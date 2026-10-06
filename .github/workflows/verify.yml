@@ -1,0 +1,35 @@
+name: Verify ProInspect
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install (bootstrap only until lockfile is committed)
+        run: |
+          if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install --no-frozen-lockfile; fi
+      - run: pnpm check
+      - name: Capture source and resolved lockfile
+        run: |
+          mkdir -p artifacts
+          git rev-parse HEAD > artifacts/source-sha.txt
+          cp pnpm-lock.yaml artifacts/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: proinspect-verification
+          path: artifacts/

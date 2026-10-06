@@ -1,0 +1,1 @@
+{"$schema":"../../node_modules/wrangler/config-schema.json","name":"proinspect-platform-local","main":"worker/app.ts","compatibility_date":"2026-10-06","compatibility_flags":["nodejs_compat"],"observability":{"enabled":true},"vars":{"APP_ENV":"local","APP_ORIGIN":"http://localhost:5173","MARKETING_ORIGIN":"http://localhost:5174","EMAIL_MODE":"local","BUILD_SHA":"development"}}

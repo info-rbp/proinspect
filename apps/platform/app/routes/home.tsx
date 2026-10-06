@@ -1,0 +1,2 @@
+export const meta=()=>[{title:'ProInspect | Property operations'}];
+export default function Home(){return <main id="main" className="container"><span className="eyebrow">PROINSPECT / PLATFORM</span><h1>Your properties.<br/>One connected workspace.</h1><p>The Cloudflare-native platform foundation is running. Customer workflows are being built against the frozen domain contract.</p><a className="button" href="/api/health">Check application health</a></main>;}
