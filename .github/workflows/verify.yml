@@ -45,6 +45,9 @@ jobs:
           pnpm exec playwright install --with-deps chromium
       - name: Browser acceptance and responsive screenshots
         run: pnpm test:browser
+      - name: Capture offline debugging dependencies
+        if: failure()
+        run: tar -czf artifacts/dependencies.tar.gz node_modules apps/marketing/node_modules apps/platform/node_modules
       - uses: actions/upload-artifact@v4
         if: always()
         with:
