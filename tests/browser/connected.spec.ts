@@ -236,7 +236,7 @@ test('professional portfolio import, recurring plan and commercial workspace are
     );
     await visit(commercial.page, commercialWorkspace.href + '/portfolio', 'Portfolio operations');
     await expect(
-      commercial.page.getByText('Commercial Property Portal', { exact: true }),
+      commercial.page.getByRole('banner').getByText('Commercial Property Portal', { exact: true }),
     ).toBeVisible();
     const response = await commercial.context.request.get(
       `/api/w/landlord/${commercialWorkspace.clientId}`,
