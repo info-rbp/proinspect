@@ -1,14 +1,16 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 
-async function signIn(page: Page, email: string) {
-  await page.goto('/signin');
+async function signIn(page: Page, email: string, returnTo = '/workspaces') {
+  await page.goto(`/signin?returnTo=${encodeURIComponent(returnTo)}`);
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByRole('button', { name: 'Email sign-in link', exact: true }).click();
   await page.getByRole('link', { name: 'Continue with local sign-in' }).click();
+  // The email field exists on both routes. Wait for the destination, not a stale field.
+  await expect(page.getByRole('heading', { name: 'Confirm it is you.' })).toBeVisible();
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByRole('button', { name: 'Confirm sign-in', exact: true }).click();
-  await expect(page).toHaveURL(/workspaces/);
+  await expect(page).toHaveURL(`http://127.0.0.1:5173${returnTo}`);
 }
 function futureDate() {
   const date = new Date(Date.now() + 5 * 86400000);
@@ -31,23 +33,24 @@ test('marketing is server rendered and responsive', async ({ page, request }) =>
   await page.screenshot({ path: 'artifacts/screenshots/marketing-mobile.png', fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
 });
-test('landlord books, staff completes, landlord receives report', async ({ page, browser }) => {
+test('service intent survives signup, booking, staff completion and report delivery', async ({ page, browser }) => {
   const email = `landlord-${Date.now()}@proinspect.test`;
-  await signIn(page, email);
-  await page.getByRole('link', { name: 'Set up a Landlord account' }).click();
+  await signIn(page, email, '/book/routine-inspection');
+  await page.getByRole('link', { name: 'Set up account', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Start with the essentials.' })).toBeVisible();
   await page.getByLabel('Your name', { exact: true }).fill('Jordan Example');
   await page.getByLabel('Account name', { exact: true }).fill('Example Self Managed');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Create Landlord account' }).click();
-  await expect(page).toHaveURL(/\/properties$/);
+  await expect(page).toHaveURL(/\/properties\?service=routine-inspection$/);
   const base = new URL(page.url()).pathname.replace(/\/properties$/, '');
   await page.getByLabel('Street address, including unit if applicable').fill(`${Math.floor(Date.now() / 1000)} Example Street`);
   await page.getByLabel('Suburb', { exact: true }).fill('Perth');
   await page.getByLabel('WA postcode').fill('6000');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Add property', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Property added');
-  await page.goto(base + '/book/routine-inspection');
+  await expect(page).toHaveURL(/\/book\/routine-inspection\?property=/);
+  await expect(page.getByLabel('Service', { exact: true })).toHaveValue('routine-inspection');
   await page.getByLabel('Preferred date', { exact: true }).fill(futureDate());
   await expect(page.getByRole('radio').first()).toBeVisible();
   await page.getByRole('radio').first().check();
@@ -68,8 +71,7 @@ test('landlord books, staff completes, landlord receives report', async ({ page,
   if (!(await order.getByLabel('Final PDF report', { exact: true }).isVisible())) await order.locator('summary').click();
   await order.getByLabel('Report title', { exact: true }).fill('Routine inspection - acceptance report');
   await order.getByLabel('Final PDF report', { exact: true }).setInputFiles({
-    name: 'report.pdf',
-    mimeType: 'application/pdf',
+    name: 'report.pdf', mimeType: 'application/pdf',
     buffer: Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF'),
   });
   await order.getByRole('button', { name: 'Upload and issue report' }).click();
