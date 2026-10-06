@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
+
 async function signIn(page: Page, email: string) {
   await page.goto('/signin');
   await page.getByLabel('Email address', { exact: true }).fill(email);
@@ -21,15 +22,14 @@ test('marketing is server rendered and responsive', async ({ page, request }) =>
   expect(html).toContain('Routine Inspection');
   expect(html).toContain('Clear work. A useful record.');
   expect(html).toContain('rel="canonical"');
+  expect(html).not.toContain('<title>Service not found');
   await page.goto('http://127.0.0.1:5174');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('The work gets done.');
   mkdirSync('artifacts/screenshots', { recursive: true });
   await page.screenshot({ path: 'artifacts/screenshots/marketing-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: 'artifacts/screenshots/marketing-mobile.png', fullPage: true });
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
-  ).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
 });
 test('landlord books, staff completes, landlord receives report', async ({ page, browser }) => {
   const email = `landlord-${Date.now()}@proinspect.test`;
@@ -41,9 +41,7 @@ test('landlord books, staff completes, landlord receives report', async ({ page,
   await page.getByRole('button', { name: 'Create Landlord account' }).click();
   await expect(page).toHaveURL(/\/properties$/);
   const base = new URL(page.url()).pathname.replace(/\/properties$/, '');
-  await page
-    .getByLabel('Street address, including unit if applicable')
-    .fill(`${Math.floor(Date.now() / 1000)} Example Street`);
+  await page.getByLabel('Street address, including unit if applicable').fill(`${Math.floor(Date.now() / 1000)} Example Street`);
   await page.getByLabel('Suburb', { exact: true }).fill('Perth');
   await page.getByLabel('WA postcode').fill('6000');
   await page.getByRole('checkbox').check();
@@ -57,7 +55,7 @@ test('landlord books, staff completes, landlord receives report', async ({ page,
   await expect(page.getByRole('heading', { name: 'Your service is booked.' })).toBeVisible();
   await page.goto(base);
   await page.screenshot({ path: 'artifacts/screenshots/landlord-desktop.png', fullPage: true });
-  const staffContext = await browser.newContext();
+  const staffContext = await browser.newContext({ baseURL: 'http://127.0.0.1:5173' });
   const staff = await staffContext.newPage();
   await signIn(staff, 'staff@proinspect.test');
   await staff.getByRole('link', { name: /ProInspect operations/ }).click();
@@ -67,39 +65,27 @@ test('landlord books, staff completes, landlord receives report', async ({ page,
   await order.getByLabel('Status', { exact: true }).selectOption('in_progress');
   await order.getByRole('button', { name: 'Save work order' }).click();
   await expect(staff.getByRole('status')).toContainText('Work order updated');
-  if (!(await order.getByLabel('Final PDF report', { exact: true }).isVisible()))
-    await order.locator('summary').click();
-  await order
-    .getByLabel('Report title', { exact: true })
-    .fill('Routine inspection - acceptance report');
-  await order
-    .getByLabel('Final PDF report', { exact: true })
-    .setInputFiles({
-      name: 'report.pdf',
-      mimeType: 'application/pdf',
-      buffer: Buffer.from(
-        '%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF',
-      ),
-    });
+  if (!(await order.getByLabel('Final PDF report', { exact: true }).isVisible())) await order.locator('summary').click();
+  await order.getByLabel('Report title', { exact: true }).fill('Routine inspection - acceptance report');
+  await order.getByLabel('Final PDF report', { exact: true }).setInputFiles({
+    name: 'report.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF'),
+  });
   await order.getByRole('button', { name: 'Upload and issue report' }).click();
   await expect(staff.getByRole('status')).toContainText('Report issued');
-  if (!(await order.getByLabel('Status', { exact: true }).isVisible()))
-    await order.locator('summary').click();
+  if (!(await order.getByLabel('Status', { exact: true }).isVisible())) await order.locator('summary').click();
   await order.getByLabel('Status', { exact: true }).selectOption('completed');
   await order.getByRole('button', { name: 'Save work order' }).click();
   await expect(staff.getByRole('status')).toContainText('Work order updated');
   await staff.screenshot({ path: 'artifacts/screenshots/staff-work-orders.png', fullPage: true });
   await page.goto(base + '/documents');
-  await expect(
-    page.getByRole('heading', { name: 'Routine inspection - acceptance report' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Routine inspection - acceptance report' })).toBeVisible();
   const downloaded = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Download PDF', exact: true }).first().click();
   expect((await downloaded).suggestedFilename()).toMatch(/ProInspect-/);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: 'artifacts/screenshots/landlord-mobile.png', fullPage: true });
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
-  ).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
   await staffContext.close();
 });
