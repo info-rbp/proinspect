@@ -33,6 +33,16 @@ import {
   audit,
 } from './services.server';
 import { availability } from './scheduler';
+import { expandedWorkspaceData } from './features/workspace-data.server';
+import { featureApi } from './features/router.server';
+import {
+  applyOrganisation,
+  acceptPortalInvitation,
+  addPortfolioProperty,
+} from './features/portfolio.server';
+import { stripeWebhook, decideApproval } from './features/finance.server';
+import { reportCallback } from './features/integrations.server';
+import { booksServices, managesProperty } from '../../../packages/authorization/server';
 
 async function json(request: Request) {
   assert(
@@ -66,7 +76,9 @@ export function apiError(error: unknown) {
     );
   if (
     error instanceof Error &&
-    /UNIQUE constraint|CHECK constraint|SCHEDULE_CONFLICT/.test(error.message)
+    /UNIQUE constraint|CHECK constraint|SCHEDULE_CONFLICT|APPROVAL_REQUIRED|CONTEXT_MISMATCH|TENANCY_OVERLAP/.test(
+      error.message,
+    )
   )
     return Response.json(
       {
@@ -90,131 +102,7 @@ export function apiError(error: unknown) {
   );
 }
 
-export async function workspaceData(env: Env, user: Principal, w: Workspace) {
-  const properties = await propertiesFor(env, user, w);
-  const propertyIds = properties.map((p) => p.id);
-  const props = placeholders(propertyIds);
-  let bookings: Record<string, any>[] = [],
-    orders: Record<string, any>[] = [],
-    requests: Record<string, any>[] = [],
-    documents: Record<string, any>[] = [],
-    tenancies: Record<string, any>[] = [],
-    inspections: Record<string, any>[] = [];
-  if (w.kind === 'tenant') {
-    requests = (
-      await statement(
-        env.DB,
-        'SELECT id,reference,title,details,category,priority,status,created_at,updated_at FROM requests WHERE tenancy_id=? AND created_by=? ORDER BY created_at DESC LIMIT 100',
-        w.scopeId,
-        user.id,
-      ).all()
-    ).results;
-    tenancies = (
-      await statement(
-        env.DB,
-        'SELECT id,property_id,status,starts_at,ends_at FROM tenancies WHERE id=?',
-        w.scopeId,
-      ).all()
-    ).results;
-    inspections = (
-      await statement(
-        env.DB,
-        `SELECT b.id,b.starts_at,b.ends_at,b.status,s.name AS service_name FROM tenant_inspections ti JOIN bookings b ON b.id=ti.booking_id JOIN services s ON s.id=b.service_id WHERE ti.tenancy_id=? ORDER BY b.starts_at DESC LIMIT 100`,
-        w.scopeId,
-      ).all()
-    ).results;
-  } else {
-    const clause =
-      w.kind === 'staff'
-        ? user.staffRole === 'inspector'
-          ? 'wo.assigned_staff_id=?'
-          : '1=1'
-        : `wo.client_id=? AND wo.property_id IN (${props})`;
-    const values =
-      w.kind === 'staff'
-        ? user.staffRole === 'inspector'
-          ? [user.id]
-          : []
-        : [w.scopeId, ...propertyIds];
-    orders = (
-      await statement(
-        env.DB,
-        `SELECT wo.id,wo.reference,wo.property_id,wo.booking_id,wo.request_id,wo.title,wo.status,wo.priority,wo.assigned_staff_id,wo.version,wo.created_at,wo.updated_at,p.address,p.suburb FROM work_orders wo LEFT JOIN properties p ON p.id=wo.property_id WHERE ${clause} ORDER BY wo.created_at DESC LIMIT 100`,
-        ...values,
-      ).all()
-    ).results;
-    bookings = (
-      await statement(
-        env.DB,
-        `SELECT b.id,b.reference,b.property_id,b.starts_at,b.ends_at,b.status,b.price_ex_gst_cents,s.name AS service_name,p.address FROM bookings b JOIN work_orders wo ON wo.booking_id=b.id JOIN services s ON s.id=b.service_id JOIN properties p ON p.id=b.property_id WHERE ${clause} ORDER BY b.starts_at DESC LIMIT 100`,
-        ...values,
-      ).all()
-    ).results;
-    const reqClause =
-      w.kind === 'staff'
-        ? user.staffRole === 'inspector'
-          ? `EXISTS(SELECT 1 FROM work_orders wo WHERE wo.request_id=r.id AND wo.assigned_staff_id=?)`
-          : '1=1'
-        : `r.client_id=? AND r.property_id IN (${props}) AND (r.source='client' OR r.category IN('maintenance','inspection_access'))`;
-    requests = (
-      await statement(
-        env.DB,
-        `SELECT r.id,r.reference,r.property_id,r.title,r.details,r.category,r.priority,r.status,r.created_at,r.updated_at FROM requests r WHERE ${reqClause} ORDER BY r.created_at DESC LIMIT 100`,
-        ...values,
-      ).all()
-    ).results;
-    if (w.kind === 'landlord')
-      tenancies = (
-        await statement(
-          env.DB,
-          `SELECT t.id,t.property_id,t.status,t.starts_at,t.ends_at,p.address FROM tenancies t JOIN properties p ON p.id=t.property_id WHERE t.property_id IN (${props}) ORDER BY t.starts_at DESC LIMIT 100`,
-          ...propertyIds,
-        ).all()
-      ).results;
-  }
-  const candidates = (
-    await statement(
-      env.DB,
-      `SELECT DISTINCT d.id,d.property_id,d.title,d.category,d.size,d.version,d.status,d.created_at,d.issued_at,p.address FROM documents d LEFT JOIN properties p ON p.id=d.property_id ${w.kind === 'landlord' ? 'JOIN document_grants g ON g.document_id=d.id' : w.kind === 'tenant' ? 'JOIN document_grants g ON g.document_id=d.id' : ''} WHERE ${w.kind === 'landlord' ? "g.recipient_kind='client' AND g.recipient_id=?" : w.kind === 'tenant' ? "g.recipient_kind='tenancy' AND g.recipient_id=?" : user.staffRole === 'inspector' ? 'EXISTS(SELECT 1 FROM work_orders wo WHERE wo.id=d.work_order_id AND wo.assigned_staff_id=?)' : '1=1'} ORDER BY d.created_at DESC LIMIT 100`,
-      ...(w.kind === 'landlord' || w.kind === 'tenant'
-        ? [w.scopeId]
-        : user.staffRole === 'inspector'
-          ? [user.id]
-          : []),
-    ).all<Record<string, any>>()
-  ).results;
-  for (const d of candidates) if (await documentAllowed(env, user, d.id)) documents.push(d);
-  const notifications = (
-    await statement(
-      env.DB,
-      'SELECT id,title,message,href,created_at,read_at FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT 30',
-      user.id,
-    ).all()
-  ).results;
-  const staff =
-    w.kind === 'staff' && user.staffRole !== 'inspector'
-      ? (
-          await statement(
-            env.DB,
-            `SELECT u.id,u.display_name,u.email FROM staff_profiles sp JOIN users u ON u.id=sp.user_id WHERE sp.active=1 AND sp.role!='read_only'`,
-          ).all()
-        ).results
-      : [];
-  return {
-    user,
-    workspace: w,
-    properties,
-    bookings,
-    workOrders: orders,
-    requests,
-    documents,
-    tenancies,
-    inspections,
-    notifications,
-    staff,
-    services: await catalogue(env),
-  };
-}
+export { expandedWorkspaceData as workspaceData } from './features/workspace-data.server';
 async function inviteTenant(env: Env, user: Principal, w: Workspace, input: unknown) {
   const data = z
     .object({
@@ -226,7 +114,7 @@ async function inviteTenant(env: Env, user: Principal, w: Workspace, input: unkn
     .parse(input);
   await propertyAccess(env, user, w, data.propertyId, true);
   assert(
-    w.kind === 'landlord' || w.kind === 'staff',
+    managesProperty(w) || w.kind === 'staff',
     403,
     'MANAGER_REQUIRED',
     'Only the current manager may create a tenancy.',
@@ -293,7 +181,7 @@ async function acceptInvitation(env: Env, user: Principal, token: unknown) {
   const hash = await digest(token);
   const invitation = await statement(
     env.DB,
-    `SELECT tenancy_id FROM invitations WHERE token_hash=? AND email=? AND expires_at>? AND consumed_at IS NULL`,
+    `SELECT i.tenancy_id FROM invitations i JOIN tenancies t ON t.id=i.tenancy_id WHERE i.token_hash=? AND i.email=? AND i.expires_at>? AND i.consumed_at IS NULL AND t.status='active' AND (EXISTS(SELECT 1 FROM staff_profiles s WHERE s.user_id=i.created_by AND s.active=1 AND s.role IN('administrator','operations_manager')) OR EXISTS(SELECT 1 FROM property_management_relationships pm JOIN client_memberships m ON m.client_id=pm.manager_client_id WHERE pm.property_id=t.property_id AND pm.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND pm.ends_at IS NULL AND m.user_id=i.created_by AND m.active=1 AND m.role!='viewer'))`,
     hash,
     user.email,
     now(),
@@ -336,6 +224,10 @@ export async function handleApi(
     const url = new URL(request.url),
       path = url.pathname,
       method = request.method;
+    if (path === '/api/webhooks/stripe' && method === 'POST')
+      return Response.json(await stripeWebhook(env, request));
+    if (path === '/api/integrations/report-tool/callback' && method === 'POST')
+      return Response.json(await reportCallback(env, request));
     if (path === '/api/health')
       return Response.json({
         ok: true,
@@ -377,8 +269,43 @@ export async function handleApi(
       return Response.json({ user, workspaces: await workspaces(env, user) });
     if (path === '/api/onboarding' && method === 'POST')
       return Response.json(await onboard(env, user, await json(request)), { status: 201 });
-    if (path === '/api/invitations/accept' && method === 'POST')
-      return Response.json(await acceptInvitation(env, user, (await json(request)).token));
+    if (path === '/api/organisation-applications' && method === 'POST')
+      return Response.json(await applyOrganisation(env, user, await json(request)), {
+        status: 201,
+      });
+    if (path === '/api/organisation-applications' && method === 'GET')
+      return Response.json({
+        applications: (
+          await statement(
+            env.DB,
+            'SELECT id,name,workspace_kind,status,created_at FROM organisation_applications WHERE user_id=? ORDER BY created_at DESC',
+            user.id,
+          ).all()
+        ).results,
+      });
+    if (path === '/api/my-approvals' && method === 'GET')
+      return Response.json({
+        approvals: (
+          await statement(
+            env.DB,
+            "SELECT a.id,a.version,a.status,a.amount_cents,a.summary,wo.title FROM approvals a JOIN work_orders wo ON wo.id=a.work_order_id WHERE a.target_user_id=? AND a.decision_scope='named_user' AND EXISTS(SELECT 1 FROM client_property_links l JOIN client_memberships m ON m.client_id=l.client_id WHERE l.property_id=wo.property_id AND l.role IN('owner','landlord') AND l.starts_at<=? AND (l.ends_at IS NULL OR l.ends_at>?) AND m.user_id=? AND m.active=1 AND m.role IN('owner','admin')) ORDER BY a.created_at DESC",
+            user.id,
+            now(),
+            now(),
+            user.id,
+          ).all()
+        ).results,
+      });
+    const ownApproval = path.match(/^\/api\/my-approvals\/([a-zA-Z0-9_-]+)$/);
+    if (ownApproval && method === 'POST')
+      return Response.json(
+        await decideApproval(env, user, null, ownApproval[1], await json(request)),
+      );
+    if (path === '/api/invitations/accept' && method === 'POST') {
+      const token = (await json(request)).token;
+      const portal = await acceptPortalInvitation(env, user, token);
+      return Response.json(portal ?? (await acceptInvitation(env, user, token)));
+    }
     const download = path.match(/^\/api\/documents\/([a-zA-Z0-9_-]+)\/download$/);
     if (download && method === 'GET') {
       assert(
@@ -395,6 +322,7 @@ export async function handleApi(
       assert(doc, 404, 'DOCUMENT_NOT_FOUND', 'Document not found.');
       const object = await env.DOCUMENTS.get(doc.object_key);
       assert(object, 404, 'DOCUMENT_UNAVAILABLE', 'The document file is unavailable.');
+      await audit(env, user, 'document.downloaded', 'document', download[1]).run();
       return new Response(object.body, {
         headers: {
           'Content-Type': 'application/pdf',
@@ -409,13 +337,15 @@ export async function handleApi(
     const w = await workspace(env, user, match[1], match[2]);
     const tail = match[3] ?? '';
     if (method === 'GET' && (!tail || tail === 'data'))
-      return Response.json(await workspaceData(env, user, w));
+      return Response.json(await expandedWorkspaceData(env, user, w));
+    const feature = await featureApi(request, env, user, w, tail);
+    if (feature) return feature;
     if (method === 'GET' && tail === 'availability') {
       assert(
-        w.kind === 'landlord',
+        booksServices(w),
         403,
         'BOOKING_FORBIDDEN',
-        'Select your Landlord workspace to book.',
+        'Select an authorised customer workspace to book.',
       );
       return Response.json(
         await availability(
@@ -426,21 +356,29 @@ export async function handleApi(
       );
     }
     if (method === 'POST' && tail === 'properties')
-      return Response.json(await createProperty(env, user, w, await json(request)), {
-        status: 201,
-      });
+      return Response.json(
+        await (w.kind === 'landlord' ? createProperty : addPortfolioProperty)(
+          env,
+          user,
+          w,
+          await json(request),
+        ),
+        {
+          status: 201,
+        },
+      );
     if (method === 'POST' && tail === 'bookings') {
       const input = bookingSchema.parse(await json(request));
       assert(
-        w.kind === 'landlord',
+        booksServices(w),
         403,
         'BOOKING_FORBIDDEN',
-        'Select your Landlord workspace to book.',
+        'Select an authorised customer workspace to book.',
       );
       return env.SCHEDULER.get(env.SCHEDULER.idFromName('default')).fetch(
         new Request('https://scheduler.internal/reserve', {
           method: 'POST',
-          body: JSON.stringify({ userId: user.id, clientId: w.scopeId, input }),
+          body: JSON.stringify({ userId: user.id, clientId: w.scopeId, kind: w.kind, input }),
         }),
       );
     }

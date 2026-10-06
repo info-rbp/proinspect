@@ -26,6 +26,11 @@ export const bookingSchema = z.object({
   serviceId: id,
   startsAt: z.string().datetime({ offset: true }),
   requestKey: z.string().min(16).max(100),
+  recurringPlanId: id.optional(),
+  planDue: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   access: z.object({
     method: z.enum(['tenant', 'owner', 'agent', 'lockbox', 'other']),
     instructions: z.string().trim().max(3000),

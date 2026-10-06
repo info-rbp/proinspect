@@ -11,7 +11,9 @@ export default function Bookings() {
         title="Bookings"
         description="Confirmed appointments and your service history."
       >
-        {d.workspace.kind === 'landlord' && (
+        {['landlord', 'property-manager', 'commercial', 'strata-manager'].includes(
+          d.workspace.kind,
+        ) && (
           <Link className="button" to={`${d.workspace.href}/book`}>
             + Book a service
           </Link>

@@ -25,6 +25,14 @@ export default function Workspaces() {
             One sign-in. Separate access for each property relationship.
           </p>
         </div>
+        <div className="actions">
+          <Link className="button secondary" to="/organisation">
+            Set up a professional organisation
+          </Link>
+          <Link className="button secondary" to="/owner-decisions">
+            My owner decisions
+          </Link>
+        </div>
         <div className="workspace-grid">
           {data.workspaces.map((w: Workspace) => (
             <Link key={w.href} to={w.href} className="workspace-card">

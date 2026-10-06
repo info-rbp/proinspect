@@ -14,7 +14,7 @@ Strata schemes have buildings, lots and common-property areas. A lot may be link
 
 ## Operations
 
-A Booking is an appointment transaction. A Work Order is execution. Creation of a booking, its work order, access envelope, audit event and outbox events is a single D1 batch transaction. All appointment writes pass through a scheduling Durable Object; a database overlap trigger is the final invariant. Single-resource capacity is explicit in the first slice, not presented as multi-inspector optimisation. Request retries carry an idempotency key and payload fingerprint.
+A Booking is an appointment transaction. A Work Order is execution. Creation of a booking, its work order, access envelope, audit event and outbox events is a single D1 batch transaction. All appointment reservations, rescheduling and cancellation pass through a scheduling Durable Object; a database overlap trigger is the final invariant. Single-resource capacity is explicit in the first slice, not presented as multi-inspector optimisation. Request retries carry an idempotency key and payload fingerprint.
 
 Requests may originate from a client, tenant or building relationship. Public marketing enquiries are leads, not bookings. Requests are triaged before becoming chargeable work. Bookings are always authenticated. Pricing is snapshotted in integer AUD cents; absent prices mean quote required, never free.
 
@@ -31,3 +31,7 @@ Outbox payloads are application-encrypted. Queues carry IDs only. Delivery is at
 ## Schema evolution
 
 The initial migration establishes the shared graph, including reserved strata/commercial relationships. Schema presence does not mean a portal is implemented. BUILD_STATUS.md is the capability ledger. Existing production repositories and data remain untouched. Imports are a separate reviewed operation after the new workflows pass acceptance.
+
+## Connected operations extension
+
+Migration 0003 adds explicit client entitlements, reviewed organisation applications, team/portfolio scope, scheme invitation terms, bounded import/bulk/recurrence records, document review/version references, operational approvals, payment receipts, restricted intake and integration delivery records. It preserves all original IDs and relationship definitions. A source-level adapter is not proof that its external counterparty has been deployed or accepted.

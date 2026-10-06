@@ -2,7 +2,9 @@
 
 A clean Cloudflare-native rebuild: one identity, one relationship-aware property graph, one operational engine and purpose-built workspaces.
 
-The first slice implements **marketing -> sign-in -> self-managing landlord -> property -> booking -> work order -> Staff -> private PDF report -> landlord**. It also implements invited-tenant maintenance requests. Professional, strata, building, council and commercial experiences remain tracked in the capability ledger, not enabled placeholders.
+The repository now contains the original booking-to-report workflow plus connected Landlord, Tenant, Property Manager, Commercial, Strata Manager, Building, Council and Staff operations. Access follows approved relationships, not a public role selector. See [BUILD_STATUS.md](docs/BUILD_STATUS.md) for implemented behaviour and explicit remaining limits.
+
+**Cloudflare deployment is locked pending the owner's repository acceptance.** CI executes local runtime and browser tests only; no Cloudflare resources, customer data or public domains are changed.
 
 ## Applications
 
@@ -42,7 +44,7 @@ CI builds both Workers, tests local D1/R2/Durable Object workflows, checks uploa
 
 ## Deploy
 
-See [DEPLOYMENT.md](docs/DEPLOYMENT.md). Staging automation only provisions new proinspect-v2-staging-* resources. Real Cloudflare credentials and application provider configuration are required. There is no hosted login bypass and no automatic production cutover.
+The deployment workflow is an inert manual-only lock. It loads no credentials and cannot provision, migrate or deploy. [DEPLOYMENT.md](docs/DEPLOYMENT.md) records the future release requirements, not an instruction to deploy now.
 
 ## Authoritative contracts
 
@@ -53,4 +55,4 @@ See [DEPLOYMENT.md](docs/DEPLOYMENT.md). Staging automation only provisions new 
 - [Launch sequence](docs/LAUNCH_SCOPE.md)
 - [Implemented and outstanding capabilities](docs/BUILD_STATUS.md)
 
-The old repositories are references only. No Firebase/Firestore, Express, Google Calendar or GCP deployment runtime was brought into this rebuild. Historical import, Report Tool automation and optional Sheets projection are separate later slices.
+The old repositories are references only. No Firebase/Firestore, Express, Google Calendar or GCP deployment runtime was brought into this rebuild. Historical import and hosted release remain separate approval steps. [Connected workflows](docs/CONNECTED_WORKFLOWS.md) and [integration contracts](docs/INTEGRATIONS.md) explain the new cross-portal behaviour.

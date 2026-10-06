@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { OperationForm } from '../components/OperationForm';
 import { useWorkspace } from '../lib/workspace';
 import { PageHeading, EmptyState } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
@@ -20,12 +21,20 @@ export default function Notifications() {
                 <p>{n.message}</p>
                 <p>{displayDate(n.created_at)}</p>
               </div>
-              <Link
-                className="button secondary small"
-                to={n.href.startsWith('/') ? n.href : new URL(n.href).pathname}
-              >
-                View update
-              </Link>
+              <div className="stack-sm">
+                {!n.read_at && (
+                  <OperationForm
+                    endpoint={`/api/w/${d.workspace.kind}/${d.workspace.scopeId}/notifications/${n.id}/read`}
+                    label="Mark as read"
+                  />
+                )}
+                <Link
+                  className="button secondary small"
+                  to={n.href.startsWith('/') ? n.href : new URL(n.href).pathname}
+                >
+                  View update
+                </Link>
+              </div>
             </article>
           ))
         ) : (

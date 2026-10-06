@@ -1,6 +1,13 @@
 export interface Env {
   APP_ENV: 'local' | 'staging' | 'production';
   BUILD_SHA?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  REPORT_TOOL_ORIGIN?: string;
+  REPORT_TOOL_SECRET?: string;
+  SHEETS_WEBHOOK_URL?: string;
+  SHEETS_WEBHOOK_SECRET?: string;
+  RESTRICTED_WORKFLOWS_ENABLED?: string;
   APP_ORIGIN: string;
   MARKETING_ORIGIN?: string;
   DB: D1Database;

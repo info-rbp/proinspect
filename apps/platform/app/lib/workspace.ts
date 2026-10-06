@@ -16,7 +16,14 @@ export interface WorkspaceData {
   inspections: RecordRow[];
   notifications: RecordRow[];
   staff: RecordRow[];
+  contractors: RecordRow[];
   services: Service[];
+  schemes: RecordRow[];
+  approvals: RecordRow[];
+  payments: RecordRow[];
+  plans: RecordRow[];
+  documentRequests: RecordRow[];
+  restrictedEnabled: boolean;
 }
 export function useWorkspace() {
   return useOutletContext<WorkspaceData>();

@@ -26,6 +26,8 @@ export async function action(args: ActionFunctionArgs) {
       serviceId: f.get('serviceId'),
       startsAt: f.get('startsAt'),
       requestKey: f.get('requestKey'),
+      recurringPlanId: f.get('recurringPlanId') || undefined,
+      planDue: f.get('planDue') || undefined,
       access: {
         method: f.get('accessMethod'),
         instructions: f.get('instructions') || '',
@@ -145,6 +147,8 @@ export default function Book() {
         <strong>04 Appointment</strong>
       </div>
       <Form method="post" className="detail-grid">
+        <input type="hidden" name="recurringPlanId" value={search.get('plan') || ''} />
+        <input type="hidden" name="planDue" value={search.get('due') || ''} />
         <input type="hidden" name="requestKey" value={requestKey} />
         <input type="hidden" name="startsAt" value={slot} />
         <div className="stack">

@@ -1,0 +1,38 @@
+/* Workspace names can be long; keep navigation and sign-out within the header. */
+.topbar {
+  min-height: 80px;
+  height: auto;
+  padding-block: 0.85rem;
+}
+.topbar > .actions {
+  min-width: 0;
+  flex: 1 1 0;
+}
+.topbar-context {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.topbar-user {
+  flex-shrink: 0;
+}
+.skip-link:not(:focus) {
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+@media (max-width: 800px) {
+  .topbar {
+    min-height: 70px;
+    padding-block: 0.75rem;
+  }
+  .topbar > .actions {
+    flex-wrap: nowrap;
+  }
+  .topbar .mobile-toggle {
+    flex: 0 0 44px;
+  }
+  .topbar-user {
+    gap: 0.5rem;
+  }
+}
