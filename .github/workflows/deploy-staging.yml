@@ -1,79 +1,14 @@
-name: Deploy isolated Cloudflare staging
+name: Cloudflare deployment locked pending acceptance
 on:
-  workflow_run:
-    workflows: ['Verify ProInspect']
-    branches: [main]
-    types: [completed]
   workflow_dispatch:
 permissions:
   contents: read
-  actions: read
-concurrency:
-  group: proinspect-v2-staging
-  cancel-in-progress: false
 jobs:
-  staging:
-    if: >-
-      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
+  deployment-locked:
     runs-on: ubuntu-latest
-    environment: staging
-    timeout-minutes: 20
-    env:
-      SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      EMAIL_FROM: ${{ vars.EMAIL_FROM }}
-      EMAIL_SINK: ${{ vars.EMAIL_SINK }}
-      TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
-      WRANGLER_SEND_METRICS: 'false'
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ env.SOURCE_SHA }}
-      - name: Require credentials and exact-source verification
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Repository acceptance required
         run: |
-          test -n "$CLOUDFLARE_API_TOKEN" || { echo 'CLOUDFLARE_API_TOKEN is missing; nothing deployed.'; exit 1; }
-          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo 'CLOUDFLARE_ACCOUNT_ID is missing; nothing deployed.'; exit 1; }
-          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$SOURCE_SHA" || { echo 'A newer main source exists; do not deploy an older revision.'; exit 1; }
-          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/verify.yml/runs?head_sha=$SOURCE_SHA&event=push&status=success&per_page=10" --jq '.workflow_runs | length' > /tmp/verified-count
-          test "$(cat /tmp/verified-count)" -gt 0 || { echo 'This source has not passed main verification.'; exit 1; }
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: pnpm install --frozen-lockfile
-      - name: Provision only new isolated staging resources
-        run: node scripts/deploy/staging.mjs --apply
-      - name: Apply additive migrations and safe catalogue seeds
-        run: |
-          pnpm --dir apps/platform exec wrangler d1 migrations apply DB --env staging --remote
-          pnpm catalogue:sql
-          pnpm --dir apps/platform exec wrangler d1 execute DB --env staging --remote --file ../../artifacts/catalogue.sql
-          pnpm --dir apps/platform exec wrangler d1 execute DB --env staging --remote --command "INSERT INTO schedule_resources(id,name,active) VALUES('default','ProInspect inspection capacity',1) ON CONFLICT(id) DO NOTHING;"
-      - name: Build the exact source for the staging environment
-        env:
-          CLOUDFLARE_ENV: staging
-        run: pnpm build
-      - name: Deploy both Workers without changing custom domains
-        run: |
-          pnpm --dir apps/platform exec wrangler deploy
-          pnpm --dir apps/marketing exec wrangler deploy
-      - name: Configure supplied application secrets without rotating encryption keys
-        env:
-          DATA_ENCRYPTION_KEY: ${{ secrets.DATA_ENCRYPTION_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
-        run: node scripts/deploy/staging-secrets.mjs
-      - name: Check hosted source pages privacy headers and D1 catalogue
-        run: node scripts/deploy/smoke.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: proinspect-staging-receipt
-          path: artifacts/staging-deployment.json
-          retention-days: 14
+          echo 'Cloudflare deployment is intentionally disabled at the owner request.'
+          echo 'No credentials are loaded, resources provisioned, migrations applied remotely or Workers deployed.'
+          echo 'Re-enable a reviewed deployment workflow only after explicit repository acceptance.'
