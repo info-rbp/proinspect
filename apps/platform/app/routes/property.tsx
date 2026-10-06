@@ -96,7 +96,10 @@ export default function Property() {
                     PDF · Version {doc.version} · {displayDate(doc.issued_at || doc.created_at)}
                   </p>
                 </div>
-                <a className="button secondary" href={`/api/documents/${doc.id}/download`}>
+                <a
+                  className="button secondary"
+                  href={`/api${d.workspace.href}/documents/${doc.id}/download`}
+                >
                   Download
                 </a>
               </div>

@@ -1,9 +1,10 @@
+import { noticeAudienceSql } from '../../../../packages/notifications/notice-policy';
+import { documentScope } from '../../../../packages/authorization/document-scope';
 import { statement, now, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
 import {
   propertiesFor,
   propertyScope,
-  documentAllowed,
   schemesFor,
   managesProperty,
   booksServices,
@@ -13,6 +14,14 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
   const properties = await propertiesFor(env, user, w),
     schemes = await schemesFor(env, user, w),
     scope = propertyScope(user, w);
+  const propertyTotal =
+    (
+      await statement(
+        env.DB,
+        `SELECT COUNT(*) AS total FROM properties p WHERE p.archived_at IS NULL AND (${scope.sql})`,
+        ...scope.values,
+      ).first<{ total: number }>()
+    )?.total ?? 0;
   const propertyFilter = (alias: string) =>
     `EXISTS(SELECT 1 FROM properties p WHERE p.id=${alias}.property_id AND (${scope.sql}))`;
   const schemeFilter = (alias: string) =>
@@ -112,36 +121,15 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
           ).all()
         ).results
       : [];
-  let docSql = '0=1',
-    docArgs: string[] = [];
-  if (w.kind === 'staff') {
-    docSql =
-      user.staffRole === 'inspector'
-        ? 'EXISTS(SELECT 1 FROM work_orders wo WHERE wo.id=d.work_order_id AND wo.assigned_staff_id=?)'
-        : '1=1';
-    docArgs = user.staffRole === 'inspector' ? [user.id] : [];
-  } else if (booksServices(w)) {
-    docSql =
-      "(EXISTS(SELECT 1 FROM document_grants g WHERE g.document_id=d.id AND g.recipient_kind='client' AND g.recipient_id=?) OR d.uploaded_client_id=?)";
-    docArgs = [w.scopeId, w.scopeId];
-  } else if (w.kind === 'tenant') {
-    docSql =
-      "EXISTS(SELECT 1 FROM document_grants g WHERE g.document_id=d.id AND g.recipient_kind='tenancy' AND g.recipient_id=?)";
-    docArgs = [w.scopeId];
-  } else {
-    docSql =
-      'd.scheme_id=? AND EXISTS(SELECT 1 FROM document_grants g WHERE g.document_id=d.id AND g.recipient_id=?)';
-    docArgs = [w.scopeId, w.scopeId];
-  }
+  const docScope = documentScope(user, w);
   const candidates = (
     await statement(
       env.DB,
-      `SELECT d.id,d.property_id,d.scheme_id,d.tenancy_id,d.title,d.category,d.size,d.version,d.status,d.created_at,d.issued_at,d.previous_document_id,d.created_by,d.uploaded_client_id,p.address FROM documents d LEFT JOIN properties p ON p.id=d.property_id WHERE ${docSql} ORDER BY d.created_at DESC LIMIT 300`,
-      ...docArgs,
+      `SELECT d.id,d.property_id,d.scheme_id,d.tenancy_id,d.title,d.category,d.size,d.version,d.status,d.created_at,d.issued_at,d.previous_document_id,d.created_by,d.uploaded_client_id,p.address FROM documents d LEFT JOIN properties p ON p.id=d.property_id WHERE ${docScope.sql} ORDER BY d.created_at DESC LIMIT 300`,
+      ...docScope.values,
     ).all<Record<string, any>>()
   ).results;
-  const documents = [];
-  for (const d of candidates) if (await documentAllowed(env, user, d.id)) documents.push(d);
+  const documents = candidates;
   const staff =
     w.kind === 'staff' && user.staffRole !== 'inspector'
       ? (
@@ -204,8 +192,14 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
   const notifications = (
     await statement(
       env.DB,
-      'SELECT id,title,message,href,created_at,read_at FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT 50',
+      `SELECT id,title,message,href,created_at,read_at FROM notifications WHERE user_id=? AND (workspace_kind IS NULL OR (workspace_kind=? AND scope_id=?)) AND (source_notice_id IS NULL OR EXISTS(SELECT 1 FROM building_notices n WHERE n.id=source_notice_id AND n.version=source_notice_version AND n.withdrawn_at IS NULL AND n.starts_at<=? AND (n.expires_at IS NULL OR n.expires_at>?) AND EXISTS(SELECT 1 FROM scheme_memberships m LEFT JOIN strata_lots l ON l.id=m.lot_id WHERE m.scheme_id=n.scheme_id AND m.user_id=notifications.user_id AND m.starts_at<=? AND (m.ends_at IS NULL OR m.ends_at>?) AND (${noticeAudienceSql(w.kind === 'council' ? 'council' : 'building')}) AND (n.lot_id IS NULL OR n.lot_id=m.lot_id) AND (n.building_id IS NULL OR n.building_id=l.building_id)))) ORDER BY created_at DESC LIMIT 50`,
       user.id,
+      w.kind,
+      w.scopeId,
+      now(),
+      now(),
+      now(),
+      now(),
     ).all()
   ).results;
   const contractors =
@@ -222,6 +216,7 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
     user,
     workspace: w,
     properties,
+    propertyTotal,
     schemes,
     bookings,
     workOrders: orders,

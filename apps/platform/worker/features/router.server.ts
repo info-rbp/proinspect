@@ -1,3 +1,7 @@
+import { propertyDirectory } from './directory.server';
+import { reconciliationData, resolveReconciliation } from './payments.server';
+import { changeNotice } from './communications.server';
+import { downloadWorkspaceDocument } from '../../../../packages/authorization/document-scope';
 import { type Env, assert, statement } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
 import { readJson } from '../../../../packages/operations/core';
@@ -51,6 +55,11 @@ export async function featureApi(
     operationsWrite(user);
   };
   if (method === 'GET') {
+    if (tail === 'property-directory')
+      return ok(await propertyDirectory(env, user, w, url.searchParams));
+    if (tail === 'payment-reconciliation') return ok(await reconciliationData(env, user, w));
+    if (area === 'documents' && id && action === 'download')
+      return downloadWorkspaceDocument(env, user, w, id);
     if (area === 'document-requests' && id && parts.length === 2)
       return ok(await documents.documentRequestDetail(env, user, w, id));
     if (tail === 'admin') return ok(await admin.adminData(env, user, w));
@@ -155,6 +164,8 @@ export async function featureApi(
     return ok(await tenancy.inviteAdditionalTenant(env, user, w, id, await body()));
   if (tail === 'inspections/publish')
     return ok(await tenancy.publishInspection(env, user, w, await body()));
+  if (area === 'schemes' && id && action === 'notices' && child)
+    return ok(await changeNotice(env, user, w, id, child, await body()));
   if (tail === 'schemes') return ok(await strata.createScheme(env, user, w, await body()));
   if (area === 'schemes' && id && action === 'structure')
     return ok(await strata.schemeStructure(env, user, w, id, await body()));
@@ -174,6 +185,8 @@ export async function featureApi(
     return ok(await finance.decideApproval(env, user, w, id, await body()));
   if (area === 'approvals' && id && action === 'response')
     return ok(await finance.councilResponse(env, user, w, id, await body()));
+  if (area === 'payment-reconciliation' && id)
+    return ok(await resolveReconciliation(env, user, w, id, await body()));
   if (tail === 'payments') return ok(await finance.createPayment(env, user, w, await body()));
   if (area === 'payments' && id && action === 'record')
     return ok(await finance.recordPayment(env, user, w, id, await body()));

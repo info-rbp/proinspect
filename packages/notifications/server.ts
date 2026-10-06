@@ -1,3 +1,4 @@
+import { noticeRecipientAllowed, type NoticeWorkspace } from './notice-policy';
 import type { Env } from '../database/types';
 import { statement, now, uid } from '../database/types';
 import { seal, unseal } from '../auth/crypto';
@@ -9,6 +10,7 @@ export interface MailJob {
   href?: string;
   facts?: Record<string, string>;
   sensitive?: boolean;
+  notice?: { id: string; version: number; userId: string; workspace: NoticeWorkspace };
 }
 export async function mailEvent(env: Env, kind: string, payload: MailJob) {
   const id = uid('evt');
@@ -77,6 +79,24 @@ export async function deliverEvent(env: Env, eventId: string) {
       `outbox:${row.id}`,
       row.envelope,
     );
+    if (
+      payload.notice &&
+      !(await noticeRecipientAllowed(
+        env,
+        payload.notice.id,
+        payload.notice.version,
+        payload.notice.userId,
+        payload.notice.workspace,
+      ))
+    ) {
+      await statement(
+        env.DB,
+        "UPDATE outbox_events SET status='failed',error_code='NOTICE_NO_LONGER_AVAILABLE',lease_token=NULL,lease_until=NULL WHERE id=? AND lease_token=?",
+        row.id,
+        lease,
+      ).run();
+      return;
+    }
     if (env.EMAIL_PROVIDER === 'local' && env.APP_ENV === 'local') {
       await statement(
         env.DB,

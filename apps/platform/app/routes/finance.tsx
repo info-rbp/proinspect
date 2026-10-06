@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { useWorkspace, workspaceApi } from '../lib/workspace';
 import { PageHeading, Badge } from '../../../../packages/ui/components';
 import {
@@ -89,6 +90,11 @@ export default function Finance() {
         ))}
         {!council && (
           <Panel title="Payments">
+            {staffWrite && (
+              <Link className="button secondary" to={`${w.href}/finance/reconciliation`}>
+                Review payment exceptions
+              </Link>
+            )}
             {d.payments.map((p) => (
               <div className="stack payment-record" key={p.id}>
                 <div className="record-row">
@@ -100,7 +106,7 @@ export default function Finance() {
                 </div>
                 {!staff &&
                   w.role !== 'viewer' &&
-                  ['pending', 'payment_required', 'failed'].includes(p.status) && (
+                  ['payment_required', 'failed'].includes(p.status) && (
                     <OperationForm
                       endpoint={`${api}/payments/${p.id}/checkout`}
                       label="Prepare secure payment"
