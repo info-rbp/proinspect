@@ -8,6 +8,7 @@ export interface WorkspaceData {
   user: Principal;
   workspace: Workspace;
   properties: Property[];
+  propertyTotal: number;
   bookings: RecordRow[];
   workOrders: RecordRow[];
   requests: RecordRow[];

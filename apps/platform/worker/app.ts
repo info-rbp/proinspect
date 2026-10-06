@@ -1,3 +1,4 @@
+import { dispatchDueNotices } from '../../../packages/notifications/notices';
 import { createRequestHandler, RouterContextProvider } from 'react-router';
 import { runtimeContext } from '../../../packages/database/context';
 import type { Env } from '../../../packages/database/types';
@@ -42,7 +43,7 @@ export default {
     });
   },
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(dispatchOutbox(env));
+    ctx.waitUntil(dispatchDueNotices(env).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchIntegrations(env));
   },
   async queue(batch: MessageBatch<{ eventId: string }>, env: Env) {

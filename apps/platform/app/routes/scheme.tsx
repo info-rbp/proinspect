@@ -24,7 +24,12 @@ export default function Scheme() {
     w = d.workspace,
     api = workspaceApi(w.kind, w.scopeId),
     root = `${api}/schemes/${s.scheme.id}`,
-    manager = ['strata-manager', 'staff'].includes(w.kind);
+    manager = ['strata-manager', 'staff'].includes(w.kind),
+    canCommunicate =
+      w.kind === 'strata-manager'
+        ? w.role !== 'viewer'
+        : w.kind === 'staff' &&
+          ['administrator', 'operations_manager'].includes(d.user.staffRole ?? '');
   return (
     <>
       <PageHeading
@@ -43,7 +48,50 @@ export default function Scheme() {
               <article key={n.id} className="notice">
                 <h3>{n.title}</h3>
                 <p className="preserve-lines">{n.body}</p>
-                <p className="small">{n.starts_at}</p>
+                <p className="small">
+                  {n.starts_at} | Version {n.version} |{' '}
+                  {n.withdrawn_at
+                    ? 'Withdrawn'
+                    : n.starts_at > new Date().toISOString()
+                      ? 'Scheduled'
+                      : 'Published'}
+                </p>
+                {canCommunicate && !n.withdrawn_at && (
+                  <details>
+                    <summary>Revise or withdraw this notice</summary>
+                    <OperationForm
+                      endpoint={`${root}/notices/${n.id}`}
+                      defaults={{ version: n.version }}
+                      label="Save notice change"
+                    >
+                      <Select
+                        name="action"
+                        label="Notice action"
+                        value="revise"
+                        options={choices(['revise', 'withdraw'])}
+                      />
+                      <Input name="title" label="Updated title" required={false} />
+                      <TextArea
+                        name="body"
+                        label="Updated message (leave blank to keep wording)"
+                        required={false}
+                      />
+                      <Input
+                        name="startsAt"
+                        label="Revised publication time"
+                        type="datetime-local"
+                        required={false}
+                      />
+                      <Input
+                        name="expiresAt"
+                        label="Revised expiry"
+                        type="datetime-local"
+                        required={false}
+                      />
+                      <Input name="reason" label="Reason for this revision" />
+                    </OperationForm>
+                  </details>
+                )}
               </article>
             ))
           ) : (
@@ -205,6 +253,19 @@ export default function Scheme() {
             </Panel>
             <Panel title="Publish a targeted notice">
               <OperationForm endpoint={`${root}/notices`} label="Publish notice">
+                <p className="small">
+                  Scheduled notices notify the authorised audience when publication is due. Email
+                  contains a portal link, not private notice content.
+                </p>
+                <Select
+                  name="emailEnabled"
+                  label="Send email notification"
+                  value="false"
+                  options={[
+                    { value: 'false', label: 'Portal only' },
+                    { value: 'true', label: 'Portal and email' },
+                  ]}
+                />
                 <Input name="title" label="Notice title" />
                 <TextArea name="body" label="Message" />
                 <Select

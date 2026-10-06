@@ -36,6 +36,7 @@ const mf = new Miniflare({
       checkouts.push(Object.fromEntries(data));
       return Response.json({
         id: 'cs_test_' + data.get('metadata[payment_id]'),
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
         url: 'https://checkout.stripe.com/c/pay/test_' + data.get('metadata[payment_id]'),
       });
     }

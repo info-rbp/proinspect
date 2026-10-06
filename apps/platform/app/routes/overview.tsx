@@ -99,7 +99,7 @@ export default function Overview() {
         <section className="grid-4" aria-label="Workspace summary">
           <Metric
             label="Properties"
-            value={d.properties.length}
+            value={d.propertyTotal}
             detail={w.kind === 'staff' ? 'Within your staff scope' : 'Linked to this workspace'}
           />
           <Metric
@@ -259,7 +259,10 @@ export default function Overview() {
                     {doc.address} · {displayDate(doc.issued_at || doc.created_at)}
                   </p>
                 </div>
-                <a className="button secondary small" href={`/api/documents/${doc.id}/download`}>
+                <a
+                  className="button secondary small"
+                  href={`/api${d.workspace.href}/documents/${doc.id}/download`}
+                >
                   Download PDF
                 </a>
               </div>

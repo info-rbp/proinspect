@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "test:schema": "python3 tests/schema.test.py",
-    "test:integration": "node --experimental-strip-types tests/runtime/run.mjs && node --experimental-strip-types tests/runtime/connected.mjs",
+    "test:integration": "node --experimental-strip-types tests/runtime/run.mjs && node --experimental-strip-types tests/runtime/connected.mjs && node --experimental-strip-types tests/runtime/continuity.mjs",
     "test:browser": "playwright test",
     "local:init": "node --experimental-strip-types scripts/local-init.mjs",
     "catalogue:sql": "node --experimental-strip-types scripts/catalogue-sql.mjs",

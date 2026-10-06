@@ -127,6 +127,15 @@ export async function changeBooking(
       wo.version,
     ),
     guard(env),
+    statement(
+      env.DB,
+      "INSERT OR IGNORE INTO notifications(id,user_id,title,message,href,created_at,workspace_kind,scope_id) SELECT 'ntf_booking_change_'||?||'_'||m.user_id,m.user_id,'Inspection information withdrawn','An appointment has changed or been cancelled. Previous inspection information no longer applies. Your manager must confirm any replacement notice and access arrangements.', '/w/tenant/'||m.tenancy_id||'/inspections',?,'tenant',m.tenancy_id FROM tenant_inspections ti JOIN tenancy_memberships m ON m.tenancy_id=ti.tenancy_id WHERE ti.booking_id=? AND m.starts_at<=? AND (m.ends_at IS NULL OR m.ends_at>?)",
+      id + ':' + result.version,
+      now(),
+      id,
+      now(),
+      now(),
+    ),
     statement(env.DB, 'DELETE FROM tenant_inspections WHERE booking_id=?', id),
     activity(
       env,

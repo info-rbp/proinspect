@@ -35,7 +35,10 @@ export default function Documents() {
                 <br />
                 Version {doc.version} · {(doc.size / 1024).toFixed(0)} KB
               </p>
-              <a className="button secondary" href={`/api/documents/${doc.id}/download`}>
+              <a
+                className="button secondary"
+                href={`/api${d.workspace.href}/documents/${doc.id}/download`}
+              >
                 Download PDF
               </a>
             </article>

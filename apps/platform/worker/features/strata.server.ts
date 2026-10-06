@@ -1,3 +1,5 @@
+import { noticeRecipientAllowed } from '../../../../packages/notifications/notice-policy';
+import { dispatchDueNotices } from '../../../../packages/notifications/notices';
 import { z } from 'zod';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
@@ -19,6 +21,8 @@ import {
   projection,
   guard,
   clearGuard,
+  replay,
+  receipt,
 } from '../../../../packages/operations/core';
 import { addressKey } from '../../../../packages/validation/index';
 import { createRequest } from '../services.server';
@@ -124,11 +128,17 @@ export async function schemeStructure(
   const d = z
     .object({
       kind: z.enum(['area', 'lot', 'building']),
-      name: shortText,
+      name: z.string().trim().min(1).max(180),
       buildingId: recordId.optional(),
       propertyId: recordId.optional(),
     })
     .parse(input);
+  assert(
+    d.kind === 'lot' || d.name.length >= 2,
+    422,
+    'NAME_REQUIRED',
+    'Use a descriptive building or area name.',
+  );
   if (d.buildingId)
     assert(
       await statement(
@@ -229,10 +239,9 @@ export async function schemeData(env: Env, user: Principal, w: Workspace, scheme
   const notices = (
     await statement(
       env.DB,
-      'SELECT * FROM building_notices WHERE scheme_id=? AND starts_at<=? AND (expires_at IS NULL OR expires_at>?) ORDER BY starts_at DESC LIMIT 100',
+      `SELECT * FROM building_notices WHERE scheme_id=? ${manager ? '' : 'AND withdrawn_at IS NULL AND starts_at<=? AND (expires_at IS NULL OR expires_at>?)'} ORDER BY starts_at DESC LIMIT 100`,
       schemeId,
-      now(),
-      now(),
+      ...(manager ? [] : [now(), now()]),
     ).all<Record<string, any>>()
   ).results;
   const visible = [];
@@ -241,30 +250,16 @@ export async function schemeData(env: Env, user: Principal, w: Workspace, scheme
       visible.push(n);
       continue;
     }
-    const roles =
-      n.audience === 'all_members'
-        ? ['resident', 'owner', 'council_member']
-        : [
-            n.audience === 'residents'
-              ? 'resident'
-              : n.audience === 'owners'
-                ? 'owner'
-                : 'council_member',
-          ];
-    const m = await statement(
-      env.DB,
-      `SELECT m.id FROM scheme_memberships m LEFT JOIN strata_lots l ON l.id=m.lot_id WHERE m.scheme_id=? AND m.user_id=? AND m.starts_at<=? AND (m.ends_at IS NULL OR m.ends_at>?) AND m.role IN(${roles.map(() => '?').join(',')}) AND (? IS NULL OR m.lot_id=?) AND (? IS NULL OR l.building_id=?)`,
-      schemeId,
-      user.id,
-      now(),
-      now(),
-      ...roles,
-      n.lot_id,
-      n.lot_id,
-      n.building_id,
-      n.building_id,
-    ).first();
-    if (m) visible.push(n);
+    if (
+      await noticeRecipientAllowed(
+        env,
+        n.id,
+        n.version,
+        user.id,
+        w.kind === 'council' ? 'council' : 'building',
+      )
+    )
+      visible.push(n);
   }
   const works = (
     await statement(
@@ -462,6 +457,8 @@ export async function publishNotice(
   await schemeAccess(env, user, w, schemeId, true);
   const d = z
     .object({
+      requestKey: z.string().min(16).max(100).optional(),
+      emailEnabled: z.boolean().default(false),
       title: shortText,
       body: z.string().trim().min(10).max(5000),
       audience: z.enum(['residents', 'owners', 'council', 'all_members']),
@@ -509,11 +506,13 @@ export async function publishNotice(
     'NOTICE_DATES',
     'Expiry must be after publication.',
   );
+  const saved = d.requestKey ? await replay(env, user, 'notice.publish', d.requestKey, d) : null;
+  if (saved?.result) return { ...saved.result, replayed: true };
   const id = uid('notice');
   await env.DB.batch([
     statement(
       env.DB,
-      'INSERT INTO building_notices(id,scheme_id,title,body,audience,starts_at,expires_at,created_by,work_order_id,building_id,lot_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
+      'INSERT INTO building_notices(id,scheme_id,title,body,audience,starts_at,expires_at,created_by,work_order_id,building_id,lot_id,email_enabled) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
       id,
       schemeId,
       d.title,
@@ -525,32 +524,17 @@ export async function publishNotice(
       d.workOrderId ?? null,
       d.buildingId ?? null,
       d.lotId ?? null,
-    ),
-    statement(
-      env.DB,
-      "INSERT INTO notifications(id,user_id,title,message,href,created_at) SELECT DISTINCT 'ntf_'||?||'_'||m.user_id,m.user_id,'Building notice available','Open your authorised building workspace to read the notice.','/workspaces',? FROM scheme_memberships m LEFT JOIN strata_lots l ON l.id=m.lot_id WHERE m.scheme_id=? AND m.starts_at<=? AND (m.ends_at IS NULL OR m.ends_at>?) AND ?<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND (?='all_members' OR m.role=?) AND (? IS NULL OR m.lot_id=?) AND (? IS NULL OR l.building_id=?)",
-      id,
-      start,
-      schemeId,
-      now(),
-      now(),
-      start,
-      d.audience,
-      d.audience === 'residents'
-        ? 'resident'
-        : d.audience === 'owners'
-          ? 'owner'
-          : 'council_member',
-      d.lotId ?? null,
-      d.lotId ?? null,
-      d.buildingId ?? null,
-      d.buildingId ?? null,
+      Number(d.emailEnabled),
     ),
     activity(env, user, 'building.notice_published', 'notice', id, null, schemeId, {
       audience: d.audience,
     }),
     projection(env, 'building_notice.published', id, { schemeId }),
+    ...(saved && d.requestKey
+      ? [receipt(env, user, 'notice.publish', d.requestKey, saved.fingerprint, { id })]
+      : []),
   ]);
+  await dispatchDueNotices(env).catch(() => console.error('notice.fanout_deferred'));
   return { id };
 }
 export async function publicWork(

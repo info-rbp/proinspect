@@ -23,6 +23,7 @@ export default [
     route('properties/:propertyId', 'routes/property.tsx'),
     route('book/:serviceId?', 'routes/book.tsx'),
     route('booking-changes', 'routes/booking-changes.tsx'),
+    route('finance/reconciliation', 'routes/payment-reconciliation.tsx'),
     route('finance', 'routes/finance.tsx'),
     route('requests/:requestId', 'routes/request-detail.tsx'),
     route('bookings', 'routes/bookings.tsx'),

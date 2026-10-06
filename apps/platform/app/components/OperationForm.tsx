@@ -90,6 +90,7 @@ const numberFields = new Set([
   'intervalMonths',
 ]);
 const boolFields = new Set([
+  'emailEnabled',
   'active',
   'assigned',
   'residentVisible',
