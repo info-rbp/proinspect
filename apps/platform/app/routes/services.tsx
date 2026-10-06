@@ -1,7 +1,96 @@
-import {Form,useActionData,useNavigation,type ActionFunctionArgs} from 'react-router';
-import {useWorkspace} from '../lib/workspace';
-import {submitAction} from '../lib/actions.server';
-import {PageHeading,Field,Feedback,EmptyState} from '../../../../packages/ui/components';
-import {money} from '../../../../packages/domain/index';
-export async function action(args:ActionFunctionArgs){const f=await args.request.formData();return submitAction(args,`services/${encodeURIComponent(String(f.get('serviceId')))}`,{priceExGstCents:Math.round(Number(f.get('price'))*100),bookingMode:f.get('bookingMode'),active:f.get('active')==='yes'},'Service configuration saved.');}
-export default function Services(){const d=useWorkspace();const result=useActionData<any>();const busy=useNavigation().state!=='idle';if(d.workspace.kind!=='staff'||!['administrator','operations_manager'].includes(d.user.staffRole??''))return <EmptyState title="Operations access required" description="The service catalogue is maintained by ProInspect operations managers."/>;return <><PageHeading eyebrow="Single service catalogue" title="Services & booking configuration" description="Publish an approved price before enabling instant booking. A service with no confirmed price is not treated as free."/><div className="stack"><Feedback value={result}/>{d.services.map(s=><section className="panel" key={s.id}><div className="panel-header"><div><h2>{s.name}</h2><p className="small" style={{marginTop:8}}>{s.duration_minutes} minutes · {s.notice_hours} hours minimum notice</p></div><strong className="small">{money(s.price_ex_gst_cents)}</strong></div><details><summary>Edit booking settings</summary><Form method="post" className="form"><input type="hidden" name="serviceId" value={s.id}/><div className="grid-2"><Field label="Approved price excluding GST (AUD)" name={`price-${s.id}`}><input id={`price-${s.id}`} name="price" type="number" min="0" max="1000000" step="0.01" required defaultValue={s.price_ex_gst_cents===null?'':s.price_ex_gst_cents/100}/></Field><Field label="Booking mode" name={`mode-${s.id}`}><select id={`mode-${s.id}`} name="bookingMode" defaultValue={s.booking_mode}><option value="request">Request / scope confirmation</option><option value="instant">Instant booking</option></select></Field></div><label className="checkbox"><input name="active" type="checkbox" value="yes" defaultChecked={Boolean(s.active)}/><span>Service active</span></label><button className="primary" disabled={busy}>Save service</button></Form></details></section>)}</div></>;}
+import { Form, useActionData, useNavigation, type ActionFunctionArgs } from 'react-router';
+import { useWorkspace } from '../lib/workspace';
+import { submitAction } from '../lib/actions.server';
+import { PageHeading, Field, Feedback, EmptyState } from '../../../../packages/ui/components';
+import { money } from '../../../../packages/domain/index';
+export async function action(args: ActionFunctionArgs) {
+  const f = await args.request.formData();
+  return submitAction(
+    args,
+    `services/${encodeURIComponent(String(f.get('serviceId')))}`,
+    {
+      priceExGstCents: Math.round(Number(f.get('price')) * 100),
+      bookingMode: f.get('bookingMode'),
+      active: f.get('active') === 'yes',
+    },
+    'Service configuration saved.',
+  );
+}
+export default function Services() {
+  const d = useWorkspace();
+  const result = useActionData<any>();
+  const busy = useNavigation().state !== 'idle';
+  if (
+    d.workspace.kind !== 'staff' ||
+    !['administrator', 'operations_manager'].includes(d.user.staffRole ?? '')
+  )
+    return (
+      <EmptyState
+        title="Operations access required"
+        description="The service catalogue is maintained by ProInspect operations managers."
+      />
+    );
+  return (
+    <>
+      <PageHeading
+        eyebrow="Single service catalogue"
+        title="Services & booking configuration"
+        description="Publish an approved price before enabling instant booking. A service with no confirmed price is not treated as free."
+      />
+      <div className="stack">
+        <Feedback value={result} />
+        {d.services.map((s) => (
+          <section className="panel" key={s.id}>
+            <div className="panel-header">
+              <div>
+                <h2>{s.name}</h2>
+                <p className="small" style={{ marginTop: 8 }}>
+                  {s.duration_minutes} minutes · {s.notice_hours} hours minimum notice
+                </p>
+              </div>
+              <strong className="small">{money(s.price_ex_gst_cents)}</strong>
+            </div>
+            <details>
+              <summary>Edit booking settings</summary>
+              <Form method="post" className="form">
+                <input type="hidden" name="serviceId" value={s.id} />
+                <div className="grid-2">
+                  <Field label="Approved price excluding GST (AUD)" name={`price-${s.id}`}>
+                    <input
+                      id={`price-${s.id}`}
+                      name="price"
+                      type="number"
+                      min="0"
+                      max="1000000"
+                      step="0.01"
+                      required
+                      defaultValue={s.price_ex_gst_cents === null ? '' : s.price_ex_gst_cents / 100}
+                    />
+                  </Field>
+                  <Field label="Booking mode" name={`mode-${s.id}`}>
+                    <select id={`mode-${s.id}`} name="bookingMode" defaultValue={s.booking_mode}>
+                      <option value="request">Request / scope confirmation</option>
+                      <option value="instant">Instant booking</option>
+                    </select>
+                  </Field>
+                </div>
+                <label className="checkbox">
+                  <input
+                    name="active"
+                    type="checkbox"
+                    value="yes"
+                    defaultChecked={Boolean(s.active)}
+                  />
+                  <span>Service active</span>
+                </label>
+                <button className="primary" disabled={busy}>
+                  Save service
+                </button>
+              </Form>
+            </details>
+          </section>
+        ))}
+      </div>
+    </>
+  );
+}

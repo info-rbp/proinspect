@@ -1,8 +1,43 @@
-const encoder=new TextEncoder();
-export async function digest(value:string|ArrayBuffer){const bytes=typeof value==='string'?encoder.encode(value):value;return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');}
-export function randomToken(){const bytes=crypto.getRandomValues(new Uint8Array(32));return Array.from(bytes).map(x=>x.toString(16).padStart(2,'0')).join('');}
-function base64(bytes:Uint8Array){return btoa(String.fromCharCode(...bytes));}
-function unbase64(text:string){return Uint8Array.from(atob(text),c=>c.charCodeAt(0));}
-async function key(secret:string){const bytes=unbase64(secret);if(bytes.length!==32)throw new Error('Encryption key must contain 32 bytes');return crypto.subtle.importKey('raw',bytes,'AES-GCM',false,['encrypt','decrypt']);}
-export async function seal(secret:string,context:string,value:unknown){const iv=crypto.getRandomValues(new Uint8Array(12));const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:encoder.encode(context)},await key(secret),encoder.encode(JSON.stringify(value)));return JSON.stringify({v:1,iv:base64(iv),ciphertext:base64(new Uint8Array(ciphertext))});}
-export async function unseal<T>(secret:string,context:string,envelope:string):Promise<T>{const value=JSON.parse(envelope);if(value.v!==1)throw new Error('Unsupported encrypted envelope');const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unbase64(value.iv),additionalData:encoder.encode(context)},await key(secret),unbase64(value.ciphertext));return JSON.parse(new TextDecoder().decode(plain));}
+const encoder = new TextEncoder();
+export async function digest(value: string | ArrayBuffer) {
+  const bytes = typeof value === 'string' ? encoder.encode(value) : value;
+  return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)))
+    .map((x) => x.toString(16).padStart(2, '0'))
+    .join('');
+}
+export function randomToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes)
+    .map((x) => x.toString(16).padStart(2, '0'))
+    .join('');
+}
+function base64(bytes: Uint8Array) {
+  return btoa(String.fromCharCode(...bytes));
+}
+function unbase64(text: string) {
+  return Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
+}
+async function key(secret: string) {
+  const bytes = unbase64(secret);
+  if (bytes.length !== 32) throw new Error('Encryption key must contain 32 bytes');
+  return crypto.subtle.importKey('raw', bytes, 'AES-GCM', false, ['encrypt', 'decrypt']);
+}
+export async function seal(secret: string, context: string, value: unknown) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv, additionalData: encoder.encode(context) },
+    await key(secret),
+    encoder.encode(JSON.stringify(value)),
+  );
+  return JSON.stringify({ v: 1, iv: base64(iv), ciphertext: base64(new Uint8Array(ciphertext)) });
+}
+export async function unseal<T>(secret: string, context: string, envelope: string): Promise<T> {
+  const value = JSON.parse(envelope);
+  if (value.v !== 1) throw new Error('Unsupported encrypted envelope');
+  const plain = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: unbase64(value.iv), additionalData: encoder.encode(context) },
+    await key(secret),
+    unbase64(value.ciphertext),
+  );
+  return JSON.parse(new TextDecoder().decode(plain));
+}

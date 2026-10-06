@@ -1,10 +1,203 @@
-import {useState} from 'react';
-import {Form,useActionData,useNavigation,data,type ActionFunctionArgs} from 'react-router';
-import {useWorkspace} from '../lib/workspace';
-import {submitAction} from '../lib/actions.server';
-import {callApi} from '../lib/api.server';
-import {PageHeading,Badge,EmptyState,Feedback,Field} from '../../../../packages/ui/components';
-import {WORK_ORDER_TRANSITIONS,statusLabel} from '../../../../packages/domain/index';
-export async function action(args:ActionFunctionArgs){const f=await args.request.formData();const id=encodeURIComponent(String(f.get('workOrderId')));if(f.get('intent')==='report'){const response=await callApi(args.request,args.context,`/api/w/${args.params.kind}/${args.params.scopeId}/work-orders/${id}/report`,{method:'POST',form:f});const result=await response.json() as any;return data(response.ok?{ok:true,message:'Report issued to the authorised client account.'}:{error:result.message,fields:result.fields},{status:response.status});}return submitAction(args,`work-orders/${id}`,{status:f.get('status')||undefined,assignedStaffId:f.get('assignedStaffId')||undefined,completionNotes:f.get('completionNotes')||undefined,version:Number(f.get('version'))},'Work order updated.');}
-function AccessInstructions({path}:{path:string}){const [value,setValue]=useState<any>(null);const [busy,setBusy]=useState(false);async function reveal(){setBusy(true);try{const r=await fetch(path);const result=await r.json() as any;setValue(r.ok?result:{error:result.message});}catch{setValue({error:'Access instructions could not be loaded.'});}finally{setBusy(false);}}return <div className="stack-sm">{value?<div className="notice"><strong>{value.error||`Access: ${value.method}`}</strong><p style={{whiteSpace:'pre-wrap'}}>{value.instructions}</p><button className="button secondary small" type="button" onClick={()=>setValue(null)}>Hide instructions</button></div>:<button type="button" className="button secondary small" onClick={reveal} disabled={busy}>{busy?'Loading…':'Reveal access instructions'}</button>}<p className="small muted">Viewing confidential access is recorded in the audit history.</p></div>;}
-export default function WorkOrders(){const d=useWorkspace();const result=useActionData<any>();const busy=useNavigation().state!=='idle';const writable=d.workspace.kind==='staff'&&d.user.staffRole!=='read_only';return <><PageHeading eyebrow="ProInspect operations" title="Work orders" description="Assign the work, manage its progress and issue the report to the correct property account."/><div className="stack"><Feedback value={result}/>{d.workOrders.length?d.workOrders.map(o=><article key={o.id} id={o.id} className="panel"><div className="panel-header"><div><p className="eyebrow">{o.reference}</p><h2>{o.title}</h2><p className="small" style={{marginTop:8}}>{o.address}, {o.suburb}</p></div><Badge status={o.status}/></div>{writable?<details><summary>Manage this work order</summary><div className="grid-2"><Form method="post" className="form"><input type="hidden" name="workOrderId" value={o.id}/><input type="hidden" name="version" value={o.version}/><Field label="Status" name={`status-${o.id}`}><select id={`status-${o.id}`} name="status" defaultValue={o.status}><option value={o.status}>{statusLabel(o.status)}</option>{(WORK_ORDER_TRANSITIONS[o.status]??[]).map(s=><option value={s} key={s}>{statusLabel(s)}</option>)}</select></Field>{['administrator','operations_manager'].includes(d.user.staffRole??'')&&<Field label="Assign staff" name={`staff-${o.id}`}><select id={`staff-${o.id}`} name="assignedStaffId" defaultValue={o.assigned_staff_id||''}><option value="">Keep current assignment</option>{d.staff.map(s=><option key={s.id} value={s.id}>{s.display_name||s.email}</option>)}</select></Field>}<Field label="Completion notes" name={`notes-${o.id}`}><textarea id={`notes-${o.id}`} name="completionNotes" maxLength={3000}/></Field><button className="primary" disabled={busy}>Save work order</button></Form><div className="stack">{o.booking_id&&<AccessInstructions path={`/api/w/staff/operations/work-orders/${o.id}/access`}/>}<Form method="post" encType="multipart/form-data" className="form"><input type="hidden" name="intent" value="report"/><input type="hidden" name="workOrderId" value={o.id}/><h3>Issue the service report</h3><p className="small">The PDF will be issued to the commissioning client. Tenant sharing is a separate authorised action.</p><Field label="Report title" name={`report-title-${o.id}`}><input id={`report-title-${o.id}`} name="title" required defaultValue={o.title}/></Field><Field label="Final PDF report" name={`file-${o.id}`} help="PDF only. Maximum 10 MB."><input id={`file-${o.id}`} name="file" type="file" accept="application/pdf" required/></Field><button className="button secondary" disabled={busy}>Upload and issue report</button></Form></div></div></details>:<p className="small">Your work order is {statusLabel(o.status).toLowerCase()}.</p>}</article>):<section className="panel"><EmptyState title="No work orders yet" description="A confirmed booking creates a work order automatically. Staff can also convert an incoming request."/></section>}</div></>;}
+import { useState } from 'react';
+import { Form, useActionData, useNavigation, data, type ActionFunctionArgs } from 'react-router';
+import { useWorkspace } from '../lib/workspace';
+import { submitAction } from '../lib/actions.server';
+import { callApi } from '../lib/api.server';
+import {
+  PageHeading,
+  Badge,
+  EmptyState,
+  Feedback,
+  Field,
+} from '../../../../packages/ui/components';
+import { WORK_ORDER_TRANSITIONS, statusLabel } from '../../../../packages/domain/index';
+export async function action(args: ActionFunctionArgs) {
+  const f = await args.request.formData();
+  const id = encodeURIComponent(String(f.get('workOrderId')));
+  if (f.get('intent') === 'report') {
+    const response = await callApi(
+      args.request,
+      args.context,
+      `/api/w/${args.params.kind}/${args.params.scopeId}/work-orders/${id}/report`,
+      { method: 'POST', form: f },
+    );
+    const result = (await response.json()) as any;
+    return data(
+      response.ok
+        ? { ok: true, message: 'Report issued to the authorised client account.' }
+        : { error: result.message, fields: result.fields },
+      { status: response.status },
+    );
+  }
+  return submitAction(
+    args,
+    `work-orders/${id}`,
+    {
+      status: f.get('status') || undefined,
+      assignedStaffId: f.get('assignedStaffId') || undefined,
+      completionNotes: f.get('completionNotes') || undefined,
+      version: Number(f.get('version')),
+    },
+    'Work order updated.',
+  );
+}
+function AccessInstructions({ path }: { path: string }) {
+  const [value, setValue] = useState<any>(null);
+  const [busy, setBusy] = useState(false);
+  async function reveal() {
+    setBusy(true);
+    try {
+      const r = await fetch(path);
+      const result = (await r.json()) as any;
+      setValue(r.ok ? result : { error: result.message });
+    } catch {
+      setValue({ error: 'Access instructions could not be loaded.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="stack-sm">
+      {value ? (
+        <div className="notice">
+          <strong>{value.error || `Access: ${value.method}`}</strong>
+          <p style={{ whiteSpace: 'pre-wrap' }}>{value.instructions}</p>
+          <button className="button secondary small" type="button" onClick={() => setValue(null)}>
+            Hide instructions
+          </button>
+        </div>
+      ) : (
+        <button type="button" className="button secondary small" onClick={reveal} disabled={busy}>
+          {busy ? 'Loading…' : 'Reveal access instructions'}
+        </button>
+      )}
+      <p className="small muted">Viewing confidential access is recorded in the audit history.</p>
+    </div>
+  );
+}
+export default function WorkOrders() {
+  const d = useWorkspace();
+  const result = useActionData<any>();
+  const busy = useNavigation().state !== 'idle';
+  const writable = d.workspace.kind === 'staff' && d.user.staffRole !== 'read_only';
+  return (
+    <>
+      <PageHeading
+        eyebrow="ProInspect operations"
+        title="Work orders"
+        description="Assign the work, manage its progress and issue the report to the correct property account."
+      />
+      <div className="stack">
+        <Feedback value={result} />
+        {d.workOrders.length ? (
+          d.workOrders.map((o) => (
+            <article key={o.id} id={o.id} className="panel">
+              <div className="panel-header">
+                <div>
+                  <p className="eyebrow">{o.reference}</p>
+                  <h2>{o.title}</h2>
+                  <p className="small" style={{ marginTop: 8 }}>
+                    {o.address}, {o.suburb}
+                  </p>
+                </div>
+                <Badge status={o.status} />
+              </div>
+              {writable ? (
+                <details>
+                  <summary>Manage this work order</summary>
+                  <div className="grid-2">
+                    <Form method="post" className="form">
+                      <input type="hidden" name="workOrderId" value={o.id} />
+                      <input type="hidden" name="version" value={o.version} />
+                      <Field label="Status" name={`status-${o.id}`}>
+                        <select id={`status-${o.id}`} name="status" defaultValue={o.status}>
+                          <option value={o.status}>{statusLabel(o.status)}</option>
+                          {(WORK_ORDER_TRANSITIONS[o.status] ?? []).map((s) => (
+                            <option value={s} key={s}>
+                              {statusLabel(s)}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                      {['administrator', 'operations_manager'].includes(d.user.staffRole ?? '') && (
+                        <Field label="Assign staff" name={`staff-${o.id}`}>
+                          <select
+                            id={`staff-${o.id}`}
+                            name="assignedStaffId"
+                            defaultValue={o.assigned_staff_id || ''}
+                          >
+                            <option value="">Keep current assignment</option>
+                            {d.staff.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.display_name || s.email}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                      )}
+                      <Field label="Completion notes" name={`notes-${o.id}`}>
+                        <textarea id={`notes-${o.id}`} name="completionNotes" maxLength={3000} />
+                      </Field>
+                      <button className="primary" disabled={busy}>
+                        Save work order
+                      </button>
+                    </Form>
+                    <div className="stack">
+                      {o.booking_id && (
+                        <AccessInstructions
+                          path={`/api/w/staff/operations/work-orders/${o.id}/access`}
+                        />
+                      )}
+                      <Form method="post" encType="multipart/form-data" className="form">
+                        <input type="hidden" name="intent" value="report" />
+                        <input type="hidden" name="workOrderId" value={o.id} />
+                        <h3>Issue the service report</h3>
+                        <p className="small">
+                          The PDF will be issued to the commissioning client. Tenant sharing is a
+                          separate authorised action.
+                        </p>
+                        <Field label="Report title" name={`report-title-${o.id}`}>
+                          <input
+                            id={`report-title-${o.id}`}
+                            name="title"
+                            required
+                            defaultValue={o.title}
+                          />
+                        </Field>
+                        <Field
+                          label="Final PDF report"
+                          name={`file-${o.id}`}
+                          help="PDF only. Maximum 10 MB."
+                        >
+                          <input
+                            id={`file-${o.id}`}
+                            name="file"
+                            type="file"
+                            accept="application/pdf"
+                            required
+                          />
+                        </Field>
+                        <button className="button secondary" disabled={busy}>
+                          Upload and issue report
+                        </button>
+                      </Form>
+                    </div>
+                  </div>
+                </details>
+              ) : (
+                <p className="small">Your work order is {statusLabel(o.status).toLowerCase()}.</p>
+              )}
+            </article>
+          ))
+        ) : (
+          <section className="panel">
+            <EmptyState
+              title="No work orders yet"
+              description="A confirmed booking creates a work order automatically. Staff can also convert an incoming request."
+            />
+          </section>
+        )}
+      </div>
+    </>
+  );
+}
