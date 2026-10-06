@@ -1,0 +1,3 @@
+import {data,redirect,type ActionFunctionArgs} from 'react-router';
+import {callApi} from './api.server';
+export async function submitAction(args:ActionFunctionArgs,tail:string,body:unknown,success='Changes saved.',redirectTo?:string){const response=await callApi(args.request,args.context,`/api/w/${args.params.kind}/${args.params.scopeId}/${tail}`,{method:'POST',body});const result=await response.json() as Record<string,any>;if(!response.ok)return data({error:result.message,fields:result.fields},{status:response.status});if(redirectTo)throw redirect(redirectTo);return {ok:true,message:success,result};}

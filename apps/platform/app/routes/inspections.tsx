@@ -1,0 +1,4 @@
+import {useWorkspace} from '../lib/workspace';
+import {PageHeading,Badge,EmptyState} from '../../../../packages/ui/components';
+import {displayDate} from '../../../../packages/domain/index';
+export default function Inspections(){const d=useWorkspace();return <><PageHeading eyebrow="Property attendance" title="Inspections" description="Only visits specifically shared with your tenancy appear here. A booking is not itself an entry notice."/><section className="panel">{d.inspections.length?d.inspections.map(i=><div className="record-row" key={i.id}><div><h3>{i.service_name}</h3><p>{displayDate(i.starts_at)}</p></div><Badge status={i.status}/></div>):<EmptyState title="No inspections are listed" description="Your manager or ProInspect will publish the relevant details when an attendance is arranged."/>}</section></>;}
