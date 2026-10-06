@@ -1,0 +1,56 @@
+name: Maintain source dependencies
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: Existing branch to lock and format
+        required: true
+        type: string
+      expected_sha:
+        description: Exact approved source commit
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: source-maintenance
+  cancel-in-progress: false
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_branch }}
+          fetch-depth: 1
+      - name: Require exact requested source and safe branch name
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          SOURCE_BRANCH: ${{ inputs.source_branch }}
+        run: |
+          git check-ref-format --branch "$SOURCE_BRANCH"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test "$SOURCE_BRANCH" != main
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm format
+      - name: Commit only tracked formatting changes and the resolved lockfile
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          SOURCE_BRANCH: ${{ inputs.source_branch }}
+        run: |
+          git add -u
+          git add pnpm-lock.yaml
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'build: lock resolved dependencies and format source'
+          remote_sha=$(git ls-remote origin "refs/heads/$SOURCE_BRANCH" | cut -f1)
+          test "$remote_sha" = "$EXPECTED_SHA"
+          git push origin "HEAD:refs/heads/$SOURCE_BRANCH"
+      - name: Record resulting source
+        run: git rev-parse HEAD
