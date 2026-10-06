@@ -1,0 +1,45 @@
+name: Bootstrap resolved source
+on:
+  push:
+    branches: [feat/property-operations-core]
+permissions:
+  contents: write
+concurrency:
+  group: bootstrap-resolved-source
+  cancel-in-progress: false
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Check whether bootstrap is needed
+        id: needed
+        run: |
+          if [ -f pnpm-lock.yaml ]; then echo 'run=false' >> "$GITHUB_OUTPUT"; else echo 'run=true' >> "$GITHUB_OUTPUT"; fi
+      - uses: pnpm/action-setup@v4
+        if: steps.needed.outputs.run == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.needed.outputs.run == 'true'
+        with:
+          node-version: '22'
+      - if: steps.needed.outputs.run == 'true'
+        run: pnpm install --no-frozen-lockfile
+      - if: steps.needed.outputs.run == 'true'
+        run: pnpm format
+      - name: Save resolved dependencies and formatting on the exact source
+        if: steps.needed.outputs.run == 'true'
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          SOURCE_BRANCH: ${{ github.ref_name }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git ls-remote origin "refs/heads/$SOURCE_BRANCH" | cut -f1)" = "$SOURCE_SHA"
+          git add -u
+          git add pnpm-lock.yaml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'build: lock resolved dependencies and format the initial source'
+          git push origin "HEAD:refs/heads/$SOURCE_BRANCH"
