@@ -1,17 +1,19 @@
 import type {Env} from '../../../packages/database/types';
 import {assert,statement,now,uid} from '../../../packages/database/types';
-import type {Principal,Workspace,Service,Property} from '../../../packages/domain/index';
+import type {Principal,Workspace,Service} from '../../../packages/domain/index';
 import {canTransition} from '../../../packages/domain/index';
 import {onboardingSchema,propertySchema,addressKey,requestSchema,workOrderUpdateSchema} from '../../../packages/validation/index';
 import {clientMembership,propertyAccess,currentTenancy,workOrderAccess,operationsWrite} from '../../../packages/authorization/server';
 import {mailEvent} from '../../../packages/notifications/server';
-import {digest,seal} from '../../../packages/auth/crypto';
+import {digest} from '../../../packages/auth/crypto';
 
 export function audit(env:Env,user:Principal,action:string,type:string,id:string,propertyId:string|null=null,metadata:Record<string,unknown>={}){return statement(env.DB,'INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,property_id,metadata_json,created_at) VALUES(?,?,?,?,?,?,?,?)',uid('aud'),user.id,action,type,id,propertyId,JSON.stringify(metadata),now());}
+export function changedExactlyOne(env:Env){return statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())');}
+export function clearMutationGuard(env:Env){return statement(env.DB,'DELETE FROM mutation_guards');}
 export async function catalogue(env:Env):Promise<Service[]>{const rows=await statement(env.DB,'SELECT * FROM services WHERE active=1 ORDER BY name').all<Record<string,any>>();return rows.results.map(row=>({...row,sectors:JSON.parse(row.sectors_json)} as Service));}
+
 export async function onboard(env:Env,user:Principal,input:unknown){
  const data=onboardingSchema.parse(input);const existing=await statement(env.DB,`SELECT c.id FROM clients c JOIN client_memberships m ON m.client_id=c.id WHERE m.user_id=? AND c.client_type='landlord' AND m.active=1`,user.id).first<{id:string}>();if(existing)return {clientId:existing.id};
- // Stable IDs make concurrent onboarding retries converge without creating two accounts.
  const clientId=`cli_${(await digest(`landlord:${user.id}`)).slice(0,32)}`;const membershipId=`mem_${clientId.slice(4)}`;
  await env.DB.batch([statement(env.DB,`INSERT INTO clients(id,name,client_type,billing_email,created_at) VALUES(?,?,'landlord',?,?) ON CONFLICT(id) DO NOTHING`,clientId,data.clientName,user.email,now()),statement(env.DB,`INSERT INTO client_memberships(id,client_id,user_id,role,created_at) VALUES(?,?,?,'owner',?) ON CONFLICT(client_id,user_id) DO NOTHING`,membershipId,clientId,user.id,now()),statement(env.DB,'UPDATE users SET display_name=? WHERE id=?',data.displayName,user.id),audit(env,user,'client.onboarded','client',clientId)]);
  return {clientId};
@@ -38,24 +40,23 @@ export async function updateWorkOrder(env:Env,user:Principal,w:Workspace,id:stri
  assert(w.kind==='staff',403,'STAFF_REQUIRED','Work execution is managed by ProInspect.');const data=workOrderUpdateSchema.parse(input);const order=await workOrderAccess(env,user,w,id,true);assert(order.version===data.version,409,'STALE_VERSION','This work order has changed. Reload before saving.');
  if(data.assignedStaffId){operationsWrite(user);const staff=await statement(env.DB,`SELECT user_id FROM staff_profiles WHERE user_id=? AND active=1 AND role!='read_only'`,data.assignedStaffId).first();assert(staff,422,'ASSIGNEE_INVALID','Select an active staff member.');}
  const next=data.status??order.status;assert(next===order.status||canTransition(order.status,next),422,'INVALID_TRANSITION','This status change is not available.');
- // Approval completion is not a free-form staff status change.
  if(next==='approved')assert(await statement(env.DB,"SELECT id FROM approvals WHERE work_order_id=? AND status='approved'",id).first(),409,'APPROVAL_REQUIRED','A recorded approval is required.');
  if(next==='completed'&&order.booking_id)assert(await statement(env.DB,"SELECT id FROM documents WHERE work_order_id=? AND status='issued'",id).first(),409,'REPORT_REQUIRED','Issue the service report before completing this booking.');
- const time=now();const updates=[statement(env.DB,`UPDATE work_orders SET status=?,assigned_staff_id=COALESCE(?,assigned_staff_id),completion_notes=COALESCE(?,completion_notes),version=version+1,updated_at=? WHERE id=? AND version=?`,next,data.assignedStaffId??null,data.completionNotes??null,time,id,data.version),audit(env,user,'work_order.updated','work_order',id,order.property_id,{from:order.status,to:next})];
+ const time=now();const updates=[statement(env.DB,`UPDATE work_orders SET status=?,assigned_staff_id=COALESCE(?,assigned_staff_id),completion_notes=COALESCE(?,completion_notes),version=version+1,updated_at=? WHERE id=? AND version=?`,next,data.assignedStaffId??null,data.completionNotes??null,time,id,data.version),changedExactlyOne(env),audit(env,user,'work_order.updated','work_order',id,order.property_id,{from:order.status,to:next})];
  if(order.booking_id&&['completed','cancelled'].includes(next))updates.push(statement(env.DB,'UPDATE bookings SET status=? WHERE id=?',next,order.booking_id));
  if(order.request_id&&next==='completed')updates.push(statement(env.DB,"UPDATE requests SET status='completed',updated_at=? WHERE id=?",time,order.request_id));
- // Optimistic concurrency is also enforced inside D1 by the version-guard trigger added in migration 0002.
- await env.DB.batch(updates);return {id,status:next};
+ updates.push(clearMutationGuard(env));await env.DB.batch(updates);return {id,status:next};
 }
 export async function issueReport(env:Env,user:Principal,w:Workspace,workOrderId:string,form:FormData){
- assert(w.kind==='staff',403,'STAFF_REQUIRED','Only authorised staff may issue reports.');const order=await workOrderAccess(env,user,w,workOrderId,true);const file=form.get('file');assert(file instanceof File,422,'FILE_REQUIRED','Choose a PDF report.');assert(file.size>5&&file.size<=10*1024*1024,422,'FILE_SIZE','The PDF must be smaller than 10 MB.');assert(file.type==='application/pdf',422,'PDF_REQUIRED','Only PDF reports are accepted.');const bytes=await file.arrayBuffer();assert(new TextDecoder().decode(bytes.slice(0,5))==='%PDF-',422,'INVALID_PDF','The file is not a valid PDF document.');
- assert(order.client_id&&order.property_id,409,'DOCUMENT_CONTEXT_REQUIRED','This work order needs an explicit commissioning client and property.');
- const id=uid('doc'),objectKey=`reports/${order.property_id}/${id}.pdf`,time=now();const hash=await digest(bytes);const title=String(form.get('title')??order.title).trim().slice(0,180)||order.title;
+ assert(w.kind==='staff',403,'STAFF_REQUIRED','Only authorised staff may issue reports.');const order=await workOrderAccess(env,user,w,workOrderId,true);const file=form.get('file');assert(file instanceof File,422,'FILE_REQUIRED','Choose a PDF report.');assert(file.size>5&&file.size<=10*1024*1024,422,'FILE_SIZE','The PDF must be smaller than 10 MB.');assert(file.type==='application/pdf',422,'PDF_REQUIRED','Only PDF reports are accepted.');const bytes=await file.arrayBuffer();assert(new TextDecoder().decode(bytes.slice(0,5))==='%PDF-',422,'INVALID_PDF','The file is not a PDF document.');
+ assert(order.client_id&&order.property_id,409,'DOCUMENT_CONTEXT_REQUIRED','This work order needs an explicit commissioning client and property.');const hash=await digest(bytes);const previous=await statement(env.DB,"SELECT id,title FROM documents WHERE work_order_id=? AND sha256=? AND category='service_report'",workOrderId,hash).first<{id:string;title:string}>();if(previous)return {...previous,replayed:true};
+ const id=uid('doc'),objectKey=`reports/${order.property_id}/${id}.pdf`,time=now();const title=String(form.get('title')??order.title).trim().slice(0,180)||order.title;
  await env.DOCUMENTS.put(objectKey,bytes,{httpMetadata:{contentType:'application/pdf'},customMetadata:{documentId:id,sha256:hash}});
  try{
   const statements=[statement(env.DB,`INSERT INTO documents(id,property_id,booking_id,work_order_id,request_id,title,category,object_key,content_type,size,sha256,status,created_by,created_at,issued_at) VALUES(?,?,?,?,?,?,'service_report',?,'application/pdf',?,?,'issued',?,?,?)`,id,order.property_id,order.booking_id,workOrderId,order.request_id,title,objectKey,file.size,hash,user.id,time,time),statement(env.DB,`INSERT INTO document_grants(document_id,recipient_kind,recipient_id,created_by,created_at) VALUES(?,'client',?,?,?)`,id,order.client_id,user.id,time),audit(env,user,'report.issued','document',id,order.property_id,{workOrderId})];
   const recipients=await statement(env.DB,`SELECT u.id,u.email FROM users u JOIN client_memberships m ON m.user_id=u.id WHERE m.client_id=? AND m.active=1 AND u.active=1`,order.client_id).all<{id:string;email:string}>();
-  for(const recipient of recipients.results.slice(0,30)){const href=`${env.APP_ORIGIN}/w/landlord/${order.client_id}/documents`;statements.push(statement(env.DB,'INSERT INTO notifications(id,user_id,title,message,href,created_at) VALUES(?,?,?,?,?,?)',uid('ntf'),recipient.id,'Your report is ready',title,href,time),await mailEvent(env,'report.issued',{to:recipient.email,subject:'Your ProInspect report is ready',heading:'A new report is available',body:'Your report is stored securely in your property account. Sign in to view it.',href,facts:{Report:title}}));}
+  assert(recipients.results.length<=30,409,'RECIPIENT_REVIEW_REQUIRED','This account requires batch notification review before report issuance.');
+  for(const recipient of recipients.results){const href=`${env.APP_ORIGIN}/w/landlord/${order.client_id}/documents`;statements.push(statement(env.DB,'INSERT INTO notifications(id,user_id,title,message,href,created_at) VALUES(?,?,?,?,?,?)',uid('ntf'),recipient.id,'Your report is ready',title,href,time),await mailEvent(env,'report.issued',{to:recipient.email,subject:'Your ProInspect report is ready',heading:'A new report is available',body:'Your report is stored securely in your property account. Sign in to view it.',href,facts:{Report:title}}));}
   await env.DB.batch(statements);
  }catch(error){await env.DOCUMENTS.delete(objectKey);throw error;}
  return {id,title};

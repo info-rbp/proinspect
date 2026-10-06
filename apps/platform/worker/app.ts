@@ -17,4 +17,4 @@ export default {
  },
  async scheduled(_event:ScheduledController,env:Env,ctx:ExecutionContext){ctx.waitUntil(dispatchOutbox(env));},
  async queue(batch:MessageBatch<{eventId:string}>,env:Env){await consumeQueue(batch,env);},
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<Env,{eventId:string}>;

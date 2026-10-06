@@ -3,10 +3,12 @@ import pathlib, sqlite3, unittest
 class SchemaTests(unittest.TestCase):
     def setUp(self):
         self.db=sqlite3.connect(':memory:')
-        self.db.executescript(pathlib.Path('database/migrations/0001_core.sql').read_text())
+        for path in sorted(pathlib.Path('database/migrations').glob('*.sql')):
+            self.db.executescript(path.read_text())
         self.db.execute("INSERT INTO users(id,email,created_at) VALUES('u','a@example.test','2026-01-01')")
         self.db.execute("INSERT INTO clients(id,name,client_type,created_at) VALUES('c','Landlord','landlord','2026-01-01')")
         self.db.execute("INSERT INTO properties(id,address,suburb,postcode,address_key,sector,created_at) VALUES('p','1 Test St','Perth','6000','1|perth|6000','residential','2026-01-01')")
+        self.db.execute("INSERT INTO client_property_links(id,client_id,property_id,role,starts_at) VALUES('l','c','p','owner','2026-01-01')")
         self.db.execute("INSERT INTO services(id,name,family,sectors_json,summary,duration_minutes) VALUES('s','Routine','inspections','[\"residential\"]','Test',45)")
         self.db.execute("INSERT INTO schedule_resources VALUES('r','Inspection capacity',1)")
     def booking(self, ident, start, end):
@@ -24,6 +26,10 @@ class SchemaTests(unittest.TestCase):
         self.db.execute("INSERT INTO property_management_relationships VALUES('m','p','c','self_managed','2026-01-01',NULL)")
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute("INSERT INTO property_management_relationships VALUES('m2','p','c','agency_managed','2026-01-01',NULL)")
+    def test_self_management_requires_ownership(self):
+        self.db.execute("DELETE FROM client_property_links")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'SELF_MANAGEMENT_REQUIRES_OWNER'):
+            self.db.execute("INSERT INTO property_management_relationships VALUES('m','p','c','self_managed','2026-01-01',NULL)")
     def test_audit_append_only(self):
         self.db.execute("INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,created_at) VALUES('a','u','test','property','p','2026-01-01')")
         with self.assertRaisesRegex(sqlite3.IntegrityError,'AUDIT_IMMUTABLE'):
@@ -32,6 +38,10 @@ class SchemaTests(unittest.TestCase):
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute("INSERT INTO client_memberships VALUES('m','missing','u','owner',1,'2026-01-01')")
         self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(),[])
+    def test_mutation_guard_rejects_lost_update(self):
+        self.db.execute("UPDATE users SET display_name='x' WHERE id='does-not-exist'")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute('INSERT INTO mutation_guards VALUES(changes())')
     def test_entire_relationship_graph_exists(self):
         names={r[0] for r in self.db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         for name in ['scheme_memberships','strata_lots','tenancy_memberships','document_grants','restricted_form_cases','outbox_events','property_management_relationships']:
