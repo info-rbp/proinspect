@@ -1,28 +1,56 @@
 # ProInspect
 
-Clean Cloudflare-native rebuild. This repository is the new source of truth; legacy application and marketing repositories are reference material only.
+A clean Cloudflare-native rebuild: one identity, one relationship-aware property graph, one operational engine and purpose-built workspaces.
 
-## Architecture contract
+The first slice implements **marketing -> sign-in -> self-managing landlord -> property -> booking -> work order -> Staff -> private PDF report -> landlord**. It also implements invited-tenant maintenance requests. Professional, strata, building, council and commercial experiences remain tracked in the capability ledger, not enabled placeholders.
 
-- Two deployables: public marketing website and authenticated platform.
-- One verified identity, relationship-scoped workspaces, and one canonical domain model.
-- Landlord means a private residential owner who self-manages; ownership alone does not grant management access.
-- Property Manager, Strata Manager, Tenant, Building, Council, Commercial and Staff are workspaces, not separate databases.
-- Ownership, management, tenancy, residence and council authority are distinct, time-bounded relationships.
-- Every new customer booking requires authentication and an authorised property or scheme relationship.
-- Booking is the appointment transaction; Work Order is execution. Writes include immutable audit and durable outbox events.
-- D1 holds canonical data; private R2 holds documents; restricted evidence uses a separate bucket and explicit authorization.
-- Documents are private until issued to explicitly selected recipients. A property relationship never grants every document.
-- Tenant/resident requests do not require a commercial client membership.
-- No Firebase, Express or Google Calendar runtime. No production migration or DNS cutover during the initial rebuild.
+## Applications
 
-## Delivery sequence
+- apps/marketing: public service discovery, server-rendered content and booking handoff.
+- apps/platform: authenticated workspaces and business API.
+- packages: shared domain, authorization, encryption, catalogue and design system.
+- database/migrations: numbered relational D1 migrations.
 
-1. Deployable Workers skeleton and verification pipeline.
-2. Versioned domain schema, identity and authorization contracts.
-3. Complete service -> account -> property -> booking -> work order -> report workflow.
-4. Tenancy and request/approval workflows.
-5. Portfolio and strata workspaces built on the same services.
-6. Production acceptance after live integration and security checks.
+Target domains: proinspect.systems and app.proinspect.systems. This source does not automatically change either live domain.
 
-The initial repository bootstrap does not assert production readiness. Implementation and test evidence will be recorded in `docs/BUILD_STATUS.md`.
+## Start locally
+
+Use Node 22.22+ within the Node 22 line and the pinned package manager.
+
+```sh
+corepack enable
+pnpm install --frozen-lockfile
+pnpm local:init
+pnpm dev
+# Another terminal:
+pnpm dev:marketing
+```
+
+`pnpm local:init --test-fixtures` creates synthetic test data only. It cannot be applied remotely and is not approved pricing or real staff provisioning. Local secrets are generated into ignored .dev.vars files.
+
+## Verify
+
+```sh
+pnpm check
+pnpm test:integration
+pnpm exec playwright install --with-deps chromium
+pnpm local:init --test-fixtures
+pnpm test:browser
+```
+
+CI builds both Workers, tests local D1/R2/Durable Object workflows, checks upload dry-runs and exercises the browser journey. Reports and screenshots are retained in verification artifacts.
+
+## Deploy
+
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md). Staging automation only provisions new proinspect-v2-staging-* resources. Real Cloudflare credentials and application provider configuration are required. There is no hosted login bypass and no automatic production cutover.
+
+## Authoritative contracts
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Domain model](docs/DOMAIN_MODEL.md)
+- [Authorization](docs/AUTHORIZATION.md)
+- [Portal definitions](docs/PORTALS.md)
+- [Launch sequence](docs/LAUNCH_SCOPE.md)
+- [Implemented and outstanding capabilities](docs/BUILD_STATUS.md)
+
+The old repositories are references only. No Firebase/Firestore, Express, Google Calendar or GCP deployment runtime was brought into this rebuild. Historical import, Report Tool automation and optional Sheets projection are separate later slices.

@@ -1,2 +1,25 @@
-import { index, type RouteConfig } from '@react-router/dev/routes';
-export default [index('routes/home.tsx')] satisfies RouteConfig;
+import { type RouteConfig, index, route } from '@react-router/dev/routes';
+export default [
+  index('routes/home.tsx'),
+  route('signin', 'routes/signin.tsx'),
+  route('auth/complete', 'routes/auth-complete.tsx'),
+  route('signout', 'routes/signout.tsx'),
+  route('onboarding', 'routes/onboarding.tsx'),
+  route('workspaces', 'routes/workspaces.tsx'),
+  route('invitations/accept', 'routes/invitation.tsx'),
+  route('book/:serviceId?', 'routes/booking-intent.tsx'),
+  route('w/:kind/:scopeId', 'routes/workspace.tsx', [
+    index('routes/overview.tsx'),
+    route('properties', 'routes/properties.tsx'),
+    route('properties/:propertyId', 'routes/property.tsx'),
+    route('book/:serviceId?', 'routes/book.tsx'),
+    route('bookings', 'routes/bookings.tsx'),
+    route('requests', 'routes/requests.tsx'),
+    route('work-orders', 'routes/work-orders.tsx'),
+    route('documents', 'routes/documents.tsx'),
+    route('tenancies', 'routes/tenancies.tsx'),
+    route('inspections', 'routes/inspections.tsx'),
+    route('services', 'routes/services.tsx'),
+    route('notifications', 'routes/notifications.tsx'),
+  ]),
+] satisfies RouteConfig;

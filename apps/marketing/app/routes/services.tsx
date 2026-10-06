@@ -1,0 +1,68 @@
+import { Link, useSearchParams } from 'react-router';
+import { FAMILIES, SERVICE_SEEDS } from '../../../../packages/service-catalogue/index';
+import { seo } from '../lib/seo';
+export const meta = () =>
+  seo(
+    'Property services',
+    'Explore inspections, maintenance attendance, contractor access and property operations support.',
+    '/services',
+  );
+export default function Services() {
+  const [search] = useSearchParams();
+  const family = search.get('family');
+  const list = family ? SERVICE_SEEDS.filter((s) => s.family === family) : SERVICE_SEEDS;
+  return (
+    <>
+      <header className="service-hero">
+        <div className="site-container">
+          <p className="eyebrow">The service catalogue</p>
+          <h1>
+            {family && FAMILIES[family]
+              ? FAMILIES[family].name
+              : 'The right service for the property.'}
+          </h1>
+          <p>Explore what ProInspect does, what each service is for and how to get started.</p>
+          <nav className="pill-links" aria-label="Service categories">
+            <Link to="/services">All services</Link>
+            {Object.entries(FAMILIES).map(([key, f]) => (
+              <Link key={key} to={`/services?family=${key}`}>
+                {f.name}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </header>
+      <section className="section">
+        <div className="site-container">
+          <div className="grid-3">
+            {list.map((s) => (
+              <article className="service-card" key={s.id}>
+                <p className="eyebrow">{FAMILIES[s.family].name}</p>
+                <h2>{s.name}</h2>
+                <p>{s.summary}</p>
+                <Link to={`/services/${s.id}`}>Explore service →</Link>
+              </article>
+            ))}
+          </div>
+          {list.length === 0 && (
+            <div className="prose">
+              <h2>
+                {family === 'documents'
+                  ? 'Property documentation, with a defined review process.'
+                  : 'Ongoing support starts with the scope.'}
+              </h2>
+              <p>
+                {family === 'documents'
+                  ? 'Residential, commercial and strata documentation needs vary. Tell ProInspect what you need prepared, the property involved and the intended use. Requirements and suitability must be reviewed before work is confirmed.'
+                  : 'Inspection plans and operational support arrangements are scoped to the properties, workload and responsibilities involved. They are not an unlimited service subscription.'}
+              </p>
+              <Link className="button" to="/contact">
+                Discuss your requirements
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}

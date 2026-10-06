@@ -1,1 +1,15 @@
-{"$schema":"../../node_modules/wrangler/config-schema.json","name":"proinspect-marketing-local","main":"worker/app.ts","compatibility_date":"2026-10-06","compatibility_flags":["nodejs_compat"],"observability":{"enabled":true},"vars":{"APP_ENV":"local","APP_ORIGIN":"http://localhost:5173","MARKETING_ORIGIN":"http://localhost:5174","BUILD_SHA":"development"}}
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "proinspect-marketing-local",
+  "main": "worker/app.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "vars": {
+    "APP_ENV": "local",
+    "APP_ORIGIN": "http://localhost:5174",
+    "PLATFORM_ORIGIN": "http://localhost:5173",
+    "MARKETING_ORIGIN": "http://localhost:5174",
+    "BUILD_SHA": "development"
+  }
+}

@@ -1,1 +1,18 @@
-{"$schema":"../../node_modules/wrangler/config-schema.json","name":"proinspect-platform-local","main":"worker/app.ts","compatibility_date":"2026-10-06","compatibility_flags":["nodejs_compat"],"observability":{"enabled":true},"vars":{"APP_ENV":"local","APP_ORIGIN":"http://localhost:5173","MARKETING_ORIGIN":"http://localhost:5174","EMAIL_MODE":"local","BUILD_SHA":"development"}}
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "proinspect-platform-local",
+  "main": "worker/app.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": false } },
+  "vars": { "APP_ENV": "local", "APP_ORIGIN": "http://localhost:5173", "EMAIL_PROVIDER": "local" },
+  "d1_databases": [{ "binding": "DB", "database_name": "proinspect-local", "database_id": "local-proinspect", "migrations_dir": "../../database/migrations" }],
+  "r2_buckets": [{ "binding": "DOCUMENTS", "bucket_name": "proinspect-local-documents" }, { "binding": "RESTRICTED_DOCUMENTS", "bucket_name": "proinspect-local-restricted" }],
+  "durable_objects": { "bindings": [{ "name": "SCHEDULER", "class_name": "BookingScheduler" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["BookingScheduler"] }],
+  "queues": {
+    "producers": [{ "binding": "EVENTS", "queue": "proinspect-local-events" }],
+    "consumers": [{ "queue": "proinspect-local-events", "max_batch_size": 10, "max_retries": 5, "dead_letter_queue": "proinspect-local-events-dlq" }]
+  },
+  "triggers": { "crons": ["*/2 * * * *"] }
+}

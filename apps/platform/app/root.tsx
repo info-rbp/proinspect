@@ -1,6 +1,65 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse, useRouteError } from 'react-router';
-import type { ReactNode } from 'react';
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+  useRouteError,
+  isRouteErrorResponse,
+  type LoaderFunctionArgs,
+} from 'react-router';
+import { runtimeContext } from '../../../packages/database/context';
 import '../../../packages/ui/styles.css';
-export function Layout({children}:{children:ReactNode}) { return <html lang="en-AU"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="robots" content="noindex, nofollow"/><Meta/><Links/></head><body><a className="skip" href="#main">Skip to content</a>{children}<ScrollRestoration/><Scripts/></body></html>; }
-export default function App(){ return <Outlet/>; }
-export function ErrorBoundary(){const e=useRouteError();return <main id="main" className="container"><h1>{isRouteErrorResponse(e)?e.status:'Unable to load this page'}</h1><p>{isRouteErrorResponse(e)&&e.status===404?'This page does not exist.':'Your access may have changed, or this action could not be completed.'}</p><a href="/">Return to your workspace</a></main>;}
+export function loader({ context }: LoaderFunctionArgs) {
+  return { nonce: context.get(runtimeContext).nonce };
+}
+export function Layout({ children }: { children: React.ReactNode }) {
+  const data = useLoaderData<typeof loader>();
+  return (
+    <html lang="en-AU">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        <a className="skip-link" href="#main">
+          Skip to content
+        </a>
+        {children}
+        <ScrollRestoration nonce={data?.nonce} />
+        <Scripts nonce={data?.nonce} />
+      </body>
+    </html>
+  );
+}
+export default function App() {
+  return <Outlet />;
+}
+export function ErrorBoundary() {
+  const error = useRouteError();
+  return (
+    <main id="main" className="auth-page">
+      <a className="brand" href="/">
+        ProInspect<span>PROPERTY OPERATIONS</span>
+      </a>
+      <section className="panel">
+        <p className="eyebrow">Unable to open this page</p>
+        <h1>
+          {isRouteErrorResponse(error)
+            ? `${error.status} · ${error.status === 403 ? 'Access not available' : 'Page unavailable'}`
+            : 'Something went wrong'}
+        </h1>
+        <p>Your records have not been changed. Return to your workspaces or sign in again.</p>
+        <a className="button" href="/workspaces">
+          Open workspaces
+        </a>
+        <a className="button secondary" href="/signin">
+          Sign in
+        </a>
+      </section>
+    </main>
+  );
+}
