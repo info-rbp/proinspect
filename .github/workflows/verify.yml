@@ -19,14 +19,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install dependencies
-        run: |
-          if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install --no-frozen-lockfile; fi
-      - name: Capture reproducibility inputs
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Capture source and deployment readiness without secret values
+        env:
+          HAS_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+          HAS_CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
         run: |
           mkdir -p artifacts
           git rev-parse HEAD > artifacts/source-sha.txt
           cp pnpm-lock.yaml artifacts/
+          git archive --format=tar.gz -o artifacts/source.tar.gz HEAD
+          node -e "const fs=require('fs');const r={cloudflareTokenConfigured:process.env.HAS_CF_TOKEN==='true',cloudflareAccountConfigured:process.env.HAS_CF_ACCOUNT==='true',deployed:false};fs.writeFileSync('artifacts/deployment-readiness.json',JSON.stringify(r,null,2));console.log(JSON.stringify(r));"
       - name: Typecheck, domain tests, SQL invariants and both builds
         run: pnpm check
       - name: Exercise actual Worker, D1, R2 and scheduling APIs
@@ -41,12 +45,6 @@ jobs:
           pnpm exec playwright install --with-deps chromium
       - name: Browser acceptance and responsive screenshots
         run: pnpm test:browser
-      - name: Verify deployment credentials are configured (no secret values)
-        env:
-          HAS_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
-          HAS_CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
-        run: |
-          node -e "const fs=require('fs');const r={cloudflareTokenConfigured:process.env.HAS_CF_TOKEN==='true',cloudflareAccountConfigured:process.env.HAS_CF_ACCOUNT==='true',deployed:false};fs.writeFileSync('artifacts/deployment-readiness.json',JSON.stringify(r,null,2));console.log(JSON.stringify(r));"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
