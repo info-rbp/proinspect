@@ -1165,3 +1165,40 @@ details[open] summary {
     font-size: 1.7rem;
   }
 }
+
+/* Connected workflow forms share the existing product surfaces. */
+.operation-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+.operation-form {
+  margin-top: 20px;
+}
+.operation-form .actions {
+  margin-top: 8px;
+}
+.preserve-lines {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.payment-record {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border, #dbe3e9);
+}
+details {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border, #dbe3e9);
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.operation-form input,
+.operation-form select,
+.operation-form textarea {
+  max-width: 100%;
+}

@@ -1,4 +1,4 @@
-import { Form, useActionData, useNavigation, type ActionFunctionArgs } from 'react-router';
+import { Link, Form, useActionData, useNavigation, type ActionFunctionArgs } from 'react-router';
 import { useWorkspace } from '../lib/workspace';
 import { submitAction } from '../lib/actions.server';
 import {
@@ -55,6 +55,12 @@ export default function Tenancies() {
                   </p>
                 </div>
                 <Badge status={t.status} />
+                <Link
+                  className="button secondary small"
+                  to={`${d.workspace.href}/tenancies/${t.id}`}
+                >
+                  Open tenancy workspace
+                </Link>
               </div>
             ))
           ) : (
@@ -64,43 +70,44 @@ export default function Tenancies() {
             />
           )}
         </section>
-        {d.workspace.kind === 'landlord' && d.workspace.role !== 'viewer' && (
-          <section className="panel form-width">
-            <div className="panel-header">
-              <h2>Create tenancy & invite tenant</h2>
-            </div>
-            <Form method="post" className="form">
-              <Field label="Property" name="propertyId">
-                <select id="propertyId" name="propertyId" required>
-                  <option value="">Choose property</option>
-                  {d.properties.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.address}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Tenant email" name="email">
-                <input id="email" name="email" type="email" required />
-              </Field>
-              <div className="grid-2">
-                <Field label="Start date" name="startDate">
-                  <input id="startDate" name="startDate" type="date" required />
-                </Field>
-                <Field label="End date, if known" name="endDate">
-                  <input id="endDate" name="endDate" type="date" />
-                </Field>
+        {['landlord', 'property-manager', 'commercial', 'staff'].includes(d.workspace.kind) &&
+          d.workspace.role !== 'viewer' && (
+            <section className="panel form-width">
+              <div className="panel-header">
+                <h2>Create tenancy & invite tenant</h2>
               </div>
-              <p className="small">
-                The tenant must verify this email and accept the invitation. Creating the record
-                does not give anyone access by address alone.
-              </p>
-              <button className="primary" disabled={busy}>
-                Create and invite
-              </button>
-            </Form>
-          </section>
-        )}
+              <Form method="post" className="form">
+                <Field label="Property" name="propertyId">
+                  <select id="propertyId" name="propertyId" required>
+                    <option value="">Choose property</option>
+                    {d.properties.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.address}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Tenant email" name="email">
+                  <input id="email" name="email" type="email" required />
+                </Field>
+                <div className="grid-2">
+                  <Field label="Start date" name="startDate">
+                    <input id="startDate" name="startDate" type="date" required />
+                  </Field>
+                  <Field label="End date, if known" name="endDate">
+                    <input id="endDate" name="endDate" type="date" />
+                  </Field>
+                </div>
+                <p className="small">
+                  The tenant must verify this email and accept the invitation. Creating the record
+                  does not give anyone access by address alone.
+                </p>
+                <button className="primary" disabled={busy}>
+                  Create and invite
+                </button>
+              </Form>
+            </section>
+          )}
       </div>
     </>
   );

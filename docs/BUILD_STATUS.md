@@ -1,43 +1,50 @@
-# Build status: first vertical slice
+# Build status: connected portal workflows
 
-This is the capability ledger, not a production acceptance certificate. Schema presence, planned navigation and dry-runs are not completed deployments.
+This ledger describes implemented source and bounded acceptance, not a production certificate. Cloudflare deployment is intentionally locked pending the owner's repository review. No customer data migration, DNS change, live payment, external email or hosted integration is claimed.
 
-## Implemented in source
+## Implemented connected slices
 
-- Two Cloudflare-native React Router applications, locked pnpm dependencies and shared UI/domain foundations.
-- Public server-rendered marketing, 23 service descriptions, three sectors, engagement information, canonical metadata, sitemap and preview noindex.
-- Unified identity, expiring hashed single-use sign-in tokens, server sessions, origin checks, Turnstile integration and Resend adapter.
-- Self-managing residential Landlord onboarding, property setup, ownership/management checks and secure duplicate-address handling.
-- Selected-service handoff through sign-in, account setup and first-property creation.
-- Native single-capacity booking with duration, buffers, notice/horizon rules, database conflict exclusion and idempotency.
-- Atomic Booking + Work Order + encrypted access + audit/outbox creation.
-- Staff queues, assignment, controlled transitions, version checks and audited sensitive access.
-- Manual report issuance to private R2, scoped document grants, content-hash retry deduplication, downloads and notification events.
-- Tenant invitation/acceptance, active/past tenancy views, requests, manager-safe visibility and Staff request-to-work-order conversion.
-- Encrypted outbox, Queue consumer/retries, scheduled dispatcher and staging-only deployment tooling.
+| Area               | Implemented behaviour                                                                                                                                                                                                                                                                                                            |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shared platform    | Two Workers-native applications; one identity; explicit client entitlements; dated property, tenancy and scheme relationships; server-scoped APIs and downloads; numbered additive SQL migrations.                                                                                                                               |
+| Landlord           | Residential self-management; existing booking-to-report journey; future cancellation/rescheduling through the shared scheduling Durable Object; stale-write/retry checks; tenancy records, additional invitations, inspection publication, document requests, PCR responses, approvals and payment requests.                     |
+| Property Manager   | Reviewed organisation onboarding; managed-property and owner-contact setup; assignment-scoped team members; CSV preview/apply; per-property bulk booking outcomes; recurring plans and occurrence advancement; work orders, document delivery, delegated authority and verified-owner escalation.                                |
+| Commercial / Asset | Separate reviewed commercial entitlement and commercial management relationships; reuses the portfolio, team, service-booking, recurring work, documents and financial engine rather than residential self-management.                                                                                                           |
+| Tenant             | Verified invitations; active/past tenancy view; requests and comments; quarantined attachments; published inspections; explicitly issued tenancy PDFs; PCR responses and manager acknowledgement; reviewed-form/bond recordkeeping.                                                                                              |
+| Strata Manager     | Schemes, buildings, lots and common areas; reviewed links to existing properties; dated scheme authority; resident/owner/council invitations; building requests, work orders, public works summaries, targeted notices and financial proposals.                                                                                  |
+| Building           | Approved resident or owner membership; audience-filtered notices; own issue history and attachments; shared works visibility; inside-lot issues can route to the same person's tenancy without copying the request or disclosing tenancy data to strata managers. Access/move enquiries are requests, not facility reservations. |
+| Council            | Dated council access; proposals and recorded recommendations; building oversight and explicitly issued council documents. A recommendation does not approve work. An authorised operator must record an actual council outcome and its reference.                                                                                |
+| Staff / Admin      | Organisation review, operational search, client/authority records, ownership linking, guarded management handover, verified-user staff roles, team and contractor controls, work-order delivery, document review/issue, payment reconciliation, audit and operational summaries.                                                 |
+| Documents          | Private R2, review state, explicit audience issue, immutable successor versions, historical version download, guided document-request state machine, returned-information workflow and issued-output completion gate.                                                                                                            |
+| Approvals          | Proposal/version checks, current delegation limits, named verified-owner decisions, advisory council responses, recorded council outcomes, database-level approval gate and targeted portal notifications.                                                                                                                       |
+| Payments           | AUD integer-cent ledger, immutable events, externally verified manual outcomes, server-priced Stripe Checkout adapter, raw-body signed webhook verification and deduplicated receipts. A ledger entry does not move money; a success URL does not mark payment paid.                                                             |
+| Integrations       | Short-lived signed Report Tool handoff and authenticated, single-consumption PDF callback; manual upload remains available. Allowlisted ID/status projection outbox with lease/retry handling, signed Apps Script receiver and Staff integration-status/retry view.                                                              |
 
-## Verification
+## Acceptance evidence
 
-The latest Verify ProInspect run is authoritative for its exact source. Tests cover domain/security rules, SQL constraints, production builds, actual local Worker/D1/R2/DO business APIs and browser journeys. A failed run is not acceptance. Real external email and hosted authentication remain unverified until configured.
+`Verify ProInspect` is authoritative for its exact commit. The repository runs:
 
-## Deployment
+- TypeScript, architecture/security/helper and deployment-lock checks.
+- Actual SQL migration/integrity tests.
+- Both production builds and upload dry-runs (no deployment).
+- The original 18 local Worker/D1/R2/Durable Object integration checks.
+- 28 further connected runtime checks covering the new workflows and access boundaries.
+- Actual Apps Script receiver code against Google-service doubles: signature, expiry, privacy allowlist, deduplication and changed-retry rejection.
+- Browser journeys for marketing and first-time booking/report delivery, Landlord/Tenant documents and approvals, professional portfolio import/plans, and resident/strata/council interactions. Screenshots are captured from running pages.
 
-Cloudflare credentials were absent at the initial check. No hosted staging, production data migration or DNS change is claimed. DEPLOYMENT.md documents the new staging workflow and required inputs.
+Stripe and Report Tool callbacks in the runtime suite use synthetic credentials and local requests. Google services are test doubles. These are contract tests, not live service acceptance. A failed check remains a failed gate; schema presence and a passing build alone are not feature acceptance.
 
-## Remaining product slices
+## Deliberate remaining limits
 
-| Area | Remaining work |
-| --- | --- |
-| Landlord | Self-service cancellation/rescheduling, richer tenancy administration, guided document requests and approvals |
-| Tenant | Attachments, Staff inspection publication, tenancy document issuance, WA forms/PCR/bond and restricted Form 2 |
-| Property Manager | Professional onboarding, assignments, imports, bulk bookings, recurring planning; disabled |
-| Strata Manager / Building / Council | Shared domain exists; three operational workspaces, notices, requests and decisions remain disabled |
-| Commercial / Asset | Shared contract exists; dedicated portfolio workflow disabled |
-| Documents | Version-management UI, scanning/quarantine, Report Tool automation and restricted evidence workflows |
-| Payments / approvals | Schema only; no collection or approval-decision feature claimed |
-| Staff | Full client/scheme/staff administration, global search, audit UI and reporting |
-| Integrations | Actual email delivery verification, Report Tool and Sheets/Apps Script |
-| Marketing | Approved pricing/legal pages, enquiry pipeline, analytics, deeper original content and final visual approval |
-| Release | Production resources, restore rehearsal, live acceptance, optional import and domain cutover |
+| Area                       | Still required before describing the whole product as complete                                                                                                                                                                                                                                                                                                                |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tenancy / legal            | Full statutory form catalogue and reviewed templates; legal-content approval; formal service/lodgement integrations; retention/erasure controls. Current ordinary forms coordinate instructions and reviewed official PDFs; they do not generate or legally serve notices or lodge a bond.                                                                                    |
+| Restricted support         | Confidential intake, separate encrypted evidence and case-granted review are implemented and tested, but `RESTRICTED_WORKFLOWS_ENABLED` defaults off. Full Form 2 statutory handling, safe-contact operating procedure, retention/erasure and production release review remain. Ordinary Staff administration cannot read a confidential case.                                |
+| Scale / scheduling         | CSV and bulk operations are bounded to 20 properties per submission. Scheduling has one configured capacity resource. Large-portfolio pagination, branches, multi-inspector/travel optimisation, consolidated invoicing and scheduled notification fan-out remain. Recurring plans require an authorised booking; they do not automatically schedule visits or issue notices. |
+| Document security          | Manual quarantine/release and file-signature/size checks are not an antivirus scan or full content validation. Automated scanning, key rotation/restore rehearsal and advanced retention tools remain.                                                                                                                                                                        |
+| Integration counterparties | Configure and accept the receiving Report Tool contract, deployed Apps Script, mail provider and payment provider in a separate release exercise. Live checkout/refund, delayed-payment edge cases and external receipt reconciliation remain unverified.                                                                                                                     |
+| Strata                     | Formal AGM/resolution/voting, levies and accounting remain non-goals. Amenity reservations, parcels and community features are not implemented. Future-dated notices become visible at their start time; scheduled notification delivery needs further work.                                                                                                                  |
+| Marketing                  | Existing service discovery/handoff remains. Approved pricing/legal pages, enquiry pipeline, analytics, deeper content and final visual approval are still outstanding.                                                                                                                                                                                                        |
+| Release                    | Owner repository acceptance; hosted resources/secrets and tested integrations; accessibility/performance/security review; backup/restore rehearsal; optional reviewed import; explicit production cutover.                                                                                                                                                                    |
 
-Only Landlord, Tenant and Staff workspaces are enabled. Restricted-case tables are reserved; no unreviewed sensitive workflow is exposed. The previous repositories remain untouched.
+The new portals are permission-backed operational workspaces, not public role selectors. A professional application cannot approve itself. Owning a lot does not confer council authority. A tenant/resident can use both workspaces under one identity without permission union. The old repositories and all existing hosted resources remain unchanged.

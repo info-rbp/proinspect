@@ -23,33 +23,59 @@ export default function WorkspaceLayout() {
   const { workspace: w, user } = data;
   const [open, setOpen] = useState(false);
   const pending = useNavigation().state !== 'idle';
-  const items =
-    w.kind === 'staff'
-      ? [
-          ['', 'Overview', '◈'],
-          ['work-orders', 'Work orders', '▤'],
-          ['bookings', 'Bookings', '▦'],
-          ['requests', 'Requests', '◇'],
-          ['properties', 'Properties', '⌂'],
-          ['documents', 'Documents & reports', '▧'],
-          ['services', 'Service catalogue', '⊞'],
-        ]
-      : w.kind === 'tenant'
-        ? [
-            ['', 'Overview', '◈'],
-            ['tenancies', 'My tenancy', '⌂'],
-            ['requests', 'My requests', '◇'],
-            ['inspections', 'Inspections', '▦'],
-            ['documents', 'Documents', '▧'],
-          ]
-        : [
-            ['', 'Overview', '◈'],
-            ['properties', 'My properties', '⌂'],
-            ['bookings', 'Bookings', '▦'],
-            ['tenancies', 'Tenancies', '▥'],
-            ['requests', 'Maintenance & requests', '◇'],
-            ['documents', 'Documents & reports', '▧'],
-          ];
+  const items: string[][] = [['', 'Overview', '']];
+  const customer = ['landlord', 'property-manager', 'commercial', 'strata-manager'].includes(
+    w.kind,
+  );
+  const management = ['landlord', 'property-manager', 'commercial'].includes(w.kind);
+  const staff = w.kind === 'staff';
+  if (management || staff)
+    items.push(['properties', management ? 'My properties' : 'Properties', '']);
+  if (management)
+    items.push([
+      'portfolio',
+      w.kind === 'landlord' ? 'Inspection plans' : 'Portfolio operations',
+      '',
+    ]);
+  if (
+    ['strata-manager', 'building', 'council'].includes(w.kind) ||
+    (staff && user.staffRole !== 'inspector')
+  )
+    items.push(['schemes', w.kind === 'building' ? 'My building' : 'Schemes & buildings', '']);
+  if (customer || staff)
+    items.push(
+      ['bookings', 'Bookings', ''],
+      ['booking-changes', 'Booking changes', ''],
+      ['work-orders', 'Work orders', ''],
+    );
+  if (management || w.kind === 'tenant' || (staff && user.staffRole !== 'inspector'))
+    items.push(['tenancies', w.kind === 'tenant' ? 'My tenancy & forms' : 'Tenancies & forms', '']);
+  if (w.kind !== 'council')
+    items.push([
+      'requests',
+      w.kind === 'tenant' || w.kind === 'building' ? 'My requests' : 'Requests',
+      '',
+    ]);
+  if (w.kind === 'tenant') items.push(['inspections', 'Inspections', '']);
+  items.push(['documents', 'Documents & reports', '']);
+  if (customer || (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? '')))
+    items.push(['document-operations', 'Document preparation', '']);
+  if (customer || w.kind === 'council' || (staff && user.staffRole !== 'inspector'))
+    items.push([
+      'finance',
+      w.kind === 'council' ? 'Council decisions' : 'Approvals & payments',
+      '',
+    ]);
+  if (customer && ['owner', 'admin'].includes(w.role)) items.push(['team', 'Team & access', '']);
+  if (staff && user.staffRole !== 'inspector')
+    items.push(
+      ['administration', 'Operations administration', ''],
+      ['services', 'Service catalogue', ''],
+    );
+  if (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''))
+    items.push(['integrations', 'Integrations', '']);
+  if (data.restrictedEnabled && (w.kind === 'tenant' || staff))
+    items.push(['confidential', 'Confidential assistance', '']);
   return (
     <div className="app-shell">
       {pending && <div className="loading-line" role="progressbar" aria-label="Loading page" />}

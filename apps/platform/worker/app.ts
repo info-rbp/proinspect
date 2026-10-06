@@ -3,6 +3,7 @@ import { runtimeContext } from '../../../packages/database/context';
 import type { Env } from '../../../packages/database/types';
 import { handleApi } from './api';
 import { consumeQueue, dispatchOutbox } from '../../../packages/notifications/server';
+import { dispatchIntegrations } from './features/integrations.server';
 export { BookingScheduler } from './scheduler';
 
 const handle = createRequestHandler(
@@ -42,6 +43,7 @@ export default {
   },
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(dispatchOutbox(env));
+    ctx.waitUntil(dispatchIntegrations(env));
   },
   async queue(batch: MessageBatch<{ eventId: string }>, env: Env) {
     await consumeQueue(batch, env);

@@ -10,6 +10,60 @@ export default function Overview() {
     (b) => b.status === 'confirmed' && b.starts_at > new Date().toISOString(),
   );
   const openOrders = d.workOrders.filter((o) => !['cancelled', 'completed'].includes(o.status));
+  if (['strata-manager', 'building', 'council'].includes(w.kind))
+    return (
+      <>
+        <PageHeading
+          title={
+            w.kind === 'strata-manager'
+              ? 'Your strata portfolio'
+              : w.kind === 'council'
+                ? 'Understand and decide.'
+                : 'Your building, connected.'
+          }
+          description={
+            w.kind === 'strata-manager'
+              ? 'Review schemes, resident issues and operational delivery.'
+              : w.kind === 'council'
+                ? 'Review proposals and building activity without exposing private tenancy records.'
+                : 'Read notices, report building issues and follow shared works.'
+          }
+        />
+        <div className="stack">
+          <div className="grid-4">
+            <Metric label="Schemes" value={d.schemes.length} detail="Within your membership" />
+            <Metric label="Open issues" value={active.length} detail="Within your access scope" />
+            <Metric label="Active work" value={openOrders.length} detail="Operational updates" />
+            <Metric
+              label="Decisions"
+              value={d.approvals.filter((a) => a.status === 'pending').length}
+              detail="Awaiting the authorised party"
+            />
+          </div>
+          {d.schemes.map((s) => (
+            <section className="panel" key={s.id}>
+              <h2>{s.name}</h2>
+              <p>Scheme {s.scheme_number}</p>
+              <div className="actions">
+                <Link className="button" to={`${w.href}/schemes/${s.id}`}>
+                  Open building workspace
+                </Link>
+                {w.kind !== 'building' && (
+                  <Link className="button secondary" to={`${w.href}/finance`}>
+                    Review decisions
+                  </Link>
+                )}
+              </div>
+            </section>
+          ))}
+          {!d.schemes.length && w.kind === 'strata-manager' && (
+            <Link className="button" to={`${w.href}/schemes`}>
+              Set up your first scheme
+            </Link>
+          )}
+        </div>
+      </>
+    );
   return (
     <>
       <PageHeading
@@ -23,7 +77,11 @@ export default function Overview() {
         title={
           w.kind === 'staff'
             ? 'Keep the work moving.'
-            : `Welcome${d.user.display_name ? ', ' + d.user.display_name.split(' ')[0] : ''}.`
+            : w.kind === 'property-manager'
+              ? 'Your managed portfolio'
+              : w.kind === 'commercial'
+                ? 'Your commercial portfolio'
+                : `Welcome${d.user.display_name ? ', ' + d.user.display_name.split(' ')[0] : ''}.`
         }
         description={
           w.kind === 'tenant'
@@ -31,7 +89,7 @@ export default function Overview() {
             : 'Your properties, upcoming work and latest reports, in one place.'
         }
       >
-        {w.kind === 'landlord' && (
+        {['landlord', 'property-manager', 'commercial'].includes(w.kind) && (
           <Link className="button" to={`${w.href}/book`}>
             + Book a service
           </Link>
@@ -56,6 +114,39 @@ export default function Overview() {
             detail="Available in your workspace"
           />
         </section>
+        {(d.approvals.some((a) => a.status === 'pending') ||
+          d.payments.some((p) => ['pending', 'payment_required', 'failed'].includes(p.status)) ||
+          d.plans.some(
+            (p) => p.status === 'active' && p.next_due <= new Date().toISOString().slice(0, 10),
+          )) && (
+          <section className="panel">
+            <div className="panel-header">
+              <h2>Decisions and due work</h2>
+            </div>
+            <div className="actions">
+              {d.approvals.some((a) => a.status === 'pending') && (
+                <Link className="button" to={`${w.href}/finance`}>
+                  {d.approvals.filter((a) => a.status === 'pending').length} approvals requiring a
+                  decision
+                </Link>
+              )}
+              {d.payments.some((p) =>
+                ['pending', 'payment_required', 'failed'].includes(p.status),
+              ) && (
+                <Link className="button secondary" to={`${w.href}/finance`}>
+                  Review payment requests
+                </Link>
+              )}
+              {d.plans.some(
+                (p) => p.status === 'active' && p.next_due <= new Date().toISOString().slice(0, 10),
+              ) && (
+                <Link className="button secondary" to={`${w.href}/portfolio`}>
+                  Schedule due inspections
+                </Link>
+              )}
+            </div>
+          </section>
+        )}
         <div className="detail-grid">
           <section className="panel">
             <div className="panel-header">
@@ -129,7 +220,7 @@ export default function Overview() {
                 {active.slice(0, 4).map((r) => (
                   <div key={r.id} className="record-row">
                     <div>
-                      <Link className="record-title" to={`${w.href}/requests#${r.id}`}>
+                      <Link className="record-title" to={`${w.href}/requests/${r.id}`}>
                         {r.title}
                       </Link>
                       <p>

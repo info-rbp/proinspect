@@ -1,3 +1,4 @@
+import { activity, projection } from '../../../packages/operations/core';
 import type { Env } from '../../../packages/database/types';
 import { assert, statement, now, uid } from '../../../packages/database/types';
 import type { Principal, Workspace, Service } from '../../../packages/domain/index';
@@ -15,6 +16,9 @@ import {
   currentTenancy,
   workOrderAccess,
   operationsWrite,
+  managesProperty,
+  booksServices,
+  clientAdmin,
 } from '../../../packages/authorization/server';
 import { mailEvent } from '../../../packages/notifications/server';
 import { digest } from '../../../packages/auth/crypto';
@@ -79,6 +83,12 @@ export async function onboard(env: Env, user: Principal, input: unknown) {
       membershipId,
       clientId,
       user.id,
+      now(),
+    ),
+    statement(
+      env.DB,
+      "INSERT INTO client_entitlements(client_id,workspace_kind,created_at) VALUES(?,'landlord',?) ON CONFLICT DO NOTHING",
+      clientId,
       now(),
     ),
     statement(env.DB, 'UPDATE users SET display_name=? WHERE id=?', data.displayName, user.id),
@@ -175,7 +185,7 @@ export async function createRequest(env: Env, user: Principal, w: Workspace, inp
     clientId = manager?.manager_client_id ?? null;
   } else {
     assert(
-      w.kind === 'landlord' && data.propertyId,
+      managesProperty(w) && data.propertyId,
       403,
       'REQUEST_FORBIDDEN',
       'Select an authorised property.',
@@ -342,17 +352,40 @@ export async function updateWorkOrder(
   ];
   if (order.booking_id && ['completed', 'cancelled'].includes(next))
     updates.push(
-      statement(env.DB, 'UPDATE bookings SET status=? WHERE id=?', next, order.booking_id),
+      statement(
+        env.DB,
+        'UPDATE bookings SET status=?,version=version+1 WHERE id=?',
+        next,
+        order.booking_id,
+      ),
     );
   if (order.request_id && next === 'completed')
     updates.push(
       statement(
         env.DB,
-        "UPDATE requests SET status='completed',updated_at=? WHERE id=?",
+        "UPDATE requests SET status='completed',version=version+1,updated_at=? WHERE id=?",
         time,
         order.request_id,
       ),
     );
+  if (order.request_id && next === 'completed')
+    updates.push(
+      statement(
+        env.DB,
+        "INSERT INTO notifications(id,user_id,title,message,href,created_at) SELECT ?,created_by,'Request completed','The work linked to your request is complete. Open your authorised workspace for details.','/workspaces',? FROM requests WHERE id=?",
+        uid('ntf'),
+        time,
+        order.request_id,
+      ),
+    );
+  updates.push(
+    projection(env, 'work_order.updated', id, {
+      workOrderId: id,
+      propertyId: order.property_id,
+      schemeId: order.scheme_id,
+      status: next,
+    }),
+  );
   updates.push(clearMutationGuard(env));
   await env.DB.batch(updates);
   return { id, status: next };
@@ -363,6 +396,7 @@ export async function issueReport(
   w: Workspace,
   workOrderId: string,
   form: FormData,
+  options?: { handoffId: string },
 ) {
   assert(w.kind === 'staff', 403, 'STAFF_REQUIRED', 'Only authorised staff may issue reports.');
   const order = await workOrderAccess(env, user, w, workOrderId, true);
@@ -383,7 +417,7 @@ export async function issueReport(
     'The file is not a PDF document.',
   );
   assert(
-    order.client_id && order.property_id,
+    order.client_id && (order.property_id || order.scheme_id),
     409,
     'DOCUMENT_CONTEXT_REQUIRED',
     'This work order needs an explicit commissioning client and property.',
@@ -395,9 +429,24 @@ export async function issueReport(
     workOrderId,
     hash,
   ).first<{ id: string; title: string }>();
-  if (previous) return { ...previous, replayed: true };
+  if (previous) {
+    if (options?.handoffId)
+      await env.DB.batch([
+        statement(
+          env.DB,
+          'UPDATE report_handoffs SET consumed_at=?,document_id=? WHERE id=? AND consumed_at IS NULL AND expires_at>?',
+          now(),
+          previous.id,
+          options.handoffId,
+          now(),
+        ),
+        changedExactlyOne(env),
+        clearMutationGuard(env),
+      ]);
+    return { ...previous, replayed: true };
+  }
   const id = uid('doc'),
-    objectKey = `reports/${order.property_id}/${id}.pdf`,
+    objectKey = `reports/${order.property_id ?? order.scheme_id}/${id}.pdf`,
     time = now();
   const title =
     String(form.get('title') ?? order.title)
@@ -411,9 +460,10 @@ export async function issueReport(
     const statements = [
       statement(
         env.DB,
-        `INSERT INTO documents(id,property_id,booking_id,work_order_id,request_id,title,category,object_key,content_type,size,sha256,status,created_by,created_at,issued_at) VALUES(?,?,?,?,?,?,'service_report',?,'application/pdf',?,?,'issued',?,?,?)`,
+        `INSERT INTO documents(id,property_id,scheme_id,booking_id,work_order_id,request_id,title,category,object_key,content_type,size,sha256,status,created_by,created_at,issued_at,source_report_id) VALUES(?,?,?,?,?,?,?,'service_report',?,'application/pdf',?,?,'issued',?,?,?,?)`,
         id,
         order.property_id,
+        order.scheme_id,
         order.booking_id,
         workOrderId,
         order.request_id,
@@ -424,6 +474,7 @@ export async function issueReport(
         user.id,
         time,
         time,
+        options?.handoffId ?? null,
       ),
       statement(
         env.DB,
@@ -435,6 +486,28 @@ export async function issueReport(
       ),
       audit(env, user, 'report.issued', 'document', id, order.property_id, { workOrderId }),
     ];
+    if (options?.handoffId)
+      statements.push(
+        statement(
+          env.DB,
+          'UPDATE report_handoffs SET consumed_at=?,document_id=? WHERE id=? AND consumed_at IS NULL AND expires_at>?',
+          now(),
+          id,
+          options.handoffId,
+          now(),
+        ),
+        changedExactlyOne(env),
+        clearMutationGuard(env),
+      );
+    statements.push(
+      projection(env, 'report.issued', id, {
+        documentId: id,
+        workOrderId,
+        propertyId: order.property_id,
+        schemeId: order.scheme_id,
+        status: 'issued',
+      }),
+    );
     const recipients = await statement(
       env.DB,
       `SELECT u.id,u.email FROM users u JOIN client_memberships m ON m.user_id=u.id WHERE m.client_id=? AND m.active=1 AND u.active=1`,
@@ -447,7 +520,7 @@ export async function issueReport(
       'This account requires batch notification review before report issuance.',
     );
     for (const recipient of recipients.results) {
-      const href = `${env.APP_ORIGIN}/w/landlord/${order.client_id}/documents`;
+      const href = `${env.APP_ORIGIN}/workspaces`;
       statements.push(
         statement(
           env.DB,

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Form, useActionData, useNavigation, data, type ActionFunctionArgs } from 'react-router';
+import { OperationForm, Input, Select, options } from '../components/OperationForm';
 import { useWorkspace } from '../lib/workspace';
 import { submitAction } from '../lib/actions.server';
 import { callApi } from '../lib/api.server';
@@ -183,6 +184,28 @@ export default function WorkOrders() {
                       </Form>
                     </div>
                   </div>
+                  {['administrator', 'operations_manager'].includes(d.user.staffRole ?? '') &&
+                    !['completed', 'cancelled'].includes(o.status) && (
+                      <div className="panel-section">
+                        <h3>Contractor assignment</h3>
+                        <p>
+                          Record an authorised instruction. This records the assignment; it does not
+                          send an instruction to the contractor.
+                        </p>
+                        <OperationForm
+                          endpoint={`/api/w/staff/operations/work-orders/${o.id}/contractor`}
+                          defaults={{ version: o.version }}
+                          label="Record contractor assignment"
+                        >
+                          <Select
+                            name="contractorId"
+                            label="Active contractor"
+                            options={options(d.contractors)}
+                          />
+                          <Input name="reference" label="Instruction / approval reference" />
+                        </OperationForm>
+                      </div>
+                    )}
                 </details>
               ) : (
                 <p className="small">Your work order is {statusLabel(o.status).toLowerCase()}.</p>

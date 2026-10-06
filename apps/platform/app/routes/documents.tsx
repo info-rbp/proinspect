@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { useWorkspace } from '../lib/workspace';
 import { PageHeading, Badge, EmptyState } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
@@ -5,6 +6,15 @@ export default function Documents() {
   const d = useWorkspace();
   return (
     <>
+      <div className="actions">
+        {['landlord', 'property-manager', 'commercial', 'strata-manager', 'staff'].includes(
+          d.workspace.kind,
+        ) && (
+          <Link className="button secondary" to={`${d.workspace.href}/document-operations`}>
+            Prepare or request a document
+          </Link>
+        )}
+      </div>
       <PageHeading
         eyebrow="Your property record"
         title="Documents & reports"

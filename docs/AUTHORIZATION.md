@@ -33,3 +33,7 @@ Mutation requests require a same-origin POST and server validation. Login tokens
 Sensitive access values and outbox payloads use AES-GCM with per-value random IVs and context-specific additional authenticated data. Secrets never enter browser bundles, logs or repository configuration. Cloudflare resource bindings are not browser credentials.
 
 Tests must cover cross-client property access, stale management relationships, viewer writes, expired tenancy, ended council terms, inspector assignment, document grants, login replay, unsafe redirects and duplicate booking submissions.
+
+## Connected workflow checks
+
+Professional entitlement requires an approved organisation application; the applicant cannot review it. Property Manager and Commercial members require per-property assignment. Former team membership and council terms are checked on every request. Ownership contacts are not ownership grants. Direct owner decisions recheck a verified ownership relationship. Financial proposals check current delegation and the database prevents approval bypass. Draft files are available only to the uploading account with scope, or authorised operational Staff; issued audiences are explicit. Confidential cases require an individual case grant even for an administrator and never appear in the ordinary search/audit/export surfaces.

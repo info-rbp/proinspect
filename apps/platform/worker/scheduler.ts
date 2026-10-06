@@ -1,3 +1,5 @@
+import { changeBooking } from './features/bookings.server';
+import { nextMonthDate, guard, clearGuard, projection } from '../../../packages/operations/core';
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from '../../../packages/database/types';
 import { assert, AppError, statement, now, uid } from '../../../packages/database/types';
@@ -107,18 +109,32 @@ export class BookingScheduler extends DurableObject<Env> {
   }
   private async reserve(request: Request) {
     try {
-      const { userId, clientId, input } = (await request.json()) as {
+      const {
+        userId,
+        clientId,
+        input,
+        kind = 'landlord',
+        operation,
+        bookingId,
+      } = (await request.json()) as {
         userId: string;
         clientId: string;
         input: unknown;
+        kind?: string;
+        operation?: string;
+        bookingId?: string;
       };
       const user = await statement(
         this.env.DB,
-        'SELECT id,email,display_name FROM users WHERE id=? AND active=1',
+        'SELECT u.id,u.email,u.display_name,s.role AS staffRole FROM users u LEFT JOIN staff_profiles s ON s.user_id=u.id AND s.active=1 WHERE u.id=? AND u.active=1',
         userId,
       ).first<Principal>();
       assert(user, 403, 'USER_INACTIVE', 'This account is not active.');
-      const w = await workspace(this.env, user, 'landlord', clientId);
+      const w = await workspace(this.env, user, kind, clientId);
+      if (operation === 'change') {
+        assert(typeof bookingId === 'string', 422, 'BOOKING_REQUIRED', 'Select a booking.');
+        return Response.json(await changeBooking(this.env, user, w, bookingId, input));
+      }
       const data = bookingSchema.parse(input);
       const property = await propertyAccess(this.env, user, w, data.propertyId, true);
       const fingerprint = await digest(
@@ -127,6 +143,8 @@ export class BookingScheduler extends DurableObject<Env> {
           serviceId: data.serviceId,
           startsAt: new Date(data.startsAt).toISOString(),
           access: data.access,
+          recurringPlanId: data.recurringPlanId ?? null,
+          planDue: data.planDue ?? null,
         }),
       );
       const existing = await statement(
@@ -173,6 +191,31 @@ export class BookingScheduler extends DurableObject<Env> {
           'ACCESS_CONFIRMATION_REQUIRED',
           'Confirm the access and notice arrangements before booking.',
         );
+      const plan = data.recurringPlanId
+        ? await statement(
+            this.env.DB,
+            "SELECT * FROM recurring_plans WHERE id=? AND client_id=? AND property_id=? AND service_id=? AND status='active'",
+            data.recurringPlanId,
+            clientId,
+            property.id,
+            service.id,
+          ).first<Record<string, any>>()
+        : null;
+      if (data.recurringPlanId)
+        assert(
+          plan && plan.next_due === data.planDue,
+          409,
+          'PLAN_CHANGED',
+          'The recurring plan has changed. Reload it before booking.',
+        );
+      const scheme =
+        kind === 'strata-manager'
+          ? await statement(
+              this.env.DB,
+              'SELECT scheme_id FROM scheme_buildings WHERE property_id=?',
+              property.id,
+            ).first<{ scheme_id: string }>()
+          : null;
       const window = appointmentWindow(service, data.startsAt);
       const id = uid('bkg'),
         reference = `PI-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
@@ -256,6 +299,50 @@ export class BookingScheduler extends DurableObject<Env> {
             },
           }),
         );
+      if (scheme)
+        statements.push(
+          statement(
+            this.env.DB,
+            'UPDATE bookings SET scheme_id=? WHERE id=?',
+            scheme.scheme_id,
+            id,
+          ),
+          statement(
+            this.env.DB,
+            'UPDATE work_orders SET scheme_id=? WHERE id=?',
+            scheme.scheme_id,
+            woId,
+          ),
+        );
+      if (plan)
+        statements.push(
+          statement(
+            this.env.DB,
+            'INSERT INTO plan_occurrences(plan_id,due_date,booking_id) VALUES(?,?,?)',
+            plan.id,
+            plan.next_due,
+            id,
+          ),
+          statement(
+            this.env.DB,
+            'UPDATE recurring_plans SET next_due=?,version=version+1 WHERE id=? AND version=?',
+            nextMonthDate(plan.next_due, plan.interval_months),
+            plan.id,
+            plan.version,
+          ),
+          guard(this.env),
+          clearGuard(this.env),
+        );
+      statements.push(
+        projection(this.env, 'booking.created', id, {
+          reference,
+          status: 'confirmed',
+          propertyId: property.id,
+          serviceId: service.id,
+          workOrderId: woId,
+          startsAt: window.startsAt,
+        }),
+      );
       await this.env.DB.batch(statements);
       return Response.json({ id, reference, workOrderId: woId }, { status: 201 });
     } catch (error) {
