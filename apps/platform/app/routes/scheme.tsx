@@ -67,6 +67,7 @@ export default function Scheme() {
                       <Select
                         name="action"
                         label="Notice action"
+                        value="revise"
                         options={choices(['revise', 'withdraw'])}
                       />
                       <Input name="title" label="Updated title" required={false} />
@@ -259,6 +260,7 @@ export default function Scheme() {
                 <Select
                   name="emailEnabled"
                   label="Send email notification"
+                  value="false"
                   options={[
                     { value: 'false', label: 'Portal only' },
                     { value: 'true', label: 'Portal and email' },
