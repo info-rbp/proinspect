@@ -1,0 +1,29 @@
+name: Export locked development dependencies
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['.github/workflows/development-bundle.yml']
+permissions:
+  contents: read
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --frozen-lockfile
+      - name: Export only locked packages, never credentials or application data
+        run: |
+          mkdir -p artifacts
+          tar -czf artifacts/dependencies.tar.gz node_modules apps/marketing/node_modules apps/platform/node_modules
+          cp pnpm-lock.yaml artifacts/
+          git rev-parse HEAD > artifacts/source-sha.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: locked-development-dependencies
+          path: artifacts/
+          retention-days: 1
