@@ -18,6 +18,8 @@ else if(!readFileSync(marketingVars,'utf8').includes('ENQUIRY_GATEWAY_SECRET='))
 const testFixtures=process.argv.includes('--test-fixtures');
 let sql=catalogueSql()+"\nINSERT INTO schedule_resources(id,name,active) VALUES('default','ProInspect inspection capacity',1) ON CONFLICT(id) DO NOTHING;\n";
 if(testFixtures)sql+="UPDATE services SET price_ex_gst_cents=12000,booking_mode='instant' WHERE id='routine-inspection';\nINSERT INTO users(id,email,display_name,created_at,verified_at) VALUES('usr_test_staff','staff@proinspect.test','Test Operations','2026-01-01','2026-01-01') ON CONFLICT(id) DO NOTHING;\nINSERT INTO staff_profiles(user_id,role,active) VALUES('usr_test_staff','operations_manager',1) ON CONFLICT(user_id) DO NOTHING;\n";
+// Distinct local fixture accounts keep browser suites independent without weakening sign-in limits.
+if(testFixtures)sql+="INSERT INTO users(id,email,display_name,created_at,verified_at) VALUES('usr_test_communications','communications-staff@proinspect.test','Test Communications','2026-01-01','2026-01-01') ON CONFLICT(id) DO NOTHING;\nINSERT INTO staff_profiles(user_id,role,active) VALUES('usr_test_communications','operations_manager',1) ON CONFLICT(user_id) DO NOTHING;\n";
 writeFileSync('artifacts/local-seed.sql',sql);
 execFileSync('pnpm',['exec','wrangler','d1','migrations','apply','DB','--local'],{cwd:app,stdio:'inherit'});
 execFileSync('pnpm',['exec','wrangler','d1','execute','DB','--local','--file',resolve(root,'artifacts/local-seed.sql')],{cwd:app,stdio:'inherit'});

@@ -21,13 +21,14 @@ test('public enquiry reaches authorised Staff triage and a recorded email reply'
  const reference=(await page.getByRole('status').innerText()).match(/ENQ-[A-F0-9]{12}/)![0];
  const staff=await browser.newContext({baseURL:origin});
  try{
- await login(staff,'staff@proinspect.test');const p=await staff.newPage();await p.goto('/w/staff/operations/enquiries?q='+reference);
+ await login(staff,'communications-staff@proinspect.test');const p=await staff.newPage();await p.goto('/w/staff/operations/enquiries?q='+reference);
  await expect(p.getByText(refName,{exact:false})).toBeVisible();await p.getByRole('link',{name:reference,exact:true}).click();await expect(p.getByRole('heading',{level:1})).toHaveText(reference);
  const triage=p.locator('section.panel').filter({has:p.getByRole('heading',{name:'Triage and assignment',exact:true})});
  const history=p.locator('section.panel').filter({has:p.getByRole('heading',{name:'Enquiry history',exact:true})});
  await triage.getByLabel('Status',{exact:true}).selectOption('reviewing');await triage.getByLabel('Internal note',{exact:true}).fill('Reviewed the property service requirements; awaiting portfolio details.');
  await triage.getByRole('button',{name:'Save enquiry status'}).click();
  await expect(history.getByText('Reviewed the property service requirements; awaiting portfolio details.',{exact:true})).toBeVisible();
+ await expect(p).toHaveURL(/\/enquiries\/enq_[a-zA-Z0-9]+$/);
  const reply=p.locator('section.panel').filter({has:p.getByRole('heading',{name:'Reply to the enquiry',exact:true})});
  await reply.getByLabel('Reply message').fill('Please confirm the number of properties and the preferred inspection period.');
  await reply.getByRole('button',{name:'Queue email reply'}).click();
@@ -39,7 +40,7 @@ test('public enquiry reaches authorised Staff triage and a recorded email reply'
 test('scheduled building notice is visible to its manager, hidden from residents, and withdrawable',async({browser})=>{
  const staff=await browser.newContext({baseURL:origin}),manager=await browser.newContext({baseURL:origin}),resident=await browser.newContext({baseURL:origin});
  try{
- const suffix=randomUUID().slice(0,8);await login(staff,'staff@proinspect.test');await login(manager,`manager-${suffix}@proinspect.test`);await login(resident,`resident-${suffix}@proinspect.test`);
+ const suffix=randomUUID().slice(0,8);await login(staff,'communications-staff@proinspect.test');await login(manager,`manager-${suffix}@proinspect.test`);await login(resident,`resident-${suffix}@proinspect.test`);
  const application=await post(manager,'/api/organisation-applications',{kind:'strata-manager',name:`Notice Manager ${suffix}`,businessReference:'Synthetic reviewed authority'});
  const approved=await post(staff,`/api/w/staff/operations/organisation-applications/${application.id}/review`,{decision:'approved',reference:'Synthetic browser verification'});
  const root=`/api/w/strata-manager/${approved.clientId}`;
