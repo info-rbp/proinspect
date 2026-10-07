@@ -1,0 +1,4 @@
+.contact-grid { display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:2rem;align-items:start; }
+.error-text { color:#a32932;font-size:.875rem; }
+.contact-grid textarea { resize:vertical; }
+@media(max-width:760px) { .contact-grid,.contact-grid .grid-2 { grid-template-columns:minmax(0,1fr); } }

@@ -8,6 +8,8 @@ export interface Env {
   SHEETS_WEBHOOK_URL?: string;
   SHEETS_WEBHOOK_SECRET?: string;
   RESTRICTED_WORKFLOWS_ENABLED?: string;
+  ENQUIRY_GATEWAY_SECRET?: string;
+  MARKETING_TURNSTILE_SECRET_KEY?: string;
   APP_ORIGIN: string;
   MARKETING_ORIGIN?: string;
   DB: D1Database;
@@ -31,28 +33,13 @@ export function envFrom(context: unknown): Env {
   return (context as CloudflareContext).cloudflare.env;
 }
 export class AppError extends Error {
-  constructor(
-    public status: number,
-    public code: string,
-    message: string,
-  ) {
-    super(message);
-  }
+  constructor(public status: number, public code: string, message: string) { super(message); }
 }
-export function assert(
-  condition: unknown,
-  status: number,
-  code: string,
-  message: string,
-): asserts condition {
+export function assert(condition: unknown,status: number,code: string,message: string): asserts condition {
   if (!condition) throw new AppError(status, code, message);
 }
 export function statement(db: D1Database, sql: string, ...values: (string | number | null)[]) {
   return db.prepare(sql).bind(...values);
 }
-export function now() {
-  return new Date().toISOString();
-}
-export function uid(prefix: string) {
-  return `${prefix}_${crypto.randomUUID().replaceAll('-', '')}`;
-}
+export function now() { return new Date().toISOString(); }
+export function uid(prefix: string) { return `${prefix}_${crypto.randomUUID().replaceAll('-', '')}`; }

@@ -1,41 +1,8 @@
-import { type RouteConfig, index, route } from '@react-router/dev/routes';
+import { type RouteConfig,index,route } from '@react-router/dev/routes';
 export default [
-  index('routes/home.tsx'),
-  route('signin', 'routes/signin.tsx'),
-  route('auth/complete', 'routes/auth-complete.tsx'),
-  route('signout', 'routes/signout.tsx'),
-  route('onboarding', 'routes/onboarding.tsx'),
-  route('organisation', 'routes/organisation.tsx'),
-  route('owner-decisions', 'routes/owner-decisions.tsx'),
-  route('workspaces', 'routes/workspaces.tsx'),
-  route('invitations/accept', 'routes/invitation.tsx'),
-  route('book/:serviceId?', 'routes/booking-intent.tsx'),
-  route('w/:kind/:scopeId', 'routes/workspace.tsx', [
-    index('routes/overview.tsx'),
-    route('portfolio', 'routes/portfolio.tsx'),
-    route('team', 'routes/team.tsx'),
-    route('schemes', 'routes/schemes.tsx'),
-    route('schemes/:schemeId', 'routes/scheme.tsx'),
-    route('document-operations', 'routes/document-operations.tsx'),
-    route('document-requests/:documentRequestId', 'routes/document-request.tsx'),
-    route('tenancies/:tenancyId', 'routes/tenancy-detail.tsx'),
-    route('properties', 'routes/properties.tsx'),
-    route('properties/:propertyId', 'routes/property.tsx'),
-    route('book/:serviceId?', 'routes/book.tsx'),
-    route('booking-changes', 'routes/booking-changes.tsx'),
-    route('finance', 'routes/finance.tsx'),
-    route('requests/:requestId', 'routes/request-detail.tsx'),
-    route('bookings', 'routes/bookings.tsx'),
-    route('requests', 'routes/requests.tsx'),
-    route('work-orders', 'routes/work-orders.tsx'),
-    route('documents', 'routes/documents.tsx'),
-    route('tenancies', 'routes/tenancies.tsx'),
-    route('inspections', 'routes/inspections.tsx'),
-    route('administration', 'routes/administration.tsx'),
-    route('integrations', 'routes/integrations.tsx'),
-    route('confidential', 'routes/confidential.tsx'),
-    route('confidential/:caseId', 'routes/confidential-case.tsx'),
-    route('services', 'routes/services.tsx'),
-    route('notifications', 'routes/notifications.tsx'),
-  ]),
+ index('routes/home.tsx'),route('signin','routes/signin.tsx'),route('auth/complete','routes/auth-complete.tsx'),route('signout','routes/signout.tsx'),
+ route('onboarding','routes/onboarding.tsx'),route('organisation','routes/organisation.tsx'),route('owner-decisions','routes/owner-decisions.tsx'),route('workspaces','routes/workspaces.tsx'),route('invitations/accept','routes/invitation.tsx'),route('book/:serviceId?','routes/booking-intent.tsx'),
+ route('w/:kind/:scopeId','routes/workspace.tsx',[
+ index('routes/overview.tsx'),route('portfolio','routes/portfolio.tsx'),route('team','routes/team.tsx'),route('schemes','routes/schemes.tsx'),route('schemes/:schemeId','routes/scheme.tsx'),route('document-operations','routes/document-operations.tsx'),route('document-requests/:documentRequestId','routes/document-request.tsx'),route('tenancies/:tenancyId','routes/tenancy-detail.tsx'),route('properties','routes/properties.tsx'),route('properties/:propertyId','routes/property.tsx'),route('book/:serviceId?','routes/book.tsx'),route('booking-changes','routes/booking-changes.tsx'),route('finance','routes/finance.tsx'),route('requests/:requestId','routes/request-detail.tsx'),route('bookings','routes/bookings.tsx'),route('requests','routes/requests.tsx'),route('work-orders','routes/work-orders.tsx'),route('documents','routes/documents.tsx'),route('tenancies','routes/tenancies.tsx'),route('inspections','routes/inspections.tsx'),route('enquiries','routes/enquiries.tsx'),route('enquiries/:enquiryId','routes/enquiry.tsx'),route('administration','routes/administration.tsx'),route('integrations','routes/integrations.tsx'),route('confidential','routes/confidential.tsx'),route('confidential/:caseId','routes/confidential-case.tsx'),route('services','routes/services.tsx'),route('notifications','routes/notifications.tsx')
+ ])
 ] satisfies RouteConfig;
