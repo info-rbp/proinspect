@@ -34,7 +34,9 @@ export async function action({request,context}:ActionFunctionArgs) {
   const body=JSON.stringify({input:parsed.data,origin:env.MARKETING_ORIGIN||env.APP_ORIGIN,
     clientKey:await digest(`${env.ENQUIRY_GATEWAY_SECRET}:ip:${request.headers.get('CF-Connecting-IP')||'local'}`),turnstile:form.get('turnstile')||undefined});
   const timestamp=String(Date.now());
-  const response=await fetch(`${target}/api/public/enquiries`,{method:'POST',headers:{'Content-Type':'application/json','X-Enquiry-Time':timestamp,'X-Enquiry-Signature':await signEnquiry(env.ENQUIRY_GATEWAY_SECRET,timestamp,body)},body,redirect:'error',signal:AbortSignal.timeout(15000)});
+  // Workers supports manual redirects; never forward signed contact data to a redirect target.
+  const response=await fetch(`${target}/api/public/enquiries`,{method:'POST',headers:{'Content-Type':'application/json','X-Enquiry-Time':timestamp,'X-Enquiry-Signature':await signEnquiry(env.ENQUIRY_GATEWAY_SECRET,timestamp,body)},body,redirect:'manual',signal:AbortSignal.timeout(15000)});
+  if(response.status>=300&&response.status<400)throw new Error('ENQUIRY_REDIRECT_REJECTED');
   const result=await response.json() as {reference?:string;message?:string;fields?:Record<string,string[]>};
   if(!response.ok)return fail(result.message||'The enquiry could not be saved. Please retry.',response.status,result.fields);
   return data({reference:result.reference},{headers:{'Cache-Control':'no-store'}});
