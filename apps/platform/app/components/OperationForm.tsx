@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode, type FormEvent } from 'react';
+import { useRef, useState, useEffect, type ReactNode, type FormEvent } from 'react';
 import { useRevalidator, useNavigate } from 'react-router';
 import { Feedback, Field } from '../../../../packages/ui/components';
 
@@ -25,9 +25,13 @@ export function OperationForm({
     key = useRef<string | null>(null),
     revalidator = useRevalidator(),
     navigate = useNavigate();
+  // Do not permit a native form submission before the client handler is attached.
+  // The explicit POST method also prevents private fields entering a URL on fallback.
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
+    if (!ready || busy) return;
     setBusy(true);
     setState(null);
     const form = new FormData(event.currentTarget);
@@ -67,8 +71,8 @@ export function OperationForm({
     }
   }
   return (
-    <form onSubmit={submit} className="stack operation-form">
-      <fieldset disabled={busy}>
+    <form method="post" onSubmit={submit} className="stack operation-form">
+      <fieldset disabled={!ready || busy}>
         {children}
         <div className="actions">
           <button className="button" type="submit">
@@ -76,6 +80,7 @@ export function OperationForm({
           </button>
         </div>
       </fieldset>
+      <noscript>Enable JavaScript to use this protected operation form.</noscript>
       <Feedback value={state} />
       {state?.ok && result?.(state.data)}
     </form>
