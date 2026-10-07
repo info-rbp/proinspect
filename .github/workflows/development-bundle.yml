@@ -19,7 +19,7 @@ jobs:
       - name: Export only locked packages, never credentials or application data
         run: |
           mkdir -p artifacts
-          tar -czf artifacts/dependencies.tar.gz node_modules apps/marketing/node_modules apps/platform/node_modules
+          tar -czf artifacts/dependencies.tar.gz node_modules
           cp pnpm-lock.yaml artifacts/
           git rev-parse HEAD > artifacts/source-sha.txt
       - uses: actions/upload-artifact@v4
