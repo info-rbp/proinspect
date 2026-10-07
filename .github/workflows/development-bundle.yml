@@ -1,6 +1,9 @@
 name: Export locked development dependencies
 on:
   workflow_dispatch:
+  push:
+    branches: ['feat/enquiries-scheduled-notices']
+    paths: ['.github/workflows/development-bundle.yml']
   pull_request:
     paths: ['.github/workflows/development-bundle.yml']
 permissions:
@@ -16,7 +19,7 @@ jobs:
         with:
           node-version: '22'
       - run: pnpm install --frozen-lockfile
-      - name: Export only locked packages, never credentials or application data
+      - name: Export locked packages only
         run: |
           mkdir -p artifacts
           tar -czf artifacts/dependencies.tar.gz node_modules
