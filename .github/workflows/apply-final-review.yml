@@ -1,0 +1,73 @@
+name: Apply checksum-verified final review source
+on:
+  pull_request:
+    paths: ['.review/**', '.github/workflows/apply-final-review.yml']
+permissions:
+  contents: read
+jobs:
+  apply-source:
+    if: github.repository == 'info-rbp/proinspect' && github.event.pull_request.number == 6 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/final-scope-config-review'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+      - name: Verify data-only source delta and apply atomically prepared files
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          python3 - <<'PY'
+          from pathlib import Path, PurePosixPath
+          import base64, hashlib, json, lzma, subprocess
+          base = '12101b7f9ea04b61d659feabefff7b4996ee9069'
+          subprocess.run(['git', 'merge-base', '--is-ancestor', base, 'HEAD'], check=True)
+          encoded = ''.join(Path(f'.review/delta-{i}.b64').read_text() for i in range(6))
+          assert len(encoded) == 66832, 'Source envelope length mismatch'
+          decoder = lzma.LZMADecompressor(memlimit=128*1024*1024)
+          raw = decoder.decompress(base64.b64decode(encoded, validate=True), max_length=1024*1024)
+          assert decoder.eof and not decoder.unused_data, 'Invalid bounded source envelope'
+          assert hashlib.sha256(raw).hexdigest() == '0212e6ee2745d37c3dd2b917375bcbdbde584a588ad3bf2cd3b3fc5c5c1e0118', 'Source checksum mismatch'
+          delta = json.loads(raw)
+          assert delta['base'] == base and delta['units'] == 'lines' and len(delta['files']) == 49
+          prepared = []
+          seen = set()
+          for item in delta['files']:
+              name = item['path']
+              pure = PurePosixPath(name)
+              assert not pure.is_absolute() and '..' not in pure.parts and name not in seen
+              assert pure.parts[0] in {'apps','config','database','docs','packages','scripts','tests'} or name in {'README.md','package.json'}
+              target = Path(name)
+              assert not target.is_symlink() and not any(p.is_symlink() for p in target.parents)
+              old = target.read_bytes() if target.exists() else b''
+              assert hashlib.sha256(old).hexdigest() == item['old'], 'Old source mismatch: ' + name
+              lines = old.decode('utf-8').splitlines(keepends=True)
+              last = len(lines)
+              for start, end, replacement in reversed(item['edits']):
+                  assert isinstance(start,int) and isinstance(end,int) and 0 <= start <= end <= last
+                  lines[start:end] = replacement.splitlines(keepends=True)
+                  last = start
+              result = ''.join(lines).encode('utf-8')
+              assert hashlib.sha256(result).hexdigest() == item['new'], 'New source mismatch: ' + name
+              prepared.append((target,result))
+              seen.add(name)
+          for target, result in prepared:
+              target.parent.mkdir(parents=True,exist_ok=True)
+              target.write_bytes(result)
+          subprocess.run(['git','add','--',*sorted(seen)],check=True)
+          print('Applied and verified',len(prepared),'source files. No application code or deployment executed.')
+          PY
+      - name: Remove transfer scaffolding and commit only to the leased review branch
+        run: |
+          git rm -r -- .review .github/workflows/apply-final-review.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: complete final scope and environment configuration review'
+          current=$(git ls-remote origin refs/heads/feat/final-scope-config-review | cut -f1)
+          test "$current" = "$EXPECTED_HEAD" || { echo 'Review branch moved; refusing overwrite.'; exit 1; }
+          git push origin HEAD:refs/heads/feat/final-scope-config-review
+          git rev-parse HEAD
