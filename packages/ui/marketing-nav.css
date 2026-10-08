@@ -1,0 +1,34 @@
+.marketing-menu {
+  display: none;
+  position: relative;
+}
+.marketing-menu summary {
+  cursor: pointer;
+  padding: 12px;
+  min-height: 44px;
+}
+.marketing-menu nav {
+  position: absolute;
+  right: 0;
+  min-width: 240px;
+  background: white;
+  box-shadow: 0 12px 32px #0002;
+  border: 1px solid #cbd5e1;
+  padding: 16px;
+  z-index: 20;
+}
+.marketing-menu nav a {
+  display: block;
+  padding: 12px;
+}
+@media (max-width: 1100px) {
+  .marketing-menu {
+    display: block;
+  }
+  .site-links {
+    display: none !important;
+  }
+  .site-header {
+    flex-wrap: wrap;
+  }
+}

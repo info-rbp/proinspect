@@ -12,7 +12,10 @@ export function randomToken() {
     .join('');
 }
 function base64(bytes: Uint8Array) {
-  return btoa(String.fromCharCode(...bytes));
+  let binary = '';
+  for (let offset = 0; offset < bytes.length; offset += 16384)
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 16384));
+  return btoa(binary);
 }
 function unbase64(text: string) {
   return Uint8Array.from(atob(text), (c) => c.charCodeAt(0));

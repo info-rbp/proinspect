@@ -259,7 +259,10 @@ export default function Overview() {
                     {doc.address} · {displayDate(doc.issued_at || doc.created_at)}
                   </p>
                 </div>
-                <a className="button secondary small" href={`/api/documents/${doc.id}/download`}>
+                <a
+                  className="button secondary small"
+                  href={`/api${d.workspace.href}/documents/${doc.id}/download`}
+                >
                   Download PDF
                 </a>
               </div>

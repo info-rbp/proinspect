@@ -1,9 +1,17 @@
 import { useState } from 'react';
-import { Form, useActionData, useNavigation, data, type ActionFunctionArgs } from 'react-router';
+import {
+  Form,
+  useActionData,
+  useNavigation,
+  data,
+  type LoaderFunctionArgs,
+  useLoaderData,
+  type ActionFunctionArgs,
+} from 'react-router';
 import { OperationForm, Input, Select, options } from '../components/OperationForm';
 import { useWorkspace } from '../lib/workspace';
 import { submitAction } from '../lib/actions.server';
-import { callApi } from '../lib/api.server';
+import { callApi, loadApi } from '../lib/api.server';
 import {
   PageHeading,
   Badge,
@@ -12,6 +20,15 @@ import {
   Field,
 } from '../../../../packages/ui/components';
 import { WORK_ORDER_TRANSITIONS, statusLabel } from '../../../../packages/domain/index';
+export async function loader({ request, context, params }: LoaderFunctionArgs) {
+  return params.workOrderId
+    ? loadApi(
+        request,
+        context,
+        `/api/w/${params.kind}/${params.scopeId}/work-orders/${params.workOrderId}`,
+      )
+    : { order: null };
+}
 export async function action(args: ActionFunctionArgs) {
   const f = await args.request.formData();
   const id = encodeURIComponent(String(f.get('workOrderId')));
@@ -78,6 +95,8 @@ function AccessInstructions({ path }: { path: string }) {
 }
 export default function WorkOrders() {
   const d = useWorkspace();
+  const detail = useLoaderData<typeof loader>();
+  const orders = detail.order ? [detail.order] : d.workOrders;
   const result = useActionData<any>();
   const busy = useNavigation().state !== 'idle';
   const writable = d.workspace.kind === 'staff' && d.user.staffRole !== 'read_only';
@@ -90,8 +109,8 @@ export default function WorkOrders() {
       />
       <div className="stack">
         <Feedback value={result} />
-        {d.workOrders.length ? (
-          d.workOrders.map((o) => (
+        {orders.length ? (
+          orders.map((o) => (
             <article key={o.id} id={o.id} className="panel">
               <div className="panel-header">
                 <div>

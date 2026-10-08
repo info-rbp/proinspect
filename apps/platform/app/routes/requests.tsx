@@ -45,7 +45,7 @@ export default function Requests() {
   const [search] = useSearchParams();
   const busy = useNavigation().state !== 'idle';
   const allowed =
-    w.kind === 'landlord' ||
+    (['landlord', 'property-manager', 'commercial'].includes(w.kind) && w.role !== 'viewer') ||
     (w.kind === 'tenant' &&
       d.tenancies.some(
         (t) => t.status === 'active' && (!t.ends_at || t.ends_at > new Date().toISOString()),
@@ -101,7 +101,7 @@ export default function Requests() {
               <h2>New request</h2>
             </div>
             <Form method="post" className="form">
-              {w.kind === 'landlord' && (
+              {['landlord', 'property-manager', 'commercial'].includes(w.kind) && (
                 <Field label="Property" name="propertyId">
                   <select
                     id="propertyId"
@@ -138,7 +138,14 @@ export default function Requests() {
                 </Field>
               </div>
               <Field label="Request title" name="title">
-                <input id="title" name="title" required minLength={4} maxLength={180} />
+                <input
+                  id="title"
+                  name="title"
+                  required
+                  minLength={4}
+                  maxLength={180}
+                  defaultValue={d.services.find((s) => s.id === search.get('service'))?.name ?? ''}
+                />
               </Field>
               <Field label="Tell us what is needed" name="details">
                 <textarea id="details" name="details" required minLength={10} maxLength={5000} />

@@ -53,7 +53,19 @@ export default function Root() {
             <Link to="/sectors/strata-building">Strata & buildings</Link>
             <Link to="/how-it-works">How it works</Link>
           </nav>
-          <details className="marketing-menu"><summary>Menu</summary><nav aria-label="Mobile site navigation"><Link to="/services">Services</Link><Link to="/sectors/residential">Residential</Link><Link to="/sectors/commercial">Commercial</Link><Link to="/sectors/strata-building">Strata &amp; buildings</Link><Link to="/how-it-works">How we work</Link><Link to="/why-proinspect">Why ProInspect</Link><Link to="/resources">Resources</Link><Link to="/contact">Contact</Link></nav></details>
+          <details className="marketing-menu">
+            <summary>Menu</summary>
+            <nav aria-label="Mobile site navigation">
+              <Link to="/services">Services</Link>
+              <Link to="/sectors/residential">Residential</Link>
+              <Link to="/sectors/commercial">Commercial</Link>
+              <Link to="/sectors/strata-building">Strata &amp; buildings</Link>
+              <Link to="/how-it-works">How we work</Link>
+              <Link to="/why-proinspect">Why ProInspect</Link>
+              <Link to="/resources">Resources</Link>
+              <Link to="/contact">Contact</Link>
+            </nav>
+          </details>
           <div className="actions">
             <a className="small" href={`${appOrigin}/signin`}>
               Sign in
@@ -84,7 +96,10 @@ export default function Root() {
               <Link to="/services">All services</Link>
               <Link to="/how-it-works">How we work</Link>
               <Link to="/client-experience">Your property record</Link>
-              <Link to="/why-proinspect">Why ProInspect</Link><Link to="/resources">Guides &amp; comparisons</Link><Link to="/areas-we-service">Service areas</Link><Link to="/about">About</Link>
+              <Link to="/why-proinspect">Why ProInspect</Link>
+              <Link to="/resources">Guides &amp; comparisons</Link>
+              <Link to="/areas-we-service">Service areas</Link>
+              <Link to="/about">About</Link>
               <Link to="/contact">Contact</Link>
             </div>
             <div>

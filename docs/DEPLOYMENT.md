@@ -1,3 +1,5 @@
+> Updated configuration inventory: use GITHUB_CONFIGURATION.md. Dormant apply helpers require REPOSITORY_ACCEPTED_SHA matching SOURCE_SHA and offline validation. The workflow remains locked; this review authorises no deployment.
+
 # Deployment is locked pending repository acceptance
 
 ## Current boundary

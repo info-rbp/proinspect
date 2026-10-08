@@ -1,9 +1,49 @@
 {
- "name":"proinspect","private":true,"type":"module","packageManager":"pnpm@10.17.1","engines":{"node":">=22.12.0 <23"},
- "scripts":{
- "dev":"pnpm --filter @proinspect/platform dev","dev:marketing":"pnpm --filter @proinspect/marketing dev","build":"pnpm -r build","typecheck":"tsc --noEmit","test":"node --experimental-strip-types --test tests/*.test.ts","test:schema":"python3 tests/schema.test.py",
- "test:integration":"node --experimental-strip-types tests/runtime/run.mjs && node --experimental-strip-types tests/runtime/connected.mjs && node --experimental-strip-types tests/runtime/communications.mjs",
- "test:browser":"playwright test","local:init":"node --experimental-strip-types scripts/local-init.mjs","catalogue:sql":"node --experimental-strip-types scripts/catalogue-sql.mjs","check":"pnpm typecheck && pnpm test && pnpm test:schema && pnpm build","format":"prettier --write . --ignore-unknown","format:check":"prettier --check . --ignore-unknown"},
- "dependencies":{"react":"19.3.0","react-dom":"19.3.0","react-router":"8.4.0","zod":"4.6.5"},
- "devDependencies":{"@cloudflare/vite-plugin":"1.62.5","@cloudflare/workers-types":"5.20261006.1","@react-router/dev":"8.4.0","@types/node":"22.20.5","@types/react":"19.3.0","@types/react-dom":"19.3.0","@tailwindcss/vite":"4.3.3","tailwindcss":"4.3.3","typescript":"5.9.3","vite":"7.3.7","wrangler":"4.147.0","prettier":"3.9.9","@playwright/test":"1.63.0","miniflare":"4.20260730.0","esbuild":"0.25.12"}
+  "name": "proinspect",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=22.22.0 <23"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @proinspect/platform dev",
+    "dev:marketing": "pnpm --filter @proinspect/marketing dev",
+    "build": "pnpm -r build",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:schema": "python3 tests/schema.test.py",
+    "test:integration": "node --experimental-strip-types tests/runtime/run.mjs && node --experimental-strip-types tests/runtime/connected.mjs && node --experimental-strip-types tests/runtime/communications.mjs && node --experimental-strip-types tests/runtime/final-pass.mjs",
+    "test:browser": "playwright test",
+    "local:init": "node --experimental-strip-types scripts/local-init.mjs",
+    "catalogue:sql": "node --experimental-strip-types scripts/catalogue-sql.mjs",
+    "check": "pnpm typecheck && pnpm test && pnpm test:schema && pnpm build",
+    "format": "prettier --write . --ignore-unknown",
+    "format:check": "prettier --check . --ignore-unknown",
+    "config:list": "node scripts/configuration.mjs",
+    "config:check": "node scripts/configuration.mjs --check"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router": "8.4.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.62.5",
+    "@cloudflare/workers-types": "5.20261006.1",
+    "@react-router/dev": "8.4.0",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@tailwindcss/vite": "4.3.3",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "7.3.7",
+    "wrangler": "4.147.0",
+    "prettier": "3.9.9",
+    "@playwright/test": "1.63.0",
+    "miniflare": "4.20260730.0",
+    "esbuild": "0.25.12"
+  }
 }
