@@ -25,7 +25,7 @@ export default function Services() {
           <nav className="pill-links" aria-label="Service categories">
             <Link to="/services">All services</Link>
             {Object.entries(FAMILIES).map(([key, f]) => (
-              <Link key={key} to={`/services?family=${key}`}>
+              <Link key={key} to={`/services/category/${key}`}>
                 {f.name}
               </Link>
             ))}

@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "secrets": {
+    "CLOUDFLARE_API_TOKEN": { "targets": ["ci"], "group": "deploy" },
+    "DATA_ENCRYPTION_KEY": { "targets": ["platform"], "group": "core", "format": "base64-32" },
+    "RESEND_API_KEY": { "targets": ["platform"], "group": "core" },
+    "TURNSTILE_SECRET_KEY": { "targets": ["platform"], "group": "core" },
+    "MARKETING_TURNSTILE_SECRET_KEY": { "targets": ["platform"], "group": "core" },
+    "ENQUIRY_GATEWAY_SECRET": {
+      "targets": ["platform", "marketing"],
+      "group": "core",
+      "format": "signing-key"
+    },
+    "STRIPE_SECRET_KEY": { "targets": ["platform"], "group": "payments" },
+    "STRIPE_WEBHOOK_SECRET": { "targets": ["platform"], "group": "payments" },
+    "REPORT_TOOL_SECRET": { "targets": ["platform"], "group": "reports", "format": "signing-key" },
+    "SHEETS_WEBHOOK_SECRET": { "targets": ["platform"], "group": "sheets", "format": "signing-key" }
+  },
+  "variables": {
+    "CLOUDFLARE_ACCOUNT_ID": { "targets": ["ci"], "group": "deploy" },
+    "EMAIL_FROM": { "targets": ["platform"], "group": "core" },
+    "OPERATIONS_EMAIL": { "targets": ["platform"], "group": "core" },
+    "EMAIL_SINK": { "targets": ["platform"], "group": "staging" },
+    "TURNSTILE_SITE_KEY": { "targets": ["platform"], "group": "core" },
+    "MARKETING_TURNSTILE_SITE_KEY": { "targets": ["marketing"], "group": "core" },
+    "REPORT_TOOL_ORIGIN": { "targets": ["platform"], "group": "reports" },
+    "SHEETS_WEBHOOK_URL": { "targets": ["platform"], "group": "sheets" },
+    "RESTRICTED_WORKFLOWS_ENABLED": {
+      "targets": ["platform"],
+      "group": "release",
+      "default": "false"
+    }
+  },
+  "generated": [
+    "APP_ENV",
+    "APP_ORIGIN",
+    "MARKETING_ORIGIN",
+    "PLATFORM_ORIGIN",
+    "BUILD_SHA",
+    "SOURCE_SHA",
+    "EMAIL_PROVIDER"
+  ],
+  "releaseControls": ["REPOSITORY_ACCEPTED_SHA"],
+  "bindings": ["DB", "DOCUMENTS", "RESTRICTED_DOCUMENTS", "SCHEDULER", "EVENTS"],
+  "externalOnly": {
+    "PROINSPECT_WEBHOOK_SECRET": "Apps Script property; same value as SHEETS_WEBHOOK_SECRET for that environment",
+    "PROINSPECT_SPREADSHEET_ID": "Apps Script property; target spreadsheet ID"
+  }
+}

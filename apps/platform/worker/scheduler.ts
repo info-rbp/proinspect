@@ -208,14 +208,27 @@ export class BookingScheduler extends DurableObject<Env> {
           'PLAN_CHANGED',
           'The recurring plan has changed. Reload it before booking.',
         );
-      const scheme =
+      const schemes =
         kind === 'strata-manager'
-          ? await statement(
-              this.env.DB,
-              'SELECT scheme_id FROM scheme_buildings WHERE property_id=?',
-              property.id,
-            ).first<{ scheme_id: string }>()
-          : null;
+          ? (
+              await statement(
+                this.env.DB,
+                "SELECT DISTINCT b.scheme_id FROM scheme_buildings b JOIN scheme_client_links l ON l.scheme_id=b.scheme_id WHERE b.property_id=? AND l.client_id=? AND l.role IN('strata_manager','building_manager') AND l.starts_at<=? AND (l.ends_at IS NULL OR l.ends_at>?)",
+                property.id,
+                clientId,
+                now(),
+                now(),
+              ).all<{ scheme_id: string }>()
+            ).results
+          : [];
+      if (kind === 'strata-manager')
+        assert(
+          schemes.length === 1,
+          409,
+          'SCHEME_REVIEW_REQUIRED',
+          'The building must have one unambiguous managed scheme before booking.',
+        );
+      const scheme = schemes[0] ?? null;
       const window = appointmentWindow(service, data.startsAt);
       const id = uid('bkg'),
         reference = `PI-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,

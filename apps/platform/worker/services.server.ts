@@ -51,10 +51,11 @@ export function changedExactlyOne(env: Env) {
 export function clearMutationGuard(env: Env) {
   return statement(env.DB, 'DELETE FROM mutation_guards');
 }
-export async function catalogue(env: Env): Promise<Service[]> {
-  const rows = await statement(env.DB, 'SELECT * FROM services WHERE active=1 ORDER BY name').all<
-    Record<string, any>
-  >();
+export async function catalogue(env: Env, includeInactive = false): Promise<Service[]> {
+  const rows = await statement(
+    env.DB,
+    `SELECT * FROM services ${includeInactive ? '' : 'WHERE active=1'} ORDER BY name`,
+  ).all<Record<string, any>>();
   return rows.results.map((row) => ({ ...row, sectors: JSON.parse(row.sectors_json) }) as Service);
 }
 

@@ -1,3 +1,4 @@
+import { loadApi } from '../lib/api.server';
 import { useEffect, useState } from 'react';
 import {
   Form,
@@ -8,13 +9,22 @@ import {
   useParams,
   useSearchParams,
   type ActionFunctionArgs,
+  type LoaderFunctionArgs,
 } from 'react-router';
 import { useWorkspace } from '../lib/workspace';
 import { submitAction } from '../lib/actions.server';
 import { PageHeading, Field, Feedback, EmptyState } from '../../../../packages/ui/components';
 import { money } from '../../../../packages/domain/index';
-export function loader() {
-  return { requestKey: crypto.randomUUID() };
+export async function loader({ request, context, params }: LoaderFunctionArgs) {
+  const propertyId = new URL(request.url).searchParams.get('property');
+  const selected = propertyId
+    ? await loadApi(
+        request,
+        context,
+        `/api/w/${params.kind}/${params.scopeId}/properties/${encodeURIComponent(propertyId)}`,
+      )
+    : null;
+  return { requestKey: crypto.randomUUID(), selectedProperty: selected?.property ?? null };
 }
 export async function action(args: ActionFunctionArgs) {
   const f = await args.request.formData();
@@ -41,11 +51,15 @@ export default function Book() {
   const d = useWorkspace();
   const { serviceId: requestedService } = useParams();
   const [search] = useSearchParams();
-  const { requestKey } = useLoaderData<typeof loader>();
+  const { requestKey, selectedProperty } = useLoaderData<typeof loader>();
+  const properties =
+    selectedProperty && !d.properties.some((p) => p.id === selectedProperty.id)
+      ? [selectedProperty, ...d.properties]
+      : d.properties;
   const result = useActionData<any>();
   const busy = useNavigation().state !== 'idle';
   const [serviceId, setServiceId] = useState(requestedService || '');
-  const [propertyId, setPropertyId] = useState(search.get('property') || d.properties[0]?.id || '');
+  const [propertyId, setPropertyId] = useState(search.get('property') || properties[0]?.id || '');
   const [date, setDate] = useState('');
   const [slots, setSlots] = useState<Array<{ start: string; end: string; label: string }>>([]);
   const [slot, setSlot] = useState('');
@@ -53,7 +67,7 @@ export default function Book() {
   const [message, setMessage] = useState('Select a date to see available appointments.');
   const [method, setMethod] = useState('owner');
   const service = d.services.find((s) => s.id === serviceId);
-  const property = d.properties.find((p) => p.id === propertyId);
+  const property = properties.find((p) => p.id === propertyId);
   useEffect(() => {
     setSlot('');
     setSlots([]);
@@ -78,26 +92,32 @@ export default function Book() {
       });
     return () => abort.abort();
   }, [date, serviceId, d.workspace.kind, d.workspace.scopeId]);
-  if (d.workspace.kind !== 'landlord')
+  if (
+    !['landlord', 'property-manager', 'commercial', 'strata-manager'].includes(d.workspace.kind) ||
+    d.workspace.role === 'viewer'
+  )
     return (
       <EmptyState
         title="Booking unavailable"
         description="Use an authorised management workspace to book a service."
       />
     );
-  if (!d.properties.length)
+  if (!properties.length)
     return (
       <>
         <PageHeading
           title="Start with your property."
-          description="Add your residential rental property before booking a service."
+          description="Add or link the property through your authorised workspace before booking."
         />
         <section className="panel">
           <EmptyState
             title="Your report needs a home"
             description="Bookings and reports are linked to your property, so you can find them again later."
           >
-            <Link className="button" to={`${d.workspace.href}/properties`}>
+            <Link
+              className="button"
+              to={`${d.workspace.href}/${d.workspace.kind === 'strata-manager' ? 'schemes' : d.workspace.kind === 'landlord' ? 'properties' : 'portfolio'}${requestedService ? `?service=${requestedService}` : ''}`}
+            >
               Add a property
             </Link>
           </EmptyState>
@@ -162,7 +182,7 @@ export default function Book() {
                 value={propertyId}
                 onChange={(e) => setPropertyId(e.target.value)}
               >
-                {d.properties.map((p) => (
+                {properties.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.address}, {p.suburb}
                   </option>
@@ -191,7 +211,13 @@ export default function Book() {
             {service?.booking_mode === 'request' && (
               <div className="notice warning">
                 This service requires a scope or price confirmation.{' '}
-                <Link to={`${d.workspace.href}/requests?property=${propertyId}`}>
+                <Link
+                  to={
+                    d.workspace.kind === 'strata-manager'
+                      ? `${d.workspace.href}/schemes`
+                      : `${d.workspace.href}/requests?property=${propertyId}&service=${serviceId}`
+                  }
+                >
                   Send a service request
                 </Link>{' '}
                 instead of reserving an appointment.
@@ -306,7 +332,10 @@ export default function Book() {
           >
             {busy ? 'Confirming booking…' : 'Confirm booking'}
           </button>
-          <Link className="small" to={`${d.workspace.href}/properties`}>
+          <Link
+            className="small"
+            to={`${d.workspace.href}/${d.workspace.kind === 'strata-manager' ? 'schemes' : d.workspace.kind === 'landlord' ? 'properties' : 'portfolio'}${requestedService ? `?service=${requestedService}` : ''}`}
+          >
             Back to properties
           </Link>
         </aside>

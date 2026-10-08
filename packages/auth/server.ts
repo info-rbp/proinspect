@@ -27,6 +27,10 @@ function cookieValue(request: Request, env: Env) {
     .find((s) => s.startsWith(cookieName(request, env) + '='))
     ?.split('=')[1];
 }
+export async function currentSessionHash(request: Request, env: Env) {
+  const value = cookieValue(request, env);
+  return value && /^[a-f0-9]{64}$/.test(value) ? digest(value) : null;
+}
 export async function principal(request: Request, env: Env): Promise<Principal | null> {
   const value = cookieValue(request, env);
   if (!value || !/^[a-f0-9]{64}$/.test(value)) return null;

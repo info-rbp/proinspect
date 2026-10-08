@@ -1,11 +1,18 @@
-import { Link, useParams } from 'react-router';
+import { loadApi } from '../lib/api.server';
+import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { useWorkspace } from '../lib/workspace';
 import { PageHeading, Badge, EmptyState } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
+export async function loader({ request, context, params }: LoaderFunctionArgs) {
+  return loadApi(
+    request,
+    context,
+    `/api/w/${params.kind}/${params.scopeId}/properties/${params.propertyId}`,
+  );
+}
 export default function Property() {
   const d = useWorkspace();
-  const { propertyId } = useParams();
-  const p = d.properties.find((p) => p.id === propertyId);
+  const { property: p } = useLoaderData<typeof loader>();
   if (!p)
     return (
       <EmptyState
@@ -28,13 +35,19 @@ export default function Property() {
         title={p.address}
         description={`${p.property_type} · ${p.sector === 'residential' ? 'Residential property' : p.sector}`}
       >
-        {d.workspace.kind === 'landlord' && (
-          <Link className="button" to={`${d.workspace.href}/book?property=${p.id}`}>
-            Book a service
-          </Link>
-        )}
+        {['landlord', 'property-manager', 'commercial', 'strata-manager'].includes(
+          d.workspace.kind,
+        ) &&
+          d.workspace.role !== 'viewer' && (
+            <Link className="button" to={`${d.workspace.href}/book?property=${p.id}`}>
+              Book a service
+            </Link>
+          )}
       </PageHeading>
       <div className="stack">
+        <Link to={`${d.workspace.href}/records/documents?property=${p.id}`}>
+          Browse the full document history
+        </Link>
         <div className="grid-2">
           <section className="panel">
             <div className="panel-header">
@@ -96,7 +109,10 @@ export default function Property() {
                     PDF · Version {doc.version} · {displayDate(doc.issued_at || doc.created_at)}
                   </p>
                 </div>
-                <a className="button secondary" href={`/api/documents/${doc.id}/download`}>
+                <a
+                  className="button secondary"
+                  href={`/api${d.workspace.href}/documents/${doc.id}/download`}
+                >
                   Download
                 </a>
               </div>

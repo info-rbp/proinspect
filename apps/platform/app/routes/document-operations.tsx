@@ -82,7 +82,9 @@ export default function DocumentOperations() {
                 <summary>
                   {doc.title} - Version {doc.version} - {doc.status}
                 </summary>
-                <a href={`/api/documents/${doc.id}/download`}>Download for review</a>
+                <a href={`/api${d.workspace.href}/documents/${doc.id}/download`}>
+                  Download for review
+                </a>
                 <OperationForm
                   endpoint={`${api}/documents/${doc.id}/issue`}
                   label="Issue to selected audience"
