@@ -1,3 +1,4 @@
+import {ENGAGEMENTS} from '../../../../packages/marketing/content';
 import { Link, useLoaderData, useOutletContext, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
 import { seo } from '../lib/seo';
 
@@ -20,9 +21,11 @@ const pages: Record<string, { title: string; intro: string; sections: Array<[str
       ['A record for the property', 'Bookings, requests, work orders and issued reports belong to the same property context.'],
       ['Access follows your role', 'A private landlord, tenant and operations employee do not see the same information. Access is checked for each relationship and document.'],
       ['Reports when they are ready', 'Email tells you an issued report is available. Your account remains its secure point of access.'],
-      ['A growing platform', 'The first release focuses on self-managing landlords, tenancy requests and ProInspect delivery. Dedicated professional, strata, building and council workspaces are part of the staged product roadmap and are not yet publicly enabled.'],
+      ['A workspace for each relationship', 'Self-managing landlords, property managers, strata managers, tenants, residents and council members use different authorised workspaces. Organisation review, invitations and effective membership dates determine access. Hosted availability is confirmed during release, not by this preview.'],
     ],
   },
+  'why-proinspect': {title:'Practical work, connected records.',intro:'Choose one service or discuss ongoing property support.',sections:[['A clear operational boundary','Confirm the instruction, access and reporting output before work starts.'],['Property and scheme context','Keep bookings, requests and issued records connected instead of scattered across separate email conversations.'],['Different roles, appropriate access','Self-managing landlords, professional managers, residents, tenants and council members have different permissions.'],['Evidence rather than unsupported claims','Ask about the intended report and service scope. Testimonials, performance figures and credentials will only be published after verification.']]},
+  'areas-we-service':{title:'Confirm service availability for your location.',intro:'ProInspect is focused on property work in Western Australia. Coverage and attendance depend on the location, service and agreed scope.',sections:[['Tell us the general location','Include the suburb or locality in your enquiry. Do not send access codes or confidential tenancy information.'],['Confirm before booking','A location appearing in a guide does not establish a service-area or urgent-response commitment. Availability is confirmed with the appointment or quotation.']]},
   about: {
     title: 'On-the-ground support. Structured property records.',
     intro: 'ProInspect provides property inspection and operational attendance services in Western Australia.',
@@ -83,6 +86,7 @@ export default function Information() {
     <header className="service-hero"><div className="site-container"><p className="eyebrow">ProInspect</p><h1>{p.title}</h1><p>{p.intro}</p></div></header>
     <section className="section"><div className="site-container"><article className="prose">
       {p.sections.map(([title, text]) => <section className="stack-sm" key={title}><h2>{title}</h2><p>{text}</p></section>)}
+      {p.path==='/how-it-works'&&<nav className="stack" aria-label="Ways to work with ProInspect">{Object.entries(ENGAGEMENTS).map(([slug,e])=><Link key={slug} to={`/how-we-work/${slug}`}>{e.title}</Link>)}</nav>}
       <div className="actions"><Link className="button" to="/services">Explore services</Link>{p.path === '/contact' ? <a className="button secondary" href="mailto:info@proinspect.systems">Email ProInspect</a> : <a className="button secondary" href={`${appOrigin}/signin`}>Open your account</a>}</div>
     </article></div></section>
   </>;

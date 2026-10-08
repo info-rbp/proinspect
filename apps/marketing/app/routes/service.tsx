@@ -1,3 +1,4 @@
+import {SERVICE_FOCUS} from '../../../../packages/marketing/content';
 import { Link, useLoaderData, useOutletContext, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
 import { findService, SERVICE_SEEDS, FAMILIES } from '../../../../packages/service-catalogue/index';
 import { seo } from '../lib/seo';
@@ -20,13 +21,14 @@ export default function ServicePage() {
   const { appOrigin } = useOutletContext<{ appOrigin: string }>();
   return <>
     <header className="service-hero"><div className="site-container">
-      <nav className="breadcrumbs" aria-label="Breadcrumb"><Link to="/services">Services</Link><span>/</span><span>{FAMILIES[s.family].name}</span></nav>
+      <nav className="breadcrumbs" aria-label="Breadcrumb"><Link to="/services">Services</Link><span>/</span><Link to={`/services/category/${s.family}`}>{FAMILIES[s.family].name}</Link></nav>
       <p className="eyebrow">{s.sectors.map(v => v === 'strata-building' ? 'Strata & buildings' : v).join(' · ')}</p>
       <h1>{s.name}</h1><p>{s.summary}</p>
       <div className="actions"><a className="button" href={`${appOrigin}/book/${s.id}`}>Arrange this service</a><Link className="button secondary" to={`/contact?service=${s.id}`}>Ask about the scope</Link></div>
     </div></header>
     <section className="section"><div className="site-container detail-grid">
       <article className="prose">
+        {SERVICE_FOCUS[s.id]&&<><h2>What this service focuses on</h2><p>{SERVICE_FOCUS[s.id][0]}</p><h2>What to provide</h2><p>{SERVICE_FOCUS[s.id][1]}</p><h2>The intended output</h2><p>{SERVICE_FOCUS[s.id][2]}</p></>}
         <h2>Clear work. A useful record.</h2>
         <p>{s.summary} The instruction, property context and agreed access arrangements guide the attendance. Any specialist assessment or additional work needs a separately agreed scope.</p>
         <h2>Before the visit</h2>
