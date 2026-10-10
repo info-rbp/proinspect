@@ -1,0 +1,16 @@
+{
+  "branch": "ProInspect-V2",
+  "source_branch": "main",
+  "accepted_source_sha": "113e931896edc23c7c324be6f9d3b5f703a4dbbb",
+  "accepted_ci_url": "https://github.com/info-rbp/proinspect/actions/runs/37710009117",
+  "accepted_ci_result": "success",
+  "frozen_at": "2026-10-10",
+  "policy": "Existing migrations are immutable. All future schema changes are additive and use unique, sequential numeric prefixes.",
+  "baseline_migrations": {
+    "database/migrations/0001_core.sql": "36646689645247e3e1ac158fbdaba548531cb6ba",
+    "database/migrations/0002_guards.sql": "97ad57958e2a109e87cbbefe2269f203494ea872",
+    "database/migrations/0003_connected_operations.sql": "aa30e4075f55fd027b96e3b171dd1b2f051d71a5",
+    "database/migrations/0004_enquiries_notices.sql": "20b6cbdb53700794eb6a8a77d201d16da239bfe2",
+    "database/migrations/0005_account.sql": "a860f8b430970f524a9d2eff19a70f9f9d1066f8"
+  }
+}

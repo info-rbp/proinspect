@@ -61,4 +61,29 @@ class SchemaTests(unittest.TestCase):
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute("INSERT INTO notice_deliveries(notice_id,user_id,notification_id,outbox_id,created_at) VALUES('notice','u','alert2','mail','2026-01-01')")
 
+
+    def test_v2_migration_numbers_unique_and_contiguous(self):
+        """V2 migrations append one version at a time; never reuse a deployed version."""
+        import re
+        paths = sorted(pathlib.Path('database/migrations').glob('*.sql'))
+        versions = []
+        for path in paths:
+            match = re.fullmatch(r'(\d{4})_[a-z0-9_]+\.sql', path.name)
+            self.assertIsNotNone(match, f'Unexpected migration filename: {path.name}')
+            versions.append(int(match.group(1)))
+        self.assertEqual(sorted(versions), list(range(1, len(paths) + 1)),
+                         'Migration numbers must be unique and contiguous; rename new migrations instead of reusing old numbers')
+
+    def test_v2_accepted_migrations_remain_byte_for_byte_unchanged(self):
+        """Protect the exact migrated schema that passed main acceptance."""
+        import hashlib
+        import json
+        manifest = json.loads(pathlib.Path('.github/v2-migration-baseline.json').read_text())
+        for path_name, expected_git_sha in manifest['baseline_migrations'].items():
+            payload = pathlib.Path(path_name).read_bytes()
+            git_blob = b'blob ' + str(len(payload)).encode('ascii') + b'\x00' + payload
+            actual_sha = hashlib.sha1(git_blob).hexdigest()
+            self.assertEqual(actual_sha, expected_git_sha,
+                             f'Previously accepted migration changed: {path_name}; create an additive migration instead')
+
 if __name__=='__main__': unittest.main()

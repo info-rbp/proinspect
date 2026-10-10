@@ -1,7 +1,7 @@
 name: Verify ProInspect
 on:
   push:
-    branches: [main]
+    branches: [main, ProInspect-V2]
   pull_request:
   workflow_dispatch:
 permissions:
