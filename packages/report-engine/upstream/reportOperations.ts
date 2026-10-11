@@ -1,6 +1,6 @@
-import { inspectionPolicy } from './inspectionPolicy.js';
-import type { ReportAggregate } from './reportModel.js';
-import type { ReportLifecycleStatus } from './platform.js';
+import { inspectionPolicy } from './inspectionPolicy.ts';
+import type { ReportAggregate } from './reportModel.ts';
+import type { ReportLifecycleStatus } from './platform.ts';
 
 export const REPORT_QC_SEVERITIES = ['info', 'warning', 'error', 'blocker'] as const;
 export type ReportQcSeverity = (typeof REPORT_QC_SEVERITIES)[number];
@@ -188,7 +188,7 @@ export interface ReportBrandingSnapshot {
   capturedAt: string;
 }
 
-declare module './reportModel.js' {
+declare module './reportModel.ts' {
   interface ReportComponentRecord {
     testRecord?: ReportTestRecord;
     aiSuggestion?: ReportAiSuggestion;
