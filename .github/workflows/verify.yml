@@ -1,7 +1,7 @@
 name: Verify ProInspect
 on:
   push:
-    branches: [main]
+    branches: [main, 'integration/report-creation-tool']
   pull_request:
   workflow_dispatch:
 permissions:
