@@ -78,7 +78,7 @@ export function apiError(error: unknown) {
     );
   if (
     error instanceof Error &&
-    /UNIQUE constraint|CHECK constraint|SCHEDULE_CONFLICT|APPROVAL_REQUIRED|CONTEXT_MISMATCH|TENANCY_OVERLAP/.test(
+    /UNIQUE constraint|CHECK constraint|SCHEDULE_CONFLICT|APPROVAL_REQUIRED|CONTEXT_MISMATCH|TENANCY_OVERLAP|V2_[A-Z_]+/.test(
       error.message,
     )
   )
