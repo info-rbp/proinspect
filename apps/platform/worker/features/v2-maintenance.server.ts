@@ -164,7 +164,9 @@ export async function maintenanceCommand(env:Env,user:Principal,w:Workspace,rout
   const x=z.object({taskId:recordId,kind:z.enum(['note','photo','report','invoice','certificate']),
     documentId:recordId.optional(),reference:reference}).parse(d);
   const t=await task(env,x.taskId);
-  if(user.staffRole==='inspector')await workOrderAccess(env,user,w,t.work_order_id,true);
+  if(user.staffRole==='inspector')assert(
+   await statement(env.DB,"SELECT id FROM v2_task_assignments WHERE task_id=? AND staff_user_id=? AND status='confirmed'",x.taskId,user.id).first(),
+   404,'TASK_NOT_ASSIGNED','This maintenance task is not assigned to you.');
   if(x.kind!=='note')assert(x.documentId,422,'DOCUMENT_REQUIRED','Non-note evidence must be an issued, authorised document.');
   const evidenceId=uid('v2ev');await env.DB.batch([statement(env.DB,
    'INSERT INTO v2_task_evidence(id,task_id,kind,document_id,reference,created_by,created_at) VALUES(?,?,?,?,?,?,?)',
@@ -196,7 +198,9 @@ export async function maintenanceCommand(env:Env,user:Principal,w:Workspace,rout
    activityKind:z.enum(['on_site','travel','inspection','coordination','administration']),note:z.string().max(1000).default(''),sourceKey:reference}).parse(d);
   if(user.staffRole==='inspector'){
    assert(x.staffUserId===user.id,403,'SELF_TIME_ONLY','Inspectors may submit only their own time.');
-   const t=await task(env,x.taskId);await workOrderAccess(env,user,w,t.work_order_id,true);
+   await task(env,x.taskId);
+   assert(await statement(env.DB,"SELECT id FROM v2_task_assignments WHERE task_id=? AND staff_user_id=? AND status='confirmed'",x.taskId,user.id).first(),
+     404,'TASK_NOT_ASSIGNED','This maintenance task is not assigned to you.');
   }
   const minutes=Math.round((Date.parse(x.endedAt)-Date.parse(x.startedAt))/60000);
   assert(minutes>=1&&minutes<=720&&x.endedAt<=now(),422,'TIME_INVALID','Record a completed interval up to twelve hours.');
