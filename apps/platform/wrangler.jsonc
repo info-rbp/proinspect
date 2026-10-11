@@ -98,7 +98,8 @@
           "binding": "DOCUMENTS"
         },
         {
-          "binding": "RESTRICTED_DOCUMENTS"
+          "binding": "RESTRICTED_DOCUMENTS",
+          "bucket_name": "proinspect-platform-restricted-documents"
         }
       ],
       "durable_objects": {

@@ -23,13 +23,17 @@ Cloudflare dashboard -> Workers & Pages -> `proinspect-platform` -> Settings -> 
 
 Wrangler 4.147 supports automatic provisioning of D1, R2 and Queues when IDs or bucket names are omitted. The named `env.connected` bindings request these resources directly as part of `wrangler deploy`:
 
-- `DB`: new `proinspect-platform-data` D1, **not** any earlier application database.
-- `DOCUMENTS`: newly provisioned private R2 bucket.
-- `RESTRICTED_DOCUMENTS`: separate newly provisioned private R2 bucket.
+- `DB`: `proinspect-platform-data` D1, created during the initial deployment attempts, **not** an earlier application database.
+- `DOCUMENTS`: the ordinary private R2 binding inherited by the existing Worker; verify its bucket identity before storing customer files.
+- `RESTRICTED_DOCUMENTS`: reuse the **existing** private R2 bucket `proinspect-platform-restricted-documents` by explicitly setting `bucket_name` in `env.connected`.
 - `EVENTS`: `proinspect-platform-events` Queue and `proinspect-platform-events-dlq` dead-letter Queue.
 - `SCHEDULER`: SQLite-backed `BookingScheduler` Durable Object.
 
-The first Cloudflare deployment log also reported `DOCUMENTS (inherited)` for the ordinary R2 binding; verify its bucket identity in Cloudflare before issuing reports, because an inherited bucket is not guaranteed to be newly created. This compatibility update does not overwrite or erase that bucket.
+The first Cloudflare deployment log reported `DOCUMENTS (inherited)` for the ordinary R2 binding; verify its bucket identity in Cloudflare before issuing reports, because an inherited bucket is not guaranteed to be newly created. This configuration does not overwrite or erase that bucket.
+
+### R2 retry fix (Cloudflare error 10004)
+
+The failed 11 October deployment created `proinspect-platform-restricted-documents` but did not complete the Worker deployment. A later build attempted to **create the same bucket again**, returning `The bucket you tried to create already exists, and you own it` (10004). The source now explicitly binds `RESTRICTED_DOCUMENTS` to that existing bucket using `bucket_name`, preventing repeat provisioning. Do not delete/recreate the bucket to bypass the error; it may contain objects. The direct-build preflight and regression tests prevent accidentally removing this binding or reusing that bucket for ordinary documents. `DOCUMENTS` remains inherited and must be checked separately in Cloudflare.
 
 The new database does not inherit any historic tenant or client records. **Do not point this application at a legacy database.** Cloudflare displays generated IDs and bucket names in its dashboard; they are not committed into source by Workers Builds. The expected first-deploy log should say `proinspect-platform` and `APP_ENV=production`, with no `local` database or localhost URL bindings.
 
