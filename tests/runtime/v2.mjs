@@ -457,13 +457,39 @@ try{
    await assert.rejects(sql("UPDATE v2_capital_forecasts SET forecast_total_cents=1 WHERE id=?",forecast.id).run(),/V2_CAPITAL_FORECAST_IMMUTABLE/);
  });
  await check('enterprise reporting uses live scoped records and immutable auditable snapshots',async()=>{
+   // Create intentionally similar work on another client's site, plus another
+   // market on our site. Each report filter must remove the other rows.
+   const t=new Date().toISOString(),past=new Date(Date.now()-3*86400000).toISOString().slice(0,10);
+   await sql("INSERT INTO v2_engagements(id,client_id,property_id,market_code,reference,status,scope_summary,starts_at,created_by,created_at) VALUES(?,?,?,?,?,'active',?,?,?,?)",
+      'v2-external-com-eng',otherClient,otherProperty,'COM','FOREIGN-COM-ENGAGEMENT',
+      'Isolated synthetic operations',twoDaysAgo,operator.id,t).run();
+   await sql("INSERT INTO v2_engagements(id,client_id,property_id,market_code,reference,status,scope_summary,starts_at,created_by,created_at) VALUES(?,?,?,?,?,'active',?,?,?,?)",
+      'v2-sameclient-com-eng',client,propertyId,'COM','SAMECLIENT-COM-ENGAGEMENT',
+      'Isolated synthetic sector scope',twoDaysAgo,operator.id,t).run();
+   for(const [id,eng,asset] of [
+      ['v2-other-com-obligation','v2-external-com-eng','v2:property:'+otherProperty],
+      ['v2-self-com-obligation','v2-sameclient-com-eng',rootAsset]
+   ]){
+      await sql("INSERT INTO v2_compliance_obligations(id,engagement_id,asset_id,title,category,source_reference,requirement_summary,accountable_party,next_review_on,status,created_by,created_at,updated_at) VALUES(?,?,?,'Extra sector record','fire','EXTERNAL-REFERENCE','Independent maintenance','qualified_provider',?,'tracked',?,?,?)",
+        id,eng,asset,past,operator.id,t,t).run();
+   }
+   for(const [id,eng,budget] of [
+      ['v2-external-cap','v2-external-com-eng',50000],
+      ['v2-sameclient-cap','v2-sameclient-com-eng',30000]
+   ]){
+      await sql("INSERT INTO v2_capital_programmes(id,engagement_id,title,purpose,baseline_budget_cents,status,authority_reference,approved_by,approved_at,created_by,created_at,updated_at) VALUES(?,?,'External test capex','Scope regression',?,'approved','SYNTHETIC-REVIEW',?,?,?, ?,?)",
+        id,eng,budget,approver.id,t,operator.id,t,t).run();
+   }
    const report=await ok(enterprise+'/reports',operator,{
       title:'Client approved residential portfolio scorecard',reportKind:'operations',
       clientId:client,marketCode:'RES',portfolioId:pf.id,windowDays:90});
    const saved=await ok(enterprise+'/reports/'+report.id+'/snapshot',operator,{});
    assert.ok(saved.id);
    assert.ok(Number(saved.summary.assets.assets)>=1);
-   assert.ok(Number(saved.summary.compliance.review_overdue)>=1);
+   assert.equal(Number(saved.summary.compliance.review_overdue),1,
+      'RES report must exclude COM obligations, including another market on the same property');
+   assert.equal(Number(saved.summary.capital.baseline_cents),10000,
+      'RES report must exclude other-client and same-client COM capital programmes');
    assert.equal(saved.summary.capital.committed_cents,7000);
    await assert.rejects(sql("DELETE FROM v2_report_snapshots WHERE id=?",saved.id).run(),/V2_REPORT_SNAPSHOT_IMMUTABLE/);
    const csv=await api(enterprise+'/export?days=90',operator);
