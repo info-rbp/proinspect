@@ -60,3 +60,8 @@ Apply additive migrations before dependent code. Worker rollback does not revert
 ## Optional connected-workflow configuration
 
 See INTEGRATIONS.md for Report Tool, Stripe and Apps Script secrets and receiving contracts. Keep RESTRICTED_WORKFLOWS_ENABLED unset/false until confidential-intake operating procedures, retention and legal/security release review are approved. None of these settings is required to run synthetic local acceptance.
+
+
+## One-time connection for the existing platform Worker
+
+The original automatic deploy workflow remains locked. A separate `workflow_dispatch` action can be run from `main` only after the owner explicitly confirms `proinspect-platform`: [Connected Worker configuration](CLOUDFLARE_CONNECTED_WORKER.md). This action provisions fresh isolated staging resources, patches the main Cloudflare Builds trigger, and commits nonsecret D1 bindings. Running it can replace the code on the existing Worker, but it does not attach custom domains, reuse historic data, or authorise production launch. GitHub secrets alone do not trigger it.
