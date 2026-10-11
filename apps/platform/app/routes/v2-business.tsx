@@ -51,6 +51,7 @@ export default function V2Business() {
       <OperationForm endpoint={(f)=>api+'/services/'+encodeURIComponent(String(f.get('serviceCode')) )+'/review'} label="Record service review">
         <Select name="serviceCode" label="Service" options={services}/>
         <Select name="status" label="Review decision" options={choices(['review','approved'])}/>
+        <Input name="approvalReference" label="Reviewed service scope / approval evidence reference" required={false}/>
         <p className="small">A service is not bookable until its market eligibility and commercial terms are separately approved.</p>
       </OperationForm>
       <OperationForm endpoint={api+'/rules'} label="Review market-service rule" defaults={{marketCode:d.ruleMarket}}>
@@ -87,6 +88,7 @@ export default function V2Business() {
        <OperationForm endpoint={(f)=>api+'/asset-markets/'+encodeURIComponent(String(f.get('assetMarketId')) )+'/review'} label="Review asset classification">
         <Select name="assetMarketId" label="Pending classification" options={proposedAssignments.map((a:any)=>({value:a.id,label:a.market_code+' / '+(a.property_id || a.scheme_id)}))}/>
         <Select name="status" label="Decision" options={choices(['approved','blocked'])}/>
+        <Input name="verificationReference" label="Verified property classification evidence" required={false}/>
        </OperationForm>
       </div>
     </div>}
@@ -110,6 +112,12 @@ export default function V2Business() {
         <Select name="engagementId" label="Draft agreement" options={draftEngagements.map((e:any)=>({value:e.id,label:e.reference}))}/>
         <Input name="authorityReference" label="Verified signed appointment / authority"/>
         <p className="small">Requires an approved market assignment and the market to be enabled. This is separate from statutory management appointment.</p>
+      </OperationForm>
+    </div>}
+    {writable&&<div className="grid-2">
+      <OperationForm endpoint={(f)=>api+'/engagements/'+encodeURIComponent(String(f.get('engagementId')) )+'/status'} label="Change engagement lifecycle">
+        <Select name="engagementId" label="Active / paused engagement" options={d.engagements.filter((e:any)=>['active','paused'].includes(e.status)).map((e:any)=>({value:e.id,label:e.reference+' ['+e.status+']'}))}/>
+        <Select name="status" label="New state" options={choices(['active','paused','ended'])}/>
       </OperationForm>
     </div>}
    </Panel>
@@ -161,6 +169,7 @@ export default function V2Business() {
      <div className="stack">
        <OperationForm endpoint={(f)=>api+'/rate-cards/'+encodeURIComponent(String(f.get('rateCardId')) )+'/approve'} label="Approve reviewed cost card">
         <Select name="rateCardId" label="Draft rate card" options={d.rateCards.filter((r:any)=>r.status==='draft').map((r:any)=>({value:r.id,label:r.market_code+' v'+r.version}))}/>
+        <Input name="approvalReference" label="Pricing signoff / approved costing reference"/>
        </OperationForm>
        <OperationForm endpoint={api+'/quotes'} label="Generate immutable internal quote"
          result={(r:any)=><p>Calculated quote {r.id}: {price(r.pricing?.exGstCents)} excl. GST. Remains draft.</p>}>
@@ -204,6 +213,10 @@ export default function V2Business() {
         <p className="small">Link exactly one work order or booking. Subscription and customer scope are verified by the database.</p>
       </OperationForm>
     </div>}
+    {writable&&<OperationForm endpoint={(f)=>api+'/subscriptions/'+encodeURIComponent(String(f.get('subscriptionId')) )+'/end'} label="End current subscription period">
+      <Select name="subscriptionId" label="Active subscription" options={activeSubscriptions.map((s:any)=>({value:s.id,label:s.engagement_id+' · '+s.id}))}/>
+      <p className="small">Ending a period prevents further allowance consumption. Historic fees and usage remain recorded.</p>
+    </OperationForm>}
     <div className="table-wrap"><table><thead><tr><th>Engagement</th><th>Period</th><th>Status</th><th>Monthly fee</th></tr></thead><tbody>
       {d.subscriptions.map((s:any)=><tr key={s.id}><td>{s.engagement_id}</td><td>{s.period_start?.slice(0,10)} – {s.period_end?.slice(0,10)}</td><td>{s.status}</td><td>{price(s.agreed_monthly_cents)}</td></tr>)}
     </tbody></table></div>

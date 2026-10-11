@@ -85,9 +85,9 @@ try{
  });
  await check('market and service activation require distinct staff review',async()=>{
    const proposed=(await sql('SELECT id FROM v2_asset_markets WHERE property_id=? AND market_code=?',propertyId,'RES').first()).id;
-   await ok(staffApi+'/asset-markets/'+proposed+'/review',operator,{status:'approved'});
+   await ok(staffApi+'/asset-markets/'+proposed+'/review',operator,{status:'approved',verificationReference:'Verified property relationship and sector evidence'});
    await ok(staffApi+'/markets/RES/enable',operator,{enabled:true});
-   await ok(staffApi+'/services/V2-001/review',operator,{status:'approved'});
+   await ok(staffApi+'/services/V2-001/review',operator,{status:'approved',approvalReference:'Approved inspection operating scope 2026'});
    await ok(staffApi+'/rules',operator,{marketCode:'RES',serviceCode:'V2-001',status:'approved',notes:'Reviewed residential inclusion'});
    const row=await sql('SELECT status FROM v2_market_service_rules WHERE market_code=? AND service_code=?','RES','V2-001').first();
    assert.equal(row.status,'approved');
@@ -119,7 +119,7 @@ try{
  const rate=await ok(staffApi+'/rate-cards',operator,{marketCode:'RES',version:1,
    loadedHourlyCents:6200,travelVisitCents:2500,fixedAdminCents:1200,
    contingencyBp:1000,targetMarginBp:3800,gstBp:1000});
- await ok(staffApi+'/rate-cards/'+rate.id+'/approve',operator,{});
+ await ok(staffApi+'/rate-cards/'+rate.id+'/approve',operator,{approvalReference:'Pricing signoff for residential V2 fixture'});
  await check('approved cost model generates immutable quote with third-party costs',async()=>{
    const q=await ok(staffApi+'/quotes',operator,{
      clientId:client,propertyId,marketCode:'RES',serviceCode:'V2-001',rateCardId:rate.id,engagementId:engagement,

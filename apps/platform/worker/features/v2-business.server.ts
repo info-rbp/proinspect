@@ -115,9 +115,10 @@ export async function v2Command(env: Env, user: Principal, w: Workspace, area: s
     return {id:assetMarketId};
   }
   if(area==='asset-markets' && key && action==='review') {
-    const d=z.object({status:choice(['approved','blocked'])}).parse(data);
-    await transaction(env,user,"UPDATE v2_asset_markets SET status=?,verified_by=?,verified_at=? WHERE id=? AND status='proposed'",
-      [d.status,user.id,now(),key],'v2.asset_market_reviewed','asset-market',key);
+    const d=z.object({status:choice(['approved','blocked']),verificationReference:reference.optional()}).parse(data);
+    if(d.status==='approved') assert(d.verificationReference,422,'V2_REVIEW_REFERENCE_REQUIRED','Record the evidence supporting this property-market classification.');
+    await transaction(env,user,"UPDATE v2_asset_markets SET status=?,verified_by=?,verified_at=?,verification_reference=? WHERE id=? AND status='proposed'",
+      [d.status,user.id,now(),d.verificationReference??null,key],'v2.asset_market_reviewed','asset-market',key);
     return {id:key,status:d.status};
   }
   if(area==='markets' && key && action==='enable') {
@@ -127,10 +128,11 @@ export async function v2Command(env: Env, user: Principal, w: Workspace, area: s
     return {market:key,enabled:d.enabled};
   }
   if(area==='services' && key && action==='review') {
-    const d=z.object({status:choice(['review','approved'])}).parse(data);
+    const d=z.object({status:choice(['review','approved']),approvalReference:reference.optional()}).parse(data);
+    if(d.status==='approved') assert(d.approvalReference,422,'V2_REVIEW_REFERENCE_REQUIRED','Record the approved service scope and responsible reviewer.');
     await transaction(env,user,
-      "UPDATE v2_services SET status=?,approved_by=?,approved_at=? WHERE code=? AND status IN ('draft','review')",
-      [d.status,d.status==='approved'?user.id:null,d.status==='approved'?now():null,key],
+      "UPDATE v2_services SET status=?,approved_by=?,approved_at=?,approval_reference=? WHERE code=? AND status IN ('draft','review')",
+      [d.status,d.status==='approved'?user.id:null,d.status==='approved'?now():null,d.approvalReference??null,key],
       'v2.service_reviewed','service',key);
     return {service:key,status:d.status};
   }
@@ -200,8 +202,9 @@ export async function v2Command(env: Env, user: Principal, w: Workspace, area: s
     return {id:rateCardId};
   }
   if(area==='rate-cards' && key && action==='approve') {
-    await transaction(env,user,"UPDATE v2_rate_cards SET status='approved',approved_by=?,approved_at=? WHERE id=? AND status='draft'",
-      [user.id,now(),key],'v2.rate_card_approved','rate-card',key);
+    const d=z.object({approvalReference:reference}).parse(data);
+    await transaction(env,user,"UPDATE v2_rate_cards SET status='approved',approved_by=?,approved_at=?,approval_reference=? WHERE id=? AND status='draft'",
+      [user.id,now(),d.approvalReference,key],'v2.rate_card_approved','rate-card',key);
     return {id:key,status:'approved'};
   }
   if(area==='engagements' && !key) {
@@ -227,6 +230,21 @@ export async function v2Command(env: Env, user: Principal, w: Workspace, area: s
       [d.authorityReference,user.id,now(),key],
       'v2.engagement_activated','engagement',key);
     return {id:key,status:'active'};
+  }
+  if(area==='engagements' && key && action==='status') {
+    const d=z.object({status:choice(['active','paused','ended'])}).parse(data);
+    const old=await statement(env.DB,'SELECT status FROM v2_engagements WHERE id=?',key).first<{status:string}>();
+    assert(old,404,'V2_ENGAGEMENT_NOT_FOUND','The engagement was not found.');
+    const transitions:Record<string,string[]>={active:['paused','ended'],paused:['active','ended']};
+    assert(transitions[old.status]?.includes(d.status),409,'V2_ENGAGEMENT_TRANSITION','This engagement status cannot be changed.');
+    await transaction(env,user,'UPDATE v2_engagements SET status=?,version=version+1 WHERE id=? AND status=?',
+      [d.status,key,old.status],'v2.engagement_status_changed','engagement',key);
+    return {id:key,status:d.status};
+  }
+  if(area==='subscriptions' && key && action==='end') {
+    await transaction(env,user,"UPDATE v2_subscription_periods SET status='ended' WHERE id=? AND status='active'",
+      [key],'v2.subscription_ended','subscription',key);
+    return {id:key,status:'ended'};
   }
   if(area==='subscriptions' && !key) {
     const d=z.object({engagementId:id,planId:id,periodStart:isoDate,periodEnd:isoDate,

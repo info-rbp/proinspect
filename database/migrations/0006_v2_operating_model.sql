@@ -10,7 +10,7 @@ CREATE TABLE v2_markets (
 CREATE TABLE v2_services (
  code TEXT PRIMARY KEY, name TEXT NOT NULL, family TEXT NOT NULL,
  summary TEXT NOT NULL, delivery_gate TEXT NOT NULL CHECK(delivery_gate IN ('operations_only','qualified_review','statutory_reserved')),
- legacy_service_id TEXT UNIQUE, version INTEGER NOT NULL DEFAULT 1 CHECK(version>0),
+ legacy_service_id TEXT UNIQUE, approval_reference TEXT, version INTEGER NOT NULL DEFAULT 1 CHECK(version>0),
  status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','review','approved','retired')),
  approved_by TEXT REFERENCES users(id), approved_at TEXT,
  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -19,7 +19,7 @@ CREATE TABLE v2_services (
 CREATE TRIGGER v2_service_approved_lock BEFORE UPDATE ON v2_services WHEN OLD.status='approved'
 BEGIN SELECT RAISE(ABORT,'V2_APPROVED_SERVICE_IMMUTABLE'); END;
 CREATE TRIGGER v2_service_review_gate BEFORE UPDATE OF status ON v2_services WHEN NEW.status='approved'
-BEGIN SELECT RAISE(ABORT,'V2_SERVICE_REVIEW_REQUIRED') WHERE NEW.approved_by IS NULL OR NEW.approved_at IS NULL; END;
+BEGIN SELECT RAISE(ABORT,'V2_SERVICE_REVIEW_REQUIRED') WHERE NEW.approved_by IS NULL OR NEW.approved_at IS NULL OR LENGTH(TRIM(COALESCE(NEW.approval_reference,'')))<4; END;
 
 CREATE TABLE v2_service_revisions (
  service_code TEXT NOT NULL REFERENCES v2_services(code), version INTEGER NOT NULL CHECK(version>0),
@@ -76,11 +76,16 @@ CREATE TABLE v2_asset_markets (
  id TEXT PRIMARY KEY, market_code TEXT NOT NULL REFERENCES v2_markets(code),
  property_id TEXT REFERENCES properties(id), scheme_id TEXT REFERENCES strata_schemes(id),
  status TEXT NOT NULL DEFAULT 'proposed' CHECK(status IN ('proposed','approved','blocked')),
- verified_by TEXT REFERENCES users(id), verified_at TEXT,
+ verified_by TEXT REFERENCES users(id), verified_at TEXT, verification_reference TEXT,
  CHECK((property_id IS NOT NULL) + (scheme_id IS NOT NULL) = 1)
 ) STRICT;
 CREATE UNIQUE INDEX v2_asset_markets_property ON v2_asset_markets(property_id,market_code) WHERE property_id IS NOT NULL;
 CREATE UNIQUE INDEX v2_asset_markets_scheme ON v2_asset_markets(scheme_id,market_code) WHERE scheme_id IS NOT NULL;
+
+CREATE TRIGGER v2_asset_market_approval BEFORE UPDATE OF status ON v2_asset_markets WHEN NEW.status='approved'
+BEGIN SELECT RAISE(ABORT,'V2_ASSET_MARKET_REVIEW_REQUIRED')
+ WHERE NEW.verified_by IS NULL OR NEW.verified_at IS NULL OR LENGTH(TRIM(COALESCE(NEW.verification_reference,'')))<4;
+END;
 
 CREATE TABLE v2_engagements (
  id TEXT PRIMARY KEY, client_id TEXT NOT NULL REFERENCES clients(id),
@@ -100,10 +105,19 @@ CREATE TRIGGER v2_engagement_activation BEFORE UPDATE OF status ON v2_engagement
 WHEN NEW.status='active' AND OLD.status!='active'
 BEGIN
  SELECT RAISE(ABORT,'V2_UNVERIFIED_ENGAGEMENT') WHERE NEW.authority_reference IS NULL OR NEW.verified_by IS NULL
- OR NEW.verified_at IS NULL OR NEW.ends_at IS NOT NULL AND NEW.ends_at<=CURRENT_TIMESTAMP;
+ OR NEW.verified_at IS NULL OR NEW.ends_at IS NOT NULL AND julianday(NEW.ends_at)<=julianday('now');
  SELECT RAISE(ABORT,'V2_UNAPPROVED_MARKET') WHERE NOT EXISTS(
  SELECT 1 FROM v2_asset_markets am JOIN v2_markets m ON m.code=am.market_code AND m.enabled=1 WHERE am.market_code=NEW.market_code AND am.status='approved'
  AND am.property_id IS NEW.property_id AND am.scheme_id IS NEW.scheme_id);
+ SELECT RAISE(ABORT,'V2_ENGAGEMENT_RELATIONSHIP_REQUIRED') WHERE NOT EXISTS(
+   SELECT 1 FROM client_property_links l WHERE NEW.property_id IS NOT NULL
+   AND l.client_id=NEW.client_id AND l.property_id=NEW.property_id
+   AND l.starts_at<=NEW.starts_at AND (l.ends_at IS NULL OR l.ends_at>NEW.starts_at)
+ ) AND NOT EXISTS(
+   SELECT 1 FROM scheme_client_links l WHERE NEW.scheme_id IS NOT NULL
+   AND l.client_id=NEW.client_id AND l.scheme_id=NEW.scheme_id
+   AND l.starts_at<=NEW.starts_at AND (l.ends_at IS NULL OR l.ends_at>NEW.starts_at)
+ );
 END;
 CREATE TRIGGER v2_engagement_scope_lock BEFORE UPDATE OF client_id,property_id,scheme_id,market_code,starts_at ON v2_engagements
 WHEN OLD.status!='draft'
@@ -161,6 +175,7 @@ CREATE TABLE v2_plan_entitlements (
 CREATE TRIGGER v2_plan_entitlements_insert_gate BEFORE INSERT ON v2_plan_entitlements
 BEGIN SELECT RAISE(ABORT,'V2_APPROVED_PLAN_IMMUTABLE') WHERE (SELECT status FROM v2_plan_versions WHERE id=NEW.plan_id)!='draft'; END;
 CREATE TRIGGER v2_plan_entitlements_update_gate BEFORE UPDATE ON v2_plan_entitlements
+WHEN (SELECT status FROM v2_plan_versions WHERE id=OLD.plan_id)!='draft'
 BEGIN SELECT RAISE(ABORT,'V2_APPROVED_PLAN_IMMUTABLE'); END;
 CREATE TRIGGER v2_plan_entitlements_delete_gate BEFORE DELETE ON v2_plan_entitlements
 WHEN (SELECT status FROM v2_plan_versions WHERE id=OLD.plan_id)!='draft'
@@ -184,6 +199,9 @@ BEGIN
  AND p.market_code=e.market_code AND e.starts_at<=NEW.period_start
  AND (e.ends_at IS NULL OR NEW.period_end<=e.ends_at)
  AND p.monthly_fee_cents=NEW.agreed_monthly_cents);
+ SELECT RAISE(ABORT,'V2_SUBSCRIPTION_PERIOD_OVERLAP') WHERE EXISTS(
+ SELECT 1 FROM v2_subscription_periods s WHERE s.engagement_id=NEW.engagement_id
+ AND s.period_start<NEW.period_end AND s.period_end>NEW.period_start);
 END;
 CREATE TRIGGER v2_subscription_lock BEFORE UPDATE OF engagement_id,plan_id,period_start,period_end,agreed_monthly_cents ON v2_subscription_periods
 BEGIN SELECT RAISE(ABORT,'V2_SUBSCRIPTION_LOCKED'); END;
@@ -244,13 +262,13 @@ CREATE TABLE v2_rate_cards (
  contingency_bp INTEGER NOT NULL CHECK(contingency_bp BETWEEN 0 AND 5000),
  target_margin_bp INTEGER NOT NULL CHECK(target_margin_bp BETWEEN 0 AND 9500),
  gst_bp INTEGER NOT NULL DEFAULT 1000 CHECK(gst_bp BETWEEN 0 AND 3000),
- approved_by TEXT REFERENCES users(id), approved_at TEXT,
+ approved_by TEXT REFERENCES users(id), approved_at TEXT, approval_reference TEXT,
  created_at TEXT NOT NULL, UNIQUE(market_code,version)
 ) STRICT;
 CREATE TRIGGER v2_rate_card_lock BEFORE UPDATE ON v2_rate_cards WHEN OLD.status='approved'
 BEGIN SELECT RAISE(ABORT,'V2_RATE_CARD_IMMUTABLE'); END;
 CREATE TRIGGER v2_rate_card_approval BEFORE UPDATE OF status ON v2_rate_cards WHEN NEW.status='approved'
-BEGIN SELECT RAISE(ABORT,'V2_RATE_CARD_REVIEW_REQUIRED') WHERE NEW.approved_by IS NULL OR NEW.approved_at IS NULL; END;
+BEGIN SELECT RAISE(ABORT,'V2_RATE_CARD_REVIEW_REQUIRED') WHERE NEW.approved_by IS NULL OR NEW.approved_at IS NULL OR LENGTH(TRIM(COALESCE(NEW.approval_reference,'')))<4; END;
 
 CREATE TABLE v2_quote_snapshots (
  id TEXT PRIMARY KEY, client_id TEXT NOT NULL REFERENCES clients(id),
