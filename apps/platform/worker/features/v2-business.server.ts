@@ -7,6 +7,8 @@ import { calculateV2Quote } from '../../../../packages/v2/pricing';
 
 const n = (max = 100000000) => z.coerce.number().int().min(0).max(max);
 const id = recordId;
+const assetRef = z.string().regex(/^[a-zA-Z0-9_:-]+$/).max(180);
+const planRef = z.string().regex(/^[A-Z]{3}:(inspection|standard|outsourced):v[0-9]+$/).max(80);
 const scope = z.object({propertyId: id.optional(), schemeId: id.optional()}).refine(
   v => Boolean(v.propertyId) !== Boolean(v.schemeId),
   'Choose exactly one property or scheme'
@@ -95,7 +97,7 @@ export async function v2Command(env: Env, user: Principal, w: Workspace, area: s
   staffEditor(user,w);
   const data=input;
   if(area==='assets' && !key) {
-    const d=scope.and(z.object({kind:choice(['building','premises','lot','common_area','plant','equipment','facility','infrastructure','other']),name:shortText,parentId:id.optional(),reference:z.string().trim().max(200).optional()})).parse(data);
+    const d=scope.and(z.object({kind:choice(['building','premises','lot','common_area','plant','equipment','facility','infrastructure','other']),name:shortText,parentId:assetRef.optional(),reference:z.string().trim().max(200).optional()})).parse(data);
     await contextExists(env,d.propertyId,d.schemeId);
     const assetId=uid('v2a');
     await transaction(env,user,
@@ -247,7 +249,7 @@ export async function v2Command(env: Env, user: Principal, w: Workspace, area: s
     return {id:key,status:'ended'};
   }
   if(area==='subscriptions' && !key) {
-    const d=z.object({engagementId:id,planId:id,periodStart:isoDate,periodEnd:isoDate,
+    const d=z.object({engagementId:id,planId:planRef,periodStart:isoDate,periodEnd:isoDate,
       agreedMonthlyCents:n()}).parse(data);
     assert(d.periodEnd>d.periodStart,422,'V2_PERIOD_INVALID','The agreement period must end after it starts.');
     const subscriptionId=uid('v2s');
