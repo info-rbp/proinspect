@@ -21,3 +21,33 @@ test('rejects incorrect application origin and source commit', () => {
   const bad = config(); bad.env.connected.vars.APP_ENV = 'local';
   assert.throws(() => directConfiguration(bad));
 });
+test('existing Worker preserves cf-v1 Durable Objects and creates an independent scheduler', () => {
+  const live = directConfiguration(config()).env.connected;
+  assert.deepEqual(live.migrations, [
+    { tag: 'cf-v1', new_sqlite_classes: ['BookingCoordinator'] },
+    { tag: 'v1', new_sqlite_classes: ['BookingScheduler'] },
+  ]);
+  assert.deepEqual(live.durable_objects.bindings, [
+    { name: 'SCHEDULER', class_name: 'BookingScheduler' },
+  ]);
+  for (const migration of live.migrations) {
+    assert.ok(!('deleted_classes' in migration));
+    assert.ok(!('renamed_classes' in migration));
+  }
+  const workerEntry = readFileSync('apps/platform/worker/app.ts', 'utf8');
+  const adapter = readFileSync('apps/platform/worker/legacy-booking-coordinator.ts', 'utf8');
+  assert.match(workerEntry, /export \{ BookingCoordinator \} from '\.\/legacy-booking-coordinator'/);
+  assert.match(workerEntry, /export \{ BookingScheduler \} from '\.\/scheduler'/);
+  assert.match(adapter, /class BookingCoordinator extends DurableObject/);
+  assert.match(adapter, /status: 503/);
+  assert.doesNotMatch(adapter, /this\.ctx\.storage|this\.state\.storage|\.deleteAll\(/);
+});
+
+test('direct deploy rejects accidental retirement of legacy Durable Objects', () => {
+  const missingHistory = config();
+  missingHistory.env.connected.migrations = [{ tag: 'v1', new_sqlite_classes: ['BookingScheduler'] }];
+  assert.throws(() => directConfiguration(missingHistory), /Keep cf-v1/);
+  const destructive = config();
+  destructive.env.connected.migrations.push({tag:'delete-legacy',deleted_classes:['BookingCoordinator']});
+  assert.throws(() => directConfiguration(destructive), /Keep cf-v1/);
+});

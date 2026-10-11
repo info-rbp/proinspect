@@ -10,6 +10,19 @@ export function directConfiguration(config, input = {}) {
     throw new Error('Expected the direct proinspect-platform production configuration.');
   if (live.d1_databases?.[0]?.binding !== 'DB' || !live.r2_buckets?.length)
     throw new Error('Direct deployment requires the database and private bucket bindings.');
+  // The existing production Worker already applied cf-v1 to a SQLite-backed
+  // BookingCoordinator namespace. Keep that historical tag and exported class;
+  // create BookingScheduler as a separate namespace. No destructive migration.
+  const migrations = live.migrations ?? [];
+  const historical = migrations.findIndex(
+    (m) => m.tag === 'cf-v1' && m.new_sqlite_classes?.includes('BookingCoordinator'),
+  );
+  const current = migrations.findIndex(
+    (m) => m.tag === 'v1' && m.new_sqlite_classes?.includes('BookingScheduler'),
+  );
+  if (historical !== 0 || current <= historical ||
+      migrations.some((m) => m.deleted_classes?.length || m.renamed_classes?.length))
+    throw new Error('Keep cf-v1 BookingCoordinator and v1 BookingScheduler migrations without deleting or renaming legacy objects.');
   if (live.d1_databases[0].database_id === 'local-proinspect')
     throw new Error('Local D1 database IDs must never deploy.');
   if (input.appOrigin) {
