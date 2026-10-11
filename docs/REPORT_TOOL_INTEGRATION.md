@@ -87,3 +87,9 @@ end-to-end native report creation is accepted.
 
 The integration branch verification workflow runs on branch pushes and pull requests, but does not deploy.
 Do not merge report integration into production until the accepted slice and its no-regression evidence are recorded.
+
+## Executed first integration step
+
+- Pure upstream inspection policies, report aggregate types and QC evaluator are now copied at the pinned source SHA under `packages/report-engine/upstream/` (see `packages/report-engine/upstream-lock.json`).
+- The 23 service IDs have an explicit draft report/output profile contract in `packages/report-engine/policy.ts`.
+- This is not yet the native editor, PDF delivery or upstream update automation. Do not claim phase 3-7 acceptance from this foundation.
