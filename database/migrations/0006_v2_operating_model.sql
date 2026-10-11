@@ -16,6 +16,11 @@ CREATE TABLE v2_services (
  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) STRICT;
 
+CREATE TRIGGER v2_service_approved_lock BEFORE UPDATE ON v2_services WHEN OLD.status='approved'
+BEGIN SELECT RAISE(ABORT,'V2_APPROVED_SERVICE_IMMUTABLE'); END;
+CREATE TRIGGER v2_service_review_gate BEFORE UPDATE OF status ON v2_services WHEN NEW.status='approved'
+BEGIN SELECT RAISE(ABORT,'V2_SERVICE_REVIEW_REQUIRED') WHERE NEW.approved_by IS NULL OR NEW.approved_at IS NULL; END;
+
 CREATE TABLE v2_service_revisions (
  service_code TEXT NOT NULL REFERENCES v2_services(code), version INTEGER NOT NULL CHECK(version>0),
  snapshot_json TEXT NOT NULL CHECK(json_valid(snapshot_json)), changed_by TEXT REFERENCES users(id),
@@ -30,6 +35,12 @@ CREATE TABLE v2_market_service_rules (
  notes TEXT NOT NULL DEFAULT '', verified_by TEXT REFERENCES users(id), verified_at TEXT,
  PRIMARY KEY(market_code,service_code)
 ) STRICT;
+
+CREATE TRIGGER v2_market_rule_review BEFORE UPDATE OF status ON v2_market_service_rules WHEN NEW.status='approved'
+BEGIN
+ SELECT RAISE(ABORT,'V2_MARKET_RULE_REVIEW_REQUIRED') WHERE NEW.verified_by IS NULL OR NEW.verified_at IS NULL;
+ SELECT RAISE(ABORT,'V2_SERVICE_NOT_APPROVED') WHERE NOT EXISTS(SELECT 1 FROM v2_services s WHERE s.code=NEW.service_code AND s.status='approved');
+END;
 
 -- An asset is scoped to EXACTLY one existing property or scheme; no duplicate canonical property.
 CREATE TABLE v2_assets (
@@ -91,7 +102,7 @@ BEGIN
  SELECT RAISE(ABORT,'V2_UNVERIFIED_ENGAGEMENT') WHERE NEW.authority_reference IS NULL OR NEW.verified_by IS NULL
  OR NEW.verified_at IS NULL OR NEW.ends_at IS NOT NULL AND NEW.ends_at<=CURRENT_TIMESTAMP;
  SELECT RAISE(ABORT,'V2_UNAPPROVED_MARKET') WHERE NOT EXISTS(
- SELECT 1 FROM v2_asset_markets am WHERE am.market_code=NEW.market_code AND am.status='approved'
+ SELECT 1 FROM v2_asset_markets am JOIN v2_markets m ON m.code=am.market_code AND m.enabled=1 WHERE am.market_code=NEW.market_code AND am.status='approved'
  AND am.property_id IS NEW.property_id AND am.scheme_id IS NEW.scheme_id);
 END;
 CREATE TRIGGER v2_engagement_scope_lock BEFORE UPDATE OF client_id,property_id,scheme_id,market_code,starts_at ON v2_engagements
@@ -121,7 +132,7 @@ BEGIN
  SELECT RAISE(ABORT,'V2_UNAPPROVED_PLAN_SERVICES') WHERE EXISTS(
  SELECT 1 FROM v2_plan_services ps LEFT JOIN v2_market_service_rules r ON r.market_code=NEW.market_code
  AND r.service_code=ps.service_code
- WHERE ps.plan_id=NEW.id AND ps.inclusion='included' AND COALESCE(r.status,'blocked')!='approved');
+ WHERE ps.plan_id=NEW.id AND ps.inclusion='included' AND (COALESCE(r.status,'blocked')!='approved' OR NOT EXISTS(SELECT 1 FROM v2_services vs WHERE vs.code=ps.service_code AND vs.status='approved')));
 END;
 
 CREATE TABLE v2_plan_services (
@@ -137,6 +148,21 @@ CREATE TRIGGER v2_plan_services_update_gate BEFORE UPDATE ON v2_plan_services
 WHEN (SELECT status FROM v2_plan_versions WHERE id=OLD.plan_id)!='draft'
 BEGIN SELECT RAISE(ABORT,'V2_APPROVED_PLAN_IMMUTABLE'); END;
 CREATE TRIGGER v2_plan_services_delete_gate BEFORE DELETE ON v2_plan_services
+WHEN (SELECT status FROM v2_plan_versions WHERE id=OLD.plan_id)!='draft'
+BEGIN SELECT RAISE(ABORT,'V2_APPROVED_PLAN_IMMUTABLE'); END;
+
+CREATE TABLE v2_plan_entitlements (
+ plan_id TEXT NOT NULL REFERENCES v2_plan_versions(id), service_code TEXT NOT NULL REFERENCES v2_services(code),
+ metric TEXT NOT NULL CHECK(metric IN ('hours_milli','visits','tickets','reports')),
+ limit_quantity INTEGER NOT NULL CHECK(limit_quantity>=0),
+ PRIMARY KEY(plan_id,service_code,metric),
+ FOREIGN KEY(plan_id,service_code) REFERENCES v2_plan_services(plan_id,service_code)
+) STRICT;
+CREATE TRIGGER v2_plan_entitlements_insert_gate BEFORE INSERT ON v2_plan_entitlements
+BEGIN SELECT RAISE(ABORT,'V2_APPROVED_PLAN_IMMUTABLE') WHERE (SELECT status FROM v2_plan_versions WHERE id=NEW.plan_id)!='draft'; END;
+CREATE TRIGGER v2_plan_entitlements_update_gate BEFORE UPDATE ON v2_plan_entitlements
+BEGIN SELECT RAISE(ABORT,'V2_APPROVED_PLAN_IMMUTABLE'); END;
+CREATE TRIGGER v2_plan_entitlements_delete_gate BEFORE DELETE ON v2_plan_entitlements
 WHEN (SELECT status FROM v2_plan_versions WHERE id=OLD.plan_id)!='draft'
 BEGIN SELECT RAISE(ABORT,'V2_APPROVED_PLAN_IMMUTABLE'); END;
 
@@ -180,7 +206,8 @@ BEGIN
  JOIN v2_market_service_rules mr ON mr.market_code=e.market_code AND mr.service_code=ps.service_code
  WHERE s.id=NEW.subscription_id AND s.status='active' AND e.status='active'
  AND p.status='approved' AND ps.inclusion='included' AND ps.service_code=NEW.service_code
- AND mr.status='approved' AND NEW.created_at>=s.period_start AND NEW.created_at<s.period_end);
+ AND mr.status='approved' AND NEW.created_at>=s.period_start AND NEW.created_at<s.period_end
+ AND EXISTS(SELECT 1 FROM v2_services ss WHERE ss.code=NEW.service_code AND ss.status='approved'));
  SELECT RAISE(ABORT,'V2_USAGE_CONTEXT_MISMATCH') WHERE
  (NEW.work_order_id IS NOT NULL AND NOT EXISTS(
  SELECT 1 FROM work_orders o JOIN v2_subscription_periods s ON s.id=NEW.subscription_id
@@ -196,6 +223,11 @@ BEGIN
  WHEN 'visits' THEN p.included_visits WHEN 'tickets' THEN p.included_tickets
  ELSE p.included_reports END
  FROM v2_subscription_periods s JOIN v2_plan_versions p ON p.id=s.plan_id WHERE s.id=NEW.subscription_id);
+ SELECT RAISE(ABORT,'V2_SERVICE_ALLOWANCE_EXCEEDED') WHERE EXISTS(
+ SELECT 1 FROM v2_plan_entitlements pe JOIN v2_subscription_periods sp ON sp.plan_id=pe.plan_id
+ WHERE sp.id=NEW.subscription_id AND pe.service_code=NEW.service_code AND pe.metric=NEW.metric
+ AND (SELECT COALESCE(SUM(u.quantity),0) FROM v2_usage_ledger u WHERE u.subscription_id=NEW.subscription_id
+ AND u.metric=NEW.metric AND u.service_code=NEW.service_code)+NEW.quantity>pe.limit_quantity);
 END;
 CREATE TRIGGER v2_usage_immutable_u BEFORE UPDATE ON v2_usage_ledger
 BEGIN SELECT RAISE(ABORT,'V2_USAGE_IMMUTABLE'); END;
@@ -232,6 +264,18 @@ CREATE TABLE v2_quote_snapshots (
  created_by TEXT NOT NULL REFERENCES users(id), created_at TEXT NOT NULL,
  CHECK((property_id IS NOT NULL) + (scheme_id IS NOT NULL) = 1)
 ) STRICT;
+CREATE TRIGGER v2_quote_scope_gate BEFORE INSERT ON v2_quote_snapshots
+BEGIN
+ SELECT RAISE(ABORT,'V2_RATE_NOT_APPROVED') WHERE NOT EXISTS (
+ SELECT 1 FROM v2_rate_cards r WHERE r.id=NEW.rate_card_id AND r.market_code=NEW.market_code AND r.status='approved');
+ SELECT RAISE(ABORT,'V2_QUOTE_SERVICE_NOT_APPROVED') WHERE NEW.service_code IS NOT NULL AND NOT EXISTS(
+ SELECT 1 FROM v2_market_service_rules mr JOIN v2_services s ON s.code=mr.service_code
+ WHERE mr.market_code=NEW.market_code AND mr.service_code=NEW.service_code AND mr.status='approved' AND s.status='approved');
+ SELECT RAISE(ABORT,'V2_QUOTE_ENGAGEMENT_MISMATCH') WHERE NEW.engagement_id IS NOT NULL AND NOT EXISTS(
+ SELECT 1 FROM v2_engagements e WHERE e.id=NEW.engagement_id AND e.client_id=NEW.client_id
+ AND e.property_id IS NEW.property_id AND e.scheme_id IS NEW.scheme_id AND e.market_code=NEW.market_code);
+END;
+
 CREATE TRIGGER v2_quote_immutable_u BEFORE UPDATE ON v2_quote_snapshots
 BEGIN SELECT RAISE(ABORT,'V2_QUOTE_SNAPSHOT_IMMUTABLE'); END;
 CREATE TRIGGER v2_quote_immutable_d BEFORE DELETE ON v2_quote_snapshots

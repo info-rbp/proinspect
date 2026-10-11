@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { V2_MARKETS,V2_SERVICE_SEEDS,V2_PLANS } from '../packages/v2/catalogue';
-import { calculateV2Quote } from '../packages/v2/pricing';
+import { V2_MARKETS,V2_SERVICE_SEEDS,V2_PLANS } from '../packages/v2/catalogue.ts';
+import { calculateV2Quote } from '../packages/v2/pricing.ts';
 test('V2 model has eleven markets and 69 stable, draft service identities',()=>{
   assert.equal(V2_MARKETS.length,11);
   assert.equal(new Set(V2_MARKETS.map(m=>m.code)).size,11);
