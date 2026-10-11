@@ -112,11 +112,11 @@ BEGIN
  SELECT RAISE(ABORT,'V2_ENGAGEMENT_RELATIONSHIP_REQUIRED') WHERE NOT EXISTS(
    SELECT 1 FROM client_property_links l WHERE NEW.property_id IS NOT NULL
    AND l.client_id=NEW.client_id AND l.property_id=NEW.property_id
-   AND l.starts_at<=NEW.starts_at AND (l.ends_at IS NULL OR l.ends_at>NEW.starts_at)
+   AND l.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND (l.ends_at IS NULL OR l.ends_at>strftime('%Y-%m-%dT%H:%M:%fZ','now'))
  ) AND NOT EXISTS(
    SELECT 1 FROM scheme_client_links l WHERE NEW.scheme_id IS NOT NULL
    AND l.client_id=NEW.client_id AND l.scheme_id=NEW.scheme_id
-   AND l.starts_at<=NEW.starts_at AND (l.ends_at IS NULL OR l.ends_at>NEW.starts_at)
+   AND l.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND (l.ends_at IS NULL OR l.ends_at>strftime('%Y-%m-%dT%H:%M:%fZ','now'))
  );
 END;
 CREATE TRIGGER v2_engagement_scope_lock BEFORE UPDATE OF client_id,property_id,scheme_id,market_code,starts_at ON v2_engagements
