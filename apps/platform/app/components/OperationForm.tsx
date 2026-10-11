@@ -98,6 +98,9 @@ const numberFields = new Set([
   'monthlyFeeCents', 'loadedHourlyCents', 'travelVisitCents', 'fixedAdminCents',
   'contingencyBp', 'targetMarginBp', 'gstBp', 'version', 'limitQuantity', 'agreedMonthlyCents',
   'budgetCeilingCents','weekday','startsMinute','endsMinute','hourlyCostCents','amountCents',
+  'designLifeMonths','replacementCostCents','score','cadenceMonths','leadDays','recurrenceMonths',
+  'likelihood','impact','baselineBudgetCents','estimatedCents','proposedCents','forecastTotalCents',
+  'revision','windowDays',
 ]);
 const boolFields = new Set([
   'active',
@@ -126,7 +129,7 @@ export function formValues(form: FormData) {
         .filter(Boolean);
     else data[key] = value;
   }
-  for (const prefix of ['access', 'answers']) {
+  for (const prefix of ['access', 'answers', 'facts']) {
     const nested: Record<string, unknown> = {};
     for (const key of Object.keys(data)) {
       if (key.startsWith(prefix + '.')) {

@@ -64,6 +64,11 @@ export default function WorkspaceLayout() {
   if (customer) items.push(['service-agreements', 'Service agreements', '']);
   if (staff && user.staffRole !== 'inspector') items.push(['v2-business', 'V2 business model', '']);
   if (staff && ['administrator','operations_manager'].includes(user.staffRole??'')) items.push(['maintenance-delivery', 'Maintenance delivery', '']);
+  if (staff && ['administrator','operations_manager'].includes(user.staffRole??'')) {
+    items.push(['asset-compliance','Assets & compliance','']);
+    items.push(['market-packs','Specialist market packs','']);
+    items.push(['enterprise-intelligence','Capital & enterprise BI','']);
+  }
   if (customer || w.kind === 'council' || (staff && user.staffRole !== 'inspector'))
     items.push([
       'finance',
