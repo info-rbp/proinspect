@@ -88,6 +88,43 @@ class SchemaTests(unittest.TestCase):
         with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_SUBSCRIPTION_SCOPE'):
             self.db.execute("INSERT INTO v2_subscription_periods(id,engagement_id,plan_id,period_start,period_end,agreed_monthly_cents,created_by,created_at) VALUES('sub','eng','RES:standard:v1','2026-01-01','2027-01-01',0,'u','2026-01-01')")
 
+    def test_v2_advanced_modules_seed_only_unreviewed(self):
+        self.assertEqual(self.db.execute('SELECT COUNT(*) FROM v2_sector_packs').fetchone()[0], 11)
+        self.assertEqual(self.db.execute('SELECT COUNT(*) FROM v2_sector_modules').fetchone()[0], 55)
+        self.assertEqual(self.db.execute('SELECT COUNT(*) FROM v2_sector_release_checks').fetchone()[0], 77)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_sector_modules WHERE status='approved'").fetchone()[0], 0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_sector_release_checks WHERE status='verified'").fetchone()[0], 0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_sector_rollouts WHERE status IN('pilot','live')").fetchone()[0], 0)
+
+    def test_v2_verified_condition_history_changes_asset_score(self):
+        self.db.execute("INSERT INTO v2_asset_details(asset_id,asset_code,criticality,updated_by,updated_at) VALUES('v2:property:p','TEST-ASSET-1','high','u','2026-01-01')")
+        self.db.execute("INSERT INTO v2_asset_conditions(id,asset_id,score,observed_on,method,summary,observed_by,created_at) VALUES('c1','v2:property:p',2,'2026-10-01','visual','Condition assessment','u','2026-10-01')")
+        self.assertIsNone(self.db.execute("SELECT last_condition_score FROM v2_asset_details WHERE asset_id='v2:property:p'").fetchone()[0])
+        self.db.execute("UPDATE v2_asset_conditions SET status='verified',verified_by='u',verified_at='2026-10-02',verification_reference='INSPECTION-REVIEW-001' WHERE id='c1'")
+        self.assertEqual(self.db.execute("SELECT last_condition_score FROM v2_asset_details WHERE asset_id='v2:property:p'").fetchone()[0], 2)
+        with self.assertRaisesRegex(sqlite3.IntegrityError, 'V2_CONDITION_HISTORY_LOCKED'):
+            self.db.execute("DELETE FROM v2_asset_conditions WHERE id='c1'")
+
+    def test_v2_preventive_and_compliance_need_active_matching_engagement(self):
+        self.db.execute("INSERT INTO v2_engagements(id,client_id,property_id,market_code,reference,scope_summary,starts_at,created_by,created_at) VALUES('draft-eng','c','p','RES','DRAFT-PM-001','Draft work','2026-01-01','u','2026-01-01')")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_PM_ENGAGEMENT_SCOPE'):
+            self.db.execute("INSERT INTO v2_preventive_plans(id,engagement_id,asset_id,service_code,title,instructions,cadence_months,next_due,created_by,created_at,updated_at) VALUES('plan','draft-eng','v2:property:p','V2-001','Roof checks','Visual review',3,'2026-11-01','u','2026-01-01','2026-01-01')")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_COMPLIANCE_SCOPE'):
+            self.db.execute("INSERT INTO v2_compliance_obligations(id,engagement_id,asset_id,title,category,source_reference,requirement_summary,accountable_party,next_review_on,created_by,created_at,updated_at) VALUES('obl','draft-eng','v2:property:p','Fire tracking','fire','EXT-AUTH-1','External assessment','owner','2026-11-01','u','2026-01-01','2026-01-01')")
+
+    def test_v2_specialist_pack_cannot_skip_release_reviews(self):
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_PACK_RELEASE_CHECKS_MISSING'):
+            self.db.execute("UPDATE v2_sector_packs SET status='approved',approval_reference='SIGNED-TEST',approved_by='u',approved_at='2026-10-11' WHERE id='RES:pack:v1'")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_MODULE_REVIEW_REQUIRED'):
+            self.db.execute("UPDATE v2_sector_modules SET status='approved' WHERE code='RES-M01'")
+
+    def test_v2_enterprise_portfolio_rejects_unrelated_property(self):
+        self.db.execute("INSERT INTO v2_enterprise_portfolios(id,client_id,name,purpose,authority_reference,created_by,created_at) VALUES('portfolio','c','Portfolio','Asset reports','SIGNED-PORTFOLIO','u','2026-01-01')")
+        self.db.execute("INSERT INTO v2_enterprise_portfolio_members(id,portfolio_id,property_id,verified_by,authority_reference,added_at) VALUES('member','portfolio','p','u','CURRENT-CLIENT-LINK','2026-10-11')")
+        self.db.execute("INSERT INTO properties(id,address,suburb,postcode,address_key,sector,created_at) VALUES('unrelated','99 Remote St','Perth','6000','99|perth|6000','residential','2026-01-01')")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_PORTFOLIO_NOT_AUTHORISED'):
+            self.db.execute("INSERT INTO v2_enterprise_portfolio_members(id,portfolio_id,property_id,verified_by,authority_reference,added_at) VALUES('bad','portfolio','unrelated','u','NOT-AUTHORISED','2026-10-11')")
+
     def test_v2_migration_numbers_unique_and_contiguous(self):
         """V2 migrations append one version at a time; never reuse a deployed version."""
         import re
