@@ -81,7 +81,7 @@ export async function renderReportPdf(input:ReportPdfInput):Promise<Uint8Array>{
  if(!pageIds.length)page('BT /F1 12 Tf 50 720 Td (Empty Report) Tj ET\n');
  set(pagesRef,`<< /Type /Pages /Kids [${pageIds.map(i=>i+' 0 R').join(' ')}] /Count ${pageIds.length} >>`);
  set(cat,`<< /Type /Catalog /Pages ${pagesRef} 0 R >>`);
- const chunks=[bytes('%PDF-1.4\n%\x80\x80\x80\x80\n')], offsets=[0];let offset=chunks[0].length;
+ const chunks:Uint8Array[]=[bytes('%PDF-1.4\n%\x80\x80\x80\x80\n')], offsets=[0];let offset=chunks[0].length;
  for(let i=0;i<objects.length;i++){
    offsets.push(offset);
    const chunk=concat([bytes(`${i+1} 0 obj\n`),objects[i],bytes('\nendobj\n')]);
