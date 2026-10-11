@@ -62,6 +62,32 @@ class SchemaTests(unittest.TestCase):
             self.db.execute("INSERT INTO notice_deliveries(notice_id,user_id,notification_id,outbox_id,created_at) VALUES('notice','u','alert2','mail','2026-01-01')")
 
 
+    def test_v2_market_catalogue_and_staging_only(self):
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_markets").fetchone()[0],11)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_services").fetchone()[0],69)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_plan_versions").fetchone()[0],33)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_services WHERE status='approved'").fetchone()[0],0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_market_service_rules WHERE status='approved'").fetchone()[0],0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_plan_versions WHERE status='approved'").fetchone()[0],0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_rate_cards WHERE status='approved'").fetchone()[0],0)
+
+    def test_v2_auto_assets_and_cross_scope_rejected(self):
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_assets WHERE property_id='p' AND kind='site'").fetchone()[0],1)
+        self.db.execute("INSERT INTO properties(id,address,suburb,postcode,address_key,sector,created_at) VALUES('q','2 Test St','Perth','6000','2|perth|6000','residential','2026-01-01')")
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM v2_assets WHERE property_id='q' AND kind='site'").fetchone()[0],1)
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_ASSET_SCOPE_MISMATCH'):
+            self.db.execute("INSERT INTO v2_assets(id,property_id,parent_id,kind,name,created_at) VALUES('bad','q','v2:property:p','equipment','Leak sensor','2026-01-01')")
+        self.db.execute("INSERT INTO v2_assets(id,property_id,parent_id,kind,name,created_at) VALUES('child','p','v2:property:p','plant','HVAC','2026-01-01')")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_ASSET_CYCLE'):
+            self.db.execute("UPDATE v2_assets SET parent_id='child' WHERE id='v2:property:p'")
+
+    def test_v2_only_approved_engagements_and_approved_plans_can_subscribe(self):
+        self.db.execute("INSERT INTO v2_engagements(id,client_id,property_id,market_code,reference,scope_summary,starts_at,created_by,created_at) VALUES('eng','c','p','RES','SIGNED-REFERENCE','Inspections','2026-01-01','u','2026-01-01')")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_UNVERIFIED_ENGAGEMENT'):
+            self.db.execute("UPDATE v2_engagements SET status='active' WHERE id='eng'")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_SUBSCRIPTION_SCOPE'):
+            self.db.execute("INSERT INTO v2_subscription_periods(id,engagement_id,plan_id,period_start,period_end,agreed_monthly_cents,created_by,created_at) VALUES('sub','eng','RES:standard:v1','2026-01-01','2027-01-01',0,'u','2026-01-01')")
+
     def test_v2_migration_numbers_unique_and_contiguous(self):
         """V2 migrations append one version at a time; never reuse a deployed version."""
         import re
