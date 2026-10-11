@@ -17,7 +17,7 @@
     "APP_ENV": "local",
     "APP_ORIGIN": "http://localhost:5173",
     "EMAIL_PROVIDER": "local",
-    "MARKETING_ORIGIN": "http://localhost:5174"
+    "MARKETING_ORIGIN": "http://localhost:5173"
   },
   "d1_databases": [
     {
@@ -81,10 +81,11 @@
       "preview_urls": false,
       "vars": {
         "APP_ENV": "production",
-        "APP_ORIGIN": "https://app.proinspect.systems",
-        "MARKETING_ORIGIN": "https://proinspect.systems",
+        "APP_ORIGIN": "https://proinspect-platform.delicate-dream-e4c9.workers.dev",
+        "MARKETING_ORIGIN": "https://proinspect-platform.delicate-dream-e4c9.workers.dev",
         "EMAIL_PROVIDER": "resend",
-        "RESTRICTED_WORKFLOWS_ENABLED": "false"
+        "RESTRICTED_WORKFLOWS_ENABLED": "false",
+        "PLATFORM_ORIGIN": "https://proinspect-platform.delicate-dream-e4c9.workers.dev"
       },
       "d1_databases": [
         {

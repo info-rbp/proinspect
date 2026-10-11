@@ -23,11 +23,5 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
     },
-    {
-      command: 'pnpm --dir apps/marketing dev --host 127.0.0.1 --port 5174',
-      url: 'http://127.0.0.1:5174/api/health',
-      reuseExistingServer: !process.env.CI,
-      timeout: 120000,
-    },
   ],
 });

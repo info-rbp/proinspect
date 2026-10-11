@@ -5,6 +5,7 @@ import { handleApi } from './api';
 import { consumeQueue, dispatchOutbox } from '../../../packages/notifications/server';
 import { dispatchNotices } from '../../../packages/notifications/notices';
 import { dispatchIntegrations } from './features/integrations.server';
+import { shouldIndexPublicPage } from '../app/lib/public-routes';
 export { BookingScheduler } from './scheduler';
 export { BookingCoordinator } from './legacy-booking-coordinator';
 const handle = createRequestHandler(() => import('virtual:react-router/server-build'),import.meta.env.MODE);
@@ -19,7 +20,11 @@ export default {
     headers.set('X-Content-Type-Options', 'nosniff');
     headers.set('Referrer-Policy', 'no-referrer');
     headers.set('X-Frame-Options', 'DENY');
-    headers.set('X-Robots-Tag', 'noindex, nofollow');
+    const requestUrl = new URL(request.url);
+    if (response.ok && shouldIndexPublicPage(requestUrl.pathname, requestUrl.origin, env.APP_ENV))
+      headers.delete('X-Robots-Tag');
+    else
+      headers.set('X-Robots-Tag', 'noindex, nofollow');
     headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     if (env.APP_ENV !== 'local') {
       headers.set('Strict-Transport-Security', 'max-age=31536000');

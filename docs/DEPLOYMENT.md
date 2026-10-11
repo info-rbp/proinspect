@@ -4,7 +4,7 @@
 
 `info-rbp/proinspect` -> **`main`** -> Cloudflare Workers Builds -> existing **`proinspect-platform`** Worker.
 
-This does **not** use a GitHub Actions deployment workflow, a manual connect operation, a separate release branch, or a staging environment. GitHub Actions only runs source verification. The marketing application is a separate Worker and requires its own Git connection when ready.
+This does **not** use a GitHub Actions deployment workflow, a manual connect operation, a separate release branch, or a staging environment. GitHub Actions only runs source verification. The original marketing source remains available, but the public marketing pages now ship in the **same deployed Platform Worker**. See [Unified site](UNIFIED_SITE.md).
 
 Cloudflare dashboard -> Workers & Pages -> `proinspect-platform` -> Settings -> Build:
 
@@ -56,7 +56,7 @@ Because Workers Builds does not commit automatically generated D1 IDs to Git, th
 
 GitHub secrets do **not** automatically appear in a Worker deployed through Cloudflare's native Git integration. Configure runtime credentials under Cloudflare Worker settings (Secrets and Variables), not GitHub Actions. See [GITHUB_CONFIGURATION.md](GITHUB_CONFIGURATION.md) for the required names.
 
-The default app origin in this repository is `https://app.proinspect.systems`. If the custom hostname is not routed to this Worker yet, supply `PROINSPECT_APP_ORIGIN` as a **Cloudflare build variable** with the exact HTTPS origin of the deployed Worker. Its value is applied to the generated configuration during Workers Builds; production authentication redirects require the correct public origin. Do not confuse a build variable with a runtime secret.
+The default app origin is the confirmed `https://proinspect-platform.delicate-dream-e4c9.workers.dev` Worker URL until `proinspect.systems` is attached to this same Worker. After attaching `proinspect.systems` to the Worker, set `PROINSPECT_APP_ORIGIN=https://proinspect.systems` as a **Cloudflare build variable** and redeploy so origin checks, the public enquiry form and sign-in work on the canonical single-domain website. Its value is applied to the generated configuration during Workers Builds; production authentication redirects require the correct public origin. Do not confuse a build variable with a runtime secret.
 
 Real authentication requires at least the `DATA_ENCRYPTION_KEY`, `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, and an approved sender; privileged user administration remains controlled. Optional Stripe, Report Tool and Sheets integrations require their own real-provider acceptance. No secrets or credentials are written to GitHub source.
 
@@ -65,3 +65,6 @@ Real authentication requires at least the `DATA_ENCRYPTION_KEY`, `RESEND_API_KEY
 Inspect the Cloudflare deployment log: Worker `proinspect-platform`, `APP_ENV=production`, real D1/R2/Queue bindings and no references to `local`. After schema initialization, confirm `/api/health` shows all bindings and `/api/catalogue` returns the configured services. Then verify sign-in and an actual authorised booking/document workflow on the selected public URL. A successful build does not by itself establish correct runtime configuration, database schema or user acceptance.
 
 Sources: https://developers.cloudflare.com/workers/ci-cd/builds/configuration/ ; https://developers.cloudflare.com/workers/wrangler/configuration/ ; https://developers.cloudflare.com/workers/vite-plugin/reference/cloudflare-environments/ ; https://developers.cloudflare.com/d1/reference/migrations/ .
+## Unified public website
+
+The established Cloudflare build/deploy commands above now ship both the complete marketing site and all private account/workspace routes in one Worker. `/` is the marketing homepage, `/services` is the 23-service catalogue, `/contact` uses the existing encrypted/signed Staff enquiry workflow in-process, and `/signin`, `/book`, `/w/...` remain on the same origin. Public SEO is indexable on `https://proinspect.systems` only; the Workers.dev alias and private routes are not indexed. The original marketing application is still built in repository verification but is not deployed separately. See [UNIFIED_SITE.md](UNIFIED_SITE.md). Runtime Marketing Turnstile settings are required on the **Platform Worker** for live public submissions.

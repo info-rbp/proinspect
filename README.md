@@ -8,12 +8,12 @@ The repository now contains the original booking-to-report workflow plus connect
 
 ## Applications
 
-- apps/marketing: public service discovery, server-rendered content and booking handoff.
-- apps/platform: authenticated workspaces and business API.
+- apps/marketing: canonical public service content and route modules, reused by the deployed platform SSR router (not a separate deployed website).
+- apps/platform: the single deployed Worker, public marketing homepage, sign-in, all workspaces and operational API.
 - packages: shared domain, authorization, encryption, catalogue and design system.
 - database/migrations: numbered relational D1 migrations.
 
-Target domains: proinspect.systems and app.proinspect.systems. This source does not automatically change either live domain.
+Target domain: proinspect.systems for both marketing and all customer accounts. The existing Worker.dev alias is usable until that custom hostname is attached.
 
 ## Start locally
 
