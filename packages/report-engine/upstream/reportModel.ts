@@ -138,6 +138,17 @@ export interface BaselineComponentSnapshot {
 }
 
 export interface ReportComponentRecord {
+  // Cloudflare integration supplies the canonical rules required by upstream QC.
+  canonicalComponentDefinitionId?: string;
+  canonicalComponentDefinitionVersion?: number;
+  canonicalAreaComponentRuleId?: string;
+  canonicalAreaComponentRuleVersion?: number;
+  requirementSnapshot?: {
+    condition?: 'required'|'optional'; cleanliness?: 'required'|'optional'; workingStatus?: 'required'|'optional';
+    commentary?: 'always'|'exception_only'|'optional'; operationalTest?: 'required'|'recommended'|'optional';
+    componentPhotoRequired?: boolean; minimumPhotos?: number; exceptionPhotoRequired?: boolean;
+    minimumExceptionPhotos?: number; maintenanceEvaluation?: boolean; comparisonPairRequired?: boolean;
+  };
   id: string;
   agencyId: string;
   reportId: string;
@@ -180,6 +191,8 @@ export interface ReportComponentRecord {
 }
 
 export interface ReportAreaRecord {
+  canonicalAreaDefinitionId?: string;
+  canonicalAreaDefinitionVersion?: number;
   id: string;
   agencyId: string;
   reportId: string;
@@ -195,6 +208,8 @@ export interface ReportAreaRecord {
 }
 
 export interface ReportMetadataRecord {
+  structureResolutionVersion?: number;
+  templateStructureMode?: string;
   id: string;
   agencyId: string;
   propertyId?: string;
