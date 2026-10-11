@@ -904,8 +904,8 @@ try {
       );
       assert.equal(
         (
-          await api(`${pm.base}/work-orders/${order.id}`, {
-            cookie: agency.cookie,
+          await api(`${staffBase}/work-orders/${order.id}`, {
+            cookie: operator.cookie,
             body: { version: order.version + 1, status: 'approved' },
           })
         ).status,
