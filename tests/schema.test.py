@@ -100,7 +100,10 @@ class SchemaTests(unittest.TestCase):
         self.db.execute("INSERT INTO v2_asset_details(asset_id,asset_code,criticality,updated_by,updated_at) VALUES('v2:property:p','TEST-ASSET-1','high','u','2026-01-01')")
         self.db.execute("INSERT INTO v2_asset_conditions(id,asset_id,score,observed_on,method,summary,observed_by,created_at) VALUES('c1','v2:property:p',2,'2026-10-01','visual','Condition assessment','u','2026-10-01')")
         self.assertIsNone(self.db.execute("SELECT last_condition_score FROM v2_asset_details WHERE asset_id='v2:property:p'").fetchone()[0])
-        self.db.execute("UPDATE v2_asset_conditions SET status='verified',verified_by='u',verified_at='2026-10-02',verification_reference='INSPECTION-REVIEW-001' WHERE id='c1'")
+        self.db.execute("INSERT INTO users(id,email,created_at) VALUES('u2','reviewer@example.test','2026-01-01')")
+        with self.assertRaisesRegex(sqlite3.IntegrityError, 'V2_CONDITION_SELF_REVIEW'):
+            self.db.execute("UPDATE v2_asset_conditions SET status='verified',verified_by='u',verified_at='2026-10-02',verification_reference='SELF-REVIEW-REJECT' WHERE id='c1'")
+        self.db.execute("UPDATE v2_asset_conditions SET status='verified',verified_by='u2',verified_at='2026-10-02',verification_reference='INSPECTION-REVIEW-001' WHERE id='c1'")
         self.assertEqual(self.db.execute("SELECT last_condition_score FROM v2_asset_details WHERE asset_id='v2:property:p'").fetchone()[0], 2)
         with self.assertRaisesRegex(sqlite3.IntegrityError, 'V2_CONDITION_HISTORY_LOCKED'):
             self.db.execute("DELETE FROM v2_asset_conditions WHERE id='c1'")
@@ -124,6 +127,16 @@ class SchemaTests(unittest.TestCase):
         self.db.execute("INSERT INTO properties(id,address,suburb,postcode,address_key,sector,created_at) VALUES('unrelated','99 Remote St','Perth','6000','99|perth|6000','residential','2026-01-01')")
         with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_PORTFOLIO_NOT_AUTHORISED'):
             self.db.execute("INSERT INTO v2_enterprise_portfolio_members(id,portfolio_id,property_id,verified_by,authority_reference,added_at) VALUES('bad','portfolio','unrelated','u','NOT-AUTHORISED','2026-10-11')")
+
+
+    def test_v2_compliance_evidence_requires_separate_reviewer(self):
+        self.db.execute("INSERT INTO users(id,email,created_at) VALUES('u2','second-reviewer@example.test','2026-01-01')")
+        self.db.execute("INSERT INTO v2_engagements(id,client_id,property_id,market_code,reference,scope_summary,starts_at,created_by,created_at) VALUES('draft-eng','c','p','RES','DRAFT-ENGAGEMENT-001','Review evidence','2026-01-01','u','2026-01-01')")
+        self.db.execute("INSERT INTO v2_compliance_obligations(id,engagement_id,asset_id,title,category,source_reference,requirement_summary,accountable_party,next_review_on,created_by,created_at,updated_at) VALUES('test-obl','draft-eng','v2:property:p','External review','fire','AUTHORITY-REFERENCE','External certificate','qualified_provider','2026-11-01','u','2026-01-01','2026-01-01')")
+        self.db.execute("INSERT INTO v2_compliance_evidence(id,obligation_id,kind,provider_name,evidence_reference,issued_on,recorded_by,created_at) VALUES('test-evidence','test-obl','inspection','Independent supplier','EVIDENCE-REF','2026-10-01','u','2026-10-01')")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_COMPLIANCE_EVIDENCE_SELF_REVIEW'):
+            self.db.execute("UPDATE v2_compliance_evidence SET status='verified',reviewed_by='u',reviewed_at='2026-10-02',independent_check_reference='SELF-REVIEW-INVALID' WHERE id='test-evidence'")
+        self.db.execute("UPDATE v2_compliance_evidence SET status='verified',reviewed_by='u2',reviewed_at='2026-10-02',independent_check_reference='INDEPENDENT-CHECK-001' WHERE id='test-evidence'")
 
     def test_v2_migration_numbers_unique_and_contiguous(self):
         """V2 migrations append one version at a time; never reuse a deployed version."""

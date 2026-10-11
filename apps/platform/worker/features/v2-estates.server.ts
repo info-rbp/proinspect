@@ -81,6 +81,9 @@ export async function estateCommand(env:Env,user:Principal,w:Workspace,route:str
  }
  if(part==='conditions'&&id&&act==='review'){
   const d=z.object({status:statusDecision,verificationReference:reference}).parse(input);
+  const previous=await statement(env.DB,'SELECT observed_by,status FROM v2_asset_conditions WHERE id=?',id).first<{observed_by:string;status:string}>();
+  assert(previous&&previous.status==='submitted',409,'V2_CONDITION_ALREADY_REVIEWED','This observation is no longer awaiting review.');
+  assert(previous.observed_by!==user.id,403,'V2_CONDITION_SELF_REVIEW','A separate staff member must verify this observation.');
   await tx(env,user,"UPDATE v2_asset_conditions SET status=?,verified_by=?,verified_at=?,verification_reference=? WHERE id=? AND status='submitted'",
     [d.status,user.id,now(),d.verificationReference,id],'v2.asset_condition_reviewed','asset-condition',id);
   return {id,status:d.status};
@@ -185,6 +188,9 @@ export async function estateCommand(env:Env,user:Principal,w:Workspace,route:str
  }
  if(part==='compliance-evidence'&&id&&act==='review'){
   const d=z.object({status:statusDecision,independentCheckReference:reference}).parse(input);
+  const previous=await statement(env.DB,'SELECT recorded_by,status FROM v2_compliance_evidence WHERE id=?',id).first<{recorded_by:string;status:string}>();
+  assert(previous&&previous.status==='submitted',409,'V2_COMPLIANCE_EVIDENCE_ALREADY_REVIEWED','This evidence has already been reviewed.');
+  assert(previous.recorded_by!==user.id,403,'V2_COMPLIANCE_EVIDENCE_SELF_REVIEW','A separate staff member must review compliance evidence.');
   await tx(env,user,"UPDATE v2_compliance_evidence SET status=?,reviewed_by=?,reviewed_at=?,independent_check_reference=? WHERE id=? AND status='submitted'",
     [d.status,user.id,now(),d.independentCheckReference,id],
     'v2.compliance_evidence_reviewed','compliance-evidence',id);

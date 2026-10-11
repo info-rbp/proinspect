@@ -307,6 +307,10 @@ try{
    const x=await ok(estates+'/conditions',operator,{assetId:rootAsset,score:2,
     observedOn:new Date().toISOString().slice(0,10),method:'visual',
     summary:'Asset requires scheduled service review'});
+   const invalidSelf=await api(estates+'/conditions/'+x.id+'/review',operator,{status:'verified',verificationReference:'NO-SELF-VERIFICATION'});
+   assert.equal(invalidSelf.status,403);
+   await assert.rejects(sql("UPDATE v2_asset_conditions SET status='verified',verified_by=?,verified_at=?,verification_reference=? WHERE id=?",
+     operator.id,new Date().toISOString(),'DIRECT-SQL-SELF-REVIEW',x.id).run(),/V2_CONDITION_SELF_REVIEW/);
    await ok(estates+'/conditions/'+x.id+'/review',approver,{status:'verified',
     verificationReference:'INDEPENDENT-CONDITION-REVIEW-2026'});
    const profile=await sql('SELECT last_condition_score,version FROM v2_asset_details WHERE asset_id=?',rootAsset).first();
@@ -347,6 +351,11 @@ try{
      kind:'service_record',providerName:'External Licensed Fire Service',
      evidenceReference:'SERVICE-CERTIFICATE-EXTERNAL-001',
      issuedOn:new Date().toISOString().slice(0,10),expiresOn:year.slice(0,10)});
+   const invalidSelf=await api(estates+'/compliance-evidence/'+rec.id+'/review',operator,{
+      status:'verified',independentCheckReference:'NO-SELF-VALIDATION'});
+   assert.equal(invalidSelf.status,403);
+   await assert.rejects(sql("UPDATE v2_compliance_evidence SET status='verified',reviewed_by=?,reviewed_at=?,independent_check_reference=? WHERE id=?",
+       operator.id,new Date().toISOString(),'DIRECT-SQL-SELF-REVIEW',rec.id).run(),/V2_COMPLIANCE_EVIDENCE_SELF_REVIEW/);
    await ok(estates+'/compliance-evidence/'+rec.id+'/review',approver,{
      status:'verified',independentCheckReference:'LICENSED-PROVIDER-EVIDENCE-CHECK'});
    const action=await ok(estates+'/actions',operator,{obligationId:obligation.id,

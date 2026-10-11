@@ -17,19 +17,30 @@ async function tx(env:Env,user:Principal,query:string,args:(string|number|null)[
  await env.DB.batch([statement(env.DB,query,...args),guard(env),activity(env,user,event,type,id),clearGuard(env)]);
 }
 type Scope={days:number,clientId?:string,marketCode?:string,portfolioId?:string};
+// Do not reuse the outer engagement alias inside subqueries: it shadows the
+// scope and previously turned client/market filters into tautologies.
 function predicates(p:string,s:string,scope:Scope){
  const bits:string[]=[],values:string[]=[];
+ const outerEngagement=p==='e.property_id';
+ const workOrder=p==='w.property_id';
  if(scope.clientId){
-  bits.push('EXISTS(SELECT 1 FROM v2_engagements e WHERE e.client_id=? AND e.property_id IS '+p+' AND e.scheme_id IS '+s+')');
+  if(outerEngagement||workOrder){
+   bits.push((outerEngagement?'e':'w')+'.client_id=?');
+  }else{
+   bits.push('EXISTS(SELECT 1 FROM v2_engagements filter_client WHERE filter_client.client_id=? AND filter_client.property_id IS '+p+' AND filter_client.scheme_id IS '+s+' AND filter_client.status=? )');
+  }
   values.push(scope.clientId);
+  if(!outerEngagement&&!workOrder) values.push('active');
  }
  if(scope.marketCode){
-  bits.push('EXISTS(SELECT 1 FROM v2_engagements e WHERE e.market_code=? AND e.property_id IS '+p+' AND e.scheme_id IS '+s+')');
+  if(outerEngagement)bits.push('e.market_code=?');
+  else bits.push('EXISTS(SELECT 1 FROM v2_engagements filter_market WHERE filter_market.market_code=? AND filter_market.property_id IS '+p+' AND filter_market.scheme_id IS '+s+' AND filter_market.status=?)');
   values.push(scope.marketCode);
+  if(!outerEngagement)values.push('active');
  }
  if(scope.portfolioId){
-  bits.push('EXISTS(SELECT 1 FROM v2_enterprise_portfolio_members m WHERE m.portfolio_id=? AND m.property_id IS '+p+' AND m.scheme_id IS '+s+')');
-  values.push(scope.portfolioId);
+  bits.push('EXISTS(SELECT 1 FROM v2_enterprise_portfolio_members filter_member JOIN v2_enterprise_portfolios filter_portfolio ON filter_portfolio.id=filter_member.portfolio_id AND filter_portfolio.status=? WHERE filter_member.portfolio_id=? AND filter_member.property_id IS '+p+' AND filter_member.scheme_id IS '+s+')');
+  values.push('active',scope.portfolioId);
  }
  return {sql:bits.length?bits.map(x=>'('+x+')').join(' AND '):'1=1',values};
 }
