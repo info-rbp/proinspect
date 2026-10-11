@@ -7,8 +7,10 @@ test('V2 specialist sector packs match all eleven operational markets and 55 con
  assert.equal(V2_SERVICE_SEEDS.length,69);
  assert.equal(V2_SECTOR_PACKS.length,11);
  assert.deepEqual(V2_SECTOR_PACKS.map(x=>x.marketCode).sort(),V2_MARKETS.map(x=>x.code).sort());
- assert.equal(V2_SECTOR_PACKS.flatMap(x=>x.modules).length,55);
- assert.equal(new Set(V2_SECTOR_PACKS.flatMap(x=>x.modules.map(m=>m.code))).size,55);
+ const moduleCodes:string[]=[];
+ for(const pack of V2_SECTOR_PACKS)for(const module of pack.modules)moduleCodes.push(module.code);
+ assert.equal(moduleCodes.length,55);
+ assert.equal(new Set(moduleCodes).size,55);
  assert.equal(SECTOR_RELEASE_CHECKS.length,7);
 });
 test('specialist fields allow only approved evidence references and non-sensitive notes',()=>{
