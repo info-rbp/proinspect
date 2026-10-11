@@ -18,17 +18,29 @@ export async function uploadReportEvidence(env:Env,user:Principal,w:Workspace,re
  const areaId=String(form.get('areaId')??''),componentId=String(form.get('componentId')??'');
  assert(/^[A-Za-z0-9_-]{1,100}$/.test(areaId),422,'AREA_REQUIRED','Select a report area.');
  assert(!componentId||/^[A-Za-z0-9_-]{1,100}$/.test(componentId),422,'COMPONENT_INVALID','Select an existing component.');
- const draft=await statement(env.DB,'SELECT content_json FROM report_drafts WHERE report_id=?',reportId).first<{content_json:string}>();
+ const draft=await statement(env.DB,'SELECT content_json,revision FROM report_drafts WHERE report_id=?',reportId).first<{content_json:string,revision:number}>();
  assert(draft,409,'REPORT_DRAFT_REQUIRED','Report draft missing.');
  const data=JSON.parse(draft.content_json),area=data.areas.find((a:{id:string})=>a.id===areaId);
  assert(area&&(!componentId||area.components.some((c:{id:string})=>c.id===componentId)),422,'EVIDENCE_CONTEXT','The evidence target must exist in the report draft.');
+ const target=componentId?area.components.find((c:{id:string})=>c.id===componentId):area;
+ const linked=componentId?'photoIds':'overviewPhotoIds';
+ const modified=structuredClone(data) as {areas:typeof data.areas};
+ const areaNew=modified.areas.find((a:{id:string})=>a.id===areaId)!;
+ const node=componentId?areaNew.components.find((c:{id:string})=>c.id===componentId)!:areaNew;
+ if(!Array.isArray(node[linked]))node[linked]=[];
  const id=uid('evid'),key=`report-evidence/${reportId}/${id}.jpg`,at=now();
+ node[linked].push(id);
  await env.DOCUMENTS.put(key,bytes,{httpMetadata:{contentType:'image/jpeg'},customMetadata:{sha256:sha}});
  try{
   await env.DB.batch([
    statement(env.DB,`INSERT INTO report_evidence(id,report_id,area_id,component_id,object_key,content_type,size,sha256,status,uploaded_by,uploaded_at)
      VALUES(?,?,?,?,?,'image/jpeg',?,?,'pending',?,?)`,id,reportId,areaId,componentId,key,photo.size,sha,user.id,at),
-   activity(env,user,'report.evidence_uploaded','report_evidence',id,row.property_id,row.scheme_id,{reportId})
+   statement(env.DB,'UPDATE report_drafts SET content_json=?,revision=revision+1,updated_by=?,updated_at=? WHERE report_id=? AND revision=?',JSON.stringify(modified),user.id,at,reportId,draft.revision),
+   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+   statement(env.DB,"UPDATE inspection_reports SET revision=revision+1,updated_at=? WHERE id=? AND revision=? AND status IN('draft','changes_requested')",at,reportId,row.revision),
+   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+   activity(env,user,'report.evidence_uploaded','report_evidence',id,row.property_id,row.scheme_id,{reportId}),
+   statement(env.DB,'DELETE FROM mutation_guards')
   ]);
  }catch(e){await env.DOCUMENTS.delete(key);throw e;}
  return {id,status:'pending',sha256:sha};

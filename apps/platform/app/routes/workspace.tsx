@@ -58,6 +58,7 @@ export default function WorkspaceLayout() {
       '',
     ]);
   if (w.kind === 'tenant') items.push(['inspections', 'Inspections', '']);
+  items.push(['reports', w.kind === 'staff' ? 'Report creation & review' : 'Issued inspection reports', '']);
   items.push(['documents', 'Documents & reports', '']);
   if (customer || (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? '')))
     items.push(['document-operations', 'Document preparation', '']);

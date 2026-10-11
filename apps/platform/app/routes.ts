@@ -38,6 +38,8 @@ export default [
     index('routes/overview.tsx'),
     route('records/:collection?', 'routes/records.tsx'),
     route('reporting', 'routes/reporting.tsx'),
+    route('reports', 'routes/reports.tsx'),
+    route('reports/:reportId', 'routes/report-detail.tsx'),
     route('work-orders/:workOrderId', 'routes/work-order-detail.tsx'),
     route('portfolio', 'routes/portfolio.tsx'),
     route('team', 'routes/team.tsx'),
