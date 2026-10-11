@@ -36,7 +36,9 @@ export async function sectorData(env:Env,user:Principal,w:Workspace){
 }
 export async function sectorCommand(env:Env,user:Principal,w:Workspace,path:string[],input:unknown){
  staff(user,w);
- const [area,id,operation]=path;
+ const [area,rawId,operation]=path;
+ let id=rawId;
+ if(id){try{id=decodeURIComponent(id);}catch{assert(false,422,'V2_SECTOR_ID_INVALID','Invalid market pack identifier.');}}
  if(area==='modules'&&id&&operation==='review'){
   const d=z.object({status:z.enum(['approved','excluded']),reviewReference:reference}).parse(input);
   const m=await statement(env.DB,
