@@ -6,8 +6,6 @@ import { seal, unseal } from '../packages/auth/crypto.ts';
 // @ts-expect-error Repository tooling is plain JavaScript.
 import * as config from '../scripts/configuration.mjs';
 const {checkConfiguration,environmentManifest,secretTargets,requireRepositoryAcceptance}=config;
-// @ts-expect-error Repository tooling is plain JavaScript.
-import { stagingConfigurations } from '../scripts/deploy/staging.mjs';
 import { SERVICE_SEEDS } from '../packages/service-catalogue/index.ts';
 import { SERVICE_FOCUS, GUIDES } from '../packages/marketing/content.ts';
 test('configuration inventory covers runtime bindings and separates marketing secrets', () => {
@@ -66,20 +64,7 @@ test('complete configuration validates while unsafe release settings fail', () =
     checkConfiguration({ ...input, EMAIL_SINK: '' }, { environment: 'production' }).ok,
     true,
   );
-  const c = stagingConfigurations(
-    {},
-    {},
-    {
-      subdomain: 'fixture',
-      databaseId: '11111111-1111-1111-1111-111111111111',
-      sourceSha: 'a'.repeat(40),
-      marketingTurnstileSiteKey: 'site-marketing',
-      reportToolOrigin: 'https://reports.example.test',
-    },
-  );
-  assert.equal(c.marketing.env.staging.vars.MARKETING_TURNSTILE_SITE_KEY, 'site-marketing');
-  assert.equal(c.platform.env.staging.vars.RESTRICTED_WORKFLOWS_ENABLED, 'false');
-  assert.equal(c.platform.env.staging.vars.REPORT_TOOL_ORIGIN, 'https://reports.example.test');
+
 });
 test('large encrypted envelopes avoid the argument stack limit and remain context bound', async () => {
   const key = Buffer.from(randomBytes(32)).toString('base64'),

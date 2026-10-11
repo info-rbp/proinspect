@@ -22,6 +22,6 @@ Staff delivery capability is added with each external workflow, not after the po
 
 Each enabled workflow requires server authorization, persistence, failure handling, an observable result and automated acceptance. Schema-only modules remain disabled. A green build does not prove hosted credentials, delivery, recovery or legal-content approval.
 
-No automatic production deployment, old resource retirement or mass historical migration. No native mobile app, general workflow engine, full strata accounting, levies, AGM administration, statutory voting, community chat or speculative integrations in the initial build.
+The platform deploys directly through Cloudflare's connected `main` branch. This does not authorise old resource retirement or mass historical migration. No native mobile app, general workflow engine, full strata accounting, levies, AGM administration, statutory voting, community chat or speculative integrations in the initial build.
 
 BUILD_STATUS.md records implemented versus pending capability. DEPLOYMENT.md records environment requirements. Do not use old repository status documents as acceptance for this rebuild.

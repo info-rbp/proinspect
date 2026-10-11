@@ -1,40 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-// @ts-expect-error Deployment tooling is intentionally plain JavaScript.
-import { resourceNames, stagingConfigurations } from '../scripts/deploy/staging.mjs';
-test('staging bootstrap cannot target production or a legacy application', () => {
-  assert.throws(() => resourceNames('production'));
-  for (const name of Object.values(resourceNames()))
-    assert.match(String(name), /^proinspect-v2-staging-/);
-});
-test('generated staging configuration separates storage, origins and queues', () => {
-  const c = stagingConfigurations(
-    { name: 'local-platform' },
-    { name: 'local-marketing' },
-    {
-      subdomain: 'example-account',
-      databaseId: '11111111-1111-1111-1111-111111111111',
-      sourceSha: 'a'.repeat(40),
-    },
-  );
-  assert.equal(c.receipt.deployed, false);
-  assert.notEqual(c.receipt.appOrigin, c.receipt.marketingOrigin);
-  assert.equal(c.platform.env.staging.vars.APP_ENV, 'staging');
-  assert.notEqual(
-    c.platform.env.staging.r2_buckets[0].bucket_name,
-    c.platform.env.staging.r2_buckets[1].bucket_name,
-  );
-  assert.equal(
-    c.platform.env.staging.queues.consumers[0].dead_letter_queue,
-    resourceNames().deadLetter,
-  );
-  assert.equal(c.marketing.env.staging.vars.PLATFORM_ORIGIN, c.receipt.appOrigin);
-  assert.equal('routes' in c.platform.env.staging, false);
+import { existsSync, readFileSync } from 'node:fs';
+
+test('Cloudflare builds main directly without a GitHub Actions deployment workflow', () => {
+  assert.equal(existsSync('.github/workflows/connect-cloudflare-platform.yml'), false);
+  assert.equal(existsSync('.github/workflows/deploy-staging.yml'), false);
+  const verification = readFileSync('.github/workflows/verify.yml', 'utf8');
+  assert.match(verification, /branches: \[main\]/);
+  assert.doesNotMatch(verification, /wrangler deploy(?! --dry-run)/);
 });
 
-test('Cloudflare deployment remains locked until explicit repository acceptance', () => {
-  const workflow = readFileSync('.github/workflows/deploy-staging.yml', 'utf8');
-  assert.match(workflow, /deployment-locked/);
-  assert.doesNotMatch(workflow, /workflow_run:|secrets\.|wrangler deploy|--remote|--apply/);
+test('the intended Cloudflare connected configuration is production, not local', () => {
+  const config = JSON.parse(readFileSync('apps/platform/wrangler.jsonc', 'utf8'));
+  const live = config.env.connected;
+  assert.equal(live.name, 'proinspect-platform');
+  assert.equal(live.vars.APP_ENV, 'production');
+  assert.equal(live.vars.EMAIL_PROVIDER, 'resend');
+  assert.match(live.vars.APP_ORIGIN, /^https:\/\//);
+  assert.equal(live.vars.RESTRICTED_WORKFLOWS_ENABLED, 'false');
+  assert.notDeepEqual(live.r2_buckets, config.r2_buckets);
+  assert.deepEqual(live.r2_buckets.map((x: { binding: string }) => x.binding), ['DOCUMENTS','RESTRICTED_DOCUMENTS']);
+  assert.equal(live.d1_databases.length, 1);
+  assert.equal(live.d1_databases[0].binding, 'DB');
+  assert.equal(live.d1_databases[0].database_name, 'proinspect-platform-data');
+  assert.equal(live.d1_databases[0].database_id, undefined);
+  assert.notEqual(live.queues.producers[0].queue, config.queues.producers[0].queue);
+  assert.equal(live.durable_objects.bindings[0].class_name, 'BookingScheduler');
+  assert.ok(live.migrations.some((m: { new_sqlite_classes?: string[] }) => m.new_sqlite_classes?.includes('BookingScheduler')));
 });

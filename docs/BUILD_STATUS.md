@@ -1,6 +1,6 @@
 # Build status: connected portal workflows
 
-This ledger describes implemented source and bounded acceptance, not a production certificate. Cloudflare deployment is intentionally locked pending the owner's repository review. No customer data migration, DNS change, live payment, external email or hosted integration is claimed.
+This ledger describes implemented source and bounded acceptance, not a production certificate. Cloudflare now builds the platform directly from `main`; hosted deployment and external-service acceptance must be verified separately. No customer data migration, DNS change, live payment, external email or hosted integration is claimed.
 
 ## Implemented connected slices
 

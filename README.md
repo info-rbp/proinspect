@@ -4,7 +4,7 @@ A clean Cloudflare-native rebuild: one identity, one relationship-aware property
 
 The repository now contains the original booking-to-report workflow plus connected Landlord, Tenant, Property Manager, Commercial, Strata Manager, Building, Council and Staff operations. Access follows approved relationships, not a public role selector. See [BUILD_STATUS.md](docs/BUILD_STATUS.md) for implemented behaviour and explicit remaining limits.
 
-**Cloudflare deployment is locked pending the owner's repository acceptance.** CI executes local runtime and browser tests only; no Cloudflare resources, customer data or public domains are changed.
+**Cloudflare Workers Builds deploys `apps/platform` directly from `main` to the existing `proinspect-platform` Worker.** GitHub Actions remains verification-only. The first live deployment provisions new resources but does not migrate historical data or attach DNS.
 
 ## Applications
 
@@ -44,7 +44,7 @@ CI builds both Workers, tests local D1/R2/Durable Object workflows, checks uploa
 
 ## Deploy
 
-The deployment workflow is an inert manual-only lock. It loads no credentials and cannot provision, migrate or deploy. [DEPLOYMENT.md](docs/DEPLOYMENT.md) records the future release requirements, not an instruction to deploy now.
+Use Cloudflare's existing Git connection to `main`, not a GitHub Actions connection workflow. The platform build is `CLOUDFLARE_ENV=connected pnpm --dir apps/platform build`; deploy is `pnpm --dir apps/platform exec wrangler deploy`. The connected environment is **production**, with automatic D1/R2/Queue provisioning. [Deployment instructions](docs/DEPLOYMENT.md) cover initial database migrations and runtime secrets.
 
 ## Authoritative contracts
 
@@ -59,9 +59,4 @@ The old repositories are references only. No Firebase/Firestore, Express, Google
 
 ## Scope review and environment configuration
 
-Read [the scope review](docs/SCOPE_REVIEW.md) for implemented workflows and deliberate remaining gaps. [GitHub configuration](docs/GITHUB_CONFIGURATION.md) lists the exact core and optional secrets, public settings, Worker targets and external integration properties. `pnpm config:list` is safe offline; `pnpm config:check` validates supplied process variables without printing values or contacting providers. Adding secrets does not enable the locked deployment workflow.
-
-
-## Existing `proinspect-platform` Cloudflare connection
-
-An explicitly confirmed one-time GitHub Actions workflow can connect the existing platform Worker to a new, isolated staging D1/R2/Queue environment and fix its Cloudflare Builds `main` trigger. See [Cloudflare connected Worker setup](docs/CLOUDFLARE_CONNECTED_WORKER.md). This does **not** enable automatic production releases, DNS cutover or historic database reuse. The original staging deployment workflow remains locked.
+Read [the scope review](docs/SCOPE_REVIEW.md) for implemented workflows and deliberate remaining gaps. [GitHub configuration](docs/GITHUB_CONFIGURATION.md) lists the exact core and optional secrets, public settings, Worker targets and external integration properties. `pnpm config:list` is safe offline; `pnpm config:check` validates supplied process variables without printing values or contacting providers. Runtime secrets must be configured on the Cloudflare Worker; GitHub-only secrets are not passed to Cloudflare Builds.
