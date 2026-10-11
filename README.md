@@ -60,3 +60,6 @@ The old repositories are references only. No Firebase/Firestore, Express, Google
 ## Scope review and environment configuration
 
 Read [the scope review](docs/SCOPE_REVIEW.md) for implemented workflows and deliberate remaining gaps. [GitHub configuration](docs/GITHUB_CONFIGURATION.md) lists the exact core and optional secrets, public settings, Worker targets and external integration properties. `pnpm config:list` is safe offline; `pnpm config:check` validates supplied process variables without printing values or contacting providers. Runtime secrets must be configured on the Cloudflare Worker; GitHub-only secrets are not passed to Cloudflare Builds.
+## Google Admin portal testing aliases
+
+Eight owner-created `@proinspect.systems` email aliases can be prepared as isolated test Landlord, Property Manager, Strata Manager, Tenant, Resident, Council, Commercial and Staff accounts using the explicit one-time SQL and verification instructions in [Portal testing](docs/PORTAL_TESTING.md). This source addition does **not** auto-provision live D1 or bypass verified email sign-in. There is no Cloudflare Actions connection workflow.

@@ -68,3 +68,7 @@ Sources: https://developers.cloudflare.com/workers/ci-cd/builds/configuration/ ;
 ## Unified public website
 
 The established Cloudflare build/deploy commands above now ship both the complete marketing site and all private account/workspace routes in one Worker. `/` is the marketing homepage, `/services` is the 23-service catalogue, `/contact` uses the existing encrypted/signed Staff enquiry workflow in-process, and `/signin`, `/book`, `/w/...` remain on the same origin. Public SEO is indexable on `https://proinspect.systems` only; the Workers.dev alias and private routes are not indexed. The original marketing application is still built in repository verification but is not deployed separately. See [UNIFIED_SITE.md](UNIFIED_SITE.md). Runtime Marketing Turnstile settings are required on the **Platform Worker** for live public submissions.
+
+## Google Admin test portal access
+
+See [Portal testing](PORTAL_TESTING.md) for the eight owner-created email aliases, test-only relationship seed, verification query and privileged Staff revocation procedure. These scripts are deliberately **not** deployment hooks or numbered migrations; they are applied only once, explicitly, against the confirmed live `DB` D1 binding, after schema migration. Email authentication, sender and Turnstile secrets must be configured directly on the Worker.
