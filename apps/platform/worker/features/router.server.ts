@@ -7,6 +7,7 @@ import {
 } from './records.server';
 import { downloadWorkspaceDocument } from '../../../../packages/authorization/documents';
 import * as enquiries from './enquiries.server';
+import { v2StaffData,v2CustomerData,v2Command } from './v2-business.server';
 import { type Env, assert, statement } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
 import { readJson } from '../../../../packages/operations/core';
@@ -59,6 +60,8 @@ export async function featureApi(
     operationsWrite(user);
   };
   if (method === 'GET') {
+    if (tail === 'v2') return ok(await v2StaffData(env,user,w,url.searchParams.get('market') ?? 'RES'));
+    if (tail === 'v2-account') return ok(await v2CustomerData(env,user,w));
     if (tail === 'records') return ok(await recordPage(env, user, w, url));
     if (tail === 'reporting') return ok(await operationalReport(env, user, w));
     if (area === 'work-orders' && id && parts.length === 2)
@@ -107,6 +110,8 @@ export async function featureApi(
       return forms.downloadRestrictedEvidence(env, user, id);
   }
   if (method !== 'POST') return null;
+  if (area === 'v2' && parts.length<=4)
+    return ok(await v2Command(env,user,w,id,action,parts[3],await body()));
   if (area === 'enquiries' && id) {
     if (action === 'reply')
       return ok(await enquiries.replyToEnquiry(env, user, w, id, await body()));
