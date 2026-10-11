@@ -20,6 +20,7 @@ import * as tenancy from './tenancies.server';
 import * as admin from './admin.server';
 import * as forms from './forms.server';
 import * as integrations from './integrations.server';
+import {reportRoutes} from './report-router.server';
 /** Feature endpoints run only after authentication, origin and workspace checks. */
 export async function featureApi(
   request: Request,
@@ -54,6 +55,7 @@ export async function featureApi(
   }
   const body = () => readJson(request),
     ok = (value: unknown) => Response.json(value);
+  if(area==='reports')return reportRoutes(request,env,user,w,tail);
   const staff = () => {
     assert(w.kind === 'staff', 403, 'STAFF_REQUIRED', 'Use the Staff workspace.');
     operationsWrite(user);
