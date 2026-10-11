@@ -60,3 +60,8 @@ The old repositories are references only. No Firebase/Firestore, Express, Google
 ## Scope review and environment configuration
 
 Read [the scope review](docs/SCOPE_REVIEW.md) for implemented workflows and deliberate remaining gaps. [GitHub configuration](docs/GITHUB_CONFIGURATION.md) lists the exact core and optional secrets, public settings, Worker targets and external integration properties. `pnpm config:list` is safe offline; `pnpm config:check` validates supplied process variables without printing values or contacting providers. Adding secrets does not enable the locked deployment workflow.
+
+
+## Existing `proinspect-platform` Cloudflare connection
+
+An explicitly confirmed one-time GitHub Actions workflow can connect the existing platform Worker to a new, isolated staging D1/R2/Queue environment and fix its Cloudflare Builds `main` trigger. See [Cloudflare connected Worker setup](docs/CLOUDFLARE_CONNECTED_WORKER.md). This does **not** enable automatic production releases, DNS cutover or historic database reuse. The original staging deployment workflow remains locked.

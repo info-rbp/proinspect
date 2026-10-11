@@ -83,3 +83,8 @@ The checker reports missing names and format failures, never values, and makes n
 For each new application-controlled key, generate an independent value locally using `openssl rand -base64 32`. Store it securely. Back up DATA_ENCRYPTION_KEY; replacing an existing key without a rotation migration strands encrypted records. Bootstrap preserves existing secrets, including encryption. If the shared gateway is configured on only one Worker, the installer stops for explicit reconciliation. Existing secret values cannot be read back for comparison.
 
 Official platform references: https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets ; https://developers.cloudflare.com/workers/configuration/secrets/ ; https://developers.cloudflare.com/workers/wrangler/environments/ . Application-specific names are defined by this repository.
+
+
+## Existing `proinspect-platform` Worker (one-time staging connection)
+
+For the [manual connected-Worker action](CLOUDFLARE_CONNECTED_WORKER.md), `CLOUDFLARE_ACCOUNT_ID` must be available as a GitHub staging variable or secret and all core/staging inputs above must pass offline validation. An optional `CLOUDFLARE_BUILDS_API_TOKEN` staging secret can be supplied if the resource-management `CLOUDFLARE_API_TOKEN` is not a **user-scoped** token with **Workers Builds Configuration: Edit**. Cloudflare's Builds API does not accept account-scoped API tokens. The action is manually dispatched and requires typing `proinspect-platform`; it does not run on each push or change the existing inert production deployment lock.
