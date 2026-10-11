@@ -131,7 +131,7 @@ class SchemaTests(unittest.TestCase):
 
     def test_v2_compliance_evidence_requires_separate_reviewer(self):
         self.db.execute("INSERT INTO users(id,email,created_at) VALUES('u2','second-reviewer@example.test','2026-01-01')")
-        self.db.execute("INSERT INTO v2_engagements(id,client_id,property_id,market_code,reference,scope_summary,starts_at,created_by,created_at) VALUES('draft-eng','c','p','RES','DRAFT-ENGAGEMENT-001','Review evidence','2026-01-01','u','2026-01-01')")
+        self.db.execute("INSERT INTO v2_engagements(id,client_id,property_id,market_code,reference,scope_summary,status,starts_at,created_by,created_at) VALUES('draft-eng','c','p','RES','DRAFT-ENGAGEMENT-001','Review evidence','active','2026-01-01','u','2026-01-01')")
         self.db.execute("INSERT INTO v2_compliance_obligations(id,engagement_id,asset_id,title,category,source_reference,requirement_summary,accountable_party,next_review_on,created_by,created_at,updated_at) VALUES('test-obl','draft-eng','v2:property:p','External review','fire','AUTHORITY-REFERENCE','External certificate','qualified_provider','2026-11-01','u','2026-01-01','2026-01-01')")
         self.db.execute("INSERT INTO v2_compliance_evidence(id,obligation_id,kind,provider_name,evidence_reference,issued_on,recorded_by,created_at) VALUES('test-evidence','test-obl','inspection','Independent supplier','EVIDENCE-REF','2026-10-01','u','2026-10-01')")
         with self.assertRaisesRegex(sqlite3.IntegrityError,'V2_COMPLIANCE_EVIDENCE_SELF_REVIEW'):
