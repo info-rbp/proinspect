@@ -6,7 +6,9 @@ test('Cloudflare builds main directly without a GitHub Actions deployment workfl
   assert.equal(existsSync('.github/workflows/connect-cloudflare-platform.yml'), false);
   assert.equal(existsSync('.github/workflows/deploy-staging.yml'), false);
   const verification = readFileSync('.github/workflows/verify.yml', 'utf8');
-  assert.match(verification, /branches: \[main\]/);
+  assert.match(verification, /branches: \[main, ProInspect-V2\]/);
+  assert.match(verification, /pull_request:/);
+  // main remains the only deployment branch; V2 is verification-only.
   assert.doesNotMatch(verification, /wrangler deploy(?! --dry-run)/);
 });
 
