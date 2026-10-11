@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { assert, now, statement, uid, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
-import { operationsWrite, booksServices } from '../../../../packages/authorization/server';
+import { operationsWrite, booksServices, propertyScope } from '../../../../packages/authorization/server';
 import { activity, guard, clearGuard, recordId, shortText, reference, isoDate } from '../../../../packages/operations/core';
 import { calculateV2Quote } from '../../../../packages/v2/pricing';
 
@@ -40,7 +40,7 @@ export async function v2StaffData(env: Env, user: Principal, w: Workspace, marke
   staffReader(user,w);
   assert(/^[A-Z]{3}$/.test(market),422,'V2_MARKET_INVALID','Choose a recognised property market.');
   const [
-    markets,services,rules,plans,assets,assignments,engagements,subscriptions,usage,rateCards,quotes,
+    markets,services,rules,plans,assets,assignments,engagements,subscriptions,usage,rateCards,quotes,clients,properties,schemes,
   ]=await Promise.all([
     statement(env.DB,'SELECT * FROM v2_markets ORDER BY code').all(),
     statement(env.DB,'SELECT code,name,family,summary,status,legacy_service_id,delivery_gate,version FROM v2_services ORDER BY code').all(),
@@ -53,10 +53,14 @@ export async function v2StaffData(env: Env, user: Principal, w: Workspace, marke
     statement(env.DB,'SELECT subscription_id,service_code,metric,SUM(quantity) AS consumed FROM v2_usage_ledger GROUP BY subscription_id,service_code,metric ORDER BY subscription_id LIMIT 150').all(),
     statement(env.DB,'SELECT * FROM v2_rate_cards ORDER BY created_at DESC LIMIT 100').all(),
     statement(env.DB,'SELECT id,client_id,market_code,service_code,amount_ex_gst_cents,gst_cents,total_cents,created_at FROM v2_quote_snapshots ORDER BY created_at DESC LIMIT 60').all(),
+    statement(env.DB,"SELECT id,name,client_type FROM clients WHERE status='active' ORDER BY name LIMIT 300").all(),
+    statement(env.DB,"SELECT id,address,suburb,sector FROM properties WHERE archived_at IS NULL ORDER BY address LIMIT 300").all(),
+    statement(env.DB,"SELECT id,name,scheme_number FROM strata_schemes ORDER BY name LIMIT 300").all(),
   ]);
   return {markets:markets.results,services:services.results,rules:rules.results,plans:plans.results,
     assets:assets.results,assignments:assignments.results,engagements:engagements.results,
     subscriptions:subscriptions.results,usage:usage.results,rateCards:rateCards.results,quotes:quotes.results,
+    clients:clients.results,properties:properties.results,schemes:schemes.results,
     ruleMarket:market, draftOnly: true};
 }
 export async function v2CustomerData(env:Env,user:Principal,w:Workspace) {
@@ -66,9 +70,15 @@ export async function v2CustomerData(env:Env,user:Principal,w:Workspace) {
     w.kind,w.scopeId,user.id).first();
   assert(current,403,'V2_CLIENT_FORBIDDEN','The current customer account is unavailable.');
   // Only activated engagements appear in a customer account. Draft proposals remain Staff-only.
-  const engagements=await statement(env.DB,
-    "SELECT e.id,e.reference,e.market_code,e.scope_summary,e.property_id,e.scheme_id,e.status,e.starts_at,e.ends_at FROM v2_engagements e WHERE e.client_id=? AND e.status IN('active','paused','ended') ORDER BY e.created_at DESC LIMIT 100",
-    w.scopeId).all<{id:string}>();
+  // Reuse the canonical portfolio/management scope. Being a client member does not
+  // grant access to every property or every scheme in a professional portfolio.
+  const ps=propertyScope(user,w);
+  const time=now();
+  const scopedSql="SELECT e.id,e.reference,e.market_code,e.scope_summary,e.property_id,e.scheme_id,e.status,e.starts_at,e.ends_at FROM v2_engagements e WHERE e.client_id=? AND e.status IN('active','paused','ended') AND ("
+    +"(e.property_id IS NOT NULL AND EXISTS(SELECT 1 FROM properties p WHERE p.id=e.property_id AND ("+ps.sql+")))"
+    +" OR (e.scheme_id IS NOT NULL AND ?='strata-manager' AND EXISTS(SELECT 1 FROM scheme_client_links l WHERE l.scheme_id=e.scheme_id AND l.client_id=? AND l.role IN('strata_manager','building_manager') AND l.starts_at<=? AND (l.ends_at IS NULL OR l.ends_at>?)))"
+    +") ORDER BY e.created_at DESC LIMIT 100";
+  const engagements=await statement(env.DB,scopedSql,w.scopeId,...ps.values,w.kind,w.scopeId,time,time).all<{id:string}>();
   const ids=engagements.results.map(e=>e.id);
   if (!ids.length)return {engagements:[],subscriptions:[],usage:[]};
   const slots=ids.map(()=>'?').join(',');

@@ -61,6 +61,8 @@ export default function WorkspaceLayout() {
   items.push(['documents', 'Documents & reports', '']);
   if (customer || (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? '')))
     items.push(['document-operations', 'Document preparation', '']);
+  if (customer) items.push(['service-agreements', 'Service agreements', '']);
+  if (staff && user.staffRole !== 'inspector') items.push(['v2-business', 'V2 business model', '']);
   if (customer || w.kind === 'council' || (staff && user.staffRole !== 'inspector'))
     items.push([
       'finance',
