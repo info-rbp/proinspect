@@ -16,7 +16,9 @@ export function loader({request,context}:LoaderFunctionArgs) {
  siteKey:env.MARKETING_TURNSTILE_SITE_KEY,ready:Boolean(env.ENQUIRY_GATEWAY_SECRET&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SITE_KEY)),local:env.APP_ENV==='local'},
  {headers:{'Cache-Control':'no-store'}});
 }
-export async function action({request,context}:ActionFunctionArgs) {
+/** Shared submission path for both the original marketing build and the unified Worker. */
+export async function submitContact({request,context}:ActionFunctionArgs,
+  deliver: typeof fetch = fetch) {
  const env=context.get(runtimeContext).env as Record<string,string>;
  const fail=(message:string,status=422,fields:Record<string,string[]|undefined>={})=>data({error:message,fields,attempt:crypto.randomUUID()},{status,headers:{'Cache-Control':'no-store'}});
  const url=new URL(request.url),local=env.APP_ENV==='local'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname);
@@ -28,20 +30,22 @@ export async function action({request,context}:ActionFunctionArgs) {
  if(form.get('website'))return fail('Please submit the form directly.',422);
  const parsed=enquirySchema.safeParse({...Object.fromEntries(form),serviceId:form.get('serviceId')||undefined,consent:form.get('consent')==='yes'});
  if(!parsed.success)return fail('Check the highlighted fields.',422,parsed.error.flatten().fieldErrors);
- const target=env.PLATFORM_ORIGIN||'http://localhost:5173',host=new URL(target);
+ const target=env.PLATFORM_ORIGIN||env.APP_ORIGIN||'http://localhost:5173',host=new URL(target);
  if(!local&&host.protocol!=='https:')return fail('The enquiry service is not configured yet.',503);
  try {
   const body=JSON.stringify({input:parsed.data,origin:env.MARKETING_ORIGIN||env.APP_ORIGIN,
     clientKey:await digest(`${env.ENQUIRY_GATEWAY_SECRET}:ip:${request.headers.get('CF-Connecting-IP')||'local'}`),turnstile:form.get('turnstile')||undefined});
   const timestamp=String(Date.now());
   // Workers supports manual redirects; never forward signed contact data to a redirect target.
-  const response=await fetch(`${target}/api/public/enquiries`,{method:'POST',headers:{'Content-Type':'application/json','X-Enquiry-Time':timestamp,'X-Enquiry-Signature':await signEnquiry(env.ENQUIRY_GATEWAY_SECRET,timestamp,body)},body,redirect:'manual',signal:AbortSignal.timeout(15000)});
+  const response=await deliver(`${target}/api/public/enquiries`,{method:'POST',headers:{'Content-Type':'application/json','X-Enquiry-Time':timestamp,'X-Enquiry-Signature':await signEnquiry(env.ENQUIRY_GATEWAY_SECRET,timestamp,body)},body,redirect:'manual',signal:AbortSignal.timeout(15000)});
   if(response.status>=300&&response.status<400)throw new Error('ENQUIRY_REDIRECT_REJECTED');
   const result=await response.json() as {reference?:string;message?:string;fields?:Record<string,string[]>};
   if(!response.ok)return fail(result.message||'The enquiry could not be saved. Please retry.',response.status,result.fields);
   return data({reference:result.reference},{headers:{'Cache-Control':'no-store'}});
  }catch{return fail('We could not confirm receipt. Your text remains here; retrying will not create a second enquiry.',503);}
 }
+export const action = submitContact;
+
 export default function Contact() {
  const settings=useLoaderData<typeof loader>(),result=useActionData<any>(),pending=useNavigation().state!=='idle';
  const [requestKey]=useState(settings.requestKey);
@@ -54,7 +58,7 @@ export default function Contact() {
     {result?.reference?<div role="status" className="stack"><h2>Your enquiry has been received.</h2><p>Reference <strong>{result.reference}</strong></p><p>ProInspect will review your requirements and contact you using the details supplied. This is not a confirmed booking or an account registration.</p><Link className="button" to="/services">Explore services</Link></div>:<>
     <h2>Your requirements</h2><p className="small">Use general property information only. Do not include keys, access codes, confidential evidence or sensitive tenant information.</p>
     {!settings.ready&&<p role="status">The enquiry service is not configured in this environment. Use synthetic information for repository testing.</p>}
-    <Form method="post" className="form" aria-label="Property enquiry">
+    <Form method="post" reloadDocument className="form" aria-label="Property enquiry">
       <input type="hidden" name="requestKey" value={requestKey}/>
       <div hidden aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off"/></label></div>
       <Field label="Your name" name="name"><input name="name" required minLength={2} maxLength={100} autoComplete="name" {...field('name')}/></Field>{error('name')}

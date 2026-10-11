@@ -6,7 +6,7 @@ Public marketing discovery feeds authenticated transactions. One verified user h
 
 ## Delivery sequence
 
-1. Cloudflare skeleton and permanent CI: marketing/platform build, health endpoints, isolated resources, no legacy runtime.
+1. Cloudflare skeleton and permanent CI: unified marketing/platform build, health endpoints, isolated resources, no legacy runtime.
 2. Freeze the shared domain, authorization and portal definitions with numbered SQL evolution.
 3. Complete marketing -> landlord signup -> property -> booking -> work order -> Staff -> ordinary report -> private client download.
 4. Complete tenant invitation -> maintenance -> manager review -> ProInspect work -> completion, then guided tenancy/document workflows with restricted evidence separately verified.

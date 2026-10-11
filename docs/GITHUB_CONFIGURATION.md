@@ -42,3 +42,6 @@ The marketing Worker is a separate Cloudflare deployment and will require its ow
 ## Local development
 
 Local `.dev.vars` and the original top-level Wrangler configuration remain separate from Cloudflare. `pnpm local:init --test-fixtures` is synthetic and never targets the remote database. GitHub Actions `Verify ProInspect` continues to run local integration and browser tests, but has no Cloudflare deployment step.
+## Unified public marketing and platform runtime
+
+The existing `proinspect-platform` Cloudflare Worker now serves both marketing and customer/account routes at one origin. Set `MARKETING_TURNSTILE_SITE_KEY` (public runtime variable), `MARKETING_TURNSTILE_SECRET_KEY`, `ENQUIRY_GATEWAY_SECRET` and `DATA_ENCRYPTION_KEY` (runtime secrets) on that **same Platform Worker**, with site/secret keys valid for its currently active hostname. Cloudflare native Git builds do not inherit GitHub secrets. `APP_ORIGIN`, `MARKETING_ORIGIN` and `PLATFORM_ORIGIN` are intentionally identical in the connected production build and can be set through `PROINSPECT_APP_ORIGIN` as a Cloudflare build variable. See [UNIFIED_SITE.md](UNIFIED_SITE.md). The standalone Marketing Worker is not deployed.

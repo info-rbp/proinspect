@@ -23,14 +23,11 @@ export function directConfiguration(config, input = {}) {
   if (historical !== 0 || current <= historical ||
       migrations.some((m) => m.deleted_classes?.length || m.renamed_classes?.length))
     throw new Error('Keep cf-v1 BookingCoordinator and v1 BookingScheduler migrations without deleting or renaming legacy objects.');
-  // A failed first deployment already created this R2 bucket. Without an
-  // explicit name, Wrangler's auto-provisioning tries to create it again and
-  // Cloudflare returns 10004 (bucket already exists). Always reuse it.
-  const ordinary = live.r2_buckets.find((bucket) => bucket.binding === 'DOCUMENTS');
-  const restricted = live.r2_buckets.find((bucket) => bucket.binding === 'RESTRICTED_DOCUMENTS');
-  if (restricted?.bucket_name !== 'proinspect-platform-restricted-documents')
+  const ordinaryBucket = live.r2_buckets.find((bucket) => bucket.binding === 'DOCUMENTS');
+  const restrictedBucket = live.r2_buckets.find((bucket) => bucket.binding === 'RESTRICTED_DOCUMENTS');
+  if (restrictedBucket?.bucket_name !== 'proinspect-platform-restricted-documents')
     throw new Error('RESTRICTED_DOCUMENTS must reuse the existing proinspect-platform-restricted-documents R2 bucket.');
-  if (!ordinary || ordinary.bucket_name === restricted.bucket_name)
+  if (!ordinaryBucket || ordinaryBucket.bucket_name === restrictedBucket.bucket_name)
     throw new Error('Ordinary and restricted document storage must have separate R2 bindings.');
   if (live.d1_databases[0].database_id === 'local-proinspect')
     throw new Error('Local D1 database IDs must never deploy.');
@@ -40,6 +37,10 @@ export function directConfiguration(config, input = {}) {
       throw new Error('PROINSPECT_APP_ORIGIN must be an HTTPS origin without path or credentials.');
     live.vars.APP_ORIGIN = url.origin;
   }
+  // Both the marketing routes and authenticated application run on the same
+  // origin, including the original Workers.dev URL until DNS is configured.
+  live.vars.MARKETING_ORIGIN = live.vars.APP_ORIGIN;
+  live.vars.PLATFORM_ORIGIN = live.vars.APP_ORIGIN;
   if (input.sha) {
     if (!/^[a-f0-9]{40}$/.test(input.sha)) throw new Error('Invalid Cloudflare commit SHA.');
     live.vars.BUILD_SHA = input.sha;

@@ -5,6 +5,7 @@ import { handleApi } from './api';
 import { consumeQueue, dispatchOutbox } from '../../../packages/notifications/server';
 import { dispatchNotices } from '../../../packages/notifications/notices';
 import { dispatchIntegrations } from './features/integrations.server';
+import { shouldIndexPublicPage } from '../app/lib/public-routes';
 export { BookingScheduler } from './scheduler';
 export { BookingCoordinator } from './legacy-booking-coordinator';
 const handle = createRequestHandler(() => import('virtual:react-router/server-build'),import.meta.env.MODE);
@@ -17,9 +18,16 @@ export default {
     const headers = new Headers(response.headers);
     headers.set('Cache-Control', 'private, no-store');
     headers.set('X-Content-Type-Options', 'nosniff');
-    headers.set('Referrer-Policy', 'no-referrer');
+    // Chrome sends Origin: null for native POST forms under no-referrer,
+    // which React Router correctly rejects as a potential CSRF attempt.
+    // strict-origin sends only the origin, never account paths or tokens.
+    headers.set('Referrer-Policy', 'strict-origin');
     headers.set('X-Frame-Options', 'DENY');
-    headers.set('X-Robots-Tag', 'noindex, nofollow');
+    const requestUrl = new URL(request.url);
+    if (response.ok && shouldIndexPublicPage(requestUrl.pathname, requestUrl.origin, env.APP_ENV))
+      headers.delete('X-Robots-Tag');
+    else
+      headers.set('X-Robots-Tag', 'noindex, nofollow');
     headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     if (env.APP_ENV !== 'local') {
       headers.set('Strict-Transport-Security', 'max-age=31536000');
