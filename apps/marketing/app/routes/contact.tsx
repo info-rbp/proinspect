@@ -58,7 +58,7 @@ export default function Contact() {
     {result?.reference?<div role="status" className="stack"><h2>Your enquiry has been received.</h2><p>Reference <strong>{result.reference}</strong></p><p>ProInspect will review your requirements and contact you using the details supplied. This is not a confirmed booking or an account registration.</p><Link className="button" to="/services">Explore services</Link></div>:<>
     <h2>Your requirements</h2><p className="small">Use general property information only. Do not include keys, access codes, confidential evidence or sensitive tenant information.</p>
     {!settings.ready&&<p role="status">The enquiry service is not configured in this environment. Use synthetic information for repository testing.</p>}
-    <Form method="post" className="form" aria-label="Property enquiry">
+    <Form method="post" reloadDocument className="form" aria-label="Property enquiry">
       <input type="hidden" name="requestKey" value={requestKey}/>
       <div hidden aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off"/></label></div>
       <Field label="Your name" name="name"><input name="name" required minLength={2} maxLength={100} autoComplete="name" {...field('name')}/></Field>{error('name')}

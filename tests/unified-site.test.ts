@@ -67,5 +67,6 @@ test('the original contact form uses a signed in-process receiver instead of a s
   assert.match(marketingAction, /enquirySchema\.safeParse/);
   assert.match(marketingAction, /signEnquiry\(/);
   assert.match(marketingAction, /Turnstile/);
+  assert.match(marketingAction, /reloadDocument/); // Avoid forwarded-action origin mismatches without weakening CSRF checks.
   assert.match(marketingAction, /export const action = submitContact/);
 });
