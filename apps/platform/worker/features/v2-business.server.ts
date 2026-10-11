@@ -95,6 +95,12 @@ export async function v2CustomerData(env:Env,user:Principal,w:Workspace) {
 }
 export async function v2Command(env: Env, user: Principal, w: Workspace, area: string, key: string|undefined, action: string|undefined, input: unknown) {
   staffEditor(user,w);
+  // React Router sends URL-encoded plan version identifiers, e.g. RES%3Astandard%3Av1.
+  // Decode record path components once before the parameterized database lookup.
+  if (key) {
+    try { key = decodeURIComponent(key); }
+    catch { assert(false, 422, 'V2_RECORD_KEY_INVALID', 'The record identifier is invalid.'); }
+  }
   const data=input;
   if(area==='assets' && !key) {
     const d=scope.and(z.object({kind:choice(['building','premises','lot','common_area','plant','equipment','facility','infrastructure','other']),name:shortText,parentId:assetRef.optional(),reference:z.string().trim().max(200).optional()})).parse(data);
