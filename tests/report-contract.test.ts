@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SERVICE_SEEDS } from '../packages/service-catalogue/index';
-import { SERVICE_REPORT_CONTRACTS, reportPolicyForService, mayUseReportAction, REPORT_RECIPIENT_KINDS } from '../packages/report-engine/policy';
-import { inspectionPolicy } from '../packages/report-engine/upstream/inspectionPolicy';
-import { evaluateReportQuality } from '../packages/report-engine/upstream/reportOperations';
+import { SERVICE_SEEDS } from '../packages/service-catalogue/index.ts';
+import { SERVICE_REPORT_CONTRACTS, reportPolicyForService, mayUseReportAction, REPORT_RECIPIENT_KINDS } from '../packages/report-engine/policy.ts';
+import { inspectionPolicy } from '../packages/report-engine/upstream/inspectionPolicy.ts';
+import { evaluateReportQuality } from '../packages/report-engine/upstream/reportOperations.ts';
 test('all 23 service outputs have explicit report contracts',()=>{
  const ids=SERVICE_SEEDS.map(x=>x.id);assert.equal(ids.length,23);
  assert.deepEqual(Object.keys(SERVICE_REPORT_CONTRACTS).sort(),ids.sort());
