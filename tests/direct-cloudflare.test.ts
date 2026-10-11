@@ -51,3 +51,24 @@ test('direct deploy rejects accidental retirement of legacy Durable Objects', ()
   destructive.env.connected.migrations.push({tag:'delete-legacy',deleted_classes:['BookingCoordinator']});
   assert.throws(() => directConfiguration(destructive), /Keep cf-v1/);
 });
+
+test('reuse the previously provisioned restricted R2 bucket across Cloudflare build retries', () => {
+  const live = directConfiguration(config()).env.connected;
+  assert.deepEqual(live.r2_buckets, [
+    { binding: 'DOCUMENTS' },
+    { binding: 'RESTRICTED_DOCUMENTS', bucket_name: 'proinspect-platform-restricted-documents' },
+  ]);
+  assert.notEqual(live.r2_buckets[0].bucket_name, live.r2_buckets[1].bucket_name);
+});
+
+test('reject a restricted R2 binding that would provoke duplicate auto-provisioning or share ordinary storage', () => {
+  const missing = config();
+  delete missing.env.connected.r2_buckets[1].bucket_name;
+  assert.throws(() => directConfiguration(missing), /must reuse the existing/);
+  const renamed = config();
+  renamed.env.connected.r2_buckets[1].bucket_name = 'some-new-bucket';
+  assert.throws(() => directConfiguration(renamed), /must reuse the existing/);
+  const shared = config();
+  shared.env.connected.r2_buckets[0].bucket_name = 'proinspect-platform-restricted-documents';
+  assert.throws(() => directConfiguration(shared), /must have separate R2/);
+});
