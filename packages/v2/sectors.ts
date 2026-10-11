@@ -625,7 +625,8 @@ export const SECTOR_RELEASE_CHECKS = ["governance","service_scope","pricing","in
 export function validSectorFacts(required:readonly string[],facts:unknown):facts is Record<string,string>{
  if(!facts || typeof facts!=='object'||Array.isArray(facts))return false;
  const data=facts as Record<string,unknown>,keys=Object.keys(data);
- return keys.length<=12 && keys.every(k=>/^[A-Za-z][A-Za-z0-9]{0,49}$/.test(k)
+ return keys.length<=12 && keys.every(k=>(required.includes(k)||k==='notes')
+ && /^[A-Za-z][A-Za-z0-9]{0,49}$/.test(k)
  && typeof data[k]==='string' && String(data[k]).length<=500)
  && required.every(k=>typeof data[k]==='string'&&String(data[k]).trim().length>=4);
 }
