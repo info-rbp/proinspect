@@ -32,7 +32,11 @@ test('V2 estate, market pack and executive workspaces render and remain staff-on
    await page.screenshot({path:'artifacts/screenshots/v2-'+view.path+'-desktop.png',fullPage:true});
    await page.setViewportSize({width:390,height:844});
    await page.screenshot({path:'artifacts/screenshots/v2-'+view.path+'-mobile.png',fullPage:true});
-   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),view.path).toBe(true);
+   const overflows=await page.evaluate(()=>[...document.querySelectorAll('body *')].map(element=>({
+      tag:element.tagName, className:typeof element.className==='string'?element.className:'', width:Math.round(element.getBoundingClientRect().width),
+      right:Math.round(element.getBoundingClientRect().right)
+    })).filter(element=>element.right>window.innerWidth+2).slice(0,8));
+   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),view.path+' overflow offenders='+JSON.stringify(overflows)).toBe(true);
    await page.setViewportSize({width:1280,height:850});
   }
   await login(customer,'restricted-v2-'+randomUUID()+'@proinspect.test');

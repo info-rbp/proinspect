@@ -20,7 +20,7 @@ export default function MarketPacks(){
  return <>
   <PageHeading eyebrow="ProInspect V2 · Sector configuration" title="Specialist market packs"
    description="Market-by-market activation with reviewed operational modules, governance and insurance checks, and deliberately scoped pilot engagements. Reserved clinical or statutory activity is never activated implicitly."/>
-  <div className="stack">
+  <div className="stack v2-responsive">
    <div className="grid-4">
     <Panel title="Markets defined">{d.packs.length}</Panel>
     <Panel title="Module definitions">{d.modules.length}</Panel>

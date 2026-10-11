@@ -18,7 +18,7 @@ export default function EnterpriseIntelligence(){
  return <>
   <PageHeading eyebrow="ProInspect V2 · Management intelligence" title="Enterprise operations and capital works"
    description="Operational performance, asset condition, compliance follow-up, labour cost and capital expenditure commitments are reported from accepted records. No sample business results or unverified financial figures are presented."/>
-  <div className="stack">
+  <div className="stack v2-responsive">
    <div className="grid-4">
     <Panel title="Recorded asset base">{m.assets.assets??0}<p className="small">High criticality: {m.assets.high_critical??0}</p></Panel>
     <Panel title="Preventive plans overdue">{m.preventive.overdue??0}<p className="small">Due within 30 days: {m.preventive.due_soon??0}</p></Panel>

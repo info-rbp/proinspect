@@ -22,7 +22,7 @@ export default function V2Estates(){
  return <>
   <PageHeading eyebrow="ProInspect V2 · Asset assurance" title="Asset registers, preventive maintenance and compliance"
    description="Track asset condition and replacement exposure, generate planned work orders, and coordinate evidence-backed obligations. This system does not issue statutory compliance certificates."/>
-  <div className="stack">
+  <div className="stack v2-responsive">
    <div className="grid-4">
     <Panel title="Assets">{d.assets.length}</Panel>
     <Panel title="Plans due now">{duePm.length}</Panel>
