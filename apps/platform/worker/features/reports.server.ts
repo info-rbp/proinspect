@@ -74,7 +74,8 @@ export async function createReport(env:Env,user:Principal,w:Workspace,input:unkn
  const serviceId=booking?.service_id??null,contract=serviceId?reportPolicyForService(serviceId):null;
  assert(!serviceId||contract,422,'SERVICE_REPORT_POLICY','The booked service has no accepted report contract.');
  const property=order.property_id?await statement(env.DB,'SELECT sector FROM properties WHERE id=?',order.property_id).first<{sector:string}>():null;
- const profile=contract?.profile??(order.scheme_id?'strata':property?.sector==='commercial'?'commercial':'residential');
+ const profile=contract?.profile==='attendance'?'attendance':
+   order.scheme_id?'strata':property?.sector==='commercial'?'commercial':contract?.profile??'residential';
  const reportType=contract?.type??d.reportType??'maintenance',output=contract?.output??'inspection';
  if(d.tenancyId) {
    const tenancy=await statement(env.DB,'SELECT id FROM tenancies WHERE id=? AND property_id=?',d.tenancyId,order.property_id).first();
