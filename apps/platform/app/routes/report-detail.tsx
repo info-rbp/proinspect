@@ -21,7 +21,21 @@ export async function action({request,context,params}:ActionFunctionArgs){
   else if(intent==='reviewEvidence'){endpoint=`evidence/${encodeURIComponent(String(f.get('evidenceId')))}/review`;body={decision:String(f.get('decision'))};}
   else if(intent==='render'){endpoint='render';body={};}
   else if(intent==='issue'){endpoint='issue';body={audience:String(f.get('audience')),recipientId:String(f.get('recipientId')),reviewReference:String(f.get('reviewReference'))};}
-  else if(intent==='respond'){endpoint='response';body={generalNote:String(f.get('generalNote')),entries:[]};}
+  else if(intent==='respond'){
+    endpoint='response';
+    const entries=[...f.entries()].filter(([key,value])=>key.startsWith('finding:')&&String(value).trim()).map(([key,value])=>{
+      const [,areaId,componentId]=key.split(':');
+      return {areaId,componentId,comment:String(value).trim()};
+    });
+    body={generalNote:String(f.get('generalNote')),entries};
+  }
+  else if(intent==='resolveResponse'){
+    endpoint='response/'+encodeURIComponent(String(f.get('responseId')))+'/'+'resolve';
+    body={status:String(f.get('status')),resolutionNote:String(f.get('resolutionNote'))};
+  }
+  else if(intent==='createMaintenanceRequest'){
+    endpoint='maintenance/'+encodeURIComponent(String(f.get('candidateId')))+'/'+'create-request';body={};
+  }
   else if(intent==='maintenance'){endpoint='maintenance/candidates';body={};}
   else return data({error:'Unknown reporting action.'},{status:422});
  }catch{return data({error:'Report draft JSON could not be read.'},{status:422});}
@@ -142,10 +156,46 @@ export default function ReportDetail(){
     </Form>}
     {manager&&['approved','issued'].includes(report.status)&&<Form method="post"><input type="hidden" name="intent" value="maintenance"/><button className="button secondary">Prepare reviewable maintenance candidates</button></Form>}
   </section>}
+  {staff&&(manager||reviewer)&&payload.responses?.length>0&&<section className="panel stack-sm">
+    <h2>Recipient responses (separate from issued PDF)</h2>
+    {payload.responses.map((response:any)=><article key={response.id} className="panel stack-sm">
+      <p className="small muted">Response {response.id} · {response.status}</p>
+      <p>{response.content.generalNote}</p>
+      {response.content.entries?.map((entry:any,i:number)=><p key={i} className="small">
+        Area {entry.areaId}{entry.componentId?' / component '+entry.componentId:''}: {entry.comment}
+      </p>)}
+      {response.status!=='resolved'&&<Form method="post" className="form stack-sm">
+       <input type="hidden" name="intent" value="resolveResponse"/>
+       <input type="hidden" name="responseId" value={response.id}/>
+       <label>Review note<input name="resolutionNote" required minLength={4} maxLength={3000}/></label>
+       <button className="button secondary" name="status" value="under_review">Mark under review</button>
+       <button className="primary" name="status" value="resolved">Record resolution</button>
+      </Form>}
+    </article>)}
+  </section>}
+  {manager&&payload.maintenanceCandidates?.length>0&&<section className="panel stack-sm">
+    <h2>Maintenance candidates</h2>
+    <p className="small muted">Reviewed findings create separate requests for operational triage. They do not authorise contractor expenditure.</p>
+    {payload.maintenanceCandidates.map((candidate:any)=><div className="list-row" key={candidate.id}>
+      <div><p>{candidate.finding}</p><p className="small muted">{candidate.request_id?'Request '+candidate.request_id:'Not instructed'}</p></div>
+      {!candidate.request_id&&<Form method="post">
+       <input type="hidden" name="intent" value="createMaintenanceRequest"/>
+       <input type="hidden" name="candidateId" value={candidate.id}/>
+       <button className="button secondary small">Send for maintenance triage</button>
+      </Form>}
+    </div>)}
+  </section>}
   {!staff&&d.workspace.kind==='tenant'&&report.issued_document_id&&<section className="panel stack-sm">
    <h2>Respond to the issued report</h2><p className="small muted">Your response is stored separately and does not change the issued report.</p>
    <Form method="post" className="form"><input type="hidden" name="intent" value="respond"/>
-    <label>Comments or differences<textarea name="generalNote" rows={5} minLength={2} maxLength={6000} required/></label>
+    <label>General comments or differences<textarea name="generalNote" rows={5} minLength={2} maxLength={6000} required/></label>
+    {payload.responseTargets?.map((area:any)=><div className="stack-sm" key={area.id}>
+       <h3>{area.name}</h3>
+       {area.components?.map((component:any)=><label key={component.id}>
+         {component.name} — optional specific comment
+         <textarea name={`finding:${area.id}:${component.id}`} maxLength={1500} rows={2}/>
+       </label>)}
+    </div>)}
     <button className="primary">Submit response</button>
    </Form>
   </section>}
