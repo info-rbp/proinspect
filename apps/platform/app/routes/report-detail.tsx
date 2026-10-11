@@ -37,6 +37,11 @@ function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:an
  const change=(value:ReportDraft)=>{setDraft(value);setDirty(true);};
  const locked=!['draft','changes_requested'].includes(record.status);
  const addArea=()=>change({...draft,areas:[...draft.areas,{id:'area_'+crypto.randomUUID().replaceAll('-','').slice(0,14),name:'New area',overviewPhotoIds:[],components:[{id:'comp_'+crypto.randomUUID().slice(0,14),component:'Visible condition',commentary:'',conditionCategory:'unable_to_confirm',cleanlinessCategory:'unable_to_confirm',workingStatus:'not_applicable',testStatus:'not_applicable',comparisonStatus:'not_compared',photoIds:[],defects:[],maintenanceRequired:false}]}]});
+ const addComponent=(ai:number)=>change({...draft,areas:draft.areas.map((a,j)=>j!==ai?a:{...a,components:[...a.components,{
+  id:'comp_'+crypto.randomUUID().replaceAll('-','').slice(0,14),component:'New component',commentary:'',
+  conditionCategory:'unable_to_confirm',cleanlinessCategory:'unable_to_confirm',workingStatus:'not_applicable',
+  testStatus:'not_applicable',comparisonStatus:'not_compared',photoIds:[],defects:[],maintenanceRequired:false
+ } ]})});
  return <section className="panel stack">
    <div><h2>Inspection report draft</h2><p className="small muted">Capture visible conditions and commentary. Changes remain drafts until submitted and independently reviewed.</p></div>
    <Form method="post" className="stack">
@@ -59,7 +64,7 @@ function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:an
          <label><input disabled={locked} type="checkbox" checked={c.maintenanceRequired} onChange={e=>change(componentUpdate(draft,ai,ci,'maintenanceRequired',e.target.checked))}/> Maintenance follow-up required</label>
          <p className="small muted">{c.photoIds.length} linked evidence image(s). All evidence needs independent acceptance before report submission.</p>
        </fieldset>)}
-       {!locked&&<button className="button secondary small" type="button" onClick={()=>change({...draft,areas:draft.areas.map((a,j)=>j!==ai?a:{...a,components:[...a.components,{id:'comp_'+crypto.randomUUID().replaceAll('-','').slice(0,14),component:'New component',commentary:'',conditionCategory:'unable_to_confirm',cleanlinessCategory:'unable_to_confirm',workingStatus:'not_applicable',testStatus:'not_applicable',comparisonStatus:'not_compared',photoIds:[],defects:[],maintenanceRequired:false}]}]})}>Add component</button>}
+       {!locked&&<button className="button secondary small" type="button" onClick={()=>addComponent(ai)}>Add component</button>}
      </div>)}
      {!locked&&<div className="actions"><button type="button" className="button secondary" onClick={addArea}>Add area</button>
        <button className="primary">Save draft{dirty?' *':''}</button></div>}
