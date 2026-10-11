@@ -67,6 +67,15 @@ export async function issueApprovedReport(env:Env,user:Principal,w:Workspace,id:
  const d=z.object({audience:z.enum(['client','tenancy','scheme_resident','scheme_owner','scheme_council']),
    recipientId:z.string().min(5).max(100),reviewReference:z.string().trim().min(4).max(500)}).parse(input);
  if(d.audience==='tenancy') assert(!!row.tenancy_id&&d.recipientId===row.tenancy_id,422,'TENANCY_REPORT_CONTEXT','The report must be linked to this tenancy before issue.');
+ if(d.audience.startsWith('scheme_')){
+   assert(!!row.scheme_id&&!row.tenancy_id&&d.recipientId===row.scheme_id,403,'SCHEME_REPORT_SCOPE',
+     'Scheme distribution requires a scheme-scoped report without private tenancy context.');
+   const request=await statement(env.DB,`SELECT r.lot_id,r.tenancy_id,r.location_kind FROM work_orders w
+     LEFT JOIN requests r ON r.id=w.request_id WHERE w.id=?`,row.work_order_id)
+     .first<{lot_id:string|null,tenancy_id:string|null,location_kind:string|null}>();
+   assert(!request?.lot_id&&!request?.tenancy_id&&request?.location_kind!=='lot',
+     403,'PRIVATE_LOT_REPORT','Private lot findings cannot be published to a whole scheme.');
+ }
  const manifest=await statement(env.DB,'SELECT document_id FROM report_render_manifests WHERE report_version_id=?',row.approved_version_id).first<{document_id:string|null}>();
  assert(manifest?.document_id,409,'RENDER_REQUIRED','Generate and review the approved PDF first.');
  // The existing ProInspect document issue function performs live recipient-context checks,
@@ -90,6 +99,15 @@ export async function respondToIssuedReport(env:Env,user:Principal,w:Workspace,i
  assert(granted,404,'REPORT_NOT_FOUND','No report response permission is available.');
  const body=z.object({generalNote:z.string().trim().min(2).max(6000),
   entries:z.array(z.object({areaId:z.string().max(100),componentId:z.string().max(100).optional(),comment:z.string().trim().min(2).max(1500)})).max(80)}).parse(input);
+ const original=await statement(env.DB,'SELECT content_json FROM report_versions WHERE id=? AND report_id=?',report.approved_version_id,id)
+   .first<{content_json:string}>();
+ assert(original,409,'REPORT_VERSION_MISSING','The issued version could not be validated.');
+ const snapshot=reportDraftSchema.parse(JSON.parse(original.content_json));
+ for(const entry of body.entries){
+   const area=snapshot.areas.find(a=>a.id===entry.areaId);
+   assert(area&&(!entry.componentId||area.components.some(c=>c.id===entry.componentId)),
+     422,'RESPONSE_TARGET_INVALID','Choose a component or area from the exact issued version.');
+ }
  const old=await statement(env.DB,'SELECT id FROM report_responses WHERE report_version_id=? AND user_id=?',report.approved_version_id,user.id).first<{id:string}>();
  if(old)return {id:old.id,replayed:true};
  const idReply=uid('rresponse'),at=now();
@@ -115,4 +133,44 @@ export async function extractMaintenanceCandidates(env:Env,user:Principal,w:Work
   added++;
  }
  return {reviewedCandidates:added,reportVersionId:report.approved_version_id,workOrdersCreated:0};
+}
+
+/** Reviewer/Operations outcomes are separate from the immutable issued PDF. */
+export async function resolveReportResponse(env:Env,user:Principal,w:Workspace,id:string,responseId:string,input:unknown){
+ const row=await accessReport(env,user,w,id);
+ assert(w.kind==='staff'&&(manager(user,w)||row.reviewer_id===user.id),403,'RESPONSE_REVIEW_FORBIDDEN','A reporting reviewer is required.');
+ const d=z.object({status:z.enum(['under_review','resolved']),resolutionNote:z.string().trim().min(4).max(3000)}).parse(input);
+ const existing=await statement(env.DB,`SELECT r.id,r.status FROM report_responses r JOIN report_versions v ON v.id=r.report_version_id
+     WHERE r.id=? AND v.report_id=?`,responseId,id).first<{id:string,status:string}>();
+ assert(existing,404,'RESPONSE_NOT_FOUND','Report response not found.');
+ if(existing.status===d.status)return {id:responseId,status:d.status,replayed:true};
+ assert(existing.status!=='resolved',409,'RESPONSE_FINAL','The response review is already final.');
+ await env.DB.batch([
+   statement(env.DB,`UPDATE report_responses SET status=?,resolved_by=?,resolved_at=?
+      WHERE id=? AND status IN('submitted','under_review')`,d.status,d.status==='resolved'?user.id:null,d.status==='resolved'?now():null,responseId),
+   activity(env,user,'report.recipient_response_reviewed','report_response',responseId,row.property_id,row.scheme_id,
+     {reportId:id,status:d.status,note:d.resolutionNote})
+ ]);
+ return {id:responseId,status:d.status};
+}
+/** Convert a reviewed maintenance finding into an existing ProInspect Request for triage. */
+export async function createMaintenanceRequest(env:Env,user:Principal,w:Workspace,id:string,candidateId:string){
+ const row=await accessReport(env,user,w,id,'issue');
+ assert(row.approved_version_id,409,'VERSION_REQUIRED','The report requires a reviewed version.');
+ const item=await statement(env.DB,'SELECT id,finding,request_id FROM report_maintenance_candidates WHERE id=? AND report_version_id=?',
+   candidateId,row.approved_version_id).first<{id:string,finding:string,request_id:string|null}>();
+ assert(item,404,'CANDIDATE_NOT_FOUND','Maintenance candidate not found.');
+ if(item.request_id)return {requestId:item.request_id,replayed:true};
+ const at=now(),requestId=uid('request'),reference='REQ-'+uid('r').slice(2,18);
+ await env.DB.batch([
+   statement(env.DB,`INSERT INTO requests(id,reference,client_id,property_id,scheme_id,created_by,source,category,title,details,priority,status,created_at,updated_at)
+     VALUES(?,?,?,?,?,?,'staff','maintenance',?,?,'routine','submitted',?,?)`,
+     requestId,reference,row.client_id,row.property_id,row.scheme_id,user.id,
+     'Report follow-up: '+item.finding.slice(0,110),item.finding,at,at),
+   statement(env.DB,'UPDATE report_maintenance_candidates SET request_id=? WHERE id=? AND request_id IS NULL',requestId,candidateId),
+   guard(env),
+   activity(env,user,'report.maintenance_request_created','request',requestId,row.property_id,row.scheme_id,
+     {reportId:id,reportVersionId:row.approved_version_id,candidateId}),clearGuard(env)
+ ]);
+ return {requestId,reference,status:'submitted'};
 }

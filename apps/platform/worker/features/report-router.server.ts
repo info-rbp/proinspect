@@ -2,7 +2,7 @@ import { type Env,assert,AppError } from '../../../../packages/database/types';
 import type {Principal,Workspace} from '../../../../packages/domain/index';
 import {listReports,reportDetail,createReport,saveReport,assignReviewer,submitReport,reviewReport} from './reports.server';
 import {uploadReportEvidence,reviewReportEvidence,downloadReportEvidence} from './report-evidence.server';
-import {renderApprovedReport,issueApprovedReport,respondToIssuedReport,extractMaintenanceCandidates} from './report-issue.server';
+import {renderApprovedReport,issueApprovedReport,respondToIssuedReport,extractMaintenanceCandidates,resolveReportResponse,createMaintenanceRequest} from './report-issue.server';
 import {readJson} from '../../../../packages/operations/core';
 async function payload(request:Request,large=false){
  if(!large)return readJson(request);
@@ -30,7 +30,9 @@ export async function reportRoutes(request:Request,env:Env,user:Principal,w:Work
  if(action==='evidence'&&child&&subaction==='review')return ok(await reviewReportEvidence(env,user,w,id,child,await payload(request)));
  if(action==='render')return ok(await renderApprovedReport(env,user,w,id));
  if(action==='issue')return ok(await issueApprovedReport(env,user,w,id,await payload(request)));
- if(action==='response')return ok(await respondToIssuedReport(env,user,w,id,await payload(request)));
+ if(action==='response'&&child&&subaction==='resolve')return ok(await resolveReportResponse(env,user,w,id,child,await payload(request)));
+ if(action==='response'&&!child)return ok(await respondToIssuedReport(env,user,w,id,await payload(request)));
  if(action==='maintenance'&&child==='candidates')return ok(await extractMaintenanceCandidates(env,user,w,id));
+ if(action==='maintenance'&&child&&subaction==='create-request')return ok(await createMaintenanceRequest(env,user,w,id,child));
  return null;
 }

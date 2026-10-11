@@ -4,7 +4,7 @@ import type { Principal,Workspace } from '../../../../packages/domain/index';
 import { operationsWrite, workOrderAccess } from '../../../../packages/authorization/server';
 import { documentScope } from '../../../../packages/authorization/documents';
 import { guard,clearGuard,activity } from '../../../../packages/operations/core';
-import { digest } from '../../../../packages/auth/crypto';
+import { digest,unseal } from '../../../../packages/auth/crypto';
 import { reportPolicyForService,type ServiceReportContract } from '../../../../packages/report-engine/policy';
 import { reportDraftSchema, initialReportDraft,qualityReview,type ReportReviewContext,type ReportDraft } from '../../../../packages/report-engine/adapter';
 
@@ -121,12 +121,31 @@ export async function listReports(env:Env,user:Principal,w:Workspace) {
 }
 export async function reportDetail(env:Env,user:Principal,w:Workspace,id:string) {
  const row=await accessReport(env,user,w,id);
- if(w.kind!=='staff')return {report:{id:row.id,status:row.status,report_type:row.report_type,profile:row.profile,work_order_id:row.work_order_id,issued_document_id:row.issued_document_id}};
+ if(w.kind!=='staff'){
+   const targets=w.kind==='tenant'&&row.approved_version_id
+     ?await statement(env.DB,'SELECT content_json FROM report_versions WHERE id=?',row.approved_version_id).first<{content_json:string}>()
+     :null;
+   const snapshot=targets?reportDraftSchema.parse(JSON.parse(targets.content_json)):null;
+   return {report:{id:row.id,status:row.status,report_type:row.report_type,profile:row.profile,
+     work_order_id:row.work_order_id,issued_document_id:row.issued_document_id},
+     responseTargets:snapshot?.areas.map(area=>({id:area.id,name:area.name,
+       components:area.components.map(c=>({id:c.id,name:c.component}))}))??[]};
+ }
  const draft=await statement(env.DB,'SELECT revision,content_json FROM report_drafts WHERE report_id=?',id).first<{revision:number,content_json:string}>();
  const versions=(await statement(env.DB,'SELECT id,sequence,created_at,content_sha256 FROM report_versions WHERE report_id=? ORDER BY sequence DESC',id).all()).results;
  const evidence=(await statement(env.DB,'SELECT id,area_id,component_id,content_type,sha256,status,uploaded_at FROM report_evidence WHERE report_id=? ORDER BY uploaded_at DESC LIMIT 250',id).all()).results;
  const reviews=(await statement(env.DB,'SELECT reviewer_id,decision,comment,created_at FROM report_review_events WHERE report_id=? ORDER BY created_at DESC LIMIT 60',id).all()).results;
- return {report:row,draft:draft?{revision:draft.revision,content:JSON.parse(draft.content_json)}:null,versions,evidence,reviews};
+ const privileged=['administrator','operations_manager'].includes(user.staffRole??'')||row.reviewer_id===user.id;
+ const rawResponses=privileged?(await statement(env.DB,`SELECT p.id,p.user_id,p.status,p.created_at,p.response_envelope
+   FROM report_responses p JOIN report_versions v ON v.id=p.report_version_id WHERE v.report_id=?
+   ORDER BY p.created_at DESC LIMIT 50`,id).all<{id:string,user_id:string,status:string,created_at:string,response_envelope:string}>()).results:[];
+ const responses=await Promise.all(rawResponses.map(async r=>({id:r.id,userId:r.user_id,status:r.status,createdAt:r.created_at,
+    content:await unseal(env.DATA_ENCRYPTION_KEY,'report-response:'+r.id,r.response_envelope)})));
+ const maintenanceCandidates=privileged&&row.approved_version_id
+   ?(await statement(env.DB,`SELECT id,area_id,component_id,finding,request_id FROM report_maintenance_candidates
+       WHERE report_version_id=? ORDER BY created_at DESC LIMIT 80`,row.approved_version_id).all()).results:[];
+ return {report:row,draft:draft?{revision:draft.revision,content:JSON.parse(draft.content_json)}:null,
+   versions,evidence,reviews,responses,maintenanceCandidates};
 }
 export async function saveReport(env:Env,user:Principal,w:Workspace,id:string,input:unknown) {
  const row=await accessReport(env,user,w,id,'edit');
