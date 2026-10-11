@@ -11,6 +11,7 @@ export async function action({request,context,params}:ActionFunctionArgs) {
  const response=await callApi(request,context,path,{method:'POST',body:{
   workOrderId:String(form.get('workOrderId')||''),
   ...(form.get('tenancyId')?{tenancyId:String(form.get('tenancyId'))}:{}),
+  ...(form.get('baselineVersionId')?{baselineVersionId:String(form.get('baselineVersionId'))}:{}),
   ...(form.get('reportType')?{reportType:String(form.get('reportType'))}:{})
  }});
  const result=await response.json() as any;
@@ -37,6 +38,9 @@ export default function ReportsRegister(){
       </select>
     </label>
     <label>Tenancy ID (Entry/Exit PCR only, when applicable)<input name="tenancyId" placeholder="Select the tenancy linked to this property"/></label>
+    <label>Issued Entry baseline version ID (required for Exit/Comparison)
+      <input name="baselineVersionId" placeholder="Copy the immutable version ID from an issued Entry report"/>
+    </label>
     <button className="primary" disabled={nav.state!=='idle'||!orders.length}>Create report</button>
    </Form>
   </section>}

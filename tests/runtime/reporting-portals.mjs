@@ -84,6 +84,7 @@ try{
    draft.areas[0].components[0].conditionCategory='intact';
    draft.areas[0].components[0].cleanlinessCategory='clean';
    draft.areas[0].components[0].commentary='Accessible component appears intact and clean on visual inspection.';
+   if(extra.reportType==='exit'||extra.reportType==='comparison')draft.areas[0].components[0].comparisonStatus='unchanged';
    await ok(p+'/save',inspector,{revision:2,content:draft});
    const form=new FormData();form.set('areaId','area_general');
    form.set('file',new File([readFileSync('tests/fixtures/report-photo.jpg')],'synthetic.jpg',{type:'image/jpeg'}));
@@ -104,6 +105,16 @@ try{
    assert.equal((await ok('/api/w/tenant/tenancy_pcr/reports',tenant)).reports.length,1);
    assert.equal((await api('/api/w/tenant/tenancy_pcr/documents/'+pcr.documentId+'/download',tenant)).status,200);
    assert.equal((await api('/api/w/landlord/'+landlordId+'/reports/'+pcr.id,landlord)).status,404);
+ });
+ await check('Exit reporting requires and retains an issued immutable Entry baseline in the same tenancy',async()=>{
+   await run("INSERT INTO work_orders(id,reference,client_id,property_id,title,status,assigned_staff_id,created_at,updated_at) VALUES('wo_exit','WO-EXIT',?,'p_pcr','Outgoing condition inspection','assigned',?,?,?)",
+     landlordId,inspector.id,at,at);
+   assert.equal((await api(staffBase+'/reports/create',inspector,{workOrderId:'wo_exit',reportType:'exit',tenancyId:'tenancy_pcr'})).status,422);
+   const exit=await approvedReport('wo_exit','client',landlordId,
+     {tenancyId:'tenancy_pcr',baselineVersionId:pcr.versionId,reportType:'exit'});
+   assert.equal((await first('SELECT baseline_version_id FROM inspection_reports WHERE id=?',exit.id)).baseline_version_id,pcr.versionId);
+   assert.equal((await api('/api/w/landlord/'+landlordId+'/documents/'+exit.documentId+'/download',landlord)).status,200);
+   assert.equal((await api('/api/w/tenant/tenancy_pcr/reports/'+exit.id,tenant)).status,404);
  });
  await check('Tenant submits component-linked response without mutating approved report version',async()=>{
    const original=await first('SELECT content_sha256 FROM report_versions WHERE id=?',pcr.versionId);

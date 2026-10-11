@@ -88,6 +88,8 @@ export async function createReport(env:Env,user:Principal,w:Workspace,input:unkn
      AND r.status IN('issued','archived')`,d.baselineVersionId,order.property_id,d.tenancyId??null,d.tenancyId??null).first<{id:string}>();
    assert(baseline,422,'BASELINE_CONTEXT','The immutable Entry version must belong to this property and tenancy.');
  }
+ if(contract?.needsBaseline||reportType==='exit'||reportType==='comparison')
+   assert(baseline,422,'BASELINE_REQUIRED','Choose an issued, immutable baseline report version for this property and tenancy.');
  const id=uid('rpt'),templateId=`system_${reportType}_${profile}_v1`,at=now();
  const draft=initialReportDraft(profile);
  // No replacement identity, no implicit tenancy access, no browser-authoritative client reference.
