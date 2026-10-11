@@ -88,3 +88,13 @@ export async function syncOfflinePhotos(scope:OfflineScope,passphrase:string,api
  }
  return saved;
 }
+
+/** Explicit local erasure, including queued photos, for an opt-in offline report. */
+export async function purgeOfflineWorkspace(scope:OfflineScope):Promise<void>{
+ await removeOfflineDraft(scope);
+ const prefix=keyFor(scope)+'::';
+ const photos=await tx<PhotoRecord[]>('photos','readonly',(store,done)=>{
+  const request=store.getAll();request.onsuccess=()=>done((request.result as PhotoRecord[]).filter(item=>item.id.startsWith(prefix)));
+ });
+ for(const photo of photos)await tx<void>('photos','readwrite',store=>{store.delete(photo.id);});
+}

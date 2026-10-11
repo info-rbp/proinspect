@@ -5,6 +5,7 @@ import { useWorkspace } from '../lib/workspace';
 import { PageHeading } from '../../../../packages/ui/components';
 import { COMPONENT_CLEANLINESS_CATEGORIES,COMPONENT_CONDITION_CATEGORIES,COMPONENT_WORKING_STATUSES,COMPONENT_TEST_STATUSES,COMPONENT_COMPARISON_STATUSES } from '../../../../packages/report-engine/upstream/reportModel';
 import type { ReportDraft } from '../../../../packages/report-engine/adapter';
+import {ReportOfflineControls} from '../components/ReportOfflineControls';
 export async function loader({request,context,params}:LoaderFunctionArgs){
  return loadApi(request,context,`/api/w/${params.kind}/${params.scopeId}/reports/${params.reportId}`);
 }
@@ -69,11 +70,13 @@ function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:an
      {!locked&&<div className="actions"><button type="button" className="button secondary" onClick={addArea}>Add area</button>
        <button className="primary">Save draft{dirty?' *':''}</button></div>}
    </Form>
+   {!locked&&<ReportOfflineControls reportId={record.id} revision={record.revision} draft={draft} onRestore={change}/>}
    {!locked&&<div className="stack-sm">
      <h3>Attach photographic evidence</h3>
      <p className="small muted">JPEG up to 5 MB. Uploaded evidence remains private and awaits independent review. Save draft changes before uploading photos.</p>
      {draft.areas.map(a=><Form key={a.id} method="post" encType="multipart/form-data" className="form stack-sm">
        <input type="hidden" name="intent" value="upload"/><input type="hidden" name="areaId" value={a.id}/>
+       <label>Link photo to<select name="componentId" defaultValue=""><option value="">Area overview</option>{a.components.map(c=><option value={c.id} key={c.id}>{c.component}</option>)}</select></label>
        <label>JPEG for {a.name}<input type="file" name="file" accept="image/jpeg" required/></label>
        <button className="button secondary small">Upload area evidence</button>
      </Form>)}
