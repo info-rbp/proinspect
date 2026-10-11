@@ -127,6 +127,12 @@
       },
       "migrations": [
         {
+          "tag": "cf-v1",
+          "new_sqlite_classes": [
+            "BookingCoordinator"
+          ]
+        },
+        {
           "tag": "v1",
           "new_sqlite_classes": [
             "BookingScheduler"

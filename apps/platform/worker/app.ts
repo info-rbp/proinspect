@@ -6,6 +6,7 @@ import { consumeQueue, dispatchOutbox } from '../../../packages/notifications/se
 import { dispatchNotices } from '../../../packages/notifications/notices';
 import { dispatchIntegrations } from './features/integrations.server';
 export { BookingScheduler } from './scheduler';
+export { BookingCoordinator } from './legacy-booking-coordinator';
 const handle = createRequestHandler(() => import('virtual:react-router/server-build'),import.meta.env.MODE);
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {

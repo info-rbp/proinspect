@@ -29,9 +29,11 @@ Wrangler 4.147 supports automatic provisioning of D1, R2 and Queues when IDs or 
 - `EVENTS`: `proinspect-platform-events` Queue and `proinspect-platform-events-dlq` dead-letter Queue.
 - `SCHEDULER`: SQLite-backed `BookingScheduler` Durable Object.
 
+The first Cloudflare deployment log also reported `DOCUMENTS (inherited)` for the ordinary R2 binding; verify its bucket identity in Cloudflare before issuing reports, because an inherited bucket is not guaranteed to be newly created. This compatibility update does not overwrite or erase that bucket.
+
 The new database does not inherit any historic tenant or client records. **Do not point this application at a legacy database.** Cloudflare displays generated IDs and bucket names in its dashboard; they are not committed into source by Workers Builds. The expected first-deploy log should say `proinspect-platform` and `APP_ENV=production`, with no `local` database or localhost URL bindings.
 
-Deploying to the **existing** Worker replaces its code. The old `cf-v1` Durable Object migration history is not copied or deleted automatically; a migration warning may require follow-up. Existing legacy data will not become available in the new application simply because the Worker name was retained. Do not enable real users until the database schema and required providers are configured.
+Deploying to the **existing** Worker replaces its code. The existing `proinspect-platform` Worker already applied `cf-v1` to the SQLite-backed `BookingCoordinator` Durable Object class. The `connected` configuration now retains that exact historical migration and adds `BookingScheduler` with a subsequent, separate `v1` migration. Both classes are exported, so Cloudflare need not delete or rename old Durable Object storage. The legacy class is retained as a read-only compatibility export: legacy booking requests return HTTP 503 rather than executing against the new D1 schema. There is no automatic migration of old booking data, pending work or stored objects; review historical records before future retirement. Existing legacy data will not become available in the new application simply because the Worker name was retained. Do not enable real users until the database schema and required providers are configured.
 
 ## Database schema after initial resource creation
 
