@@ -112,6 +112,11 @@ try{
   const bytes=new Uint8Array(await (await (await mf.getR2Bucket('DOCUMENTS')).get(obj.object_key)).arrayBuffer());
   assert.equal(new TextDecoder().decode(bytes.slice(0,8)),'%PDF-1.4');
   assert.equal((await api('/api/w/landlord/'+clientId+'/documents/'+doc+'/download',owner)).status,404);
+  const pending=await first('SELECT version FROM work_orders WHERE id=?','work_report');
+  await ok(staffBase+'/work-orders/work_report',ops,{status:'in_progress',version:pending.version});
+  const inProgress=await first('SELECT version FROM work_orders WHERE id=?','work_report');
+  assert.equal((await api(staffBase+'/work-orders/work_report',ops,{status:'completed',version:inProgress.version})).status,409,
+    'Rendering without recipient issuance cannot complete an operational Work Order.');
  });
  await check('issue uses existing explicit grant and only authorised client can download',async()=>{
   const issued=await ok(base+'/issue',ops,{audience:'client',recipientId:clientId,reviewReference:'Reviewed attendance delivery'});
@@ -128,11 +133,11 @@ try{
   await ok(base+'/maintenance/candidates',ops,{});
   assert.equal((await first('SELECT COUNT(*) AS c FROM report_maintenance_candidates WHERE report_version_id=?',version)).c,1);
  });
- await check('the existing Work Order completion gate accepts the issued report',async()=>{
+ await check('native approval and the exact issued render manifest guard Work Order completion',async()=>{
   const o=await first('SELECT version FROM work_orders WHERE id=?','work_report');
-  const completed=await ok(staffBase+'/work-orders/work_report',ops,{status:'in_progress',version:o.version});
-  assert.equal(completed.status,'in_progress');
-  // ProInspect still owns Work Order transitions; rendering alone never completes work.
+  const completed=await ok(staffBase+'/work-orders/work_report',ops,{status:'completed',version:o.version});
+  assert.equal(completed.status,'completed');
+  assert.equal((await first('SELECT status FROM bookings WHERE id=?','booking_report')).status,'completed');
  });
  writeFileSync('artifacts/reporting-results.json',JSON.stringify({checks:checks.length,passed:checks,deployed:false},null,2));
  console.log(checks.length+' native reporting Worker acceptance checks passed.');
