@@ -39,6 +39,7 @@ export default [
     route('enquiries/:enquiryId', 'routes/enquiry.tsx'),
     route('administration', 'routes/administration.tsx'),
     route('v2-business', 'routes/v2-business.tsx'),
+    route('maintenance-delivery', 'routes/v2-maintenance.tsx'),
     route('service-agreements', 'routes/v2-agreements.tsx'),
     route('integrations', 'routes/integrations.tsx'),
     route('confidential', 'routes/confidential.tsx'),

@@ -63,6 +63,7 @@ export default function WorkspaceLayout() {
     items.push(['document-operations', 'Document preparation', '']);
   if (customer) items.push(['service-agreements', 'Service agreements', '']);
   if (staff && user.staffRole !== 'inspector') items.push(['v2-business', 'V2 business model', '']);
+  if (staff && user.staffRole !== 'read_only') items.push(['maintenance-delivery', 'Maintenance delivery', '']);
   if (customer || w.kind === 'council' || (staff && user.staffRole !== 'inspector'))
     items.push([
       'finance',

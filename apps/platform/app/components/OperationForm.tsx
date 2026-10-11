@@ -97,6 +97,7 @@ const numberFields = new Set([
   'includedHoursMilli', 'includedVisits', 'includedTickets', 'includedReports',
   'monthlyFeeCents', 'loadedHourlyCents', 'travelVisitCents', 'fixedAdminCents',
   'contingencyBp', 'targetMarginBp', 'gstBp', 'version', 'limitQuantity', 'agreedMonthlyCents',
+  'budgetCeilingCents','weekday','startsMinute','endsMinute','hourlyCostCents','amountCents',
 ]);
 const boolFields = new Set([
   'active',
@@ -106,6 +107,7 @@ const boolFields = new Set([
   'acceptCondition',
   'selfManaged',
   'noticeConfirmed',
+  'approvalRequired',
 ]);
 export function formValues(form: FormData) {
   const data: Record<string, unknown> = {};
@@ -114,7 +116,7 @@ export function formValues(form: FormData) {
     if (numberFields.has(key)) data[key] = Number(value);
     else if (boolFields.has(key)) data[key] = value === 'true' || value === 'on';
     else if (
-      ['startsAt', 'endsAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'periodStart', 'periodEnd'].includes(key)
+      ['startsAt', 'endsAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'periodStart', 'periodEnd', 'startedAt', 'endedAt', 'effectiveFrom'].includes(key)
     )
       data[key] = new Date(String(value)).toISOString();
     else if (key === 'propertyIds')
