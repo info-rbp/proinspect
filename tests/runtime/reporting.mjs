@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {mkdirSync,writeFileSync} from 'node:fs';
+import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {randomBytes,randomUUID} from 'node:crypto';
 import {build} from 'esbuild';
@@ -14,8 +14,16 @@ const db=await mf.getD1Database('DB'),run=(s,...v)=>db.prepare(s).bind(...v).run
 async function check(label,fn){await fn();checks.push(label);console.log('PASS '+label)}
 async function api(path,who,body){
  const headers={Origin:'http://localhost',...(who?{Cookie:who.cookie}:{})};
- if(body!==undefined)headers['Content-Type']='application/json';
- const res=await mf.dispatchFetch('http://localhost'+path,{method:body===undefined?'GET':'POST',headers,body:body===undefined?undefined:JSON.stringify(body)});
+ let payload;
+ if(body instanceof FormData){
+   const multipart=new Request('http://localhost'+path,{method:'POST',body});
+   headers['Content-Type']=multipart.headers.get('Content-Type');
+   payload=new Uint8Array(await multipart.arrayBuffer());
+   headers['Content-Length']=String(payload.length);
+ } else if(body!==undefined){
+   headers['Content-Type']='application/json';payload=JSON.stringify(body);
+ }
+ const res=await mf.dispatchFetch('http://localhost'+path,{method:body===undefined?'GET':'POST',headers,body:payload});
  return {status:res.status,response:res,data:res.headers.get('Content-Type')?.includes('json')?await res.json():await res.arrayBuffer()};
 }
 async function ok(path,who,body,status=200){const r=await api(path,who,body);assert.equal(r.status,status,path+': '+JSON.stringify(r.data));return r.data}
@@ -67,17 +75,32 @@ try{
   assert.equal((await api(base+'/save',inspector,{revision:2,content:draft})).status,409);
   assert.equal((await first('SELECT COUNT(*) AS c FROM report_sync_receipts WHERE report_id=?',reportId)).c,1);
  });
+ await check('exception evidence requires an independently reviewed JPEG, not a file name alone',async()=>{
+  assert.equal((await api(base+'/submit',inspector,{revision:3})).status,409);
+  const upload=new FormData();
+  upload.set('areaId','area_general');
+  upload.set('componentId','component_general');
+  upload.set('file',new File([readFileSync('tests/fixtures/report-photo.jpg')],'synthetic.jpg',{type:'image/jpeg'}));
+  const createdEvidence=await ok(base+'/evidence',inspector,upload);
+  assert.equal(createdEvidence.status,'pending');
+  assert.equal((await api(base+'/submit',inspector,{revision:4})).status,409);
+  assert.equal((await api(base+'/evidence/'+createdEvidence.id+'/review',inspector,{decision:'accepted'})).status,403);
+  assert.equal((await api('/api/w/landlord/'+clientId+'/reports/'+reportId+'/evidence/'+createdEvidence.id+'/download',owner)).status,404);
+  assert.equal((await ok(base+'/evidence/'+createdEvidence.id+'/review',reviewer,{decision:'accepted'})).status,'accepted');
+  const refreshed=await ok(base,inspector);
+  assert.deepEqual(refreshed.draft.content.areas[0].components[0].photoIds,[createdEvidence.id]);
+ });
  let version;
  await check('approved template and QC create immutable report version',async()=>{
-  const submitted=await ok(base+'/submit',inspector,{revision:3});version=submitted.versionId;
+  const submitted=await ok(base+'/submit',inspector,{revision:4});version=submitted.versionId;
   assert.equal(submitted.status,'submitted');
-  assert.equal((await api(base+'/submit',inspector,{revision:3})).status,403);
+  assert.equal((await api(base+'/submit',inspector,{revision:4})).status,403);
   await assert.rejects(run('UPDATE report_versions SET content_json=? WHERE id=?','{}',version),/REPORT_VERSION_IMMUTABLE/);
  });
  await check('reviewer is independent of inspector, and cannot act before assignment',async()=>{
-  assert.equal((await api(base+'/review',inspector,{decision:'approved',comment:'Self',revision:4})).status,403);
-  assert.equal((await api(base+'/review',ops,{decision:'approved',comment:'Operations cannot bypass assignment',revision:4})).status,403);
-  const reviewed=await ok(base+'/review',reviewer,{decision:'approved',comment:'Evidence and recorded findings reviewed independently',revision:4});
+  assert.equal((await api(base+'/review',inspector,{decision:'approved',comment:'Self',revision:5})).status,403);
+  assert.equal((await api(base+'/review',ops,{decision:'approved',comment:'Operations cannot bypass assignment',revision:5})).status,403);
+  const reviewed=await ok(base+'/review',reviewer,{decision:'approved',comment:'Evidence and recorded findings reviewed independently',revision:5});
   assert.equal(reviewed.status,'approved');
  });
  let doc;
