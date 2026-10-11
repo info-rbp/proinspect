@@ -59,3 +59,8 @@ Suite coverage: 19 helper/security tests, 10 SQL checks, 76 runtime checks and 1
 ## ProInspect-V2 business model foundation (development branch only)
 
 Work Package 1 is implemented on `ProInspect-V2` with migration `0006_v2_operating_model.sql`, 11 market definitions, 69 **draft** service definitions (23 explicitly mapped to existing booking identities), 613 proposed market-service rules, 33 draft package versions, scoped asset hierarchies and relationship-driven operations engagements. Authenticated Staff V2 administration, rate-card calculations, plan inclusion/allowance controls, manual usage posting and a customer agreement view are present. All new V2 offerings remain inactive pending approved business rules. Existing `main` service pricing and public booking flows are unchanged. Consult `docs/V2_BUSINESS_FOUNDATION.md` for the acceptance and release boundaries. Exact-commit GitHub CI controls whether the build is verified; this text is not a deployment certificate.
+
+
+## WP2 maintenance delivery (development branch only)
+
+Additive migration 0007 and Staff maintenance-delivery console implement scoped work packages, verified contractor credentials, capacity rosters/blocks/allocations, labour and cost approval, entitlement usage posting, evidence, task and parent closeout gates. See docs/V2_MAINTENANCE_DELIVERY.md; GitHub Actions controls acceptance.

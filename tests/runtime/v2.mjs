@@ -269,6 +269,9 @@ try{
    assert.notEqual(premature.status,200);
    await ok(maintenance+'/evidence/'+ev.id+'/review',operator,{status:'verified'});
    await ok(maintenance+'/costs/'+cost.id+'/review',operator,{status:'approved'});
+   const held=await api(maintenance+'/tasks/'+taskId+'/status',operator,{status:'completed',version:4,completionNotes:'Verified field work and evidence'});
+   assert.notEqual(held.status,200);
+   await ok(maintenance+'/allocations/'+allocation.id+'/release',operator,{status:'completed'});
    await advance('completed',4);
    await sql("UPDATE work_orders SET status='completed' WHERE id=?",workId).run();
    assert.equal((await sql('SELECT status FROM work_orders WHERE id=?',workId).first()).status,'completed');

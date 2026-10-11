@@ -14,7 +14,7 @@ CREATE TABLE v2_maintenance_tasks (
  evidence_kind TEXT NOT NULL DEFAULT 'note' CHECK(evidence_kind IN('note','photo','report','certificate')),
  version INTEGER NOT NULL DEFAULT 1 CHECK(version>0),
  created_by TEXT NOT NULL REFERENCES users(id), created_at TEXT NOT NULL,
- updated_at TEXT NOT NULL, completed_by TEXT REFERENCES users(id), completed_at TEXT
+ updated_at TEXT NOT NULL, completion_summary TEXT, completed_by TEXT REFERENCES users(id), completed_at TEXT
 ) STRICT;
 CREATE INDEX v2_tasks_work_order ON v2_maintenance_tasks(work_order_id,status);
 CREATE INDEX v2_tasks_asset ON v2_maintenance_tasks(asset_id,status);
@@ -66,7 +66,15 @@ BEGIN
  EXISTS(SELECT 1 FROM v2_time_entries e WHERE e.task_id=NEW.id AND e.status='submitted')
  OR EXISTS(SELECT 1 FROM v2_external_costs c WHERE c.task_id=NEW.id AND c.status='submitted'));
  SELECT RAISE(ABORT,'V2_TASK_CLOSEOUT_ACTOR') WHERE NEW.status='completed'
- AND (NEW.completed_by IS NULL OR NEW.completed_at IS NULL);
+ AND (NEW.completed_by IS NULL OR NEW.completed_at IS NULL OR LENGTH(TRIM(COALESCE(NEW.completion_summary,'')))<4);
+ SELECT RAISE(ABORT,'V2_TASK_ALLOCATION_OPEN') WHERE NEW.status IN('completed','cancelled')
+ AND EXISTS(SELECT 1 FROM v2_resource_allocations a WHERE a.task_id=NEW.id AND a.status='confirmed');
+ SELECT RAISE(ABORT,'V2_TASK_CREDENTIAL_REVOKED') WHERE NEW.status IN('scheduled','in_progress','evidence_pending','completed')
+ AND EXISTS(SELECT 1 FROM v2_task_assignments a WHERE a.task_id=NEW.id AND a.contractor_id IS NOT NULL
+ AND a.status='confirmed' AND NOT EXISTS(SELECT 1 FROM v2_contractor_credentials c
+ WHERE c.contractor_id=a.contractor_id AND c.credential_type='insurance' AND c.status='verified'
+ AND c.valid_until>strftime('%Y-%m-%dT%H:%M:%fZ','now')));
+
 END;
 CREATE TRIGGER v2_parent_order_close BEFORE UPDATE OF status ON work_orders
 WHEN NEW.status IN('completed','cancelled') AND OLD.status!=NEW.status

@@ -70,8 +70,8 @@ export async function maintenanceCommand(env:Env,user:Principal,w:Workspace,rout
   const x=z.object({status:z.enum(actionStates),version:whole(),completionNotes:z.string().max(2000).optional()}).parse(d);
   const t=await task(env,key);assert(t.version===x.version,409,'TASK_STALE','The task has changed.');
   if(x.status==='completed') assert(x.completionNotes&&x.completionNotes.trim().length>=4,422,'CLOSEOUT_NOTES_REQUIRED','Provide a closeout reference after verification of evidence.');
-  await record(env,user,'UPDATE v2_maintenance_tasks SET status=?,version=version+1,updated_at=?,completed_by=?,completed_at=? WHERE id=? AND version=?',
-   [x.status,now(),x.status==='completed'?user.id:null,x.status==='completed'?now():null,key,x.version],
+  await record(env,user,'UPDATE v2_maintenance_tasks SET status=?,version=version+1,updated_at=?,completion_summary=?,completed_by=?,completed_at=? WHERE id=? AND version=?',
+   [x.status,now(),x.status==='completed'?x.completionNotes??null:null,x.status==='completed'?user.id:null,x.status==='completed'?now():null,key,x.version],
    'v2.task_status_changed','maintenance-task',key,t.property_id,t.scheme_id);
   return {id:key,status:x.status};
  }

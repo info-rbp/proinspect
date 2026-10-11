@@ -53,16 +53,20 @@ export default function Maintenance(){
           <Select name="taskId" label="Scoped task" options={d.tasks.filter((t:any)=>t.status==='scoped').map((t:any)=>({value:t.id,label:t.title}))}/>
           <Select name="credentialType" label="Required evidence" options={choices(['insurance','licence','competency','site_induction'])}/>
         </OperationForm>
-        <OperationForm endpoint={(f)=>api+'/tasks/'+encodeURIComponent(String(f.get('taskId')) )+'/status'}
-          label="Change task status">
-          <Select name="taskId" label="Task" options={tasks}/>
-          <Select name="status" label="New stage" options={choices(['awaiting_approval','approved','assigned','scheduled','in_progress','evidence_pending','completed','cancelled'])}/>
-          <Input name="version" label="Current task version (from board)" type="number" value={1}/>
-          <Input name="completionNotes" label="Verified completion reference (when closing)" required={false}/>
-          <p className="small">Completion requires verified evidence, accepted costs and no pending time review. Reload and use the current version.</p>
-        </OperationForm>
+
       </div>
      </div>}
+    {canReview&&openTasks.length>0&&<div className="stack">
+      <h3>Task stage and closeout</h3>
+      {openTasks.map((t:any)=><details key={t.id}>
+        <summary>{t.title} · {t.status} · version {t.version}</summary>
+        <OperationForm endpoint={api+'/tasks/'+t.id+'/status'} defaults={{version:t.version}} label="Record stage change">
+          <Select name="status" label="Next work stage" options={choices(['awaiting_approval','approved','assigned','scheduled','in_progress','evidence_pending','completed','cancelled'])}/>
+          <Input name="completionNotes" label="Final verified work summary (required for completion)" required={false}/>
+          <p className="small">Allowed transitions are checked by the database. Closing requires approved evidence, reviewed time and costs, and completed resource allocations.</p>
+        </OperationForm>
+      </details>)}
+    </div>}
    </Panel>
    <Panel title="Verified suppliers and task assignments">
      {canReview&&<div className="grid-2">
