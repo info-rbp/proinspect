@@ -151,5 +151,137 @@ try{
    const stranger=await ok(otherBase+'/v2-account',other);
    assert.equal(stranger.engagements.length,0);assert.equal(stranger.usage.length,0);
  });
+
+ const maintenance='/api/w/staff/operations/v2-maintenance';
+ const fieldOfficer=await login('v2-inspector@example.test');
+ await sql("INSERT INTO staff_profiles(user_id,role,active) VALUES(?,'inspector',1)",fieldOfficer.id).run();
+ const workId='wo_v2';
+ const taskCreated=await ok(maintenance+'/tasks',operator,{
+   workOrderId:workId,assetId:'v2:property:'+propertyId,title:'Check and rectify bathroom extractor',
+   trade:'general',priority:'routine',approvalRequired:false,budgetCeilingCents:20000,evidenceKind:'note',
+   instructions:'Review safe access and document work scope'
+ });
+ const taskId=taskCreated.id;
+ await check('task hierarchy is scoped and parent cannot close with open tasks',async()=>{
+   const invalid=await api(maintenance+'/tasks',operator,{
+    workOrderId:workId,assetId:'v2:property:'+otherProperty,title:'Cross-portfolio asset',
+    trade:'general',budgetCeilingCents:5000,evidenceKind:'note'
+   });
+   assert.notEqual(invalid.status,200);
+   await assert.rejects(sql("UPDATE work_orders SET status='completed' WHERE id=?",workId).run(),/V2_WORK_PACKAGE_OPEN/);
+   assert.equal((await sql('SELECT status FROM work_orders WHERE id=?',workId).first()).status,'triage');
+ });
+ await check('unqualified contractor cannot be assigned and verified credentials are required',async()=>{
+   const contractor=await sql("INSERT INTO contractors(id,name,email) VALUES('v2_contractor','Verified external trade','supplier@example.test')").run();
+   const refused=await api(maintenance+'/assignments',operator,{
+      taskId,contractorId:'v2_contractor',instructionReference:'INSTR-V2-UNVERIFIED'
+   });
+   assert.notEqual(refused.status,200);
+   await ok(maintenance+'/credentials',operator,{
+      contractorId:'v2_contractor',credentialType:'insurance',trade:'general',
+      credentialReference:'POLICY-SYNTHETIC-2026',verificationReference:'PROVIDER-INDEPENDENT-CHECK-2026',
+      validUntil:year
+   });
+   const accepted=await ok(maintenance+'/assignments',operator,{
+      taskId,contractorId:'v2_contractor',instructionReference:'APPROVED-SUPPLIER-TEST'
+   });
+   assert.ok(accepted.id);
+   const worker=await ok(maintenance+'/assignments',operator,{
+      taskId,staffUserId:fieldOfficer.id,instructionReference:'INSPECTOR-ASSIGNED-TEST'
+   });
+   assert.ok(worker.id);
+ });
+ async function advance(status,version){
+   return ok(maintenance+'/tasks/'+taskId+'/status',operator,{status,version,
+     completionNotes:status==='completed'?'Verified service closeout evidence recorded':undefined});
+ }
+ await advance('assigned',1);
+ const resource=await ok(maintenance+'/resources',operator,{
+    name:'Field officer capacity',kind:'staff',staffUserId:fieldOfficer.id,region:'Perth WA'
+ });
+ await ok(maintenance+'/resources/'+resource.id+'/skill',operator,{trade:'general'});
+ for(const weekday of [1,2,3,4,5]){
+   await ok(maintenance+'/resources/'+resource.id+'/roster',operator,{weekday,startsMinute:480,endsMinute:1020});
+ }
+ const slot=new Date(Date.parse(futureDate()+'T09:00:00+08:00'));
+ const startsAt=slot.toISOString(),endsAt=new Date(slot.getTime()+3600000).toISOString();
+ const allocation=await ok(maintenance+'/allocations',operator,{
+   taskId,resourceId:resource.id,startsAt,endsAt,allocationReference:'ASSIGN-FIELD-INSPECTOR-2026'
+ });
+ await check('real capacity enforces rosters and overlapping reservations',async()=>{
+   const overlapping=await api(maintenance+'/allocations',operator,{
+     taskId,resourceId:resource.id,startsAt:new Date(slot.getTime()+15*60000).toISOString(),
+     endsAt:new Date(slot.getTime()+75*60000).toISOString(),
+     allocationReference:'OVERLAP-BLOCKED-2026'
+   });
+   assert.notEqual(overlapping.status,200);
+   const outside=await api(maintenance+'/allocations',operator,{
+     taskId,resourceId:resource.id,startsAt:new Date(slot.getTime()-3*3600000).toISOString(),
+     endsAt:new Date(slot.getTime()-2*3600000).toISOString(),
+     allocationReference:'ROSTER-BLOCKED-2026'
+   });
+   assert.notEqual(outside.status,200);
+   const blocked=await api(maintenance+'/blocks',operator,{
+     resourceId:resource.id,startsAt,endsAt,reason:'Blocking an already assigned shift'
+   });
+   assert.notEqual(blocked.status,200);
+   assert.equal((await sql("SELECT COUNT(*) AS n FROM v2_resource_allocations WHERE status='confirmed' AND task_id=?",taskId).first()).n,1);
+ });
+ await advance('scheduled',2);
+ await advance('in_progress',3);
+ await check('approved staff rates and linked subscription prevent silent entitlement overages',async()=>{
+   const rate=await ok(maintenance+'/rates',operator,{staffUserId:fieldOfficer.id,effectiveFrom:twoDaysAgo,hourlyCostCents:6000});
+   await ok(maintenance+'/rates/'+rate.id+'/approve',operator,{approvalReference:'VERIFIED-LOADED-LABOUR-RATE-2026'});
+   await ok(maintenance+'/entitlements',operator,{
+     taskId,subscriptionId:subscription.id,serviceCode:'V2-001'
+   });
+   const end=new Date(Date.now()-30*60000),start=new Date(end.getTime()-60*60000);
+   const item=await ok(maintenance+'/time',fieldOfficer,{
+     taskId,staffUserId:fieldOfficer.id,startedAt:start.toISOString(),endedAt:end.toISOString(),
+     activityKind:'on_site',note:'Extractor inspection and adjustments',
+     sourceKey:'TIMESHEET-INSPECTOR-V2-001'
+   });
+   assert.equal(item.minutes,60);
+   const dup=await api(maintenance+'/time',fieldOfficer,{
+     taskId,staffUserId:fieldOfficer.id,startedAt:start.toISOString(),endedAt:end.toISOString(),
+     activityKind:'travel',sourceKey:'TIMESHEET-OVERLAP-V2-002'
+   });
+   assert.notEqual(dup.status,200);
+   const selfReview=await api(maintenance+'/time/'+item.id+'/review',fieldOfficer,{status:'approved'});
+   assert.equal(selfReview.status,403);
+   const result=await ok(maintenance+'/time/'+item.id+'/review',operator,{status:'approved'});
+   assert.equal(result.costCents,6000);
+   const usage=await sql("SELECT quantity FROM v2_usage_ledger WHERE source_key=?", 'v2time:'+item.id).first();
+   assert.equal(usage.quantity,1000);
+   assert.equal((await sql('SELECT SUM(quantity) AS total FROM v2_usage_ledger WHERE subscription_id=?',subscription.id).first()).total,2000);
+ });
+ await check('evidence, cost review and task closeout are explicit',async()=>{
+   const ev=await ok(maintenance+'/evidence',fieldOfficer,{
+     taskId,kind:'note',reference:'PHOTO-REVIEWED-BY-OFFICE-REFERENCE-2026'
+   });
+   const cost=await ok(maintenance+'/costs',operator,{
+     taskId,category:'materials',amountCents:1200,invoiceReference:'INV-V2-MATERIALS-001',
+     sourceKey:'MATERIALS-ORDER-001'
+   });
+   const premature=await api(maintenance+'/tasks/'+taskId+'/status',operator,{
+     status:'completed',version:4,completionNotes:'Closeout recorded'
+   });
+   assert.notEqual(premature.status,200);
+   await ok(maintenance+'/evidence/'+ev.id+'/review',operator,{status:'verified'});
+   await ok(maintenance+'/costs/'+cost.id+'/review',operator,{status:'approved'});
+   await advance('completed',4);
+   await sql("UPDATE work_orders SET status='completed' WHERE id=?",workId).run();
+   assert.equal((await sql('SELECT status FROM work_orders WHERE id=?',workId).first()).status,'completed');
+   assert.equal((await sql("SELECT COALESCE(SUM(cost_cents),0) AS amount FROM v2_time_entries WHERE task_id=? AND status='approved'",taskId).first()).amount,6000);
+   assert.equal((await sql("SELECT COALESCE(SUM(amount_cents),0) AS amount FROM v2_external_costs WHERE task_id=? AND status='approved'",taskId).first()).amount,1200);
+ });
+ await check('maintenance register is staff scoped and clients cannot inspect operational cost rates',async()=>{
+   const list=await ok(maintenance,operator);
+   assert.ok(list.tasks.some(t=>t.id===taskId));
+   assert.ok(!JSON.stringify(await ok(ownerBase+'/v2-account',owner)).includes('hourly_cost_cents'));
+   assert.equal((await api(maintenance,owner)).status,403);
+   assert.equal((await api(maintenance+'/tasks',owner,{workOrderId:workId,title:'Unauthorized',trade:'general',budgetCeilingCents:0})).status,403);
+ });
+
  console.log('PASS V2 all operating-model workflow checks');
 }finally {await mf.dispose();}
