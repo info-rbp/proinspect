@@ -1,0 +1,37 @@
+name: Propose upstream reporting update
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_sha:
+        description: "Exact 40-character upstream commit (optional: latest main)"
+        required: false
+        type: string
+  repository_dispatch:
+    types: [report-engine-upstream-updated]
+# This workflow lives only on the integration branch. GitHub does not run a
+# scheduled workflow from non-default branches. Use Actions > Run workflow,
+# selecting integration/report-creation-tool, until an approved long-term trigger is configured.
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: report-upstream-proposal
+  cancel-in-progress: false
+jobs:
+  propose:
+    if: github.ref == 'refs/heads/integration/report-creation-tool'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/report-creation-tool
+          persist-credentials: true
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.2'
+      - name: Propose reviewed engine source update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT_UPSTREAM_SHA: ${{ github.event.inputs.upstream_sha }}
+        run: node scripts/sync-report-engine.mjs
