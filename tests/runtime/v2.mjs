@@ -291,5 +291,177 @@ try{
    assert.equal((await api(maintenance+'/tasks',owner,{workOrderId:workId,title:'Unauthorized',trade:'general',budgetCeilingCents:0})).status,403);
  });
 
+
+ const estates='/api/w/staff/operations/v2-estates';
+ const sectors='/api/w/staff/operations/v2-sectors';
+ const enterprise='/api/w/staff/operations/v2-intelligence';
+ const rootAsset='v2:property:'+propertyId;
+ const approver=await login('v2-capital-administrator@example.test');
+ await sql("INSERT INTO staff_profiles(user_id,role,active) VALUES(?,'administrator',1)",approver.id).run();
+ await check('asset lifecycle, immutable condition reviews and warranty references',async()=>{
+   const result=await ok(estates+'/profiles',operator,{assetId:rootAsset,assetCode:'ASSET-V2-ROOT-001',
+    manufacturer:'Equipment Test Co',model:'Base Facility',designLifeMonths:240,
+    replacementCostCents:240000,criticality:'high',lifecycleStatus:'operational',
+    notes:'Operational asset condition register'});
+   assert.equal(result.version,1);
+   const x=await ok(estates+'/conditions',operator,{assetId:rootAsset,score:2,
+    observedOn:new Date().toISOString().slice(0,10),method:'visual',
+    summary:'Asset requires scheduled service review'});
+   await ok(estates+'/conditions/'+x.id+'/review',approver,{status:'verified',
+    verificationReference:'INDEPENDENT-CONDITION-REVIEW-2026'});
+   const profile=await sql('SELECT last_condition_score,version FROM v2_asset_details WHERE asset_id=?',rootAsset).first();
+   assert.equal(profile.last_condition_score,2);assert.equal(profile.version,2);
+   await assert.rejects(sql('DELETE FROM v2_asset_conditions WHERE id=?',x.id).run(),/V2_CONDITION_HISTORY_LOCKED/);
+   const warr=await ok(estates+'/warranties',operator,{assetId:rootAsset,
+      provider:'Verified Manufacturer Pty Ltd',warrantyReference:'MANUFACTURE-WARRANTY-V2',
+      expiresOn:year.slice(0,10),verificationReference:'INDEPENDENT-WARRANTY-REVIEW'});
+   assert.ok(warr.id);
+ });
+ const preventive=await ok(estates+'/plans',operator,{
+   assetId:rootAsset,engagementId:engagement,serviceCode:'V2-001',
+   title:'Three-monthly property plant condition review',instructions:'Check service history and defects, confirm safe access, record evidence.',
+   cadenceMonths:3,leadDays:14,nextDue:new Date(Date.now()-86400000).toISOString().slice(0,10)
+ });
+ await check('preventive programme issues one canonical work order per due cycle',async()=>{
+   await ok(estates+'/plans/'+preventive.id+'/state',operator,{status:'active',
+     authorityReference:'SIGNED-APPROVED-PLANNED-SERVICE',version:1});
+   const first=await ok(estates+'/plans/'+preventive.id+'/issue',operator,{authorityReference:'PM-DUE-AUTHORISATION-V2'});
+   assert.ok(first.workOrderId);assert.ok(first.taskId);
+   const rows=await sql('SELECT id,client_id,property_id FROM work_orders WHERE id=?',first.workOrderId).first();
+   assert.equal(rows.client_id,client);assert.equal(rows.property_id,propertyId);
+   assert.equal((await sql('SELECT asset_id FROM v2_maintenance_tasks WHERE id=?',first.taskId).first()).asset_id,rootAsset);
+   assert.equal((await sql('SELECT COUNT(*) AS n FROM v2_preventive_occurrences WHERE plan_id=?',preventive.id).first()).n,1);
+   assert.notEqual((await sql('SELECT next_due FROM v2_preventive_plans WHERE id=?',preventive.id).first()).next_due,new Date(Date.now()-86400000).toISOString().slice(0,10));
+ });
+ const obligation=await ok(estates+'/obligations',operator,{assetId:rootAsset,engagementId:engagement,
+   title:'External fire system evidence review',category:'fire',jurisdiction:'Western Australia',
+   sourceReference:'AUTHORITY-PROVIDER-SERVICE-SCOPE-2026',
+   requirementSummary:'Follow up on independent qualified provider attendance evidence.',
+   accountableParty:'qualified_provider',recurrenceMonths:12,
+   nextReviewOn:new Date(Date.now()-86400000).toISOString().slice(0,10)
+ });
+ await check('compliance tracks accountable party and independent evidence without declaring statutory compliance',async()=>{
+   await ok(estates+'/obligations/'+obligation.id+'/state',operator,{status:'tracked',
+     reviewReference:'MANAGER-REVIEWED-COMPLIANCE-REGISTER',version:1});
+   const rec=await ok(estates+'/compliance-evidence',operator,{obligationId:obligation.id,
+     kind:'service_record',providerName:'External Licensed Fire Service',
+     evidenceReference:'SERVICE-CERTIFICATE-EXTERNAL-001',
+     issuedOn:new Date().toISOString().slice(0,10),expiresOn:year.slice(0,10)});
+   await ok(estates+'/compliance-evidence/'+rec.id+'/review',approver,{
+     status:'verified',independentCheckReference:'LICENSED-PROVIDER-EVIDENCE-CHECK'});
+   const action=await ok(estates+'/actions',operator,{obligationId:obligation.id,
+     actionText:'Confirm next external contractor review',dueOn:year.slice(0,10),assigneeId:operator.id});
+   await ok(estates+'/actions/'+action.id+'/close',operator,{status:'done',
+     completionReference:'NEXT-REVIEW-CALENDAR-ACKNOWLEDGED'});
+   const risk=await ok(estates+'/risks',operator,{assetId:rootAsset,category:'failure',
+     summary:'Mechanical system requires condition monitoring',likelihood:3,impact:4,
+     mitigation:'Review service evidence and record replacement forecast',
+     nextReviewOn:year.slice(0,10),ownerStaffId:operator.id});
+   assert.ok(risk.id);
+   const rows=await ok(estates,operator);
+   assert.ok(rows.obligations.some(x=>x.id===obligation.id));
+   assert.ok(!JSON.stringify(rows).includes('statutory_certified'));
+ });
+ await check('all eleven specialist market packs remain disabled until seven independent gates',async()=>{
+   const d=await ok(sectors,operator);
+   assert.equal(d.packs.length,11);assert.equal(d.modules.length,55);assert.equal(d.checks.length,77);
+   const early=await api(sectors+'/packs/'+encodeURIComponent('RES:pack:v1')+'/approve',approver,{
+      approvalReference:'PREMATURE-PACK-APPROVAL'});
+   assert.notEqual(early.status,200);
+   assert.equal((await api(sectors,owner)).status,403);
+ });
+ const moduleCodes=['RES-M01','RES-M02','RES-M03','RES-M04','RES-M05'];
+ for(let i=0;i<moduleCodes.length;i++){
+   await ok(sectors+'/modules/'+moduleCodes[i]+'/review',operator,{
+    status:i===0?'approved':'excluded',reviewReference:'REVIEWED-RESIDENTIAL-SCOPE-'+moduleCodes[i]});
+ }
+ for(const c of ['governance','service_scope','pricing','insurance','credentials','privacy','workflow_acceptance']){
+   await ok(sectors+'/checks',operator,{packId:'RES:pack:v1',checkCode:c,status:'verified',
+     evidenceReference:'INDEPENDENT-MARKET-RELEASE-CHECK-'+c});
+ }
+ await ok(sectors+'/packs/'+encodeURIComponent('RES:pack:v1')+'/approve',approver,{
+    approvalReference:'BOARD-AUTHORISED-RESIDENTIAL-PACK-V1'});
+ const rollout=await ok(sectors+'/rollouts',operator,{packId:'RES:pack:v1',engagementId:engagement});
+ await check('progressive sector pilot enforces scoped approved module facts and stage sequence',async()=>{
+   await ok(sectors+'/rollouts/'+rollout.id+'/state',approver,{status:'pilot',
+     authorityReference:'CLIENT-PILOT-APPROVAL-2026'});
+   const rejected=await api(sectors+'/records',operator,{rolloutId:rollout.id,moduleCode:'RES-M01',
+      assetId:rootAsset,sourceKey:'PRIVATE-CASE-REJECTED',
+      facts:{scopeReference:'SIGNED-PILOT',evidenceReference:'SURVEY-REF-001',patientDiagnosis:'MUST-NOT-STORE'}});
+   assert.equal(rejected.status,422);
+   const cross=await api(sectors+'/records',operator,{rolloutId:rollout.id,moduleCode:'RES-M01',
+      assetId:'v2:property:'+otherProperty,sourceKey:'CROSS-PROPERTY-REJECTED',
+      facts:{scopeReference:'SIGNED-PILOT',evidenceReference:'SURVEY-REF-001'}});
+   assert.notEqual(cross.status,200);
+   const record=await ok(sectors+'/records',operator,{rolloutId:rollout.id,moduleCode:'RES-M01',
+      assetId:rootAsset,sourceKey:'SIGNED-PILOT-SURVEY-001',
+      facts:{scopeReference:'OPERATIONAL-CLIENT-SCOPE',evidenceReference:'SERVICE-SURVEY-REF-001'}});
+   await ok(sectors+'/records/'+record.id+'/review',approver,{status:'accepted',
+      reviewReference:'INDEPENDENT-OPERATIONS-EVIDENCE-REVIEW'});
+   await ok(sectors+'/rollouts/'+rollout.id+'/state',approver,{status:'live',
+      authorityReference:'CLIENT-LIVE-ROLLOUT-SIGNOFF-2026'});
+   assert.equal((await sql("SELECT COUNT(*) AS n FROM v2_sector_rollouts WHERE status='live'").first()).n,1);
+   assert.equal((await sql("SELECT COUNT(*) AS n FROM v2_sector_packs WHERE status='approved'").first()).n,1);
+   assert.equal((await sql("SELECT COUNT(*) AS n FROM v2_sector_packs WHERE status='draft'").first()).n,10);
+ });
+ const pf=await ok(enterprise+'/portfolios',operator,{clientId:client,name:'V2 Planned Estates',
+    purpose:'Maintain consistent scoped operational indicators',
+    authorityReference:'VERIFIED-CLIENT-REPORTING-AUTHORITY'});
+ await check('enterprise portfolio never grants access to unrelated property or client',async()=>{
+   await ok(enterprise+'/portfolio-members',operator,{portfolioId:pf.id,propertyId,
+     authorityReference:'CLIENT-ASSET-REPORTING-CONSENT'});
+   const unrelated=await api(enterprise+'/portfolio-members',operator,{
+      portfolioId:pf.id,propertyId:otherProperty,authorityReference:'INVALID-CROSS-CLIENT-LINK'});
+   assert.notEqual(unrelated.status,200);
+ });
+ const capital=await ok(enterprise+'/programmes',operator,{engagementId:engagement,
+    title:'Proactive plant replacement programme',
+    purpose:'Capture asset renewal costs and staged contractor commitments',
+    baselineBudgetCents:10000});
+ await check('capital programme approval requires another authorised staff user',async()=>{
+   const self=await api(enterprise+'/programmes/'+capital.id+'/state',operator,{status:'approved',
+     authorityReference:'SELF-APPROVAL-INVALID',version:1});
+   assert.equal(self.status,403);
+   await ok(enterprise+'/programmes/'+capital.id+'/state',approver,{status:'approved',
+     authorityReference:'SIGNED-CLIENT-CAPEX-AUTHORITY',version:1});
+ });
+ const project=await ok(enterprise+'/projects',operator,{programmeId:capital.id,assetId:rootAsset,
+   title:'Mechanical plant condition remediation',
+   scopeSummary:'Review replacement options and contractor proposals before order',
+   estimatedCents:10000});
+ await ok(enterprise+'/projects/'+project.id+'/state',approver,{
+   status:'approved',authorityReference:'CLIENT-CAPEX-PROJECT-AUTHORITY'});
+ await check('capital committed amount is transactionally capped by approved programme baseline',async()=>{
+   const a=await ok(enterprise+'/commitments',operator,{projectId:project.id,
+      category:'professional',proposedCents:7000,quotationReference:'CAPEX-QUOTE-7000'});
+   await ok(enterprise+'/commitments/'+a.id+'/review',approver,{status:'approved',
+      authorityReference:'CLIENT-SIGNED-COMMITMENT-7000'});
+   const b=await ok(enterprise+'/commitments',operator,{projectId:project.id,
+      category:'materials',proposedCents:4000,quotationReference:'CAPEX-QUOTE-4000'});
+   const over=await api(enterprise+'/commitments/'+b.id+'/review',approver,{status:'approved',
+      authorityReference:'SHOULD-BE-REJECTED-OVER-BUDGET'});
+   assert.notEqual(over.status,200);
+   assert.equal((await sql("SELECT COALESCE(SUM(proposed_cents),0) AS total FROM v2_capital_commitments WHERE status='approved' AND project_id=?",project.id).first()).total,7000);
+   const forecast=await ok(enterprise+'/forecasts',operator,{projectId:project.id,
+      revision:1,forecastTotalCents:9200,rationale:'Supplier bids reduced provisional costs',
+      sourceReference:'INDEPENDENT-SUPPLIER-ESTIMATE-2026'});
+   await assert.rejects(sql("UPDATE v2_capital_forecasts SET forecast_total_cents=1 WHERE id=?",forecast.id).run(),/V2_CAPITAL_FORECAST_IMMUTABLE/);
+ });
+ await check('enterprise reporting uses live scoped records and immutable auditable snapshots',async()=>{
+   const report=await ok(enterprise+'/reports',operator,{
+      title:'Client approved residential portfolio scorecard',reportKind:'operations',
+      clientId:client,marketCode:'RES',portfolioId:pf.id,windowDays:90});
+   const saved=await ok(enterprise+'/reports/'+report.id+'/snapshot',operator,{});
+   assert.ok(saved.id);
+   assert.ok(Number(saved.summary.assets.assets)>=1);
+   assert.ok(Number(saved.summary.compliance.review_overdue)>=1);
+   assert.equal(saved.summary.capital.committed_cents,7000);
+   await assert.rejects(sql("DELETE FROM v2_report_snapshots WHERE id=?",saved.id).run(),/V2_REPORT_SNAPSHOT_IMMUTABLE/);
+   const csv=await api(enterprise+'/export?days=90',operator);
+   assert.equal(csv.status,200);assert.ok(csv.data.includes('metric'));
+   assert.equal((await api(enterprise,owner)).status,403);
+   assert.equal((await api(enterprise+'/reports',owner,{title:'Unsafe',reportKind:'operations',windowDays:90})).status,403);
+ });
+
  console.log('PASS V2 all operating-model workflow checks');
 }finally {await mf.dispose();}
