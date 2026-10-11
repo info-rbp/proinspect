@@ -64,3 +64,8 @@ Work Package 1 is implemented on `ProInspect-V2` with migration `0006_v2_operati
 ## WP2 maintenance delivery (development branch only)
 
 Additive migration 0007 and Staff maintenance-delivery console implement scoped work packages, verified contractor credentials, capacity rosters/blocks/allocations, labour and cost approval, entitlement usage posting, evidence, task and parent closeout gates. See docs/V2_MAINTENANCE_DELIVERY.md; GitHub Actions controls acceptance.
+
+
+## Final V2 operational build-out — WP3–WP5 (development branch)
+
+WP3 additive migration 0008 and Staff asset/compliance console: asset conditions, warranty, approved preventive recurrence with one work order per due cycle, independently reviewed compliance evidence, actions and risk register. WP4 migration 0009: 11 **unapproved** specialist packs, 55 structured coordination modules, 77 pending release checks, scoped pilot-to-live activation and reserved-provider boundaries. WP5 migration 0010: staff-only enterprise reporting, immutable KPI snapshots, CSV export, client relationship-scoped portfolio groups, dual-authorised capital budgets, milestone and commitment gates. Source implementation is not production or business approval. See docs/V2_ASSET_PREVENTIVE_COMPLIANCE.md, docs/V2_SECTOR_ROLLOUTS.md and docs/V2_CAPITAL_ENTERPRISE.md. Main contains independent deployment changes and must be reconciled deliberately before release. All specialist offerings remain gated until verification against the approved external business catalogue and contracts.
