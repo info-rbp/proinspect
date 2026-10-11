@@ -4,16 +4,16 @@ A clean Cloudflare-native rebuild: one identity, one relationship-aware property
 
 The repository now contains the original booking-to-report workflow plus connected Landlord, Tenant, Property Manager, Commercial, Strata Manager, Building, Council and Staff operations. Access follows approved relationships, not a public role selector. See [BUILD_STATUS.md](docs/BUILD_STATUS.md) for implemented behaviour and explicit remaining limits.
 
-**Cloudflare deployment is locked pending the owner's repository acceptance.** CI executes local runtime and browser tests only; no Cloudflare resources, customer data or public domains are changed.
+**Cloudflare Workers Builds deploys `apps/platform` directly from `main` to the existing `proinspect-platform` Worker.** GitHub Actions remains verification-only. The first live deployment provisions new resources but does not migrate historical data or attach DNS.
 
 ## Applications
 
-- apps/marketing: public service discovery, server-rendered content and booking handoff.
-- apps/platform: authenticated workspaces and business API.
+- apps/marketing: canonical public service content and route modules, reused by the deployed platform SSR router (not a separate deployed website).
+- apps/platform: the single deployed Worker, public marketing homepage, sign-in, all workspaces and operational API.
 - packages: shared domain, authorization, encryption, catalogue and design system.
 - database/migrations: numbered relational D1 migrations.
 
-Target domains: proinspect.systems and app.proinspect.systems. This source does not automatically change either live domain.
+Target domain: proinspect.systems for both marketing and all customer accounts. The existing Worker.dev alias is usable until that custom hostname is attached.
 
 ## Start locally
 
@@ -44,7 +44,7 @@ CI builds both Workers, tests local D1/R2/Durable Object workflows, checks uploa
 
 ## Deploy
 
-The deployment workflow is an inert manual-only lock. It loads no credentials and cannot provision, migrate or deploy. [DEPLOYMENT.md](docs/DEPLOYMENT.md) records the future release requirements, not an instruction to deploy now.
+Use Cloudflare's existing Git connection to `main`, not a GitHub Actions connection workflow. The platform build is `CLOUDFLARE_ENV=connected pnpm --dir apps/platform build`; deploy is `pnpm --dir apps/platform exec wrangler deploy`. The connected environment is **production**, with automatic D1/R2/Queue provisioning. [Deployment instructions](docs/DEPLOYMENT.md) cover initial database migrations and runtime secrets.
 
 ## Authoritative contracts
 
@@ -59,4 +59,10 @@ The old repositories are references only. No Firebase/Firestore, Express, Google
 
 ## Scope review and environment configuration
 
-Read [the scope review](docs/SCOPE_REVIEW.md) for implemented workflows and deliberate remaining gaps. [GitHub configuration](docs/GITHUB_CONFIGURATION.md) lists the exact core and optional secrets, public settings, Worker targets and external integration properties. `pnpm config:list` is safe offline; `pnpm config:check` validates supplied process variables without printing values or contacting providers. Adding secrets does not enable the locked deployment workflow.
+Read [the scope review](docs/SCOPE_REVIEW.md) for implemented workflows and deliberate remaining gaps. [GitHub configuration](docs/GITHUB_CONFIGURATION.md) lists the exact core and optional secrets, public settings, Worker targets and external integration properties. `pnpm config:list` is safe offline; `pnpm config:check` validates supplied process variables without printing values or contacting providers. Runtime secrets must be configured on the Cloudflare Worker; GitHub-only secrets are not passed to Cloudflare Builds.
+## Google Admin portal testing aliases
+
+Eight owner-created `@proinspect.systems` email aliases can be prepared as isolated test Landlord, Property Manager, Strata Manager, Tenant, Resident, Council, Commercial and Staff accounts using the explicit one-time SQL and verification instructions in [Portal testing](docs/PORTAL_TESTING.md). This source addition does **not** auto-provision live D1 or bypass verified email sign-in. There is no Cloudflare Actions connection workflow.
+
+
+For the one-time GitHub API-powered live D1 test-account setup (not a Worker deploy), see [Portal testing](docs/PORTAL_TESTING.md). GitHub Actions consumes the Cloudflare API key securely without showing the value or requiring a separate Cloudflare browser login.

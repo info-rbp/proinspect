@@ -18,14 +18,14 @@ function futureDate() {
   return date.toISOString().slice(0, 10);
 }
 test('marketing is server rendered and responsive', async ({ page, request }) => {
-  const response = await request.get('http://127.0.0.1:5174/services/routine-inspection');
+  const response = await request.get('http://127.0.0.1:5173/services/routine-inspection');
   expect(response.status()).toBe(200);
   const html = await response.text();
   expect(html).toContain('Routine Inspection');
   expect(html).toContain('Clear work. A useful record.');
   expect(html).toContain('rel="canonical"');
   expect(html).not.toContain('<title>Service not found');
-  await page.goto('http://127.0.0.1:5174');
+  await page.goto('http://127.0.0.1:5173');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('The work gets done.');
   mkdirSync('artifacts/screenshots', { recursive: true });
   await page.screenshot({ path: 'artifacts/screenshots/marketing-desktop.png', fullPage: true });

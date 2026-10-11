@@ -39,13 +39,13 @@ test('marketing category, engagement and guide routes render with mobile navigat
     '/areas-we-service',
   ];
   for (const path of paths) {
-    const r = await request.get('http://127.0.0.1:5174' + path);
+    const r = await request.get('http://127.0.0.1:5173' + path);
     expect(r.status(), path).toBe(200);
     expect(await r.text()).toContain('rel="canonical"');
   }
-  expect((await request.get('http://127.0.0.1:5174/resources/not-a-guide')).status()).toBe(404);
+  expect((await request.get('http://127.0.0.1:5173/resources/not-a-guide')).status()).toBe(404);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('http://127.0.0.1:5174/resources');
+  await page.goto('http://127.0.0.1:5173/resources');
   await page.locator('.marketing-menu summary').click();
   await expect(
     page

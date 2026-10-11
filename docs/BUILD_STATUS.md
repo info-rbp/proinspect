@@ -1,12 +1,12 @@
 # Build status: connected portal workflows
 
-This ledger describes implemented source and bounded acceptance, not a production certificate. Cloudflare deployment is intentionally locked pending the owner's repository review. No customer data migration, DNS change, live payment, external email or hosted integration is claimed.
+This ledger describes implemented source and bounded acceptance, not a production certificate. Cloudflare now builds the platform directly from `main`; hosted deployment and external-service acceptance must be verified separately. No customer data migration, DNS change, live payment, external email or hosted integration is claimed.
 
 ## Implemented connected slices
 
 | Area                | Implemented behaviour                                                                                                                                                                                                                                                                                                |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shared platform     | Two Workers-native applications; one identity; explicit client entitlements; dated property, tenancy and scheme relationships; server-scoped APIs and downloads; numbered additive SQL migrations.                                                                                                                   |
+| Shared platform     | One deployed Cloudflare Worker with the marketing homepage and authenticated platform in one router; one identity; explicit client entitlements; dated property, tenancy and scheme relationships; server-scoped APIs and downloads; numbered additive SQL migrations.                                                                                                                   |
 | Landlord            | Residential self-management; booking-to-report journey; cancellation/rescheduling of future appointments through the scheduling Durable Object; stale-write/retry checks; tenancy records, additional invitations, inspection publication, document requests, PCR responses, approvals and payment requests.         |
 | Property Manager    | Reviewed organisation onboarding; managed-property and owner-contact setup; assignment-scoped team members; CSV preview/apply; per-property bulk booking outcomes; recurring plans and occurrence advancement; work orders, document delivery, delegated authority and verified-owner escalation.                    |
 | Commercial / Asset  | Separate reviewed commercial entitlement and commercial management relationships; reuses portfolio, team, booking, recurring work, documents and finance rather than residential self-management.                                                                                                                    |
@@ -54,7 +54,6 @@ See COMMUNICATIONS.md for configuration and delivery semantics. Cloudflare remai
 See SCOPE_REVIEW.md for implemented coverage and unresolved scope. GITHUB_CONFIGURATION.md and config/environment.json are the complete environment inventory. This pass adds account/session controls, report-email preferences, full scoped record browsing/counts, independent details, workspace-specific document access, professional booking/request UI, inactive service administration, marketing categories/guides and mobile navigation. The offline checker never prints secret values or contacts providers; dormant apply helpers require an accepted SHA. Deployment stays locked.
 
 Suite coverage: 19 helper/security tests, 10 SQL checks, 76 runtime checks and 11 browser journeys. These are counts, not acceptance until the exact commit passes Verify ProInspect. No full statutory, antivirus, large-scale scheduling, accounting or production-readiness claim is made.
-
 
 ## ProInspect-V2 business model foundation (development branch only)
 

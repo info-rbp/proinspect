@@ -6,7 +6,7 @@ async function post(c:BrowserContext,path:string,data:unknown={}){const r=await 
 async function login(c:BrowserContext,email:string){const start=await post(c,'/api/auth/start',{email});await post(c,'/api/auth/complete',{email,token:new URL(start.localSignInUrl).searchParams.get('token')});}
 test('public enquiry reaches authorised Staff triage and a recorded email reply',async({page,browser})=>{
  const refName='Enquiry Browser '+randomUUID().slice(0,8);
- await page.goto('http://127.0.0.1:5174/contact?service=routine-inspection');
+ await page.goto('http://127.0.0.1:5173/contact?service=routine-inspection');
  await expect(page.getByRole('heading',{level:1})).toHaveText('Tell us what the property needs.');
  await expect(page.getByLabel('Service (optional)',{exact:true})).toHaveValue('routine-inspection');
  await page.getByLabel('Your name',{exact:true}).fill(refName);

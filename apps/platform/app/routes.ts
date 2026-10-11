@@ -1,6 +1,29 @@
-import { type RouteConfig, index, route } from '@react-router/dev/routes';
+import { type RouteConfig, index, layout, route } from '@react-router/dev/routes';
+
+// Public and authenticated pages are served by the same React Router application
+// and the same Cloudflare Worker. Keep the original marketing route modules as
+// the source of truth; do not maintain a second copy of the service catalogue.
 export default [
-  index('routes/home.tsx'),
+  layout('routes/public-layout.tsx', [
+    index('../../marketing/app/routes/home.tsx'),
+    route('services', '../../marketing/app/routes/services.tsx'),
+    route('services/category/:family', '../../marketing/app/routes/content.tsx', {
+      id: 'public-service-family',
+    }),
+    route('how-we-work/:model', '../../marketing/app/routes/content.tsx', {
+      id: 'public-engagement-model',
+    }),
+    route('resources', '../../marketing/app/routes/resources.tsx'),
+    route('resources/:guide', '../../marketing/app/routes/content.tsx', {
+      id: 'public-resource-guide',
+    }),
+    route('services/:slug', '../../marketing/app/routes/service.tsx'),
+    route('sectors/:sector', '../../marketing/app/routes/sector.tsx'),
+    route('contact', 'routes/public-contact.tsx'),
+    route(':page', '../../marketing/app/routes/information.tsx'),
+  ]),
+  route('sitemap.xml', '../../marketing/app/routes/sitemap.ts'),
+  route('robots.txt', '../../marketing/app/routes/robots.ts'),
   route('signin', 'routes/signin.tsx'),
   route('auth/complete', 'routes/auth-complete.tsx'),
   route('signout', 'routes/signout.tsx'),

@@ -31,4 +31,4 @@ The callback verifies Stripe's raw-body timestamped signature, test/live mode, s
 
 ## Email
 
-The existing encrypted mail outbox, Queue consumer and provider adapter remain in use. Outbox failure never rolls back completed operational work. Staging must use its controlled mailbox; production never uses local sign-in links. Provider delivery and real recipient behaviour require hosted acceptance.
+The existing encrypted mail outbox, Queue consumer and provider adapter remain in use. Outbox failure never rolls back completed operational work. Production must never use local sign-in links or redirect authentication links to a test sink. Provider delivery and real recipient behaviour require hosted acceptance.
