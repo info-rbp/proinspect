@@ -61,4 +61,91 @@ class SchemaTests(unittest.TestCase):
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute("INSERT INTO notice_deliveries(notice_id,user_id,notification_id,outbox_id,created_at) VALUES('notice','u','alert2','mail','2026-01-01')")
 
+
+class PortalTestingSeedTests(unittest.TestCase):
+    """The owner-approved Google Admin aliases must receive only synthetic, scoped access."""
+
+    def setUp(self):
+        self.db = sqlite3.connect(':memory:')
+        self.db.execute('PRAGMA foreign_keys=ON')
+        for migration in sorted(pathlib.Path('database/migrations').glob('*.sql')):
+            self.db.executescript(migration.read_text())
+        self.seed_path = pathlib.Path('scripts/portal-testing/seed-google-admin-aliases.sql')
+
+    def seed(self):
+        self.db.executescript(self.seed_path.read_text())
+
+    def roles_for(self, email):
+        rows = self.db.execute('''
+          SELECT e.workspace_kind FROM client_memberships m
+          JOIN clients c ON c.id=m.client_id
+          JOIN client_entitlements e ON e.client_id=c.id AND e.active=1
+          JOIN users u ON u.id=m.user_id
+          WHERE u.email=? AND u.active=1 AND m.active=1 AND c.status='active'
+          UNION
+          SELECT 'tenant' FROM tenancy_memberships m JOIN tenancies t ON t.id=m.tenancy_id
+          JOIN users u ON u.id=m.user_id
+          WHERE u.email=? AND u.active=1 AND m.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now')
+          UNION
+          SELECT CASE WHEN m.role='council_member' THEN 'council' ELSE 'building' END
+          FROM scheme_memberships m JOIN users u ON u.id=m.user_id
+          WHERE u.email=? AND u.active=1 AND m.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now')
+            AND (m.ends_at IS NULL OR m.ends_at>strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+          UNION
+          SELECT 'staff' FROM staff_profiles sp JOIN users u ON u.id=sp.user_id
+          WHERE u.email=? AND u.active=1 AND sp.active=1
+        ''', (email,) * 4).fetchall()
+        return {row[0] for row in rows}
+
+    def test_all_eight_portals_are_scoped_and_idempotent(self):
+        self.seed()
+        expected = {
+           'landlord-testing@proinspect.systems': 'landlord',
+           'property-manager-testing@proinspect.systems': 'property-manager',
+           'strata-manager-testing@proinspect.systems': 'strata-manager',
+           'tenant-testing@proinspect.systems': 'tenant',
+           'building-resident-testing@proinspect.systems': 'building',
+           'building-council-testing@proinspect.systems': 'council',
+           'commercial-testing@proinspect.systems': 'commercial',
+           'staff-testing@proinspect.systems': 'staff',
+        }
+        for email, portal in expected.items():
+            with self.subTest(email=email):
+                self.assertEqual(self.roles_for(email), {portal})
+        self.assertEqual(self.db.execute("SELECT role FROM staff_profiles WHERE user_id=(SELECT id FROM users WHERE email='staff-testing@proinspect.systems')").fetchone()[0], 'administrator')
+        self.assertEqual(self.db.execute('SELECT count(*) FROM users WHERE verified_at IS NOT NULL').fetchone()[0], 0)
+        self.assertEqual(self.db.execute('SELECT count(*) FROM login_tokens').fetchone()[0], 0)
+        self.assertEqual(self.db.execute('SELECT count(*) FROM sessions').fetchone()[0], 0)
+        self.assertEqual(self.db.execute('SELECT count(*) FROM services').fetchone()[0], 23)
+        self.assertEqual(self.db.execute('SELECT count(*) FROM properties').fetchone()[0], 5)
+        self.assertEqual(self.db.execute('SELECT count(*) FROM scheme_memberships').fetchone()[0], 2)
+        self.assertEqual(self.db.execute('SELECT count(*) FROM clients').fetchone()[0], 4)
+        before = [(name, self.db.execute('SELECT count(*) FROM ' + name).fetchone()[0])
+                  for name in ['users','clients','client_memberships','client_entitlements','properties',
+                               'scheme_client_links','scheme_memberships','tenancies','audit_events','services']]
+        self.seed()
+        after = [(name, self.db.execute('SELECT count(*) FROM ' + name).fetchone()[0])
+                 for name, _ in before]
+        self.assertEqual(before, after)
+        self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(), [])
+
+    def test_cross_role_property_relationships_are_real_and_isolated(self):
+        self.seed()
+        self.assertEqual(self.db.execute("SELECT mode FROM property_management_relationships WHERE property_id='prop_pi_test_landlord'").fetchone()[0], 'self_managed')
+        self.assertEqual(self.db.execute("SELECT mode FROM property_management_relationships WHERE property_id='prop_pi_test_agency'").fetchone()[0], 'agency_managed')
+        self.assertEqual(self.db.execute("SELECT mode FROM property_management_relationships WHERE property_id='prop_pi_test_commercial'").fetchone()[0], 'commercial_managed')
+        self.assertEqual(self.db.execute("SELECT property_id FROM tenancies WHERE id='tnc_pi_test_landlord'").fetchone()[0], 'prop_pi_test_landlord')
+        self.assertEqual(self.db.execute("SELECT count(*) FROM scheme_client_links WHERE client_id='cli_pi_test_strata' AND role='strata_manager'").fetchone()[0], 1)
+        self.assertEqual(self.db.execute("SELECT count(*) FROM scheme_memberships WHERE role='council_member' AND ends_at>strftime('%Y-%m-%dT%H:%M:%fZ','now')").fetchone()[0], 1)
+        self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(), [])
+
+    def test_existing_email_identity_is_not_overwritten(self):
+        self.db.execute("INSERT INTO users(id,email,display_name,created_at,verified_at) VALUES('usr_preexisting','landlord-testing@proinspect.systems','Existing name','2026-01-01','2026-02-01')")
+        self.seed()
+        user = self.db.execute("SELECT id,display_name,verified_at FROM users WHERE email='landlord-testing@proinspect.systems'").fetchone()
+        self.assertEqual(user, ('usr_preexisting','Existing name','2026-02-01'))
+        self.assertEqual(self.roles_for('landlord-testing@proinspect.systems'), {'landlord'})
+        self.assertEqual(self.db.execute("SELECT user_id FROM client_memberships WHERE client_id='cli_pi_test_landlord'").fetchone()[0], 'usr_preexisting')
+        self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(), [])
+
 if __name__=='__main__': unittest.main()
