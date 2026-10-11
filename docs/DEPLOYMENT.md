@@ -72,3 +72,8 @@ The established Cloudflare build/deploy commands above now ship both the complet
 ## Google Admin test portal access
 
 See [Portal testing](PORTAL_TESTING.md) for the eight owner-created email aliases, test-only relationship seed, verification query and privileged Staff revocation procedure. These scripts are deliberately **not** deployment hooks or numbered migrations; they are applied only once, explicitly, against the confirmed live `DB` D1 binding, after schema migration. Email authentication, sender and Turnstile secrets must be configured directly on the Worker.
+
+
+## One-time GitHub API maintenance for test portal identities
+
+A narrowly-scoped one-time Github Actions job has been added to **migrate the actual bound D1 database and provision owner-approved test aliases only**. It is not a Worker deploy action, does not change Cloudflare's `main` build commands, and does not replace the native Git integration. It verifies the Worker `DB` UUID before writes, runs the existing numbered migrations and test-only seed, then validates all eight scoped memberships against Cloudflare D1. It uses `CLOUDFLARE_API_TOKEN` from repository secrets and the `CLOUDFLARE_ACCOUNT_ID` repository variable/secret (or the account ID confirmed in the previous Cloudflare deployment log). See [PORTAL_TESTING.md](PORTAL_TESTING.md).

@@ -1,0 +1,51 @@
+name: One-time Cloudflare D1 portal test provisioning
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/portal-testing/provision-once-2026-10-11.intent
+permissions:
+  contents: read
+concurrency:
+  group: portal-test-production-d1-once
+  cancel-in-progress: false
+jobs:
+  provision:
+    if: github.repository == 'info-rbp/proinspect' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID || '8ca23ac6d2cc906d4dd13b8da5ea2b25' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Check repository tests for one-time provisioning
+        run: node --experimental-strip-types --test tests/portal-cloudflare.test.ts
+      - name: Resolve and verify deployed Worker DB before any changes
+        run: node scripts/portal-testing/provision-cloudflare.mjs preflight
+      - name: Apply five committed D1 schema migrations to the bound production database
+        run: pnpm --dir apps/platform exec wrangler d1 migrations apply DB --remote --config wrangler.portal-provision.json
+      - name: Add eight owner-requested synthetic test identities and their memberships
+        run: pnpm --dir apps/platform exec wrangler d1 execute DB --remote --config wrangler.portal-provision.json --file ../../scripts/portal-testing/seed-google-admin-aliases.sql
+      - name: Verify all eight permissions against the actual live D1 database
+        run: node scripts/portal-testing/provision-cloudflare.mjs verify
+      - name: Check public Worker authentication and catalogue readiness
+        run: |
+          node --input-type=module <<'EOF_NODE'
+          const origin='https://proinspect-platform.delicate-dream-e4c9.workers.dev';
+          for(const endpoint of ['/api/health','/api/catalogue']) {
+            try {
+              const r=await fetch(origin+endpoint);
+              if(endpoint==='/api/health' && r.ok) {
+                const health=await r.json();
+                console.log(`Health: auth configured = ${health.authenticationConfigured===true}, source = ${health.source}`);
+              } else console.log(`${endpoint}: HTTP ${r.status}`);
+            } catch {console.log(`${endpoint}: unable to reach deployed Worker`);}
+          }
+          EOF_NODE

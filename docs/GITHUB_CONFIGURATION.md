@@ -45,3 +45,8 @@ Local `.dev.vars` and the original top-level Wrangler configuration remain separ
 ## Unified public marketing and platform runtime
 
 The existing `proinspect-platform` Cloudflare Worker now serves both marketing and customer/account routes at one origin. Set `MARKETING_TURNSTILE_SITE_KEY` (public runtime variable), `MARKETING_TURNSTILE_SECRET_KEY`, `ENQUIRY_GATEWAY_SECRET` and `DATA_ENCRYPTION_KEY` (runtime secrets) on that **same Platform Worker**, with site/secret keys valid for its currently active hostname. Cloudflare native Git builds do not inherit GitHub secrets. `APP_ORIGIN`, `MARKETING_ORIGIN` and `PLATFORM_ORIGIN` are intentionally identical in the connected production build and can be set through `PROINSPECT_APP_ORIGIN` as a Cloudflare build variable. See [UNIFIED_SITE.md](UNIFIED_SITE.md). The standalone Marketing Worker is not deployed.
+
+
+## One-time live D1 portal test provisioning through GitHub
+
+The eight Google Admin test identities are provisioned through a **separate, path-filtered one-time D1 maintenance job**, not through Cloudflare Workers Builds and not through a GitHub Actions Worker deploy. It uses the repository secret `CLOUDFLARE_API_TOKEN` and variable/secret `CLOUDFLARE_ACCOUNT_ID` (falling back to the account ID from the prior Cloudflare deployment log) to confirm the deployed `proinspect-platform` D1 binding before doing anything. Permissions needed on the Cloudflare API token: Workers Scripts Read and D1 Read/Write for this account. The job runs only for the committed one-time intent file, not every push. See [PORTAL_TESTING.md](PORTAL_TESTING.md).
