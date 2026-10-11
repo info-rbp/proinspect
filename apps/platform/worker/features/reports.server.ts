@@ -138,9 +138,11 @@ export async function saveReport(env:Env,user:Principal,w:Workspace,id:string,in
    if(previous){assert(previous.fingerprint===fingerprint,409,'SYNC_REPLAY_CHANGED','A sync operation cannot be replayed with different content.');return {id,revision:previous.result_revision,replayed:true};}
  }
  assert(row.revision===d.revision,409,'REPORT_CHANGED','The report changed. Review and reconcile before synchronising.');
+ const currentDraft=await statement(env.DB,'SELECT revision FROM report_drafts WHERE report_id=?',id).first<{revision:number}>();
+ assert(currentDraft,409,'DRAFT_MISSING','This report has no draft.');
  const at=now(),updates=[
    statement(env.DB,"UPDATE inspection_reports SET revision=revision+1,updated_at=? WHERE id=? AND revision=? AND status IN('draft','changes_requested')",at,id,d.revision),guard(env),
-   statement(env.DB,'UPDATE report_drafts SET revision=revision+1,content_json=?,updated_by=?,updated_at=? WHERE report_id=? AND revision=?',content,user.id,at,id,d.revision),guard(env)
+   statement(env.DB,'UPDATE report_drafts SET revision=revision+1,content_json=?,updated_by=?,updated_at=? WHERE report_id=? AND revision=?',content,user.id,at,id,currentDraft.revision),guard(env)
  ];
  if(d.operationId)updates.push(statement(env.DB,'INSERT INTO report_sync_receipts(id,report_id,user_id,expected_revision,result_revision,fingerprint,created_at) VALUES(?,?,?,?,?,?,?)',d.operationId,id,user.id,d.revision,d.revision+1,fingerprint,at));
  updates.push(activity(env,user,'report.draft_saved','inspection_report',id,row.property_id,row.scheme_id),clearGuard(env));
