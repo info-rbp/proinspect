@@ -144,8 +144,8 @@ export interface ReportComponentRecord {
   canonicalAreaComponentRuleId?: string;
   canonicalAreaComponentRuleVersion?: number;
   requirementSnapshot?: {
-    condition?: 'required'|'optional'; cleanliness?: 'required'|'optional'; workingStatus?: 'required'|'optional';
-    commentary?: 'always'|'exception_only'|'optional'; operationalTest?: 'required'|'recommended'|'optional';
+    condition?: 'required'|'optional'; cleanliness?: 'required'|'optional'; workingStatus?: 'required'|'optional'|'hidden';
+    commentary?: 'always'|'exception_only'|'optional'; operationalTest?: 'required'|'recommended'|'optional'|'not_applicable';
     componentPhotoRequired?: boolean; minimumPhotos?: number; exceptionPhotoRequired?: boolean;
     minimumExceptionPhotos?: number; maintenanceEvaluation?: boolean; comparisonPairRequired?: boolean;
   };
