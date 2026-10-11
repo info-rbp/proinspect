@@ -25,7 +25,8 @@ export async function createScheme(env:Env,user:Principal,w:Workspace,input:unkn
 }
 export async function schemeStructure(env:Env,user:Principal,w:Workspace,schemeId:string,input:unknown){
  await schemeAccess(env,user,w,schemeId,true);
- const d=z.object({kind:z.enum(['area','lot','building']),name:shortText,buildingId:recordId.optional(),propertyId:recordId.optional()}).parse(input);
+ const d=z.object({kind:z.enum(['area','lot','building']),name:z.string().trim().min(1).max(180),buildingId:recordId.optional(),propertyId:recordId.optional()}).parse(input);
+ assert(d.kind==='lot'||d.name.length>=2,422,'STRUCTURE_NAME_TOO_SHORT','Building and common-area names must have at least two characters.');
  if(d.buildingId)assert(await statement(env.DB,'SELECT id FROM scheme_buildings WHERE id=? AND scheme_id=?',d.buildingId,schemeId).first(),422,'BUILDING_MISMATCH','Choose a building in this scheme.');
  if(d.propertyId){assert(w.kind==='staff',403,'CANONICAL_LINK_REVIEW','Existing property-to-lot links require Staff verification.');operationsWrite(user);assert(await statement(env.DB,'SELECT id FROM properties WHERE id=?',d.propertyId).first(),422,'PROPERTY_NOT_FOUND','Property not found.');}
  const id=uid(d.kind),s=d.kind==='area'?statement(env.DB,'INSERT INTO common_property_areas(id,scheme_id,building_id,name) VALUES(?,?,?,?)',id,schemeId,d.buildingId??null,d.name):d.kind==='lot'?statement(env.DB,'INSERT INTO strata_lots(id,scheme_id,lot_number,building_id,property_id) VALUES(?,?,?,?,?)',id,schemeId,d.name,d.buildingId??null,d.propertyId??null):statement(env.DB,'INSERT INTO scheme_buildings(id,scheme_id,name,property_id) VALUES(?,?,?,?)',id,schemeId,d.name,d.propertyId??null);
