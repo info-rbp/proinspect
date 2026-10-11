@@ -18,7 +18,10 @@ export default {
     const headers = new Headers(response.headers);
     headers.set('Cache-Control', 'private, no-store');
     headers.set('X-Content-Type-Options', 'nosniff');
-    headers.set('Referrer-Policy', 'no-referrer');
+    // Chrome sends Origin: null for native POST forms under no-referrer,
+    // which React Router correctly rejects as a potential CSRF attempt.
+    // strict-origin sends only the origin, never account paths or tokens.
+    headers.set('Referrer-Policy', 'strict-origin');
     headers.set('X-Frame-Options', 'DENY');
     const requestUrl = new URL(request.url);
     if (response.ok && shouldIndexPublicPage(requestUrl.pathname, requestUrl.origin, env.APP_ENV))

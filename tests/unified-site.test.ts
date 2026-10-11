@@ -67,6 +67,17 @@ test('the original contact form uses a signed in-process receiver instead of a s
   assert.match(marketingAction, /enquirySchema\.safeParse/);
   assert.match(marketingAction, /signEnquiry\(/);
   assert.match(marketingAction, /Turnstile/);
-  assert.match(marketingAction, /reloadDocument/); // Avoid forwarded-action origin mismatches without weakening CSRF checks.
+  assert.match(marketingAction, /reloadDocument/); // Native form submits on the same origin.
   assert.match(marketingAction, /export const action = submitContact/);
+});
+
+
+test('unified worker preserves browser POST origin for marketing forms without leaking account paths', () => {
+  const sourceText = source('apps/platform/worker/app.ts');
+  assert.match(sourceText, /headers\.set\('Referrer-Policy', 'strict-origin'\)/);
+  assert.doesNotMatch(sourceText, /headers\.set\('Referrer-Policy', 'no-referrer'\)/);
+  // Referrer-Policy: no-referrer forces Chromium navigation POSTs to send
+  // Origin: null; React Router rejects those form submissions before action().
+  // strict-origin sends only the origin and keeps the framework's CSRF checks intact.
+  assert.match(source('apps/marketing/app/routes/contact.tsx'), /<Form method=\"post\" reloadDocument/);
 });
