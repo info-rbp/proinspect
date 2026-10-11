@@ -27,7 +27,7 @@ BEGIN
  OR EXISTS(SELECT 1 FROM scheme_client_links l WHERE NEW.scheme_id IS NOT NULL
  AND l.scheme_id=NEW.scheme_id AND l.client_id=p.client_id
  AND l.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now')
- AND (l.ends_at IS NULL OR l.ends_at>strftime('%Y-%m-%dT%H:%M:%fZ','now'))));
+ AND (l.ends_at IS NULL OR l.ends_at>strftime('%Y-%m-%dT%H:%M:%fZ','now')))));
 END;
 CREATE TRIGGER v2_enterprise_portfolio_members_lock BEFORE UPDATE ON v2_enterprise_portfolio_members
 BEGIN SELECT RAISE(ABORT,'V2_PORTFOLIO_MEMBERSHIP_IMMUTABLE'); END;
