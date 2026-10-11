@@ -1,0 +1,6 @@
+One-time operation requested by the owner on 2026-10-11:
+- Run the existing, isolated portal-testing D1 seed against the exact live DB binding of proinspect-platform.
+- Apply the existing additive SQL migrations first, with Wrangler's migration ledger and backups.
+- Verify the eight Google Admin testing aliases have only their specified workspace access.
+- Never deploy or replace the Worker through GitHub Actions.
+- This file is the unique path-filtered trigger. Do not edit or recommit it after execution.

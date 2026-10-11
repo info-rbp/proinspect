@@ -63,3 +63,6 @@ Read [the scope review](docs/SCOPE_REVIEW.md) for implemented workflows and deli
 ## Google Admin portal testing aliases
 
 Eight owner-created `@proinspect.systems` email aliases can be prepared as isolated test Landlord, Property Manager, Strata Manager, Tenant, Resident, Council, Commercial and Staff accounts using the explicit one-time SQL and verification instructions in [Portal testing](docs/PORTAL_TESTING.md). This source addition does **not** auto-provision live D1 or bypass verified email sign-in. There is no Cloudflare Actions connection workflow.
+
+
+For the one-time GitHub API-powered live D1 test-account setup (not a Worker deploy), see [Portal testing](docs/PORTAL_TESTING.md). GitHub Actions consumes the Cloudflare API key securely without showing the value or requiring a separate Cloudflare browser login.
