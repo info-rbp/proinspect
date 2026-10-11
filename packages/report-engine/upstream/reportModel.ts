@@ -1,4 +1,4 @@
-import type { ReportLifecycleStatus } from './platform.js';
+import type { ReportLifecycleStatus } from './platform.ts';
 
 export const COMPONENT_CONDITION_CATEGORIES = [
   'not_applicable',
