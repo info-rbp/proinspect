@@ -109,8 +109,20 @@ try{
    const original=await first('SELECT content_sha256 FROM report_versions WHERE id=?',pcr.versionId);
    const body={generalNote:'The entry wall description differs from the observed appearance.',
       entries:[{areaId:'area_general',componentId:'component_general',comment:'The wall colour appears different.'}]};
+   assert.equal((await api('/api/w/tenant/tenancy_pcr/reports/'+pcr.id+'/response',tenant,{
+      generalNote:'Invalid reference',entries:[{areaId:'unknown',comment:'Should not be accepted'}]
+   })).status,422);
    const response=await ok('/api/w/tenant/tenancy_pcr/reports/'+pcr.id+'/response',tenant,body);
    assert.equal(response.status,'submitted');
+   const reviewed=await ok(staffBase+'/reports/'+pcr.id,reviewer);
+   assert.equal(reviewed.responses[0].content.entries[0].componentId,'component_general');
+   assert.equal((await api(staffBase+'/reports/'+pcr.id+'/response/'+response.id+'/resolve',inspector,{
+     status:'resolved',resolutionNote:'Self resolution forbidden'
+   })).status,403);
+   const resolved=await ok(staffBase+'/reports/'+pcr.id+'/response/'+response.id+'/resolve',reviewer,{
+     status:'resolved',resolutionNote:'Response recorded for independent review and follow-up'
+   });
+   assert.equal(resolved.status,'resolved');
    assert.equal((await ok('/api/w/tenant/tenancy_pcr/reports/'+pcr.id+'/response',tenant,body)).replayed,true);
    assert.equal((await first('SELECT content_sha256 FROM report_versions WHERE id=?',pcr.versionId)).content_sha256,original.content_sha256);
    assert.equal((await api('/api/w/commercial/cli_comm/reports/'+pcr.id,commercial)).status,404);

@@ -132,6 +132,12 @@ try{
   assert.equal(result.reviewedCandidates,1);assert.equal(result.workOrdersCreated,0);
   await ok(base+'/maintenance/candidates',ops,{});
   assert.equal((await first('SELECT COUNT(*) AS c FROM report_maintenance_candidates WHERE report_version_id=?',version)).c,1);
+  const item=await first('SELECT id FROM report_maintenance_candidates WHERE report_version_id=?',version);
+  assert.equal((await api(base+'/maintenance/'+item.id+'/create-request',inspector,{})).status,403);
+  const triage=await ok(base+'/maintenance/'+item.id+'/create-request',ops,{});
+  assert.equal(triage.status,'submitted');
+  assert.equal((await ok(base+'/maintenance/'+item.id+'/create-request',ops,{})).replayed,true);
+  assert.equal((await first('SELECT status FROM requests WHERE id=?',triage.requestId)).status,'submitted');
  });
  await check('native approval and the exact issued render manifest guard Work Order completion',async()=>{
   const o=await first('SELECT version FROM work_orders WHERE id=?','work_report');

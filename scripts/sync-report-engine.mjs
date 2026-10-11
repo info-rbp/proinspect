@@ -52,7 +52,7 @@ for(const file of lock.files){
  const text=await r.text();if(text.length>150000)throw Error('Unexpectedly large upstream module.');
  const adapted=transformed(file.sourcePath,text);
  writeFileSync(file.targetPath,adapted);
- file.sourceBlobSha=createHash('sha1').update('blob '+Buffer.byteLength(text)+'\\0'+text).digest('hex');
+ file.sourceBlobSha=createHash('sha1').update('blob '+Buffer.byteLength(text)).update(Uint8Array.of(0)).update(text).digest('hex');
 }
 lock.sourceCommit=sha;
 lock.lastProposedAt=new Date().toISOString();
@@ -61,6 +61,10 @@ writeFileSync(lockPath,JSON.stringify(lock,null,2)+'\n');
 const changed=execFileSync('git',['status','--porcelain','packages/report-engine'],{encoding:'utf8'}).trim();
 if(!changed){console.log('No file difference from the last accepted engine version.');process.exit(0);}
 const branch='sync/report-engine-'+sha.slice(0,12);
+if(execFileSync('git',['ls-remote','--heads','origin',branch],{encoding:'utf8'}).trim()){
+ console.log('An upstream-update proposal already exists at '+branch+'. Review it before proposing another.');
+ process.exit(0);
+}
 const git=(args)=>execFileSync('git',args,{stdio:'inherit'});
 git(['config','user.name','github-actions[bot]']);git(['config','user.email','41898282+github-actions[bot]@users.noreply.github.com']);
 git(['switch','-c',branch]);

@@ -50,3 +50,25 @@ jobs:
             artifacts/
             playwright-report/
           retention-days: 7
+
+  propose-report-engine-update:
+    # The Verify workflow already exists on main, so a manual workflow_dispatch
+    # selecting this integration branch can execute this branch-only helper job.
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/integration/report-creation-tool'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/report-creation-tool
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare a reviewed upstream change proposal
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/sync-report-engine.mjs
