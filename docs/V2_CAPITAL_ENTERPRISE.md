@@ -21,3 +21,7 @@
 The operational BI and capital-controls foundation is implemented, not a complete accounting, procurement, payroll, contractor payment or ERP suite. Route optimisation, machine-learning forecasting, automated contractual customer notices, external procurement systems, regulatory/clinical attestations and public launch remain separate integrations and acceptance milestones.
 
 Security: Staff operations management only, with administrator-only capital approvals and CSV export audit. Other client workspaces continue using the already scoped basic operational reporting route. No staging/production deployment is performed by these source changes.
+
+## Report filter correction
+
+The metrics engine now prevents nested SQL aliases from shadowing the source engagement, filters the actual engagement or work-order client and isolates distinct markets. Multi-client and same-site cross-market tests verify the resulting compliance counts and capital budgets before the freeze.

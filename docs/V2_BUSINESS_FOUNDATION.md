@@ -29,3 +29,7 @@ The V2 schema is additive to immutable migrations 0001-0005. Migration `0006_v2_
 The 69 services and market associations are draft sector proposals, not a line-by-line import of the separate business workbook. The 613 suggested market-service rule rows and 33 draft package versions require comparison with business-approved content before publishing. All V2 market availability defaults disabled; all service, plan and rate records are draft. Approval requires review references, a legitimate client-property/scheme relationship, verified authority, and matching market classification.
 
 The new entitlement ledger is **manual and evidence-linked** to a booking or work order. Existing customer bookings do not automatically debit V2 subscription allowances until an accepted accounting workflow is added. Approved rate cards generate **immutable internal draft quotes only**; formal customer quote issuance, contractual rate negotiation, subscription invoicing and Stripe settlement remain separate implementation work. None of this is a hosted deployment.
+
+## Source freeze approval status
+
+Proposed services, 11 markets, 33 plan versions, 613 eligibility candidates, customer packages and pricing remain BUSINESS-UNAPPROVED unless separately approved by the authorised owner. CI acceptance is technical source verification, not a signed legal/commercial workbook comparison. See [V2_RELEASE_FREEZE.md](V2_RELEASE_FREEZE.md).

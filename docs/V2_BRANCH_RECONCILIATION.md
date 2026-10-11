@@ -49,3 +49,8 @@ This step preserves the accepted source and records what can be reused safely. I
 Before making V2 functional changes: (1) pass Verify ProInspect for the V2 baseline commit; (2) reconcile PR #3 functionality as reviewed, bite-sized changes with non-colliding SQL migrations, preserving every successful main test; (3) only then begin V2 market/asset/service/subscription model changes.
 
 Full design scope is the agreed 11-market property-operations business model, but this baseline step deliberately contains **no new services, pricing assumptions or production changes**.
+
+
+## Final integration and freeze decision (11 October 2026)
+
+The earlier baseline-only next steps are historical. Main's later unified website and deployment architecture was merged into V2, the report scope and independent-review defects corrected, single-digit strata lot labels fixed, and PR #3 explicitly reviewed and deferred where incompatible. See [V2_RELEASE_FREEZE.md](V2_RELEASE_FREEZE.md) for exact decisions and the freeze policy.

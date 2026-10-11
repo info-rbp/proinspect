@@ -16,3 +16,7 @@
 Do not activate preventive plans or compliance obligations without a real, approved ProInspect operations engagement and service scope. Actual inspection/compliance obligations, authorities, statutory deadlines, testing frequencies and sign-off responsibilities must be validated individually. The system does not invent jurisdictional frequencies or automatically issue notices to clients. Issue cycles are staff-controlled; external calendar sync, reminders, contractor dispatch and automated regulatory compliance certification are **not delivered** in this work package.
 
 Acceptance: additive migrations 0001–0008, Python schema invariants, Worker/D1/R2 task creation and document-scope tests, authenticated mobile/desktop Staff screens, and a passing GitHub Actions run on the exact final V2 commit.
+
+## Independent-review hardening
+
+Additive migration 0011 requires a condition reviewer to differ from the observer and a compliance evidence reviewer to differ from the submitter. The Worker also returns 403 on self-review. Runtime/schema tests attempt direct database bypass and verify the distinct-user gates.
