@@ -6,7 +6,7 @@ test('Cloudflare builds main directly without a GitHub Actions deployment workfl
   assert.equal(existsSync('.github/workflows/connect-cloudflare-platform.yml'), false);
   assert.equal(existsSync('.github/workflows/deploy-staging.yml'), false);
   const verification = readFileSync('.github/workflows/verify.yml', 'utf8');
-  assert.match(verification, /branches: \\[main(?:, \\'integration\\/report-creation-tool\\')?\\]/);
+  assert.ok(verification.includes("branches: [main, 'integration/report-creation-tool']"));
   assert.doesNotMatch(verification, /wrangler deploy(?! --dry-run)/);
 });
 
