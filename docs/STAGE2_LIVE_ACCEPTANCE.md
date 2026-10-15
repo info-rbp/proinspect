@@ -29,6 +29,21 @@
 
 The work-order, request, report, approval and notice flows are tested in the isolated CI environment. Their **production** sign-in and portal handoffs remain unaccepted.
 
+## Confirmed Turnstile hostname mismatch — separate authentication blocker
+
+A live read-only Cloudflare Browser Rendering inspection of `/signin` exposed the public Turnstile site key used by the production login form. Comparing that **public** key (without revealing or retrieving its secret) to the Cloudflare Turnstile widget inventory showed that it belongs to **`proinspect.systems (Spin)`**.
+
+That widget allows `proinspect.systems`, `localhost` and `127.0.0.1`, **but not** the deployed `proinspect-platform.delicate-dream-e4c9.workers.dev` hostname. The existing **`ProInspect Production`** widget does include the Workers.dev hostname, but its site key is **not** the value currently rendered by the application. This is a genuine *configuration mismatch* and may prevent the sign-in challenge from issuing a valid token.
+
+**Remediation options require owner approval and a matched secret:**
+
+1. Least-disruptive candidate: update the existing `proinspect.systems (Spin)` widget's domain allowlist to *add* `proinspect-platform.delicate-dream-e4c9.workers.dev`, preserving the existing allowed domains and Worker sitekey/secret pair. This does not require changing the production root domain or Google MX.
+2. Alternatively, confirm the `ProInspect Production` widget's site key and associated secret can both be securely installed into the existing Worker; **never swap only the public site key**. Do not rotate or disclose secret values in GitHub or a chat.
+
+Before applying either option, use the controlled Cloudflare Turnstile configuration workflow and verify the exact widget, hostnames, existing Worker secret destination and rollback. Validate one genuine challenge response through the real sign-in handler and confirm token replay is rejected.
+
+**State:** Diagnosed; configuration **not changed** pending explicit authorisation of the widget/hostname change. The automated smoke run reports five D1/routing blockers; this Turnstile finding is an **additional independently verified blocker** not included in that run's five.
+
 ## Mailbox ownership gate — do not bypass
 
 The eight `*-testing@proinspect.systems` identities are documented **Google Workspace alternative email aliases**, not eight separate Google users. Production MX records for `proinspect.systems` point at Google, and Cloudflare Email Routing is disabled. Do **not** change MX records or enable Cloudflare catch-all routing to capture authentication links.
