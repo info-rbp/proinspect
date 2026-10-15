@@ -73,7 +73,8 @@ async function query(db, sql) {
     'Stage 2 script prohibits any non-read-only SQL');
   const data = await cf('/accounts/' + account + '/d1/database/' +
     db + '/query', 'POST', { sql });
-  return requireCondition(Array.isArray(data), 'Unexpected D1 query response')[0].results || [];
+  requireCondition(Array.isArray(data), 'Unexpected D1 query response');
+  return data[0]?.results || [];
 }
 async function row(db, sql) { return (await query(db, sql))[0] || {}; }
 
