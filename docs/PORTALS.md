@@ -33,7 +33,10 @@ workspace experiences, not new staff roles or subscription prices:
   requires explicit ownership attestation during account and property setup.
   A separate *professional organisation* workflow remains available for
   asset managers representing third-party owners; these applications still
-  require operational review.
+  require operational review. Self-registered commercial owners cannot use
+  professional managed-property creation or portfolio imports without a
+  reviewed `client_entitlements.approved_by` grant. The distinction is
+  verified server-side, not just by hiding UI controls.
 - An identity may hold one account of each type, with independent property
   and workspace permissions. Legacy residential sign-up API callers default
   to `residential`; existing client records are unchanged.
