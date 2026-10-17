@@ -88,8 +88,8 @@ export default function SignIn() {
             )}
           </Form>
           <p className="auth-foot">
-            New self-managing landlord? You can set up your account after verifying your email.
-            Tenant access requires an invitation.
+            New landlord? Choose Residential or Commercial when setting up your account
+            after verifying your email. Tenant access requires an invitation.
           </p>
         </section>
       </div>
