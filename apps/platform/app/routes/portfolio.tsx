@@ -90,7 +90,7 @@ export default function Portfolio() {
             </OperationForm>
           </Panel>
         )}
-        {professional && admin && (
+        {professional && approvedProfessional && admin && (
           <Panel
             title="Import a portfolio"
             description="Preview up to 20 properties at a time. Headers: address,suburb,postcode,ownerName; optional ownerEmail,propertyType. Existing or duplicate addresses require review."
