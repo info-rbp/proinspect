@@ -35,7 +35,7 @@ import {
   audit,
 } from './services.server';
 import { availability } from './scheduler';
-import { includedLandlordBooking } from '../../../packages/authorization/subscription-booking';
+import { includedSubscriptionBooking } from '../../../packages/authorization/subscription-booking';
 import { expandedWorkspaceData } from './features/workspace-data.server';
 import { featureApi } from './features/router.server';
 import {
@@ -369,9 +369,9 @@ export async function handleApi(
           'SERVICE_SECTOR_MISMATCH',
           'This service is not available for the selected property category.',
         );
-        included =
-          w.kind === 'landlord' &&
-          Boolean(await includedLandlordBooking(env, w.scopeId, property.id, service.id));
+        included = Boolean(
+          await includedSubscriptionBooking(env, w.scopeId, property.id, service.id),
+        );
       }
       return Response.json(
         await availability(env, serviceId, url.searchParams.get('date') ?? '', included),
