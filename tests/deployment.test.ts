@@ -16,6 +16,11 @@ test('the intended Cloudflare connected configuration is production, not local',
   assert.equal(live.name, 'proinspect-platform');
   assert.equal(live.vars.APP_ENV, 'production');
   assert.equal(live.vars.EMAIL_PROVIDER, 'resend');
+  // Direct Cloudflare Workers Builds replaces plaintext variables from the
+  // connected config. Keeping both addresses here prevents future deployments
+  // from silently disabling passwordless sign-in and operational emails.
+  assert.equal(live.vars.EMAIL_FROM, 'info@proinspect.systems');
+  assert.equal(live.vars.OPERATIONS_EMAIL, 'info@proinspect.systems');
   assert.match(live.vars.APP_ORIGIN, /^https:\/\//);
   assert.equal(live.vars.RESTRICTED_WORKFLOWS_ENABLED, 'false');
   assert.notDeepEqual(live.r2_buckets, config.r2_buckets);
