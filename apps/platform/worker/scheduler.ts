@@ -9,7 +9,7 @@ import { workspace, propertyAccess } from '../../../packages/authorization/serve
 import { digest, seal } from '../../../packages/auth/crypto';
 import { mailEvent } from '../../../packages/notifications/server';
 import { audit, catalogue } from './services.server';
-import { includedLandlordBooking } from '../../../packages/authorization/subscription-booking';
+import { includedSubscriptionBooking } from '../../../packages/authorization/subscription-booking';
 
 export function appointmentWindow(service: Service, startsAt: string, clock = Date.now()) {
   const starts = new Date(startsAt);
@@ -170,10 +170,9 @@ export class BookingScheduler extends DurableObject<Env> {
         'SERVICE_SECTOR_MISMATCH',
         'This service is not available for the selected property category.',
       );
-      const includedSubscription =
-        kind === 'landlord'
-          ? await includedLandlordBooking(this.env, clientId, property.id, service.id)
-          : null;
+      const includedSubscription = await includedSubscriptionBooking(
+        this.env, clientId, property.id, service.id,
+      );
       assert(
         includedSubscription ||
           (service.booking_mode === 'instant' && service.price_ex_gst_cents !== null),
