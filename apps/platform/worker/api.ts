@@ -37,6 +37,7 @@ import {
 import { availability } from './scheduler';
 import { includedSubscriptionBooking } from '../../../packages/authorization/subscription-booking';
 import { expandedWorkspaceData } from './features/workspace-data.server';
+import { ownerPortfolio } from './features/owner-portfolio.server';
 import { featureApi } from './features/router.server';
 import {
   applyOrganisation,
@@ -274,6 +275,8 @@ export async function handleApi(
       return Response.json(await updateAccount(env, user, await json(request)));
     if (path === '/api/account/sessions/revoke' && method === 'POST')
       return revokeSessions(request, env, user, await json(request));
+    if (path === '/api/owner-portfolio' && method === 'GET')
+      return Response.json(await ownerPortfolio(env, user));
     if (path === '/api/session' && method === 'GET')
       return Response.json({ user, workspaces: await workspaces(env, user) });
     if (path === '/api/onboarding' && method === 'POST')
