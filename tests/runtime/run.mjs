@@ -390,6 +390,29 @@ try {
       body: { address: '91 Synthetic House Street', suburb: 'Perth', postcode: '6000', propertyType: 'Office', selfManaged: true },
     })).status, 422);
     const commBase = `/api/w/commercial/${signup.data.clientId}`;
+    const initialWorkspace = (await api(commBase, { cookie: owner.cookie })).data;
+    assert.equal(initialWorkspace.professionalPortfolioApproved, false);
+    // Direct commercial Landlord signup cannot self-authorise portfolio
+    // management for another owner's properties.
+    const thirdParty = await api(commBase + '/properties', {
+      cookie: owner.cookie,
+      body: {
+        address: 'Third Party Management Street',
+        suburb: 'Perth',
+        postcode: '6000',
+        propertyType: 'Office',
+        ownerName: 'Unaffiliated Owner',
+        authorityReference: 'Unreviewed claim',
+      },
+    });
+    assert.equal(thirdParty.status, 403);
+    assert.equal((await api(commBase + '/imports/preview', {
+      cookie: owner.cookie,
+      body: {
+        csv: 'address,suburb,postcode,ownerName\\n98 Unreviewed Street,Perth,6000,Unaffiliated Owner',
+        authorityReference: 'Unreviewed claim',
+      },
+    })).status, 403);
     const added = await api(commBase + '/properties', {
       cookie: owner.cookie,
       body: {
