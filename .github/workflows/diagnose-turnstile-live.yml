@@ -1,0 +1,23 @@
+name: Diagnose live Turnstile hydration (read only)
+on:
+  push:
+    branches:
+      - fix/turnstile-hydration-20261017
+permissions:
+  contents: read
+jobs:
+  read-only-browser:
+    if: github.repository == 'info-rbp/proinspect'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --frozen-lockfile
+      - name: Install browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Inspect deployed page without submitting credentials
+        run: node scripts/portal-testing/diagnose-turnstile-live.mjs
