@@ -59,7 +59,7 @@ export default function Workspaces() {
               Set up a Landlord account
             </Link>
           </section>
-        )
+        )}
       </section>
     </main>
   );
