@@ -1213,6 +1213,97 @@ try {
       assert.equal((await sql.prepare('PRAGMA foreign_key_check').all()).results.length, 0);
     },
   );
+  await check('all customer portals book their own unpriced subscription services with Staff-visible Work Orders', async () => {
+    const commercialProperty = await first(
+      "SELECT id FROM properties WHERE address='50 Commercial Street' AND sector='commercial'",
+    );
+    const strataBuilding = await first(
+      'SELECT property_id FROM scheme_buildings WHERE scheme_id=?',
+      scheme.id,
+    );
+    assert.ok(commercialProperty?.id);
+    assert.ok(strataBuilding?.property_id);
+    const scenarios = [
+      {
+        kind: 'property-manager',
+        actor: agency,
+        client: pm,
+        propertyId: imported.propertyIds[0],
+        serviceId: 'property-condition-report',
+      },
+      {
+        kind: 'commercial',
+        actor: commercialUser,
+        client: commercial,
+        propertyId: commercialProperty.id,
+        serviceId: 'commercial-property-inspection',
+      },
+      {
+        kind: 'strata-manager',
+        actor: strataUser,
+        client: strataOrg,
+        propertyId: strataBuilding.property_id,
+        serviceId: 'common-property-inspection',
+      },
+    ];
+    for (const [index, scenario] of scenarios.entries()) {
+      const service = await first(
+        'SELECT booking_mode,price_ex_gst_cents FROM services WHERE id=?',
+        scenario.serviceId,
+      );
+      assert.equal(service.booking_mode, 'request', scenario.kind);
+      assert.equal(service.price_ex_gst_cents, null, scenario.kind);
+      const data = await ok(scenario.client.base, scenario.actor);
+      assert.ok(data.subscriptionBookingServices[scenario.propertyId]?.includes(scenario.serviceId), scenario.kind);
+      const date = new Date(Date.now() + (15 + index * 7) * 86400000);
+      while ([0, 6].includes(date.getUTCDay())) date.setUTCDate(date.getUTCDate() + 1);
+      const day = date.toISOString().slice(0, 10);
+      const path = `${scenario.client.base}/availability?service=${scenario.serviceId}&date=${day}&property=${scenario.propertyId}`;
+      assert.equal((await api(path, { cookie: outsider.cookie })).status, 403);
+      const available = await ok(path, scenario.actor);
+      assert.ok(available.slots.length, `${scenario.kind}: no included appointment`);
+      const booked = await ok(scenario.client.base + '/bookings', scenario.actor, {
+        propertyId: scenario.propertyId,
+        serviceId: scenario.serviceId,
+        startsAt: available.slots[0].start,
+        requestKey: requestKey(),
+        access: {
+          method: 'agent',
+          instructions: 'Synthetic included-service acceptance; no customer data',
+          noticeConfirmed: true,
+        },
+      }, 201);
+      const row = await first(
+        'SELECT client_id,property_id,scheme_id,price_ex_gst_cents,snapshot_json FROM bookings WHERE id=?',
+        booked.id,
+      );
+      assert.equal(row.client_id, scenario.client.id, scenario.kind);
+      assert.equal(row.property_id, scenario.propertyId, scenario.kind);
+      assert.equal(row.price_ex_gst_cents, 0, scenario.kind);
+      const snapshot = JSON.parse(row.snapshot_json);
+      assert.equal(snapshot.bookingBasis, 'subscription_included', scenario.kind);
+      assert.equal(snapshot.subscription.planCode, 'all_inclusive', scenario.kind);
+      assert.ok(snapshot.subscription.id, scenario.kind);
+      if (scenario.kind === 'strata-manager')
+        assert.equal(row.scheme_id, scheme.id);
+      const workOrder = await first(
+        'SELECT booking_id,client_id,status,scheme_id FROM work_orders WHERE id=?',
+        booked.workOrderId,
+      );
+      assert.equal(workOrder.booking_id, booked.id, scenario.kind);
+      assert.equal(workOrder.client_id, scenario.client.id, scenario.kind);
+      assert.equal(workOrder.status, 'scheduled', scenario.kind);
+      const staff = await ok(staffBase, operator);
+      assert.ok(staff.workOrders.some(w => w.booking_id === booked.id), `${scenario.kind}: Staff missing work order`);
+      const portal = await ok(scenario.client.base, scenario.actor);
+      assert.ok(portal.bookings.some(b => b.id === booked.id), `${scenario.kind}: customer missing booking`);
+      const payments = await first(
+        'SELECT COUNT(*) AS n FROM payments WHERE work_order_id=?',
+        booked.workOrderId,
+      );
+      assert.equal(payments.n, 0, scenario.kind);
+    }
+  });
   writeFileSync(
     'artifacts/connected-results.json',
     JSON.stringify(
