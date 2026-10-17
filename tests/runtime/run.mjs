@@ -135,43 +135,56 @@ try {
     assert.equal((await api(base, { cookie: outsider.cookie })).status, 403);
   });
   const date = futureDate();
-  const pcrDate = `${date}T09:00:00+08:00`;
   const pcrInput = {
     propertyId,
     serviceId: 'property-condition-report',
-    startsAt: pcrDate,
     requestKey: randomBytes(16).toString('hex'),
     access: { method: 'owner', instructions: 'Synthetic PCR booking test', noticeConfirmed: true },
   };
-  await check('request-only unpriced service is not automatically free without a subscription', async () => {
-    const data = await api(base, { cookie: owner.cookie });
-    assert.deepEqual(data.data.subscriptionBookingServices[propertyId] ?? [], []);
-    const slotResult = await api(
+  const inclusiveId = `sub_inclusive_${clientId}`;
+  await check('new Landlord and other customer accounts automatically receive an active all-inclusive plan', async () => {
+    const sub = await first('SELECT * FROM subscriptions WHERE client_id=?', clientId);
+    assert.equal(sub.id, inclusiveId);
+    assert.equal(sub.plan_code, 'all_inclusive');
+    assert.equal(sub.status, 'active');
+    assert.equal(sub.property_id, null);
+    assert.deepEqual(JSON.parse(sub.allowance_json).includedServiceIds, ['*']);
+    const outsiderPlan = await first('SELECT plan_code,status FROM subscriptions WHERE client_id=?', outsiderClient);
+    assert.equal(outsiderPlan.plan_code, 'all_inclusive');
+    assert.equal(outsiderPlan.status, 'active');
+    const denied = await api(
+      `/api/w/landlord/${outsiderClient}/availability?service=property-condition-report&date=${date}&property=${propertyId}`,
+      { cookie: outsider.cookie },
+    );
+    assert.equal(denied.status, 404);
+  });
+  await run("UPDATE subscriptions SET status='paused' WHERE id=?", inclusiveId);
+  await check('paused subscriptions cannot schedule even though account exists', async () => {
+    const d = await api(base, { cookie: owner.cookie });
+    assert.deepEqual(d.data.subscriptionBookingServices[propertyId] ?? [], []);
+    const slots = await api(
       `${base}/availability?service=property-condition-report&date=${date}&property=${propertyId}`,
       { cookie: owner.cookie },
     );
-    assert.equal(slotResult.status, 200);
-    assert.equal(slotResult.data.slots.length, 0);
-    const attempt = await api(base + '/bookings', { cookie: owner.cookie, body: pcrInput });
-    assert.equal(attempt.status, 409);
-    assert.equal((await first("SELECT count(*) AS n FROM bookings WHERE service_id='property-condition-report'")).n, 0);
+    assert.equal(slots.status, 200);
+    assert.equal(slots.data.slots.length, 0);
+    const denied = await api(base + '/bookings', {
+      cookie: owner.cookie,
+      body: { ...pcrInput, startsAt: `${date}T09:00:00+08:00` },
+    });
+    assert.equal(denied.status, 409);
   });
-  await run(
-    "INSERT INTO subscriptions(id,client_id,property_id,plan_code,status,allowance_json,created_at) VALUES(?,?,?,'synthetic-landlord-plan','active',?,?)",
-    'sub_test_landlord_pcr', clientId, propertyId,
-    JSON.stringify({ includedServiceIds: ['property-condition-report'] }),
-    new Date().toISOString(),
-  );
-  await check('active scoped subscription allows an unpriced PCR booking and creates a linked work order without a second charge', async () => {
+  await run("UPDATE subscriptions SET status='active' WHERE id=?", inclusiveId);
+  await check('all-inclusive plan books an unpriced PCR without extra payment and creates exactly one Work Order', async () => {
     const data = await api(base, { cookie: owner.cookie });
     assert.ok(data.data.subscriptionBookingServices[propertyId].includes('property-condition-report'));
-    assert.ok(!data.data.subscriptionBookingServices[propertyId].includes('routine-inspection'));
+    assert.ok(data.data.subscriptionBookingServices[propertyId].includes('routine-inspection'));
     const open = await api(
       `${base}/availability?service=property-condition-report&date=${date}&property=${propertyId}`,
       { cookie: owner.cookie },
     );
     assert.equal(open.status, 200);
-    assert.ok(open.data.slots.length);
+    assert.ok(open.data.slots.length > 1);
     const booked = await api(base + '/bookings', {
       cookie: owner.cookie,
       body: { ...pcrInput, startsAt: open.data.slots[0].start },
@@ -181,35 +194,49 @@ try {
     assert.equal(stored.price_ex_gst_cents, 0);
     const snapshot = JSON.parse(stored.snapshot_json);
     assert.equal(snapshot.bookingBasis, 'subscription_included');
-    assert.equal(snapshot.subscription.id, 'sub_test_landlord_pcr');
-    assert.equal(snapshot.subscription.planCode, 'synthetic-landlord-plan');
+    assert.equal(snapshot.subscription.id, inclusiveId);
+    assert.equal(snapshot.subscription.planCode, 'all_inclusive');
     assert.equal(
       (await first('SELECT booking_id FROM work_orders WHERE id=?', booked.data.workOrderId)).booking_id,
       booked.data.id,
     );
     assert.equal((await first('SELECT COUNT(*) AS n FROM payments WHERE work_order_id=?', booked.data.workOrderId)).n, 0);
-    assert.equal((await api(base + '/bookings', {
+    const retry = await api(base + '/bookings', {
       cookie: owner.cookie,
       body: { ...pcrInput, startsAt: open.data.slots[0].start },
-    })).data.replayed, true);
-  });
-  await run("UPDATE subscriptions SET status='paused' WHERE id='sub_test_landlord_pcr'");
-  await check('pausing subscription closes new PCR booking but does not erase confirmed work', async () => {
-    const data = await api(base, { cookie: owner.cookie });
-    assert.deepEqual(data.data.subscriptionBookingServices[propertyId], []);
-    const a = await api(
+    });
+    assert.equal(retry.status, 200);
+    assert.equal(retry.data.replayed, true);
+    // Another date/slot is permitted: there is currently no numeric visit limit.
+    const remaining = await api(
       `${base}/availability?service=property-condition-report&date=${date}&property=${propertyId}`,
       { cookie: owner.cookie },
     );
-    assert.equal(a.status, 200);
-    assert.equal(a.data.slots.length, 0);
+    assert.ok(remaining.data.slots.length);
+    const next = await api(base + '/bookings', {
+      cookie: owner.cookie,
+      body: { ...pcrInput, requestKey: randomBytes(16).toString('hex'), startsAt: remaining.data.slots[0].start },
+    });
+    assert.equal(next.status, 201, JSON.stringify(next.data));
+    assert.equal((await first("SELECT COUNT(*) AS n FROM bookings WHERE service_id='property-condition-report'")).n, 2);
+  });
+  await run("UPDATE subscriptions SET status='paused' WHERE id=?", inclusiveId);
+  await check('pausing the plan prevents later included bookings without deleting existing records', async () => {
+    const data = await api(base, { cookie: owner.cookie });
+    assert.deepEqual(data.data.subscriptionBookingServices[propertyId], []);
+    const checkSlots = await api(
+      `${base}/availability?service=property-condition-report&date=${date}&property=${propertyId}`,
+      { cookie: owner.cookie },
+    );
+    assert.equal(checkSlots.data.slots.length, 0);
     const blocked = await api(base + '/bookings', {
       cookie: owner.cookie,
-      body: { ...pcrInput, requestKey: randomBytes(16).toString('hex') },
+      body: { ...pcrInput, requestKey: randomBytes(16).toString('hex'), startsAt: `${date}T12:00:00+08:00` },
     });
     assert.equal(blocked.status, 409);
-    assert.equal((await first("SELECT COUNT(*) AS n FROM bookings WHERE service_id='property-condition-report'")).n, 1);
+    assert.equal((await first("SELECT COUNT(*) AS n FROM bookings WHERE service_id='property-condition-report'")).n, 2);
   });
+  await run("UPDATE subscriptions SET status='active' WHERE id=?", inclusiveId);
   const available = await api(`${base}/availability?service=routine-inspection&date=${date}`, { cookie: owner.cookie });
   assert.equal(available.status, 200);
   assert.ok(available.data.slots.length > 0);
