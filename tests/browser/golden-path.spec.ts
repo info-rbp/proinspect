@@ -33,7 +33,7 @@ test('marketing is server rendered and responsive', async ({ page, request }) =>
   await page.screenshot({ path: 'artifacts/screenshots/marketing-mobile.png', fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
 });
-test('service intent survives signup, booking, staff completion and report delivery', async ({ page, browser }) => {
+test('new Landlord signup auto-includes services, books, and hands work to Staff with report delivery', async ({ page, browser }) => {
   const email = `landlord-${Date.now()}@proinspect.test`;
   await signIn(page, email, '/book/routine-inspection');
   await page.getByRole('link', { name: 'Set up account', exact: true }).click();
@@ -51,6 +51,10 @@ test('service intent survives signup, booking, staff completion and report deliv
   await page.getByRole('button', { name: 'Add property', exact: true }).click();
   await expect(page).toHaveURL(/\/book\/routine-inspection\?property=/);
   await expect(page.getByLabel('Service', { exact: true })).toHaveValue('routine-inspection');
+  // A genuinely new Landlord account created through the UI must receive the
+  // all-inclusive subscription during onboarding, without manual plan setup.
+  await expect(page.getByText('Included in your active ProInspect subscription.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Included — no additional charge')).toBeVisible();
   await page.getByLabel('Preferred date', { exact: true }).fill(futureDate());
   await expect(page.getByRole('radio').first()).toBeVisible();
   await page.getByRole('radio').first().check();

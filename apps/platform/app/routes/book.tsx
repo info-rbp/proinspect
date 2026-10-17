@@ -213,7 +213,7 @@ export default function Book() {
             {service && <p className="small">{service.summary}</p>}
             {included && (
               <div className="notice">
-                Included in your active Landlord subscription. No additional service charge
+                Included in your active ProInspect subscription. No additional service charge
                 applies to this booking.
               </div>
             )}
