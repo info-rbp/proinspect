@@ -9,6 +9,7 @@ import { workspace, propertyAccess } from '../../../packages/authorization/serve
 import { digest, seal } from '../../../packages/auth/crypto';
 import { mailEvent } from '../../../packages/notifications/server';
 import { audit, catalogue } from './services.server';
+import { includedSubscriptionBooking } from '../../../packages/authorization/subscription-booking';
 
 export function appointmentWindow(service: Service, startsAt: string, clock = Date.now()) {
   const starts = new Date(startsAt);
@@ -53,15 +54,14 @@ export function appointmentWindow(service: Service, startsAt: string, clock = Da
     reservedEnd: new Date(ends.getTime() + service.buffer_after * 60000).toISOString(),
   };
 }
-export async function availability(env: Env, serviceId: string, date: string) {
+export async function availability(env: Env, serviceId: string, date: string, includedInSubscription = false) {
   assert(/^\d{4}-\d{2}-\d{2}$/.test(date), 422, 'DATE_INVALID', 'Choose a valid date.');
   const service = (await catalogue(env)).find((s) => s.id === serviceId);
   assert(service, 404, 'SERVICE_NOT_FOUND', 'Service not found.');
-  if (service.booking_mode !== 'instant')
+  if (!includedInSubscription && (service.booking_mode !== 'instant' || service.price_ex_gst_cents === null))
     return {
       slots: [],
-      message:
-        'This service is arranged by request. Contact ProInspect to confirm the scope and appointment.',
+      message: 'This service is not currently available for direct booking. Choose an included subscription service or submit a service request.',
     };
   const resource = await statement(
     env.DB,
@@ -163,17 +163,22 @@ export class BookingScheduler extends DurableObject<Env> {
         return Response.json({ id: existing.id, reference: existing.reference, replayed: true });
       }
       const service = (await catalogue(this.env)).find((s) => s.id === data.serviceId);
-      assert(
-        service && service.booking_mode === 'instant' && service.price_ex_gst_cents !== null,
-        409,
-        'SERVICE_NOT_OPEN',
-        'Online booking is not yet enabled for this service.',
-      );
+      assert(service, 404, 'SERVICE_NOT_FOUND', 'Service not found.');
       assert(
         service.sectors.includes(property.sector),
         422,
         'SERVICE_SECTOR_MISMATCH',
         'This service is not available for the selected property category.',
+      );
+      const includedSubscription = await includedSubscriptionBooking(
+        this.env, clientId, property.id, service.id,
+      );
+      assert(
+        includedSubscription ||
+          (service.booking_mode === 'instant' && service.price_ex_gst_cents !== null),
+        409,
+        'SERVICE_NOT_OPEN',
+        'This service is not included in an active subscription or enabled for direct booking.',
       );
       assert(
         await statement(
@@ -248,12 +253,16 @@ export class BookingScheduler extends DurableObject<Env> {
           window.endsAt,
           window.reservedStart,
           window.reservedEnd,
-          service.price_ex_gst_cents,
+          includedSubscription ? 0 : service.price_ex_gst_cents,
           JSON.stringify({
             property,
             serviceName: service.name,
             customerName: user.display_name,
             customerEmail: user.email,
+            bookingBasis: includedSubscription ? 'subscription_included' : 'published_price',
+            subscription: includedSubscription
+              ? { id: includedSubscription.id, planCode: includedSubscription.planCode }
+              : null,
           }),
           data.requestKey,
           fingerprint,

@@ -13,6 +13,46 @@ class SchemaTests(unittest.TestCase):
         self.db.execute("INSERT INTO schedule_resources VALUES('r','Inspection capacity',1)")
     def booking(self, ident, start, end):
         self.db.execute("INSERT INTO bookings(id,reference,client_id,user_id,property_id,service_id,resource_id,starts_at,ends_at,reserved_start,reserved_end,snapshot_json,request_key,fingerprint,created_at) VALUES(?,?,'c','u','p','s','r',?,?,?,?,'{}',?,'hash','2026-01-01')",(ident,ident,start,end,start,end,ident))
+    def test_active_accounts_receive_all_inclusive_subscription_without_new_roles(self):
+        row = self.db.execute(
+            "SELECT plan_code,status,property_id,allowance_json FROM subscriptions WHERE client_id='c'"
+        ).fetchone()
+        self.assertEqual(row, ('all_inclusive', 'active', None, '{"includedServiceIds":["*"]}'))
+        self.assertEqual(
+            self.db.execute("SELECT COUNT(*) FROM subscriptions WHERE client_id='c'").fetchone()[0],
+            1,
+        )
+        self.db.execute(
+            "INSERT INTO clients(id,name,client_type,status,created_at) VALUES('pending','Pending','agency','pending','2026-01-01')"
+        )
+        self.assertEqual(
+            self.db.execute("SELECT COUNT(*) FROM subscriptions WHERE client_id='pending'").fetchone()[0],
+            0,
+        )
+        self.db.execute("UPDATE clients SET status='active' WHERE id='pending'")
+        self.assertEqual(
+            self.db.execute("SELECT plan_code FROM subscriptions WHERE client_id='pending'").fetchone()[0],
+            'all_inclusive',
+        )
+        self.db.execute(
+            "UPDATE subscriptions SET status='paused' WHERE client_id='pending'"
+        )
+        self.db.execute("UPDATE clients SET status='inactive' WHERE id='pending'")
+        self.db.execute("UPDATE clients SET status='active' WHERE id='pending'")
+        self.assertEqual(
+            self.db.execute("SELECT status FROM subscriptions WHERE client_id='pending'").fetchone()[0],
+            'paused',
+        )
+        self.assertEqual(
+            self.db.execute("SELECT COUNT(*) FROM subscriptions WHERE client_id='pending'").fetchone()[0],
+            1,
+        )
+        # A billing entitlement is not a portal membership or an admin role.
+        self.assertEqual(
+            self.db.execute("SELECT COUNT(*) FROM client_entitlements WHERE client_id='pending'").fetchone()[0],
+            0,
+        )
+
     def test_overlap_is_rejected_in_database(self):
         self.booking('a','2026-10-10T01:00:00.000Z','2026-10-10T02:00:00.000Z')
         with self.assertRaisesRegex(sqlite3.IntegrityError,'SCHEDULE_CONFLICT'):

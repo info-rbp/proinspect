@@ -35,6 +35,7 @@ import {
   audit,
 } from './services.server';
 import { availability } from './scheduler';
+import { includedSubscriptionBooking } from '../../../packages/authorization/subscription-booking';
 import { expandedWorkspaceData } from './features/workspace-data.server';
 import { featureApi } from './features/router.server';
 import {
@@ -355,12 +356,25 @@ export async function handleApi(
         'BOOKING_FORBIDDEN',
         'Select an authorised customer workspace to book.',
       );
+      const propertyId = url.searchParams.get('property');
+      const serviceId = url.searchParams.get('service') ?? '';
+      let included = false;
+      if (propertyId) {
+        const property = await propertyAccess(env, user, w, propertyId, true);
+        const service = (await catalogue(env)).find((s) => s.id === serviceId);
+        assert(service, 404, 'SERVICE_NOT_FOUND', 'Service not found.');
+        assert(
+          service.sectors.includes(property.sector),
+          422,
+          'SERVICE_SECTOR_MISMATCH',
+          'This service is not available for the selected property category.',
+        );
+        included = Boolean(
+          await includedSubscriptionBooking(env, w.scopeId, property.id, service.id),
+        );
+      }
       return Response.json(
-        await availability(
-          env,
-          url.searchParams.get('service') ?? '',
-          url.searchParams.get('date') ?? '',
-        ),
+        await availability(env, serviceId, url.searchParams.get('date') ?? '', included),
       );
     }
     if (method === 'POST' && tail === 'properties')

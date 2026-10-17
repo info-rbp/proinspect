@@ -18,6 +18,7 @@ export interface WorkspaceData {
   staff: RecordRow[];
   contractors: RecordRow[];
   services: Service[];
+  subscriptionBookingServices: Record<string, string[]>;
   schemes: RecordRow[];
   approvals: RecordRow[];
   payments: RecordRow[];
