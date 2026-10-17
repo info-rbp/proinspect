@@ -113,6 +113,11 @@ test('commercial Landlord signup selects its type and books an included commerci
   const workspaces = (await session.json()).workspaces;
   expect(workspaces.map((w: any) => w.kind)).toContain('commercial');
   expect(workspaces.map((w: any) => w.kind)).not.toContain('staff');
+  await page.goto(base + '/portfolio');
+  await expect(page.getByText('Self-managed commercial ownership')).toBeVisible();
+  await expect(page.getByText('Add a managed property', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Import a portfolio', { exact: true })).toHaveCount(0);
+  await page.goto(base + '/properties?service=commercial-property-inspection');
   await expect(page.getByText('Add a property', { exact: true })).toBeVisible();
   await page.getByLabel('Street address, including unit if applicable').fill(`${Math.floor(Date.now() / 1000)} Synthetic Office Road`);
   await page.getByLabel('Suburb', { exact: true }).fill('Perth');
