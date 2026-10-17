@@ -8,9 +8,12 @@ export default async function handleRequest(
   routerContext: EntryContext,
   loadContext: Readonly<RouterContextProvider>,
 ) {
+  // Both React Router's streamed transfer scripts and React's own streaming
+  // instructions must receive the same request nonce as the Worker's CSP.
+  const nonce = loadContext.get(runtimeContext).nonce;
   const stream = await renderToReadableStream(
-    <ServerRouter context={routerContext} url={request.url} />,
-    { nonce: loadContext.get(runtimeContext).nonce, signal: request.signal },
+    <ServerRouter context={routerContext} url={request.url} nonce={nonce} />,
+    { nonce, signal: request.signal },
   );
   await stream.allReady;
   headers.set('Content-Type', 'text/html; charset=utf-8');
