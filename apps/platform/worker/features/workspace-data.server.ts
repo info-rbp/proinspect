@@ -11,6 +11,7 @@ import {
   booksServices,
 } from '../../../../packages/authorization/server';
 import { catalogue } from '../services.server';
+import { landlordBookingCoverage } from '../../../../packages/authorization/subscription-booking';
 export async function expandedWorkspaceData(env: Env, user: Principal, w: Workspace) {
   const properties = await propertiesFor(env, user, w),
     schemes = await schemesFor(env, user, w),
@@ -209,6 +210,14 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
           ).all()
         ).results
       : [];
+  const services = await catalogue(
+    env,
+    w.kind === 'staff' && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''),
+  );
+  const subscriptionBookingServices =
+    w.kind === 'landlord'
+      ? await landlordBookingCoverage(env, w.scopeId, properties, services)
+      : {};
   return {
     contractors,
     user,
@@ -223,10 +232,8 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
     inspections,
     notifications,
     staff,
-    services: await catalogue(
-      env,
-      w.kind === 'staff' && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''),
-    ),
+    services,
+    subscriptionBookingServices,
     approvals,
     payments,
     plans,
