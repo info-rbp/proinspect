@@ -127,6 +127,22 @@ export async function clientMembership(env: Env, user: Principal, clientId: stri
   if (write) assert(row.role !== 'viewer', 403, 'READ_ONLY', 'This account has view-only access.');
   return row;
 }
+/**
+ * A self-registered Commercial Landlord may operate property they own.
+ * Importing or adding a third party's managed portfolio requires the existing
+ * Staff-reviewed organisation approval, never just a self-service subscription.
+ */
+export async function approvedProfessionalPortfolio(env: Env, w: Workspace): Promise<boolean> {
+  if (w.kind !== 'commercial' && w.kind !== 'property-manager') return false;
+  const approved = await statement(
+    env.DB,
+    'SELECT approved_by FROM client_entitlements WHERE client_id=? AND workspace_kind=? AND active=1',
+    w.scopeId,
+    w.kind,
+  ).first<{ approved_by: string | null }>();
+  return Boolean(approved?.approved_by);
+}
+
 export async function clientAdmin(env: Env, user: Principal, w: Workspace) {
   assert(booksServices(w), 403, 'CLIENT_REQUIRED', 'Use an authorised customer workspace.');
   const m = await clientMembership(env, user, w.scopeId, true);
