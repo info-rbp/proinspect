@@ -51,7 +51,7 @@ function covers(
   const ids = includedServiceIds(sub.allowance_json);
   return ids.includes('*') || ids.includes(serviceId);
 }
-export async function includedLandlordBooking(
+export async function includedSubscriptionBooking(
   env: Env,
   clientId: string,
   propertyId: string,
@@ -61,7 +61,7 @@ export async function includedLandlordBooking(
   const found = subscriptions.find((s) => covers(s, propertyId, serviceId));
   return found ? { id: found.id, planCode: found.plan_code } : null;
 }
-export async function landlordBookingCoverage(
+export async function subscriptionBookingCoverage(
   env: Env,
   clientId: string,
   properties: Property[],
