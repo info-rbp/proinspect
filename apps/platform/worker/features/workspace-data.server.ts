@@ -9,6 +9,7 @@ import {
   schemesFor,
   managesProperty,
   booksServices,
+  approvedProfessionalPortfolio,
 } from '../../../../packages/authorization/server';
 import { catalogue } from '../services.server';
 import { subscriptionBookingCoverage } from '../../../../packages/authorization/subscription-booking';
@@ -218,6 +219,7 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
     booksServices(w)
       ? await subscriptionBookingCoverage(env, w.scopeId, properties, services)
       : {};
+  const professionalPortfolioApproved = await approvedProfessionalPortfolio(env, w);
   return {
     contractors,
     user,
@@ -234,6 +236,7 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
     staff,
     services,
     subscriptionBookingServices,
+    professionalPortfolioApproved,
     approvals,
     payments,
     plans,
