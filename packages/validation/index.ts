@@ -10,15 +10,21 @@ export const signInSchema = z.object({
   returnTo: z.string().max(500).optional(),
   turnstile: z.string().max(2048).optional(),
 });
+export const landlordTypes = ['residential', 'commercial'] as const;
 export const onboardingSchema = z.object({
   displayName: z.string().trim().min(2).max(100),
   clientName: z.string().trim().min(2).max(160),
+  // Legacy API clients are residential unless they explicitly select commercial.
+  landlordType: z.enum(landlordTypes).default('residential'),
 });
 export const propertySchema = z.object({
   address: z.string().trim().min(5).max(180),
   suburb: z.string().trim().min(2).max(80),
   postcode: z.string().regex(/^\d{4}$/),
-  propertyType: z.enum(['House', 'Apartment', 'Townhouse', 'Villa', 'Other']).default('House'),
+  propertyType: z.enum([
+    'House', 'Apartment', 'Townhouse', 'Villa',
+    'Office', 'Retail', 'Warehouse', 'Industrial', 'Mixed-use', 'Other',
+  ]).default('House'),
   selfManaged: z.literal(true),
 });
 export const bookingSchema = z.object({

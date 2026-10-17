@@ -15,6 +15,7 @@ export default function Portfolio() {
     w = d.workspace,
     api = workspaceApi(w.kind, w.scopeId),
     professional = ['property-manager', 'commercial'].includes(w.kind),
+    approvedProfessional = d.professionalPortfolioApproved,
     admin = ['owner', 'admin'].includes(w.role);
   return (
     <>
@@ -23,6 +24,16 @@ export default function Portfolio() {
         description="Keep property relationships, individual bookings and recurring inspection plans connected. Bulk operations report each result separately."
       />
       <div className="stack">
+        {w.kind === 'commercial' && !approvedProfessional && (
+          <Panel
+            title="Self-managed commercial ownership"
+            description="Your commercial landlord account manages premises you own. To manage property for other owners, submit a separate organisation setup request for review."
+          >
+            <Link className="button secondary" to={`${w.href}/properties`}>
+              Add your own commercial property
+            </Link>
+          </Panel>
+        )}
         <Panel title="Portfolio">
           <div className="table-wrap">
             <table>
@@ -56,7 +67,7 @@ export default function Portfolio() {
             </table>
           </div>
         </Panel>
-        {professional && admin && (
+        {professional && approvedProfessional && admin && (
           <Panel
             title="Add a managed property"
             description="Record your management authority. An existing address is sent for relationship review, never silently linked."
@@ -79,7 +90,7 @@ export default function Portfolio() {
             </OperationForm>
           </Panel>
         )}
-        {professional && admin && (
+        {professional && approvedProfessional && admin && (
           <Panel
             title="Import a portfolio"
             description="Preview up to 20 properties at a time. Headers: address,suburb,postcode,ownerName; optional ownerEmail,propertyType. Existing or duplicate addresses require review."

@@ -3,6 +3,7 @@ import { statement, assert, now, uid, type Env } from '../../../../packages/data
 import type { Principal, Workspace } from '../../../../packages/domain/index';
 import {
   clientAdmin,
+  approvedProfessionalPortfolio,
   clientMembership,
   propertyAccess,
   managesProperty,
@@ -200,6 +201,12 @@ export async function addPortfolioProperty(
     'Use a professional portfolio workspace.',
   );
   await clientAdmin(env, user, w);
+  assert(
+    await approvedProfessionalPortfolio(env, w),
+    403,
+    'PROFESSIONAL_REVIEW_REQUIRED',
+    'Professional management of another owner’s property requires a reviewed organisation account.',
+  );
   const d = portfolioProperty.parse(input);
   assert(
     !(await statement(
@@ -243,6 +250,12 @@ export function parseCsv(text: string): string[][] {
 }
 export async function previewImport(env: Env, user: Principal, w: Workspace, input: unknown) {
   await clientAdmin(env, user, w);
+  assert(
+    await approvedProfessionalPortfolio(env, w),
+    403,
+    'PROFESSIONAL_REVIEW_REQUIRED',
+    'Portfolio imports require a reviewed organisation account.',
+  );
   assert(
     ['property-manager', 'commercial'].includes(w.kind),
     403,
@@ -321,6 +334,12 @@ export async function previewImport(env: Env, user: Principal, w: Workspace, inp
 }
 export async function applyImport(env: Env, user: Principal, w: Workspace, id: string) {
   await clientAdmin(env, user, w);
+  assert(
+    await approvedProfessionalPortfolio(env, w),
+    403,
+    'PROFESSIONAL_REVIEW_REQUIRED',
+    'Portfolio imports require a reviewed organisation account.',
+  );
   const row = await statement(
     env.DB,
     'SELECT * FROM portfolio_imports WHERE id=? AND client_id=? AND user_id=?',

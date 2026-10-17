@@ -95,3 +95,56 @@ test('new Landlord signup auto-includes services, books, and hands work to Staff
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
   await staffContext.close();
 });
+
+test('commercial Landlord signup selects its type and books an included commercial inspection', async ({ page, browser }) => {
+  const email = `commercial-owner-${Date.now()}@proinspect.test`;
+  await signIn(page, email, '/book/commercial-property-inspection');
+  await page.getByRole('link', { name: 'Set up account', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Start with the essentials.' })).toBeVisible();
+  await page.getByLabel('Landlord type', { exact: true }).selectOption('commercial');
+  await page.getByLabel('Your name', { exact: true }).fill('Commercial Test Owner');
+  await page.getByLabel('Account name', { exact: true }).fill('Synthetic Commercial Ownership');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Create Landlord account' }).click();
+  await expect(page).toHaveURL(/\/w\/commercial\/cli_[a-z0-9]+\/properties\?service=commercial-property-inspection$/);
+  const base = new URL(page.url()).pathname.replace(/\/properties$/, '');
+  const session = await page.request.get('/api/session');
+  expect(session.ok()).toBe(true);
+  const workspaces = (await session.json()).workspaces;
+  expect(workspaces.map((w: any) => w.kind)).toContain('commercial');
+  expect(workspaces.map((w: any) => w.kind)).not.toContain('staff');
+  await page.goto(base + '/portfolio');
+  await expect(page.getByText('Self-managed commercial ownership')).toBeVisible();
+  await expect(page.getByText('Add a managed property', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Import a portfolio', { exact: true })).toHaveCount(0);
+  await page.goto(base + '/properties?service=commercial-property-inspection');
+  await expect(page.getByText('Add a property', { exact: true })).toBeVisible();
+  await page.getByLabel('Street address, including unit if applicable').fill(`${Math.floor(Date.now() / 1000)} Synthetic Office Road`);
+  await page.getByLabel('Suburb', { exact: true }).fill('Perth');
+  await page.getByLabel('WA postcode').fill('6000');
+  await page.getByLabel('Property type', { exact: true }).selectOption('Office');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Add property', exact: true }).click();
+  await expect(page).toHaveURL(/\/w\/commercial\/cli_[a-z0-9]+\/book\/commercial-property-inspection\?property=/);
+  await expect(page.getByLabel('Service', { exact: true })).toHaveValue('commercial-property-inspection');
+  await expect(page.getByText('Included in your active ProInspect subscription.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Included — no additional charge')).toBeVisible();
+  await page.getByLabel('Preferred date', { exact: true }).fill(futureDate());
+  await expect(page.getByRole('radio').first()).toBeVisible();
+  await page.getByRole('radio').first().check();
+  await page.getByRole('button', { name: 'Confirm booking', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Your service is booked.' })).toBeVisible();
+  const bookingRef = (await page.locator('section.panel.form-width h2').textContent())?.trim();
+  expect(bookingRef).toMatch(/^PI-[A-Z0-9]{8}$/);
+  const staffContext = await browser.newContext({ baseURL: 'http://127.0.0.1:5173' });
+  try {
+    const staff = await staffContext.newPage();
+    await signIn(staff, 'staff@proinspect.test');
+    const staffResponse = await staffContext.request.get('/api/w/staff/operations');
+    expect(staffResponse.ok()).toBe(true);
+    const staffData = await staffResponse.json();
+    expect(staffData.workOrders.some((w: any) => w.reference === bookingRef!.replace('PI-', 'WO-'))).toBe(true);
+  } finally {
+    await staffContext.close();
+  }
+});

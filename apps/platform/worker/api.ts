@@ -377,16 +377,23 @@ export async function handleApi(
         await availability(env, serviceId, url.searchParams.get('date') ?? '', included),
       );
     }
-    if (method === 'POST' && tail === 'properties')
+    if (method === 'POST' && tail === 'properties') {
+      const input = await json(request);
+      // Professional portfolio onboarding remains separately reviewed. The
+      // Commercial Landlord owner form explicitly attests self-management.
+      const selfOwned =
+        w.kind === 'landlord' ||
+        (w.kind === 'commercial' && input.selfManaged === true);
       return Response.json(
-        await (w.kind === 'landlord' ? createProperty : addPortfolioProperty)(
+        await (selfOwned ? createProperty : addPortfolioProperty)(
           env,
           user,
           w,
-          await json(request),
+          input,
         ),
         { status: 201 },
       );
+    }
     if (method === 'POST' && tail === 'bookings') {
       const input = bookingSchema.parse(await json(request));
       assert(

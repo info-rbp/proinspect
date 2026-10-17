@@ -349,6 +349,123 @@ try {
     assert.equal((await api(tenantBase, { cookie: tenant.cookie })).status, 200);
     assert.equal((await api(tenantBase + '/requests', { cookie: tenant.cookie, body: { category: 'maintenance', title: 'New request blocked', details: 'This must not be accepted after the tenancy ended.', priority: 'routine' } })).status, 403);
   });
+  await check('Residential and Commercial Landlord types create independently scoped, all-inclusive accounts', async () => {
+    const wrongType = await api('/api/onboarding', {
+      cookie: outsider.cookie,
+      body: { displayName: 'No Staff Grant', clientName: 'Unauthorised Staff', landlordType: 'staff' },
+    });
+    assert.equal(wrongType.status, 422);
+    const commercialInput = {
+      displayName: 'Test Commercial Owner',
+      clientName: 'Self Managed Commercial Premises',
+      landlordType: 'commercial',
+    };
+    const signup = await api('/api/onboarding', { cookie: owner.cookie, body: commercialInput });
+    assert.equal(signup.status, 201, JSON.stringify(signup.data));
+    assert.equal(signup.data.workspaceKind, 'commercial');
+    assert.equal(signup.data.landlordType, 'commercial');
+    assert.notEqual(signup.data.clientId, clientId);
+    const repeated = await api('/api/onboarding', { cookie: owner.cookie, body: commercialInput });
+    assert.equal(repeated.status, 201);
+    assert.equal(repeated.data.clientId, signup.data.clientId);
+    const state = await first('SELECT client_type FROM clients WHERE id=?', signup.data.clientId);
+    assert.equal(state.client_type, 'commercial_landlord');
+    const subscription = await first('SELECT status,plan_code,allowance_json FROM subscriptions WHERE client_id=?', signup.data.clientId);
+    assert.equal(subscription.status, 'active');
+    assert.equal(subscription.plan_code, 'all_inclusive');
+    assert.deepEqual(JSON.parse(subscription.allowance_json).includedServiceIds, ['*']);
+    const ws = (await api('/api/session', { cookie: owner.cookie })).data.workspaces;
+    assert.ok(ws.some(w => w.kind === 'landlord' && w.scopeId === clientId));
+    assert.ok(ws.some(w => w.kind === 'commercial' && w.scopeId === signup.data.clientId));
+    assert.equal(ws.filter(w => w.scopeId === signup.data.clientId).length, 1);
+    assert.equal((await api(`/api/w/landlord/${signup.data.clientId}`, { cookie: owner.cookie })).status, 403);
+    assert.equal((await api(`/api/w/commercial/${signup.data.clientId}`, { cookie: outsider.cookie })).status, 403);
+    assert.equal((await api(`/api/w/landlord/${clientId}`, { cookie: outsider.cookie })).status, 403);
+    assert.equal((await api(`/api/w/commercial/${signup.data.clientId}/properties`, {
+      cookie: owner.cookie,
+      body: { address: '90 Synthetic Office Street', suburb: 'Perth', postcode: '6000', propertyType: 'House', selfManaged: true },
+    })).status, 422);
+    assert.equal((await api(base + '/properties', {
+      cookie: owner.cookie,
+      body: { address: '91 Synthetic House Street', suburb: 'Perth', postcode: '6000', propertyType: 'Office', selfManaged: true },
+    })).status, 422);
+    const commBase = `/api/w/commercial/${signup.data.clientId}`;
+    const initialWorkspace = (await api(commBase, { cookie: owner.cookie })).data;
+    assert.equal(initialWorkspace.professionalPortfolioApproved, false);
+    // Direct commercial Landlord signup cannot self-authorise portfolio
+    // management for another owner's properties.
+    const thirdParty = await api(commBase + '/properties', {
+      cookie: owner.cookie,
+      body: {
+        address: 'Third Party Management Street',
+        suburb: 'Perth',
+        postcode: '6000',
+        propertyType: 'Office',
+        ownerName: 'Unaffiliated Owner',
+        authorityReference: 'Unreviewed claim',
+      },
+    });
+    assert.equal(thirdParty.status, 403);
+    assert.equal((await api(commBase + '/imports/preview', {
+      cookie: owner.cookie,
+      body: {
+        csv: 'address,suburb,postcode,ownerName\\n98 Unreviewed Street,Perth,6000,Unaffiliated Owner',
+        authorityReference: 'Unreviewed claim',
+      },
+    })).status, 403);
+    const added = await api(commBase + '/properties', {
+      cookie: owner.cookie,
+      body: {
+        address: '90 Synthetic Office Street',
+        suburb: 'Perth',
+        postcode: '6000',
+        propertyType: 'Office',
+        selfManaged: true,
+      },
+    });
+    assert.equal(added.status, 201, JSON.stringify(added.data));
+    const p = await first('SELECT sector,property_type FROM properties WHERE id=?', added.data.propertyId);
+    assert.equal(p.sector, 'commercial');
+    assert.equal(p.property_type, 'Office');
+    const rel = await first('SELECT mode FROM property_management_relationships WHERE property_id=?', added.data.propertyId);
+    assert.equal(rel.mode, 'commercial_managed');
+    assert.equal((await first('SELECT name FROM portfolio_owners WHERE property_id=?', added.data.propertyId)).name, 'Test Commercial Owner');
+    const sectorDenied = await api(`${commBase}/availability?service=property-condition-report&date=${date}&property=${added.data.propertyId}`, {
+      cookie: owner.cookie,
+    });
+    assert.equal(sectorDenied.status, 422);
+    const service = await first('SELECT booking_mode,price_ex_gst_cents FROM services WHERE id=?', 'commercial-property-inspection');
+    assert.equal(service.booking_mode, 'request');
+    assert.equal(service.price_ex_gst_cents, null);
+    const covered = (await api(commBase, { cookie: owner.cookie })).data;
+    assert.ok(covered.subscriptionBookingServices[added.data.propertyId].includes('commercial-property-inspection'));
+    assert.ok(!covered.subscriptionBookingServices[added.data.propertyId].includes('property-condition-report'));
+    const open = await api(`${commBase}/availability?service=commercial-property-inspection&date=${date}&property=${added.data.propertyId}`, {
+      cookie: owner.cookie,
+    });
+    assert.equal(open.status, 200, JSON.stringify(open.data));
+    assert.ok(open.data.slots.length);
+    const booked = await api(commBase + '/bookings', {
+      cookie: owner.cookie,
+      body: {
+        propertyId: added.data.propertyId,
+        serviceId: 'commercial-property-inspection',
+        startsAt: open.data.slots[0].start,
+        requestKey: randomBytes(16).toString('hex'),
+        access: { method: 'owner', instructions: 'Synthetic commercial owner visit', noticeConfirmed: true },
+      },
+    });
+    assert.equal(booked.status, 201, JSON.stringify(booked.data));
+    const record = await first('SELECT client_id,price_ex_gst_cents,snapshot_json FROM bookings WHERE id=?', booked.data.id);
+    assert.equal(record.client_id, signup.data.clientId);
+    assert.equal(record.price_ex_gst_cents, 0);
+    const snap = JSON.parse(record.snapshot_json);
+    assert.equal(snap.bookingBasis, 'subscription_included');
+    assert.equal(snap.subscription.planCode, 'all_inclusive');
+    assert.equal((await first('SELECT booking_id FROM work_orders WHERE id=?', booked.data.workOrderId)).booking_id, booked.data.id);
+    assert.equal((await first('SELECT COUNT(*) AS n FROM payments WHERE work_order_id=?', booked.data.workOrderId)).n, 0);
+    assert.ok((await api('/api/w/staff/operations', { cookie: operator.cookie })).data.workOrders.some(o => o.booking_id === booked.data.id));
+  });
   await check('audit immutability and database referential integrity hold', async () => {
     await assert.rejects(() => run('DELETE FROM audit_events'));
     assert.equal((await sql.prepare('PRAGMA foreign_key_check').all()).results.length, 0);

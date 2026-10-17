@@ -59,28 +59,50 @@ export async function catalogue(env: Env, includeInactive = false): Promise<Serv
   return rows.results.map((row) => ({ ...row, sectors: JSON.parse(row.sectors_json) }) as Service);
 }
 
+/**
+ * Self-managing owners can open independent Residential and Commercial
+ * accounts. Professional management of third-party property still requires
+ * the separately reviewed organisation-application route.
+ *
+ * The existing D1 client insert trigger provisions the all-inclusive plan.
+ */
 export async function onboard(env: Env, user: Principal, input: unknown) {
   const data = onboardingSchema.parse(input);
+  const residential = data.landlordType === 'residential';
+  const clientType = residential ? 'landlord' : 'commercial_landlord';
+  const workspaceKind = residential ? 'landlord' : 'commercial';
   const existing = await statement(
     env.DB,
-    `SELECT c.id FROM clients c JOIN client_memberships m ON m.client_id=c.id WHERE m.user_id=? AND c.client_type='landlord' AND m.active=1`,
+    `SELECT c.id FROM clients c
+     JOIN client_memberships m ON m.client_id=c.id
+     JOIN client_entitlements e ON e.client_id=c.id AND e.workspace_kind=?
+     WHERE m.user_id=? AND c.client_type=? AND m.role='owner'
+       AND m.active=1 AND c.status='active' AND e.active=1
+     ORDER BY c.created_at LIMIT 1`,
+    workspaceKind,
     user.id,
+    clientType,
   ).first<{ id: string }>();
-  if (existing) return { clientId: existing.id };
-  const clientId = `cli_${(await digest(`landlord:${user.id}`)).slice(0, 32)}`;
+  if (existing) return { clientId: existing.id, workspaceKind, landlordType: data.landlordType };
+  // Retain the old Residential stable ID contract for retries/existing clients.
+  const salt = residential ? 'landlord' : 'commercial_landlord';
+  const clientId = `cli_${(await digest(`${salt}:${user.id}`)).slice(0, 32)}`;
   const membershipId = `mem_${clientId.slice(4)}`;
   await env.DB.batch([
     statement(
       env.DB,
-      `INSERT INTO clients(id,name,client_type,billing_email,created_at) VALUES(?,?,'landlord',?,?) ON CONFLICT(id) DO NOTHING`,
+      `INSERT INTO clients(id,name,client_type,billing_email,created_at) VALUES(?,?,?,?,?)
+       ON CONFLICT(id) DO NOTHING`,
       clientId,
       data.clientName,
+      clientType,
       user.email,
       now(),
     ),
     statement(
       env.DB,
-      `INSERT INTO client_memberships(id,client_id,user_id,role,created_at) VALUES(?,?,?,'owner',?) ON CONFLICT(client_id,user_id) DO NOTHING`,
+      `INSERT INTO client_memberships(id,client_id,user_id,role,created_at)
+       VALUES(?,?,?,'owner',?) ON CONFLICT(client_id,user_id) DO NOTHING`,
       membershipId,
       clientId,
       user.id,
@@ -88,21 +110,26 @@ export async function onboard(env: Env, user: Principal, input: unknown) {
     ),
     statement(
       env.DB,
-      "INSERT INTO client_entitlements(client_id,workspace_kind,created_at) VALUES(?,'landlord',?) ON CONFLICT DO NOTHING",
+      `INSERT INTO client_entitlements(client_id,workspace_kind,created_at)
+       VALUES(?,?,?) ON CONFLICT DO NOTHING`,
       clientId,
+      workspaceKind,
       now(),
     ),
     statement(env.DB, 'UPDATE users SET display_name=? WHERE id=?', data.displayName, user.id),
-    audit(env, user, 'client.onboarded', 'client', clientId),
+    audit(env, user, 'client.onboarded', 'client', clientId, null, {
+      landlordType: data.landlordType,
+      workspaceKind,
+    }),
   ]);
-  return { clientId };
+  return { clientId, workspaceKind, landlordType: data.landlordType };
 }
 export async function createProperty(env: Env, user: Principal, w: Workspace, input: unknown) {
   assert(
-    w.kind === 'landlord',
+    w.kind === 'landlord' || w.kind === 'commercial',
     403,
     'SELF_MANAGEMENT_REQUIRED',
-    'Create this property from your Landlord workspace.',
+    'Create a property from your Residential or Commercial Landlord workspace.',
   );
   const member = await clientMembership(env, user, w.scopeId, true);
   assert(
@@ -111,7 +138,17 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
     'ACCOUNT_ADMIN_REQUIRED',
     'An account administrator must add the property.',
   );
+  const commercial = w.kind === 'commercial';
+  const allowedPropertyTypes = commercial
+    ? ['Office', 'Retail', 'Warehouse', 'Industrial', 'Mixed-use', 'Other']
+    : ['House', 'Apartment', 'Townhouse', 'Villa', 'Other'];
   const data = propertySchema.parse(input);
+  assert(
+    allowedPropertyTypes.includes(data.propertyType),
+    422,
+    'PROPERTY_TYPE_INVALID',
+    `Choose a ${commercial ? 'commercial' : 'residential'} property type.`,
+  );
   const key = addressKey(data.address, data.suburb, data.postcode);
   const existing = await statement(
     env.DB,
@@ -136,18 +173,21 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
   await env.DB.batch([
     statement(
       env.DB,
-      `INSERT INTO properties(id,address,suburb,postcode,address_key,sector,property_type,created_at) VALUES(?,?,?,?,?,'residential',?,?)`,
+      `INSERT INTO properties(id,address,suburb,postcode,address_key,sector,property_type,created_at)
+       VALUES(?,?,?,?,?,?,?,?)`,
       propertyId,
       data.address,
       data.suburb,
       data.postcode,
       key,
+      commercial ? 'commercial' : 'residential',
       data.propertyType,
       time,
     ),
     statement(
       env.DB,
-      `INSERT INTO client_property_links(id,client_id,property_id,role,starts_at) VALUES(?,?,?,'owner',?)`,
+      `INSERT INTO client_property_links(id,client_id,property_id,role,starts_at)
+       VALUES(?,?,?,'owner',?)`,
       uid('link'),
       w.scopeId,
       propertyId,
@@ -155,13 +195,24 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
     ),
     statement(
       env.DB,
-      `INSERT INTO property_management_relationships(id,property_id,manager_client_id,mode,starts_at) VALUES(?,?,?,'self_managed',?)`,
+      `INSERT INTO property_management_relationships(id,property_id,manager_client_id,mode,starts_at)
+       VALUES(?,?,?,?,?)`,
       uid('mgmt'),
       propertyId,
       w.scopeId,
+      commercial ? 'commercial_managed' : 'self_managed',
       time,
     ),
-    audit(env, user, 'property.created', 'property', propertyId, propertyId),
+    ...(commercial
+      ? [statement(
+          env.DB,
+          'INSERT INTO portfolio_owners(property_id,client_id,name,email) VALUES(?,?,?,?)',
+          propertyId, w.scopeId, user.display_name || user.email, user.email,
+        )]
+      : []),
+    audit(env, user, 'property.created', 'property', propertyId, propertyId, {
+      landlordType: commercial ? 'commercial' : 'residential',
+    }),
   ]);
   return { propertyId };
 }

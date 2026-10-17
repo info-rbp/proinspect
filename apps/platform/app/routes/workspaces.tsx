@@ -46,12 +46,14 @@ export default function Workspaces() {
             </Link>
           ))}
         </div>
-        {!data.workspaces.some((w: Workspace) => w.kind === 'landlord') && (
+        {(!data.workspaces.some((w: Workspace) => w.kind === 'landlord') ||
+          !data.workspaces.some((w: Workspace) => w.kind === 'commercial')) && (
           <section className="panel">
-            <h2>Self-managing your own rental?</h2>
+            <h2>Self-managing your own property?</h2>
             <p style={{ margin: '12px 0 18px' }}>
-              Create a Landlord account to add your residential property and book ProInspect
-              services. Professional and tenancy access is granted separately.
+              Create a Residential or Commercial Landlord account to manage property you own
+              and book your included ProInspect services. Managing other owners’ properties
+              as a professional organisation requires separate review.
             </p>
             <Link to="/onboarding" className="button">
               Set up a Landlord account
