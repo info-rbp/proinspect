@@ -68,6 +68,9 @@ export default function Book() {
   const [method, setMethod] = useState('owner');
   const service = d.services.find((s) => s.id === serviceId);
   const property = properties.find((p) => p.id === propertyId);
+  const included = Boolean(d.subscriptionBookingServices?.[propertyId]?.includes(serviceId));
+  const directBooking = included ||
+    (service?.booking_mode === 'instant' && service.price_ex_gst_cents !== null);
   useEffect(() => {
     setSlot('');
     setSlots([]);
@@ -75,7 +78,7 @@ export default function Book() {
     const abort = new AbortController();
     setLoading(true);
     fetch(
-      `/api/w/${d.workspace.kind}/${d.workspace.scopeId}/availability?service=${encodeURIComponent(serviceId)}&date=${date}`,
+      `/api/w/${d.workspace.kind}/${d.workspace.scopeId}/availability?service=${encodeURIComponent(serviceId)}&date=${date}&property=${encodeURIComponent(propertyId)}`,
       { signal: abort.signal },
     )
       .then(async (r) => {
@@ -91,7 +94,7 @@ export default function Book() {
         if (!abort.signal.aborted) setLoading(false);
       });
     return () => abort.abort();
-  }, [date, serviceId, d.workspace.kind, d.workspace.scopeId]);
+  }, [date, serviceId, propertyId, d.workspace.kind, d.workspace.scopeId]);
   if (
     !['landlord', 'property-manager', 'commercial', 'strata-manager'].includes(d.workspace.kind) ||
     d.workspace.role === 'viewer'
@@ -208,7 +211,13 @@ export default function Book() {
               </select>
             </Field>
             {service && <p className="small">{service.summary}</p>}
-            {service?.booking_mode === 'request' && (
+            {included && (
+              <div className="notice">
+                Included in your active Landlord subscription. No additional service charge
+                applies to this booking.
+              </div>
+            )}
+            {service?.booking_mode === 'request' && !included && (
               <div className="notice warning">
                 This service requires a scope or price confirmation.{' '}
                 <Link
@@ -313,10 +322,12 @@ export default function Book() {
               <div className="definition">
                 <span className="muted">Duration</span>
                 <span>Approx. {service.duration_minutes} minutes</span>
-                <span className="muted">Service price</span>
+                <span className="muted">{included ? 'Subscription coverage' : 'Service price'}</span>
                 <strong>
-                  {money(service.price_ex_gst_cents)}
-                  {service.price_ex_gst_cents !== null ? ' + GST' : ''}
+                  {included
+                    ? 'Included — no additional charge'
+                    : money(service.price_ex_gst_cents)}
+                  {!included && service.price_ex_gst_cents !== null ? ' + GST' : ''}
                 </strong>
               </div>
               <p className="small">
@@ -328,7 +339,7 @@ export default function Book() {
           <Feedback value={result} />
           <button
             className="primary"
-            disabled={busy || !slot || service?.booking_mode !== 'instant'}
+            disabled={busy || !slot || !directBooking}
           >
             {busy ? 'Confirming booking…' : 'Confirm booking'}
           </button>
