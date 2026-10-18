@@ -19,7 +19,7 @@ const workflowNames: Record<string,string> = {
  B23:'Transitional legacy disposal record',
 };
 type Transaction = {id:string;code:string;status:string;details:string;version:number;externalReference?:string;generalDeltaCents:number;petDeltaCents:number};
-type Bond = {id:string;status:string;bondReference?:string;generalCents:number;petCents:number;heldGeneralCents:number;heldPetCents:number;weeklyRentCents:number;transactions:Transaction[];participants:any[];receipts:any[];claims:any[];deadlines:any[];notices:any[];cases:any[];governmentSubmission:string;};
+type Bond = {id:string;status:string;bondReference?:string;generalCents:number;petCents:number;heldGeneralCents:number;heldPetCents:number;weeklyRentCents:number;transactions:Transaction[];participants:any[];receipts:any[];claims:any[];deadlines:any[];notices:any[];cases:any[];allocations:any[];contributions:any[];worksheets:any[];verification:any[];reconciliations:any[];exceptions:any[];governmentSubmission:string;};
 const money=(n:number)=>new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(n/100);
 export async function loader({request,context,params}:LoaderFunctionArgs) {
  const root=`/api/w/${params.kind}/${params.scopeId}`;
@@ -60,6 +60,7 @@ export default function TenancyBonds(){
     <OperationForm endpoint={`${base}/bonds/${b.id}/parties`} label="Add pending participant">
      <Select name="role" label="Legal relationship" options={choices(['tenant','landlord','agent','estate'])}/>
      <Input name="name" label="Legal name"/>
+     <Select name="memberUserId" label="Linked verified tenancy user (for tenant parties)" optional options={detail.members.map((m:any)=>({value:m.user_id,label:m.display_name||m.email||m.user_id}))}/>
      <Input name="effectiveAt" type="datetime-local" label="Effective date/time"/>
     </OperationForm>
    </Panel>}
