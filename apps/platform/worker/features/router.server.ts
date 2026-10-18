@@ -20,6 +20,7 @@ import * as tenancy from './tenancies.server';
 import * as admin from './admin.server';
 import * as forms from './forms.server';
 import * as bonds from './bonds.server';
+import * as bondCompletion from './bond-completion.server';
 import * as integrations from './integrations.server';
 /** Feature endpoints run only after authentication, origin and workspace checks. */
 export async function featureApi(
@@ -221,6 +222,20 @@ export async function featureApi(
     return ok(await bonds.addParticipant(env,user,w,id,await body()));
   if (area === 'bonds' && id && action === 'parties' && child && parts[4]==='status')
     return ok(await bonds.updateParticipant(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'contributions')
+    return ok(await bondCompletion.addBondContribution(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'verifications')
+    return ok(await bondCompletion.verifyExternalBondDocument(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'exceptions' && !child)
+    return ok(await bondCompletion.createBondException(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'exceptions' && child && parts[4]==='status')
+    return ok(await bondCompletion.changeBondException(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='prepare')
+    return ok(await bondCompletion.prepareBondForm(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='allocations')
+    return ok(await bondCompletion.addBondAllocation(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='payout')
+    return ok(await bondCompletion.reconcileBondPayout(env,user,w,id,child,await body()));
   if (area === 'bonds' && id && action === 'receipts')
     return ok(await bonds.recordReceipt(env,user,w,id,await body()));
   if (area === 'bonds' && id && action === 'transactions' && !child)
