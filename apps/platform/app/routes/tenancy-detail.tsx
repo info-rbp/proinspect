@@ -146,6 +146,9 @@ export default function TenancyDetail() {
             </OperationForm>
           )}
         </Panel>
+        <Panel title="Bond register and government transactions" description="Track bond receipts, lodgements, variations, releases, disputes and determinations with external confirmation evidence.">
+          <Link to={`${w.href}/tenancies/${t.id}/bonds`}>Open bond register and workflows →</Link>
+        </Panel>
         <Panel
           title="Forms and bond coordination"
           description="This workflow collects instructions and tracks reviewed official documents. It does not generate a substitute prescribed form, lodge a bond, terminate a tenancy or serve a notice automatically."
