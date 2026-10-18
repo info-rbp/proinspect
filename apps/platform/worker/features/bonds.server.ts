@@ -96,7 +96,7 @@ export async function getBond(env:Env,user:Principal,w:Workspace,id:string){
   externalReference:t.external_reference,version:t.version,
   channel:t.channel,
  })));
- const participants=(await statement(env.DB,'SELECT id,role,status,effective_at,ended_at,external_reference,government_document_id FROM bond_parties WHERE bond_id=? ORDER BY created_at',id).all()).results;
+ const participants=(await statement(env.DB,'SELECT id,user_id,role,status,effective_at,ended_at,external_reference,government_document_id FROM bond_parties WHERE bond_id=? ORDER BY created_at',id).all()).results;
  const receipts=(await statement(env.DB,'SELECT id,transaction_id,kind,amount_cents,paid_at,due_at,lodgement_confirmed_at FROM bond_receipts WHERE bond_id=? ORDER BY created_at',id).all()).results;
  const cases=(await statement(env.DB,'SELECT id,transaction_id,status,external_reference,decision_at,appeal_due_at,version FROM bond_cases WHERE bond_id=? ORDER BY created_at',id).all()).results;
  const notices=(await statement(env.DB,'SELECT id,kind,government_reference,received_at,response_due_at FROM bond_notices WHERE bond_id=? ORDER BY received_at',id).all()).results;
@@ -111,7 +111,7 @@ export async function getBond(env:Env,user:Principal,w:Workspace,id:string){
  return {id:b.id,tenancyId:b.tenancy_id,propertyId:b.property_id,status:b.status,
   bondReference:b.bond_reference,generalCents:b.general_cents,petCents:b.pet_cents,
   heldGeneralCents:b.held_general_cents,heldPetCents:b.held_pet_cents,weeklyRentCents:b.weekly_rent_cents,
-  version:b.version,transactions,participants,receipts,cases,notices,deadlines,claims,
+  version:b.version,transactions,participants:isTenant?participants.filter((p:any)=>p.user_id===user.id):participants,receipts,cases,notices,deadlines,claims,
   allocations:isTenant?allocations.map(a=>({...a,party_id:null,target_bond_id:null})):allocations,
   contributions:isTenant?[]:contributions,worksheets,verification,reconciliations,
   exceptions:isTenant?[]:exceptions,workflowRules:WA_BOND_RULES,
@@ -369,15 +369,19 @@ export async function recordCase(env:Env,user:Principal,w:Workspace,bondId:strin
 }
 
 const participantSchema=z.object({role:z.enum(['tenant','landlord','agent','estate']),
-  name:z.string().trim().min(2).max(180),effectiveAt:isoDate,requestKey:recordId});
+  name:z.string().trim().min(2).max(180),memberUserId:recordId.optional(),effectiveAt:isoDate,requestKey:recordId});
 const participantStatus=z.object({status:z.enum(['confirmed','former']),
   governmentReference:reference,governmentDocumentId:recordId,requestKey:recordId});
 export async function addParticipant(env:Env,user:Principal,w:Workspace,bondId:string,input:unknown){
  const d=participantSchema.parse(input),b=await authorized(env,user,w,bondId,true);
+ if(d.role==='tenant'&&d.memberUserId)assert(await statement(env.DB,
+   'SELECT id FROM tenancy_memberships WHERE tenancy_id=? AND user_id=? AND starts_at<=? AND (ends_at IS NULL OR ends_at>?)',
+    b.tenancy_id,d.memberUserId,now(),now()).first(),422,'BOND_PARTY_NOT_TENANT','The selected user is not a current member of this tenancy.');
+ else if(d.memberUserId)assert(false,422,'BOND_PARTY_MEMBER','Only tenant bond parties can link to a tenancy user.');
  const id=uid('bparty'),created=now();
  return mutation(env,user,'bond.participant.add',d.requestKey,{bondId,...d},[
- statement(env.DB,'INSERT INTO bond_parties(id,bond_id,role,name_envelope,effective_at,created_at) VALUES(?,?,?,?,?,?)',
-  id,bondId,d.role,await seal(env.DATA_ENCRYPTION_KEY,`bond-party:${id}`,{name:d.name}),d.effectiveAt,created),
+ statement(env.DB,'INSERT INTO bond_parties(id,bond_id,user_id,role,name_envelope,effective_at,created_at) VALUES(?,?,?,?,?,?,?)',
+  id,bondId,d.memberUserId??null,d.role,await seal(env.DATA_ENCRYPTION_KEY,`bond-party:${id}`,{name:d.name}),d.effectiveAt,created),
  event(env,user,bondId,'participant.recorded',null,{partyId:id,role:d.role,status:'pending'}),
  activity(env,user,'bond.participant_added','bond',bondId,b.property_id)
  ],{partyId:id,status:'pending'});
@@ -389,6 +393,9 @@ export async function updateParticipant(env:Env,user:Principal,w:Workspace,bondI
  assert((p.status==='pending'&&d.status==='confirmed')||(p.status==='confirmed'&&d.status==='former'),
    409,'BOND_PARTY_TRANSITION','The government party status cannot be changed this way.');
  await document(env,b,d.governmentDocumentId);
+ const approved=await statement(env.DB,"SELECT id FROM bond_external_verifications WHERE bond_id=? AND document_id=? AND external_reference=? AND result='verified'",
+   bondId,d.governmentDocumentId,d.governmentReference).first();
+ assert(approved,422,'BOND_PARTY_GOV_REVIEW','Independent Staff review of the official participant variation is required.');
  const time=now();
  return mutation(env,user,'bond.participant.transition',d.requestKey,{bondId,id,...d},[
  statement(env.DB,'UPDATE bond_parties SET status=?,external_reference=?,government_document_id=?,ended_at=? WHERE id=? AND bond_id=? AND status=?',
