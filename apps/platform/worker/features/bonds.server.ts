@@ -22,7 +22,7 @@ const receiptSchema = z.object({kind:z.enum(['general','pet']),amountCents:cents
   paidAt:isoDate,payer:z.string().min(2).max(180),paymentReference:reference,requestKey:recordId});
 const confirmSchema = z.object({version,status:z.enum(['submitted','confirmed','rejected','cancelled']),
   channel:governmentChannels.optional(),externalReference:reference.optional(),
-  confirmationDocumentId:recordId.optional(),requestKey:recordId});
+  confirmationDocumentId:recordId.optional(),governmentBondReference:reference.optional(),requestKey:recordId});
 const claimSchema = z.object({category:claimCategories,amountCents:cents.positive(),
   explanation:z.string().min(5).max(3500),evidenceDocumentId:recordId.optional(),requestKey:recordId});
 const noticeSchema = z.object({kind:z.enum(['release_application','invitation_to_submit','commissioner_decision','appeal','variation','other']),
@@ -139,9 +139,13 @@ export async function recordReceipt(env:Env,user:Principal,w:Workspace,bondId:st
  ],{receiptId:id,dueAt:due});
 }
 export async function confirmTransaction(env:Env,user:Principal,w:Workspace,bondId:string,id:string,input:unknown){
- const d=confirmSchema.parse(input),b=await authorized(env,user,w,bondId,true);
+ const d=confirmSchema.parse(input),
+  tenantSubmission=w.kind==='tenant'&&d.status==='submitted';
+ const b=await authorized(env,user,w,bondId,!tenantSubmission);
  const tx=await statement(env.DB,'SELECT * FROM bond_transactions WHERE id=? AND bond_id=?',id,bondId).first<Record<string,any>>();
  assert(tx,404,'BOND_TRANSACTION_NOT_FOUND','Bond transaction not found.');
+ if(tenantSubmission)assert(tx.code==='B13'&&d.channel==='manual',403,'BOND_TENANT_SUBMISSION_RESTRICTED',
+   'A tenant can only record their own manual release application.');
  assert(tx.version===d.version && ['draft','submitted'].includes(tx.status),409,'BOND_TRANSACTION_CHANGED','Transaction has already changed.');
  assert((tx.status==='draft'&&['submitted','cancelled'].includes(d.status))||
  (tx.status==='submitted'&&['confirmed','rejected'].includes(d.status)),409,'BOND_TRANSITION_INVALID','Invalid transaction transition.');
@@ -152,6 +156,7 @@ export async function confirmTransaction(env:Env,user:Principal,w:Workspace,bond
   assert(tx.external_reference&&d.confirmationDocumentId,422,'CONFIRMATION_REQUIRED','External submission reference and a reviewed government confirmation are required.');
   await document(env,b,d.confirmationDocumentId!);
   if(tx.code==='B01') {
+   assert(d.governmentBondReference,422,'BOND_OFFICIAL_NUMBER_REQUIRED','Record the confirmed government bond number, not merely an application reference.');
    assert(b.status!=='active',409,'BOND_ALREADY_LODGED','Initial bond already confirmed.');
    const receipts=await statement(env.DB,"SELECT kind,COALESCE(SUM(amount_cents),0) AS amount FROM bond_receipts WHERE bond_id=? GROUP BY kind",bondId).all<{kind:string;amount:number}>();
    const totals=new Map(receipts.results.map(x=>[x.kind,x.amount]));
@@ -180,7 +185,7 @@ export async function confirmTransaction(env:Env,user:Principal,w:Workspace,bond
   'UPDATE bond_transactions SET status=?,version=version+1,channel=COALESCE(?,channel),external_reference=COALESCE(?,external_reference),confirmation_document_id=COALESCE(?,confirmation_document_id),submitted_at=CASE WHEN ?=\'submitted\' THEN ? ELSE submitted_at END,confirmed_at=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_at END,confirmed_by=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_by END,updated_at=? WHERE id=? AND bond_id=? AND version=?',
   d.status,d.channel??null,d.externalReference??null,d.confirmationDocumentId??null,d.status,time,d.status,time,d.status,user.id,time,id,bondId,d.version),
   statement(env.DB,'UPDATE bonds SET status=?,bond_reference=CASE WHEN ?=\'confirmed\' AND ?=\'B01\' THEN ? ELSE bond_reference END,held_general_cents=CASE WHEN ?=\'confirmed\' THEN ? ELSE held_general_cents END,held_pet_cents=CASE WHEN ?=\'confirmed\' THEN ? ELSE held_pet_cents END,general_cents=CASE WHEN ?=\'confirmed\' AND ? IN (\'B02\',\'B03\') THEN general_cents+? ELSE general_cents END,pet_cents=CASE WHEN ?=\'confirmed\' AND ? IN (\'B02\',\'B03\') THEN pet_cents+? ELSE pet_cents END,version=version+1,updated_at=?,confirmed_at=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_at END WHERE id=?',
-   nextStatus,d.status,tx.code,tx.external_reference,d.status,tx.code==='B01'?b.general_cents:newG,d.status,tx.code==='B01'?b.pet_cents:newP,d.status,tx.code,tx.general_delta_cents,d.status,tx.code,tx.pet_delta_cents,time,d.status,time,bondId),
+   nextStatus,d.status,tx.code,d.governmentBondReference??null,d.status,tx.code==='B01'?b.general_cents:newG,d.status,tx.code==='B01'?b.pet_cents:newP,d.status,tx.code,tx.general_delta_cents,d.status,tx.code,tx.pet_delta_cents,time,d.status,time,bondId),
   event(env,user,bondId,'transaction.'+d.status,id,{code:tx.code,externalReference:d.externalReference??tx.external_reference}),
   activity(env,user,'bond.transaction_'+d.status,'bond_transaction',id,b.property_id)
  ];
