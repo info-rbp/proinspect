@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { assert, now, statement, uid, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
-import { activity, dateOnly, isoDate, recordId, reference, replay, receipt, version } from '../../../../packages/operations/core';
+import { activity, dateOnly, isoDate, recordId, reference, replay, receipt, version, guard } from '../../../../packages/operations/core';
 import { seal, unseal } from '../../../../packages/auth/crypto';
 import { tenancyAccess } from './tenancies.server';
 import { WA_BOND_RULES, waResidentialBondLimit, type BondWorkflowCode } from '../../../../packages/validation/wa-bonds';
@@ -166,68 +166,133 @@ export async function recordReceipt(env:Env,user:Principal,w:Workspace,bondId:st
  activity(env,user,'bond.payment_recorded','bond',bondId,b.property_id)
  ],{receiptId:id,dueAt:due});
 }
-export async function confirmTransaction(env:Env,user:Principal,w:Workspace,bondId:string,id:string,input:unknown){
- const d=confirmSchema.parse(input),
-  tenantSubmission=w.kind==='tenant'&&d.status==='submitted';
+export async function confirmTransaction(env:Env,user:Principal,w:Workspace,bondId:string,id:string,input:unknown) {
+ const d=confirmSchema.parse(input),tenantSubmission=w.kind==='tenant'&&d.status==='submitted';
  const b=await authorized(env,user,w,bondId,!tenantSubmission);
+ const action='bond.tx.transition',payload={bondId,id,...d};
+ const retry=await replay(env,user,action,d.requestKey,payload);
+ if(retry.result)return retry.result;
  const tx=await statement(env.DB,'SELECT * FROM bond_transactions WHERE id=? AND bond_id=?',id,bondId).first<Record<string,any>>();
  assert(tx,404,'BOND_TRANSACTION_NOT_FOUND','Bond transaction not found.');
- if(tenantSubmission)assert(tx.code==='B13'&&d.channel==='manual',403,'BOND_TENANT_SUBMISSION_RESTRICTED',
-   'A tenant can only record their own manual release application.');
- assert(tx.version===d.version && ['draft','submitted'].includes(tx.status),409,'BOND_TRANSACTION_CHANGED','Transaction has already changed.');
+ if(tenantSubmission)
+  assert(tx.code==='B13'&&tx.created_by===user.id&&d.channel==='manual',403,
+    'BOND_TENANT_SUBMISSION_RESTRICTED','A tenant may record only their own manual bond release application.');
+ assert(tx.version===d.version&&['draft','submitted'].includes(tx.status),409,'BOND_TRANSACTION_CHANGED','A newer transaction version exists.');
  assert((tx.status==='draft'&&['submitted','cancelled'].includes(d.status))||
- (tx.status==='submitted'&&['confirmed','rejected'].includes(d.status)),409,'BOND_TRANSITION_INVALID','Invalid transaction transition.');
- if(d.status==='submitted')assert(d.channel&&d.externalReference,422,'EXTERNAL_REFERENCE_REQUIRED','Record actual government submission channel and reference.');
- if(d.status==='confirmed'){
-  assert(!['B20','B23'].includes(tx.code),
-    422,'BOND_RESTRICTED_WORKFLOW','This workflow must use the correct restricted or historical process.');
-  assert(tx.external_reference&&d.confirmationDocumentId,422,'CONFIRMATION_REQUIRED','External submission reference and a reviewed government confirmation are required.');
-  await document(env,b,d.confirmationDocumentId!);
+   (tx.status==='submitted'&&['confirmed','rejected'].includes(d.status)),
+   409,'BOND_TRANSITION_INVALID','The requested transaction transition is not available.');
+ const releaseCodes=['B10','B11','B12','B13','B14','B15'];
+ const isRelease=releaseCodes.includes(tx.code);
+ const isTopUp=['B02','B03'].includes(tx.code);
+ const code=tx.code as BondWorkflowCode;
+ if(d.status==='submitted') {
+  assert(d.channel&&d.externalReference,422,'BOND_SUBMISSION_REFERENCE','Record the actual external channel and application reference.');
+  if(w.kind==='property-manager'&&d.channel==='manual')
+   assert(d.agentManualExceptionReference,422,'AGENT_BONDSONLINE_REQUIRED','Agents generally use BondsOnline. Record the documented manual exception.');
+  const worksheet=await statement(env.DB,'SELECT official_form FROM bond_preparations WHERE transaction_id=?',id).first();
+  assert(worksheet,422,'BOND_WORKSHEET_REQUIRED','Complete the form-specific preparation checklist before recording an external submission.');
+  if(['B09','B19','B20','B23'].includes(tx.code))
+   assert(false,403,'BOND_RESTRICTED_PROCESS','This workflow requires a different protected or historical process.');
+  if(isRelease) {
+   assert(tx.general_delta_cents<=0&&tx.pet_delta_cents<=0&&tx.general_delta_cents+tx.pet_delta_cents<0,
+    422,'BOND_RELEASE_AMOUNT','A release requires an amount.');
+   const totals=await statement(env.DB,'SELECT COALESCE(SUM(general_cents),0) AS g,COALESCE(SUM(pet_cents),0) AS p FROM bond_allocations WHERE transaction_id=?',id)
+      .first<{g:number;p:number}>();
+   assert((totals?.g??0)===-tx.general_delta_cents&&(totals?.p??0)===-tx.pet_delta_cents,422,
+     'BOND_ALLOCATION_MISMATCH','Recipient allocations must reconcile to every general/pet cent proposed for release.');
+   if(tx.code==='B11')assert(-tx.general_delta_cents===b.held_general_cents&&-tx.pet_delta_cents===b.held_pet_cents,
+     422,'BOND_FULL_RELEASE_AMOUNT','A full return must account for all confirmed money held.');
+   if(tx.code==='B12'){
+    const claims=await statement(env.DB,'SELECT COALESCE(SUM(amount_cents),0) AS amount FROM bond_claims WHERE transaction_id=?',id).first<{amount:number}>();
+    const landlord=await statement(env.DB,"SELECT COALESCE(SUM(general_cents+pet_cents),0) AS amount FROM bond_allocations WHERE transaction_id=? AND recipient_kind='landlord'",id).first<{amount:number}>();
+    assert((claims?.amount??0)>0&&(claims?.amount??0)===(landlord?.amount??0),
+      422,'BOND_DEDUCTION_RECONCILIATION','Landlord payouts must equal evidenced deduction claims.');
+   }
+   if(tx.code==='B14')assert(await statement(env.DB,"SELECT id FROM bond_allocations WHERE transaction_id=? AND recipient_kind='new_bond'",id).first(),
+      422,'BOND_TRANSFER_PAIR_REQUIRED','Create a linked new-bond allocation before transferring funds.');
+   if(tx.code==='B15')assert(await statement(env.DB,"SELECT id FROM bond_allocations WHERE transaction_id=? AND recipient_kind='housing_loan'",id).first(),
+      422,'BOND_ASSISTANCE_REFERENCE_REQUIRED','Record the housing-loan repayment allocation.');
+   if(tx.code!=='B10') {
+    const t=await statement(env.DB,'SELECT status,ends_at FROM tenancies WHERE id=?',b.tenancy_id)
+      .first<{status:string;ends_at:string|null}>();
+    assert(t&&(t.status==='ended'||(t.ends_at!==null&&t.ends_at<=now())),
+      422,'BOND_TENANCY_ACTIVE','Full bond release applications normally require the tenancy to have ended; use the approved restricted exception where applicable.');
+   }
+  }
+  if(isTopUp){
+   const kind=tx.code==='B02'?'general':'pet',needed=tx.code==='B02'?tx.general_delta_cents:tx.pet_delta_cents;
+   const paid=await statement(env.DB,'SELECT COALESCE(SUM(amount_cents),0) AS n FROM bond_receipts WHERE bond_id=? AND transaction_id=? AND kind=?',
+      bondId,id,kind).first<{n:number}>();
+   assert((paid?.n??0)>=needed,422,'BOND_TOPUP_RECEIPT_REQUIRED','Record the additional funds and lodgement deadline before submission.');
+   if(tx.code==='B03')assert(b.pet_cents+needed<=35000,422,'BOND_PET_CAP','Residential pet bond exceeds $350.');
+  }
+ }
+ if(d.status==='confirmed') {
+  assert(tx.external_reference&&d.confirmationDocumentId,422,'BOND_CONFIRMATION_EVIDENCE','Attach the actual official confirmation.');
+  await document(env,b,d.confirmationDocumentId);
+  const approved=await statement(env.DB,"SELECT id FROM bond_external_verifications WHERE bond_id=? AND transaction_id=? AND document_id=? AND external_reference=? AND result='verified' ORDER BY reviewed_at DESC LIMIT 1",
+    bondId,id,d.confirmationDocumentId,tx.external_reference).first();
+  assert(approved,422,'BOND_GOVERNMENT_REVIEW_REQUIRED','Independent Staff review of the official external confirmation is required.');
   if(tx.code==='B01') {
-   assert(d.governmentBondReference,422,'BOND_OFFICIAL_NUMBER_REQUIRED','Record the confirmed government bond number, not merely an application reference.');
-   assert(b.status!=='active',409,'BOND_ALREADY_LODGED','Initial bond already confirmed.');
-   const receipts=await statement(env.DB,"SELECT kind,COALESCE(SUM(amount_cents),0) AS amount FROM bond_receipts WHERE bond_id=? GROUP BY kind",bondId).all<{kind:string;amount:number}>();
-   const totals=new Map(receipts.results.map(x=>[x.kind,x.amount]));
-   assert((totals.get('general')??0)>=b.general_cents&&(totals.get('pet')??0)>=b.pet_cents,422,
-     'BOND_FUNDS_NOT_RECORDED','Record the payments actually received before confirming lodgement.');
+   assert(d.governmentBondReference,422,'BOND_OFFICIAL_NUMBER_REQUIRED','Enter the official confirmed bond number.');
+   const totals=(await statement(env.DB,'SELECT kind,COALESCE(SUM(amount_cents),0) AS n FROM bond_receipts WHERE bond_id=? GROUP BY kind',bondId)
+      .all<{kind:string;n:number}>()).results;
+   const value=new Map(totals.map(x=>[x.kind,x.n]));
+   assert((value.get('general')??0)>=b.general_cents&&(value.get('pet')??0)>=b.pet_cents,
+     422,'BOND_RECEIPTS_MISSING','Record the funds received for each bond category.');
   }
-  if(tx.code==='B12'){
-    const c=await statement(env.DB,'SELECT COALESCE(SUM(amount_cents),0) AS amount FROM bond_claims WHERE transaction_id=?',id).first<{amount:number}>();
-    assert((c?.amount??0)>0 && (c?.amount??0)<=-(tx.general_delta_cents+tx.pet_delta_cents),422,
-      'BOND_CLAIMS_MISMATCH','Deductions must be evidenced and reconcile with the proposed bond release.');
+  if(isTopUp)assert(
+    tx.general_delta_cents>=0&&tx.pet_delta_cents>=0&&tx.general_delta_cents+tx.pet_delta_cents>0,
+    422,'BOND_INVALID_TOPUP','Bond top-up amounts must be positive.');
+  if(isRelease) {
+   assert(b.held_general_cents+tx.general_delta_cents>=0&&b.held_pet_cents+tx.pet_delta_cents>=0,
+    422,'BOND_RELEASE_OVERDRAW','Proposed release exceeds confirmed funds.');
+   assert(!await statement(env.DB,'SELECT id FROM bond_payout_reconciliations WHERE transaction_id=?',id).first(),
+    409,'BOND_PAYOUT_ALREADY_RECORDED','A payout is already reconciled.');
   }
-  if(['B10','B11','B12','B13','B14','B15','B19'].includes(tx.code))
-   assert(tx.general_delta_cents<=0&&tx.pet_delta_cents<=0&&
-      b.held_general_cents+tx.general_delta_cents>=0&&b.held_pet_cents+tx.pet_delta_cents>=0,
-      422,'BOND_BALANCE','Release amounts must not exceed bond held.');
-  if(tx.code==='B11')assert(
-    b.held_general_cents+tx.general_delta_cents===0&&b.held_pet_cents+tx.pet_delta_cents===0,
-    422,'BOND_FULL_RELEASE_REQUIRED','Full agreed release must account for the complete confirmed balance.');
-  if(['B04','B05','B06','B07','B08','B09','B16','B17','B18','B21','B22'].includes(tx.code))
-   assert(tx.general_delta_cents===0&&tx.pet_delta_cents===0,422,
-     'BOND_NON_FINANCIAL_AMOUNT','Administrative variations and cases cannot change bond principal.');
-  if(['B02','B03'].includes(tx.code))
-   assert(tx.general_delta_cents>=0&&tx.pet_delta_cents>=0&&(tx.general_delta_cents+tx.pet_delta_cents)>0,
-     422,'BOND_VARIATION_AMOUNT','Bond top-ups must be positive.');
  }
- const time=now(),newG=b.held_general_cents+tx.general_delta_cents,newP=b.held_pet_cents+tx.pet_delta_cents;
- const release=['B10','B11','B12','B13','B14','B15','B19'].includes(tx.code);
- const nextStatus=d.status==='confirmed'?(release?(newG+newP===0?'released':'active'):'active'):
-  d.status==='submitted'?(release?'release_pending':tx.code==='B01'?'lodgement_submitted':['B16','B17','B18'].includes(tx.code)?'in_dispute':'variation_pending'):
-  d.status==='rejected'?'exception':b.status;
- const commands=[statement(env.DB,
-  'UPDATE bond_transactions SET status=?,version=version+1,channel=COALESCE(?,channel),external_reference=COALESCE(?,external_reference),confirmation_document_id=COALESCE(?,confirmation_document_id),submitted_at=CASE WHEN ?=\'submitted\' THEN ? ELSE submitted_at END,confirmed_at=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_at END,confirmed_by=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_by END,updated_at=? WHERE id=? AND bond_id=? AND version=?',
-  d.status,d.channel??null,d.externalReference??null,d.confirmationDocumentId??null,d.status,time,d.status,time,d.status,user.id,time,id,bondId,d.version),
-  statement(env.DB,'UPDATE bonds SET status=?,bond_reference=CASE WHEN ?=\'confirmed\' AND ?=\'B01\' THEN ? ELSE bond_reference END,held_general_cents=CASE WHEN ?=\'confirmed\' THEN ? ELSE held_general_cents END,held_pet_cents=CASE WHEN ?=\'confirmed\' THEN ? ELSE held_pet_cents END,general_cents=CASE WHEN ?=\'confirmed\' AND ? IN (\'B02\',\'B03\') THEN general_cents+? ELSE general_cents END,pet_cents=CASE WHEN ?=\'confirmed\' AND ? IN (\'B02\',\'B03\') THEN pet_cents+? ELSE pet_cents END,version=version+1,updated_at=?,confirmed_at=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_at END WHERE id=?',
-   nextStatus,d.status,tx.code,d.governmentBondReference??null,d.status,tx.code==='B01'?b.general_cents:newG,d.status,tx.code==='B01'?b.pet_cents:newP,d.status,tx.code,tx.general_delta_cents,d.status,tx.code,tx.pet_delta_cents,time,d.status,time,bondId),
-  event(env,user,bondId,'transaction.'+d.status,id,{code:tx.code,externalReference:d.externalReference??tx.external_reference}),
-  activity(env,user,'bond.transaction_'+d.status,'bond_transaction',id,b.property_id)
- ];
+ if(d.status==='rejected'){
+  assert(d.confirmationDocumentId,422,'BOND_REJECTION_EVIDENCE','An official rejection needs reviewed evidence.');
+  await document(env,b,d.confirmationDocumentId!);
+  const approved=await statement(env.DB,"SELECT id FROM bond_external_verifications WHERE bond_id=? AND transaction_id=? AND document_id=? AND result='verified'",bondId,id,d.confirmationDocumentId).first();
+  assert(approved,422,'BOND_REJECTION_UNVERIFIED','Staff must review the rejection evidence.');
+ }
+ const time=now();
+ let status=b.status,g=b.held_general_cents,p=b.held_pet_cents,authorizedG=b.general_cents,authorizedP=b.pet_cents;
+ let officialRef:string|null=null;
+ if(d.status==='submitted')
+  status=isRelease?'release_pending':tx.code==='B01'?'lodgement_submitted':['B16','B17','B18'].includes(tx.code)?'in_dispute':'variation_pending';
+ if(d.status==='rejected')status='exception';
  if(d.status==='confirmed'){
-  commands.push(statement(env.DB,"UPDATE bond_deadlines SET completed_at=? WHERE bond_id=? AND kind='lodgement' AND completed_at IS NULL",time,bondId));
-  commands.push(statement(env.DB,'UPDATE bond_receipts SET lodgement_confirmed_at=? WHERE bond_id=? AND lodgement_confirmed_at IS NULL',time,bondId));
+  if(tx.code==='B01'){
+   g=b.general_cents;p=b.pet_cents;officialRef=d.governmentBondReference??null;status='active';
+  }else if(isTopUp){
+   g+=tx.general_delta_cents;p+=tx.pet_delta_cents;
+   authorizedG+=tx.general_delta_cents;authorizedP+=tx.pet_delta_cents;status='active';
+  }else if(isRelease){
+   status='payout_pending'; // actual funds remain held until independent payout reconciliation
+  }else{
+   status=['B16','B17','B18'].includes(tx.code)?'in_dispute':'active';
+  }
  }
- return mutation(env,user,'bond.tx.transition',d.requestKey,{bondId,id,...d},commands,{id,status:d.status,bondStatus:nextStatus});
+ const next={id,status:d.status,bondStatus:status};
+ const commands=[
+ statement(env.DB,'UPDATE bond_transactions SET status=?,version=version+1,channel=COALESCE(?,channel),external_reference=COALESCE(?,external_reference),confirmation_document_id=COALESCE(?,confirmation_document_id),submitted_at=CASE WHEN ?=\'submitted\' THEN ? ELSE submitted_at END,confirmed_at=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_at END,confirmed_by=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_by END,updated_at=? WHERE id=? AND bond_id=? AND version=?',
+  d.status,d.channel??null,d.externalReference??null,d.confirmationDocumentId??null,d.status,time,d.status,time,d.status,user.id,time,id,bondId,d.version),
+ guard(env),
+ statement(env.DB,'UPDATE bonds SET status=?,bond_reference=COALESCE(?,bond_reference),held_general_cents=?,held_pet_cents=?,general_cents=?,pet_cents=?,version=version+1,updated_at=?,confirmed_at=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_at END WHERE id=? AND version=?',
+  status,officialRef,g,p,authorizedG,authorizedP,time,d.status,time,bondId,b.version),
+ guard(env),
+ event(env,user,bondId,'transaction.'+d.status,id,{code:tx.code,externalReference:d.externalReference??tx.external_reference}),
+ activity(env,user,'bond.transaction_'+d.status,'bond_transaction',id,b.property_id)
+ ];
+ if(d.status==='confirmed'&&(tx.code==='B01'||isTopUp)){
+  commands.push(statement(env.DB,"UPDATE bond_deadlines SET completed_at=? WHERE bond_id=? AND kind='lodgement' AND completed_at IS NULL AND (transaction_id IS NULL OR transaction_id=?)",
+    time,bondId,id));
+  commands.push(statement(env.DB,'UPDATE bond_receipts SET lodgement_confirmed_at=? WHERE bond_id=? AND lodgement_confirmed_at IS NULL AND (transaction_id IS NULL OR transaction_id=?)',
+    time,bondId,id));
+ }
+ return mutation(env,user,action,d.requestKey,payload,commands,next);
 }
 export async function addClaim(env:Env,user:Principal,w:Workspace,bondId:string,id:string,input:unknown){
  const d=claimSchema.parse(input),b=await authorized(env,user,w,bondId,true);
