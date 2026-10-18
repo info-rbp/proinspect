@@ -42,8 +42,18 @@ export const FORM_DEFINITIONS = [
     audience: 'both',
   },
 ];
+async function ordinaryResidentialScope(env: Env, user: Principal, w: Workspace, tenancyId: string, write = false) {
+  assert(
+    ['tenant','landlord','property-manager','staff'].includes(w.kind),
+    403,'RESIDENTIAL_FORMS_ONLY','WA residential forms are not available to commercial workspaces.',
+  );
+  const t = await tenancyAccess(env,user,w,tenancyId,write && w.kind !== 'tenant');
+  const p = await statement(env.DB,'SELECT sector FROM properties WHERE id=?',t.property_id).first<{sector:string}>();
+  assert(p?.sector==='residential',403,'RESIDENTIAL_FORMS_ONLY','WA residential forms require residential property.');
+  return t;
+}
 export async function formsData(env: Env, user: Principal, w: Workspace, tenancyId: string) {
-  await tenancyAccess(env, user, w, tenancyId);
+  await ordinaryResidentialScope(env, user, w, tenancyId);
   const rows = (
     await statement(
       env.DB,
@@ -73,7 +83,7 @@ export async function createForm(env: Env, user: Principal, w: Workspace, input:
   const d = z
     .object({ tenancyId: recordId, formCode: z.string(), details: z.string().min(10).max(6000) })
     .parse(input);
-  const t = await tenancyAccess(env, user, w, d.tenancyId, w.kind !== 'tenant');
+  const t = await ordinaryResidentialScope(env, user, w, d.tenancyId, w.kind !== 'tenant');
   assert(
     t.status === 'active' || d.formCode === 'WA_BOND_DISPOSAL',
     409,
@@ -122,7 +132,7 @@ export async function updateForm(
     Record<string, any>
   >();
   assert(f, 404, 'FORM_NOT_FOUND', 'Form not found.');
-  const t = await tenancyAccess(env, user, w, f.tenancy_id, w.kind !== 'tenant');
+  const t = await ordinaryResidentialScope(env, user, w, f.tenancy_id, w.kind !== 'tenant');
   const d = z
     .object({
       version,
