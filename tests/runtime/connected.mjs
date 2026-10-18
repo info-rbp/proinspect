@@ -268,7 +268,8 @@ try {
       version:2,status:'confirmed',governmentBondReference:'WA-BOND-TEST-001',
       confirmationDocumentId:pdfRecord.id,requestKey:requestKey()
     }})).status,422);
-    const verify=resource+'/verifications';
+    const staffResource=staffBase+'/bonds/'+id;
+    const verify=staffResource+'/verifications';
     assert.equal((await api(verify,{cookie:tenant.cookie,body:{
       transactionId:lodged.transactionId,documentId:pdfRecord.id,externalReference:'WA-BOND-APP-TEST-01',
       sourceChannel:'manual',verificationMethod:'official_certificate',reviewNotes:'Test synthetic records',
@@ -355,7 +356,7 @@ try {
       governmentReference:'PARTIAL-APP-01',governmentDocumentId:pdfRecord.id,generalCents:100000,
       petCents:0,outcome:'matched',notes:'Synthetic test only',requestKey:requestKey()
     }})).status,403);
-    const paidOut=await ok(partialTx+'/payout',operator,{governmentReference:'PARTIAL-APP-01',
+    const paidOut=await ok(staffResource+'/transactions/'+partial.transactionId+'/payout',operator,{governmentReference:'PARTIAL-APP-01',
       governmentDocumentId:pdfRecord.id,generalCents:100000,petCents:0,
       outcome:'matched',notes:'Synthetic verified payout test; no money changed hands.',requestKey:requestKey()});
     assert.equal(paidOut.status,'active');
