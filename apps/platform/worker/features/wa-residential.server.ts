@@ -6,6 +6,7 @@ import { recordId,version,reference,activity,guard,clearGuard } from '../../../.
 import { tenancyAccess } from './tenancies.server';
 import { waAvailableForms,waForm,OFFICIAL_WA_FORMS_URL } from '../../../../packages/wa-residential/forms';
 import { operationsWrite } from '../../../../packages/authorization/server';
+import { entryNoticeAdvisory } from '../../../../packages/wa-residential/rules';
 
 async function scope(env:Env,user:Principal,w:Workspace,tenancyId:string,write=false){
   assert(['landlord','property-manager','tenant','staff'].includes(w.kind),403,'RESIDENTIAL_FORMS_ONLY','Residential tenancy forms are only available in residential Landlord, Property Manager, Tenant and Staff workspaces.');
@@ -43,7 +44,7 @@ export async function waFormsData(env:Env,user:Principal,w:Workspace,tenancyId:s
  })))};
 }
 export async function waCreateForm(env:Env,user:Principal,w:Workspace,input:unknown){
- const q=z.object({tenancyId:recordId,formCode:z.string().max(64),answers:z.record(z.string(),z.union([z.string(),z.number()])),notes:z.string().max(4000).optional()}).parse(input);
+ const q=z.object({tenancyId:recordId,formCode:z.string().max(64),bookingId:recordId.optional(),answers:z.record(z.string(),z.union([z.string(),z.number()])),notes:z.string().max(4000).optional()}).parse(input);
  const t=await scope(env,user,w,q.tenancyId,w.kind!=='tenant');
  const f=waForm(q.formCode);
  assert(f&&waAvailableForms(w.kind).some(x=>x.code===q.formCode),422,'FORM_UNAVAILABLE','The selected form is not available to this user.');
@@ -60,11 +61,39 @@ export async function waCreateForm(env:Env,user:Principal,w:Workspace,input:unkn
   }
  }
  assert(Object.keys(q.answers).every(k=>f.fields.some(field=>field.key===k)),422,'FORM_FIELD_UNKNOWN','An unsupported field was submitted.');
+ if (w.kind==='tenant'){
+  const activeMember=await statement(env.DB,
+   "SELECT id FROM tenancy_memberships WHERE tenancy_id=? AND user_id=? AND starts_at<=? AND (ends_at IS NULL OR ends_at>?)",
+   t.id,user.id,now(),now()).first();
+  assert(activeMember,403,'TENANCY_MEMBERSHIP_ENDED','Only an active tenant may start a new statutory request.');
+ }
+ let booking: {id:string;starts_at:string;status:string}|null=null;
+ let noticePurpose: string|null=null;
+ if(f.code==='WA_FORM_19'){
+   assert(q.bookingId,422,'BOOKING_REQUIRED','Form 19 entry notice must be linked to a confirmed inspection booking.');
+   assert(typeof values.entryPurpose==='string'&&['routine','repairs','other'].includes(values.entryPurpose),
+     422,'ENTRY_PURPOSE_REQUIRED','Select a supported entry purpose.');
+   noticePurpose=String(values.entryPurpose);
+ }
+ if(q.bookingId){
+  assert(['WA_FORM_19','WA_FORM_1'].includes(f.code),422,'BOOKING_NOT_APPLICABLE',
+   'Only entry notices and PCRs may link directly to an inspection booking.');
+  booking=await statement(env.DB,
+   "SELECT id,starts_at,status FROM bookings WHERE id=? AND property_id=? AND status IN('confirmed','completed')",
+   q.bookingId,t.property_id).first<{id:string;starts_at:string;status:string}>();
+  assert(booking,422,'BOOKING_CONTEXT','The booking must belong to this residential tenancy property.');
+  if(f.code==='WA_FORM_19'){
+    assert(booking.status==='confirmed',409,'BOOKING_NOT_CONFIRMED','The entry notice requires a current confirmed booking.');
+    const perthDate=new Date(new Date(booking.starts_at).getTime()+8*3600000).toISOString().slice(0,10);
+    assert(values.entryDate===perthDate,422,'ENTRY_DATE_MISMATCH','The proposed entry date must match the inspection booking in Perth local time.');
+  }
+ }
  const id=uid('waf'),time=now();
  await env.DB.batch([
-  statement(env.DB,"INSERT INTO wa_residential_form_cases(id,tenancy_id,property_id,form_code,form_stage,initiator_id,initiator_kind,data_envelope,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+  statement(env.DB,"INSERT INTO wa_residential_form_cases(id,tenancy_id,property_id,form_code,form_stage,initiator_id,initiator_kind,data_envelope,created_at,updated_at,booking_id,notice_purpose,notice_booking_starts_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
     id,t.id,t.property_id,f.code,f.stage,user.id,w.kind==='tenant'?'tenant':'manager',
-    await seal(env.DATA_ENCRYPTION_KEY,`wa-form:${id}`,{answers:values,notes:q.notes??''}),time,time),
+    await seal(env.DATA_ENCRYPTION_KEY,`wa-form:${id}`,{answers:values,notes:q.notes??''}),time,time,
+    booking?.id??null,noticePurpose,booking?.starts_at??null),
   statement(env.DB,'INSERT INTO wa_residential_form_events(id,case_id,actor_id,action,created_at) VALUES(?,?,?,?,?)',uid('wfe'),id,user.id,'draft_created',time),
   activity(env,user,'wa_form.draft_created','wa_form',id,t.property_id,null,{formCode:f.code}),
  ]);
@@ -111,6 +140,19 @@ export async function waRecordDelivery(env:Env,user:Principal,w:Workspace,id:str
    c.status==='document_issued'||c.status==='service_evidence_recorded',
    409,'OFFICIAL_DOCUMENT_REQUIRED','An approved, issued official document must exist before recording delivery.',
  );
+ if(c.form_code==='WA_FORM_19'&&q.outcome==='delivered'){
+  assert(!c.notice_invalidated_at,409,'ENTRY_NOTICE_STALE','A changed booking invalidated this entry notice.');
+  assert(c.booking_id && c.notice_booking_starts_at && c.notice_purpose,
+     409,'ENTRY_BOOKING_REQUIRED','A confirmed, matching booking is required for the entry notice.');
+  const current=await statement(env.DB,
+   "SELECT starts_at FROM bookings WHERE id=? AND property_id=? AND status='confirmed'",
+   c.booking_id,t.property_id).first<{starts_at:string}>();
+  assert(current?.starts_at===c.notice_booking_starts_at,409,'ENTRY_NOTICE_STALE',
+    'Booking time changed; issue a reviewed replacement notice.');
+  const check=entryNoticeAdvisory(c.notice_purpose,q.deliveryAt,current.starts_at);
+  assert(check.withinPublishedWindow,409,'ENTRY_NOTICE_TIMING_REVIEW',
+    'The published entry window is not satisfied. Review and reissue an appropriate notice.');
+ }
  const deliveredAt=new Date(q.deliveryAt).toISOString();
  assert(new Date(deliveredAt).getTime()<=Date.now()+60000,422,'INVALID_DELIVERY_DATE','Future delivery cannot be recorded as completed.');
  const did=uid('wad');
