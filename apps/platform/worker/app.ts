@@ -5,6 +5,7 @@ import { handleApi } from './api';
 import { consumeQueue, dispatchOutbox } from '../../../packages/notifications/server';
 import { dispatchNotices } from '../../../packages/notifications/notices';
 import { dispatchIntegrations } from './features/integrations.server';
+import { dispatchBondAlerts } from './features/bond-alerts.server';
 import { shouldIndexPublicPage } from '../app/lib/public-routes';
 export { BookingScheduler } from './scheduler';
 export { BookingCoordinator } from './legacy-booking-coordinator';
@@ -39,6 +40,7 @@ export default {
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(dispatchNotices(env).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchIntegrations(env));
+    ctx.waitUntil(dispatchBondAlerts(env).then(() => dispatchOutbox(env)));
   },
   async queue(batch: MessageBatch<{ eventId: string }>, env: Env) { await consumeQueue(batch, env); },
 } satisfies ExportedHandler<Env, { eventId: string }>;
