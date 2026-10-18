@@ -24,6 +24,7 @@ CREATE TABLE bond_parties (
  user_id TEXT REFERENCES users(id), role TEXT NOT NULL CHECK(role IN('tenant','landlord','agent','estate')),
  name_envelope TEXT NOT NULL,
  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN('pending','confirmed','former')),
+ external_reference TEXT, government_document_id TEXT REFERENCES documents(id),
  effective_at TEXT NOT NULL, ended_at TEXT,
  created_at TEXT NOT NULL
 ) STRICT;
