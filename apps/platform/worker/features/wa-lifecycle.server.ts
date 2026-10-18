@@ -3,7 +3,7 @@ import { assert, now, statement, uid, type Env } from '../../../../packages/data
 import type { Principal, Workspace } from '../../../../packages/domain/index';
 import { seal, unseal } from '../../../../packages/auth/crypto';
 import { boundedFile, recordId, reference, version, activity, guard, clearGuard } from '../../../../packages/operations/core';
-import { operationsWrite } from '../../../../packages/authorization/server';
+import { operationsWrite, administrator } from '../../../../packages/authorization/server';
 import { mailEvent } from '../../../../packages/notifications/server';
 import { waForm } from '../../../../packages/wa-residential/forms';
 import { responseDeadline, WA_ADVISORY_RULE_VERSION } from '../../../../packages/wa-residential/rules';
@@ -246,11 +246,42 @@ export async function waTenantAnswer(env:Env,user:Principal,w:Workspace,id:strin
  ]);
  return {id,responseId,decision,recorded:true,statutoryConsentConfirmed:false};
 }
+/**
+ * Second-person release review: the uploader cannot approve their own PDF.
+ * Approval is a technical control over use of the master; external legal
+ * validity of the template, version and field mapping still needs counsel.
+ */
+export async function waApproveTemplate(env:Env,user:Principal,w:Workspace,formCode:string,input:unknown){
+ assert(w.kind==='staff',403,'STAFF_REQUIRED','Only authorised Staff can approve WA template masters.');
+ administrator(user);
+ const q=z.object({templateVersion:z.string().trim().min(4).max(80),reviewReference:reference}).parse(input);
+ assert(waForm(formCode),422,'FORM_UNAVAILABLE','Unknown residential form code.');
+ const row=await statement(env.DB,
+  'SELECT reviewed_by,object_key,official_sha256,file_size,release_approved_at FROM wa_residential_form_templates WHERE form_code=? AND version=? AND retired_at IS NULL',
+  formCode,q.templateVersion).first<{reviewed_by:string;object_key:string|null;official_sha256:string;file_size:number|null;release_approved_at:string|null}>();
+ assert(row&&row.object_key,404,'TEMPLATE_UNAVAILABLE','Upload an official PDF before review.');
+ assert(row.reviewed_by!==user.id,403,'SECOND_REVIEWER_REQUIRED','A separate administrator must approve a template uploaded by another Staff reviewer.');
+ assert(!row.release_approved_at,409,'TEMPLATE_ALREADY_APPROVED','The official template version is already approved for application use.');
+ const file=await env.DOCUMENTS.head(row.object_key);
+ assert(file && file.size===row.file_size && file.customMetadata?.sha256===row.official_sha256,
+  409,'TEMPLATE_INTEGRITY','The retained PDF does not match its recorded official digest and size.');
+ await env.DB.batch([
+  statement(env.DB,
+   'UPDATE wa_residential_form_templates SET release_approved_at=?,release_approved_by=?,release_review_reference=? WHERE form_code=? AND version=? AND retired_at IS NULL AND release_approved_at IS NULL',
+    now(),user.id,q.reviewReference,formCode,q.templateVersion),
+  statement(env.DB,'INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?,?,?,?,?,?)',
+   uid('aud'),user.id,'wa_template.release_approved','wa_template',formCode,
+   JSON.stringify({templateVersion:q.templateVersion}),now()),
+ ]);
+ return {formCode,version:q.templateVersion,releaseApproved:true,
+   independentlyReviewed:true,legalCertificationProvided:false};
+}
 export async function waTemplatesData(env:Env,user:Principal,w:Workspace){
  assert(w.kind==='staff',403,'STAFF_REQUIRED','Only authorised Staff can manage the master official forms library.');
  operationsWrite(user);
  const rows=await statement(env.DB,`SELECT form_code,version,official_source_url,official_sha256,
-    legal_review_reference,approved_at,retired_at,file_size
+    legal_review_reference,approved_at,retired_at,file_size,reviewed_by,
+    release_approved_at,release_approved_by,release_review_reference
     FROM wa_residential_form_templates WHERE object_key IS NOT NULL
     ORDER BY form_code,approved_at DESC LIMIT 300`).all();
  return {templates:rows.results,authoritativeSourceOnly:true};
