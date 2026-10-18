@@ -115,7 +115,7 @@ export function formValues(form: FormData) {
     if (numberFields.has(key)) data[key] = Number(value);
     else if (boolFields.has(key)) data[key] = value === 'true' || value === 'on';
     else if (
-      ['startsAt', 'endsAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'paidAt', 'receivedAt', 'responseDueAt', 'decisionAt', 'appealDueAt'].includes(key)
+      ['startsAt', 'endsAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'paidAt', 'receivedAt', 'responseDueAt', 'decisionAt', 'appealDueAt', 'effectiveAt'].includes(key)
     )
       data[key] = new Date(String(value)).toISOString();
     else if (key === 'propertyIds')
