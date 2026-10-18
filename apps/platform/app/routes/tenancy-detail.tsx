@@ -146,6 +146,14 @@ export default function TenancyDetail() {
             </OperationForm>
           )}
         </Panel>
+        {d.properties.some((property: any) => property.id === t.property_id && property.sector === 'residential') && (
+          <Panel title="WA Residential Statutory Forms" description="Guided residential-only official form intake, review, deadlines and document evidence. Commercial tenancies are excluded.">
+            <Link className="button" to={`${w.href}/tenancies/${t.id}/wa-forms`}>
+              Open WA Residential Forms Centre
+            </Link>
+            <p className="small">Preparation and review are not legally effective service or government lodgement. Follow the official instructions for every document.</p>
+          </Panel>
+        )}
         <Panel
           title="Forms and bond coordination"
           description="This workflow collects instructions and tracks reviewed official documents. It does not generate a substitute prescribed form, lodge a bond, terminate a tenancy or serve a notice automatically."
