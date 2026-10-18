@@ -107,6 +107,10 @@ export async function waRecordDelivery(env:Env,user:Principal,w:Workspace,id:str
    recipientReference:reference,deliveryMethod:z.enum(['in_person','post','email','government_portal','other']),
    deliveryAt:z.string().datetime({offset:true}),evidenceReference:reference,
    outcome:z.enum(['attempted','delivered','rejected','unconfirmed'])}).parse(input);
+ if (q.outcome==='delivered') assert(
+   c.status==='document_issued'||c.status==='service_evidence_recorded',
+   409,'OFFICIAL_DOCUMENT_REQUIRED','An approved, issued official document must exist before recording delivery.',
+ );
  const deliveredAt=new Date(q.deliveryAt).toISOString();
  assert(new Date(deliveredAt).getTime()<=Date.now()+60000,422,'INVALID_DELIVERY_DATE','Future delivery cannot be recorded as completed.');
  const did=uid('wad');
@@ -154,10 +158,17 @@ export async function waLinkIssuedDocument(env:Env,user:Principal,w:Workspace,id
  'SELECT form_code FROM wa_residential_form_templates WHERE form_code=? AND version=? AND retired_at IS NULL',
  c.form_code,q.templateVersion).first();
  assert(template,422,'OFFICIAL_TEMPLATE_NOT_APPROVED','The official document version has not been approved for use.');
+ const verified = await statement(env.DB,
+  'SELECT object_key FROM wa_residential_form_templates WHERE form_code=? AND version=? AND retired_at IS NULL AND object_key IS NOT NULL',
+  c.form_code,q.templateVersion).first<{object_key:string}>();
+ assert(verified && await env.DOCUMENTS.head(verified.object_key),422,'TEMPLATE_BYTES_REQUIRED',
+ 'The official source file must be uploaded, independently reviewed and retained before this template can issue.');
  const doc=await statement(env.DB,
- "SELECT d.id FROM documents d JOIN document_grants g ON g.document_id=d.id AND g.recipient_kind='tenancy' AND g.recipient_id=? WHERE d.id=? AND d.property_id=? AND d.tenancy_id=? AND d.status='issued'",
+ "SELECT d.id,d.category FROM documents d JOIN document_grants g ON g.document_id=d.id AND g.recipient_kind='tenancy' AND g.recipient_id=? WHERE d.id=? AND d.property_id=? AND d.tenancy_id=? AND d.status='issued'",
  t.id,q.documentId,t.property_id,t.id).first();
  assert(doc,422,'OFFICIAL_DOCUMENT_REQUIRED','Only an issued tenancy-specific PDF with an explicit tenancy grant can be linked.');
+ if (c.form_code==='WA_FORM_1') assert((doc as {category:string}).category==='property_condition_report',
+   422,'PCR_REPORT_REQUIRED','Form 1 must link an issued property condition report.');
  await env.DB.batch([
   statement(env.DB,"UPDATE wa_residential_form_cases SET status='document_issued',template_version=?,issued_document_id=?,external_reference=?,version=version+1,updated_at=? WHERE id=? AND status='approved'",
    q.templateVersion,q.documentId,q.reference,now(),id),
@@ -169,3 +180,5 @@ export async function waLinkIssuedDocument(env:Env,user:Principal,w:Workspace,id
  ]);
  return {id,status:'document_issued',documentId:q.documentId,legalServiceConfirmed:false};
 }
+
+export { scope as waResidentialScope, entry as waResidentialCase };
