@@ -214,8 +214,12 @@ export async function featureApi(
     return ok(await finance.recordPayment(env, user, w, id, await body()));
   if (area === 'payments' && id && action === 'checkout')
     return ok(await finance.checkout(env, user, w, id));
+  if (tail === 'wa-form-templates')
+    return ok(await waResidential.waRegisterTemplate(env,user,w,await body()));
   if (tail === 'wa-forms')
     return ok(await waResidential.waCreateForm(env,user,w,await body()));
+  if (area === 'wa-forms' && id && action === 'issue')
+    return ok(await waResidential.waLinkIssuedDocument(env,user,w,id,await body()));
   if (area === 'wa-forms' && id && action === 'delivery')
     return ok(await waResidential.waRecordDelivery(env,user,w,id,await body()));
   if (area === 'wa-forms' && id && parts.length === 2)
