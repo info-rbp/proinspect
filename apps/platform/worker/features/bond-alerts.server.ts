@@ -18,6 +18,16 @@ export async function dispatchBondAlerts(env:Env) {
  JOIN client_memberships cm ON cm.client_id=c.id AND cm.active=1 AND cm.role IN ('owner','admin')
  JOIN users u ON u.id=cm.user_id AND u.active=1
  WHERE d.completed_at IS NULL AND d.due_at<=?
+ AND (
+   d.source='receipt'
+   OR (d.source='government_notice' AND EXISTS (
+      SELECT 1 FROM bond_notices n JOIN bond_external_verifications v
+      ON v.bond_id=n.bond_id AND v.document_id=n.document_id
+        AND v.external_reference=n.government_reference AND v.result='verified'
+      WHERE n.bond_id=d.bond_id AND n.transaction_id=d.transaction_id
+        AND n.response_due_at=d.due_at
+   ))
+ )
  ORDER BY d.due_at LIMIT 75
  `,instant,instant,soon).all<{
  id:string;kind:string;due_at:string;tenancy_id:string;property_id:string;
