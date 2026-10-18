@@ -119,3 +119,53 @@ export async function waRecordDelivery(env:Env,user:Principal,w:Workspace,id:str
  ]);
  return {id:did,outcome:q.outcome,legalServiceConfirmed:false};
 }
+
+/**
+ * Register a separately approved official source. This records provenance;
+ * it does not assert that ProInspect has generated or altered a prescribed form.
+ */
+export async function waRegisterTemplate(env:Env,user:Principal,w:Workspace,input:unknown){
+ assert(w.kind==='staff',403,'STAFF_REVIEW_REQUIRED','Only authorised Staff can register a legally reviewed official template.');
+ operationsWrite(user);
+ const q=z.object({formCode:z.string().max(64),templateVersion:z.string().min(4).max(80),
+   officialSourceUrl:z.string().url(),sha256:z.string().regex(/^[a-f0-9]{64}$/i),
+   legalReviewReference:reference}).parse(input);
+ assert(waForm(q.formCode),422,'FORM_UNAVAILABLE','The selected form is not in the approved residential catalogue.');
+ const url=new URL(q.officialSourceUrl);
+ assert(url.protocol==='https:' && (url.hostname==='www.consumerprotection.wa.gov.au'||url.hostname==='consumerprotection.wa.gov.au'),422,
+   'OFFICIAL_SOURCE_REQUIRED','Official forms must come from the WA Consumer Protection source.');
+ await statement(env.DB,
+ 'INSERT INTO wa_residential_form_templates(form_code,version,official_source_url,official_sha256,reviewed_by,legal_review_reference,approved_at) VALUES(?,?,?,?,?,?,?)',
+ q.formCode,q.templateVersion,q.officialSourceUrl,q.sha256.toLowerCase(),user.id,q.legalReviewReference,now()).run();
+ return {formCode:q.formCode,version:q.templateVersion};
+}
+/**
+ * Connect a separately reviewed, already-issued official PDF with an approved
+ * template version and a grant to the correct tenancy. Does NOT mark legal
+ * service completed; that requires distinct evidence.
+ */
+export async function waLinkIssuedDocument(env:Env,user:Principal,w:Workspace,id:string,input:unknown){
+ assert(w.kind==='staff',403,'STAFF_REVIEW_REQUIRED','Only authorised Staff can link official issued documents.');
+ operationsWrite(user);
+ const {c,t}=await entry(env,user,w,id);
+ assert(c.status==='approved',409,'FORM_NOT_APPROVED','Staff must review the form instructions first.');
+ const q=z.object({documentId:recordId,templateVersion:z.string().min(4).max(80),reference}).parse(input);
+ const template=await statement(env.DB,
+ 'SELECT form_code FROM wa_residential_form_templates WHERE form_code=? AND version=? AND retired_at IS NULL',
+ c.form_code,q.templateVersion).first();
+ assert(template,422,'OFFICIAL_TEMPLATE_NOT_APPROVED','The official document version has not been approved for use.');
+ const doc=await statement(env.DB,
+ "SELECT d.id FROM documents d JOIN document_grants g ON g.document_id=d.id AND g.recipient_kind='tenancy' AND g.recipient_id=? WHERE d.id=? AND d.property_id=? AND d.tenancy_id=? AND d.status='issued'",
+ t.id,q.documentId,t.property_id,t.id).first();
+ assert(doc,422,'OFFICIAL_DOCUMENT_REQUIRED','Only an issued tenancy-specific PDF with an explicit tenancy grant can be linked.');
+ await env.DB.batch([
+  statement(env.DB,"UPDATE wa_residential_form_cases SET status='document_issued',template_version=?,issued_document_id=?,external_reference=?,version=version+1,updated_at=? WHERE id=? AND status='approved'",
+   q.templateVersion,q.documentId,q.reference,now(),id),
+  guard(env),
+  statement(env.DB,'INSERT INTO wa_residential_form_events(id,case_id,actor_id,action,reference,created_at) VALUES(?,?,?,?,?,?)',
+   uid('wfe'),id,user.id,'official_document_issued',q.reference,now()),
+  activity(env,user,'wa_form.official_document_issued','wa_form',id,t.property_id,null,{formCode:c.form_code,documentId:q.documentId}),
+  clearGuard(env),
+ ]);
+ return {id,status:'document_issued',documentId:q.documentId,legalServiceConfirmed:false};
+}
