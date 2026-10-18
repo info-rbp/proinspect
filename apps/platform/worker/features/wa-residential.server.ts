@@ -221,9 +221,9 @@ export async function waLinkIssuedDocument(env:Env,user:Principal,w:Workspace,id
 
  const q=z.object({documentId:recordId,templateVersion:z.string().min(4).max(80),reference}).parse(input);
  const template=await statement(env.DB,
- 'SELECT form_code FROM wa_residential_form_templates WHERE form_code=? AND version=? AND retired_at IS NULL',
+ 'SELECT form_code FROM wa_residential_form_templates WHERE form_code=? AND version=? AND retired_at IS NULL AND release_approved_at IS NOT NULL AND release_approved_by IS NOT NULL',
  c.form_code,q.templateVersion).first();
- assert(template,422,'OFFICIAL_TEMPLATE_NOT_APPROVED','The official document version has not been approved for use.');
+ assert(template,422,'OFFICIAL_TEMPLATE_NOT_APPROVED','An independent administrator must release-approve the verified official PDF before use.');
  const verified = await statement(env.DB,
   'SELECT object_key FROM wa_residential_form_templates WHERE form_code=? AND version=? AND retired_at IS NULL AND object_key IS NOT NULL',
   c.form_code,q.templateVersion).first<{object_key:string}>();
