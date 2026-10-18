@@ -66,7 +66,7 @@ export default function TenancyBonds(){
    </Panel>}
    <Panel title="Start a bond workflow" description="Select an applicable official process. New drafts are not sent to government automatically.">
     <OperationForm endpoint={`${base}/bonds/${b.id}/transactions`} label="Create bond workflow">
-     <Select name="code" label="Workflow" options={Object.entries(workflowNames).filter(([c])=>canManage||['B13','B16','B17','B18','B20'].includes(c)).map(([value,label])=>({value,label}))}/>
+     <Select name="code" label="Workflow" options={Object.entries(workflowNames).filter(([c])=>!['B20','B23'].includes(c)&&(canManage||['B13','B16','B17','B18'].includes(c))).map(([value,label])=>({value,label}))}/>
      <TextArea name="details" label="Instructions, context and evidence required"/>
      <Input name="generalDeltaCents" label="Proposed general bond change in cents (+ or -)" type="number" required={false}/>
      <Input name="petDeltaCents" label="Proposed pet bond change in cents (+ or -)" type="number" required={false}/>
@@ -77,13 +77,14 @@ export default function TenancyBonds(){
    </Panel>}
    {b.transactions.map(tx=><Panel key={tx.id} title={workflowNames[tx.code]||tx.code} description={tx.details}>
     <p><Badge status={tx.status}/> · Recorded external reference: {tx.externalReference||'None'} · General change: {money(tx.generalDeltaCents)} · Pet change: {money(tx.petDeltaCents)}</p>
-    {canManage&&tx.status==='draft'&&<OperationForm endpoint={`${base}/bonds/${b.id}/transactions/${tx.id}/status`} defaults={{version:tx.version,status:'submitted'}} label="Record external submission">
-     <Select name="channel" label="Actual submission channel" options={choices(['manual','bondsonline','ecourts','other'])}/>
+    {(canManage||(w.kind==='tenant'&&tx.code==='B13'))&&tx.status==='draft'&&<OperationForm endpoint={`${base}/bonds/${b.id}/transactions/${tx.id}/status`} defaults={{version:tx.version,status:'submitted'}} label="Record external submission">
+     <Select name="channel" label="Actual submission channel" options={choices(canManage?['manual','bondsonline','ecourts','other']:['manual'])}/>
      <Input name="externalReference" label="Actual application/submission reference"/>
     </OperationForm>}
     {canManage&&tx.status==='submitted'&&<>
       <OperationForm endpoint={`${base}/bonds/${b.id}/transactions/${tx.id}/status`} defaults={{version:tx.version,status:'confirmed'}} label="Record verified government confirmation">
        <Input name="confirmationDocumentId" label="Issued government confirmation document ID" help="Upload and issue the government record to the correct tenancy first."/>
+       {tx.code==='B01'&&<Input name="governmentBondReference" label="Confirmed official bond number"/>}
       </OperationForm>
       <OperationForm endpoint={`${base}/bonds/${b.id}/transactions/${tx.id}/status`} defaults={{version:tx.version,status:'rejected'}} label="Record external rejection">
        <p className="small">Only use this after the government has rejected the transaction.</p>
