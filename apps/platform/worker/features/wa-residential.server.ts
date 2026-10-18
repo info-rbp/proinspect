@@ -6,6 +6,7 @@ import { recordId,version,reference,activity,guard,clearGuard } from '../../../.
 import { tenancyAccess } from './tenancies.server';
 import { waAvailableForms,waForm,OFFICIAL_WA_FORMS_URL } from '../../../../packages/wa-residential/forms';
 import { operationsWrite, documentAllowed } from '../../../../packages/authorization/server';
+import { mailEvent } from '../../../../packages/notifications/server';
 import { entryNoticeAdvisory } from '../../../../packages/wa-residential/rules';
 import { waIssueReadiness } from './wa-review-gates.server';
 
@@ -128,12 +129,47 @@ export async function waUpdateForm(env:Env,user:Principal,w:Workspace,id:string,
    operationsWrite(user);
    assert(q.reviewReference,422,'REVIEW_REFERENCE_REQUIRED','Record the actual review decision and supporting reference.');
  }
+
+ // A statutory form submission is an operational event, not service of a
+ // statutory notice. Notify only the current manager's active authorised
+ // owner/admin users; do not put private answers or even the form code in mail.
+ const managerNotice: ReturnType<typeof statement>[] = [];
+ if(q.status==='submitted'&&w.kind==='tenant'){
+  const managers=(await statement(env.DB,`
+   SELECT DISTINCT u.id,u.email,e.workspace_kind,pm.manager_client_id
+   FROM property_management_relationships pm
+   JOIN clients c ON c.id=pm.manager_client_id AND c.status='active'
+   JOIN client_entitlements e ON e.client_id=c.id AND e.active=1
+     AND e.workspace_kind IN('landlord','property-manager')
+   JOIN client_memberships m ON m.client_id=c.id AND m.active=1 AND m.role IN('owner','admin')
+   JOIN users u ON u.id=m.user_id AND u.active=1
+   WHERE pm.property_id=? AND pm.ends_at IS NULL
+   LIMIT 20`,t.property_id).all<{
+    id:string;email:string;workspace_kind:string;manager_client_id:string;
+   }>()).results;
+  for(const to of managers){
+   const idempotent=`wa_new_${c.id}_${to.id}`;
+   const href=`/w/${to.workspace_kind}/${to.manager_client_id}/tenancies/${t.id}/wa-forms/${c.id}`;
+   managerNotice.push(statement(env.DB,
+    'INSERT OR IGNORE INTO notifications(id,user_id,title,message,href,created_at) VALUES(?,?,?,?,?,?)',
+    idempotent,to.id,'Residential tenancy form requires review',
+    'An authorised tenancy document request has been submitted. Review it through your Landlord workspace.',
+    href,now()));
+   managerNotice.push(await mailEvent(env,'wa_form.review_required',{
+    to:to.email,subject:'Residential tenancy request awaiting review',
+    heading:'Tenancy form review required',
+    body:'An authorised tenancy form request has been submitted. Sign in to review its details and next steps.',
+    href:env.APP_ORIGIN+href,sensitive:true,
+   },idempotent));
+  }
+ }
  await env.DB.batch([
   statement(env.DB,'UPDATE wa_residential_form_cases SET status=?,version=version+1,reviewed_by=CASE WHEN ? THEN ? ELSE reviewed_by END,review_reference=COALESCE(?,review_reference),updated_at=? WHERE id=? AND version=?',
    q.status,q.status==='approved'?1:0,user.id,q.reviewReference??null,now(),id,q.version),
   guard(env),
   statement(env.DB,'INSERT INTO wa_residential_form_events(id,case_id,actor_id,action,reference,created_at) VALUES(?,?,?,?,?,?)',uid('wfe'),id,user.id,q.status,q.reviewReference??null,now()),
   activity(env,user,'wa_form.status_changed','wa_form',id,t.property_id,null,{status:q.status}),
+  ...managerNotice,
   clearGuard(env),
  ]);
  return {id,status:q.status};
