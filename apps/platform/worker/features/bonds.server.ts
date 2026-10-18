@@ -4,6 +4,7 @@ import type { Principal, Workspace } from '../../../../packages/domain/index';
 import { activity, dateOnly, isoDate, recordId, reference, replay, receipt, version } from '../../../../packages/operations/core';
 import { seal, unseal } from '../../../../packages/auth/crypto';
 import { tenancyAccess } from './tenancies.server';
+import { WA_BOND_RULES, waResidentialBondLimit, type BondWorkflowCode } from '../../../../packages/validation/wa-bonds';
 
 const cents = z.number().int().min(0).max(100000000);
 const workflowCodes = ['B01','B02','B03','B04','B05','B06','B07','B08','B09',
@@ -22,7 +23,7 @@ const receiptSchema = z.object({kind:z.enum(['general','pet']),amountCents:cents
   paidAt:isoDate,payer:z.string().min(2).max(180),paymentReference:reference,requestKey:recordId});
 const confirmSchema = z.object({version,status:z.enum(['submitted','confirmed','rejected','cancelled']),
   channel:governmentChannels.optional(),externalReference:reference.optional(),
-  confirmationDocumentId:recordId.optional(),governmentBondReference:reference.optional(),requestKey:recordId});
+  confirmationDocumentId:recordId.optional(),governmentBondReference:reference.optional(),agentManualExceptionReference:reference.optional(),requestKey:recordId});
 const claimSchema = z.object({category:claimCategories,amountCents:cents.positive(),
   explanation:z.string().min(5).max(3500),evidenceDocumentId:recordId.optional(),requestKey:recordId});
 const noticeSchema = z.object({kind:z.enum(['release_application','invitation_to_submit','commissioner_decision','appeal','variation','other']),
@@ -34,11 +35,11 @@ const caseSchema = z.object({status:z.enum(['notice_received','responded','refer
 const evidenceSchema = z.object({documentId:recordId,category:z.enum(['lodgement','variation','release','claim','notice','dispute','court','government_confirmation','other']),
   transactionId:recordId.optional(),requestKey:recordId});
 
-function event(env:Env,user:Principal,bondId:string,action:string,transactionId:string|null=null,metadata:Record<string,unknown>={}) {
+export function event(env:Env,user:Principal,bondId:string,action:string,transactionId:string|null=null,metadata:Record<string,unknown>={}) {
  return statement(env.DB,'INSERT INTO bond_events(id,bond_id,transaction_id,actor_id,action,metadata_json,created_at) VALUES(?,?,?,?,?,?,?)',
  uid('be'),bondId,transactionId,user.id,action,JSON.stringify(metadata),now());
 }
-async function authorized(env:Env,user:Principal,w:Workspace,bondId:string,write=false){
+export async function authorized(env:Env,user:Principal,w:Workspace,bondId:string,write=false){
  const bond=await statement(env.DB,'SELECT * FROM bonds WHERE id=?',bondId).first<Record<string,any>>();
  assert(bond,404,'BOND_NOT_FOUND','Bond not found.');
  const tenancy=await tenancyAccess(env,user,w,bond.tenancy_id,write&&w.kind!=='tenant');
@@ -51,12 +52,12 @@ async function authorized(env:Env,user:Principal,w:Workspace,bondId:string,write
    assert(false,403,'BOND_MANAGER_REQUIRED','This bond action requires the landlord or manager.');
  return bond;
 }
-async function document(env:Env,bond:Record<string,any>,documentId:string) {
+export async function document(env:Env,bond:Record<string,any>,documentId:string) {
  const d=await statement(env.DB,"SELECT id FROM documents WHERE id=? AND property_id=? AND tenancy_id=? AND status='issued'",
  documentId,bond.property_id,bond.tenancy_id).first();
  assert(d,422,'BOND_DOCUMENT_INVALID','Attach an issued document belonging to this tenancy.');
 }
-async function mutation(env:Env,user:Principal,action:string,key:string,payload:unknown,commands:ReturnType<typeof statement>[],result:unknown){
+export async function mutation(env:Env,user:Principal,action:string,key:string,payload:unknown,commands:ReturnType<typeof statement>[],result:unknown){
  const r=await replay(env,user,action,key,payload);
  if(r.result) return r.result;
  await env.DB.batch([...commands,receipt(env,user,action,key,r.fingerprint,result)]);
@@ -67,6 +68,7 @@ export async function createBond(env:Env,user:Principal,w:Workspace,input:unknow
  const t=await tenancyAccess(env,user,w,d.tenancyId,true);
  const p=await statement(env.DB,'SELECT sector FROM properties WHERE id=?',t.property_id).first<{sector:string}>();
  assert(p?.sector==='residential',422,'BOND_RESIDENTIAL_ONLY','Use the residential tenancy workflow.');
+ assert(!waResidentialBondLimit(d.weeklyRentCents,d.generalCents,d.petCents).length,422,'BOND_AMOUNT_CAP',waResidentialBondLimit(d.weeklyRentCents,d.generalCents,d.petCents).join(' '));
  const existing=await statement(env.DB,'SELECT id FROM bonds WHERE tenancy_id=?',d.tenancyId).first<{id:string}>();
  if(existing)return {bondId:existing.id};
  const id=uid('bond'),time=now(),answer={bondId:id};
@@ -89,7 +91,7 @@ export async function getBond(env:Env,user:Principal,w:Workspace,id:string){
  const isTenant=w.kind==='tenant';
  const transactions=await Promise.all(rows.map(async t=>({
   id:t.id,code:t.code,status:t.status,generalDeltaCents:t.general_delta_cents,petDeltaCents:t.pet_delta_cents,
-  details:(await unseal<{details:string}>(env.DATA_ENCRYPTION_KEY,`bond-tx:${t.id}`,t.details_envelope)).details,
+  details:isTenant&&['B09','B19'].includes(t.code)?'Restricted estate process':(await unseal<{details:string}>(env.DATA_ENCRYPTION_KEY,`bond-tx:${t.id}`,t.details_envelope)).details,
   createdAt:t.created_at,submittedAt:t.submitted_at,confirmedAt:t.confirmed_at,
   externalReference:t.external_reference,version:t.version,
   channel:t.channel,
@@ -100,21 +102,46 @@ export async function getBond(env:Env,user:Principal,w:Workspace,id:string){
  const notices=(await statement(env.DB,'SELECT id,kind,government_reference,received_at,response_due_at FROM bond_notices WHERE bond_id=? ORDER BY received_at',id).all()).results;
  const deadlines=(await statement(env.DB,'SELECT id,kind,source,due_at,completed_at FROM bond_deadlines WHERE bond_id=? ORDER BY due_at',id).all()).results;
  const claims=(await statement(env.DB,'SELECT id,transaction_id,category,amount_cents,evidence_document_id FROM bond_claims WHERE bond_id=?',id).all()).results;
+ const allocations=(await statement(env.DB,"SELECT a.id,a.transaction_id,a.recipient_kind,a.party_id,a.target_bond_id,a.general_cents,a.pet_cents FROM bond_allocations a WHERE a.bond_id=? ORDER BY a.created_at",id).all<Record<string,any>>()).results;
+ const contributions=(await statement(env.DB,"SELECT party_id,receipt_id,amount_cents FROM bond_contributions WHERE bond_id=? ORDER BY created_at",id).all<Record<string,any>>()).results;
+ const worksheets=(await statement(env.DB,'SELECT transaction_id,official_form,policy_version FROM bond_preparations WHERE bond_id=?',id).all()).results;
+ const verification=(await statement(env.DB,"SELECT transaction_id,document_id,external_reference,result,reviewed_at FROM bond_external_verifications WHERE bond_id=? ORDER BY reviewed_at",id).all()).results;
+ const reconciliations=(await statement(env.DB,'SELECT transaction_id,government_reference,general_cents,pet_cents,outcome,created_at FROM bond_payout_reconciliations WHERE bond_id=?',id).all()).results;
+ const exceptions=(await statement(env.DB,'SELECT id,kind,status,created_at FROM bond_exception_cases WHERE bond_id=?',id).all()).results;
  return {id:b.id,tenancyId:b.tenancy_id,propertyId:b.property_id,status:b.status,
   bondReference:b.bond_reference,generalCents:b.general_cents,petCents:b.pet_cents,
   heldGeneralCents:b.held_general_cents,heldPetCents:b.held_pet_cents,weeklyRentCents:b.weekly_rent_cents,
   version:b.version,transactions,participants,receipts,cases,notices,deadlines,claims,
+  allocations:isTenant?allocations.map(a=>({...a,party_id:null,target_bond_id:null})):allocations,
+  contributions:isTenant?[]:contributions,worksheets,verification,reconciliations,
+  exceptions:isTenant?[]:exceptions,workflowRules:WA_BOND_RULES,
   governmentSubmission:'external_only',roles:{canManage:!isTenant,canApplyRelease:true},
   guidance:'ProInspect coordinates records; only government confirmation establishes an official bond outcome.'};
 }
 export async function createTransaction(env:Env,user:Principal,w:Workspace,bondId:string,input:unknown){
  const d=txSchema.parse(input),b=await authorized(env,user,w,bondId);
+ assert(d.code!=='B09'&&d.code!=='B19',403,'BOND_ESTATE_RESTRICTED','Estate matters require confidential exception caseworker review, not ordinary bond transaction details.');
  assert(d.code!=='B20',403,'BOND_CONFIDENTIAL_RESTRICTED','Family-violence bond workflows must use the separately protected case process; ordinary bond records are not a safe intake.');
  assert(d.code!=='B23',422,'BOND_LEGACY_RECORD_ONLY','Legacy disposal documents are historical; new applications use the current release form.');
  const tenant=w.kind==='tenant';
- assert(!tenant||['B13','B16','B17','B18','B20'].includes(d.code),403,'BOND_ACTION_FORBIDDEN','This transaction requires the managing party.');
+ assert(!tenant||['B13','B16','B17','B18'].includes(d.code),403,'BOND_ACTION_FORBIDDEN','This transaction requires the managing party.');
  assert(b.status!=='released',409,'BOND_CLOSED','Released bonds cannot be modified.');
  if(d.code==='B01')assert(b.status==='draft'||b.status==='awaiting_lodgement',409,'BOND_LODGEMENT_STATE','Initial lodgement can only start once.');
+ if(d.code==='B01')assert(d.generalDeltaCents===0&&d.petDeltaCents===0,422,'BOND_INITIAL_AMOUNT','Initial lodgement is derived from the registered bond and recorded payments.');
+ if(['B04','B05','B06','B07','B08','B16','B17','B18','B21','B22'].includes(d.code))
+   assert(d.generalDeltaCents===0&&d.petDeltaCents===0,422,'BOND_NON_FINANCIAL_AMOUNT','Administrative workflows cannot change the financial balance.');
+ if(['B02','B03'].includes(d.code)){
+   assert(d.generalDeltaCents>=0&&d.petDeltaCents>=0&&d.generalDeltaCents+d.petDeltaCents>0,
+    422,'BOND_TOPUP_AMOUNT','Top-ups must be positive.');
+   assert(d.code==='B02'?d.petDeltaCents===0:d.generalDeltaCents===0,422,'BOND_TOPUP_CATEGORY','Choose the correct general or pet bond category.');
+   assert(d.code!=='B03'||b.pet_cents+d.petDeltaCents<=35000,422,'BOND_PET_CAP','Residential pet bonds cannot exceed $350.');
+ }
+ if(['B10','B11','B12','B13','B14','B15'].includes(d.code)){
+   assert(d.generalDeltaCents<=0&&d.petDeltaCents<=0&&d.generalDeltaCents+d.petDeltaCents<0,
+    422,'BOND_RELEASE_AMOUNT','A release needs a negative general or pet amount.');
+   assert(-d.generalDeltaCents<=b.held_general_cents&&-d.petDeltaCents<=b.held_pet_cents,
+    422,'BOND_RELEASE_BALANCE','Release cannot exceed the confirmed bond.');
+ }
  const changes=['B02','B03','B10'].includes(d.code);
  if(changes)assert(b.status==='active',409,'BOND_NOT_ACTIVE','The bond must be active for this transaction.');
  const id=uid('btx'),time=now(),payload={bondId,transactionId:id};
