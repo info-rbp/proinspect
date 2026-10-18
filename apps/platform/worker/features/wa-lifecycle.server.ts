@@ -138,6 +138,9 @@ export async function waSignatureEvidence(env:Env,user:Principal,w:Workspace,id:
 }
 export async function waCaseDetail(env:Env,user:Principal,w:Workspace,id:string) {
  const {c}=await waResidentialCase(env,user,w,id);
+ if(w.kind==='tenant'&&c.initiator_id!==user.id)
+  return {id,formCode:c.form_code,status:c.status,issuedDocumentId:c.issued_document_id,
+   legallyCertified:false,decisions:[],deliveries:[],externalEvents:[],events:[]};
  const cases=await statement(env.DB,'SELECT id,actor_id,action,reference,created_at FROM wa_residential_form_events WHERE case_id=? ORDER BY created_at',
    id).all();
  const deliveries=await statement(env.DB,'SELECT id,recipient_kind,delivery_method,delivery_at,outcome,created_at FROM wa_residential_form_delivery WHERE case_id=? ORDER BY created_at',
@@ -201,4 +204,40 @@ export async function waUploadTemplate(env:Env,user:Principal,w:Workspace,form:F
  }catch(e){await env.DOCUMENTS.delete(path);throw e;}
  return {formCode:q.formCode,version:q.templateVersion,sha256:file.hash,reviewed: true,
    templateNeedsIndependentLegalSignoff:true};
+}
+
+/** Tenant response to a properly issued landlord modification request. */
+export async function waTenantAnswer(env:Env,user:Principal,w:Workspace,id:string,input:unknown){
+ assert(w.kind==='tenant',403,'TENANT_REQUIRED','Only an authorised residential tenant can respond.');
+ const {c}=await waResidentialCase(env,user,w,id);
+ assert(c.form_code==='WA_FORM_28'&&c.initiator_kind==='manager'&&c.issued_document_id,
+  422,'TENANT_RESPONSE_UNAVAILABLE','Only an issued Form 28 is eligible for the tenant response workflow.');
+ const q=z.object({version,response:z.enum(['approved','declined','acknowledged','disputed']),
+   comments:z.string().trim().min(4).max(4000),reference:reference}).parse(input);
+ assert(c.version===q.version&&!c.decision_status,409,'WA_FORM_CHANGED','The form has already been responded to or has changed.');
+ const active=await statement(env.DB,
+  "SELECT id FROM tenancy_memberships WHERE tenancy_id=? AND user_id=? AND starts_at<=? AND (ends_at IS NULL OR ends_at>?)",
+  c.tenancy_id,user.id,now(),now()).first();
+ assert(active,403,'TENANCY_INACTIVE','A current tenant must respond to this modification request.');
+ const responseId=uid('wrp'),decision=q.response==='declined'?'refused':q.response;
+ const sealed=await seal(env.DATA_ENCRYPTION_KEY,`wa-response:${responseId}`,{comments:q.comments});
+ await env.DB.batch([
+  statement(env.DB,'INSERT INTO wa_residential_form_responses(id,case_id,user_id,answer,envelope,reference,created_at) VALUES(?,?,?,?,?,?,?)',
+   responseId,id,user.id,decision,sealed,q.reference,now()),
+  statement(env.DB,'UPDATE wa_residential_form_cases SET decision_status=?,decision_at=?,version=version+1,updated_at=? WHERE id=? AND version=? AND decision_status IS NULL',
+   decision,now(),now(),id,q.version),
+  guard(env),
+  ...(await log(env,user,c,'tenant_response_recorded',q.reference)),
+  clearGuard(env),
+ ]);
+ return {id,responseId,decision,recorded:true,statutoryConsentConfirmed:false};
+}
+export async function waTemplatesData(env:Env,user:Principal,w:Workspace){
+ assert(w.kind==='staff',403,'STAFF_REQUIRED','Only authorised Staff can manage the master official forms library.');
+ operationsWrite(user);
+ const rows=await statement(env.DB,`SELECT form_code,version,official_source_url,official_sha256,
+    legal_review_reference,approved_at,retired_at,file_size
+    FROM wa_residential_form_templates WHERE object_key IS NOT NULL
+    ORDER BY form_code,approved_at DESC LIMIT 300`).all();
+ return {templates:rows.results,authoritativeSourceOnly:true};
 }
