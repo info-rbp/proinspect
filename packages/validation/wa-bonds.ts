@@ -55,7 +55,7 @@ export function bondWorksheetErrors(code: BondWorkflowCode, values:Record<string
  for(const [key,v] of Object.entries(values)) {
    if(v.length>500)errors.push(`Form field too long: ${key}`);
    if(/(?:date|deadline|tenancyStart|tenancyEndDate|effectiveDate)/i.test(key)&&v&&
-      !/^\\d{4}-\\d{2}-\\d{2}$/.test(v))errors.push(`Use YYYY-MM-DD for ${key}`);
+      !/^\d{4}-\d{2}-\d{2}$/.test(v))errors.push(`Use YYYY-MM-DD for ${key}`);
  }
  return errors;
 }
