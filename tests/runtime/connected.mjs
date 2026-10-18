@@ -356,8 +356,23 @@ try {
       governmentReference:'PARTIAL-APP-01',governmentDocumentId:pdfRecord.id,generalCents:100000,
       petCents:0,outcome:'matched',notes:'Synthetic test only',requestKey:requestKey()
     }})).status,403);
+    assert.equal((await api(staffResource+'/transactions/'+partial.transactionId+'/payout',{
+      cookie:operator.cookie,body:{governmentReference:'PARTIAL-APP-01',
+       governmentDocumentId:pdfRecord.id,generalCents:100000,petCents:0,
+       outcome:'matched',notes:'Approval is not evidence of completed payout.',requestKey:requestKey()}
+    })).status,422);
+    const payoutProof=await ok(base+'/documents/upload',owner,upload({
+      title:'Synthetic separate government payout confirmation',category:'tenancy_document',propertyId,
+    },pdf('Synthetic payout confirmation only, no real government transfer')));
+    await ok(base+'/documents/'+payoutProof.id+'/issue',owner,{
+      audience:'tenancy',recipientId:tenant.tenancyId,reviewReference:'Synthetic government payout fixture'});
+    await ok(verify,operator,{
+      documentId:payoutProof.id,externalReference:'PARTIAL-APP-01',
+      sourceChannel:'manual',verificationMethod:'government_correspondence',
+      reviewNotes:'Separate synthetic payout confirmation reviewed; fixture only, no money was moved.',
+      result:'verified',requestKey:requestKey()});
     const paidOut=await ok(staffResource+'/transactions/'+partial.transactionId+'/payout',operator,{governmentReference:'PARTIAL-APP-01',
-      governmentDocumentId:pdfRecord.id,generalCents:100000,petCents:0,
+      governmentDocumentId:payoutProof.id,generalCents:100000,petCents:0,
       outcome:'matched',notes:'Synthetic verified payout test; no money changed hands.',requestKey:requestKey()});
     assert.equal(paidOut.status,'active');
     assert.equal((await ok(resource,owner)).heldGeneralCents,140000);
