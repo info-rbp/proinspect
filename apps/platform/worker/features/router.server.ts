@@ -224,6 +224,8 @@ export async function featureApi(
     return ok(await finance.checkout(env, user, w, id));
   if (tail === 'wa-form-templates/upload')
     return ok(await waLifecycle.waUploadTemplate(env,user,w,await request.formData()));
+  if (area === 'wa-form-templates' && id && action === 'approve')
+    return ok(await waLifecycle.waApproveTemplate(env,user,w,id,await body()));
 
   if (tail === 'wa-forms')
     return ok(await waResidential.waCreateForm(env,user,w,await body()));
