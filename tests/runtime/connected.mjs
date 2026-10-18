@@ -245,6 +245,17 @@ try {
     const paid=await ok(resource+'/receipts',owner,{
       kind:'general',amountCents:240000,paidAt:nowTime,payer:'Test Tenant',paymentReference:'Test receipt 100',requestKey:requestKey()});
     assert.ok(paid.dueAt);
+    const dispatchAlerts=()=>ok('/__test__/bond-deadlines/dispatch',owner,{});
+    const near=new Date(Date.now()+3600000).toISOString();
+    await run("UPDATE bond_deadlines SET due_at=? WHERE bond_id=? AND kind='lodgement'",near,id);
+    await dispatchAlerts();
+    assert.equal((await first("SELECT COUNT(*) AS n FROM outbox_events WHERE kind='bond.deadline'")).n,1);
+    await dispatchAlerts();
+    assert.equal((await first("SELECT COUNT(*) AS n FROM bond_alert_dispatches")).n,1);
+    const alertRecord=await first("SELECT id,envelope FROM outbox_events WHERE kind='bond.deadline'");
+    const alertJob=await unseal(key,`outbox:${alertRecord.id}`,alertRecord.envelope);
+    assert.ok(!JSON.stringify(alertJob).includes('240000'));
+    assert.ok(!JSON.stringify(alertJob).includes('Synthetic Tenant'));
     const lodged=await ok(resource+'/transactions',owner,{
       code:'B01',details:'Synthetic external bond lodgement test only',requestKey:requestKey()});
     const url=resource+'/transactions/'+lodged.transactionId;
@@ -338,6 +349,22 @@ try {
       kind:'release_application',governmentReference:'NOTICE-REF-TEST-01',receivedAt:nowTime,
       responseDueAt:new Date(Date.now()+14*86400000).toISOString(),documentId:pdfRecord.id,requestKey:requestKey()});
     assert.ok(notice.noticeId);
+    const closeNotice=new Date(Date.now()+7200000).toISOString();
+    await run('UPDATE bond_notices SET response_due_at=? WHERE id=?',closeNotice,notice.noticeId);
+    await run("UPDATE bond_deadlines SET due_at=? WHERE bond_id=? AND transaction_id=? AND kind='response'",
+      closeNotice,id,partial.transactionId);
+    await dispatchAlerts();
+    assert.equal((await first("SELECT COUNT(*) AS n FROM outbox_events WHERE kind='bond.deadline'")).n,1,
+      'unverified external government notices must not trigger reminder emails');
+    await ok(verify,operator,{
+      documentId:pdfRecord.id,externalReference:'NOTICE-REF-TEST-01',
+      sourceChannel:'manual',verificationMethod:'government_correspondence',
+      reviewNotes:'Synthetic test reminder notice independently checked; not an actual WA government notice.',
+      result:'verified',requestKey:requestKey()});
+    await dispatchAlerts();
+    assert.equal((await first("SELECT COUNT(*) AS n FROM outbox_events WHERE kind='bond.deadline'")).n,2);
+    await dispatchAlerts();
+    assert.equal((await first("SELECT COUNT(*) AS n FROM bond_alert_dispatches")).n,2);
     assert.equal((await api(partialTx+'/case',{cookie:tenant.cookie,body:{
       status:'determined',decision:'Forged decision',requestKey:requestKey()
     }})).status,403);
