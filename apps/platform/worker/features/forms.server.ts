@@ -230,7 +230,8 @@ function restrictedEnabled(env: Env) {
 }
 async function caseAccess(env: Env, user: Principal, id: string) {
   restrictedEnabled(env);
-  const c = await statement(env.DB, 'SELECT * FROM restricted_form_cases WHERE id=?', id).first<
+  const c = await statement(env.DB,
+   "SELECT c.* FROM restricted_form_cases c JOIN tenancies t ON t.id=c.tenancy_id JOIN properties p ON p.id=t.property_id AND p.sector='residential' WHERE c.id=?", id).first<
     Record<string, any>
   >();
   const allowed =
@@ -267,7 +268,9 @@ export async function restrictedData(env: Env, user: Principal, w: Workspace) {
   const cases = (
     await statement(
       env.DB,
-      `SELECT c.id,c.status,c.version,c.created_at FROM restricted_form_cases c WHERE (c.applicant_user_id=? ${w.kind === 'tenant' ? 'AND c.tenancy_id=?' : ''}) OR EXISTS(SELECT 1 FROM restricted_case_grants g JOIN restricted_reviewers r ON r.staff_user_id=g.staff_user_id AND r.active=1 JOIN staff_profiles s ON s.user_id=g.staff_user_id AND s.active=1 WHERE g.case_id=c.id AND g.staff_user_id=?) ORDER BY c.created_at DESC`,
+      `SELECT c.id,c.status,c.version,c.created_at FROM restricted_form_cases c
+       JOIN tenancies t ON t.id=c.tenancy_id JOIN properties p ON p.id=t.property_id AND p.sector='residential'
+       WHERE (c.applicant_user_id=? ${w.kind === 'tenant' ? 'AND c.tenancy_id=?' : ''}) OR EXISTS(SELECT 1 FROM restricted_case_grants g JOIN restricted_reviewers r ON r.staff_user_id=g.staff_user_id AND r.active=1 JOIN staff_profiles s ON s.user_id=g.staff_user_id AND s.active=1 WHERE g.case_id=c.id AND g.staff_user_id=?) ORDER BY c.created_at DESC`,
       user.id,
       ...(w.kind === 'tenant' ? [w.scopeId] : []),
       user.id,
@@ -289,7 +292,7 @@ export async function createRestrictedCase(
 ) {
   restrictedEnabled(env);
   assert(w.kind === 'tenant', 403, 'TENANT_REQUIRED', 'Open this intake from your own tenancy.');
-  await tenancyAccess(env, user, w, w.scopeId);
+  await ordinaryResidentialScope(env, user, w, w.scopeId);
   const d = z
     .object({
       details: z.string().min(10).max(6000),
