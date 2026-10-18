@@ -91,7 +91,7 @@ export async function getBond(env:Env,user:Principal,w:Workspace,id:string){
  const isTenant=w.kind==='tenant';
  const transactions=await Promise.all(rows.map(async t=>({
   id:t.id,code:t.code,status:t.status,generalDeltaCents:t.general_delta_cents,petDeltaCents:t.pet_delta_cents,
-  details:isTenant&&['B09','B19'].includes(t.code)?'Restricted estate process':(await unseal<{details:string}>(env.DATA_ENCRYPTION_KEY,`bond-tx:${t.id}`,t.details_envelope)).details,
+  details:isTenant&&t.created_by!==user.id?'This bond transaction was recorded by another authorised party. Contact the managing landlord for details.':(await unseal<{details:string}>(env.DATA_ENCRYPTION_KEY,`bond-tx:${t.id}`,t.details_envelope)).details,
   createdAt:t.created_at,submittedAt:t.submitted_at,confirmedAt:t.confirmed_at,
   externalReference:t.external_reference,version:t.version,
   channel:t.channel,
@@ -113,7 +113,7 @@ export async function getBond(env:Env,user:Principal,w:Workspace,id:string){
   heldGeneralCents:b.held_general_cents,heldPetCents:b.held_pet_cents,weeklyRentCents:b.weekly_rent_cents,
   version:b.version,transactions,participants:isTenant?participants.filter((p:any)=>p.user_id===user.id):participants,receipts,cases,notices,deadlines,claims,
   allocations:isTenant?allocations.map(a=>({...a,party_id:null,target_bond_id:null})):allocations,
-  contributions:isTenant?[]:contributions,worksheets,verification,reconciliations,
+  contributions:isTenant?[]:contributions,worksheets,verification:isTenant?verification.map(v=>({transaction_id:v.transaction_id,result:v.result,reviewed_at:v.reviewed_at})):verification,reconciliations,
   exceptions:isTenant?[]:exceptions,workflowRules:WA_BOND_RULES,
   governmentSubmission:'external_only',roles:{canManage:!isTenant,canApplyRelease:true},
   guidance:'ProInspect coordinates records; only government confirmation establishes an official bond outcome.'};
