@@ -30,7 +30,7 @@ const noticeSchema = z.object({kind:z.enum(['release_application','invitation_to
   governmentReference:reference, receivedAt:isoDate,responseDueAt:isoDate.optional(),
   documentId:recordId.optional(),requestKey:recordId});
 const caseSchema = z.object({status:z.enum(['notice_received','responded','referred','submissions','determined','appealed','declined','resolved']),
-  decision:z.string().max(5000).optional(),reference:reference.optional(),
+  decision:z.string().max(5000).optional(),reference:reference.optional(),governmentDocumentId:recordId.optional(),
   decisionAt:isoDate.optional(),appealDueAt:isoDate.optional(),version:version.optional(),requestKey:recordId});
 const evidenceSchema = z.object({documentId:recordId,category:z.enum(['lodgement','variation','release','claim','notice','dispute','court','government_confirmation','other']),
   transactionId:recordId.optional(),requestKey:recordId});
@@ -331,7 +331,10 @@ export async function addNotice(env:Env,user:Principal,w:Workspace,bondId:string
     403,'BOND_OFFICIAL_NOTICE_RESTRICTED','Only the managing party may record this official notice type.');
  assert(await statement(env.DB,'SELECT id FROM bond_transactions WHERE id=? AND bond_id=?',id,bondId).first(),
  404,'BOND_TRANSACTION_NOT_FOUND','Transaction not found.');
+ if(['release_application','invitation_to_submit','commissioner_decision','appeal'].includes(d.kind))
+   assert(d.documentId,422,'BOND_OFFICIAL_NOTICE_DOCUMENT','Attach the official notice before recording a response deadline.');
  if(d.documentId)await document(env,b,d.documentId);
+ if(d.responseDueAt)assert(new Date(d.responseDueAt)>new Date(d.receivedAt),422,'BOND_NOTICE_DEADLINE','The official response deadline must follow receipt.');
  const nid=uid('bn'),deadline=uid('bdue');
  const commands=[
   statement(env.DB,'INSERT INTO bond_notices(id,bond_id,transaction_id,kind,government_reference,received_at,response_due_at,document_id,created_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
@@ -354,6 +357,15 @@ export async function recordCase(env:Env,user:Principal,w:Workspace,bondId:strin
  if(existing){assert(d.version===existing.version,409,'BOND_CASE_CHANGED','Case has changed.');
  assert(allowed[existing.status]?.includes(d.status),409,'BOND_CASE_TRANSITION','Invalid case transition.');}
  else assert(d.status==='notice_received'||d.status==='referred',422,'BOND_CASE_START','Start with an official notice/referral.');
+ if(['determined','declined','resolved'].includes(d.status)){
+    assert(w.kind==='staff'&&['administrator','operations_manager'].includes(user.staffRole??''),
+     403,'BOND_OFFICIAL_DECISION_STAFF','Official dispute outcomes require designated Staff review.');
+    assert(d.reference&&d.governmentDocumentId,422,'BOND_DECISION_EVIDENCE','Attach the official decision reference and issued evidence.');
+    await document(env,b,d.governmentDocumentId!);
+    const ok=await statement(env.DB,"SELECT id FROM bond_external_verifications WHERE bond_id=? AND document_id=? AND external_reference=? AND result='verified'",
+      bondId,d.governmentDocumentId!,d.reference!).first();
+    assert(ok,422,'BOND_DECISION_NOT_REVIEWED','Independent Staff verification of the official decision is required.');
+ }
  if(d.status==='determined')assert(d.decisionAt&&d.decision,422,'BOND_DECISION_REQUIRED','Record the official determination and date.');
  const decision=d.decision?await seal(env.DATA_ENCRYPTION_KEY,`bond-case:${cid}`,{decision:d.decision}):null;
  const commands=existing?[
