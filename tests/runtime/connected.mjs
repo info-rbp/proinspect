@@ -235,6 +235,26 @@ try {
     },201);
     assert.equal((await api(`/api/w/commercial/${commercial.clientId}/tenancies/${tenant.tenancyId}/wa-forms`,
       {cookie:owner.cookie})).status,403);
+    const commercialBase=`/api/w/commercial/${commercial.clientId}`;
+    const commercialProperty=await ok(commercialBase+'/properties',owner,{
+      address:'987 Commercial Forms Isolation Avenue',suburb:'Perth',postcode:'6000',
+      propertyType:'Office',selfManaged:true
+    },201);
+    const commercialTenant=await makeTenant(owner,commercialBase,commercialProperty.propertyId,
+      'commercial-forms-tenant@tests.example');
+    assert.equal((await api(
+      `${commercialTenant.base}/tenancies/${commercialTenant.tenancyId}/wa-forms`,
+      {cookie:commercialTenant.cookie})).status,403);
+    assert.equal((await api(`${commercialTenant.base}/wa-forms`,{
+      cookie:commercialTenant.cookie,body:{tenancyId:commercialTenant.tenancyId,
+       formCode:'WA_FORM_25',answers:{animal:'Dog',arrangements:'Indoor'}}
+    })).status,403);
+    assert.equal((await api(`${commercialTenant.base}/confidential`,
+      {cookie:commercialTenant.cookie})).status,403);
+    assert.equal((await api(`${commercialTenant.base}/confidential`,{
+      cookie:commercialTenant.cookie,body:{details:'Commercial tenancy does not use residential Form 2',
+        reviewerId:'staff_reviewer_fixture'}
+    })).status,403);
     assert.equal((await api(`${tenant.base}/wa-forms`, {cookie:tenant.cookie,body:{
       tenancyId:tenant.tenancyId,formCode:'WA_FORM_19',answers:{entryPurpose:'Routine',entryDate:'2026-11-20'}
     }})).status,422);
