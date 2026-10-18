@@ -18,7 +18,7 @@ const workflowNames: Record<string,string> = {
  B23:'Transitional legacy disposal record',
 };
 type Transaction = {id:string;code:string;status:string;details:string;version:number;externalReference?:string;generalDeltaCents:number;petDeltaCents:number};
-type Bond = {id:string;status:string;bondReference?:string;generalCents:number;petCents:number;heldGeneralCents:number;heldPetCents:number;weeklyRentCents:number;transactions:Transaction[];receipts:any[];claims:any[];deadlines:any[];notices:any[];cases:any[];governmentSubmission:string;};
+type Bond = {id:string;status:string;bondReference?:string;generalCents:number;petCents:number;heldGeneralCents:number;heldPetCents:number;weeklyRentCents:number;transactions:Transaction[];participants:any[];receipts:any[];claims:any[];deadlines:any[];notices:any[];cases:any[];governmentSubmission:string;};
 const money=(n:number)=>new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(n/100);
 export async function loader({request,context,params}:LoaderFunctionArgs) {
  const root=`/api/w/${params.kind}/${params.scopeId}`;
@@ -55,6 +55,24 @@ export default function TenancyBonds(){
      <div><strong>Total confirmed held</strong><p>{money(b.heldGeneralCents+b.heldPetCents)}</p></div>
     </div>
    </Panel>
+   {canManage&&<Panel title="Record a government bond party" description="This does not change the official participant register until government evidence is confirmed.">
+    <OperationForm endpoint={`${base}/bonds/${b.id}/parties`} label="Add pending participant">
+     <Select name="role" label="Legal relationship" options={choices(['tenant','landlord','agent','estate'])}/>
+     <Input name="name" label="Legal name"/>
+     <Input name="effectiveAt" type="datetime-local" label="Effective date/time"/>
+    </OperationForm>
+   </Panel>}
+   {!!b.participants.length&&<Panel title="Bond parties and externally confirmed changes">
+    {b.participants.map((p:any)=><div className="record-row" key={p.id}>
+      <div><strong>{p.role}</strong><p>Status: {p.status} · Effective: {p.effective_at}</p>
+        {p.external_reference&&<p className="small">Government reference: {p.external_reference}</p>}</div>
+      {canManage&&p.status!=='former'&&<OperationForm endpoint={`${base}/bonds/${b.id}/parties/${p.id}/status`}
+        defaults={{status:p.status==='pending'?'confirmed':'former'}} label={p.status==='pending'?'Confirm government party':'Record official party removal'}>
+        <Input name="governmentReference" label="Government variation/reference"/>
+        <Input name="governmentDocumentId" label="Issued government certificate document ID"/>
+      </OperationForm>}
+    </div>)}
+   </Panel>}
    {canManage && <Panel title="Record a bond payment" description="Recording a receipt starts a 14-day reminder; it does not transfer funds or lodge the bond.">
     <OperationForm endpoint={`${base}/bonds/${b.id}/receipts`} label="Record received payment">
      <Select name="kind" label="Bond payment category" options={choices(['general','pet'])}/>
