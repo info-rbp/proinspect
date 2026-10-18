@@ -107,6 +107,7 @@ const boolFields = new Set([
   'acceptCondition',
   'selfManaged',
   'noticeConfirmed',
+  'acknowledgeExternalProcess',
 ]);
 export function formValues(form: FormData) {
   const data: Record<string, unknown> = {};
@@ -125,7 +126,7 @@ export function formValues(form: FormData) {
         .filter(Boolean);
     else data[key] = value;
   }
-  for (const prefix of ['access', 'answers']) {
+  for (const prefix of ['access', 'answers', 'fields']) {
     const nested: Record<string, unknown> = {};
     for (const key of Object.keys(data)) {
       if (key.startsWith(prefix + '.')) {
