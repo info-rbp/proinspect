@@ -118,7 +118,7 @@ export default function TenancyBonds(){
       <Select name="category" label="Deduction type" options={choices(['property_damage','garden','carpet_cleaning','cleaning','pet_fumigation','keys_security','unpaid_rent','unpaid_utilities','other_breach'])}/>
       <Input name="amountCents" label="Amount claimed (cents)" type="number"/>
       <TextArea name="explanation" label="Explanation and supporting evidence"/>
-      <Input name="evidenceDocumentId" label="Issued supporting document ID" required={false}/>
+      <Input name="evidenceDocumentId" label="Issued supporting document ID (required)"/>
      </OperationForm>}
     <details><summary>Record a government notice, dispute or determination</summary>
      <OperationForm endpoint={`${base}/bonds/${b.id}/transactions/${tx.id}/notices`} label="Record government notice">
