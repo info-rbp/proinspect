@@ -102,9 +102,15 @@ export async function waExternalEvent(env:Env,user:Principal,w:Workspace,id:stri
  assert(c.version===q.version,409,'WA_FORM_CHANGED','The case changed; refresh before updating the external result.');
  if(q.action!=='prepared') assert(['approved','document_issued','service_evidence_recorded','external_submitted','external_confirmed','disputed'].includes(c.status),
      409,'FORM_NOT_REVIEWED','A reviewed form is required before an external submission or determination can be recorded.');
- if(q.action==='confirmed'||q.action==='determined'||q.action==='finalised')
-   assert((c.external_status==='submitted'||c.external_status==='disputed'||c.external_status==='determined') || q.provider==='bonds_administration',
-      409,'PRIOR_EVENT_REQUIRED','Verify the corresponding external authority event first.');
+ if(['confirmed','rejected','disputed','determined','appealed','finalised'].includes(q.action)){
+   const prior=await statement(env.DB,
+    "SELECT action FROM wa_residential_form_external_events WHERE case_id=? AND action IN('submitted','confirmed','disputed','determined') ORDER BY created_at DESC LIMIT 1",
+    id).first<{action:string}>();
+   assert(prior,409,'PRIOR_EVENT_REQUIRED','Record the actual external submission before recording a decision.');
+   if(q.action==='appealed') assert(prior.action==='determined',409,'DETERMINATION_REQUIRED','Appeal requires a prior recorded determination.');
+   if(q.action==='finalised') assert(prior.action==='confirmed'||prior.action==='determined',
+    409,'FINALISATION_REVIEW_REQUIRED','Finalisation requires an independently reviewed confirmed result.');
+ }
  const e=uid('wex');
  await env.DB.batch([
   statement(env.DB,'INSERT INTO wa_residential_form_external_events(id,case_id,actor_id,action,provider,external_reference,evidence_reference,effective_at,created_at) VALUES(?,?,?,?,?,?,?,?,?)',
@@ -120,7 +126,7 @@ export async function waExternalEvent(env:Env,user:Principal,w:Workspace,id:stri
 }
 export async function waSignatureEvidence(env:Env,user:Principal,w:Workspace,id:string,input:unknown) {
  const {c,t}=await waResidentialCase(env,user,w,id);
- assert(['landlord','property-manager','staff'].includes(w.kind),403,'SIGNATURE_RECORD_FORBIDDEN','Only authorised managers or reviewers can record signature evidence.');
+ assert(w.kind==='staff',403,'SIGNATURE_RECORD_FORBIDDEN','Only an authorised Staff reviewer can attest externally verified signature evidence.');
  await manager(env,user,w,c.tenancy_id);
  const q=z.object({signedDocumentId:recordId,signerKind:z.enum(['tenant','landlord','staff_witness','external']),
     method:z.enum(['wet_ink','stylus','external_provider']),evidenceReference:reference,verifiedAt:iso}).parse(input);
@@ -140,7 +146,9 @@ export async function waSignatureEvidence(env:Env,user:Principal,w:Workspace,id:
 export async function waCaseDetail(env:Env,user:Principal,w:Workspace,id:string) {
  const {c}=await waResidentialCase(env,user,w,id);
  if(w.kind==='tenant'&&c.initiator_id!==user.id)
-  return {id,formCode:c.form_code,status:c.status,issuedDocumentId:c.issued_document_id,
+  return {id,tenancyId:c.tenancy_id,version:c.version,formCode:c.form_code,status:c.status,
+   formStage:c.form_stage,formInitiatorKind:c.initiator_kind,decision:c.decision_status,
+   issuedDocumentId:c.issued_document_id,
    legallyCertified:false,decisions:[],deliveries:[],externalEvents:[],events:[]};
  const cases=await statement(env.DB,'SELECT id,actor_id,action,reference,created_at FROM wa_residential_form_events WHERE case_id=? ORDER BY created_at',
    id).all();
