@@ -126,7 +126,7 @@ export default function WaFormCase() {
      </OperationForm>
      <p className="small">Recording dispatch is not proof of lawful statutory service.</p>
     </Panel>}
-   {manager&&c.issuedDocumentId&&<Panel title="Signature evidence (completed outside ProInspect)">
+   {staff&&c.issuedDocumentId&&<Panel title="Signature evidence (completed outside ProInspect)">
     <OperationForm endpoint={`${base}/wa-forms/${c.id}/signature-evidence`} label="Record verified signed-document evidence">
      <Input name="signedDocumentId" label="Already issued official signed PDF ID" value={c.issuedDocumentId}/>
      <Select name="signerKind" label="Signer identity" options={options(['tenant','landlord','staff_witness','external'])}/>
