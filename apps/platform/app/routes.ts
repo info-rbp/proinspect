@@ -46,6 +46,7 @@ export default [
     route('document-operations', 'routes/document-operations.tsx'),
     route('document-requests/:documentRequestId', 'routes/document-request.tsx'),
     route('tenancies/:tenancyId', 'routes/tenancy-detail.tsx'),
+    route('tenancies/:tenancyId/bonds', 'routes/tenancy-bonds.tsx'),
     route('properties', 'routes/properties.tsx'),
     route('properties/:propertyId', 'routes/property.tsx'),
     route('book/:serviceId?', 'routes/book.tsx'),
