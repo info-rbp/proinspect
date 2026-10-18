@@ -94,6 +94,8 @@ export async function featureApi(
       return ok(await waResidential.waFormsData(env, user, w, id));
     if (tail === 'wa-form-queue')
       return ok(await waLifecycle.waReviewQueue(env,user,w));
+    if (tail === 'wa-form-templates')
+      return ok(await waLifecycle.waTemplatesData(env,user,w));
     if (area === 'wa-forms' && id && parts.length === 2)
       return ok(await waLifecycle.waCaseDetail(env,user,w,id));
     if (area === 'schemes' && id && parts.length === 2)
@@ -233,6 +235,8 @@ export async function featureApi(
     return ok(await waIssuance.waCompleteAdministrativeCase(env,user,w,id,await body()));
   if (area === 'wa-forms' && id && action === 'receipt')
     return ok(await waLifecycle.waConfirmReceipt(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'tenant-answer')
+    return ok(await waLifecycle.waTenantAnswer(env,user,w,id,await body()));
   if (area === 'wa-forms' && id && action === 'decision')
     return ok(await waLifecycle.waDecision(env,user,w,id,await body()));
   if (area === 'wa-forms' && id && action === 'external')
