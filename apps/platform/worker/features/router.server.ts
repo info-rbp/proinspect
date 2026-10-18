@@ -21,6 +21,7 @@ import * as admin from './admin.server';
 import * as forms from './forms.server';
 import * as waResidential from './wa-residential.server';
 import * as waLifecycle from './wa-lifecycle.server';
+import * as waIssuance from './wa-issuance.server';
 import * as integrations from './integrations.server';
 /** Feature endpoints run only after authentication, origin and workspace checks. */
 export async function featureApi(
@@ -226,6 +227,10 @@ export async function featureApi(
     return ok(await waResidential.waCreateForm(env,user,w,await body()));
   if (area === 'wa-forms' && id && action === 'issue')
     return ok(await waResidential.waLinkIssuedDocument(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'verify')
+    return ok(await waIssuance.waVerifyRequirement(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'complete')
+    return ok(await waIssuance.waCompleteAdministrativeCase(env,user,w,id,await body()));
   if (area === 'wa-forms' && id && action === 'receipt')
     return ok(await waLifecycle.waConfirmReceipt(env,user,w,id,await body()));
   if (area === 'wa-forms' && id && action === 'decision')
