@@ -614,6 +614,100 @@ try {
       });
     },
   );
+  await check('WA official-PDF template bytes, issued tenancy grant, reviewed decisions and safe administrative close',async()=>{
+    const submission=await ok(tenant.base+'/wa-forms',tenant,{
+      tenancyId:tenant.tenancyId,formCode:'WA_FORM_25',
+      answers:{animal:'One synthetic indoor dog',arrangements:'Attested indoor supervision'}
+    });
+    await ok(`${tenant.base}/wa-forms/${submission.id}`,tenant,{version:1,status:'submitted'});
+    await ok(`${staffBase}/wa-forms/${submission.id}`,operator,{
+      version:2,status:'under_review',reviewReference:'Synthetic document-review intake'
+    });
+    await ok(`${staffBase}/wa-forms/${submission.id}`,operator,{
+      version:3,status:'approved',reviewReference:'Synthetic reviewed official output'
+    });
+    const uploaded=await ok(base+'/documents/upload',owner,upload({
+      title:'Synthetic properly issued WA Form 25 PDF',category:'tenancy_document',propertyId
+    },pdf('WA official form test fixture')));
+    await ok(`${base}/documents/${uploaded.id}/issue`,owner,{
+      audience:'tenancy',recipientId:tenant.tenancyId,
+      reviewReference:'Synthetic tenancy-specific official PDF grant'
+    });
+    const blocked=await api(`${staffBase}/wa-forms/${submission.id}/issue`,{cookie:operator.cookie,
+      body:{documentId:uploaded.id,templateVersion:'2026-test-no-bytes',reference:'No source registered'}
+    });
+    assert.equal(blocked.status,422);
+    const template=new FormData();
+    for(const [k,v] of Object.entries({
+      formCode:'WA_FORM_25',templateVersion:'synthetic-2026-10-wa25',
+      officialSourceUrl:'https://www.consumerprotection.wa.gov.au/rental-forms-and-notices',
+      legalReviewReference:'Synthetic reviewer attestation, NOT approval for live legal use'
+    }))template.set(k,v);
+    template.set('file',new File([pdf('Synthetic source PDF')],
+      'wa-form25-test.pdf',{type:'application/pdf'}));
+    const stored=await ok(`${staffBase}/wa-form-templates/upload`,operator,template);
+    assert.equal(stored.formCode,'WA_FORM_25');
+    assert.match(stored.sha256,/^[a-f0-9]{64}$/);
+    const linked=await ok(`${staffBase}/wa-forms/${submission.id}/issue`,operator,{
+      documentId:uploaded.id,templateVersion:stored.version,
+      reference:'Synthetic reviewed issuance match'
+    });
+    assert.equal(linked.legalServiceConfirmed,false);
+    assert.equal((await api(`${base}/wa-forms/${submission.id}/signature-evidence`,{
+      cookie:owner.cookie,body:{signedDocumentId:uploaded.id,signerKind:'landlord',
+        method:'wet_ink',evidenceReference:'Synthetic signature'} })).status,403);
+    await ok(`${staffBase}/wa-forms/${submission.id}/receipt`,operator,{
+      version:5,receivedAt:new Date().toISOString(),evidenceReference:'Synthetic verified receipt'
+    });
+    await ok(`${base}/wa-forms/${submission.id}/decision`,owner,{
+      version:6,decision:'approved',explanation:'Approved the synthetic household pet request.'
+    });
+    const delivered=await ok(`${staffBase}/wa-forms/${submission.id}/delivery`,operator,{
+      recipientKind:'tenant',recipientReference:'synthetic tenant fixture',
+      deliveryMethod:'in_person',deliveryAt:new Date().toISOString(),
+      evidenceReference:'Synthetic delivered source evidence',outcome:'delivered'
+    });
+    assert.equal(delivered.legalServiceConfirmed,false);
+    const final=await ok(`${staffBase}/wa-forms/${submission.id}/complete`,operator,{
+      version:7,completionReference:'Synthetic administrative closure review'
+    });
+    assert.equal(final.legalValidityCertified,false);
+    const last=await first('SELECT status,decision_status FROM wa_residential_form_cases WHERE id=?',submission.id);
+    assert.equal(last.status,'completed');
+    assert.equal(last.decision_status,'approved');
+  });
+  await check('WA 2026 bond release tracks documented external submission and determination without transacting',async()=>{
+    const submitted=await ok(base+'/wa-forms',owner,{
+      tenancyId:tenant.tenancyId,formCode:'WA_BOND_RELEASE',
+      answers:{bondReference:'synthetic-wa-bond',claimAmount:0,
+        allocation:'Synthetic full release to named tenants; external government process'}
+    });
+    await ok(`${base}/wa-forms/${submitted.id}`,owner,{version:1,status:'submitted'});
+    await ok(`${staffBase}/wa-forms/${submitted.id}`,operator,{
+      version:2,status:'under_review',reviewReference:'Synthetic bond application review'
+    });
+    await ok(`${staffBase}/wa-forms/${submitted.id}`,operator,{
+      version:3,status:'approved',reviewReference:'Synthetic reviewed submission'
+    });
+    assert.equal((await api(`${staffBase}/wa-forms/${submitted.id}/external`,{
+      cookie:operator.cookie,body:{version:4,action:'confirmed',provider:'bonds_administration',
+        externalReference:'bond-fixture-0001',evidenceReference:'Without actual prior submission',
+        effectiveAt:new Date().toISOString()}
+    })).status,409);
+    await ok(`${staffBase}/wa-forms/${submitted.id}/external`,operator,{
+      version:4,action:'submitted',provider:'bonds_administration',
+      externalReference:'synthetic-bonds-submission-001',
+      evidenceReference:'Synthetic portal submission evidence',effectiveAt:new Date().toISOString()
+    });
+    const confirmed=await ok(`${staffBase}/wa-forms/${submitted.id}/external`,operator,{
+      version:5,action:'confirmed',provider:'bonds_administration',
+      externalReference:'synthetic-bonds-confirmed-001',
+      evidenceReference:'Synthetic government receipt fixture',effectiveAt:new Date().toISOString()
+    });
+    assert.equal(confirmed.governmentTransactionPerformed,false);
+    assert.equal((await first('SELECT external_status FROM wa_residential_form_cases WHERE id=?',submitted.id)).external_status,'confirmed');
+    assert.equal((await first('SELECT COUNT(*) AS n FROM wa_residential_form_external_events WHERE case_id=?',submitted.id)).n,2);
+  });
   const wo = (await ok(`${staffBase}/requests/${maintenance.id}/convert`, operator, {})).id;
   await check(
     'pending cost proposal blocks operational bypass and only commissioning landlord can decide',
