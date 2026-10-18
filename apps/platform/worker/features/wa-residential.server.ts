@@ -39,7 +39,11 @@ export async function waFormsData(env:Env,user:Principal,w:Workspace,tenancyId:s
  const rows=(await statement(env.DB,q,tenancyId,...(w.kind==='tenant'?[user.id]:[])).all<Record<string,any>>()).results;
  return {definitions:waAvailableForms(w.kind),source:OFFICIAL_WA_FORMS_URL,cases:await Promise.all(rows.map(async r=>({
   id:r.id,formCode:r.form_code,status:r.status,version:r.version,createdAt:r.created_at,
-  dueAt:r.due_at,issuedDocumentId:r.issued_document_id,
+  dueAt:r.due_at,dueBasis:r.due_basis,receiptAt:r.received_at,
+  decisionStatus:r.decision_status,externalStatus:r.external_status,
+  noticeInvalidatedAt:r.notice_invalidated_at,bookingId:r.booking_id,
+  issuedDocumentId:r.issued_document_id,templateVersion:r.template_version,
+
   details: r.initiator_id===user.id || w.kind!=='tenant'
    ? await unseal(env.DATA_ENCRYPTION_KEY,`wa-form:${r.id}`,r.data_envelope):null,
  })))};
