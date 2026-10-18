@@ -263,7 +263,7 @@ try {
     assert.equal(delivery.legalServiceConfirmed,false);
     const forms=await ok(`${tenant.base}/tenancies/${tenant.tenancyId}/wa-forms`,tenant);
     assert.ok(forms.cases.some(f=>f.id===created.id&&f.status==='approved'));
-    assert.equal((await first('SELECT COUNT(*) n FROM wa_residential_form_events WHERE case_id=?',created.id)).n,4);
+    assert.equal((await first('SELECT COUNT(*) n FROM wa_residential_form_events WHERE case_id=?',created.id)).n,5);
     assert.equal((await first('SELECT COUNT(*) n FROM wa_residential_form_delivery WHERE case_id=?',created.id)).n,1);
   });
 
