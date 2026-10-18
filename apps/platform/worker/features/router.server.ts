@@ -217,6 +217,10 @@ export async function featureApi(
   if (area === 'payments' && id && action === 'checkout')
     return ok(await finance.checkout(env, user, w, id));
   if (tail === 'bonds') return ok(await bonds.createBond(env,user,w,await body()));
+  if (area === 'bonds' && id && action === 'parties' && !child)
+    return ok(await bonds.addParticipant(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'parties' && child && parts[4]==='status')
+    return ok(await bonds.updateParticipant(env,user,w,id,child,await body()));
   if (area === 'bonds' && id && action === 'receipts')
     return ok(await bonds.recordReceipt(env,user,w,id,await body()));
   if (area === 'bonds' && id && action === 'transactions' && !child)
