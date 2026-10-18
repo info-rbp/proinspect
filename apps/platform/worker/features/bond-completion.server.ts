@@ -168,7 +168,10 @@ export async function reconcileBondPayout(env:Env,user:Principal,w:Workspace,bon
   bondId,d.governmentDocumentId,d.governmentReference).first();
  assert(verified,422,'BOND_PAYOUT_EVIDENCE_UNVERIFIED','An independent staff reviewer must verify the actual payout confirmation.');
  const targetG=-tx.general_delta_cents,targetP=-tx.pet_delta_cents;
- assert(d.generalCents===targetG&&d.petCents===targetP,422,'BOND_PAYOUT_MISMATCH','Payout must exactly match the government-approved release amounts.');
+ if(d.outcome==='matched')assert(d.generalCents===targetG&&d.petCents===targetP,
+   422,'BOND_PAYOUT_MISMATCH','Matched payout must exactly equal the government-approved release amounts.');
+ else assert(d.generalCents!==targetG||d.petCents!==targetP||d.notes.length>=30,422,
+    'BOND_EXCEPTION_EXPLANATION','Explain the actual missing, short-paid or disputed payout before marking an exception.');
  if(tx.code==='B14'){
   const target=await statement(env.DB,'SELECT b.id,b.status FROM bonds b JOIN bond_allocations a ON a.target_bond_id=b.id WHERE a.transaction_id=? AND a.recipient_kind=\'new_bond\' LIMIT 1',id)
     .first<{id:string;status:string}>();
