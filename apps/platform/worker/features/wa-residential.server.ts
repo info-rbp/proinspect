@@ -161,7 +161,7 @@ export async function waRecordDelivery(env:Env,user:Principal,w:Workspace,id:str
    c.booking_id,t.property_id).first<{starts_at:string}>();
   assert(current?.starts_at===c.notice_booking_starts_at,409,'ENTRY_NOTICE_STALE',
     'Booking time changed; issue a reviewed replacement notice.');
-  const check=entryNoticeAdvisory(c.notice_purpose,q.deliveryAt,current.starts_at);
+  const check=entryNoticeAdvisory(c.notice_purpose,q.deliveryAt,current!.starts_at);
   assert(check.withinPublishedWindow,409,'ENTRY_NOTICE_TIMING_REVIEW',
     'The published entry window is not satisfied. Review and reissue an appropriate notice.');
  }
