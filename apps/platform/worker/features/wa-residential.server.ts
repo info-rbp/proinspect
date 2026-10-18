@@ -162,8 +162,16 @@ export async function waRecordDelivery(env:Env,user:Principal,w:Workspace,id:str
   assert(current?.starts_at===c.notice_booking_starts_at,409,'ENTRY_NOTICE_STALE',
     'Booking time changed; issue a reviewed replacement notice.');
   const check=entryNoticeAdvisory(c.notice_purpose,q.deliveryAt,current!.starts_at);
-  assert(check.withinPublishedWindow,409,'ENTRY_NOTICE_TIMING_REVIEW',
+  if(c.notice_purpose!=='other')
+   assert(check.withinPublishedWindow,409,'ENTRY_NOTICE_TIMING_REVIEW',
     'The published entry window is not satisfied. Review and reissue an appropriate notice.');
+  else {
+   const reviewed=await statement(env.DB,
+    "SELECT id FROM wa_residential_form_verifications WHERE case_id=? AND requirement='service_window_review'",
+    c.id).first();
+   assert(reviewed,409,'SPECIFIC_ENTRY_REVIEW_REQUIRED',
+    'Other entry grounds require a reviewed, purpose-specific notice and service window.');
+  }
  }
  const deliveredAt=new Date(q.deliveryAt).toISOString();
  assert(new Date(deliveredAt).getTime()<=Date.now()+60000,422,'INVALID_DELIVERY_DATE','Future delivery cannot be recorded as completed.');
