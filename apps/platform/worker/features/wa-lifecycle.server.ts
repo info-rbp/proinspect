@@ -24,7 +24,7 @@ async function manager(env:Env,user:Principal,w:Workspace,tenancyId:string) {
 function timeInPast(value:string) {
  assert(new Date(value).getTime()<=Date.now()+60000,422,'FUTURE_EVIDENCE','The evidence timestamp cannot be in the future.');
 }
-async function log(env:Env,user:Principal,c:{id:string;property_id:string},action:string,ref:string|null=null) {
+async function log(env:Env,user:Principal,c:Record<string,any>,action:string,ref:string|null=null) {
  return [
   statement(env.DB,'INSERT INTO wa_residential_form_events(id,case_id,actor_id,action,reference,created_at) VALUES(?,?,?,?,?,?)',
      uid('wfe'),c.id,user.id,action,ref,now()),
