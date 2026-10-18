@@ -267,6 +267,13 @@ try {
     assert.equal((await api(`${base}/wa-forms/${created.id}`,{
       cookie:outsider.cookie,body:{version:1,status:'submitted'}})).status,403);
     await ok(`${tenant.base}/wa-forms/${created.id}`,tenant,{version:1,status:'submitted'});
+    const managerNotification=await first('SELECT user_id,message FROM notifications WHERE id=?',
+      `wa_new_${created.id}_${await userId(owner)}`);
+    assert.ok(managerNotification,'Submitting a tenant form must notify the authorised landlord');
+    assert.ok(!managerNotification.message.includes('One indoor cat'),
+      'Tenant answers must never leak into general landlord notification text');
+    assert.equal((await first('SELECT COUNT(*) AS n FROM outbox_events WHERE id=? AND kind=?',
+      `wa_new_${created.id}_${await userId(owner)}`,'wa_form.review_required')).n,1);
     assert.equal((await api(`${base}/wa-forms/${created.id}`,{cookie:owner.cookie,
       body:{version:2,status:'approved',reviewReference:'Owner cannot act as legal reviewer'}})).status,403);
     await ok(`${staffBase}/wa-forms/${created.id}`,operator,{
