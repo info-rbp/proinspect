@@ -648,6 +648,18 @@ try {
     const stored=await ok(`${staffBase}/wa-form-templates/upload`,operator,template);
     assert.equal(stored.formCode,'WA_FORM_25');
     assert.match(stored.sha256,/^[a-f0-9]{64}$/);
+    assert.equal((await api(`${staffBase}/wa-forms/${submission.id}/issue`,{
+      cookie:operator.cookie,body:{documentId:uploaded.id,templateVersion:stored.version,
+        reference:'Unapproved master must not issue'}
+    })).status,422);
+    assert.equal((await api(`${staffBase}/wa-form-templates/WA_FORM_25/approve`,{
+      cookie:operator.cookie,body:{templateVersion:stored.version,reviewReference:'Same uploader cannot approve'}
+    })).status,403);
+    const reviewed=await ok(`${staffBase}/wa-form-templates/WA_FORM_25/approve`,admin,{
+      templateVersion:stored.version,
+      reviewReference:'Separate synthetic administrator source and legal review'
+    });
+    assert.equal(reviewed.releaseApproved,true);
     const linked=await ok(`${staffBase}/wa-forms/${submission.id}/issue`,operator,{
       documentId:uploaded.id,templateVersion:stored.version,
       reference:'Synthetic reviewed issuance match'
