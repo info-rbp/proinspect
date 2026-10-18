@@ -151,8 +151,8 @@ export async function confirmTransaction(env:Env,user:Principal,w:Workspace,bond
  (tx.status==='submitted'&&['confirmed','rejected'].includes(d.status)),409,'BOND_TRANSITION_INVALID','Invalid transaction transition.');
  if(d.status==='submitted')assert(d.channel&&d.externalReference,422,'EXTERNAL_REFERENCE_REQUIRED','Record actual government submission channel and reference.');
  if(d.status==='confirmed'){
-  assert(['B01','B02','B03','B10','B11','B12','B13','B14','B15','B19'].includes(tx.code),
-    422,'BOND_NON_FINANCIAL_CONFIRMATION','This workflow does not change the government-held bond balance.');
+  assert(!['B20','B23'].includes(tx.code),
+    422,'BOND_RESTRICTED_WORKFLOW','This workflow must use the correct restricted or historical process.');
   assert(tx.external_reference&&d.confirmationDocumentId,422,'CONFIRMATION_REQUIRED','External submission reference and a reviewed government confirmation are required.');
   await document(env,b,d.confirmationDocumentId!);
   if(tx.code==='B01') {
@@ -172,6 +172,12 @@ export async function confirmTransaction(env:Env,user:Principal,w:Workspace,bond
    assert(tx.general_delta_cents<=0&&tx.pet_delta_cents<=0&&
       b.held_general_cents+tx.general_delta_cents>=0&&b.held_pet_cents+tx.pet_delta_cents>=0,
       422,'BOND_BALANCE','Release amounts must not exceed bond held.');
+  if(tx.code==='B11')assert(
+    b.held_general_cents+tx.general_delta_cents===0&&b.held_pet_cents+tx.pet_delta_cents===0,
+    422,'BOND_FULL_RELEASE_REQUIRED','Full agreed release must account for the complete confirmed balance.');
+  if(['B04','B05','B06','B07','B08','B09','B16','B17','B18','B21','B22'].includes(tx.code))
+   assert(tx.general_delta_cents===0&&tx.pet_delta_cents===0,422,
+     'BOND_NON_FINANCIAL_AMOUNT','Administrative variations and cases cannot change bond principal.');
   if(['B02','B03'].includes(tx.code))
    assert(tx.general_delta_cents>=0&&tx.pet_delta_cents>=0&&(tx.general_delta_cents+tx.pet_delta_cents)>0,
      422,'BOND_VARIATION_AMOUNT','Bond top-ups must be positive.');
@@ -179,7 +185,7 @@ export async function confirmTransaction(env:Env,user:Principal,w:Workspace,bond
  const time=now(),newG=b.held_general_cents+tx.general_delta_cents,newP=b.held_pet_cents+tx.pet_delta_cents;
  const release=['B10','B11','B12','B13','B14','B15','B19'].includes(tx.code);
  const nextStatus=d.status==='confirmed'?(release?(newG+newP===0?'released':'active'):'active'):
-  d.status==='submitted'?(release?'release_pending':tx.code==='B01'?'lodgement_submitted':'variation_pending'):
+  d.status==='submitted'?(release?'release_pending':tx.code==='B01'?'lodgement_submitted':['B16','B17','B18'].includes(tx.code)?'in_dispute':'variation_pending'):
   d.status==='rejected'?'exception':b.status;
  const commands=[statement(env.DB,
   'UPDATE bond_transactions SET status=?,version=version+1,channel=COALESCE(?,channel),external_reference=COALESCE(?,external_reference),confirmation_document_id=COALESCE(?,confirmation_document_id),submitted_at=CASE WHEN ?=\'submitted\' THEN ? ELSE submitted_at END,confirmed_at=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_at END,confirmed_by=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_by END,updated_at=? WHERE id=? AND bond_id=? AND version=?',
