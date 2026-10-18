@@ -260,10 +260,10 @@ try {
     await ok(base+'/documents/'+pdfRecord.id+'/issue',owner,{
       audience:'tenancy',recipientId:tenant.tenancyId,reviewReference:'Synthetic official confirmation only'});
     const confirm=await ok(base+'/bonds/'+bondId+'/transactions/'+lodged.transactionId+'/status',owner,{
-      version:2,status:'confirmed',confirmationDocumentId:pdfRecord.id,requestKey:requestKey()});
+      version:2,status:'confirmed',governmentBondReference:'WA-BOND-TEST-001',confirmationDocumentId:pdfRecord.id,requestKey:requestKey()});
     assert.equal(confirm.bondStatus,'active');
     const state=await ok(base+'/bonds/'+bondId,owner);
-    assert.equal(state.bondReference,'WA bond application test reference');
+    assert.equal(state.bondReference,'WA-BOND-TEST-001');
     assert.equal(state.heldGeneralCents,240000);
     assert.equal(state.receipts.length,1);
     assert.ok(state.receipts[0].lodgement_confirmed_at);
@@ -275,10 +275,13 @@ try {
       code:'B13',details:'Tenant initiated full security bond release via manual form',
       generalDeltaCents:-240000,requestKey:requestKey()});
     assert.equal(release.bondId,bondId);
-    const fraud=await api(tenant.base+'/bonds/'+bondId+'/transactions/'+release.transactionId+'/status',{
-      cookie:tenant.cookie,body:{version:1,status:'submitted',channel:'manual',
-      externalReference:'fake government receipt',requestKey:requestKey()}});
-    assert.equal(fraud.status,403);
+    const tenantSubmission=await ok(tenant.base+'/bonds/'+bondId+'/transactions/'+release.transactionId+'/status',tenant,{
+      version:1,status:'submitted',channel:'manual',externalReference:'Tenant manual application 100',
+      requestKey:requestKey()});
+    assert.equal(tenantSubmission.status,'submitted');
+    assert.equal((await api(tenant.base+'/bonds/'+bondId+'/transactions/'+release.transactionId+'/status',{
+      cookie:tenant.cookie,body:{version:2,status:'confirmed',governmentBondReference:'FAKE',requestKey:requestKey()}
+    })).status,403);
     const evidence=await ok(base+'/bonds/'+bondId+'/evidence',owner,{
       documentId:pdfRecord.id,category:'lodgement',requestKey:requestKey()});
     assert.ok(evidence.evidenceId);
