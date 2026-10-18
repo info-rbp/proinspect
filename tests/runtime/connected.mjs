@@ -225,6 +225,80 @@ try {
     )
   ).propertyId;
   const tenant = await makeTenant(owner, base, propertyId, 'tenant@tests.example');
+
+  await check('WA bond register records lodgement deadlines and requires verified external confirmation',async()=>{
+    const created=await ok(base+'/bonds',owner,{
+      tenancyId:tenant.tenancyId,weeklyRentCents:60000,generalCents:240000,petCents:0,requestKey:requestKey()});
+    const bondId=created.bondId;
+    assert.equal((await api(base+'/bonds',{cookie:outsider.cookie,body:{
+      tenancyId:tenant.tenancyId,weeklyRentCents:60000,generalCents:240000,requestKey:requestKey()
+    }})).status,403);
+    assert.equal((await api('/api/w/landlord/'+client+'/bonds/'+bondId,{cookie:outsider.cookie})).status,403);
+    assert.equal((await ok(tenant.base+'/tenancies/'+tenant.tenancyId+'/bonds',tenant)).bonds[0].id,bondId);
+    assert.equal((await api(tenant.base+'/bonds/'+bondId+'/receipts',{cookie:tenant.cookie,body:{
+      kind:'general',amountCents:240000,paidAt:new Date().toISOString(),payer:'Test Tenant',paymentReference:'Test receipt 100',requestKey:requestKey()
+    }})).status,403);
+    const paid=await ok(base+'/bonds/'+bondId+'/receipts',owner,{
+      kind:'general',amountCents:240000,paidAt:new Date().toISOString(),payer:'Test Tenant',paymentReference:'Test receipt 100',
+      requestKey:requestKey()});
+    assert.ok(paid.dueAt);
+    const lodged=await ok(base+'/bonds/'+bondId+'/transactions',owner,{
+      code:'B01',details:'Synthetic bond lodged externally with WA Bonds Administration',
+      requestKey:requestKey()});
+    assert.equal((await api(base+'/bonds/'+bondId+'/transactions/'+lodged.transactionId+'/status',{
+      cookie:owner.cookie,body:{version:1,status:'confirmed',requestKey:requestKey()}
+    })).status,409);
+    const submitted=await ok(base+'/bonds/'+bondId+'/transactions/'+lodged.transactionId+'/status',owner,{
+      version:1,status:'submitted',channel:'manual',externalReference:'WA bond application test reference',requestKey:requestKey()});
+    assert.equal(submitted.status,'submitted');
+    assert.equal((await api(base+'/bonds/'+bondId+'/transactions/'+lodged.transactionId+'/status',{
+      cookie:owner.cookie,body:{version:2,status:'confirmed',requestKey:requestKey()}
+    })).status,422);
+    const pdfRecord=await ok(base+'/documents/upload',owner,upload({
+      title:'Synthetic government bond lodgement certificate',category:'tenancy_document',propertyId,
+    },pdf('Government confirmation synthetic testing only')));
+    await ok(base+'/documents/'+pdfRecord.id+'/issue',owner,{
+      audience:'tenancy',recipientId:tenant.tenancyId,reviewReference:'Synthetic official confirmation only'});
+    const confirm=await ok(base+'/bonds/'+bondId+'/transactions/'+lodged.transactionId+'/status',owner,{
+      version:2,status:'confirmed',confirmationDocumentId:pdfRecord.id,requestKey:requestKey()});
+    assert.equal(confirm.bondStatus,'active');
+    const state=await ok(base+'/bonds/'+bondId,owner);
+    assert.equal(state.bondReference,'WA bond application test reference');
+    assert.equal(state.heldGeneralCents,240000);
+    assert.equal(state.receipts.length,1);
+    assert.ok(state.receipts[0].lodgement_confirmed_at);
+    assert.equal(state.transactions[0].status,'confirmed');
+    const variation=await ok(base+'/bonds/'+bondId+'/transactions',owner,{
+      code:'B04',details:'Outgoing and incoming tenant change, externally reviewed',requestKey:requestKey()});
+    assert.equal(variation.bondId,bondId);
+    const release=await ok(tenant.base+'/bonds/'+bondId+'/transactions',tenant,{
+      code:'B13',details:'Tenant initiated full security bond release via manual form',
+      generalDeltaCents:-240000,requestKey:requestKey()});
+    assert.equal(release.bondId,bondId);
+    const fraud=await api(tenant.base+'/bonds/'+bondId+'/transactions/'+release.transactionId+'/status',{
+      cookie:tenant.cookie,body:{version:1,status:'submitted',channel:'manual',
+      externalReference:'fake government receipt',requestKey:requestKey()}});
+    assert.equal(fraud.status,403);
+    const evidence=await ok(base+'/bonds/'+bondId+'/evidence',owner,{
+      documentId:pdfRecord.id,category:'lodgement',requestKey:requestKey()});
+    assert.ok(evidence.evidenceId);
+    const notice=await ok(base+'/bonds/'+bondId+'/transactions/'+release.transactionId+'/notices',owner,{
+      kind:'release_application',governmentReference:'Notice reference synthetic',receivedAt:new Date().toISOString(),
+      responseDueAt:new Date(Date.now()+14*86400000).toISOString(),documentId:pdfRecord.id,requestKey:requestKey()});
+    assert.ok(notice.noticeId);
+    assert.equal((await api('/api/w/tenant/'+tenant.tenancyId+'/bonds/'+bondId+'/transactions/'+release.transactionId+'/case',{
+      cookie:tenant.cookie,body:{status:'determined',decision:'Forged decision',requestKey:requestKey()}
+    })).status,403);
+    const c=await ok(base+'/bonds/'+bondId+'/transactions/'+release.transactionId+'/case',owner,{
+      status:'notice_received',requestKey:requestKey()});
+    assert.ok(c.caseId);
+    const detail=await ok(base+'/bonds/'+bondId,owner);
+    assert.equal(detail.notices.length,1);
+    assert.ok(detail.deadlines.some(x=>x.kind==='response'));
+    assert.equal(detail.cases.length,1);
+    assert.equal((await first('SELECT COUNT(*) AS n FROM bond_events WHERE bond_id=?',bondId)).n>=8,true);
+  });
+
   const b = await book(owner, base, propertyId);
   await check(
     'published inspection follows the correct tenancy and rescheduling withdraws stale information',
