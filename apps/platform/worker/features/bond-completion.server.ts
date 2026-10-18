@@ -95,7 +95,7 @@ export async function addBondAllocation(env:Env,user:Principal,w:Workspace,bondI
  assert((d.recipientKind==='tenant')===Boolean(d.partyId),422,'BOND_ALLOCATION_PARTY','A tenant payout requires an authorised bond party.');
  assert((d.recipientKind==='new_bond')===Boolean(d.targetBondId),422,'BOND_ALLOCATION_DESTINATION','A transfer requires a different target bond.');
  if(d.recipientKind==='new_bond'){
-  assert(tx.code==='B14'&&d.targetBondId!==bondId,422,'BOND_TRANSFER_CONTEXT','Choose a separate new tenancy bond.');
+  assert(d.targetBondId&&tx.code==='B14'&&d.targetBondId!==bondId,422,'BOND_TRANSFER_CONTEXT','Choose a separate new tenancy bond.');
   const target=await statement(env.DB,"SELECT id,property_id FROM bonds WHERE id=?",d.targetBondId).first<{id:string;property_id:string}>();
   assert(target,422,'BOND_DESTINATION_MISSING','The new bond must exist in ProInspect.');
   // Writing this transfer may reveal a second tenancy. Require access to both.
@@ -105,6 +105,7 @@ export async function addBondAllocation(env:Env,user:Principal,w:Workspace,bondI
   422,'BOND_HOUSING_LOAN_REFERENCE','Record the official assistance-loan allocation reference.');
  if(d.recipientKind==='landlord')assert(tx.code==='B12',422,'BOND_LANDLORD_ALLOCATION','Only an evidenced landlord claim may receive bond funds.');
  if(d.recipientKind==='tenant'){
+   assert(d.partyId,422,'BOND_ALLOCATION_PARTY','Choose a verified tenant bond party.');
    const party=await statement(env.DB,'SELECT user_id,role,status FROM bond_parties WHERE bond_id=? AND id=?',bondId,d.partyId)
       .first<{user_id:string|null;role:string;status:string}>();
    assert(party?.status==='confirmed'&&['tenant','estate'].includes(party.role),422,
