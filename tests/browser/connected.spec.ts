@@ -395,7 +395,7 @@ test('WA Residential Forms Centre creates an authorised pet request without expo
     'Form 25 — Pet request');
   await tenant.page.getByRole('button',{name:'Submit request for review'}).click();
   await saved(tenant.page);
-  await expect(tenant.page.getByText('submitted',{exact:true}).first()).toBeVisible();
+  await expect(tenant.page.locator('[data-status="submitted"]').first()).toBeVisible();
   const ownerForms=await get(landlord.context,api+`/tenancies/${tenancy.id}/wa-forms`);
   expect(ownerForms.cases.some((x:any)=>x.id===created.id&&x.status==='submitted')).toBe(true);
  }finally{
