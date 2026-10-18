@@ -5,13 +5,15 @@ import { PageHeading } from '../../../../packages/ui/components';
 import { OperationForm,Panel,Input,Select } from '../components/OperationForm';
 import { WA_RESIDENTIAL_FORMS } from '../../../../packages/wa-residential/forms';
 type Template={form_code:string;version:string;official_source_url:string;official_sha256:string;
- legal_review_reference:string;approved_at:string;retired_at:string|null;file_size:number};
+ legal_review_reference:string;approved_at:string;retired_at:string|null;file_size:number;
+ reviewed_by:string;release_approved_at:string|null;release_approved_by:string|null;
+ release_review_reference:string|null};
 export const meta=()=>[{title:'Official WA forms library | ProInspect'}];
 export async function loader({request,context,params}:LoaderFunctionArgs){
  return await loadApi(request,context,`/api/w/${params.kind}/${params.scopeId}/wa-form-templates`) as {templates:Template[]};
 }
 export default function WaOfficialTemplates(){
- const d=useLoaderData<typeof loader>(),w=useWorkspace().workspace;
+ const d=useLoaderData<typeof loader>(),context=useWorkspace(),w=context.workspace;
  const api=workspaceApi(w.kind,w.scopeId);
  return <div className="stack">
   <PageHeading title="Official WA residential form library"
@@ -35,6 +37,14 @@ export default function WaOfficialTemplates(){
       <p className="small">Registered {t.approved_at} · {t.file_size} bytes</p>
       <p className="small">SHA-256: <code>{t.official_sha256}</code></p>
       <p className="small">Review reference: {t.legal_review_reference}</p>
+      <p className="small">Application use: {t.release_approved_at?'Approved by a separate administrator':'Not yet independently approved'}</p>
+      {t.release_review_reference&&<p className="small">Release review: {t.release_review_reference}</p>}
+      {context.user.staffRole==='administrator'&&!t.release_approved_at&&t.reviewed_by!==context.user.id&&
+        <OperationForm endpoint={`${api}/wa-form-templates/${encodeURIComponent(t.form_code)}/approve`}
+          defaults={{templateVersion:t.version}} label="Approve source version for application use">
+          <Input name="reviewReference" label="Independent legal/source approval reference"/>
+        </OperationForm>
+      }
       {t.retired_at&&<p>Retired: {t.retired_at}</p>}
     </div>
     <a href={t.official_source_url} target="_blank" rel="noopener noreferrer">Official source →</a>
