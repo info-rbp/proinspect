@@ -25,14 +25,14 @@ async function entry(env:Env,user:Principal,w:Workspace,id:string){
  const c=await statement(env.DB,'SELECT * FROM wa_residential_form_cases WHERE id=?',id).first<Record<string,any>>();
  assert(c,404,'WA_FORM_NOT_FOUND','The form record is unavailable.');
  const t=await scope(env,user,w,c.tenancy_id);
- if(w.kind==='tenant') assert(c.initiator_id===user.id || c.status==='document_issued'||c.status==='service_evidence_recorded'||c.status==='completed',
+ if(w.kind==='tenant') assert(c.initiator_id===user.id,
     403,'WA_FORM_PRIVATE','This record has not been issued to you.');
  return {c,t};
 }
 export async function waFormsData(env:Env,user:Principal,w:Workspace,tenancyId:string){
  await scope(env,user,w,tenancyId);
  const q=w.kind==='tenant'
-   ? "SELECT * FROM wa_residential_form_cases WHERE tenancy_id=? AND (initiator_id=? OR status IN('document_issued','service_evidence_recorded','completed')) ORDER BY created_at DESC"
+   ? 'SELECT * FROM wa_residential_form_cases WHERE tenancy_id=? AND initiator_id=? ORDER BY created_at DESC'
    : 'SELECT * FROM wa_residential_form_cases WHERE tenancy_id=? ORDER BY created_at DESC';
  const rows=(await statement(env.DB,q,tenancyId,...(w.kind==='tenant'?[user.id]:[])).all<Record<string,any>>()).results;
  return {definitions:waAvailableForms(w.kind),source:OFFICIAL_WA_FORMS_URL,cases:await Promise.all(rows.map(async r=>({
