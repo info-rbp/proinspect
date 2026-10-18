@@ -19,6 +19,7 @@ import * as strata from './strata.server';
 import * as tenancy from './tenancies.server';
 import * as admin from './admin.server';
 import * as forms from './forms.server';
+import * as bonds from './bonds.server';
 import * as integrations from './integrations.server';
 /** Feature endpoints run only after authentication, origin and workspace checks. */
 export async function featureApi(
@@ -85,6 +86,10 @@ export async function featureApi(
       return documents.downloadAttachment(env, user, w, id);
     if (area === 'tenancies' && id && parts.length === 2)
       return ok(await tenancy.tenancyDetail(env, user, w, id));
+    if (area === 'tenancies' && id && action === 'bonds')
+      return ok(await bonds.listBonds(env,user,w,id));
+    if (area === 'bonds' && id && parts.length === 2)
+      return ok(await bonds.getBond(env,user,w,id));
     if (area === 'tenancies' && id && action === 'forms')
       return ok(await forms.formsData(env, user, w, id));
     if (area === 'schemes' && id && parts.length === 2)
@@ -211,6 +216,21 @@ export async function featureApi(
     return ok(await finance.recordPayment(env, user, w, id, await body()));
   if (area === 'payments' && id && action === 'checkout')
     return ok(await finance.checkout(env, user, w, id));
+  if (tail === 'bonds') return ok(await bonds.createBond(env,user,w,await body()));
+  if (area === 'bonds' && id && action === 'receipts')
+    return ok(await bonds.recordReceipt(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && !child)
+    return ok(await bonds.createTransaction(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='status')
+    return ok(await bonds.confirmTransaction(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='claims')
+    return ok(await bonds.addClaim(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='notices')
+    return ok(await bonds.addNotice(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='case')
+    return ok(await bonds.recordCase(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'evidence')
+    return ok(await bonds.addEvidence(env,user,w,id,await body()));
   if (tail === 'forms') return ok(await forms.createForm(env, user, w, await body()));
   if (area === 'forms' && id && parts.length === 2)
     return ok(await forms.updateForm(env, user, w, id, await body()));
