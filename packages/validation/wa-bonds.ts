@@ -25,8 +25,8 @@ export const WA_BOND_FORMS: Record<'lodgement'|'variation'|'release', string> = 
 };
 export const WA_BOND_RULES: Record<BondWorkflowCode, BondWorkflowRule> = {
  B01:{name:'Initial bond lodgement',form:'lodgement',required:['tenancyStart','tenantLegalNames','landlordLegalName','paymentDate'],notes:'Include all parties, payment receipt, general/pet components and approved manual/BondsOnline form.'},
- B02:{name:'General bond top-up',form:'variation',required:['rentIncreaseReference','writtenNoticeDate','topUpPaymentDate','newWeeklyRentCents'],notes:'Written increase notice, lawful rent increase and additional funds must be evidenced.'},
- B03:{name:'Pet bond increase',form:'variation',required:['petApprovalReference','writtenNoticeDate','topUpPaymentDate'],notes:'Pet approval or permitted rent-increase trigger, 60-day written notice and assistance-dog exemption apply.'},
+ B02:{name:'General bond top-up',form:'variation',required:['rentIncreaseReference','writtenNoticeDate','topUpEffectiveDate','topUpPaymentDate','newWeeklyRentCents'],notes:'Written increase notice, lawful rent increase and additional funds must be evidenced.'},
+ B03:{name:'Pet bond increase',form:'variation',required:['eligibilityTriggerReference','writtenNoticeDate','topUpEffectiveDate','topUpPaymentDate'],notes:'Pet approval or permitted rent-increase trigger, 60-day written notice and assistance-dog exemption apply.'},
  B04:{name:'Incoming tenant',form:'variation',required:['incomingTenantName','effectiveDate','tenantConsentReference'],notes:'Outgoing/remaining tenants must agree where required. Update the official bond register before confirming.'},
  B05:{name:'Outgoing tenant',form:'variation',required:['outgoingTenantName','effectiveDate','settlementReference'],notes:'Leaving tenants should settle their share before government variation; do not automatically remove their entitlement.'},
  B06:{name:'Landlord change',form:'variation',required:['formerLandlord','newLandlord','effectiveDate'],notes:'Former and new owner/landlord details and required signatures.'},
@@ -55,7 +55,7 @@ export function bondWorksheetErrors(code: BondWorkflowCode, values:Record<string
  for(const [key,v] of Object.entries(values)) {
    if(v.length>500)errors.push(`Form field too long: ${key}`);
    if(/(?:date|deadline|tenancyStart|tenancyEndDate|effectiveDate)/i.test(key)&&v&&
-      !/^\d{4}-\d{2}-\d{2}$/.test(v))errors.push(`Use YYYY-MM-DD for ${key}`);
+      (!/^\d{4}-\d{2}-\d{2}$/.test(v)||Number.isNaN(Date.parse(v))||new Date(v).toISOString().slice(0,10)!==v))errors.push(`Use YYYY-MM-DD for ${key}`);
  }
  return errors;
 }
