@@ -225,6 +225,48 @@ try {
     )
   ).propertyId;
   const tenant = await makeTenant(owner, base, propertyId, 'tenant@tests.example');
+  await check('WA residential form catalogue, private draft, review, delivery evidence and commercial denial', async () => {
+    const defs = await ok(`${tenant.base}/tenancies/${tenant.tenancyId}/wa-forms`, tenant);
+    assert.ok(defs.definitions.some(f => f.code === 'WA_FORM_25'));
+    assert.ok(!defs.definitions.some(f => f.code === 'WA_FORM_19'));
+    assert.ok(!defs.definitions.some(f => f.code === 'WA_FORM_2'));
+    const commercial = await ok('/api/onboarding', owner, {
+      displayName:'Test Owner',clientName:'Commercial Fixture',landlordType:'commercial'
+    },201);
+    assert.equal((await api(`/api/w/commercial/${commercial.clientId}/tenancies/${tenant.tenancyId}/wa-forms`,
+      {cookie:owner.cookie})).status,403);
+    assert.equal((await api(`${tenant.base}/wa-forms`, {cookie:tenant.cookie,body:{
+      tenancyId:tenant.tenancyId,formCode:'WA_FORM_19',answers:{entryPurpose:'Routine',entryDate:'2026-11-20'}
+    }})).status,422);
+    const created = await ok(`${tenant.base}/wa-forms`, tenant, {
+      tenancyId:tenant.tenancyId, formCode:'WA_FORM_25',
+      answers:{animal:'One indoor cat',arrangements:'Indoor, supervised'},
+      notes:'Synthetic test only'
+    });
+    assert.equal(created.status,'draft');
+    assert.equal((await api(`${base}/wa-forms/${created.id}`,{
+      cookie:outsider.cookie,body:{version:1,status:'submitted'}})).status,403);
+    await ok(`${tenant.base}/wa-forms/${created.id}`,tenant,{version:1,status:'submitted'});
+    assert.equal((await api(`${base}/wa-forms/${created.id}`,{cookie:owner.cookie,
+      body:{version:2,status:'approved',reviewReference:'Owner cannot act as legal reviewer'}})).status,403);
+    await ok(`${staffBase}/wa-forms/${created.id}`,operator,{
+      version:2,status:'under_review',reviewReference:'Synthetic Staff review'
+    });
+    await ok(`${staffBase}/wa-forms/${created.id}`,operator,{
+      version:3,status:'approved',reviewReference:'Synthetic legal-template pending'
+    });
+    const delivery=await ok(`${staffBase}/wa-forms/${created.id}/delivery`,operator,{
+      recipientKind:'tenant',recipientReference:'fixture@example.test',
+      deliveryMethod:'email',deliveryAt:new Date().toISOString(),
+      evidenceReference:'Test delivery attempt only',outcome:'attempted'
+    });
+    assert.equal(delivery.legalServiceConfirmed,false);
+    const forms=await ok(`${tenant.base}/tenancies/${tenant.tenancyId}/wa-forms`,tenant);
+    assert.ok(forms.cases.some(f=>f.id===created.id&&f.status==='approved'));
+    assert.equal((await first('SELECT COUNT(*) n FROM wa_residential_form_events WHERE case_id=?',created.id)).n,4);
+    assert.equal((await first('SELECT COUNT(*) n FROM wa_residential_form_delivery WHERE case_id=?',created.id)).n,1);
+  });
+
   const b = await book(owner, base, propertyId);
   await check(
     'published inspection follows the correct tenancy and rescheduling withdraws stale information',
