@@ -298,6 +298,10 @@ try {
     assert.equal(info.bondReference,'WA-BOND-TEST-001');
     assert.equal(info.heldGeneralCents,240000);
     assert.equal(info.receipts.length,1);
+    const tenantView=await ok(tenantResource,tenant);
+    assert.ok(!tenantView.transactions[0].details.includes('Synthetic external bond lodgement'));
+    assert.equal(tenantView.verification[0].external_reference,undefined);
+    assert.equal(tenantView.contributions.length,0);
     assert.ok(info.receipts[0].lodgement_confirmed_at);
     const party=await ok(resource+'/parties',owner,{
       role:'tenant',name:'Synthetic Tenant',memberUserId:await userId(tenant),
