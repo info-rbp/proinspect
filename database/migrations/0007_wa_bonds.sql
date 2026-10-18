@@ -119,3 +119,11 @@ CREATE TRIGGER bond_events_immutable_update BEFORE UPDATE ON bond_events BEGIN S
 CREATE TRIGGER bond_events_immutable_delete BEFORE DELETE ON bond_events BEGIN SELECT RAISE(ABORT,'BOND_HISTORY_IMMUTABLE'); END;
 CREATE TRIGGER bond_receipts_immutable_update BEFORE UPDATE OF amount_cents,kind,payer_envelope,payment_reference,paid_at ON bond_receipts BEGIN SELECT RAISE(ABORT,'BOND_RECEIPT_IMMUTABLE'); END;
 CREATE TRIGGER bond_transactions_confirmed_immutable BEFORE UPDATE OF code,general_delta_cents,pet_delta_cents,details_envelope,channel,external_reference,confirmation_document_id ON bond_transactions WHEN OLD.status='confirmed' BEGIN SELECT RAISE(ABORT,'BOND_CONFIRMED_TRANSACTION_IMMUTABLE'); END;
+
+CREATE TABLE bond_alert_dispatches (
+ deadline_id TEXT NOT NULL REFERENCES bond_deadlines(id),
+ user_id TEXT NOT NULL REFERENCES users(id),
+ phase TEXT NOT NULL CHECK(phase IN('approaching','overdue')),
+ created_at TEXT NOT NULL,
+ PRIMARY KEY(deadline_id,user_id,phase)
+) STRICT;
