@@ -56,6 +56,19 @@ export async function prepareBondForm(env:Env,user:Principal,w:Workspace,bondId:
    403,'BOND_WORKSHEET_FORBIDDEN','You may prepare only your own tenant-initiated application.');
  const errors=bondWorksheetErrors(tx.code as BondWorkflowCode,d.fields);
  assert(!errors.length,422,'BOND_WORKSHEET_INCOMPLETE',errors.join(' '));
+ if(['B02','B03'].includes(tx.code)){
+  const notice=new Date(d.fields.writtenNoticeDate).getTime();
+  const effective=new Date(d.fields.topUpEffectiveDate).getTime();
+  assert(Number.isFinite(notice)&&Number.isFinite(effective)&&effective-notice>=60*86400000,
+    422,'BOND_TOPUP_NOTICE','Record a valid increase date at least 60 days after the applicable written notice.');
+  if(tx.code==='B02'){
+   const newRent=Number(d.fields.newWeeklyRentCents);
+   assert(Number.isInteger(newRent)&&newRent>=b.weekly_rent_cents&&newRent<=100000000,
+     422,'BOND_RENT_INCREASE_EVIDENCE','A general bond top-up needs the verified new weekly rent in cents.');
+   assert(newRent>120000||b.general_cents+tx.general_delta_cents<=newRent*4,
+     422,'BOND_GENERAL_TOPUP_CAP','The general bond top-up exceeds the four-week cap for the recorded weekly rent.');
+  }else assert(b.pet_cents+tx.pet_delta_cents<=35000,422,'BOND_PET_CAP','Residential pet bond cannot exceed $350.');
+ }
  const exists=await statement(env.DB,'SELECT id FROM bond_preparations WHERE transaction_id=?',id).first();
  assert(!exists,409,'BOND_WORKSHEET_EXISTS','Create a new transaction draft to replace a recorded worksheet.');
  const wid=uid('bw'),time=now();
@@ -150,6 +163,7 @@ export async function reconcileBondPayout(env:Env,user:Principal,w:Workspace,bon
  assert(b.status==='payout_pending',409,'BOND_PAYOUT_STATE','There is no pending confirmed payout.');
  assert(tx.external_reference===d.governmentReference,422,'BOND_PAYOUT_REFERENCE','Payout must match the release application.');
  await document(env,b,d.governmentDocumentId);
+ assert(tx.confirmation_document_id!==d.governmentDocumentId,422,'BOND_PAYOUT_PROOF_SEPARATE','Use separate government payout evidence, not the release approval document.');
  const verified=await statement(env.DB,"SELECT id FROM bond_external_verifications WHERE bond_id=? AND document_id=? AND external_reference=? AND result='verified'",
   bondId,d.governmentDocumentId,d.governmentReference).first();
  assert(verified,422,'BOND_PAYOUT_EVIDENCE_UNVERIFIED','An independent staff reviewer must verify the actual payout confirmation.');
