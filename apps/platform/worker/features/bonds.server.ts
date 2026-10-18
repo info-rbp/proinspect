@@ -108,6 +108,8 @@ export async function getBond(env:Env,user:Principal,w:Workspace,id:string){
 }
 export async function createTransaction(env:Env,user:Principal,w:Workspace,bondId:string,input:unknown){
  const d=txSchema.parse(input),b=await authorized(env,user,w,bondId);
+ assert(d.code!=='B20',403,'BOND_CONFIDENTIAL_RESTRICTED','Family-violence bond workflows must use the separately protected case process; ordinary bond records are not a safe intake.');
+ assert(d.code!=='B23',422,'BOND_LEGACY_RECORD_ONLY','Legacy disposal documents are historical; new applications use the current release form.');
  const tenant=w.kind==='tenant';
  assert(!tenant||['B13','B16','B17','B18','B20'].includes(d.code),403,'BOND_ACTION_FORBIDDEN','This transaction requires the managing party.');
  assert(b.status!=='released',409,'BOND_CLOSED','Released bonds cannot be modified.');
