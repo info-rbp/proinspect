@@ -5,7 +5,7 @@ import { seal,unseal } from '../../../../packages/auth/crypto';
 import { recordId,version,reference,activity,guard,clearGuard } from '../../../../packages/operations/core';
 import { tenancyAccess } from './tenancies.server';
 import { waAvailableForms,waForm,OFFICIAL_WA_FORMS_URL } from '../../../../packages/wa-residential/forms';
-import { operationsWrite } from '../../../../packages/authorization/server';
+import { operationsWrite, documentAllowed } from '../../../../packages/authorization/server';
 import { entryNoticeAdvisory } from '../../../../packages/wa-residential/rules';
 import { waIssueReadiness } from './wa-issuance.server';
 
@@ -27,16 +27,23 @@ async function entry(env:Env,user:Principal,w:Workspace,id:string){
  const c=await statement(env.DB,'SELECT * FROM wa_residential_form_cases WHERE id=?',id).first<Record<string,any>>();
  assert(c,404,'WA_FORM_NOT_FOUND','The form record is unavailable.');
  const t=await scope(env,user,w,c.tenancy_id);
- if(w.kind==='tenant') assert(c.initiator_id===user.id,
+ if(w.kind==='tenant'&&c.initiator_id!==user.id){
+  assert(c.form_code==='WA_FORM_28'&&c.issued_document_id &&
+   await documentAllowed(env,user,c.issued_document_id),
     403,'WA_FORM_PRIVATE','This record has not been issued to you.');
+ }
  return {c,t};
 }
 export async function waFormsData(env:Env,user:Principal,w:Workspace,tenancyId:string){
  await scope(env,user,w,tenancyId);
  const q=w.kind==='tenant'
-   ? 'SELECT * FROM wa_residential_form_cases WHERE tenancy_id=? AND initiator_id=? ORDER BY created_at DESC'
+   ? `SELECT * FROM wa_residential_form_cases
+      WHERE tenancy_id=? AND (initiator_id=? OR
+       (form_code='WA_FORM_28' AND issued_document_id IN
+        (SELECT document_id FROM document_grants WHERE recipient_kind='tenancy' AND recipient_id=?)))
+      ORDER BY created_at DESC`
    : 'SELECT * FROM wa_residential_form_cases WHERE tenancy_id=? ORDER BY created_at DESC';
- const rows=(await statement(env.DB,q,tenancyId,...(w.kind==='tenant'?[user.id]:[])).all<Record<string,any>>()).results;
+ const rows=(await statement(env.DB,q,tenancyId,...(w.kind==='tenant'?[user.id,tenancyId]:[])).all<Record<string,any>>()).results;
  return {definitions:waAvailableForms(w.kind),source:OFFICIAL_WA_FORMS_URL,cases:await Promise.all(rows.map(async r=>({
   id:r.id,formCode:r.form_code,status:r.status,version:r.version,createdAt:r.created_at,
   dueAt:r.due_at,dueBasis:r.due_basis,receiptAt:r.received_at,
