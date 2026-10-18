@@ -9,21 +9,16 @@ type FormCase={id:string;formCode:string;status:string;version:number;createdAt:
 type Data={definitions:Definition[];cases:FormCase[];source:string};
 export const meta=()=>[{title:'WA Residential Tenancy Forms | ProInspect'}];
 export async function loader({request,context,params}:LoaderFunctionArgs){
- return await loadApi(request,context,`/api/w/${params.kind}/${params.scopeId}/tenancies/${params.tenancyId}/wa-forms`) as Data;
+ return { ...(await loadApi(request,context,`/api/w/${params.kind}/${params.scopeId}/tenancies/${params.tenancyId}/wa-forms`) as Data), tenancyId:params.tenancyId };
 }
 export default function WAResidentialForms(){
  const d=useLoaderData<typeof loader>(),w=useWorkspace().workspace;
  const prefix=workspaceApi(w.kind,w.scopeId);
- const tenancyId=new URL(typeof window!=='undefined'?window.location.href:'http://localhost').pathname.split('/').at(-2)??'';
+ const tenancyId=d.tenancyId!;
  return <div className="stack">
    <PageHeading title="WA Residential Tenancy Forms" description="Approved official forms are separate from application instructions. An online draft is not a legal notice, bond lodgement or court filing." />
    <Link to={`${w.href}/tenancies/${tenancyId}`}>Back to tenancy</Link>
    <Panel title="Start a residential form">
-     <OperationForm endpoint={`${prefix}/wa-forms`} defaults={{tenancyId}} label="Save draft form instructions">
-       <Select name="formCode" label="WA form" options={d.definitions.map(f=>({value:f.code,label:f.name}))}/>
-       <TextArea name="notes" label="Supporting instructions / questions for review" required={false}/>
-       <p className="small">Select the appropriate form, then follow the official source for field requirements. The draft is private until reviewed and issued.</p>
-     </OperationForm>
      <p><a href={d.source} target="_blank" rel="noopener noreferrer">Official WA Consumer Protection forms and notices</a></p>
    </Panel>
    <Panel title="Form catalogue">
