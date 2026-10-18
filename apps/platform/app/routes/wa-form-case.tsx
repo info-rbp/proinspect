@@ -15,7 +15,7 @@ type WaCase={
  externalEvents:{id:string;action:string;external_reference:string;effective_at:string}[];
  decisions:{id:string;decision:string;explanation:string;createdAt:string}[];
 };
-type Template={form_code:string;version:string;approved_at:string};
+type Template={form_code:string;version:string;approved_at:string;release_approved_at:string|null};
 export const meta=()=>[{title:'WA statutory form case | ProInspect'}];
 export async function loader({request,context,params}:LoaderFunctionArgs){
  const base=`/api/w/${params.kind}/${params.scopeId}`;
@@ -38,7 +38,7 @@ export default function WaFormCase() {
  const manager=staff||['landlord','property-manager'].includes(w.kind);
  const selectedDocuments=workspace.documents.filter((doc:any)=>
   doc.tenancy_id===c.tenancyId&&doc.status==='issued');
- const templateOptions=d.templates.filter(t=>t.form_code===c.formCode)
+ const templateOptions=d.templates.filter(t=>t.form_code===c.formCode&&t.release_approved_at)
    .map(t=>({value:t.version,label:`${t.version} (reviewed ${t.approved_at.slice(0,10)})`}));
  const label=d.definitions.find(f=>f.code===c.formCode)?.name??c.formCode;
  return <div className="stack">
