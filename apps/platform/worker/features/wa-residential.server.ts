@@ -7,6 +7,7 @@ import { tenancyAccess } from './tenancies.server';
 import { waAvailableForms,waForm,OFFICIAL_WA_FORMS_URL } from '../../../../packages/wa-residential/forms';
 import { operationsWrite } from '../../../../packages/authorization/server';
 import { entryNoticeAdvisory } from '../../../../packages/wa-residential/rules';
+import { waIssueReadiness } from './wa-issuance.server';
 
 async function scope(env:Env,user:Principal,w:Workspace,tenancyId:string,write=false){
   assert(['landlord','property-manager','tenant','staff'].includes(w.kind),403,'RESIDENTIAL_FORMS_ONLY','Residential tenancy forms are only available in residential Landlord, Property Manager, Tenant and Staff workspaces.');
@@ -195,6 +196,10 @@ export async function waLinkIssuedDocument(env:Env,user:Principal,w:Workspace,id
  operationsWrite(user);
  const {c,t}=await entry(env,user,w,id);
  assert(c.status==='approved',409,'FORM_NOT_APPROVED','Staff must review the form instructions first.');
+ const issueReady=await waIssueReadiness(env,c);
+ assert(issueReady.ready,422,'ISSUE_REQUIREMENTS_OUTSTANDING',
+   'Complete statutory evidence review before linking the issued document: '+issueReady.missing.join(', ')+'.');
+
  const q=z.object({documentId:recordId,templateVersion:z.string().min(4).max(80),reference}).parse(input);
  const template=await statement(env.DB,
  'SELECT form_code FROM wa_residential_form_templates WHERE form_code=? AND version=? AND retired_at IS NULL',
