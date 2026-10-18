@@ -20,7 +20,7 @@ const txSchema = z.object({code:txCodes, details:z.string().min(5).max(5000),
   petDeltaCents:z.number().int().min(-100000000).max(100000000).default(0),
   requestKey:recordId});
 const receiptSchema = z.object({kind:z.enum(['general','pet']),amountCents:cents.positive(),
-  paidAt:isoDate,payer:z.string().min(2).max(180),paymentReference:reference,requestKey:recordId});
+  paidAt:isoDate,payer:z.string().min(2).max(180),paymentReference:reference,transactionId:recordId.optional(),requestKey:recordId});
 const confirmSchema = z.object({version,status:z.enum(['submitted','confirmed','rejected','cancelled']),
   channel:governmentChannels.optional(),externalReference:reference.optional(),
   confirmationDocumentId:recordId.optional(),governmentBondReference:reference.optional(),agentManualExceptionReference:reference.optional(),requestKey:recordId});
@@ -97,7 +97,7 @@ export async function getBond(env:Env,user:Principal,w:Workspace,id:string){
   channel:t.channel,
  })));
  const participants=(await statement(env.DB,'SELECT id,role,status,effective_at,ended_at,external_reference,government_document_id FROM bond_parties WHERE bond_id=? ORDER BY created_at',id).all()).results;
- const receipts=(await statement(env.DB,'SELECT id,kind,amount_cents,paid_at,due_at,lodgement_confirmed_at FROM bond_receipts WHERE bond_id=? ORDER BY created_at',id).all()).results;
+ const receipts=(await statement(env.DB,'SELECT id,transaction_id,kind,amount_cents,paid_at,due_at,lodgement_confirmed_at FROM bond_receipts WHERE bond_id=? ORDER BY created_at',id).all()).results;
  const cases=(await statement(env.DB,'SELECT id,transaction_id,status,external_reference,decision_at,appeal_due_at,version FROM bond_cases WHERE bond_id=? ORDER BY created_at',id).all()).results;
  const notices=(await statement(env.DB,'SELECT id,kind,government_reference,received_at,response_due_at FROM bond_notices WHERE bond_id=? ORDER BY received_at',id).all()).results;
  const deadlines=(await statement(env.DB,'SELECT id,kind,source,due_at,completed_at FROM bond_deadlines WHERE bond_id=? ORDER BY due_at',id).all()).results;
@@ -155,12 +155,19 @@ export async function createTransaction(env:Env,user:Principal,w:Workspace,bondI
 export async function recordReceipt(env:Env,user:Principal,w:Workspace,bondId:string,input:unknown){
  const d=receiptSchema.parse(input),b=await authorized(env,user,w,bondId,true);
  assert(b.status!=='released',409,'BOND_CLOSED','Bond is closed.');
+ if(b.status==='active')assert(d.transactionId,422,'BOND_TOPUP_CONTEXT','Select the appropriate pending bond variation for additional funds.');
+ if(d.transactionId){
+   const t=await statement(env.DB,'SELECT code,status FROM bond_transactions WHERE bond_id=? AND id=?',bondId,d.transactionId).first<{code:string;status:string}>();
+   assert(t&&t.status==='draft'&&['B02','B03'].includes(t.code)&&
+      (t.code==='B02'?d.kind==='general':d.kind==='pet'),422,
+      'BOND_PAYMENT_VARIATION','Additional bond receipts must match a draft variation.');
+ }
  const paid=new Date(d.paidAt);assert(paid.getTime()<=Date.now()+300000,422,'BOND_RECEIPT_FUTURE','Payment cannot be dated in the future.');
  const due=new Date(paid.getTime()+14*24*3600*1000).toISOString(),id=uid('brc'),deadline=uid('bdue'),time=now();
  return mutation(env,user,'bond.receipt',d.requestKey,{bondId,...d},[
- statement(env.DB,'INSERT INTO bond_receipts(id,bond_id,kind,amount_cents,payer_envelope,payment_reference,paid_at,due_at,created_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
- id,bondId,d.kind,d.amountCents,await seal(env.DATA_ENCRYPTION_KEY,`bond-receipt:${id}`,{payer:d.payer}),d.paymentReference,d.paidAt,due,user.id,time),
- statement(env.DB,"INSERT INTO bond_deadlines(id,bond_id,kind,source,due_at,created_at) VALUES(?,?,'lodgement','receipt',?,?)",deadline,bondId,due,time),
+ statement(env.DB,'INSERT INTO bond_receipts(id,bond_id,transaction_id,kind,amount_cents,payer_envelope,payment_reference,paid_at,due_at,created_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
+ id,bondId,d.transactionId??null,d.kind,d.amountCents,await seal(env.DATA_ENCRYPTION_KEY,`bond-receipt:${id}`,{payer:d.payer}),d.paymentReference,d.paidAt,due,user.id,time),
+ statement(env.DB,"INSERT INTO bond_deadlines(id,bond_id,transaction_id,kind,source,due_at,created_at) VALUES(?,?,?,'lodgement','receipt',?,?)",deadline,bondId,d.transactionId??null,due,time),
  statement(env.DB,"UPDATE bonds SET status=CASE WHEN status='draft' THEN 'awaiting_lodgement' ELSE status END,version=version+1,updated_at=? WHERE id=?",time,bondId),
  event(env,user,bondId,'payment.recorded',null,{kind:d.kind,amountCents:d.amountCents,receiptId:id}),
  activity(env,user,'bond.payment_recorded','bond',bondId,b.property_id)
