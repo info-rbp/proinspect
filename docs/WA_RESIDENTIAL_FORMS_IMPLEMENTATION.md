@@ -46,3 +46,28 @@ The catalogue entries are candidate workflow definitions. Form identities, statu
 10. **Live acceptance.** Controlled production verified emails, official document review, legally approved test transactions, failure/rollback evidence; must not send genuine statutory notices, charge rent or lodge bonds in test mode.
 
 **Release gate:** Do not merge this draft PR into production until official-template provenance, legal review, end-to-end real-world legal-service controls, safety and CI acceptance are completed. Passing CI on an incomplete workflow cannot certify a statutory process.
+
+---
+
+## October 2026 implementation continuation — actual code on this branch
+
+The four-stage engine now includes these implemented and testable components:
+
+| Phase | Working application behaviour | Deliberate legal limitation |
+|---|---|---|
+| Commencement | All forms catalogued, structured encrypted intake, Staff review, master official PDF upload to private R2, SHA-256, **independent administrator release approval**, separately issued tenancy-PDF link, signed-document evidence register, Form 1 PCR report-category gate | No template-field coordinate mapping or prescription-safe auto-filling until official master editions are reviewed. No automatic legal signatures |
+| Active tenancy | Form 25/26 actual received timestamp, advisory deadline/version, atomic landlord inbox/email notification without tenant answers, audited written decision, scheduled idempotent reminders, Form 19 same-property scheduled booking and Perth date validation, notice invalidation on cancellation/reschedule, issued Form 28 visible to recipient with explicit document grant | A recorded receipt, emailed decision or dispatch is not deemed legally effective service. No automatic approval/refusal on timeouts |
+| Breaches and ending | Form 20/21/23/22/1A/1B/1C & specialist catalogue, distinct reviewed prerequisites, Form 1A linked to an actually issued and delivered Form 21 in the same tenancy, ledger and grounds attestations, immutable case history | Legal grounds and notice periods require current WA counsel-approved rules and a reliable rent ledger. No termination is performed by a case record |
+| Bonds and specialist processes | 2026 bond release / lodgement / variation / dispute registry, append-only submission/confirmation/determination/appeal events, prior-event gating, signed PDF evidence, administrative closeout only following external confirmation. Legacy bond-disposal intake disabled but records preserved | Does not lodge, receive, refund or release bond funds; government confirmation is recorded by Staff from external source only; manual form signature rules still need acceptance |
+
+**Security:** D1 rejects forms attached to commercial properties; APIs reject both Commercial Landlords and tenants of commercial properties. Confidential Form 2 remains behind the existing disabled restricted-feature flag, its own encryption and reviewer grant model. D1 independently prohibits confidential Form 2 cases for commercial tenancies. No Form 2 case data appears in ordinary WA forms, email reminders or Staff form queues.
+
+**Document integrity and two-person release:** Uploaders must be authorised operational Staff; they upload actual official PDF bytes to private R2. The server calculates SHA-256 and retains the source, edition and originating URL. Another Staff member with `administrator` authority (not the uploader) must attest a second review of the stored digest/size and source/version before the template is eligible for issued-document linkage. This **does not substitute for qualified legal sign-off or independent verification against the authoritative WA PDF**. A separate issue action only links an already issued PDF granted to the same tenancy.
+
+**Automated tests added:** WA forms registry and advisory rule unit tests; D1 sector and confidentiality triggers; real isolated Worker/D1/R2 tests of encrypted intake, role-scoped approvals, Form 25 receipt and decision, atomic manager notifications, booking-notice invalidation, two-person template release and tenancy-specific PDF, bond submission/confirmation, administrative closure, commercial Landlord and commercial Tenant denial; browser-created Form 25 with Landlord case visibility. GitHub Actions results should be reviewed on the **current branch head**, not an older green commit.
+
+### Release gate remains closed
+
+This is a working application engine on a draft integration branch, **not a legally complete statutory form/issuance service**. Before merging/deploying, ProInspect needs actual latest WA approved official documents, a legally reviewed prescribed field mapping, source hash verification, a supported PDF filling/appearance/signing mechanism with visual and legal QA, current deadline/grounds and notice-service rules (including exceptions), qualified approval of restricted Form 2 practices, external government/service-provider acceptance, and end-to-end live recipient/recovery tests.
+
+The engine intentionally marks deadline calculations as advisory, legal-service status false, records external bond events without executing them, and guards against unreviewed prescribed form issuance.
