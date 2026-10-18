@@ -7,7 +7,7 @@ import { tenancyAccess } from './tenancies.server';
 import { waAvailableForms,waForm,OFFICIAL_WA_FORMS_URL } from '../../../../packages/wa-residential/forms';
 import { operationsWrite, documentAllowed } from '../../../../packages/authorization/server';
 import { entryNoticeAdvisory } from '../../../../packages/wa-residential/rules';
-import { waIssueReadiness } from './wa-issuance.server';
+import { waIssueReadiness } from './wa-review-gates.server';
 
 async function scope(env:Env,user:Principal,w:Workspace,tenancyId:string,write=false){
   assert(['landlord','property-manager','tenant','staff'].includes(w.kind),403,'RESIDENTIAL_FORMS_ONLY','Residential tenancy forms are only available in residential Landlord, Property Manager, Tenant and Staff workspaces.');
