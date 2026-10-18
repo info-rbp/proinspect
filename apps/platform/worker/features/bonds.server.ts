@@ -145,11 +145,29 @@ export async function confirmTransaction(env:Env,user:Principal,w:Workspace,bond
  (tx.status==='submitted'&&['confirmed','rejected'].includes(d.status)),409,'BOND_TRANSITION_INVALID','Invalid transaction transition.');
  if(d.status==='submitted')assert(d.channel&&d.externalReference,422,'EXTERNAL_REFERENCE_REQUIRED','Record actual government submission channel and reference.');
  if(d.status==='confirmed'){
+  assert(['B01','B02','B03','B10','B11','B12','B13','B14','B15','B19'].includes(tx.code),
+    422,'BOND_NON_FINANCIAL_CONFIRMATION','This workflow does not change the government-held bond balance.');
   assert(tx.external_reference&&d.confirmationDocumentId,422,'CONFIRMATION_REQUIRED','External submission reference and a reviewed government confirmation are required.');
   await document(env,b,d.confirmationDocumentId!);
-  if(tx.code==='B01')assert(b.status!=='active',409,'BOND_ALREADY_LODGED','Initial bond already confirmed.');
+  if(tx.code==='B01') {
+   assert(b.status!=='active',409,'BOND_ALREADY_LODGED','Initial bond already confirmed.');
+   const receipts=await statement(env.DB,"SELECT kind,COALESCE(SUM(amount_cents),0) AS amount FROM bond_receipts WHERE bond_id=? GROUP BY kind",bondId).all<{kind:string;amount:number}>();
+   const totals=new Map(receipts.results.map(x=>[x.kind,x.amount]));
+   assert((totals.get('general')??0)>=b.general_cents&&(totals.get('pet')??0)>=b.pet_cents,422,
+     'BOND_FUNDS_NOT_RECORDED','Record the payments actually received before confirming lodgement.');
+  }
+  if(tx.code==='B12'){
+    const c=await statement(env.DB,'SELECT COALESCE(SUM(amount_cents),0) AS amount FROM bond_claims WHERE transaction_id=?',id).first<{amount:number}>();
+    assert((c?.amount??0)>0 && (c?.amount??0)<=-(tx.general_delta_cents+tx.pet_delta_cents),422,
+      'BOND_CLAIMS_MISMATCH','Deductions must be evidenced and reconcile with the proposed bond release.');
+  }
   if(['B10','B11','B12','B13','B14','B15','B19'].includes(tx.code))
-   assert(b.held_general_cents+tx.general_delta_cents>=0 && b.held_pet_cents+tx.pet_delta_cents>=0,422,'BOND_BALANCE','Release exceeds bond held.');
+   assert(tx.general_delta_cents<=0&&tx.pet_delta_cents<=0&&
+      b.held_general_cents+tx.general_delta_cents>=0&&b.held_pet_cents+tx.pet_delta_cents>=0,
+      422,'BOND_BALANCE','Release amounts must not exceed bond held.');
+  if(['B02','B03'].includes(tx.code))
+   assert(tx.general_delta_cents>=0&&tx.pet_delta_cents>=0&&(tx.general_delta_cents+tx.pet_delta_cents)>0,
+     422,'BOND_VARIATION_AMOUNT','Bond top-ups must be positive.');
  }
  const time=now(),newG=b.held_general_cents+tx.general_delta_cents,newP=b.held_pet_cents+tx.pet_delta_cents;
  const release=['B10','B11','B12','B13','B14','B15','B19'].includes(tx.code);
@@ -160,7 +178,7 @@ export async function confirmTransaction(env:Env,user:Principal,w:Workspace,bond
   'UPDATE bond_transactions SET status=?,version=version+1,channel=COALESCE(?,channel),external_reference=COALESCE(?,external_reference),confirmation_document_id=COALESCE(?,confirmation_document_id),submitted_at=CASE WHEN ?=\'submitted\' THEN ? ELSE submitted_at END,confirmed_at=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_at END,confirmed_by=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_by END,updated_at=? WHERE id=? AND bond_id=? AND version=?',
   d.status,d.channel??null,d.externalReference??null,d.confirmationDocumentId??null,d.status,time,d.status,time,d.status,user.id,time,id,bondId,d.version),
   statement(env.DB,'UPDATE bonds SET status=?,bond_reference=CASE WHEN ?=\'confirmed\' AND ?=\'B01\' THEN ? ELSE bond_reference END,held_general_cents=CASE WHEN ?=\'confirmed\' THEN ? ELSE held_general_cents END,held_pet_cents=CASE WHEN ?=\'confirmed\' THEN ? ELSE held_pet_cents END,version=version+1,updated_at=?,confirmed_at=CASE WHEN ?=\'confirmed\' THEN ? ELSE confirmed_at END WHERE id=?',
-   nextStatus,d.status,tx.code,tx.external_reference,d.status,tx.code==='B01'?b.general_cents:newG,d.status,tx.code==='B01'?b.pet_cents:newP,time,d.status,time,bondId),
+   nextStatus,d.status,tx.code,tx.external_reference,d.status,tx.code==='B01'?b.general_cents:newG,d.status,tx.code==='B01'?b.pet_cents:newP,d.status,tx.code,tx.general_delta_cents,d.status,tx.code,tx.pet_delta_cents,time,d.status,time,bondId),
   event(env,user,bondId,'transaction.'+d.status,id,{code:tx.code,externalReference:d.externalReference??tx.external_reference}),
   activity(env,user,'bond.transaction_'+d.status,'bond_transaction',id,b.property_id)
  ];
@@ -196,6 +214,8 @@ export async function addEvidence(env:Env,user:Principal,w:Workspace,bondId:stri
 }
 export async function addNotice(env:Env,user:Principal,w:Workspace,bondId:string,id:string,input:unknown){
  const d=noticeSchema.parse(input),b=await authorized(env,user,w,bondId);
+ if(w.kind==='tenant')assert(['release_application','invitation_to_submit','appeal','other'].includes(d.kind),
+    403,'BOND_OFFICIAL_NOTICE_RESTRICTED','Only the managing party may record this official notice type.');
  assert(await statement(env.DB,'SELECT id FROM bond_transactions WHERE id=? AND bond_id=?',id,bondId).first(),
  404,'BOND_TRANSACTION_NOT_FOUND','Transaction not found.');
  if(d.documentId)await document(env,b,d.documentId);
@@ -211,6 +231,8 @@ export async function addNotice(env:Env,user:Principal,w:Workspace,bondId:string
 }
 export async function recordCase(env:Env,user:Principal,w:Workspace,bondId:string,id:string,input:unknown){
  const d=caseSchema.parse(input),b=await authorized(env,user,w,bondId);
+ if(w.kind==='tenant')assert(['notice_received','responded','referred','submissions','appealed'].includes(d.status),
+   403,'BOND_CASE_OUTCOME_RESTRICTED','A managing party must record official outcomes.');
  assert(await statement(env.DB,'SELECT id FROM bond_transactions WHERE id=? AND bond_id=?',id,bondId).first(),404,'BOND_TRANSACTION_NOT_FOUND','Transaction not found.');
  const existing=await statement(env.DB,'SELECT * FROM bond_cases WHERE transaction_id=? ORDER BY created_at DESC LIMIT 1',id).first<Record<string,any>>();
  const cid=existing?.id??uid('bcase'),allowed:Record<string,string[]>={
