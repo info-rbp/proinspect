@@ -63,7 +63,7 @@ export async function formsData(env: Env, user: Principal, w: Workspace, tenancy
     ).all<Record<string, any>>()
   ).results;
   return {
-    definitions: FORM_DEFINITIONS,
+    definitions: FORM_DEFINITIONS.filter((f) => f.code !== 'WA_BOND_DISPOSAL'),
     forms: await Promise.all(
       rows.map(async (r) => ({
         id: r.id,
@@ -83,6 +83,8 @@ export async function createForm(env: Env, user: Principal, w: Workspace, input:
   const d = z
     .object({ tenancyId: recordId, formCode: z.string(), details: z.string().min(10).max(6000) })
     .parse(input);
+  assert(d.formCode!=='WA_BOND_DISPOSAL',422,'SUPERSEDED_BOND_PROCESS',
+   'The legacy bond-disposal workflow is archived. Use the 2026 Security Bond Release Application.');
   const t = await ordinaryResidentialScope(env, user, w, d.tenancyId, w.kind !== 'tenant');
   assert(
     t.status === 'active' || d.formCode === 'WA_BOND_DISPOSAL',
