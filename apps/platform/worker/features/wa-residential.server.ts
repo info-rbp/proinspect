@@ -74,6 +74,10 @@ export async function waUpdateForm(env:Env,user:Principal,w:Workspace,id:string,
  const {c,t}=await entry(env,user,w,id);
  const q=z.object({version,status:z.enum(['submitted','under_review','approved','withdrawn']),
    reviewReference:reference.optional()}).parse(input);
+ if (q.status==='under_review'||q.status==='approved') {
+   assert(w.kind==='staff',403,'STAFF_REVIEW_REQUIRED','Only an authorised ProInspect reviewer may approve an official form.');
+   operationsWrite(user);
+ }
  const allowed:Record<string,string[]>={draft:['submitted','withdrawn'],submitted:['under_review','withdrawn'],under_review:['approved','withdrawn']};
  assert(c.version===q.version&&allowed[c.status]?.includes(q.status),409,'WA_FORM_CHANGED','The record changed or cannot take this action.');
  if(q.status==='submitted') assert(c.initiator_id===user.id,403,'FORM_CREATOR_REQUIRED','Only the creator can submit the draft.');
