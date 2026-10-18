@@ -261,9 +261,20 @@ try {
       evidenceReference:'Test delivery attempt only',outcome:'attempted'
     });
     assert.equal(delivery.legalServiceConfirmed,false);
+    const receipt=await ok(`${base}/wa-forms/${created.id}/receipt`,owner,{
+      version:4,receivedAt:new Date().toISOString(),evidenceReference:'Synthetic actual receipt evidence'
+    });
+    assert.equal(receipt.legallyVerified,false);
+    assert.ok(new Date(receipt.dueAt).getTime()>Date.now());
+    const decision=await ok(`${base}/wa-forms/${created.id}/decision`,owner,{
+      version:5,decision:'approved',explanation:'Approved pet arrangement for the synthetic fixture.'
+    });
+    assert.equal(decision.legalDecisionConfirmed,false);
+    assert.equal((await api(`${base}/wa-forms/${created.id}/decision`,{cookie:owner.cookie,
+      body:{version:5,decision:'approved',explanation:'Duplicate decision not allowed.'}})).status,409);
     const forms=await ok(`${tenant.base}/tenancies/${tenant.tenancyId}/wa-forms`,tenant);
     assert.ok(forms.cases.some(f=>f.id===created.id&&f.status==='approved'));
-    assert.equal((await first('SELECT COUNT(*) n FROM wa_residential_form_events WHERE case_id=?',created.id)).n,5);
+    assert.equal((await first('SELECT COUNT(*) n FROM wa_residential_form_events WHERE case_id=?',created.id)).n,7);
     assert.equal((await first('SELECT COUNT(*) n FROM wa_residential_form_delivery WHERE case_id=?',created.id)).n,1);
   });
 
