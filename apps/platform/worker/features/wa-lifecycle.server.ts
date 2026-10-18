@@ -39,7 +39,7 @@ export async function waConfirmReceipt(env:Env,user:Principal,w:Workspace,id:str
  const q=z.object({version,receivedAt:iso,evidenceReference:reference}).parse(input);
  assert(['WA_FORM_25','WA_FORM_26'].includes(c.form_code),422,'RECEIPT_RULE_UNAVAILABLE',
   'The 14-day advisory clock is only configured for forms 25 and 26.');
- assert(['submitted','under_review','approved'].includes(c.status),409,'FORM_NOT_SUBMITTED','Submit the request first.');
+ assert(['submitted','under_review','approved','document_issued','service_evidence_recorded'].includes(c.status),409,'FORM_NOT_SUBMITTED','Submit the request first.');
  assert(c.received_at===null,409,'RECEIPT_ALREADY_RECORDED','Receipt has already been recorded.');
  assert(c.version===q.version,409,'WA_FORM_CHANGED','Refresh the form before recording receipt.');
  timeInPast(q.receivedAt);
