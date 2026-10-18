@@ -8,6 +8,7 @@ import { mailEvent } from '../../../../packages/notifications/server';
 import { waForm } from '../../../../packages/wa-residential/forms';
 import { responseDeadline, WA_ADVISORY_RULE_VERSION } from '../../../../packages/wa-residential/rules';
 import { waResidentialCase, waResidentialScope } from './wa-residential.server';
+import { waIssueReadiness } from './wa-issuance.server';
 
 /**
  * Response rights are based on workspace plus original tenancy relationships.
@@ -150,7 +151,12 @@ export async function waCaseDetail(env:Env,user:Principal,w:Workspace,id:string)
  const decisions=await statement(env.DB,'SELECT id,decision,explanation_envelope,created_at FROM wa_residential_form_decisions WHERE case_id=? ORDER BY created_at',id).all<{
   id:string;decision:string;explanation_envelope:string;created_at:string;
  }>();
- return {id,formCode:c.form_code,status:c.status,decision:c.decision_status,receiptAt:c.received_at,dueAt:c.due_at,
+ return {id,tenancyId:c.tenancy_id,formCode:c.form_code,version:c.version,bookingId:c.booking_id,
+  noticeInvalidatedAt:c.notice_invalidated_at,
+  issueReadiness:await waIssueReadiness(env,c),
+  formStage:c.form_stage,externalStatus:c.external_status,
+  formCreatorId:c.initiator_id,formInitiatorKind:c.initiator_kind,
+  status:c.status,decision:c.decision_status,receiptAt:c.received_at,dueAt:c.due_at,
   dueBasis:c.due_basis,ruleVersion:c.deadline_rule_version,legalClockCertified:false,
   legalServiceConfirmed:false,issuedDocumentId:c.issued_document_id,
   events:cases.results,deliveries:deliveries.results,externalEvents:external.results,
