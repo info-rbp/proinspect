@@ -288,6 +288,17 @@ try {
         noticeReference: 'Actual notice reference fixture',
       });
       assert.equal((await ok(tenant.base, tenant)).inspections.length, 1);
+      const scheduled=await first('SELECT starts_at FROM bookings WHERE id=?',b.id);
+      const perthDate=new Date(new Date(scheduled.starts_at).getTime()+8*3600000).toISOString().slice(0,10);
+      assert.equal((await api(base+'/wa-forms',{cookie:owner.cookie,body:{
+        tenancyId:tenant.tenancyId,formCode:'WA_FORM_19',bookingId:'another_book',
+        answers:{entryPurpose:'routine',entryDate:perthDate}
+      }})).status,422);
+      const entryNotice=await ok(base+'/wa-forms',owner,{
+        tenancyId:tenant.tenancyId,formCode:'WA_FORM_19',bookingId:b.id,
+        answers:{entryPurpose:'routine',entryDate:perthDate}
+      });
+      assert.equal(entryNotice.status,'draft');
       const slots = await ok(
           `${base}/availability?service=routine-inspection&date=${futureDate()}`,
           owner,
@@ -301,6 +312,8 @@ try {
           accessConfirmed: true,
         };
       await ok(`${base}/bookings/${b.id}/change`, owner, input);
+      const stale=await first('SELECT notice_invalidated_at FROM wa_residential_form_cases WHERE id=?',entryNotice.id);
+      assert.ok(stale.notice_invalidated_at,'Rescheduling must invalidate any linked Form 19');
       assert.equal((await ok(tenant.base, tenant)).inspections.length, 0);
       assert.equal((await ok(`${base}/bookings/${b.id}/change`, owner, input)).replayed, true);
       assert.equal(
