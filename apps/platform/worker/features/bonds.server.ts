@@ -25,7 +25,7 @@ const confirmSchema = z.object({version,status:z.enum(['submitted','confirmed','
   channel:governmentChannels.optional(),externalReference:reference.optional(),
   confirmationDocumentId:recordId.optional(),governmentBondReference:reference.optional(),agentManualExceptionReference:reference.optional(),requestKey:recordId});
 const claimSchema = z.object({category:claimCategories,amountCents:cents.positive(),
-  explanation:z.string().min(5).max(3500),evidenceDocumentId:recordId.optional(),requestKey:recordId});
+  explanation:z.string().min(5).max(3500),evidenceDocumentId:recordId,requestKey:recordId});
 const noticeSchema = z.object({kind:z.enum(['release_application','invitation_to_submit','commissioner_decision','appeal','variation','other']),
   governmentReference:reference, receivedAt:isoDate,responseDueAt:isoDate.optional(),
   documentId:recordId.optional(),requestKey:recordId});
@@ -305,7 +305,7 @@ export async function addClaim(env:Env,user:Principal,w:Workspace,bondId:string,
  const d=claimSchema.parse(input),b=await authorized(env,user,w,bondId,true);
  const tx=await statement(env.DB,'SELECT code,status FROM bond_transactions WHERE id=? AND bond_id=?',id,bondId).first<{code:string;status:string}>();
  assert(tx&&tx.code==='B12'&&tx.status==='draft',409,'BOND_CLAIM_STATE','Claims require a draft landlord-deduction release.');
- if(d.evidenceDocumentId) await document(env,b,d.evidenceDocumentId);
+ await document(env,b,d.evidenceDocumentId);
  const total=await statement(env.DB,'SELECT COALESCE(SUM(amount_cents),0) AS total FROM bond_claims WHERE transaction_id=?',id).first<{total:number}>();
  assert((total?.total??0)+d.amountCents<=b.held_general_cents+b.held_pet_cents,422,'BOND_CLAIM_LIMIT','Claims exceed confirmed bond held.');
  const cid=uid('bcl');return mutation(env,user,'bond.claim',d.requestKey,{bondId,id,...d},[
