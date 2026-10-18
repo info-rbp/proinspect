@@ -265,6 +265,8 @@ export async function restrictedData(env: Env, user: Principal, w: Workspace) {
     'CONFIDENTIAL_ACCESS',
     'This workspace cannot open confidential cases.',
   );
+  if (w.kind === 'tenant')
+    await ordinaryResidentialScope(env, user, w, w.scopeId);
   const cases = (
     await statement(
       env.DB,
