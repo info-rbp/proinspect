@@ -6,7 +6,7 @@ CREATE TABLE bonds (
  tenancy_id TEXT NOT NULL UNIQUE REFERENCES tenancies(id),
  property_id TEXT NOT NULL REFERENCES properties(id),
  created_by TEXT NOT NULL REFERENCES users(id),
- status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN('draft','awaiting_lodgement','lodgement_submitted','active','variation_pending','release_pending','in_dispute','appeal_pending','released','exception')),
+ status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN('draft','awaiting_lodgement','lodgement_submitted','active','variation_pending','release_pending','in_dispute','appeal_pending','payout_pending','released','exception')),
  bond_reference TEXT UNIQUE,
  general_cents INTEGER NOT NULL DEFAULT 0 CHECK(general_cents>=0),
  pet_cents INTEGER NOT NULL DEFAULT 0 CHECK(pet_cents>=0),
@@ -128,3 +128,84 @@ CREATE TABLE bond_alert_dispatches (
  created_at TEXT NOT NULL,
  PRIMARY KEY(deadline_id,user_id,phase)
 ) STRICT;
+
+-- Form worksheets are not substitutes for official Bonds Administration forms.
+CREATE TABLE bond_preparations (
+ id TEXT PRIMARY KEY, bond_id TEXT NOT NULL REFERENCES bonds(id),
+ transaction_id TEXT NOT NULL UNIQUE REFERENCES bond_transactions(id),
+ official_form TEXT NOT NULL CHECK(official_form IN('lodgement','variation','release','external')),
+ worksheet_envelope TEXT NOT NULL, policy_version TEXT NOT NULL,
+ acknowledged_external INTEGER NOT NULL CHECK(acknowledged_external=1),
+ prepared_by TEXT NOT NULL REFERENCES users(id),
+ created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+) STRICT;
+CREATE TABLE bond_contributions (
+ id TEXT PRIMARY KEY, bond_id TEXT NOT NULL REFERENCES bonds(id),
+ party_id TEXT NOT NULL REFERENCES bond_parties(id),
+ receipt_id TEXT NOT NULL REFERENCES bond_receipts(id),
+ amount_cents INTEGER NOT NULL CHECK(amount_cents>0),
+ created_by TEXT NOT NULL REFERENCES users(id), created_at TEXT NOT NULL,
+ UNIQUE(bond_id,receipt_id,party_id)
+) STRICT;
+CREATE INDEX bond_contributions_receipt ON bond_contributions(receipt_id);
+CREATE TABLE bond_allocations (
+ id TEXT PRIMARY KEY, bond_id TEXT NOT NULL REFERENCES bonds(id),
+ transaction_id TEXT NOT NULL REFERENCES bond_transactions(id),
+ recipient_kind TEXT NOT NULL CHECK(recipient_kind IN('tenant','landlord','housing_loan','new_bond')),
+ party_id TEXT REFERENCES bond_parties(id), target_bond_id TEXT REFERENCES bonds(id),
+ general_cents INTEGER NOT NULL DEFAULT 0 CHECK(general_cents>=0),
+ pet_cents INTEGER NOT NULL DEFAULT 0 CHECK(pet_cents>=0),
+ payment_reference TEXT,
+ created_by TEXT NOT NULL REFERENCES users(id), created_at TEXT NOT NULL,
+ CHECK(general_cents+pet_cents>0),
+ CHECK((recipient_kind='tenant' AND party_id IS NOT NULL AND target_bond_id IS NULL)
+    OR (recipient_kind='new_bond' AND target_bond_id IS NOT NULL AND party_id IS NULL)
+    OR (recipient_kind IN('landlord','housing_loan') AND target_bond_id IS NULL))
+) STRICT;
+CREATE INDEX bond_allocations_tx ON bond_allocations(transaction_id);
+-- A staff review is a human attestation of an official document/reference, not direct government verification.
+CREATE TABLE bond_external_verifications (
+ id TEXT PRIMARY KEY, bond_id TEXT NOT NULL REFERENCES bonds(id),
+ transaction_id TEXT REFERENCES bond_transactions(id),
+ document_id TEXT NOT NULL REFERENCES documents(id),
+ external_reference TEXT NOT NULL,
+ source_channel TEXT NOT NULL CHECK(source_channel IN('bondsonline','manual','ecourts','other')),
+ verification_method TEXT NOT NULL CHECK(verification_method IN('government_portal','government_correspondence','official_certificate','court_record')),
+ review_notes_envelope TEXT NOT NULL,
+ result TEXT NOT NULL CHECK(result IN('verified','rejected')),
+ reviewed_by TEXT NOT NULL REFERENCES users(id), reviewed_at TEXT NOT NULL,
+ UNIQUE(bond_id,transaction_id,document_id,external_reference,reviewed_by)
+) STRICT;
+CREATE INDEX bond_verifications_documents ON bond_external_verifications(bond_id,document_id,transaction_id,result);
+CREATE TABLE bond_payout_reconciliations (
+ id TEXT PRIMARY KEY, bond_id TEXT NOT NULL REFERENCES bonds(id),
+ transaction_id TEXT NOT NULL UNIQUE REFERENCES bond_transactions(id),
+ government_reference TEXT NOT NULL,
+ government_document_id TEXT NOT NULL REFERENCES documents(id),
+ general_cents INTEGER NOT NULL CHECK(general_cents>=0),
+ pet_cents INTEGER NOT NULL CHECK(pet_cents>=0),
+ outcome TEXT NOT NULL CHECK(outcome IN('matched','exception')),
+ reconciled_by TEXT NOT NULL REFERENCES users(id),
+ notes_envelope TEXT NOT NULL, created_at TEXT NOT NULL
+) STRICT;
+-- Exceptions require caseworker review and are not shared with a tenant by default.
+CREATE TABLE bond_exception_cases (
+ id TEXT PRIMARY KEY, bond_id TEXT NOT NULL REFERENCES bonds(id),
+ transaction_id TEXT REFERENCES bond_transactions(id),
+ kind TEXT NOT NULL CHECK(kind IN('estate','failed_lodgement','payout_mismatch','missing_government_record','manual_review')),
+ status TEXT NOT NULL DEFAULT 'open' CHECK(status IN('open','in_review','resolved','referred')),
+ details_envelope TEXT NOT NULL,
+ created_by TEXT NOT NULL REFERENCES users(id),
+ resolved_by TEXT REFERENCES users(id),
+ created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+) STRICT;
+CREATE INDEX bond_exceptions_open ON bond_exception_cases(status,created_at);
+-- No editing of confirmed payments, allocations, reviews or reconciliation.
+CREATE TRIGGER bond_allocations_immutable_update BEFORE UPDATE ON bond_allocations BEGIN SELECT RAISE(ABORT,'BOND_ALLOCATION_IMMUTABLE'); END;
+CREATE TRIGGER bond_allocations_immutable_delete BEFORE DELETE ON bond_allocations BEGIN SELECT RAISE(ABORT,'BOND_ALLOCATION_IMMUTABLE'); END;
+CREATE TRIGGER bond_contributions_immutable_update BEFORE UPDATE ON bond_contributions BEGIN SELECT RAISE(ABORT,'BOND_CONTRIBUTION_IMMUTABLE'); END;
+CREATE TRIGGER bond_contributions_immutable_delete BEFORE DELETE ON bond_contributions BEGIN SELECT RAISE(ABORT,'BOND_CONTRIBUTION_IMMUTABLE'); END;
+CREATE TRIGGER bond_external_verifications_immutable_update BEFORE UPDATE ON bond_external_verifications BEGIN SELECT RAISE(ABORT,'BOND_VERIFICATION_IMMUTABLE'); END;
+CREATE TRIGGER bond_external_verifications_immutable_delete BEFORE DELETE ON bond_external_verifications BEGIN SELECT RAISE(ABORT,'BOND_VERIFICATION_IMMUTABLE'); END;
+CREATE TRIGGER bond_payout_reconciliations_immutable_update BEFORE UPDATE ON bond_payout_reconciliations BEGIN SELECT RAISE(ABORT,'BOND_RECONCILIATION_IMMUTABLE'); END;
+CREATE TRIGGER bond_payout_reconciliations_immutable_delete BEFORE DELETE ON bond_payout_reconciliations BEGIN SELECT RAISE(ABORT,'BOND_RECONCILIATION_IMMUTABLE'); END;
