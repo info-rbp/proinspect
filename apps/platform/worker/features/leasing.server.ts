@@ -157,7 +157,7 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   return {ok:true};
  }
  if(method==='POST'&&section==='sessions'){
-  const d=sessionInput.parse({...body,listingId});
+  const d=sessionInput.parse({...body as Record<string,unknown>,listingId});
   assert(new Date(d.endsAt)>new Date(d.startsAt),422,'SESSION_TIME','End time must be later.');
   const id=uid('lsn'),t=now();
   await statement(env.DB,"INSERT INTO leasing_sessions(id,listing_id,starts_at,ends_at,capacity,instructions,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
