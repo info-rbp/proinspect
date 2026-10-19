@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link,Form,useLoaderData,useActionData,type LoaderFunctionArgs,type ActionFunctionArgs,data } from 'react-router';
 import { runtimeContext } from '../../../../packages/database/context';
 import type { Env } from '../../../../packages/database/types';
-import { publicListing,createLead } from '../../../platform/worker/features/leasing.server';
+import { publicListing,createLead,rentalEnabled } from '../../../platform/worker/features/leasing.server';
 import { displayPrice,handoffDisclaimer,safeApplicationUrl } from '../../../../packages/marketing/leasing';
 import { digest } from '../../../../packages/auth/crypto';
 import { Turnstile } from '../../../../packages/ui/Turnstile';
@@ -14,7 +14,7 @@ export async function loader({params,context}:LoaderFunctionArgs) {
  const env=context.get(runtimeContext).env as Env;
  const result=await publicListing(env,params.kind!,params.slug!);
  if(!result)throw new Response('Property not found',{status:404});
- return data({result,requestKey:crypto.randomUUID(),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??'',ready:Boolean(env.DATA_ENCRYPTION_KEY&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SECRET_KEY&&env.MARKETING_TURNSTILE_SITE_KEY))},{headers:{'Cache-Control':'no-store'}});
+ return data({result,requestKey:crypto.randomUUID(),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??'',rentalReady:rentalEnabled(env),ready:Boolean(env.DATA_ENCRYPTION_KEY&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SECRET_KEY&&env.MARKETING_TURNSTILE_SITE_KEY))},{headers:{'Cache-Control':'no-store'}});
 }
 export async function action({request,context,params}:ActionFunctionArgs){
  const env=context.get(runtimeContext).env as Env;
@@ -38,7 +38,7 @@ export async function action({request,context,params}:ActionFunctionArgs){
  }
 }
 export default function LeasingProperty(){
- const {result,requestKey,siteKey,ready}=useLoaderData<typeof loader>();
+ const {result,requestKey,siteKey,rentalReady,ready}=useLoaderData<typeof loader>();
  const res=useActionData<typeof action>() as {success?:boolean;reference?:string;error?:string}|undefined,p=result.listing as any,photos=result.photos as any[],sessions=result.sessions as any[];
  const appUrl=safeApplicationUrl(p.application_url);
  const [kind,setKind]=useState<'inspection'|'interest'>(sessions.length?'inspection':'interest');
@@ -47,7 +47,8 @@ export default function LeasingProperty(){
  <section className="section"><div className="site-container leasing-detail-grid"><div className="stack">
  <div className="panel"><p className="eyebrow">{p.kind==='commercial'?'Commercial':'Residential'} lease</p><h2>About this property</h2><p className="leasing-description">{p.description}</p><div className="leasing-facts">{p.bedrooms!=null&&<span>{p.bedrooms} bedrooms</span>}{p.bathrooms!=null&&<span>{p.bathrooms} bathrooms</span>}{p.parking!=null&&<span>{p.parking} parking</span>}{p.area_sqm!=null&&<span>{p.area_sqm} m²</span>}{p.available_from&&<span>Available {p.available_from}</span>}</div></div>
  <div className="panel"><h2>Leasing representative</h2><p><strong>{p.agent_name}</strong> · {p.agent_role==='landlord'?'Landlord':p.agent_role==='property_manager'?'Property manager':'Leasing agent'}</p><p>ProInspect conducts the advertised open inspection on this representative's behalf. All rental terms and applications are managed by the responsible party.</p></div>
- {appUrl&&<div className="panel"><h2>Apply for this property</h2><p>Applications are submitted through the leasing representative's nominated provider, not through ProInspect.</p><a className="button secondary" href={appUrl} target="_blank" rel="noopener noreferrer">Continue to application provider ↗</a></div>}
+ {p.application_mode==='external'&&appUrl&&<div className="panel"><h2>Apply for this property</h2><p>Applications are submitted through the leasing representative's nominated provider, not through ProInspect.</p><a className="button secondary" href={appUrl} target="_blank" rel="noopener noreferrer">Continue to application provider ↗</a></div>}
+ {p.application_mode==='proinspect'&&p.kind==='residential'&&<div className="panel"><h2>Apply for this residential property</h2><p>Complete a private Form 18-based application. You can save your progress, invite additional applicants and securely upload requested documents. ProInspect administers applications on behalf of {p.agent_name}; the leasing representative makes the decision.</p>{rentalReady?<Link className="button" to={'/properties-for-lease/residential/'+p.slug+'/apply'}>Start or resume application →</Link>:<p className="notice warning">ProInspect-hosted applications are temporarily unavailable. Register your interest instead.</p>}</div>}
  </div><aside className="stack"><div className="panel"><h2>Open for inspection</h2>{sessions.length===0?<p>No open inspection sessions are currently advertised. Register your interest to receive an appropriate response.</p>:<ul className="leasing-session-list">{sessions.map((s:any)=><li key={s.id}><strong>{new Date(s.starts_at).toLocaleString('en-AU',{timeZone:'Australia/Perth',weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} AWST</strong><span>{s.capacity!=null&&s.booked_count>=s.capacity?'Session full':'Registration available'}</span></li>)}</ul>}</div>
  <div className="panel"><h2>Registration and interest</h2>{res?.success?<div role="status" className="notice"><h3>Registration received</h3><p>Reference: <strong>{res.reference}</strong></p><p>This is not a rental application or an approval of your tenancy.</p></div>:<><p className="small">Choose an inspection session or express interest. You do not need a ProInspect account.</p><Form method="post" reloadDocument className="form" aria-label="Lease inspection registration">
  <input type="hidden" name="requestKey" value={requestKey}/><div hidden><label>Website<input name="website" tabIndex={-1} autoComplete="off"/></label></div>
