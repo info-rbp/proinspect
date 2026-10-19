@@ -53,6 +53,55 @@ class SchemaTests(unittest.TestCase):
             0,
         )
 
+    def test_leasing_listing_matches_canonical_property_and_client(self):
+        self.db.execute("""INSERT INTO leasing_listings(
+            id,property_id,instructed_by_client_id,kind,slug,title,description,
+            display_address,suburb,postcode,agent_name,agent_role,created_by,created_at,updated_at
+        ) VALUES('lst1','p','c','residential','perth-example','Property for lease',
+          'An approved property for lease with a detailed description and representative.',
+          '1 Test St','Perth','6000','Owner','landlord','u','2026-01-01','2026-01-01')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'LEASING_SECTOR_MISMATCH'):
+            self.db.execute("""INSERT INTO leasing_listings(
+              id,property_id,instructed_by_client_id,kind,slug,title,description,
+              display_address,suburb,postcode,agent_name,agent_role,created_by,created_at,updated_at
+            ) VALUES('lst2','p','c','commercial','other','Other','Example',
+            '2 Test St','Perth','6000','Owner','landlord','u','2026-01-01','2026-01-01')""")
+        self.assertEqual(self.db.execute(
+            "SELECT instructed_by_client_id FROM leasing_listings WHERE id='lst1'").fetchone()[0], 'c')
+
+    def test_leasing_publication_requires_approved_media(self):
+        self.db.execute("""INSERT INTO leasing_listings(
+          id,property_id,instructed_by_client_id,kind,slug,title,description,
+          display_address,suburb,postcode,agent_name,agent_role,created_by,created_at,updated_at
+        ) VALUES('lst1','p','c','residential','perth-example','Property for lease',
+          'A property description that contains plenty of relevant information.',
+          '1 Test St','Perth','6000','Owner','landlord','u','2026-01-01','2026-01-01')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'LEASING_PHOTO_REQUIRED'):
+            self.db.execute("UPDATE leasing_listings SET status='published' WHERE id='lst1'")
+        self.db.execute("""INSERT INTO leasing_photos(id,listing_id,object_key,content_type,size,alt_text,created_at)
+          VALUES('photo','lst1','leasing/lst1/pic','image/jpeg',123,'Exterior view','2026-01-01')""")
+        self.db.execute("UPDATE leasing_listings SET status='published' WHERE id='lst1'")
+        self.assertEqual(self.db.execute("SELECT status FROM leasing_listings WHERE id='lst1'").fetchone()[0], 'published')
+
+    def test_leasing_session_capacity_and_email_event_history(self):
+        self.db.execute("""INSERT INTO leasing_listings(
+          id,property_id,instructed_by_client_id,kind,slug,title,description,
+          display_address,suburb,postcode,agent_name,agent_role,created_by,created_at,updated_at
+        ) VALUES('lst1','p','c','residential','perth-example','Property for lease',
+          'A property description that contains plenty of relevant information.',
+          '1 Test St','Perth','6000','Owner','landlord','u','2026-01-01','2026-01-01')""")
+        self.db.execute("""INSERT INTO leasing_sessions(id,listing_id,starts_at,ends_at,capacity,created_at,updated_at)
+          VALUES('session','lst1','2026-11-01T01:00:00Z','2026-11-01T01:30:00Z',1,'2026-01-01','2026-01-01')""")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute("UPDATE leasing_sessions SET booked_count=2 WHERE id='session'")
+        self.db.execute("""INSERT INTO leasing_leads(
+         id,listing_id,session_id,kind,request_key,fingerprint,email_hash,envelope,cancel_token_hash,created_at
+        ) VALUES('lead','lst1','session','inspection','key','hash','hashed-email','cipher','hashed-cancel','2026-01-01')""")
+        self.db.execute("""INSERT INTO leasing_email_events(id,lead_id,kind,envelope,created_at)
+         VALUES('event','lead','registration.received','encrypted','2026-01-01')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'LEASING_EVENT_IMMUTABLE'):
+            self.db.execute("DELETE FROM leasing_email_events WHERE id='event'")
+
     def test_overlap_is_rejected_in_database(self):
         self.booking('a','2026-10-10T01:00:00.000Z','2026-10-10T02:00:00.000Z')
         with self.assertRaisesRegex(sqlite3.IntegrityError,'SCHEDULE_CONFLICT'):
