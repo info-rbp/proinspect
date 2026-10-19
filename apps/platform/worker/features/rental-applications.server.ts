@@ -116,8 +116,8 @@ export async function saveRentalSection(env:Env,token:string,section:AnswerStep,
  assert(allowedEdit(app.status),409,'APPLICATION_LOCKED','Submitted applications cannot be edited without a new information request.');
  assert(ANSWER_STEPS.includes(section),422,'SECTION_INVALID','Choose a form section.');
  assert(person.version===version,409,'DRAFT_CHANGED','This draft has changed. Reload before saving.');
+ if(section==='identity')raw.email=answers.identity?.email??'';
  const values=cleanSection(section,raw);
- if(section==='identity')values.email=answers.identity?.email??'';
  const updated={...answers,[section]:values};
  const result=await env.DB.batch([
   statement(env.DB,"UPDATE rental_applicants SET answers_envelope=?,state='in_progress',declared_at=NULL,version=version+1,updated_at=? WHERE id=? AND version=? AND state!='removed'",
