@@ -39,7 +39,13 @@ export function envFrom(context: unknown): Env {
   return (context as CloudflareContext).cloudflare.env;
 }
 export class AppError extends Error {
-  constructor(public status: number, public code: string, message: string) { super(message); }
+  readonly status: number;
+  readonly code: string;
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
 }
 export function assert(condition: unknown,status: number,code: string,message: string): asserts condition {
   if (!condition) throw new AppError(status, code, message);
