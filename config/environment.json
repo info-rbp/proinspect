@@ -65,6 +65,12 @@
       ],
       "group": "sheets",
       "format": "signing-key"
+    },
+    "GOOGLE_CALENDAR_PRIVATE_KEY": {
+      "targets": [
+        "platform"
+      ],
+      "group": "calendar"
     }
   },
   "variables": {
@@ -123,6 +129,30 @@
       ],
       "group": "release",
       "default": "false"
+    },
+    "GOOGLE_CALENDAR_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "calendar"
+    },
+    "GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL": {
+      "targets": [
+        "platform"
+      ],
+      "group": "calendar"
+    },
+    "GOOGLE_CALENDAR_ID": {
+      "targets": [
+        "platform"
+      ],
+      "group": "calendar"
+    },
+    "GOOGLE_CALENDAR_TIMEZONE": {
+      "targets": [
+        "platform"
+      ],
+      "group": "calendar"
     }
   },
   "generated": [

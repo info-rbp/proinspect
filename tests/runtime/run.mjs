@@ -110,6 +110,18 @@ try {
   await run("INSERT INTO staff_profiles VALUES(?,'operations_manager',1)", operatorUser.id);
   await run("INSERT INTO staff_profiles VALUES(?,'inspector',1)", inspectorUser.id);
 
+  await check('Google Calendar read-only diagnostics require authenticated operations staff', async () => {
+    assert.equal((await api('/api/staff/calendar-diagnostic')).status, 401);
+    assert.equal((await api('/api/staff/calendar-diagnostic', { cookie: owner.cookie })).status, 403);
+    assert.equal((await api('/api/staff/calendar-diagnostic', { cookie: inspector.cookie })).status, 403);
+    const allowed = await api('/api/staff/calendar-diagnostic', { cookie: operator.cookie });
+    assert.equal(allowed.status, 200);
+    assert.equal(allowed.data.ok, false);
+    assert.equal(allowed.data.code, 'CALENDAR_DISABLED');
+    assert.equal(allowed.data.phase, 'configuration');
+    assert.equal((await first('SELECT COUNT(*) AS n FROM bookings')).n, 0);
+    assert.equal((await first('SELECT COUNT(*) AS n FROM work_orders')).n, 0);
+  });
   await check('magic links are single-use and origin-checked', async () => {
     assert.equal((await api('/api/auth/complete', { body: { email: owner.email, token: owner.token } })).status, 400);
     assert.equal((await api('/api/auth/start', { body: { email: 'blocked@example.test' }, headers: { Origin: 'https://evil.example' } })).status, 403);

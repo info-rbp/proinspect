@@ -7,6 +7,7 @@ import { dispatchNotices } from '../../../packages/notifications/notices';
 import { dispatchIntegrations } from './features/integrations.server';
 import { dispatchLeasingReminders } from './features/leasing.server';
 import { shouldIndexPublicPage } from '../app/lib/public-routes';
+import { readOnlyCalendarDiagnostic, shouldRunCalendarReleaseProbe } from './features/google-calendar.server';
 export { BookingScheduler } from './scheduler';
 export { BookingCoordinator } from './legacy-booking-coordinator';
 const handle = createRequestHandler(() => import('virtual:react-router/server-build'),import.meta.env.MODE);
@@ -40,6 +41,26 @@ export default {
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(dispatchLeasingReminders(env).then(() => dispatchNotices(env)).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchIntegrations(env));
+    // Check the scheduled trigger time, not actual execution time: Cron
+    // invocations may start later than their scheduled minute.
+    // Temporary, automatically expiring read-only release smoke test.
+    // Runs without any anonymous HTTP route, calendar mutation, D1 write
+    // or privileged response body. Logs contain only fixed diagnostic codes.
+    if (env.APP_ENV === 'production' && shouldRunCalendarReleaseProbe(new Date(_event.scheduledTime))) {
+      ctx.waitUntil(
+        readOnlyCalendarDiagnostic(env)
+          .then((check) => console.info(JSON.stringify({
+            event: 'google_calendar.readonly_probe',
+            ...check,
+          })))
+          .catch(() => console.info(JSON.stringify({
+            event: 'google_calendar.readonly_probe',
+            ok: false,
+            phase: 'configuration',
+            code: 'UNEXPECTED_DIAGNOSTIC_ERROR',
+          }))),
+      );
+    }
   },
   async queue(batch: MessageBatch<{ eventId: string }>, env: Env) { await consumeQueue(batch, env); },
 } satisfies ExportedHandler<Env, { eventId: string }>;

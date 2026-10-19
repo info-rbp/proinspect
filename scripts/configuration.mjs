@@ -18,7 +18,7 @@ export function checkConfiguration(
     throw new Error('Use staging or production.');
   const enabled = new Set(groups);
   for (const group of enabled)
-    if (!['core', 'deploy', 'payments', 'reports', 'sheets'].includes(group))
+    if (!['core', 'deploy', 'payments', 'reports', 'sheets', 'calendar'].includes(group))
       throw new Error('Unknown configuration group.');
   if (environment === 'staging' && enabled.has('core')) enabled.add('staging');
   const entries = { ...environmentManifest.secrets, ...environmentManifest.variables },
