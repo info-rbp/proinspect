@@ -3,7 +3,7 @@ import { Form, Link, redirect, data, useLoaderData, useActionData, useSearchPara
  type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
 import { runtimeContext } from '../../../../packages/database/context';
 import { AppError, type Env } from '../../../../packages/database/types';
-import { rentalPage,saveRentalSection,inviteRentalApplicant,removeRentalApplicant,finishRentalApplicant,
+import { rentalPage,saveRentalSection,inviteRentalApplicant,resendRentalInvitation,removeRentalApplicant,finishRentalApplicant,
  submitRental,withdrawRental,uploadRentalDocument,deleteRentalDocument } from '../../../platform/worker/features/rental-applications.server';
 import { ANSWER_STEPS,FIELDS,FORM18_STEPS,stepComplete,type Form18Field,
  type Form18Step,type AnswerStep,type Form18Answers } from '../../../../packages/marketing/form18';
@@ -46,6 +46,10 @@ export async function action({context,params,request}:ActionFunctionArgs){
   }
   if(intent==='invite'){
    await inviteRentalApplicant(env,token,{name:form.get('inviteName'),email:form.get('inviteEmail')});
+   return redirect(target('review'));
+  }
+  if(intent==='resend'){
+   await resendRentalInvitation(env,token,Number(form.get('ordinal')));
    return redirect(target('review'));
   }
   if(intent==='remove'){
@@ -132,6 +136,7 @@ function Household({people,editable}:{
    <div><span className={'rental-state'+(p.state==='complete'?'':' waiting')}>{p.state==='complete'?'Complete':p.state==='invited'?'Invited':'In progress'}</span>
     {editable&&p.ordinal>1&&<Form method="post"><input type="hidden" name="intent" value="remove"/><input type="hidden" name="ordinal" value={p.ordinal}/>
       <button className="rental-inline-button" type="submit">Remove</button></Form>}
+    {editable&&p.ordinal>1&&<Form method="post"><input type="hidden" name="intent" value="resend"/><input type="hidden" name="ordinal" value={p.ordinal}/><button className="rental-inline-button" type="submit">Resend private link</button></Form>}
    </div></div>)}</div>
   {editable&&people.length<10&&<div className="rental-section-note">
    <h3>Invite another applicant</h3><p>Send a private application link by email. The household application waits for everyone to finish.</p>
