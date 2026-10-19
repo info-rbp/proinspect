@@ -218,6 +218,19 @@ export default function Home() {
         </div>
       </section>
       <section className="section soft">
+        <div className="site-container">
+          <div className="section-heading">
+            <div><p className="eyebrow">Open property inspections</p><h2>Searching for a property to lease?</h2></div>
+            <Link to="/properties-for-lease">View all properties →</Link>
+          </div>
+          <div className="grid-2">
+            <article className="service-card"><p className="eyebrow">Residential</p><h3>Rental open inspections</h3><p>See approved rental listings and register for inspections conducted by ProInspect on behalf of the responsible landlord or agent.</p><Link to="/properties-for-lease/residential">Residential properties →</Link></article>
+            <article className="service-card"><p className="eyebrow">Commercial</p><h3>Commercial leasing inspections</h3><p>Explore commercial properties with on-site inspections undertaken on behalf of the leasing representative.</p><Link to="/properties-for-lease/commercial">Commercial properties →</Link></article>
+          </div>
+          <p className="small">ProInspect is the inspection attendance provider, not the landlord, property manager or leasing agent.</p>
+        </div>
+      </section>
+      <section className="section soft">
         <div className="site-container section-heading">
           <div>
             <p className="eyebrow">Take the next step</p>
