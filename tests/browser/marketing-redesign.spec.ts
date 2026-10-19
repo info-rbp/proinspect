@@ -9,8 +9,8 @@ test('premium public homepage shows key sections and destinations without impact
   await expect(page.locator('.mkt-sector-card')).toHaveCount(3);
   await expect(page.locator('.mkt-featured-card')).toHaveCount(6);
   await expect(page.locator('.mkt-engagement-card')).toHaveCount(4);
-  await expect(page.getByText('Illustrative report design.')).toBeVisible();
-  await page.getByRole('link', { name: /Routine Inspection/i }).first().click();
+  await expect(page.getByText(/Illustrative report design/)).toBeVisible();
+  await page.locator('.mkt-featured-card').filter({ hasText: 'Routine Inspection' }).getByRole('link').click();
   await expect(page).toHaveURL(/\/services\/routine-inspection$/);
   await expect(page.getByRole('heading', { name: 'What is a Routine Inspection?' })).toBeVisible();
   await expect(page.getByText('ILLUSTRATIVE EXAMPLE')).toBeVisible();
