@@ -18,6 +18,7 @@ CREATE TRIGGER leasing_application_settings_guard BEFORE UPDATE OF application_m
 BEGIN
  SELECT RAISE(ABORT,'EXTERNAL_APPLICATION_URL_REQUIRED') WHERE
    NEW.application_mode='external' AND (NEW.application_url IS NULL OR NEW.application_url NOT LIKE 'https://%');
+ SELECT RAISE(ABORT,'EXTERNAL_APPLICATION_PRECEDENCE') WHERE NEW.application_mode='proinspect' AND NEW.application_url IS NOT NULL;
  SELECT RAISE(ABORT,'RESIDENTIAL_APPLICATION_ONLY') WHERE NEW.application_mode='proinspect' AND NEW.kind!='residential';
  SELECT RAISE(ABORT,'APPLICATION_AUTHORITY_REQUIRED') WHERE NEW.application_mode='proinspect'
    AND (LENGTH(TRIM(COALESCE(NEW.application_authority_reference,'')))<5
