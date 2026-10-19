@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from 'react-router';
+import { Link, useOutletContext, useSearchParams } from 'react-router';
 import { FAMILIES, SERVICE_SEEDS } from '../../../../packages/service-catalogue/index';
 import { MarketingCta } from '../components/marketing-ui';
 import { MarketingPageHero, MarketingServiceGrid, MarketingSectionTitle } from '../components/page-patterns';
@@ -12,6 +12,7 @@ export const meta = () =>
   );
 
 export default function Services() {
+  const { appOrigin } = useOutletContext<{ appOrigin: string }>();
   const [search] = useSearchParams();
   const requestedFamily = search.get('family');
   // Support existing inbound ?family= links, while linking visitors to the canonical category pages.
@@ -77,7 +78,7 @@ export default function Services() {
           </div>
         </div>
       </section>
-      <MarketingCta title="Ready to arrange property work?" description="Choose the relevant service or discuss a tailored, recurring requirement. Every attendance is subject to confirmed scope and availability." />
+      <MarketingCta title="Ready to arrange property work?" description="Choose the relevant service or discuss a tailored, recurring requirement. Every attendance is subject to confirmed scope and availability." appOrigin={appOrigin} />
     </>
   );
 }
