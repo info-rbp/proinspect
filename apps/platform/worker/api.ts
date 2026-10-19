@@ -47,7 +47,7 @@ import { stripeWebhook, decideApproval } from './features/finance.server';
 import { reportCallback } from './features/integrations.server';
 import { booksServices, managesProperty } from '../../../packages/authorization/server';
 import { readOnlyCalendarDiagnostic } from './features/google-calendar.server';
-import { calendarSyncSummary } from './features/calendar-scheduling.server';
+import { calendarSyncSummary, retryCalendarSync } from './features/calendar-scheduling.server';
 
 async function json(request: Request) {
   assert(
@@ -275,6 +275,11 @@ export async function handleApi(
       // Google calendar IDs, private keys and OAuth tokens are never returned.
       operationsWrite(user);
       return Response.json(await readOnlyCalendarDiagnostic(env));
+    }
+    const calendarRetry = path.match(/^\\/api\\/staff\\/calendar-sync\\/(bkg_[0-9a-f]{32})\\/retry$/);
+    if (calendarRetry && method === 'POST') {
+      operationsWrite(user);
+      return Response.json(await retryCalendarSync(env, calendarRetry[1], user.id));
     }
     if (path === '/api/staff/calendar-sync' && method === 'GET') {
       operationsWrite(user);
