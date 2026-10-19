@@ -50,7 +50,7 @@ test('applicant access is separate from public listing, restricted R2 is used, p
  const migration=read('database/migrations/0008_rental_applications.sql');
  const wrapper=read('apps/platform/wrangler.jsonc');
  assert.match(server,/RESTRICTED_DOCUMENTS\.put/);
- assert.match(server,/rental-applicants/);
+ assert.match(server,/rental_applicants/);
  assert.match(server,/access_token_hash/);
  assert.match(server,/state='complete'/);
  assert.match(migration,/quarantined/);
