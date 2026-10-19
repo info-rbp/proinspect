@@ -100,7 +100,7 @@ export async function cancelLead(env:Env,request:Request,token:string,clientKey:
  const lead=await statement(env.DB,"SELECT id,session_id,status FROM leasing_leads WHERE cancel_token_hash=?",hash).first<{id:string;session_id:string|null;status:string}>();
  assert(lead,404,'NOT_FOUND','Registration not found.');
  if(lead.status==='cancelled')return {cancelled:true};
- const batch=[statement(env.DB,"UPDATE leasing_leads SET status='cancelled',cancelled_at=? WHERE id=? AND status='active'",now(),lead.id)];
+ const batch=[statement(env.DB,"UPDATE leasing_leads SET status='cancelled',cancelled_at=? WHERE id=? AND status='active'",now(),lead.id),statement(env.DB,"INSERT INTO mutation_guards(changed_rows) VALUES(changes())"),statement(env.DB,"DELETE FROM mutation_guards")];
  if(lead.session_id)batch.push(statement(env.DB,"UPDATE leasing_sessions SET booked_count=MAX(0,booked_count-1),version=version+1 WHERE id=?",lead.session_id));
  batch.push(await event(env,lead.id,'registration.cancelled',{cancelledAt:now()}));
  await env.DB.batch(batch);
@@ -134,6 +134,7 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   return {id};
  }
  const body=method==='POST'?await request.json():{};
+ 
  if(method==='POST'&&parts.length===0){
   const d=listingInput.parse(body),id=uid('lst'),t=now();
   await statement(env.DB,`INSERT INTO leasing_listings(id,property_id,instructed_by_client_id,owner_client_id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,agent_name,agent_role,application_url,created_by,created_at,updated_at) VALUES(${Array(24).fill('?').join(',')})`,
@@ -148,6 +149,22 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   const photos=(await statement(env.DB,'SELECT id,alt_text,sort_order,content_type,size FROM leasing_photos WHERE listing_id=? ORDER BY sort_order',listingId).all()).results;
   const leads=(await statement(env.DB,"SELECT id,session_id,kind,status,created_at FROM leasing_leads WHERE listing_id=? ORDER BY created_at DESC LIMIT 100",listingId).all()).results;
   return {sessions,photos,leads};
+ }
+ if(method==='POST'&&section==='edit'){
+  const d=listingInput.extend({version:z.number().int().positive()}).parse(body);
+  const result=await statement(env.DB,`UPDATE leasing_listings SET property_id=?,instructed_by_client_id=?,owner_client_id=?,kind=?,slug=?,title=?,description=?,display_address=?,suburb=?,postcode=?,price_cents=?,price_period=?,bedrooms=?,bathrooms=?,parking=?,area_sqm=?,available_from=?,agent_name=?,agent_role=?,application_url=?,updated_at=?,version=version+1 WHERE id=? AND version=?`,
+   d.propertyId,d.instructedByClientId,d.ownerClientId??null,d.kind,d.slug,d.title,d.description,d.displayAddress,d.suburb,d.postcode,d.priceCents??null,d.pricePeriod,d.bedrooms??null,d.bathrooms??null,d.parking??null,d.areaSqm??null,d.availableFrom??null,d.agentName,d.agentRole,safeApplicationUrl(d.applicationUrl),now(),listingId,d.version).run();
+  assert(result.meta.changes===1,409,'STALE_LISTING','Reload listing before editing.');
+  return {ok:true};
+ }
+ if(method==='POST'&&section==='photo-remove'&&other){
+  const p=await statement(env.DB,'SELECT object_key FROM leasing_photos WHERE id=? AND listing_id=?',other,listingId).first<{object_key:string}>();
+  assert(p,404,'PHOTO_NOT_FOUND','Photo not found.');
+  const total=await statement(env.DB,'SELECT COUNT(*) AS count FROM leasing_photos WHERE listing_id=?',listingId).first<{count:number}>();
+  assert(listing.status!=='published'||(total?.count??0)>1,409,'LAST_PHOTO','A published listing must keep one photo. Withdraw it first.');
+  await statement(env.DB,'DELETE FROM leasing_photos WHERE id=? AND listing_id=?',other,listingId).run();
+  await env.DOCUMENTS.delete(p.object_key);
+  return {ok:true};
  }
  if(method==='POST'&&section==='status'){
   const d=z.object({version:z.number().int().positive(),status:z.enum(['draft','published','withdrawn','leased'])}).parse(body);
@@ -165,15 +182,43 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   return {id};
  }
 
+ if(method==='POST'&&section==='session-edit'&&other){
+   const d=z.object({version:z.number().int().positive(),startsAt:z.string().datetime({offset:true}),endsAt:z.string().datetime({offset:true}),capacity:z.number().int().min(1).max(200).nullable().optional(),instructions:z.string().max(600).default('')}).parse(body);
+   assert(new Date(d.endsAt)>new Date(d.startsAt),422,'SESSION_TIME','End time must be after start.');
+   const original=await statement(env.DB,'SELECT starts_at,ends_at FROM leasing_sessions WHERE id=? AND listing_id=?',other,listingId).first<{starts_at:string;ends_at:string}>();
+   assert(original,404,'SESSION_NOT_FOUND','Inspection session not found.');
+   const up=await statement(env.DB,"UPDATE leasing_sessions SET starts_at=?,ends_at=?,capacity=?,instructions=?,updated_at=?,version=version+1 WHERE id=? AND listing_id=? AND version=? AND status='scheduled'",
+    d.startsAt,d.endsAt,d.capacity??null,d.instructions,now(),other,listingId,d.version).run();
+   assert(up.meta.changes===1,409,'STALE_SESSION','Session changed or has too many registrations for this capacity.');
+   if(original.starts_at!==d.startsAt||original.ends_at!==d.endsAt){
+    const rec=(await statement(env.DB,"SELECT id,envelope FROM leasing_leads WHERE session_id=? AND status='active'",other).all<{id:string;envelope:string}>()).results;
+    for(const r of rec){
+     const contact=await unseal<LeadInput>(env.DATA_ENCRYPTION_KEY,'leasing-lead:'+r.id,r.envelope);
+     await env.DB.batch([await event(env,r.id,'session.updated',{previous:original.starts_at,current:d.startsAt}),
+       await mailEvent(env,'leasing.session.updated',{to:contact.email,subject:'Your property open inspection time has changed',heading:'Inspection time updated',
+        body:'The inspection session time has changed. Please check the updated time before attending.',
+        facts:{'New time (UTC)':d.startsAt,'Previous time (UTC)':original.starts_at},sensitive:true})]);
+    }
+   }
+   return {ok:true};
+ }
  if(method==='POST'&&section==='session-status'&&other){
   const d=z.object({status:z.enum(['scheduled','cancelled','completed']),version:z.number().int().positive()}).parse(body);
-  const found=await statement(env.DB,'SELECT id FROM leasing_sessions WHERE id=? AND listing_id=?',other,listingId).first();
+  const found=await statement(env.DB,'SELECT id,status,starts_at FROM leasing_sessions WHERE id=? AND listing_id=?',other,listingId).first<{id:string;status:string;starts_at:string}>();
   assert(found,404,'SESSION_NOT_FOUND','Session not found.');
   const result=await statement(env.DB,'UPDATE leasing_sessions SET status=?,version=version+1,updated_at=? WHERE id=? AND version=?',d.status,now(),other,d.version).run();
   assert(result.meta.changes===1,409,'STALE_SESSION','Reload session before editing.');
   if(d.status==='cancelled'){
    const recipients=(await statement(env.DB,"SELECT id FROM leasing_leads WHERE session_id=? AND status='active'",other).all<{id:string}>()).results;
-   for(const r of recipients)await (await event(env,r.id,'session.cancelled',{sessionId:other,cancelledAt:now()})).run();
+   for(const r of recipients){
+      const lead=await statement(env.DB,'SELECT envelope FROM leasing_leads WHERE id=?',r.id).first<{envelope:string}>();
+      if(!lead)continue;
+      const contact=await unseal<LeadInput>(env.DATA_ENCRYPTION_KEY,'leasing-lead:'+r.id,lead.envelope);
+      await env.DB.batch([
+       await event(env,r.id,'session.cancelled',{sessionId:other,cancelledAt:now()}),
+       await mailEvent(env,'leasing.session.cancelled',{to:contact.email,subject:'Property open inspection cancelled',heading:'Inspection session cancelled',body:'The advertised inspection session has been cancelled. Please check the property page for other inspection options.',facts:{'Original session (UTC)':found.starts_at},sensitive:true})
+      ]);
+    }
   }
   return {ok:true};
  }
