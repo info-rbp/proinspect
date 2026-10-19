@@ -177,7 +177,7 @@ export async function googleServiceToken(
     throw new Error('GOOGLE_SCOPE_NOT_ALLOWED');
   const email = env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL?.trim();
   const key = env.GOOGLE_CALENDAR_PRIVATE_KEY;
-  if (!email || !key || !/^[^\\s@]+@[^\\s@]+\\.iam\\.gserviceaccount\\.com$/.test(email))
+  if (!email || !key || !email.endsWith('.iam.gserviceaccount.com') || !email.includes('@') || /\s/.test(email))
     throw new Error('GOOGLE_CREDENTIALS_INVALID');
   let jwt: string;
   try { jwt = await assertion(email, key, scope); }
