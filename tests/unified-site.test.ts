@@ -54,8 +54,10 @@ test('the deployed Worker has one origin for marketing, booking, sign-in and con
     'proinspect-platform-restricted-documents');
   const publicLayout = source('apps/platform/app/routes/public-layout.tsx');
   assert.match(publicLayout, /appOrigin: ''/);
-  assert.match(publicLayout, /to="\/book"/);
-  assert.match(publicLayout, /to="\/signin"/);
+  assert.match(publicLayout, /<MarketingHeader appOrigin=\{appOrigin\}/);
+  const chrome = source('apps/marketing/app/components/site-chrome.tsx');
+  assert.match(chrome, /appOrigin \+ '\/book'/);
+  assert.match(chrome, /appOrigin \+ '\/signin'/);
 });
 
 test('the original contact form uses a signed in-process receiver instead of a second Worker', () => {
