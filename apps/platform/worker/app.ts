@@ -40,10 +40,12 @@ export default {
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(dispatchNotices(env).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchIntegrations(env));
+    // Check the scheduled trigger time, not actual execution time: Cron
+    // invocations may start later than their scheduled minute.
     // Temporary, automatically expiring read-only release smoke test.
     // Runs without any anonymous HTTP route, calendar mutation, D1 write
     // or privileged response body. Logs contain only fixed diagnostic codes.
-    if (env.APP_ENV === 'production' && shouldRunCalendarReleaseProbe(new Date())) {
+    if (env.APP_ENV === 'production' && shouldRunCalendarReleaseProbe(new Date(_event.scheduledTime))) {
       ctx.waitUntil(
         readOnlyCalendarDiagnostic(env)
           .then((check) => console.info(JSON.stringify({
