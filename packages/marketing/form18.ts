@@ -21,6 +21,7 @@ export const FIELDS:Record<AnswerStep,Form18Field[]>={
   {key:'fullName',label:'Full legal name',required:true},
   {key:'dateOfBirth',label:'Date of birth',kind:'date',required:true},
   {key:'mobile',label:'Mobile telephone',kind:'tel',required:true},
+  {key:'email',label:'Email address',kind:'email',required:true,hint:'This is the private email address linked to your application.'},
   {key:'homePhone',label:'Home telephone',kind:'tel'},
   {key:'workPhone',label:'Work telephone',kind:'tel'},
   {key:'currentAddress',label:'Current residential address',required:true,section:'Where you live now'},
@@ -121,6 +122,7 @@ export function cleanSection(section:AnswerStep,raw:Record<string,unknown>){
   if(cleaned.length>700)throw Error('FIELD_TOO_LONG');
   if(field.required&&!cleaned)throw Error('FIELD_REQUIRED:'+field.label);
   if(field.options&&cleaned&&!field.options.includes(cleaned))throw Error('FIELD_INVALID:'+field.label);
+  if(field.kind==='email'&&cleaned&&!z.string().email().safeParse(cleaned).success)throw Error('FIELD_INVALID:'+field.label);
   if(field.kind==='number'&&cleaned&&!/^(?:0|[1-9]\d{0,8})(?:\.\d{1,2})?$/.test(cleaned))throw Error('FIELD_INVALID:'+field.label);
   if(field.kind==='date'&&cleaned&&(!/^\d{4}-\d{2}-\d{2}$/.test(cleaned)||!Number.isFinite(Date.parse(cleaned))||new Date(cleaned).toISOString().slice(0,10)!==cleaned))throw Error('FIELD_INVALID:'+field.label);
   values[field.key]=cleaned;
