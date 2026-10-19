@@ -120,7 +120,7 @@ function Fields({section,answers}: {section:AnswerStep;answers:Record<string,str
     <input id={'form18-'+field.key} name={field.key} type={field.kind??'text'}
      min={field.kind==='number'?'0':undefined} step={field.kind==='number'?'0.01':undefined}
      max={field.kind==='date'&&field.key==='dateOfBirth'?new Date().toISOString().slice(0,10):undefined}
-     defaultValue={value} maxLength={700} required={field.required} autoComplete="off"/>}
+     defaultValue={value} maxLength={700} required={field.required} readOnly={field.key==='email'} autoComplete="off"/>}
    {field.hint&&<small>{field.hint}</small>}
   </div>;
  })}</div>;
