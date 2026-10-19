@@ -641,6 +641,21 @@ try {
       });
     },
   );
+  await check('WA Form 1 cannot issue without independent PCR report prerequisite verification',async()=>{
+    const form=await ok(base+'/wa-forms',owner,{
+      tenancyId:tenant.tenancyId,formCode:'WA_FORM_1',
+      answers:{inspectionDate:'2026-11-20',inspectionReference:'Synthetic initial PCR'}
+    });
+    await ok(base+'/wa-forms/'+form.id,owner,{version:1,status:'submitted'});
+    await ok(staffBase+'/wa-forms/'+form.id,operator,{version:2,status:'under_review',reviewReference:'PCR reviewer'});
+    await ok(staffBase+'/wa-forms/'+form.id,operator,{version:3,status:'approved',reviewReference:'PCR legal document review'});
+    const attempt=await api(staffBase+'/wa-forms/'+form.id+'/issue',{cookie:operator.cookie,
+      body:{documentId:'synthetic_pcr_document',templateVersion:'synthetic-2026-wa-form1',reference:'Synthetic issuance attempt'}
+    });
+    assert.equal(attempt.status,422);
+    assert.equal(attempt.data.code,'ISSUE_REQUIREMENTS_OUTSTANDING');
+    assert.match(attempt.data.message,/issued_pcr_report/);
+  });
   await check('WA official-PDF template bytes, issued tenancy grant, reviewed decisions and safe administrative close',async()=>{
     const submission=await ok(tenant.base+'/wa-forms',tenant,{
       tenancyId:tenant.tenancyId,formCode:'WA_FORM_25',
