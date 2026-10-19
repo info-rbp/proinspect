@@ -69,13 +69,18 @@ export async function createLead(env:Env,request:Request,source:{input:unknown;t
  const confirmationHref=env.APP_ORIGIN+'/properties-for-lease/'+listing.kind+'/'+listing.slug;
  const payload={listingId:listing.id,listingTitle:listing.title,kind:d.kind,session:session?.starts_at??null,contact:d.email,registeredAt:stamp,agentName:listing.agent_name};
  const batch=[];
- if(session)batch.push(statement(env.DB,"UPDATE leasing_sessions SET booked_count=booked_count+1,updated_at=?,version=version+1 WHERE id=? AND status='scheduled' AND starts_at>? AND (capacity IS NULL OR booked_count<capacity)",stamp,session.id,stamp));
+ if(session){
+ batch.push(statement(env.DB,"UPDATE leasing_sessions SET booked_count=booked_count+1,updated_at=?,version=version+1 WHERE id=? AND status='scheduled' AND starts_at>? AND (capacity IS NULL OR booked_count<capacity)",stamp,session.id,stamp));
+ // Existing mutation_guard rejects zero-row reservations inside the same D1 batch.
+ batch.push(statement(env.DB,"INSERT INTO mutation_guards(changed_rows) VALUES(changes())"));
+ batch.push(statement(env.DB,"DELETE FROM mutation_guards"));
+ }
  batch.push(statement(env.DB,'INSERT INTO leasing_leads(id,listing_id,session_id,kind,request_key,fingerprint,email_hash,envelope,cancel_token_hash,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
  id,d.listingId,session?.id??null,d.kind,d.requestKey,finger,emailHash,await seal(env.DATA_ENCRYPTION_KEY,'leasing-lead:'+id,d),await digest(cancelToken),stamp));
  batch.push(await event(env,id,eventKind,payload));
  batch.push(await mailEvent(env,'leasing.'+eventKind,{to:d.email,subject:'ProInspect '+(session?'inspection registration':'property enquiry')+' received',heading:session?'Inspection registration received':'Property interest received',
  body:session?'We have recorded your registration. This does not constitute a rental application. Changes to the inspection will be advised where possible.':'We have recorded your interest. This does not constitute a rental application.',
- href:confirmationHref,facts:{Property:listing.title,...(session?{'Inspection (UTC)':session.starts_at}:{})},sensitive:true}));
+ href:session?env.APP_ORIGIN+'/properties-for-lease/cancel/'+cancelToken:confirmationHref,facts:{Property:listing.title,...(session?{'Inspection (UTC)':session.starts_at}:{}),'Property details':confirmationHref},sensitive:true}));
  if(env.OPERATIONS_EMAIL)batch.push(await mailEvent(env,'leasing.operations',{to:env.OPERATIONS_EMAIL,subject:'New property '+(session?'inspection registration':'interest'),heading:'Leasing enquiry recorded',body:'A new registration has been stored securely. Review it in the authorised leasing register.',facts:{Property:listing.title,Reference:id}}));
  try {
   const result=await env.DB.batch(batch);
