@@ -1,6 +1,7 @@
 import type { Env } from '../../../../packages/database/types';
 import { now, statement, uid, AppError } from '../../../../packages/database/types';
 import { mailEvent } from '../../../../packages/notifications/server';
+import type { BookingForCalendar } from './calendar-google.server';
 import { calendarEventId, calendarSchedulingEnabled, syncGoogleEvent, GoogleCalendarFailure } from './calendar-google.server';
 export { assertCalendarSlot, calendarEventId, calendarSchedulingEnabled, googleBusy, overlaps } from './calendar-google.server';
 
