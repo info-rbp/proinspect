@@ -2,6 +2,7 @@ import { SERVICE_FOCUS } from '../../../../packages/marketing/content';
 import { Link, useLoaderData, useOutletContext, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
 import { findService, SERVICE_SEEDS, FAMILIES } from '../../../../packages/service-catalogue/index';
 import { IllustrativeReport, MarketingCta, PropertyArtwork } from '../components/marketing-ui';
+import { MarketingFaq } from '../components/page-patterns';
 import { seo } from '../lib/seo';
 
 export function loader({ params }: LoaderFunctionArgs) {
@@ -29,12 +30,24 @@ const routineSteps = [
   ['03', 'Property attendance', 'The agreed visible-condition inspection is undertaken on site.'],
   ['04', 'Receive the record', 'The issued result is associated with your authorised property account.'],
 ];
-const routineFaq = [
+const routineFaq: [string, string][] = [
   ['Is a routine inspection the same as a Property Condition Report?', 'No. A routine inspection records visible condition and matters needing attention during the tenancy. A PCR serves a different incoming-condition documentation purpose.'],
   ['Does the service include repairs?', 'No. The inspection documents observations within scope. Repair work and specialist assessments require separate arrangements.'],
   ['Will an online request reserve a time?', 'Not automatically. Appointment availability, price, scope and authorised access must be confirmed.'],
   ['What if access or specialist assessment is needed?', 'Provide any known restrictions before attendance. Any additional specialist work requires a separate scope and approval.'],
 ];
+const generalSteps: [string, string, string][] = [
+  ['01', 'Describe the task', 'Select the service and give the property details and intended outcome.'],
+  ['02', 'Confirm the instruction', 'Agree scope, relevant access arrangements, timing and any applicable charges.'],
+  ['03', 'On-site attendance', 'ProInspect undertakes the agreed activity within the accepted service limits.'],
+  ['04', 'Review the outcome', 'The issued observations or service record are available in the authorised property context.'],
+];
+const generalFaq: [string, string][] = [
+  ['Does a request confirm an appointment?', 'No. Scope, availability, authority, access and any applicable price must be confirmed before attendance is accepted.'],
+  ['What if the matter requires specialist assessment?', 'Visible observations, operational attendance and specialist assessment are different services. Additional technical work or certification requires a separately agreed scope.'],
+  ['How do access and supporting documents work?', 'Provide the authorised access arrangements and relevant context as part of the instruction. Do not submit private entry codes through a public enquiry.'],
+];
+
 export default function ServicePage() {
   const { service: s, related } = useLoaderData<typeof loader>();
   const { appOrigin } = useOutletContext<{ appOrigin: string }>();
@@ -141,24 +154,89 @@ export default function ServicePage() {
           </section>
         </>
       ) : (
-        <section className="section mkt-section">
-          <div className="site-container mkt-service-intro-grid">
-            <article className="prose">
-              {focus && <><p className="eyebrow">Service focus</p><h2>What this service covers</h2><p>{focus[0]}</p><h2>What to prepare</h2><p>{focus[1]}</p><h2>The documented outcome</h2><p>{focus[2]}</p></>}
-              <h2>Scope, timing and approvals</h2><p>The property, agreed access and instruction determine what can be done. Additional work, technical assessment or certification requires a separately confirmed scope.</p>
-              <h2>What happens next</h2><p>Availability, any approved price and the appointment are confirmed through the booking process. An issued record is linked to the authorised property account.</p>
-              <Link className="mkt-text-link" to={'/contact?service=' + s.id}>Discuss your requirements <span aria-hidden="true">↗</span></Link>
-            </article>
-            <aside className="mkt-at-glance">
-              <p className="eyebrow">At a glance</p><h3>{s.name}</h3>
-              <p>{FAMILIES[s.family].name}</p>
-              <div className="mkt-aside-divider" />
-              <p>Indicative attendance: {s.duration_minutes} minutes, subject to scope and confirmation.</p>
-              <p>Online service requests are not confirmed bookings until accepted.</p>
-              <a className="button" href={appOrigin + '/book/' + s.id}>Arrange this service <span aria-hidden="true">→</span></a>
-            </aside>
-          </div>
-        </section>
+        <>
+          <section className="section mkt-section">
+            <div className="site-container mkt-service-intro-grid">
+              <div>
+                <p className="eyebrow">The service explained</p>
+                <h2>What is {s.name}?</h2>
+                <p>{s.summary}</p>
+                <p>The agreed instruction defines the property areas, intended activity, authorised access and requested output. ProInspect records the outcome within that agreed service boundary.</p>
+                <Link className="mkt-text-link" to={'/contact?service=' + s.id}>Discuss the scope <span aria-hidden="true">↗</span></Link>
+              </div>
+              <aside className="mkt-at-glance">
+                <p className="eyebrow">At a glance</p>
+                <h3>{s.name}</h3><p>{FAMILIES[s.family].name}</p>
+                <div className="mkt-aside-divider" />
+                <h3>Indicative attendance</h3>
+                <p>{s.duration_minutes} minutes, subject to the agreed instruction, timing and access.</p>
+                <div className="mkt-aside-divider" />
+                <p>Online requests are not confirmed bookings until accepted.</p>
+                <a className="button" href={appOrigin + '/book/' + s.id}>Arrange this service <span aria-hidden="true">→</span></a>
+              </aside>
+            </div>
+          </section>
+          <section className="section mkt-section mkt-stone">
+            <div className="site-container">
+              <div className="mkt-section-heading"><div><p className="eyebrow">Purpose &amp; scope</p><h2>A defined task. A useful outcome.</h2></div><p>These are service guidance points. The final accepted scope controls what is undertaken and recorded.</p></div>
+              <div className="mkt-inclusions">
+                {[
+                  ['What this service focuses on', focus?.[0] ?? s.summary],
+                  ['What you need to provide', focus?.[1] ?? 'Relevant property context, instruction and authorised access.'],
+                  ['The intended output', focus?.[2] ?? 'A documented record of the agreed attendance.'],
+                  ['Service boundaries', 'Specialist assessment, certification, repairs and additional work require a separately confirmed scope.'],
+                ].map(([title, body], i) => (
+                  <div className="mkt-inclusion-item" key={title}>
+                    <span className="mkt-inclusion-check" aria-hidden="true">✓</span>
+                    <div><h3>{title}</h3><p>{body}</p></div>
+                    <span className="mkt-inclusion-index">0{i + 1}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+          <section className="section mkt-section mkt-report-section">
+            <div className="site-container mkt-proof-grid">
+              <div className="mkt-proof-copy">
+                <p className="eyebrow">The documented outcome</p>
+                <h2>Know what the attendance is intended to produce.</h2>
+                <p>{focus?.[2] ?? 'The agreed attendance produces an appropriate service record within its defined scope.'}</p>
+                <ul className="mkt-check-list">
+                  <li>The instruction and relevant property context are identified</li>
+                  <li>Agreed tasks and relevant observations are recorded</li>
+                  <li>Matters needing review can inform a separately authorised next step</li>
+                  <li>An issued result is linked to the relevant authorised property account</li>
+                </ul>
+              </div>
+              <div className="mkt-callout-panel mkt-service-record-preview">
+                <span className="mkt-card-number">ILLUSTRATIVE SERVICE OUTCOME</span>
+                <h3>{s.name}</h3>
+                <div className="mkt-service-record-line"><span>Focus</span><strong>{focus?.[0] ?? s.summary}</strong></div>
+                <div className="mkt-service-record-line"><span>Preparation</span><strong>{focus?.[1] ?? 'Agreed property and access details'}</strong></div>
+                <div className="mkt-service-record-line"><span>Intended record</span><strong>{focus?.[2] ?? 'A documented service outcome'}</strong></div>
+                <p className="mkt-image-disclosure">Editorial illustration, not a real issued report or a promise of a fixed report format.</p>
+              </div>
+            </div>
+          </section>
+          <section className="section mkt-section mkt-process-section">
+            <div className="site-container">
+              <div className="mkt-section-heading"><div><p className="eyebrow">How the service works</p><h2>From instruction to an issued record.</h2></div></div>
+              <ol className="mkt-steps">{generalSteps.map(([n, title, body]) => <li key={n}><span className="mkt-step-number">{n}</span><h3>{title}</h3><p>{body}</p></li>)}</ol>
+            </div>
+          </section>
+          <section className="section mkt-section">
+            <div className="site-container mkt-detail-two-col">
+              <div><p className="eyebrow">Before the visit</p><h2>Prepare the property instruction.</h2><p>Provide the general location, purpose, relevant records and authorised access. Known hazards or restrictions must be identified before an attendance is confirmed.</p></div>
+              <div><p className="eyebrow">After the visit</p><h2>Review and decide what happens next.</h2><p>The authorised customer can review the issued record. Additional repairs, specialist investigations or return visits are separate decisions requiring the appropriate instruction.</p></div>
+            </div>
+          </section>
+          <section className="section mkt-section mkt-stone">
+            <div className="site-container mkt-faq-grid">
+              <div><p className="eyebrow">Common questions</p><h2>What to know before arranging this service.</h2></div>
+              <MarketingFaq questions={generalFaq} />
+            </div>
+          </section>
+        </>
       )}
 
       {related.length > 0 && <section className="section mkt-section mkt-related-section"><div className="site-container"><div className="mkt-section-heading"><div><p className="eyebrow">Explore further</p><h2>Related property services.</h2></div><Link className="mkt-text-link" to="/services">All services <span aria-hidden="true">↗</span></Link></div><div className="grid-3">{related.map((r) => <article className="mkt-related-card" key={r.id}><p className="mkt-kicker">{FAMILIES[r.family].name}</p><h3>{r.name}</h3><p>{r.summary}</p><Link className="mkt-text-link" to={'/services/' + r.id}>Explore service <span aria-hidden="true">↗</span></Link></article>)}</div></div></section>}
