@@ -10,6 +10,7 @@ export interface Env {
   RESTRICTED_WORKFLOWS_ENABLED?: string;
   ENQUIRY_GATEWAY_SECRET?: string;
   MARKETING_TURNSTILE_SECRET_KEY?: string;
+  MARKETING_TURNSTILE_SITE_KEY?: string;
   APP_ORIGIN: string;
   MARKETING_ORIGIN?: string;
   DB: D1Database;
