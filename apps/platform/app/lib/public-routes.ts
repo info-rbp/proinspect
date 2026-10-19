@@ -17,3 +17,8 @@ export function shouldIndexPublicPage(pathname: string, requestOrigin: string, a
   return appEnv === 'production' &&
     requestOrigin === 'https://proinspect.systems' && isPublicSitePath(pathname);
 }
+/** Sensitive applicant links share the marketing styling but are NEVER indexable. */
+export function isMarketingStylePath(pathname:string):boolean {
+ return isPublicSitePath(pathname)||/^\/rental-application\/[a-f0-9]{64}$/.test(pathname)||
+  /^\/properties-for-lease\/residential\/[a-z0-9-]+\/apply$/.test(pathname);
+}
