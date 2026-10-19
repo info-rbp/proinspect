@@ -218,10 +218,27 @@ export async function submitRental(env:Env,token:string){
  const notice={mode:l.tenancy_database_notice_mode,entries:JSON.parse(l.tenancy_database_notice_json),
   representative:l.agent_name,property:l.display_address,formVersion:FORM18_VERSION};
  const stamp=now();
+ const completePeople=await Promise.all(rows.map(async row=>{
+  const record=await statement(env.DB,'SELECT answers_envelope FROM rental_applicants WHERE id=?',row.id).first<{answers_envelope:string}>();
+  assert(record,409,'APPLICANTS_INCOMPLETE','An applicant could not be read.');
+  return {ordinal:row.ordinal,declaredAt:row.declared_at,
+   answers:await unseal<Form18Answers>(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+row.id,record.answers_envelope)};
+ }));
+ const fileManifest=(await statement(env.DB,'SELECT applicant_id,category,filename,size_bytes,sha256,review_status FROM rental_application_documents WHERE application_id=? ORDER BY uploaded_at',app.id).all()).results;
+ const prior=await statement(env.DB,'SELECT COALESCE(MAX(version),0) AS n FROM rental_application_submissions WHERE application_id=?',app.id).first<{n:number}>();
+ const snapshotVersion=(prior?.n??0)+1;
+ assert(snapshotVersion<=30,422,'SUBMISSION_LIMIT','Submission history requires staff review.');
+ const snapshot={reference:app.reference,formVersion:FORM18_VERSION,submittedAt:stamp,
+  property:l.display_address,leasingRepresentative:l.agent_name,
+  applicants:completePeople,notice,documents:fileManifest};
+ const submissionId=uid('ras');
  await env.DB.batch([
   statement(env.DB,"UPDATE rental_applications SET status='submitted',notice_envelope=?,submitted_at=COALESCE(submitted_at,?),updated_at=?,version=version+1 WHERE id=? AND status IN('draft','information_requested') AND version=?",
    await seal(env.DATA_ENCRYPTION_KEY,'rental-notice:'+app.id,notice),stamp,stamp,app.id,app.version),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+  statement(env.DB,'INSERT INTO rental_application_submissions(id,application_id,submitted_by_applicant_id,version,form_version,snapshot_envelope,created_at) VALUES(?,?,?,?,?,?,?)',
+   submissionId,app.id,person.id,snapshotVersion,FORM18_VERSION,
+   await seal(env.DATA_ENCRYPTION_KEY,'rental-submission:'+submissionId,snapshot),stamp),
   await event(env,app.id,'submitted',{reference:app.reference,applicantCount:rows.length,formVersion:FORM18_VERSION},person.id),
   await mailEvent(env,'rental.application.received',{to:answers.identity?.email,subject:'Rental application received — '+app.reference,
    heading:'Your rental application was received',body:'We have recorded your application for '+l.title+'. The responsible landlord or licensed leasing representative makes the decision. This is not a tenancy agreement or offer.',
@@ -239,8 +256,8 @@ export async function withdrawRental(env:Env,token:string){
  assert(person.role==='primary'&&!['withdrawn','decision_recorded'].includes(app.status),403,'WITHDRAW_NOT_ALLOWED','Only the primary applicant can withdraw an active application.');
  const stamp=now();
  await env.DB.batch([
-  statement(env.DB,"UPDATE rental_applications SET status='withdrawn',withdrawn_at=?,updated_at=?,version=version+1 WHERE id=? AND status!='withdrawn'",
-   stamp,stamp,app.id),
+  statement(env.DB,"UPDATE rental_applications SET status='withdrawn',withdrawn_at=?,updated_at=?,version=version+1 WHERE id=? AND version=? AND status NOT IN('withdrawn','decision_recorded')",
+   stamp,stamp,app.id,app.version),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   await event(env,app.id,'withdrawn',{at:stamp},person.id),
   statement(env.DB,'DELETE FROM mutation_guards'),
