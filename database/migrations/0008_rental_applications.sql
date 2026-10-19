@@ -105,3 +105,17 @@ CREATE TRIGGER rental_events_immutable_delete BEFORE DELETE ON rental_applicatio
 CREATE TRIGGER rental_submitted_at_required BEFORE UPDATE OF status ON rental_applications
  WHEN NEW.status IN('submitted','ready_for_handoff','forwarded','decision_recorded') AND NEW.submitted_at IS NULL
  BEGIN SELECT RAISE(ABORT,'APPLICATION_SUBMISSION_REQUIRED'); END;
+
+-- Do not strand an unfinished ProInspect household application when a listing
+-- is reconfigured for an agency's external portal.
+CREATE TRIGGER leasing_application_mode_active_draft_guard BEFORE UPDATE OF application_mode ON leasing_listings
+ WHEN OLD.application_mode='proinspect' AND NEW.application_mode!='proinspect' AND EXISTS (
+ SELECT 1 FROM rental_applications a WHERE a.listing_id=OLD.id
+ AND a.status IN ('draft','submitted','information_requested','ready_for_handoff','forwarded'))
+ BEGIN SELECT RAISE(ABORT,'ACTIVE_APPLICATIONS_REQUIRE_TRANSITION'); END;
+-- Prevent cross-application applicant/document references even if called by
+-- another future backend route.
+CREATE TRIGGER rental_application_document_parent_guard BEFORE INSERT ON rental_application_documents
+ WHEN NOT EXISTS(SELECT 1 FROM rental_applicants a
+ WHERE a.id=NEW.applicant_id AND a.application_id=NEW.application_id AND a.state!='removed')
+ BEGIN SELECT RAISE(ABORT,'RENTAL_DOCUMENT_APPLICANT_MISMATCH'); END;
