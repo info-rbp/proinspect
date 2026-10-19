@@ -172,12 +172,12 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   return {listing:details,sessions,photos,leads};
  }
  if(method==='POST'&&section==='application-settings'){
-  const d=applicationSettingsSchema.extend({version:z.number().int().positive()}).parse(body);
+  const d=applicationSettingsSchema.parse(body),settingsVersion=z.number().int().positive().parse((body as Record<string,unknown>).version);
   assert(listing.kind==='residential'||d.applicationMode!=='proinspect',422,'RESIDENTIAL_APPLICATION_ONLY','The WA Form 18 workflow is available for residential leasing only.');
   const update=await statement(env.DB,"UPDATE leasing_listings SET application_mode=?,application_url=?,application_authority_reference=?,application_recipient_email=?,tenancy_database_notice_mode=?,tenancy_database_notice_json=?,version=version+1,updated_at=? WHERE id=? AND version=?",
    d.applicationMode,safeApplicationUrl(d.applicationUrl),d.applicationAuthorityReference||null,
    d.applicationRecipientEmail||null,d.tenancyDatabaseNoticeMode,JSON.stringify(d.tenancyDatabaseNotices),
-   now(),listingId,d.version).run();
+   now(),listingId,settingsVersion).run();
   assert(update.meta.changes===1,409,'STALE_LISTING','The listing changed. Reload before updating application settings.');
   return {ok:true,applicationMode:d.applicationMode};
  }
