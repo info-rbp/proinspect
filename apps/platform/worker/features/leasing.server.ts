@@ -12,6 +12,17 @@ export async function publicListings(env:Env,kind?:string){
  const rows=await statement(env.DB,`SELECT ${cols} FROM leasing_listings WHERE status='published' AND (? IS NULL OR kind=?) ORDER BY published_at DESC LIMIT 100`,kind??null,kind??null).all();
  return rows.results;
 }
+export async function publicPhoto(env:Env,photoId:string) {
+ let p:{object_key:string;content_type:string}|null=null;
+ if(photoId.endsWith('/cover')){
+  const listingId=photoId.slice(0,-6);
+  p=await statement(env.DB,"SELECT ph.object_key,ph.content_type FROM leasing_photos ph JOIN leasing_listings l ON l.id=ph.listing_id WHERE l.id=? AND l.status='published' ORDER BY ph.sort_order,ph.id LIMIT 1",listingId).first();
+ }else p=await statement(env.DB,"SELECT ph.object_key,ph.content_type FROM leasing_photos ph JOIN leasing_listings l ON l.id=ph.listing_id WHERE ph.id=? AND l.status='published'",photoId).first();
+ assert(p,404,'PHOTO_NOT_FOUND','Photo unavailable.');
+ const object=await env.DOCUMENTS.get(p.object_key);
+ assert(object,404,'PHOTO_NOT_FOUND','Photo unavailable.');
+ return new Response(object.body,{headers:{'Content-Type':p.content_type,'Cache-Control':'public, max-age=300','X-Content-Type-Options':'nosniff'}});
+}
 export async function publicListing(env:Env,kind:string,slug:string){
  const row=await statement(env.DB,`SELECT ${cols} FROM leasing_listings WHERE status='published' AND kind=? AND slug=?`,kind,slug).first<Record<string,any>>();
  if(!row)return null;
@@ -97,6 +108,26 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   const listings=(await statement(env.DB,"SELECT l.*,c.name AS instructing_client,p.address AS property_address FROM leasing_listings l JOIN clients c ON c.id=l.instructed_by_client_id JOIN properties p ON p.id=l.property_id ORDER BY l.updated_at DESC LIMIT 150").all()).results;
   return {listings};
  }
+ if(method==='POST'&&parts.length===2&&parts[1]==='photos'){
+  const form=await request.formData();
+  const media=form.get('file'),alt=String(form.get('altText')??'').trim();
+  assert(media instanceof File && media.size>0 && media.size<=6000000,422,'PHOTO_SIZE','Use an image of 6 MB or smaller.');
+  assert(['image/png','image/jpeg','image/webp'].includes(media.type),422,'PHOTO_TYPE','Use JPEG, PNG or WebP images.');
+  assert(alt.length>=8&&alt.length<=240,422,'PHOTO_ALT','Describe the image for accessibility.');
+  const id=uid('lph'),key='leasing/'+parts[0]+'/'+id;
+  const bytes=new Uint8Array(await media.arrayBuffer());
+  const valid=media.type==='image/png'?(bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71):
+   media.type==='image/jpeg'?(bytes[0]===255&&bytes[1]===216&&bytes[2]===255):
+   (bytes[0]===82&&bytes[1]===73&&bytes[2]===70&&bytes[3]===70&&bytes[8]===87&&bytes[9]===69&&bytes[10]===66&&bytes[11]===80);
+  assert(valid,422,'PHOTO_INVALID','The uploaded file is not a valid image of the selected type.');
+  const found=await statement(env.DB,'SELECT id FROM leasing_listings WHERE id=?',parts[0]).first();
+  assert(found,404,'LISTING_NOT_FOUND','Listing not found.');
+  await env.DOCUMENTS.put(key,bytes,{httpMetadata:{contentType:media.type}});
+  try{await statement(env.DB,'INSERT INTO leasing_photos(id,listing_id,object_key,content_type,size,alt_text,created_at) VALUES(?,?,?,?,?,?,?)',
+    id,parts[0],key,media.type,media.size,alt,now()).run();
+  }catch(error){await env.DOCUMENTS.delete(key);throw error;}
+  return {id};
+ }
  const body=method==='POST'?await request.json():{};
  if(method==='POST'&&parts.length===0){
   const d=listingInput.parse(body),id=uid('lst'),t=now();
@@ -128,7 +159,7 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   id,listingId,d.startsAt,d.endsAt,d.capacity??null,d.instructions,t,t).run();
   return {id};
  }
- if(method==='POST'&&section==='sessions'&&other)throw new Error('INVALID_PATH');
+
  if(method==='POST'&&section==='session-status'&&other){
   const d=z.object({status:z.enum(['scheduled','cancelled','completed']),version:z.number().int().positive()}).parse(body);
   const found=await statement(env.DB,'SELECT id FROM leasing_sessions WHERE id=? AND listing_id=?',other,listingId).first();
