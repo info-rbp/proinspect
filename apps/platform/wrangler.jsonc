@@ -1,6 +1,7 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "proinspect-platform-local",
+  "keep_vars": true,
   "main": "worker/app.ts",
   "compatibility_date": "2026-07-01",
   "compatibility_flags": [
