@@ -153,6 +153,13 @@
         "platform"
       ],
       "group": "calendar"
+    },
+    "RENTAL_APPLICATIONS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
     }
   },
   "generated": [
