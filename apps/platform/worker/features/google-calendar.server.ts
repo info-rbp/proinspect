@@ -42,7 +42,7 @@ function base64url(value: Uint8Array): string {
 async function assertion(email: string, privateKey: string): Promise<string> {
   // The secret may be pasted as a PEM with real line breaks or JSON-escaped
   // newlines. Never include its contents in exception messages.
-  const pem = privateKey.trim().replaceAll('\\n', '\n').replaceAll('\r', '');
+  const pem = privateKey.trim().replaceAll('\\n', '\n').replaceAll('\r', '').trim();
   const match = /^-----BEGIN PRIVATE KEY-----\s+([a-zA-Z0-9+/=\s]+?)\s+-----END PRIVATE KEY-----$/.exec(pem);
   if (!match) throw new Error('KEY_FORMAT');
   const raw = atob(match[1].replace(/\s/g, ''));
