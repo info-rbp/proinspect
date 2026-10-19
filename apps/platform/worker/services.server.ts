@@ -431,7 +431,7 @@ export async function updateWorkOrder(
         order.request_id,
       ),
     );
-  if (order.booking_id && next === 'cancelled' && calendarSchedulingEnabled(env)) {
+  if (order.booking_id && ['completed', 'cancelled'].includes(next) && calendarSchedulingEnabled(env)) {
     const existingBooking = await statement(env.DB, 'SELECT version FROM bookings WHERE id=?', order.booking_id)
       .first<{ version: number }>();
     if (existingBooking)
