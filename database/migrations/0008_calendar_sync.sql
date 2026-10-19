@@ -1,5 +1,7 @@
 -- Google Calendar is an operational projection, not a booking authority.
 -- Import and enable only after configuring the Calendar scope and service account.
+-- Historical bookings are not automatically exported; a separately audited
+-- backfill is required if existing appointments should appear on Google.
 -- A versioned, lease-protected job is committed in the same D1 batch as a booking
 -- creation, rescheduling or cancellation. No external API call occurs in D1.
 CREATE TABLE booking_calendar_sync (
@@ -19,5 +21,3 @@ CREATE TABLE booking_calendar_sync (
 ) STRICT;
 CREATE INDEX booking_calendar_sync_pending
   ON booking_calendar_sync(status,next_attempt_at,updated_at);
--- Historical bookings are intentionally NOT automatically exported to Google.
--- A separately audited migration is required before any old bookings are sent.
