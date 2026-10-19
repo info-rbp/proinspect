@@ -332,3 +332,18 @@
 @media(prefers-reduced-motion:reduce) {
   .site .mkt-catalogue-card,.site .mkt-guide-card,.site .mkt-linked-card { transition:none; }
 }
+
+
+/* Completion details for every catalogue service, and current-section navigation. */
+.site .mkt-service-record-preview { background:#fff; border:1px solid #ceded5; box-shadow:0 12px 35px #21403f0d; padding:2rem; }
+.site .mkt-service-record-preview h3 { font-size:1.3rem; margin:.9rem 0 1.3rem; }
+.site .mkt-service-record-line { display:grid; grid-template-columns:minmax(90px, .32fr) minmax(0,1fr); gap:1rem; border-top:1px solid #e1e9e4; padding:.85rem 0; font-size:.82rem; line-height:1.6; }
+.site .mkt-service-record-line span { color:#608079; }
+.site .mkt-service-record-line strong { color:#304d4a; font-weight:650; }
+.site .mkt-service-record-preview .mkt-image-disclosure { border-top:1px solid #e1e9e4; padding-top:.85rem; }
+.site .mkt-site-links a[aria-current='page'] { color:#f0d2a3; border-bottom:2px solid #f0d2a3; padding-bottom:.4rem; }
+.site .marketing-menu nav a[aria-current='page'] { background:#e5f1ec; font-weight:750; }
+@media(max-width:540px) {
+  .site .mkt-service-record-preview { padding:1.3rem; }
+  .site .mkt-service-record-line { grid-template-columns:1fr; gap:.2rem; }
+}
