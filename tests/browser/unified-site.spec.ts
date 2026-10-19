@@ -17,7 +17,7 @@ test('a visitor can browse marketing and enter the booking/sign-in workflow on o
   await expect(page.getByRole('heading', { level: 1 })).toContainText('The right service');
   await page.getByRole('link', { name: 'Explore service' }).first().click();
   await expect(page).toHaveURL(/\/services\/[^/]+$/);
-  await page.getByRole('link', { name: 'Arrange this service', exact: true }).click();
+  await page.getByRole('link', { name: 'Arrange this service', exact: true }).first().click();
   await expect(page).toHaveURL(/\/signin|\/book/);
   await page.goto('/signin');
   await expect(page.getByRole('heading', { name: 'Your properties. Your work. One place.' })).toBeVisible();
