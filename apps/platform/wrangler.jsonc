@@ -88,6 +88,7 @@
         "EMAIL_FROM": "info@proinspect.systems",
         "OPERATIONS_EMAIL": "info@proinspect.systems",
         "RESTRICTED_WORKFLOWS_ENABLED": "false",
+        "GOOGLE_CALENDAR_BOOKINGS_ENABLED": "false",
         "PLATFORM_ORIGIN": "https://proinspect-platform.delicate-dream-e4c9.workers.dev"
       },
       "d1_databases": [
