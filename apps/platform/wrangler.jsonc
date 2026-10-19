@@ -18,6 +18,7 @@
     "APP_ENV": "local",
     "APP_ORIGIN": "http://localhost:5173",
     "EMAIL_PROVIDER": "local",
+    "RENTAL_APPLICATIONS_ENABLED": "true",
     "MARKETING_ORIGIN": "http://localhost:5173"
   },
   "d1_databases": [
@@ -88,6 +89,7 @@
         "EMAIL_FROM": "info@proinspect.systems",
         "OPERATIONS_EMAIL": "info@proinspect.systems",
         "RESTRICTED_WORKFLOWS_ENABLED": "false",
+        "RENTAL_APPLICATIONS_ENABLED": "false",
         "PLATFORM_ORIGIN": "https://proinspect-platform.delicate-dream-e4c9.workers.dev"
       },
       "d1_databases": [
