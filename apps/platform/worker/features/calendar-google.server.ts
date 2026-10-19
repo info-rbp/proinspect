@@ -167,7 +167,7 @@ export async function assertCalendarSlot(
   }
 }
 
-type BookingForCalendar = {
+export type BookingForCalendar = {
   id: string; reference: string; starts_at: string; ends_at: string;
   reserved_start: string; reserved_end: string; status: string; version: number;
   service_name: string; address: string; suburb: string;
