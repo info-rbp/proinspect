@@ -34,6 +34,19 @@ export async function waIssueReadiness(env:Env,c:Record<string,any>){
     if(!booking) checks.push('active_booking');
   }
  }
+ if(c.form_code==='WA_FORM_1'){
+  // A reviewer reference alone cannot establish that a PCR actually exists.
+  // Require an issued, tenancy-granted property condition report associated
+  // with this residential tenancy before the prescribed Form 1 can issue.
+  const report=await statement(env.DB,`
+    SELECT d.id FROM documents d
+    JOIN document_grants g ON g.document_id=d.id
+      AND g.recipient_kind='tenancy' AND g.recipient_id=?
+    WHERE d.tenancy_id=? AND d.property_id=?
+      AND d.category='property_condition_report' AND d.status='issued'
+    LIMIT 1`,c.tenancy_id,c.tenancy_id,c.property_id).first();
+  if(!report) checks.push('issued_tenancy_granted_pcr');
+ }
  if(c.form_code==='WA_FORM_1A'){
   const envelope=await unseal<{answers?:Record<string,string>}>(env.DATA_ENCRYPTION_KEY,
     `wa-form:${c.id}`,c.data_envelope);
