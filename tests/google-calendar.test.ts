@@ -104,7 +104,7 @@ test('real RSA signature, OAuth exchange, then read-only FreeBusy; no secrets re
     const status = await readOnlyCalendarDiagnostic({
       ...base, GOOGLE_CALENDAR_PRIVATE_KEY: privateKey.replaceAll('\n', '\\n'),
     });
-    assert.equal(status.ok, true);
+    assert.equal(status.ok, true, JSON.stringify(status));
     assert.equal(status.phase, 'complete');
     assert.equal(status.code, 'GOOGLE_CALENDAR_FREEBUSY_OK');
     assert.equal(exchangeCount, 1);
