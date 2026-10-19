@@ -302,6 +302,7 @@ export async function dispatchCalendarSync(env: Env, maxJobs = 4): Promise<void>
   }
 }
 export async function calendarSyncSummary(env: Env) {
+  if (!calendarSchedulingEnabled(env)) return { enabled: false, counts: [], alerts: [] };
   const counts = await statement(env.DB,
     'SELECT status,COUNT(*) AS count FROM booking_calendar_sync GROUP BY status ORDER BY status',
   ).all<{ status: string; count: number }>();
@@ -310,4 +311,26 @@ export async function calendarSyncSummary(env: Env) {
     'ORDER BY updated_at DESC LIMIT 25',
   ).all<{ booking_id: string; status: string; error_code: string; updated_at: string }>();
   return { enabled: calendarSchedulingEnabled(env), counts: counts.results, alerts: alerts.results };
+}
+
+/** Explicit, privileged retry after operators resolve a calendar conflict. */
+export async function retryCalendarSync(env: Env, bookingId: string, actorId: string) {
+  if (!calendarSchedulingEnabled(env))
+    throw new AppError(409, 'CALENDAR_SYNC_DISABLED', 'Operational calendar synchronisation is not enabled.');
+  if (!/^bkg_[0-9a-f]{32}$/.test(bookingId))
+    throw new AppError(422, 'BOOKING_INVALID', 'Choose a valid booking.');
+  const time = now();
+  const row = await statement(env.DB,
+    "UPDATE booking_calendar_sync SET status='pending',attempts=0,error_code=NULL," +
+    "next_attempt_at=?,updated_at=?,lease_token=NULL,lease_until=NULL " +
+    "WHERE booking_id=? AND status='attention' RETURNING booking_id",
+    time, time, bookingId,
+  ).first();
+  if (!row) throw new AppError(409, 'CALENDAR_RETRY_UNAVAILABLE', 'This booking is not awaiting calendar review.');
+  await statement(env.DB,
+    "INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) " +
+    "VALUES(?,?,'booking.calendar_sync_retry','booking',?,'{}',?)",
+    uid('aud'), actorId, bookingId, time,
+  ).run();
+  return { queued: true, bookingId };
 }
