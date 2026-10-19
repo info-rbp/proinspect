@@ -276,10 +276,11 @@ export async function handleApi(
       operationsWrite(user);
       return Response.json(await readOnlyCalendarDiagnostic(env));
     }
-    const calendarRetry = path.match(/^\\/api\\/staff\\/calendar-sync\\/(bkg_[0-9a-f]{32})\\/retry$/);
-    if (calendarRetry && method === 'POST') {
+    const calendarRetry = path.startsWith('/api/staff/calendar-sync/') && path.endsWith('/retry')
+      ? path.slice('/api/staff/calendar-sync/'.length, -'/retry'.length) : null;
+    if (calendarRetry && /^bkg_[0-9a-f]{32}$/.test(calendarRetry) && method === 'POST') {
       operationsWrite(user);
-      return Response.json(await retryCalendarSync(env, calendarRetry[1], user.id));
+      return Response.json(await retryCalendarSync(env, calendarRetry, user.id));
     }
     if (path === '/api/staff/calendar-sync' && method === 'GET') {
       operationsWrite(user);
