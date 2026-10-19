@@ -13,7 +13,7 @@ function staff(user:Principal){
 }
 async function appRow(env:Env,id:string){
  const r=await statement(env.DB,"SELECT a.*,l.display_address,l.kind,l.slug,l.title,l.agent_name,l.instructed_by_client_id,l.application_recipient_email,l.tenancy_database_notice_mode,l.tenancy_database_notice_json FROM rental_applications a JOIN leasing_listings l ON l.id=a.listing_id WHERE a.id=?",id).first<Record<string,any>>();
- assert(r,404,'RENTAL_APPLICATION_NOT_FOUND','Application unavailable.');
+ assert(r&&r.status!=='draft',404,'RENTAL_APPLICATION_NOT_FOUND','Application unavailable.');
  return r;
 }
 async function audit(env:Env,appId:string,kind:string,staffId:string,details:unknown){
