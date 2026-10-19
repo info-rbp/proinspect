@@ -5,6 +5,7 @@ import { handleApi } from './api';
 import { consumeQueue, dispatchOutbox } from '../../../packages/notifications/server';
 import { dispatchNotices } from '../../../packages/notifications/notices';
 import { dispatchIntegrations } from './features/integrations.server';
+import { dispatchLeasingReminders } from './features/leasing.server';
 import { shouldIndexPublicPage } from '../app/lib/public-routes';
 export { BookingScheduler } from './scheduler';
 export { BookingCoordinator } from './legacy-booking-coordinator';
@@ -37,7 +38,7 @@ export default {
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   },
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(dispatchNotices(env).then(() => dispatchOutbox(env)));
+    ctx.waitUntil(dispatchLeasingReminders(env).then(() => dispatchNotices(env)).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchIntegrations(env));
   },
   async queue(batch: MessageBatch<{ eventId: string }>, env: Env) { await consumeQueue(batch, env); },
