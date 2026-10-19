@@ -1,3 +1,4 @@
+import { applicationSettingsSchema } from '../../../../packages/marketing/form18';
 import { z } from 'zod';
 import { statement, assert, now, uid, type Env } from '../../../../packages/database/types';
 import { digest, seal, unseal, randomToken } from '../../../../packages/auth/crypto';
@@ -7,7 +8,7 @@ import type { Principal } from '../../../../packages/domain/index';
 import { operationsWrite } from '../../../../packages/authorization/server';
 import { isLocal } from '../../../../packages/auth/server';
 
-const cols='id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,agent_name,agent_role,application_url,published_at';
+const cols='id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,agent_name,agent_role,application_url,application_mode,published_at';
 export async function publicListings(env:Env,kind?:string){
  const rows=await statement(env.DB,`SELECT ${cols} FROM leasing_listings WHERE status='published' AND (? IS NULL OR kind=?) ORDER BY published_at DESC LIMIT 100`,kind??null,kind??null).all();
  return rows.results;
@@ -136,19 +137,49 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
  const body=method==='POST'?await request.json():{};
  
  if(method==='POST'&&parts.length===0){
-  const d=listingInput.parse(body),id=uid('lst'),t=now();
-  await statement(env.DB,`INSERT INTO leasing_listings(id,property_id,instructed_by_client_id,owner_client_id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,agent_name,agent_role,application_url,created_by,created_at,updated_at) VALUES(${Array(24).fill('?').join(',')})`,
-  id,d.propertyId,d.instructedByClientId,d.ownerClientId??null,d.kind,d.slug,d.title,d.description,d.displayAddress,d.suburb,d.postcode,d.priceCents??null,d.pricePeriod,d.bedrooms??null,d.bathrooms??null,d.parking??null,d.areaSqm??null,d.availableFrom??null,d.agentName,d.agentRole,safeApplicationUrl(d.applicationUrl),user.id,t,t).run();
+  const d=listingInput.parse(body);
+  const config=applicationSettingsSchema.parse({
+   applicationMode:d.applicationMode,applicationUrl:d.applicationUrl??'',
+   applicationAuthorityReference:d.applicationAuthorityReference,
+   applicationRecipientEmail:d.applicationRecipientEmail,
+   tenancyDatabaseNoticeMode:d.tenancyDatabaseNoticeMode,
+   tenancyDatabaseNotices:d.tenancyDatabaseNotices,
+  });
+  assert(d.kind==='residential'||config.applicationMode!=='proinspect',422,'RESIDENTIAL_APPLICATION_ONLY','Form 18 applications are residential only.');
+  const id=uid('lst'),t=now();
+  const names=['id','property_id','instructed_by_client_id','owner_client_id','kind','slug','title','description',
+   'display_address','suburb','postcode','price_cents','price_period','bedrooms','bathrooms','parking',
+   'area_sqm','available_from','agent_name','agent_role','application_url','application_mode',
+   'application_authority_reference','application_recipient_email','tenancy_database_notice_mode',
+   'tenancy_database_notice_json','created_by','created_at','updated_at'];
+  const values=[id,d.propertyId,d.instructedByClientId,d.ownerClientId??null,d.kind,d.slug,d.title,d.description,
+   d.displayAddress,d.suburb,d.postcode,d.priceCents??null,d.pricePeriod,d.bedrooms??null,d.bathrooms??null,
+   d.parking??null,d.areaSqm??null,d.availableFrom??null,d.agentName,d.agentRole,
+   safeApplicationUrl(config.applicationUrl),config.applicationMode,config.applicationAuthorityReference||null,
+   config.applicationRecipientEmail||null,config.tenancyDatabaseNoticeMode,JSON.stringify(config.tenancyDatabaseNotices),
+   user.id,t,t];
+  await statement(env.DB,'INSERT INTO leasing_listings('+names.join(',')+') VALUES('+names.map(()=>'?').join(',')+')',...values).run();
   return {id};
  }
  const [listingId,section,other]=parts;
- const listing=await statement(env.DB,'SELECT id,status,version FROM leasing_listings WHERE id=?',listingId).first<{id:string;status:string;version:number}>();
+ const listing=await statement(env.DB,'SELECT id,status,version,kind FROM leasing_listings WHERE id=?',listingId).first<{id:string;status:string;version:number;kind:string}>();
  assert(listing,404,'LISTING_NOT_FOUND','Listing not found.');
  if(method==='GET'&&parts.length===1){
   const sessions=(await statement(env.DB,'SELECT * FROM leasing_sessions WHERE listing_id=? ORDER BY starts_at DESC LIMIT 100',listingId).all()).results;
   const photos=(await statement(env.DB,'SELECT id,alt_text,sort_order,content_type,size FROM leasing_photos WHERE listing_id=? ORDER BY sort_order',listingId).all()).results;
   const leads=(await statement(env.DB,"SELECT id,session_id,kind,status,created_at FROM leasing_leads WHERE listing_id=? ORDER BY created_at DESC LIMIT 100",listingId).all()).results;
-  return {sessions,photos,leads};
+  const details=await statement(env.DB,'SELECT * FROM leasing_listings WHERE id=?',listingId).first();
+  return {listing:details,sessions,photos,leads};
+ }
+ if(method==='POST'&&section==='application-settings'){
+  const d=applicationSettingsSchema.extend({version:z.number().int().positive()}).parse(body);
+  assert(listing.kind==='residential'||d.applicationMode!=='proinspect',422,'RESIDENTIAL_APPLICATION_ONLY','The WA Form 18 workflow is available for residential leasing only.');
+  const update=await statement(env.DB,"UPDATE leasing_listings SET application_mode=?,application_url=?,application_authority_reference=?,application_recipient_email=?,tenancy_database_notice_mode=?,tenancy_database_notice_json=?,version=version+1,updated_at=? WHERE id=? AND version=?",
+   d.applicationMode,safeApplicationUrl(d.applicationUrl),d.applicationAuthorityReference||null,
+   d.applicationRecipientEmail||null,d.tenancyDatabaseNoticeMode,JSON.stringify(d.tenancyDatabaseNotices),
+   now(),listingId,d.version).run();
+  assert(update.meta.changes===1,409,'STALE_LISTING','The listing changed. Reload before updating application settings.');
+  return {ok:true,applicationMode:d.applicationMode};
  }
  if(method==='POST'&&section==='edit'){
   const d=listingInput.extend({version:z.number().int().positive()}).parse(body);
