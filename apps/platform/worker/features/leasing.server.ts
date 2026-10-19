@@ -228,3 +228,30 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
  }
  assert(false,404,'NOT_FOUND','Unknown leasing action.');
 }
+
+/** Scheduled, idempotent reminder staging. Google Apps Script remains disconnected. */
+export async function dispatchLeasingReminders(env:Env) {
+ if(!env.DATA_ENCRYPTION_KEY)return;
+ const time=now(),until=new Date(Date.now()+24*60*60*1000).toISOString();
+ const rows=(await statement(env.DB,`SELECT r.id,r.envelope,s.starts_at,l.title,l.kind,l.slug
+ FROM leasing_leads r JOIN leasing_sessions s ON s.id=r.session_id JOIN leasing_listings l ON l.id=r.listing_id
+ WHERE r.kind='inspection' AND r.status='active' AND r.reminder_queued_at IS NULL
+ AND s.status='scheduled' AND l.status='published' AND s.starts_at>? AND s.starts_at<=?
+ ORDER BY s.starts_at LIMIT 50`,time,until).all<{id:string;envelope:string;starts_at:string;title:string;kind:string;slug:string}>()).results;
+ for(const r of rows) {
+  const contact=await unseal<LeadInput>(env.DATA_ENCRYPTION_KEY,'leasing-lead:'+r.id,r.envelope);
+  const awst=new Date(r.starts_at).toLocaleString('en-AU',{timeZone:'Australia/Perth',weekday:'long',day:'numeric',month:'long',hour:'numeric',minute:'2-digit'});
+  try {
+   await env.DB.batch([
+    statement(env.DB,"UPDATE leasing_leads SET reminder_queued_at=? WHERE id=? AND reminder_queued_at IS NULL AND status='active'",now(),r.id),
+    statement(env.DB,"INSERT INTO mutation_guards(changed_rows) VALUES(changes())"),
+    statement(env.DB,"DELETE FROM mutation_guards"),
+    await event(env,r.id,'session.reminder',{startsAt:r.starts_at}),
+    await mailEvent(env,'leasing.session.reminder',{to:contact.email,subject:'Reminder: your property inspection',heading:'Upcoming open inspection',
+     body:'This is a reminder of your registered property open inspection. Please review the property page before attending.',
+     facts:{Property:r.title,'Inspection (AWST)':awst},
+     href:env.APP_ORIGIN+'/properties-for-lease/'+r.kind+'/'+r.slug,sensitive:true}),
+   ]);
+  } catch(error) {console.error('leasing.reminder_failed',{type:error instanceof Error?error.name:'unknown'});}
+ }
+}
