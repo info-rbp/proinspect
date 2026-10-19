@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link,Form,useLoaderData,useActionData,type LoaderFunctionArgs,type ActionFunctionArgs,data } from 'react-router';
 import { runtimeContext } from '../../../../packages/database/context';
 import type { Env } from '../../../../packages/database/types';
@@ -40,6 +41,7 @@ export default function LeasingProperty(){
  const {result,requestKey,siteKey,ready}=useLoaderData<typeof loader>();
  const res=useActionData<typeof action>() as {success?:boolean;reference?:string;error?:string}|undefined,p=result.listing as any,photos=result.photos as any[],sessions=result.sessions as any[];
  const appUrl=safeApplicationUrl(p.application_url);
+ const [kind,setKind]=useState<'inspection'|'interest'>(sessions.length?'inspection':'interest');
  return <><header className="service-hero"><div className="site-container"><p className="eyebrow"><Link to="/properties-for-lease">Properties for lease</Link> / <Link to={`/properties-for-lease/${p.kind}`}>{p.kind}</Link></p><h1>{p.title}</h1><p>{p.display_address} · {p.suburb} WA {p.postcode}</p><p className="leasing-price">{displayPrice(p.price_cents,p.price_period)}</p><p className="leasing-role-note">{handoffDisclaimer}</p></div></header>
  <div className="site-container"><div className="leasing-gallery">{photos.map((photo:any,i:number)=><img key={photo.id} src={`/api/public/leasing/photos/${photo.id}`} alt={photo.alt_text} loading={i===0?'eager':'lazy'}/>)}</div></div>
  <section className="section"><div className="site-container leasing-detail-grid"><div className="stack">
@@ -49,8 +51,8 @@ export default function LeasingProperty(){
  </div><aside className="stack"><div className="panel"><h2>Open for inspection</h2>{sessions.length===0?<p>No open inspection sessions are currently advertised. Register your interest to receive an appropriate response.</p>:<ul className="leasing-session-list">{sessions.map((s:any)=><li key={s.id}><strong>{new Date(s.starts_at).toLocaleString('en-AU',{timeZone:'Australia/Perth',weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} AWST</strong><span>{s.capacity!=null&&s.booked_count>=s.capacity?'Session full':'Registration available'}</span></li>)}</ul>}</div>
  <div className="panel"><h2>Registration and interest</h2>{res?.success?<div role="status" className="notice"><h3>Registration received</h3><p>Reference: <strong>{res.reference}</strong></p><p>This is not a rental application or an approval of your tenancy.</p></div>:<><p className="small">Choose an inspection session or express interest. You do not need a ProInspect account.</p><Form method="post" reloadDocument className="form" aria-label="Lease inspection registration">
  <input type="hidden" name="requestKey" value={requestKey}/><div hidden><label>Website<input name="website" tabIndex={-1} autoComplete="off"/></label></div>
- <label>Request type<select name="kind" required defaultValue={sessions.length?'inspection':'interest'}><option value="inspection">Register for an open inspection</option><option value="interest">Register general interest</option></select></label>
- <label>Open inspection session<select name="sessionId" defaultValue={sessions.find((s:any)=>s.capacity==null||s.booked_count<s.capacity)?.id??''}><option value="">No session — interest only</option>{sessions.map((s:any)=><option disabled={s.capacity!=null&&s.booked_count>=s.capacity} value={s.id} key={s.id}>{new Date(s.starts_at).toLocaleString('en-AU',{timeZone:'Australia/Perth',weekday:'long',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} AWST</option>)}</select></label>
+ <label>Request type<select name="kind" required value={kind} onChange={e=>setKind(e.target.value as "inspection"|"interest")}><option value="inspection" disabled={sessions.length===0}>Register for an open inspection</option><option value="interest">Register general interest</option></select></label>
+ {kind==='inspection'&&<label>Open inspection session<select name="sessionId" required defaultValue={sessions.find((s:any)=>s.capacity==null||s.booked_count<s.capacity)?.id??''}><option value="">No session — interest only</option>{sessions.map((s:any)=><option disabled={s.capacity!=null&&s.booked_count>=s.capacity} value={s.id} key={s.id}>{new Date(s.starts_at).toLocaleString('en-AU',{timeZone:'Australia/Perth',weekday:'long',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} AWST</option>)}</select></label>}
  <label>Full name<input name="name" required minLength={2} maxLength={120} autoComplete="name"/></label>
  <label>Email<input name="email" type="email" required maxLength={254} autoComplete="email"/></label>
  <label>Phone<input name="phone" type="tel" required minLength={6} maxLength={40} autoComplete="tel"/></label>
