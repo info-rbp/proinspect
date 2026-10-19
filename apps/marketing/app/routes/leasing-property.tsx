@@ -38,7 +38,7 @@ export async function action({request,context,params}:ActionFunctionArgs){
 }
 export default function LeasingProperty(){
  const {result,requestKey,siteKey,ready}=useLoaderData<typeof loader>();
- const res=useActionData<typeof action>(),p=result.listing as any,photos=result.photos as any[],sessions=result.sessions as any[];
+ const res=useActionData<typeof action>() as {success?:boolean;reference?:string;error?:string}|undefined,p=result.listing as any,photos=result.photos as any[],sessions=result.sessions as any[];
  const appUrl=safeApplicationUrl(p.application_url);
  return <><header className="service-hero"><div className="site-container"><p className="eyebrow"><Link to="/properties-for-lease">Properties for lease</Link> / <Link to={`/properties-for-lease/${p.kind}`}>{p.kind}</Link></p><h1>{p.title}</h1><p>{p.display_address} · {p.suburb} WA {p.postcode}</p><p className="leasing-price">{displayPrice(p.price_cents,p.price_period)}</p><p className="leasing-role-note">{handoffDisclaimer}</p></div></header>
  <div className="site-container"><div className="leasing-gallery">{photos.map((photo:any,i:number)=><img key={photo.id} src={`/api/public/leasing/photos/${photo.id}`} alt={photo.alt_text} loading={i===0?'eager':'lazy'}/>)}</div></div>
