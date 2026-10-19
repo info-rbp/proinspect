@@ -23,7 +23,7 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
             ProInspect<span>PROPERTY SERVICES</span>
           </Link>
           <nav className="site-links mkt-site-links" aria-label="Primary navigation">
-            <Link to="/services">Services</Link>
+            <Link to="/services" aria-current={pathname.startsWith('/services') ? 'page' : undefined}>Services</Link>
             <details className="mkt-nav-dropdown" ref={audienceMenu}>
               <summary>Who we help</summary>
               <div className="mkt-nav-popover">
@@ -36,9 +36,9 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
                 ))}
               </div>
             </details>
-            <Link to="/how-it-works">How we work</Link>
-            <Link to="/why-proinspect">Why ProInspect</Link>
-            <Link to="/resources">Resources</Link>
+            <Link to="/how-it-works" aria-current={pathname.startsWith('/how-') ? 'page' : undefined}>How we work</Link>
+            <Link to="/why-proinspect" aria-current={pathname === '/why-proinspect' ? 'page' : undefined}>Why ProInspect</Link>
+            <Link to="/resources" aria-current={pathname.startsWith('/resources') ? 'page' : undefined}>Resources</Link>
           </nav>
           <div className="mkt-header-actions">
             <a className="mkt-signin" href={appOrigin + '/signin'}>Sign in</a>
