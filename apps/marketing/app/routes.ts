@@ -11,6 +11,8 @@ export default [
   route('properties-for-lease', 'routes/leasing-index.tsx'),
   route('properties-for-lease/cancel/:token', 'routes/leasing-cancel.tsx'),
   route('properties-for-lease/:kind', 'routes/leasing-sector.tsx'),
+  route('properties-for-lease/:kind/:slug/apply', 'routes/rental-start.tsx'),
+  route('rental-application/:token', 'routes/rental-application.tsx'),
   route('properties-for-lease/:kind/:slug', 'routes/leasing-property.tsx'),
   route('contact', 'routes/contact.tsx'),
   route(':page', 'routes/information.tsx'),
