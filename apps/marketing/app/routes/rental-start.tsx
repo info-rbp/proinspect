@@ -35,7 +35,7 @@ export default function RentalStart(){
  const {listing,enabled,siteKey}=useLoaderData<typeof loader>();
  const result=useActionData<typeof action>() as {success?:boolean;error?:string}|undefined;
  return <div className="rental-shell"><div className="site-container">
-  <nav className="rental-breadcrumb" aria-label="Breadcrumb"><Link to="/properties-for-lease/residential">Residential properties</Link><span aria-hidden="true"> / </span><Link to={'/properties-for-lease/residential/'+locationSafe(listing.id,listing.title)}>Property details</Link></nav>
+  <nav className="rental-breadcrumb" aria-label="Breadcrumb"><Link to="/properties-for-lease/residential">Residential properties</Link><span aria-hidden="true"> / </span><Link to={'/properties-for-lease/residential/'+listing.slug}>Property details</Link></nav>
   <div className="rental-intro"><p className="eyebrow">Private residential application</p><h1>Apply for {listing.title}</h1><p>Complete your application in your own time. Each adult applicant can complete their section privately, and supporting documents can be added securely.</p></div>
   <div className="rental-start-grid"><section className="rental-paper">
     {result?.success?<div role="status" className="rental-success"><h2>Check your email</h2><p>We have sent a private application link to the address you entered, if delivery is available. Open it to start or resume your application.</p><p>Do not forward the link: it allows access to your own answers and documents.</p></div>:<>
@@ -56,5 +56,3 @@ export default function RentalStart(){
   </div>
  </div></div>;
 }
-// The property page is linked from the current location rather than guessing a slug from its title.
-function locationSafe(_id:string,_title:string){return typeof window==='undefined'?'':window.location.pathname.split('/').slice(-2,-1)[0];}
