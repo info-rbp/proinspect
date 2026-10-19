@@ -149,17 +149,44 @@ export async function inviteRentalApplicant(env:Env,token:string,input:unknown){
  ]);
  return {invited:true};
 }
+export async function resendRentalInvitation(env:Env,token:string,ordinal:number){
+ const {person,app}=await tokenAccess(env,token);
+ assert(person.role==='primary'&&app.status==='draft'&&ordinal>1,403,
+  'RESEND_NOT_ALLOWED','Only the primary applicant may resend an invitation before submission.');
+ const match=await statement(env.DB,"SELECT id,answers_envelope,state FROM rental_applicants WHERE application_id=? AND ordinal=? AND state!='removed'",
+  app.id,ordinal).first<{id:string;answers_envelope:string;state:string}>();
+ assert(match,404,'APPLICANT_NOT_FOUND','Applicant unavailable.');
+ await limit(env,'resend:'+match.id,5);
+ const answers=await unseal<Form18Answers>(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+match.id,match.answers_envelope);
+ const address=answers.identity?.email;
+ assert(address,409,'APPLICANT_EMAIL_MISSING','Applicant email is unavailable.');
+ const secret=randomToken();
+ await env.DB.batch([
+  statement(env.DB,'UPDATE rental_applicants SET access_token_hash=?,access_expires_at=?,updated_at=? WHERE id=?',
+   await digest(secret),expiry(),now(),match.id),
+  await event(env,app.id,'coapplicant_invited',{ordinal,resent:true},person.id),
+  await mailEvent(env,'rental.coapplicant.reminder',{to:address,
+   subject:'Your private rental application link',
+   heading:'Continue your part of the application',
+   body:'You have a new secure link to complete or review your own rental application information. Do not forward this link.',
+   href:mailLink(env,secret),sensitive:true}),
+ ]);
+ return {resent:true};
+}
 export async function removeRentalApplicant(env:Env,token:string,ordinal:number){
  const {person,app}=await tokenAccess(env,token);
  assert(person.role==='primary'&&app.status==='draft'&&ordinal>1,403,'REMOVE_NOT_ALLOWED','Only invited applicants may be removed before submission.');
  const match=await statement(env.DB,"SELECT id FROM rental_applicants WHERE application_id=? AND ordinal=? AND state!='removed'",app.id,ordinal).first<{id:string}>();
  assert(match,404,'APPLICANT_NOT_FOUND','Applicant not found.');
+ const files=(await statement(env.DB,'SELECT object_key FROM rental_application_documents WHERE applicant_id=?',match.id).all<{object_key:string}>()).results;
  await env.DB.batch([
+  statement(env.DB,'DELETE FROM rental_application_documents WHERE applicant_id=?',match.id),
   statement(env.DB,"UPDATE rental_applicants SET state='removed',access_token_hash=?,updated_at=? WHERE id=? AND state!='removed'",await digest(randomToken()),now(),match.id),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
-  await event(env,app.id,'coapplicant_removed',{ordinal},person.id),
+  await event(env,app.id,'coapplicant_removed',{ordinal,documentsRemoved:files.length},person.id),
   statement(env.DB,'DELETE FROM mutation_guards'),
  ]);
+ for(const f of files)await env.RESTRICTED_DOCUMENTS.delete(f.object_key);
  return {removed:true};
 }
 export async function finishRentalApplicant(env:Env,token:string,consent:unknown,version:number){
