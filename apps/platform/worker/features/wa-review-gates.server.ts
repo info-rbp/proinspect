@@ -6,7 +6,7 @@ import { preIssueDependencies } from '../../../../packages/wa-residential/rules'
 export const editableRequirements=[
  'verified_prior_form_21','statutory_grounds_review','legal_service_review',
  'verified_rent_ledger','verified_grounds','verified_entry_purpose',
- 'service_window_review','official_signature_policy',
+ 'service_window_review','official_signature_policy','issued_pcr_report',
 ] as const;
 type Requirement=typeof editableRequirements[number];
 export function manualIssueRequirements(code:string):Requirement[]{
