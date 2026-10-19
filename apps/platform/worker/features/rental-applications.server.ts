@@ -51,7 +51,7 @@ function enabled(env:Env){assert(rentalEnabled(env),503,'RENTAL_NOT_ENABLED','Th
 export async function rentalStartPage(env:Env,slug:string){
  const row=await statement(env.DB,"SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email FROM leasing_listings WHERE kind='residential' AND slug=? AND status='published' AND application_mode='proinspect'",slug).first<RentalListing>();
  assert(row,404,'RENTAL_APPLICATION_UNAVAILABLE','Online applications are unavailable for this property.');
- return {listing:{id:row.id,title:row.title,address:row.display_address,suburb:row.suburb,agentName:row.agent_name},
+ return {listing:{id:row.id,slug:row.slug,title:row.title,address:row.display_address,suburb:row.suburb,agentName:row.agent_name},
   enabled:rentalEnabled(env),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??''};
 }
 export async function startRental(env:Env,request:Request,listingId:string,input:unknown,security?:string){
