@@ -20,6 +20,7 @@ export default [
     route('services/:slug', '../../marketing/app/routes/service.tsx'),
     route('sectors/:sector', '../../marketing/app/routes/sector.tsx'),
     route('properties-for-lease', '../../marketing/app/routes/leasing-index.tsx'),
+    route('properties-for-lease/cancel/:token', '../../marketing/app/routes/leasing-cancel.tsx'),
     route('properties-for-lease/:kind', '../../marketing/app/routes/leasing-sector.tsx'),
     route('properties-for-lease/:kind/:slug', '../../marketing/app/routes/leasing-property.tsx'),
     route('contact', 'routes/public-contact.tsx'),
