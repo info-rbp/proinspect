@@ -3,6 +3,7 @@ export function isPublicSitePath(pathname: string): boolean {
   if (pathname === '/' || pathname === '/services' || pathname === '/contact' ||
       pathname === '/resources' || pathname === '/robots.txt' || pathname === '/sitemap.xml')
     return true;
+  if (/^\/properties-for-lease\/cancel\/[a-f0-9]{64}$/.test(pathname)) return false;
   if (pathname === '/properties-for-lease' || /^\/properties-for-lease\/(?:residential|commercial)(?:\/[a-z0-9-]+)?$/.test(pathname)) return true;
   if (/^\/(?:services|sectors|how-we-work|resources)\/.+/.test(pathname)) return true;
   return new Set([
