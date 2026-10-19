@@ -26,8 +26,12 @@ export interface ReservedWindow {
 export interface BusyPeriod { start: string; end: string; }
 
 export class GoogleCalendarFailure extends Error {
-  constructor(public readonly code: string, public readonly retryable = true) {
+  readonly code: string;
+  readonly retryable: boolean;
+  constructor(code: string, retryable = true) {
     super(code);
+    this.code = code;
+    this.retryable = retryable;
   }
 }
 export function calendarSchedulingEnabled(env: CalendarEnv): boolean {
