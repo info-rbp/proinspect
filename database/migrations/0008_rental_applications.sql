@@ -119,3 +119,25 @@ CREATE TRIGGER rental_application_document_parent_guard BEFORE INSERT ON rental_
  WHEN NOT EXISTS(SELECT 1 FROM rental_applicants a
  WHERE a.id=NEW.applicant_id AND a.application_id=NEW.application_id AND a.state!='removed')
  BEGIN SELECT RAISE(ABORT,'RENTAL_DOCUMENT_APPLICANT_MISMATCH'); END;
+
+-- Each submitted Form 18 record is an immutable encrypted snapshot. Later
+-- information requests create new revisions rather than changing legal history.
+CREATE TABLE rental_application_submissions (
+ id TEXT PRIMARY KEY,
+ application_id TEXT NOT NULL REFERENCES rental_applications(id),
+ submitted_by_applicant_id TEXT NOT NULL REFERENCES rental_applicants(id),
+ version INTEGER NOT NULL CHECK(version BETWEEN 1 AND 30),
+ form_version TEXT NOT NULL,
+ snapshot_envelope TEXT NOT NULL,
+ created_at TEXT NOT NULL,
+ UNIQUE(application_id,version)
+) STRICT;
+CREATE INDEX rental_submission_history ON rental_application_submissions(application_id,version DESC);
+CREATE TRIGGER rental_submission_immutable_update BEFORE UPDATE ON rental_application_submissions BEGIN
+ SELECT RAISE(ABORT,'RENTAL_SUBMISSION_IMMUTABLE'); END;
+CREATE TRIGGER rental_submission_immutable_delete BEFORE DELETE ON rental_application_submissions BEGIN
+ SELECT RAISE(ABORT,'RENTAL_SUBMISSION_IMMUTABLE'); END;
+CREATE TRIGGER rental_submission_applicant_guard BEFORE INSERT ON rental_application_submissions
+ WHEN NOT EXISTS(SELECT 1 FROM rental_applicants r WHERE r.id=NEW.submitted_by_applicant_id
+ AND r.application_id=NEW.application_id AND r.role='primary')
+ BEGIN SELECT RAISE(ABORT,'RENTAL_SUBMISSION_PRIMARY_REQUIRED'); END;
