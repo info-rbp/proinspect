@@ -1,4 +1,4 @@
-import { noticeEntry } from './form18';
+import { noticeEntry } from './form18.ts';
 import { z } from 'zod';
 export const listingInput=z.object({
  propertyId:z.string().min(3),instructedByClientId:z.string().min(3),ownerClientId:z.string().min(3).nullable().optional(),
