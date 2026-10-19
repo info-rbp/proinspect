@@ -102,6 +102,53 @@ class SchemaTests(unittest.TestCase):
         with self.assertRaisesRegex(sqlite3.IntegrityError,'LEASING_EVENT_IMMUTABLE'):
             self.db.execute("DELETE FROM leasing_email_events WHERE id='event'")
 
+    def test_rental_application_authority_and_form18_notice_requirements(self):
+        self.db.execute("""INSERT INTO leasing_listings(id,property_id,instructed_by_client_id,kind,slug,title,
+         description,display_address,suburb,postcode,agent_name,agent_role,created_by,created_at,updated_at)
+         VALUES('lst1','p','c','residential','example-rental','Example listing for rent',
+         'Example property that is advertised to interested renters in Perth.',
+         '1 Test St','Perth','6000','Property agency','leasing_agent','u','2026-01-01','2026-01-01')""")
+        self.assertEqual(self.db.execute("SELECT application_mode FROM leasing_listings WHERE id='lst1'").fetchone()[0], 'unavailable')
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'APPLICATION_AUTHORITY_REQUIRED'):
+            self.db.execute("UPDATE leasing_listings SET application_mode='proinspect' WHERE id='lst1'")
+        self.db.execute("UPDATE leasing_listings SET application_authority_reference='SIGNED-123',application_recipient_email='agency@example.test' WHERE id='lst1'")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'TENANCY_DATABASE_NOTICE_REQUIRED'):
+            self.db.execute("UPDATE leasing_listings SET application_mode='proinspect' WHERE id='lst1'")
+        self.db.execute("UPDATE leasing_listings SET tenancy_database_notice_mode='not_used',application_mode='proinspect' WHERE id='lst1'")
+        self.assertEqual(self.db.execute("SELECT application_mode FROM leasing_listings WHERE id='lst1'").fetchone()[0], 'proinspect')
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'EXTERNAL_APPLICATION_URL_REQUIRED'):
+            self.db.execute("UPDATE leasing_listings SET application_mode='external' WHERE id='lst1'")
+
+    def test_rental_applicants_and_documents_are_scoped_to_application(self):
+        self.db.execute("""INSERT INTO leasing_listings(id,property_id,instructed_by_client_id,kind,slug,title,
+         description,display_address,suburb,postcode,agent_name,agent_role,created_by,created_at,updated_at)
+         VALUES('lst1','p','c','residential','example-rental','Example listing for rent',
+         'Example property that is advertised to interested renters in Perth.',
+         '1 Test St','Perth','6000','Property agency','leasing_agent','u','2026-01-01','2026-01-01')""")
+        self.db.execute("""INSERT INTO rental_applications(id,listing_id,reference,started_at,updated_at)
+         VALUES('app1','lst1','RNT-EXAMPLE','2026-01-01','2026-01-01')""")
+        self.db.execute("""INSERT INTO rental_applicants(id,application_id,ordinal,role,email_hash,access_token_hash,
+         access_expires_at,answers_envelope,created_at,updated_at) VALUES('ap1','app1',1,'primary','hash1','tok1',
+         '2027-01-01','sealed','2026-01-01','2026-01-01')""")
+        self.db.execute("""INSERT INTO rental_applicants(id,application_id,ordinal,role,email_hash,access_token_hash,
+         access_expires_at,answers_envelope,created_at,updated_at) VALUES('ap2','app1',2,'coapplicant','hash2','tok2',
+         '2027-01-01','sealed','2026-01-01','2026-01-01')""")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute("""INSERT INTO rental_applicants(id,application_id,ordinal,role,email_hash,access_token_hash,
+             access_expires_at,answers_envelope,created_at,updated_at) VALUES('ap3','app1',2,'coapplicant','hash3','tok3',
+             '2027-01-01','sealed','2026-01-01','2026-01-01')""")
+        self.db.execute("""INSERT INTO rental_application_documents(id,application_id,applicant_id,object_key,category,
+         filename,content_type,size_bytes,sha256,uploaded_at) VALUES('d1','app1','ap2','private/key','identity',
+         'example.pdf','application/pdf',123,'hash-file','2026-01-01')""")
+        self.assertEqual(self.db.execute("SELECT review_status FROM rental_application_documents WHERE id='d1'").fetchone()[0], 'quarantined')
+        self.db.execute("""INSERT INTO rental_application_events(id,application_id,actor_applicant_id,kind,envelope,created_at)
+         VALUES('e1','app1','ap1','started','encrypted','2026-01-01')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'RENTAL_APPLICATION_HISTORY_IMMUTABLE'):
+            self.db.execute("DELETE FROM rental_application_events WHERE id='e1'")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'APPLICATION_SUBMISSION_REQUIRED'):
+            self.db.execute("UPDATE rental_applications SET status='submitted' WHERE id='app1'")
+        self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(), [])
+
     def test_overlap_is_rejected_in_database(self):
         self.booking('a','2026-10-10T01:00:00.000Z','2026-10-10T02:00:00.000Z')
         with self.assertRaisesRegex(sqlite3.IntegrityError,'SCHEDULE_CONFLICT'):
