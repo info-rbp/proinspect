@@ -13,7 +13,7 @@ test('premium public homepage shows key sections and destinations without impact
   await page.locator('.mkt-featured-card').filter({ hasText: 'Routine Inspection' }).getByRole('link').click();
   await expect(page).toHaveURL(/\/services\/routine-inspection$/);
   await expect(page.getByRole('heading', { name: 'What is a Routine Inspection?' })).toBeVisible();
-  await expect(page.getByText('ILLUSTRATIVE EXAMPLE')).toBeVisible();
+  await expect(page.getByText('ILLUSTRATIVE EXAMPLE', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Arrange this service' }).first()).toHaveAttribute('href', '/book/routine-inspection');
 });
 
