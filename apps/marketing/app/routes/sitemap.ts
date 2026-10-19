@@ -4,6 +4,9 @@ export function loader() {
   const paths = [
     '/',
     '/services',
+    '/properties-for-lease',
+    '/properties-for-lease/residential',
+    '/properties-for-lease/commercial',
     '/sectors/residential',
     '/sectors/commercial',
     '/sectors/strata-building',
