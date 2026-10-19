@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   assertCalendarSlot, calendarEventId, calendarSchedulingEnabled, googleBusy,
   syncGoogleEvent, overlaps, GoogleCalendarFailure,
-} from '../apps/platform/worker/features/calendar-scheduling.server.ts';
+} from '../apps/platform/worker/features/calendar-google.server.ts';
 
 const BOOKING_ID = 'bkg_' + 'a'.repeat(32);
 const EVENT_ID = calendarEventId(BOOKING_ID);
