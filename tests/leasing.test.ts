@@ -44,6 +44,6 @@ test('future Google Apps Script email events remain inert',()=>{
  for(const kind of ['registration.received','interest.received','registration.cancelled','session.updated','session.cancelled','session.reminder'])assert.ok(sql.includes(kind));
  const api=text('apps/platform/worker/api.ts');
  assert.ok(api.includes('/api/public/leasing'));
- assert.ok(api.includes('/api/staff/leasing'));
+ assert.ok(api.includes('staffLeasing(env,user,request'));
  assert.ok(!api.includes('/api/integrations/leasing-google-script'));
 });
