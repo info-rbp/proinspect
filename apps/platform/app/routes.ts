@@ -22,6 +22,8 @@ export default [
     route('properties-for-lease', '../../marketing/app/routes/leasing-index.tsx'),
     route('properties-for-lease/cancel/:token', '../../marketing/app/routes/leasing-cancel.tsx'),
     route('properties-for-lease/:kind', '../../marketing/app/routes/leasing-sector.tsx'),
+    route('properties-for-lease/:kind/:slug/apply', '../../marketing/app/routes/rental-start.tsx'),
+    route('rental-application/:token', '../../marketing/app/routes/rental-application.tsx'),
     route('properties-for-lease/:kind/:slug', '../../marketing/app/routes/leasing-property.tsx'),
     route('contact', 'routes/public-contact.tsx'),
     route(':page', '../../marketing/app/routes/information.tsx'),
