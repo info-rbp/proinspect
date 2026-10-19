@@ -95,6 +95,7 @@ export const applicationSettingsSchema=z.object({
 }).superRefine((d,ctx)=>{
  if(d.applicationMode==='external'&&!safeUrl(d.applicationUrl))ctx.addIssue({code:'custom',message:'An approved HTTPS application link is required.',path:['applicationUrl']});
  if(d.applicationMode==='proinspect'){
+  if(d.applicationUrl.trim())ctx.addIssue({code:'custom',message:'Remove the agency application URL before activating a ProInspect-hosted form.',path:['applicationUrl']});
   if(d.applicationAuthorityReference.length<5)ctx.addIssue({code:'custom',message:'Record the signed application-handling authority.',path:['applicationAuthorityReference']});
   if(!d.applicationRecipientEmail)ctx.addIssue({code:'custom',message:'Name an authorised recipient for applications.',path:['applicationRecipientEmail']});
   if(d.tenancyDatabaseNoticeMode==='unconfigured'||(d.tenancyDatabaseNoticeMode==='configured'&&!d.tenancyDatabaseNotices.length))
