@@ -46,3 +46,97 @@
 - [ ] Run source/test/build/Worker integration/browser suites, including migrations
 - [ ] Reconcile branch against newest main without overwriting existing Google Calendar integration
 - [ ] Merge only after accepted checks; production Worker deployment remains managed by main
+
+## Form 18-based residential tenancy applications (extension)
+
+The optional ProInspect application feature is an administrative intake and
+handoff service, not a leasing decision engine, a tenancy agreement or an
+applicant scoring tool. It is disabled in production pending acceptance.
+
+### Listing configuration and agency-link precedence
+
+Authorised staff choose among:
+- External agency portal: the specific approved HTTPS URL is shown on the
+  public property page. No ProInspect form is offered.
+- ProInspect Form 18: residential only, requires written application-processing
+  authority, a named verified recipient, and completed Form 18 Attachment A
+  notice configuration.
+- Applications unavailable: no Apply action; property inspection registrations
+  and general expressions of interest remain separate.
+
+Where an agency-supplied application URL exists, the ProInspect-hosted form
+cannot also be enabled. Switching away from ProInspect is prohibited while
+active drafts or lodged applications exist, preventing silent abandonment.
+
+### Applicant journey
+
+1. Applicant opens a published residential listing and chooses Apply.
+2. The primary applicant enters name/email and gets a unique private email
+   link protected by Turnstile and rate limits.
+3. A mobile-first Form 18 wizard covers identity/contact details, rental
+   history, employment and income, personal references/next of kin/emergency
+   contact, supporting documents, and final review/declaration.
+4. Sections save as encrypted drafts. Passwordless applicant-specific links
+   expire after 30 days; a fresh primary link can be requested.
+5. The primary applicant may invite up to nine additional adult applicants.
+   Each receives a private email link; co-applicants cannot view each other's
+   answers or files. The primary sees only name, masked email and completion
+   status. An invitation may be resent, and pre-submission invitees removed.
+6. Each applicant declares their own information and acknowledges the
+   property-specific tenancy database notice. The primary can submit only
+   after every active household member completes the declaration.
+7. Submission creates an immutable encrypted Form 18-format household
+   snapshot with recorded disclosures and a restricted document manifest.
+   Subsequent information requests require a further recorded submission.
+8. The authorised operations reviewer may verify completeness and notify
+   the named leasing representative via reference-only email. Secure
+   transfer of complete records is a separate approved manual process.
+   The landlord/agency alone makes a tenancy decision.
+
+### Supporting documents and security
+
+- Supported uploads: PDF, JPEG, PNG, WebP; maximum 8 MB per file and ten files
+  per applicant; type and file signature checks, SHA-256 duplicate detection.
+- Stored in private RESTRICTED_DOCUMENTS R2, not public marketing storage.
+  Applicant answers are encrypted at rest; access links are hashed in D1.
+- New files are quarantined. An administrator may only mark them released
+  after recording an independently verified malware/security scan reference.
+  There is NO built-in malware scanner or automatic approval.
+- Authorised downloads are audit logged, forced as attachments and served
+  with no-store headers. Public property and inspection routes do not expose
+  rental applications or supporting documents.
+- Removed pre-submission applicants have their access revoked and uploaded
+  documents deleted. Failures in private R2 cleanup require operational review.
+- Current retention/deletion rules, access requests and incident-response
+  procedures need written approval before handling actual applicants.
+
+### Application states and output
+
+Draft -> Submitted -> Information requested (optional) -> Resubmitted ->
+Ready for secure handoff -> Forwarded -> Decision recorded.
+Primary applicants can withdraw permitted active applications.
+This module does not approve applicants, negotiate tenancy terms or sign a lease.
+
+An authorised staff reviewer can print/save a Form 18-format PDF summary
+from the latest immutable encrypted submission snapshot, including applicant
+sections and Attachment A notice. The generated document is clearly labelled
+as a digital equivalent, not the government-issued Form 18 template.
+
+### Google Apps Script boundary
+
+The existing ProInspect encrypted notification outbox supports application
+invitations and receipt/handoff notifications. The future Google Apps Script
+adapter remains UNBUILT and INACTIVE. Sensitive applicant answers, identity
+documents and financial details are NOT sent as ordinary email attachments.
+
+### Launch gate
+
+The connected environment uses RENTAL_APPLICATIONS_ENABLED=false. Local
+development enables the feature for testing. Production activation requires
+signed instructions from the authorised leasing representative, appropriate
+WA licensing review, reviewed current Form 18 and Attachment A wording,
+a privacy/retention schedule and deletion controls, an approved malware scan
+process, isolated staging tests (including multiple applicants, document
+quarantine, invite renewal, review, submission and secure handoff), and
+explicit release approval. Merging code alone does not authorise collecting
+actual renter information.
