@@ -35,11 +35,14 @@ export async function rentalStaffDetail(env:Env,user:Principal,id:string){
  }
  const documents=(await statement(env.DB,"SELECT id,applicant_id,category,filename,content_type,size_bytes,review_status,uploaded_at,reviewed_at FROM rental_application_documents WHERE application_id=? ORDER BY uploaded_at DESC",id).all()).results;
  const history=(await statement(env.DB,"SELECT id,kind,created_at,actor_applicant_id,actor_staff_id FROM rental_application_events WHERE application_id=? ORDER BY created_at,id LIMIT 250",id).all()).results;
+ const latest=await statement(env.DB,'SELECT id,version,snapshot_envelope,created_at FROM rental_application_submissions WHERE application_id=? ORDER BY version DESC LIMIT 1',id).first<{id:string;version:number;snapshot_envelope:string;created_at:string}>();
+ const latestSubmission=latest?{version:latest.version,createdAt:latest.created_at,
+  record:await unseal<Record<string,any>>(env.DATA_ENCRYPTION_KEY,'rental-submission:'+latest.id,latest.snapshot_envelope)}:null;
  const notice=app.notice_envelope?await unseal<Record<string,unknown>>(env.DATA_ENCRYPTION_KEY,'rental-notice:'+id,app.notice_envelope):
   {mode:app.tenancy_database_notice_mode,entries:JSON.parse(app.tenancy_database_notice_json)};
  await statement(env.DB,"INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?, 'rental_application.viewed','rental_application',?,'{}',?)",
   uid('aud'),user.id,id,now()).run();
- return {application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
+ return {latestSubmission,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
   property:app.display_address,title:app.title,leasingRepresentative:app.agent_name,instructingClientId:app.instructed_by_client_id,
   forwardedAt:app.forwarded_at,noticeVersion:app.consent_version},applicants,documents,notice,history};
 }
@@ -50,7 +53,7 @@ export async function updateRentalStatus(env:Env,user:Principal,id:string,input:
   note:z.string().trim().min(10).max(1200)}).parse(input);
  const valid:Record<string,string[]>={
   submitted:['information_requested','ready_for_handoff'],
-  information_requested:['ready_for_handoff'],
+  information_requested:[],
   ready_for_handoff:['forwarded'],
   forwarded:['decision_recorded'],
  };
