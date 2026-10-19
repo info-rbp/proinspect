@@ -1,3 +1,4 @@
+import { noticeEntry } from './form18';
 import { z } from 'zod';
 export const listingInput=z.object({
  propertyId:z.string().min(3),instructedByClientId:z.string().min(3),ownerClientId:z.string().min(3).nullable().optional(),
@@ -13,7 +14,12 @@ export const listingInput=z.object({
  availableFrom:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
  agentName:z.string().trim().min(2).max(180),
  agentRole:z.enum(['landlord','property_manager','leasing_agent']),
- applicationUrl:z.string().url().max(1000).nullable().optional()
+ applicationUrl:z.string().url().max(1000).nullable().optional(),
+ applicationMode:z.enum(['unavailable','external','proinspect']).optional().default('unavailable'),
+ applicationAuthorityReference:z.string().trim().max(200).optional().default(''),
+ applicationRecipientEmail:z.string().trim().email().max(254).or(z.literal('')).optional().default(''),
+ tenancyDatabaseNoticeMode:z.enum(['unconfigured','not_used','configured']).optional().default('unconfigured'),
+ tenancyDatabaseNotices:z.array(noticeEntry).max(6).optional().default([])
 });
 export const sessionInput=z.object({listingId:z.string().min(3),startsAt:z.string().datetime({offset:true}),endsAt:z.string().datetime({offset:true}),capacity:z.number().int().min(1).max(200).nullable().optional(),instructions:z.string().trim().max(600).default('')});
 export const leadInput=z.object({requestKey:z.string().uuid(),listingId:z.string().min(3),sessionId:z.string().min(3).nullable().optional(),kind:z.enum(['inspection','interest']),name:z.string().trim().min(2).max(120),email:z.string().trim().email().max(254).transform(x=>x.toLowerCase()),phone:z.string().trim().min(6).max(40),message:z.string().trim().max(1200).default(''),consent:z.literal(true)}).refine(x=>x.kind==='interest'?!x.sessionId:Boolean(x.sessionId),{message:'Select an inspection session for an inspection registration.'});
