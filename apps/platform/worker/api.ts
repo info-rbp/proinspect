@@ -1,3 +1,4 @@
+import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
 import { accountData, updateAccount, revokeSessions } from './features/account.server';
 import { receiveEnquiry } from './features/enquiries.server';
 import { ZodError, z } from 'zod';
@@ -247,6 +248,14 @@ export async function handleApi(
           env.DATA_ENCRYPTION_KEY && (env.APP_ENV === 'local' || env.RESEND_API_KEY),
         ),
       });
+    if (path==='/api/public/leasing' && method==='GET') return Response.json({listings:await publicListings(env,url.searchParams.get('kind')??undefined)});
+    const pubphoto=path.match(/^\\/api\\/public\\/leasing\\/photos\\/([a-zA-Z0-9_-]+)(?:\\/(cover))?$/);
+    if(pubphoto&&method==='GET')return publicPhoto(env,pubphoto[1]+(pubphoto[2]?'/cover':''));
+    const cancel=path.match(/^\\/api\\/public\\/leasing\\/cancel\\/([a-f0-9]{64})$/);
+    if(cancel&&method==='POST'){
+      requireOrigin(request,env);
+      return Response.json(await cancelLead(env,request,cancel[1],await digest(env.DATA_ENCRYPTION_KEY+':cancel:'+(request.headers.get('CF-Connecting-IP')??'unknown'))));
+    }
     if (path === '/api/catalogue' && method === 'GET')
       return Response.json({ services: await catalogue(env) });
     if (path === '/api/auth/start' && method === 'POST') {
@@ -267,6 +276,11 @@ export async function handleApi(
         { headers: { 'Set-Cookie': await signOut(request, env) } },
       );
     const user = await requireUser(request, env);
+    const leasingStaff=path.match(/^\\/api\\/staff\\/leasing(?:\\/(.*))?$/);
+    if(leasingStaff) {
+      if(method!=='GET'&&method!=='HEAD')requireOrigin(request,env);
+      return Response.json(await staffLeasing(env,user,request,leasingStaff[1]??''),{status:method==='POST'?201:200});
+    }
     if (method !== 'GET' && method !== 'HEAD') requireOrigin(request, env);
     if (path === '/api/account' && method === 'GET')
       return Response.json(await accountData(request, env, user));
