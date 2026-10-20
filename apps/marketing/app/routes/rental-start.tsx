@@ -6,7 +6,7 @@ import { Turnstile } from '../../../../packages/ui/Turnstile';
 import { seo } from '../lib/seo';
 import '../../../../packages/ui/rental-application.css';
 
-export const meta=()=>seo('Residential rental application | ProInspect','Complete a private Form 18-based rental application for a residential property where ProInspect is authorised to administer the application.','/properties-for-lease');
+export const meta=()=>seo('Residential rental application | ProInspect','Complete a private residential rental application for a residential property where ProInspect is authorised to administer the application.','/properties-for-lease');
 export async function loader({context,params}:LoaderFunctionArgs){
  const env=context.get(runtimeContext).env as Env;
  if(params.kind!=='residential')throw new Response('Residential applications only',{status:404});
@@ -52,7 +52,7 @@ export default function RentalStart(){
     </>}
   </section>
   <aside className="rental-side"><div className="rental-property-panel"><p className="eyebrow">Property you're applying for</p><h3>{listing.title}</h3><p>{listing.address}, {listing.suburb} WA</p><p>Application administered by ProInspect on behalf of <strong>{listing.agentName}</strong>.</p></div>
-  <div className="rental-property-panel"><h3>How it works</h3><ol><li>Receive your private application link.</li><li>Complete your Form 18 details in short sections.</li><li>Invite other adult applicants if needed.</li><li>Upload supporting evidence securely.</li><li>Review and submit as a household.</li></ol><p className="rental-muted">This application is not a tenancy agreement or an offer. The landlord or authorised leasing representative makes leasing decisions.</p></div></aside>
+  <div className="rental-property-panel"><h3>How it works</h3><ol><li>Receive your private application link.</li><li>Complete your rental application details in short sections.</li><li>Invite other adult applicants if needed.</li><li>Upload supporting evidence securely.</li><li>Review and submit as a household.</li></ol><p className="rental-muted">This application is not a tenancy agreement or an offer. The landlord or authorised leasing representative makes leasing decisions.</p></div></aside>
   </div>
  </div></div>;
 }
