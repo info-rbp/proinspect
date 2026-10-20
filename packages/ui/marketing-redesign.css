@@ -395,3 +395,13 @@
   .site .mkt-hero-overlay { background: Canvas; color: CanvasText; border: 1px solid CanvasText; }
   .site .mkt-abstract-art { border: 1px solid CanvasText; }
 }
+
+
+/* Rights-cleared imagery: no customer report or private R2 URL can be used. */
+.site .mkt-approved-property-media img { width:100%; height:100%; display:block; object-fit:cover; }
+.site .mkt-art-illustration-note {
+  position:absolute; right:.65rem; bottom:.65rem;
+  padding:.2rem .5rem; border-radius:4px;
+  background:#163c43ee; color:#fff; font-size:.7rem;
+  font-weight:700; letter-spacing:.02em; pointer-events:none;
+}
