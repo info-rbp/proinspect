@@ -164,6 +164,7 @@ export async function guestReport(env:Env,token:string){
  assert(doc,404,'REPORT_NOT_FOUND','Report unavailable.');
  const file=await env.DOCUMENTS.get(doc.object_key);
  assert(file,404,'REPORT_NOT_FOUND','Report unavailable.');
- await statement(env.DB,'UPDATE guest_access_links SET consumed_at=? WHERE token_hash=? AND consumed_at IS NULL',now(),access.token_hash).run();
+ const spent=await statement(env.DB,'UPDATE guest_access_links SET consumed_at=? WHERE token_hash=? AND consumed_at IS NULL AND expires_at>? RETURNING token_hash',now(),access.token_hash,now()).first();
+ assert(spent,404,'LINK_INVALID','This report link has already been used or has expired.');
  return new Response(file.body,{headers:{'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="ProInspect-report.pdf"','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
 }

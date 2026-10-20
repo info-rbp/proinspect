@@ -76,7 +76,7 @@ export default function WorkspaceLayout() {
       ['services', 'Service catalogue', ''],
     );
   if (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''))
-    items.push(['enquiries', 'Marketing enquiries', ''], ['integrations', 'Integrations', '']);
+    items.push(['enquiries', 'Marketing enquiries', ''], ['guest-orders', 'One-off booking requests', ''], ['integrations', 'Integrations', '']);
   if (data.restrictedEnabled && (w.kind === 'tenant' || staff))
     items.push(['confidential', 'Confidential assistance', '']);
   return (
