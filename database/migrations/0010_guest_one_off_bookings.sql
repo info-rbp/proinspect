@@ -60,5 +60,3 @@ CREATE TABLE guest_request_limits (
  expires_at TEXT NOT NULL
 ) STRICT;
 
--- A guest token must never become an authenticated portal session.
--- A report link grants access only to its specific issued document.
