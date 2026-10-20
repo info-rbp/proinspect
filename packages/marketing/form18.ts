@@ -78,7 +78,8 @@ export const FIELDS:Record<AnswerStep,Form18Field[]>={
  ]
 };
 export const ANSWER_STEPS:['identity','rental','employment','references']=['identity','rental','employment','references'];
-export const FORM18_VERSION='form18-digital-2026-10';
+/** Schema identity, not an assertion that Form 18 is compulsory or prescribed. */
+export const FORM18_VERSION='proinspect-rental-application-v1';
 export const APPLICATION_MODES=['unavailable','external','proinspect'] as const;
 export type ApplicationMode=(typeof APPLICATION_MODES)[number];
 export const noticeEntry=z.object({
@@ -144,4 +145,4 @@ export function allDetailsComplete(answers:Form18Answers){
 export function initialAnswers(name:string,email:string):Form18Answers{
  return {identity:{fullName:name,email},rental:{},employment:{},references:{}};
 }
-export function maskedEmail(email:string){const [user,domain]=email.split('@');return user.slice(0,2)+'***@'+domain;}
+export function maskedEmail(email:string){const [user='',domain=''] = email.split('@');return user.slice(0,2)+'***@'+domain;}
