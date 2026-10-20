@@ -1,4 +1,4 @@
-import { PUBLIC_LEGAL_APPROVAL } from '../../../../packages/marketing/legal-drafts';
+import { PUBLIC_LEGAL_APPROVAL } from '../../../../packages/marketing/legal-drafts.ts';
 
 /** Public marketing route families for the unified Worker, including unapproved legal drafts. */
 export function isPublicSitePath(pathname: string): boolean {
