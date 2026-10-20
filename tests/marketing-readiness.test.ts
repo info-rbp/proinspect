@@ -69,5 +69,5 @@ test('draft legal documents cannot be indexed as final operative policies', () =
   }
   const info = readFileSync('apps/marketing/app/routes/information.tsx', 'utf8');
   assert.match(info, /noindex, nofollow/);
-  assert.match(info, /not be treated as an approved policy or a binding contract/);
+  assert.match(info, /Do not treat this review draft as an approved policy or a binding contract/);
 });
