@@ -110,8 +110,11 @@ export async function guestAction(request:Request,env:Env){
  return env.SCHEDULER.get(env.SCHEDULER.idFromName('default')).fetch(new Request('https://scheduler.internal/guest',{method:'POST',body:JSON.stringify({orderId:order.id,action:data.action,startsAt:data.startsAt})}));
 }
 export async function staffGuestOrders(env:Env){
- const rows=await statement(env.DB,"SELECT id,reference,status,service_id,price_basis,price_ex_gst_cents,created_at FROM guest_service_orders ORDER BY created_at DESC LIMIT 100").all();
- return {orders:rows.results};
+ const rows=await statement(env.DB,"SELECT id,reference,status,service_id,price_basis,price_ex_gst_cents,created_at,envelope FROM guest_service_orders ORDER BY created_at DESC LIMIT 100").all<{id:string;reference:string;status:string;service_id:string;price_basis:string;price_ex_gst_cents:number|null;created_at:string;envelope:string}>();
+ return {orders:await Promise.all(rows.results.map(async ({envelope,...row})=>{
+  const customer=await unseal<GuestBookingInput>(env.DATA_ENCRYPTION_KEY,'guest:'+row.id,envelope);
+  return {...row,name:customer.name,email:customer.email,property:customer.address+', '+customer.suburb};
+ }))};
 }
 export async function staffGuestAction(env:Env,id:string,action:string,body:unknown,userId:string){
  const order=await orderById(env,id);

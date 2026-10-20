@@ -64,6 +64,7 @@ export default [
     route('tenancies', 'routes/tenancies.tsx'),
     route('inspections', 'routes/inspections.tsx'),
     route('enquiries', 'routes/enquiries.tsx'),
+    route('guest-orders', 'routes/guest-orders.tsx'),
     route('enquiries/:enquiryId', 'routes/enquiry.tsx'),
     route('administration', 'routes/administration.tsx'),
     route('integrations', 'routes/integrations.tsx'),
