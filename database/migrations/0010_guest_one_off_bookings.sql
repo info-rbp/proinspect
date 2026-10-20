@@ -60,3 +60,9 @@ CREATE TABLE guest_request_limits (
  expires_at TEXT NOT NULL
 ) STRICT;
 
+
+CREATE TABLE guest_reminder_deliveries (
+ booking_id TEXT PRIMARY KEY REFERENCES bookings(id),
+ outbox_id TEXT NOT NULL UNIQUE REFERENCES outbox_events(id),
+ created_at TEXT NOT NULL
+) STRICT;

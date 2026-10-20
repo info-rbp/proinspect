@@ -13,7 +13,7 @@ import { readJson } from '../../../../packages/operations/core';
 type Order = {id:string;reference:string;status:string;envelope:string;service_id:string;sector:string;price_basis:'published'|'quote';price_ex_gst_cents:number|null;property_id:string|null;booking_id:string|null;fingerprint:string;quote_expires_at:string|null;verified_at:string|null};
 const SYSTEM='usr_guest_booking_system';
 const CLIENT='cli_guest_transactions';
-function safe(order:Order){return {reference:order.reference,status:order.status,priceExGstCents:order.price_ex_gst_cents,priceBasis:order.price_basis,hasAppointment:Boolean(order.booking_id)};}
+function safe(order:Order){return {reference:order.reference,status:order.status,priceExGstCents:order.price_ex_gst_cents,priceBasis:order.price_basis,serviceId:order.service_id,hasAppointment:Boolean(order.booking_id)};}
 async function limit(env:Env,part:string,max:number){
  const key=await digest(env.DATA_ENCRYPTION_KEY+':guest:'+part),time=now(),expires=new Date(Date.now()+900000).toISOString();
  const row=await statement(env.DB,"INSERT INTO guest_request_limits(bucket,attempts,expires_at) VALUES(?,1,?) ON CONFLICT(bucket) DO UPDATE SET attempts=CASE WHEN expires_at<? THEN 1 ELSE attempts+1 END,expires_at=CASE WHEN expires_at<? THEN excluded.expires_at ELSE expires_at END RETURNING attempts",key,expires,time,time).first<{attempts:number}>();
@@ -84,8 +84,11 @@ export async function guestStatus(env:Env,token:string){
  const order=await lookup(env,token,'manage');
  return safe(order);
 }
-export async function guestAvailability(env:Env,serviceId:string,date:string){
- return availability(env,serviceId,date);
+export async function guestAvailability(env:Env,token:string,date:string){
+ const order=await lookup(env,token,'manage');
+ assert(order.verified_at,403,'EMAIL_UNVERIFIED','Verify your email first.');
+ assert(['verified','awaiting_appointment','confirmed'].includes(order.status),409,'NO_APPOINTMENT','Appointment availability is not open for this request.');
+ return availability(env,order.service_id,date);
 }
 export async function guestAction(request:Request,env:Env){
  requireOrigin(request,env);
