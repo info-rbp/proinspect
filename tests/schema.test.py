@@ -153,7 +153,7 @@ class SchemaTests(unittest.TestCase):
         self.db.execute("""INSERT INTO leasing_listings(id,property_id,instructed_by_client_id,kind,slug,title,description,display_address,suburb,postcode,agent_name,agent_role,created_by,created_at,updated_at)
          VALUES('l1','p','c','residential','example','Example rental listing','Example residential property listed for rent.','1 Test St','Perth','6000','Agency','leasing_agent','u','2026-01-01','2026-01-01')""")
         self.db.execute("""INSERT INTO rental_applications(id,listing_id,reference,started_at,updated_at,submitted_at,status)
-         VALUES('a1','l1','RNT-EXAMPLE','2026-01-01','2026-01-01','2026-01-02','submitted')""")
+         VALUES('a1','l1','RNT-EXAMPLE','2026-01-01','2026-01-01','2026-01-02','draft')""")
         self.db.execute("""INSERT INTO rental_applicants(id,application_id,ordinal,role,email_hash,access_token_hash,access_expires_at,answers_envelope,created_at,updated_at)
          VALUES('p1','a1',1,'primary','h1','t1','2027-01-01','sealed','2026-01-01','2026-01-01')""")
         self.db.execute("""INSERT INTO rental_application_documents(id,application_id,applicant_id,object_key,category,filename,content_type,size_bytes,sha256,uploaded_at)
@@ -164,6 +164,7 @@ class SchemaTests(unittest.TestCase):
         self.db.execute("UPDATE rental_application_documents SET review_status='released' WHERE id='d1'")
         with self.assertRaisesRegex(sqlite3.IntegrityError,'SCAN_VERDICT_IMMUTABLE'):
             self.db.execute("UPDATE rental_application_documents SET scan_status='unsafe' WHERE id='d1'")
+        self.db.execute("UPDATE rental_applications SET status='submitted' WHERE id='a1'")
         self.db.execute("""INSERT INTO rental_application_submissions(id,application_id,submitted_by_applicant_id,version,form_version,snapshot_envelope,created_at)
          VALUES('sub1','a1','p1',1,'version1','sealed','2026-01-02')""")
         with self.assertRaisesRegex(sqlite3.IntegrityError,'AGENCY_EMAIL_DELIVERY_NOT_CONFIRMED'):
