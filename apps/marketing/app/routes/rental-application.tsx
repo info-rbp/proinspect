@@ -10,7 +10,7 @@ import { ANSWER_STEPS,FIELDS,FORM18_STEPS,stepComplete,type Form18Field,
 import '../../../../packages/ui/rental-application.css';
 
 export const meta=()=>[{title:'Private tenancy application | ProInspect'},
- {name:'robots',content:'noindex, nofollow, noarchive'},{name:'referrer',content:'strict-origin'}];
+ {name:'robots',content:'noindex, nofollow, noarchive'},{name:'referrer',content:'no-referrer'}];
 const privateHeaders={'Cache-Control':'private, no-store','X-Robots-Tag':'noindex, nofollow'};
 export async function loader({context,params}:LoaderFunctionArgs){
  const env=context.get(runtimeContext).env as Env;
@@ -180,13 +180,13 @@ function Review({page,editable}:{page:any;editable:boolean}){
     {editable&&<Link to={'?step='+step}>Edit this section →</Link>}
    </details>)}</div>
   {page.role==='primary'&&<Household people={page.household} editable={editable&&page.status==='draft'}/>}
-  <section className="rental-notice"><h3>Information for applicants — Form 18</h3>
+  <section className="rental-notice"><h3>Information for applicants</h3>
    <p>This application assists the identified landlord or leasing representative in considering an application to rent residential premises under the Residential Tenancies Act 1987 (WA). Submitting it does not create a tenancy agreement or guarantee an offer.</p>
    <p>Your details are collected for this application and, with your consent, made available to the responsible leasing representative, not to other applicants. Applicants must be considered in accordance with applicable WA equal opportunity and privacy obligations.</p>
-   <h3>Tenancy database information — Form 18 Attachment A</h3>
+   <h3>Tenancy database information — tenancy database notice</h3>
    {page.notice.mode==='configured'?<div className="rental-notice-list">{page.notice.entries.map((n:any,i:number)=><article key={i}><strong>{n.name}</strong><p>Operator: {n.operatorContact}</p><p>How to obtain information: {n.accessInstructions}</p></article>)}</div>:
     <p>The leasing representative has confirmed that tenancy databases are not used for this application. If that changes, an appropriate written notice must be provided.</p>}
-   <p className="rental-legal">This is an electronic Form 18-based intake, not a signed lease. Do not lodge identification documents by ordinary email. Authorised staff review uploaded files through restricted document storage.</p>
+   <p className="rental-legal">This is an electronic residential application, not a signed lease. Do not lodge identification documents by ordinary email. Authorised staff review uploaded files through restricted document storage.</p>
   </section>
   {page.state==='complete'&&editable?<div className="rental-success"><h3>Your declaration is complete</h3><p>If you edit any section, you must declare again.</p></div>:null}
   {editable&&page.state!=='complete'&&<Form method="post" className="rental-form">
@@ -197,7 +197,7 @@ function Review({page,editable}:{page:any;editable:boolean}){
    <label className="rental-check"><input name="notAnAgreement" type="checkbox" value="yes" required/><span>I understand this application is not a tenancy agreement or approval.</span></label>
    <label className="rental-check"><input name="noticeAcknowledged" type="checkbox" value="yes" required/><span>I acknowledge receiving the tenancy database information displayed above and have reviewed the <Link to="/privacy">privacy policy</Link>.</span></label>
    <button className="button rental-full-button" type="submit" disabled={!complete}>Complete my declaration</button>
-   {!complete&&<p className="rental-muted">Complete the required Form 18 sections before declaring.</p>}
+   {!complete&&<p className="rental-muted">Complete the required application sections before declaring.</p>}
   </Form>}
   {page.role==='primary'&&page.state==='complete'&&editable&&<div className="rental-form"><h3>Submit household application</h3>
    <p className="rental-muted">Every included applicant must complete their own declaration before final submission.</p>
