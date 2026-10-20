@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { retentionDays,hasRentalRetentionPolicy,retentionDeadline } from '../packages/marketing/rental-retention.ts';
 import { FIELDS, FORM18_STEPS, ANSWER_STEPS, FORM18_VERSION, applicationSettingsSchema,
  cleanSection, stepComplete, allDetailsComplete,initialAnswers } from '../packages/marketing/form18.ts';
 const example={identity:{fullName:'Example Applicant',email:'example@example.test',mobile:'0412345678',dateOfBirth:'1994-05-12',
@@ -59,4 +60,39 @@ test('applicant access is separate from public listing, restricted R2 is used, p
  assert.match(read('apps/platform/worker/features/rental-review.server.ts'),/r\.status!=='draft'/);
  assert.match(read('apps/platform/worker/features/rental-review.server.ts'),/DOCUMENT_QUARANTINED/);
  assert.equal(JSON.parse(wrapper).env.connected.vars.RENTAL_APPLICATIONS_ENABLED,'false');
+});
+
+test('policy-controlled retention requires explicit bounded periods, not guessed statutory days',()=>{
+ const env={RENTAL_RETENTION_DRAFT_DAYS:'30',RENTAL_RETENTION_SUBMITTED_DAYS:'180',RENTAL_RETENTION_WITHDRAWN_DAYS:'30'} as any;
+ assert.equal(hasRentalRetentionPolicy(env),true);
+ assert.equal(retentionDays(env,'submitted'),180);
+ assert.equal(retentionDeadline(env,'draft',new Date('2026-10-20T00:00:00Z')),'2026-11-19T00:00:00.000Z');
+ assert.equal(hasRentalRetentionPolicy({...env,RENTAL_RETENTION_SUBMITTED_DAYS:'0'}),false);
+ assert.equal(hasRentalRetentionPolicy({...env,RENTAL_RETENTION_DRAFT_DAYS:undefined}),false);
+});
+test('handoff is staged for future Google Apps Script and cannot falsely claim email delivery',()=>{
+ const read=(p:string)=>readFileSync(p,'utf8');
+ const app=read('apps/platform/worker/features/rental-review.server.ts');
+ const handoff=read('apps/platform/worker/features/rental-handoff.server.ts');
+ const sql=read('database/migrations/0009_rental_application_safeguards.sql');
+ assert.match(app,/stageRentalAppsScriptHandoff/);
+ assert.doesNotMatch(app,/rental\.application\.forwarded/);
+ assert.match(handoff,/awaiting_script|rental-email-v1/);
+ assert.match(sql,/GOOGLE_SCRIPT_DELIVERY_NOT_YET_IMPLEMENTED/);
+ assert.match(sql,/AGENCY_EMAIL_DELIVERY_NOT_CONFIRMED/);
+ assert.match(sql,/TRUSTED_CLEAN_SCAN_REQUIRED/);
+});
+test('privacy requests and erasure have explicit staff approval, retention holds and no automatic live purge',()=>{
+ const read=(p:string)=>readFileSync(p,'utf8');
+ const privacy=read('apps/platform/worker/features/rental-privacy.server.ts');
+ const scanner=read('apps/platform/worker/features/rental-malware.server.ts');
+ const vars=JSON.parse(read('apps/platform/wrangler.jsonc')).env.connected.vars;
+ assert.match(privacy,/privacy_hold_until/);
+ assert.match(privacy,/RENTAL_RETENTION_AUTOPURGE_ENABLED/);
+ assert.match(privacy,/RESTRICTED_DOCUMENTS\.delete/);
+ assert.match(privacy,/rental_application_purge_permits/);
+ assert.match(scanner,/crypto\.subtle\.verify/);
+ assert.match(scanner,/RENTAL_SCANNER_WEBHOOK_SECRET/);
+ assert.equal(vars.RENTAL_APPLICATIONS_ENABLED,'false');
+ assert.equal(vars.RENTAL_RETENTION_AUTOPURGE_ENABLED,'false');
 });
