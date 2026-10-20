@@ -2,7 +2,7 @@ import { assert,now,statement,uid,type Env } from '../../../../packages/database
 import { digest,seal } from '../../../../packages/auth/crypto';
 
 type Subject={id:string;reference:string;application_recipient_email:string|null;
- display_address:string;title:string;agent_name:string;instructed_by_client_id:string};
+ display_address:string;title:string;agent_name:string;instructed_by_client_id:string;privacy_hold_until:string|null};
 /**
  * This prepares a durable, recipient-bound manifest. No email is sent.
  * The future Apps Script adapter must authenticate, retrieve the immutable
@@ -12,6 +12,10 @@ type Subject={id:string;reference:string;application_recipient_email:string|null
 export async function stageRentalAppsScriptHandoff(env:Env,app:Subject){
  assert(app.application_recipient_email,409,'AGENCY_EMAIL_NOT_CONFIGURED',
   'Configure an authorised agency or landlord email before staging an application.');
+ assert(!app.privacy_hold_until||app.privacy_hold_until<=now(),409,'PRIVACY_HOLD_ACTIVE',
+  'An active privacy hold must be reviewed before applicant data can be prepared for delivery.');
+ const pendingPrivacy=await statement(env.DB,"SELECT id FROM rental_application_privacy_requests WHERE application_id=? AND kind='erasure' AND status IN('requested','in_review')",app.id).first();
+ assert(!pendingPrivacy,409,'ERASURE_REVIEW_PENDING','Resolve the applicant privacy request before preparing agency delivery.');
  const snapshot=await statement(env.DB,"SELECT id,version FROM rental_application_submissions WHERE application_id=? ORDER BY version DESC LIMIT 1",
   app.id).first<{id:string;version:number}>();
  assert(snapshot,409,'SUBMISSION_REQUIRED','A completed application record is required.');
