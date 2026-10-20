@@ -46,6 +46,7 @@ import {
 import { stripeWebhook, decideApproval } from './features/finance.server';
 import { reportCallback } from './features/integrations.server';
 import { booksServices, managesProperty } from '../../../packages/authorization/server';
+import { readOnlyCalendarDiagnostic } from './features/google-calendar.server';
 
 async function json(request: Request) {
   assert(
@@ -268,6 +269,12 @@ export async function handleApi(
       );
     const user = await requireUser(request, env);
     if (method !== 'GET' && method !== 'HEAD') requireOrigin(request, env);
+    if (path === '/api/staff/calendar-diagnostic' && method === 'GET') {
+      // Genuine authenticated operations staff only; no public test trigger.
+      // Google calendar IDs, private keys and OAuth tokens are never returned.
+      operationsWrite(user);
+      return Response.json(await readOnlyCalendarDiagnostic(env));
+    }
     if (path === '/api/account' && method === 'GET')
       return Response.json(await accountData(request, env, user));
     if (path === '/api/account' && method === 'POST')
