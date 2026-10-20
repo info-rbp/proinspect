@@ -176,8 +176,9 @@ function Review({page,editable}:{page:any;editable:boolean}){
  const complete=ANSWER_STEPS.every(s=>stepComplete(answers,s));
  const pending=page.household.some((p:any)=>p.state!=='complete');
  const submitted=['submitted','ready_for_handoff','forwarded','decision_recorded'].includes(page.status);
- if(page.status==='withdrawn')return <div role="status" className="rental-success"><h2>Application withdrawn</h2><p>This application is no longer active. Retained information remains subject to our privacy and retention policy.</p></div>;
+ const withdrawn=page.status==='withdrawn';
  return <>
+  {withdrawn&&<div role="status" className="rental-success"><h2>Application withdrawn</h2><p>The application is closed. You may still request access, correction or erasure of retained information below.</p></div>}
   {page.moreInformation&&<div className="rental-notice" role="status"><h3>More information requested</h3><p>{page.moreInformation.instructions}</p><p>Update the relevant section, then review and complete your declaration again.</p></div>}
   <div className="rental-section-note">Review your answers below. Only your own personal details appear here. Your co-applicants' confidential answers are not displayed to you.</div>
   <div className="rental-summary">{ANSWER_STEPS.map(step=><details key={step} open={step==='identity'}>
