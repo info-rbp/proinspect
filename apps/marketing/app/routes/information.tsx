@@ -1,4 +1,5 @@
 import { ENGAGEMENTS } from '../../../../packages/marketing/content';
+import { PUBLIC_LEGAL_DRAFTS, PUBLIC_LEGAL_APPROVAL } from '../../../../packages/marketing/legal-drafts';
 import {
   Link,
   useLoaderData,
@@ -149,52 +150,26 @@ const pages: Record<string, { title: string; intro: string; sections: Array<[str
       ],
     ],
   },
-  privacy: {
-    title: 'Privacy information',
-    intro:
-      'Pre-release notice: the final business privacy policy must be approved before public registration opens.',
-    sections: [
-      [
-        'Purpose of this build',
-        'This environment is for validation of the rebuilt ProInspect platform. Use synthetic data during testing.',
-      ],
-      [
-        'Access to records',
-        'The application is designed to restrict property and tenancy information to authorised relationships. Customer files are not public marketing assets.',
-      ],
-      [
-        'Before launch',
-        'The operator must publish the approved collection, use, disclosure, retention, access and contact policy. This placeholder is not a substitute for that policy.',
-      ],
-    ],
-  },
-  terms: {
-    title: 'Service terms',
-    intro:
-      'Pre-release notice: approved commercial terms are required before public bookings are enabled.',
-    sections: [
-      [
-        'Confirmed scope',
-        'The service, price, access arrangements and appointment must be confirmed for each booking.',
-      ],
-      [
-        'Scope limitations',
-        'Catalogue descriptions do not establish a legal, engineering or emergency-response engagement.',
-      ],
-      [
-        'Before launch',
-        'The operator must approve cancellation, payment, service scope and complaint arrangements and publish the final terms.',
-      ],
-    ],
-  },
+
 };
 export function loader({ params }: LoaderFunctionArgs) {
-  const page = pages[params.page ?? ''];
+  const key = params.page ?? '';
+  if (key === 'privacy' || key === 'terms') {
+    return {
+      ...PUBLIC_LEGAL_DRAFTS[key],
+      path: '/' + key,
+      legalApproved: PUBLIC_LEGAL_APPROVAL[key].approved,
+    };
+  }
+  const page = pages[key];
   if (!page) throw new Response('Not found', { status: 404 });
-  return { ...page, path: `/${params.page}` };
+  return { ...page, path: '/' + key, legalApproved: true };
 }
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
-  loaderData ? seo(loaderData.title, loaderData.intro, loaderData.path) : [];
+  loaderData
+    ? [...seo(loaderData.title, loaderData.intro, loaderData.path),
+       ...(!loaderData.legalApproved ? [{ name: 'robots', content: 'noindex, nofollow' }] : [])]
+    : [];
 export default function Information() {
   const p = useLoaderData<typeof loader>();
   const { appOrigin } = useOutletContext<{ appOrigin: string }>();
@@ -204,7 +179,7 @@ export default function Information() {
   const why = p.path === '/why-proinspect';
   const serviceArea = p.path === '/areas-we-service';
   const about = p.path === '/about';
-  const label = legal ? 'Public information' : how ? 'How we work' : client ? 'The client experience' : why ? 'Why ProInspect' : serviceArea ? 'Where we work' : about ? 'About ProInspect' : 'Property services';
+  const label = legal ? 'Legal documents — review drafts' : how ? 'How we work' : client ? 'The client experience' : why ? 'Why ProInspect' : serviceArea ? 'Where we work' : about ? 'About ProInspect' : 'Property services';
   const visual = legal ? 'none' as const : client ? 'report' as const : how ? 'process' as const : serviceArea ? 'residential' as const : about ? 'commercial' as const : 'services' as const;
   return (
     <>
@@ -220,7 +195,7 @@ export default function Information() {
         <section className="mkt-legal-notice" aria-label="Pre-release policy notice">
           <div className="site-container">
             <strong>Pre-release information</strong>
-            <span>{p.path === '/privacy' ? 'The final approved privacy policy is not yet published.' : 'The final approved commercial service terms are not yet published.'} This page is a placeholder and should not be treated as an approved policy or contract.</span>
+            <span>{p.path === '/privacy' ? 'Privacy handling statements here are proposals pending operator review.' : 'The service terms here are proposals pending operator review.'} Do not treat this review draft as an approved policy or a binding contract.</span>
           </div>
         </section>
       )}
@@ -228,9 +203,9 @@ export default function Information() {
         <div className="site-container">
           <MarketingSectionTitle
             eyebrow={legal ? 'Current release information' : how ? 'A clear process' : why ? 'Our approach' : client ? 'Your property record' : serviceArea ? 'Location and availability' : 'What you should know'}
-            title={legal ? 'Information for review.' : how ? 'Simple steps. Agreed responsibilities.' : why ? 'What matters in a property service.' : client ? 'Property work with context.' : serviceArea ? 'Check your location before arranging attendance.' : 'The practical approach behind the work.'}
+            title={legal ? 'Review the proposed contents.' : how ? 'Simple steps. Agreed responsibilities.' : why ? 'What matters in a property service.' : client ? 'Property work with context.' : serviceArea ? 'Check your location before arranging attendance.' : 'The practical approach behind the work.'}
             description={legal
-              ? 'These pre-release notices remain subject to the business owner’s final review.'
+              ? 'The final policy or contract will take effect only after its actual operator, commitments, applicable disclosures and publication date have been approved.'
               : 'We describe our service boundaries clearly and only make commitments once the instruction is confirmed.'}
           />
           <MarketingEditorialBlocks sections={p.sections} numbered={how} />
