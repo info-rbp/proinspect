@@ -20,6 +20,7 @@ import {
   booksServices,
   clientAdmin,
 } from '../../../packages/authorization/server';
+import { guestReportDelivery } from './features/guest-report.server';
 import { mailEvent } from '../../../packages/notifications/server';
 import { digest } from '../../../packages/auth/crypto';
 
@@ -594,6 +595,8 @@ export async function issueReport(
         }),
       );
     }
+    const guestDelivery=order.booking_id ? await guestReportDelivery(env,order.booking_id,id,title):null;
+    if(guestDelivery) statements.push(...guestDelivery);
     await env.DB.batch(statements);
   } catch (error) {
     await env.DOCUMENTS.delete(objectKey);

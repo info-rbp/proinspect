@@ -20,6 +20,10 @@ export default [
     route('services/:slug', '../../marketing/app/routes/service.tsx'),
     route('sectors/:sector', '../../marketing/app/routes/sector.tsx'),
     route('contact', 'routes/public-contact.tsx'),
+    route('guest/book/:serviceId?', 'routes/guest-book.tsx'),
+    route('guest/verify', 'routes/guest-verify.tsx'),
+    route('guest/manage', 'routes/guest-manage.tsx'),
+    route('guest/quote', 'routes/guest-quote.tsx'),
     route(':page', '../../marketing/app/routes/information.tsx'),
   ]),
   route('sitemap.xml', '../../marketing/app/routes/sitemap.ts'),
@@ -34,6 +38,7 @@ export default [
   route('workspaces', 'routes/workspaces.tsx'),
   route('invitations/accept', 'routes/invitation.tsx'),
   route('book/:serviceId?', 'routes/booking-intent.tsx'),
+  route('book/subscriber/:serviceId?', 'routes/subscriber-intent.tsx'),
   route('w/:kind/:scopeId', 'routes/workspace.tsx', [
     index('routes/overview.tsx'),
     route('records/:collection?', 'routes/records.tsx'),
