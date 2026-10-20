@@ -149,6 +149,32 @@ class SchemaTests(unittest.TestCase):
             self.db.execute("UPDATE rental_applications SET status='submitted' WHERE id='app1'")
         self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(), [])
 
+    def test_rental_scan_and_google_script_handoff_cannot_be_falsely_approved(self):
+        self.db.execute("""INSERT INTO leasing_listings(id,property_id,instructed_by_client_id,kind,slug,title,description,display_address,suburb,postcode,agent_name,agent_role,created_by,created_at,updated_at)
+         VALUES('l1','p','c','residential','example','Example rental listing','Example residential property listed for rent.','1 Test St','Perth','6000','Agency','leasing_agent','u','2026-01-01','2026-01-01')""")
+        self.db.execute("""INSERT INTO rental_applications(id,listing_id,reference,started_at,updated_at,submitted_at,status)
+         VALUES('a1','l1','RNT-EXAMPLE','2026-01-01','2026-01-01','2026-01-02','submitted')""")
+        self.db.execute("""INSERT INTO rental_applicants(id,application_id,ordinal,role,email_hash,access_token_hash,access_expires_at,answers_envelope,created_at,updated_at)
+         VALUES('p1','a1',1,'primary','h1','t1','2027-01-01','sealed','2026-01-01','2026-01-01')""")
+        self.db.execute("""INSERT INTO rental_application_documents(id,application_id,applicant_id,object_key,category,filename,content_type,size_bytes,sha256,uploaded_at)
+         VALUES('d1','a1','p1','rental/d1','identity','id.pdf','application/pdf',123,'digest1','2026-01-01')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'TRUSTED_CLEAN_SCAN_REQUIRED'):
+            self.db.execute("UPDATE rental_application_documents SET review_status='released' WHERE id='d1'")
+        self.db.execute("UPDATE rental_application_documents SET scan_status='clean' WHERE id='d1'")
+        self.db.execute("UPDATE rental_application_documents SET review_status='released' WHERE id='d1'")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'SCAN_VERDICT_IMMUTABLE'):
+            self.db.execute("UPDATE rental_application_documents SET scan_status='unsafe' WHERE id='d1'")
+        self.db.execute("""INSERT INTO rental_application_submissions(id,application_id,submitted_by_applicant_id,version,form_version,snapshot_envelope,created_at)
+         VALUES('sub1','a1','p1',1,'version1','sealed','2026-01-02')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'AGENCY_EMAIL_DELIVERY_NOT_CONFIRMED'):
+            self.db.execute("UPDATE rental_applications SET status='forwarded' WHERE id='a1'")
+        self.db.execute("""INSERT INTO rental_application_handoffs(id,application_id,submission_id,idempotency_key,recipient_hash,recipient_envelope,staged_at)
+         VALUES('h1','a1','sub1','idem1','hash','sealed','2026-01-02')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'GOOGLE_SCRIPT_DELIVERY_NOT_YET_IMPLEMENTED'):
+            self.db.execute("UPDATE rental_application_handoffs SET status='delivered',delivered_at='2026-01-03',delivery_reference='ref' WHERE id='h1'")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'RENTAL_SUBMISSION_IMMUTABLE'):
+            self.db.execute("DELETE FROM rental_application_submissions WHERE id='sub1'")
+
     def test_overlap_is_rejected_in_database(self):
         self.booking('a','2026-10-10T01:00:00.000Z','2026-10-10T02:00:00.000Z')
         with self.assertRaisesRegex(sqlite3.IntegrityError,'SCHEDULE_CONFLICT'):
