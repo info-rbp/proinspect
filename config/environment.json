@@ -71,6 +71,13 @@
         "platform"
       ],
       "group": "calendar"
+    },
+    "RENTAL_SCANNER_WEBHOOK_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "format": "signing-key"
     }
   },
   "variables": {
@@ -159,6 +166,34 @@
         "platform"
       ],
       "group": "release",
+      "default": "false"
+    },
+    "RENTAL_RETENTION_DRAFT_DAYS": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-privacy",
+      "default": ""
+    },
+    "RENTAL_RETENTION_SUBMITTED_DAYS": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-privacy",
+      "default": ""
+    },
+    "RENTAL_RETENTION_WITHDRAWN_DAYS": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-privacy",
+      "default": ""
+    },
+    "RENTAL_RETENTION_AUTOPURGE_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-privacy",
       "default": "false"
     }
   },
