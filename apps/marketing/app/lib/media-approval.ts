@@ -20,7 +20,7 @@ export type PublicMarketingMediaSlot =
   | 'service-hero';
 
 export type PublicMarketingImage = {
-  src: \`/marketing-media/\${string}\`;
+  src: `/marketing-media/${string}`;
   alt: string;
   source: string;
   rightsRecord: string;
