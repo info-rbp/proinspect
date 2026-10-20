@@ -405,3 +405,30 @@
   background:#163c43ee; color:#fff; font-size:.7rem;
   font-weight:700; letter-spacing:.02em; pointer-events:none;
 }
+
+
+/* WCAG reflow: the brand, booking CTA and menu must not compete for one
+   unbroken row at 320px / high zoom. Put booking on its own usable row. */
+@media (max-width: 380px) {
+  .site .mkt-site-header {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    column-gap: .35rem;
+    row-gap: .4rem;
+    padding-block: .6rem;
+  }
+  .site .mkt-brand { order: 1; min-width: 0; }
+  .site .marketing-menu { order: 2; margin-left: auto; flex: 0 0 auto; }
+  .site .mkt-header-actions {
+    order: 3;
+    width: 100%;
+    flex: 1 0 100%;
+    margin-left: 0;
+  }
+  .site .mkt-header-book { width: 100%; }
+  .site .marketing-menu nav {
+    right: 0;
+    width: min(280px, calc(100vw - 2.2rem));
+    max-width: calc(100vw - 2.2rem);
+  }
+}
