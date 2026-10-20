@@ -262,7 +262,7 @@ export async function withdrawRental(env:Env,token:string){
  const stamp=now();
  await env.DB.batch([
   statement(env.DB,"UPDATE rental_applications SET status='withdrawn',withdrawn_at=?,retained_until=?,updated_at=?,version=version+1 WHERE id=? AND version=? AND status NOT IN('withdrawn','decision_recorded')",
-   stamp,stamp,app.id,app.version),
+   stamp,retentionDeadline(env,'withdrawn'),stamp,app.id,app.version),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   await event(env,app.id,'withdrawn',{at:stamp},person.id),
   statement(env.DB,'DELETE FROM mutation_guards'),
