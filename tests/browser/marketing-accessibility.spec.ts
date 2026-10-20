@@ -39,9 +39,16 @@ test('public marketing reflows at narrow and wide desktop viewports', async ({ p
         scroll: document.documentElement.scrollWidth,
         client: document.documentElement.clientWidth,
         main: document.querySelectorAll('main#main').length,
+        offenders: Array.from(document.querySelectorAll('body *')).map((node) => {
+          const r = node.getBoundingClientRect();
+          const style = getComputedStyle(node);
+          return { element: node.tagName.toLowerCase(), className: String(node.className).slice(0, 100),
+            left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width),
+            position: style.position, overflowX: style.overflowX };
+        }).filter((v) => v.right > window.innerWidth + 2 || v.left < -2).slice(0, 16),
       }));
       expect(metrics.main, path).toBe(1);
-      expect(metrics.scroll, width + 'px ' + path).toBeLessThanOrEqual(metrics.client + 2);
+      expect(metrics.scroll, width + 'px ' + path + ': ' + JSON.stringify(metrics.offenders)).toBeLessThanOrEqual(metrics.client + 2);
     }
   }
 });
