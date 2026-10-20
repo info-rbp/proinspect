@@ -1,14 +1,30 @@
 import { Link } from 'react-router';
+import { approvedPublicMarketingImage, type PublicMarketingMediaSlot } from '../lib/media-approval';
 
 type BuildingKind = 'residential' | 'commercial' | 'strata';
 
 export function PropertyArtwork({
   kind = 'residential',
   className = '',
+  slot,
 }: {
   kind?: BuildingKind;
   className?: string;
+  slot?: PublicMarketingMediaSlot;
 }) {
+  const approved = approvedPublicMarketingImage(slot);
+  if (approved) {
+    return (
+      <div className={'mkt-property-art mkt-approved-property-media ' + className}>
+        <img
+          src={approved.src}
+          alt={approved.alt}
+          decoding="async"
+          loading={slot === 'home-hero' ? 'eager' : 'lazy'}
+        />
+      </div>
+    );
+  }
   const tall = kind !== 'residential';
   return (
     <div
@@ -76,6 +92,7 @@ export function PropertyArtwork({
         <path d="M618 390 C636 358 665 345 677 356 V394" fill="#84ae8c" />
         <path d="M0 404 H680" stroke="#b1c9b9" strokeWidth="5" />
       </svg>
+      <span className="mkt-art-illustration-note" aria-hidden="true">Illustration</span>
     </div>
   );
 }
