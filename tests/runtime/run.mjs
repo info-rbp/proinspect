@@ -478,6 +478,46 @@ try {
     assert.equal((await first('SELECT COUNT(*) AS n FROM payments WHERE work_order_id=?', booked.data.workOrderId)).n, 0);
     assert.ok((await api('/api/w/staff/operations', { cookie: operator.cookie })).data.workOrders.some(o => o.booking_id === booked.data.id));
   });
+  await check('guest one-off booking uses verification, canonical records, no portal and no subscription', async () => {
+    const visit = new Date(Date.now()+14*86400000);
+    while ([0,6].includes(visit.getUTCDay())) visit.setUTCDate(visit.getUTCDate()+1);
+    const visitDate=visit.toISOString().slice(0,10);
+    const guestInput={
+      requestKey:crypto.randomUUID(),name:'Synthetic Guest',email:'guest-oneoff@example.test',phone:'0400000001',
+      serviceId:'routine-inspection',sector:'residential',address:'141 Synthetic Guest Street',suburb:'Perth',postcode:'6000',propertyType:'House',
+      access:{method:'owner',instructions:'Synthetic keys for test only',noticeConfirmed:true},consent:true,website:''
+    };
+    const request=await api('/api/guest/requests',{body:guestInput});
+    assert.equal(request.status,201,JSON.stringify(request.data));
+    const retry=await api('/api/guest/requests',{body:guestInput});
+    assert.equal(retry.status,201);
+    assert.equal(retry.data.reference,request.data.reference);
+    assert.equal((await first("SELECT count(*) n FROM subscriptions WHERE client_id='cli_guest_transactions'")).n,0);
+    assert.equal((await first("SELECT count(*) n FROM client_memberships WHERE client_id='cli_guest_transactions'")).n,0);
+    assert.equal((await first('SELECT count(*) n FROM bookings WHERE client_id=?','cli_guest_transactions')).n,0);
+    const verify=await api('/api/guest/verify',{body:{token:request.data.localVerifyToken}});
+    assert.equal(verify.status,200,JSON.stringify(verify.data));
+    assert.equal((await api('/api/guest/verify',{body:{token:request.data.localVerifyToken}})).status,404);
+    const t=verify.data.localManageToken;
+    const avail=await api('/api/guest/availability?service=routine-inspection&date='+visitDate);
+    assert.equal(avail.status,200,JSON.stringify(avail.data));
+    assert.ok(avail.data.slots.length);
+    const firstSlot=avail.data.slots[0].start;
+    const booked=await api('/api/guest/manage',{body:{token:t,action:'confirm',startsAt:firstSlot}});
+    assert.equal(booked.status,201,JSON.stringify(booked.data));
+    assert.equal(booked.data.status,'confirmed');
+    const record=await first("SELECT b.id,b.client_id,b.user_id,wo.id work_order_id FROM bookings b JOIN work_orders wo ON wo.booking_id=b.id WHERE b.client_id='cli_guest_transactions'");
+    assert.equal(record.user_id,'usr_guest_booking_system');
+    assert.equal((await first('SELECT status,total_cents FROM payments WHERE work_order_id=?',record.work_order_id)).status,'payment_required');
+    assert.equal((await api('/api/guest/manage',{body:{token:'f'.repeat(64),action:'cancel'}})).status,404);
+    const busy=await api('/api/guest/availability?service=routine-inspection&date='+visitDate);
+    assert.equal(busy.data.slots.some(s=>s.start===firstSlot),false);
+    const cancelled=await api('/api/guest/manage',{body:{token:t,action:'cancel'}});
+    assert.equal(cancelled.status,200,JSON.stringify(cancelled.data));
+    assert.equal(cancelled.data.status,'cancelled');
+    assert.equal((await first('SELECT status FROM bookings WHERE id=?',record.id)).status,'cancelled');
+    assert.equal((await first("SELECT count(*) n FROM subscriptions WHERE client_id='cli_guest_transactions'")).n,0);
+  });
   await check('audit immutability and database referential integrity hold', async () => {
     await assert.rejects(() => run('DELETE FROM audit_events'));
     assert.equal((await sql.prepare('PRAGMA foreign_key_check').all()).results.length, 0);
