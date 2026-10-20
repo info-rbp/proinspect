@@ -84,3 +84,10 @@ DROP TRIGGER rental_submission_immutable_delete;
 CREATE TRIGGER rental_submission_immutable_delete BEFORE DELETE ON rental_application_submissions
  WHEN NOT EXISTS(SELECT 1 FROM rental_application_purge_permits p WHERE p.application_id=OLD.application_id)
  BEGIN SELECT RAISE(ABORT,'RENTAL_SUBMISSION_IMMUTABLE'); END;
+
+CREATE TABLE rental_document_scan_receipts (
+ event_id TEXT PRIMARY KEY,
+ document_id TEXT NOT NULL REFERENCES rental_application_documents(id),
+ received_at TEXT NOT NULL
+) STRICT;
+CREATE INDEX rental_scan_receipts_doc ON rental_document_scan_receipts(document_id);
