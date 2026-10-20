@@ -41,7 +41,7 @@ export function MarketingPageHero({
           {visual !== 'none' && (
             <div className="mkt-page-hero-art">
               {art
-                ? <PropertyArtwork kind={visual as 'residential' | 'commercial' | 'strata'} />
+                ? <PropertyArtwork kind={visual as 'residential' | 'commercial' | 'strata'} slot={visual === 'strata' ? 'sector-strata' : visual === 'commercial' ? 'sector-commercial' : 'sector-residential'} />
                 : visual === 'report'
                   ? <div className="mkt-page-report-art"><IllustrativeReport compact /><p>Illustrative record design, not an issued report.</p></div>
                   : <div className={'mkt-abstract-art mkt-abstract-' + visual} aria-hidden="true">
