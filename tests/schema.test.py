@@ -200,9 +200,10 @@ class PortalTestingSeedTests(unittest.TestCase):
         self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(),[])
 
     def test_guest_order_keys_and_access_tokens_are_unique(self):
-        self.db.execute("INSERT INTO guest_service_orders(id,reference,request_key,fingerprint,envelope,service_id,sector,price_basis,price_ex_gst_cents,created_at,updated_at) VALUES('g1','G-1','k1','hash','encrypted','s','residential','published',12000,'2026-01-01','2026-01-01')")
+        self.seed()
+        self.db.execute("INSERT INTO guest_service_orders(id,reference,request_key,fingerprint,envelope,service_id,sector,price_basis,price_ex_gst_cents,created_at,updated_at) VALUES('g1','G-1','k1','hash','encrypted','routine-inspection','residential','published',12000,'2026-01-01','2026-01-01')")
         with self.assertRaises(sqlite3.IntegrityError):
-            self.db.execute("INSERT INTO guest_service_orders(id,reference,request_key,fingerprint,envelope,service_id,sector,price_basis,price_ex_gst_cents,created_at,updated_at) VALUES('g2','G-2','k1','hash','encrypted','s','residential','published',12000,'2026-01-01','2026-01-01')")
+            self.db.execute("INSERT INTO guest_service_orders(id,reference,request_key,fingerprint,envelope,service_id,sector,price_basis,price_ex_gst_cents,created_at,updated_at) VALUES('g2','G-2','k1','hash','encrypted','routine-inspection','residential','published',12000,'2026-01-01','2026-01-01')")
         self.db.execute("INSERT INTO guest_access_links(token_hash,order_id,purpose,expires_at,created_at) VALUES('tokenhash','g1','verify','2027-01-01','2026-01-01')")
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute("INSERT INTO guest_access_links(token_hash,order_id,purpose,expires_at,created_at) VALUES('tokenhash','g1','manage','2027-01-01','2026-01-01')")
