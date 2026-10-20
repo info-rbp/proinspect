@@ -1,3 +1,4 @@
+import { hasRentalRetentionPolicy,retentionDeadline } from '../../../../packages/marketing/rental-retention';
 import { z } from 'zod';
 import { now, uid, assert, statement, type Env } from '../../../../packages/database/types';
 import { digest, seal, unseal, randomToken } from '../../../../packages/auth/crypto';
@@ -12,7 +13,7 @@ import {
 type RentalRow={id:string;listing_id:string;reference:string;status:string;version:number;submitted_at:string|null;notice_envelope:string|null;started_at:string};
 type ApplicantRow={id:string;application_id:string;role:string;ordinal:number;state:string;email_hash:string;answers_envelope:string;version:number;access_expires_at:string;declared_at:string|null};
 type RentalListing={id:string;slug:string;title:string;display_address:string;suburb:string;postcode:string;agent_name:string;agent_role:string;application_mode:string;tenancy_database_notice_mode:string;tenancy_database_notice_json:string;application_recipient_email:string|null;status:string;kind:string};
-export const rentalEnabled=(env:Env)=>env.RENTAL_APPLICATIONS_ENABLED==='true'&&Boolean(env.DATA_ENCRYPTION_KEY&&env.RESTRICTED_DOCUMENTS);
+export const rentalEnabled=(env:Env)=>env.RENTAL_APPLICATIONS_ENABLED==='true'&&Boolean(env.DATA_ENCRYPTION_KEY&&env.RESTRICTED_DOCUMENTS&&hasRentalRetentionPolicy(env));
 const expiry=()=>new Date(Date.now()+30*86400000).toISOString();
 const mailLink=(env:Env,token:string)=>env.APP_ORIGIN+'/rental-application/'+token;
 const emailHash=(env:Env,email:string)=>digest(env.DATA_ENCRYPTION_KEY+':rental-applicant:'+email.trim().toLowerCase());
@@ -73,7 +74,7 @@ export async function startRental(env:Env,request:Request,listingId:string,input
  }
  const appId=uid('rapp'),applicantId=uid('rap'),reference='RNT-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
  await env.DB.batch([
-  statement(env.DB,"INSERT INTO rental_applications(id,listing_id,reference,status,started_at,updated_at,consent_version) VALUES(?,?,?,'draft',?,?,?)",appId,listingId,reference,t,t,FORM18_VERSION),
+  statement(env.DB,"INSERT INTO rental_applications(id,listing_id,reference,status,started_at,updated_at,consent_version,retained_until) VALUES(?,?,?,'draft',?,?,?,?)",appId,listingId,reference,t,t,FORM18_VERSION,retentionDeadline(env,'draft')),
   statement(env.DB,"INSERT INTO rental_applicants(id,application_id,ordinal,role,email_hash,access_token_hash,access_expires_at,answers_envelope,state,created_at,updated_at) VALUES(?,?,1,'primary',?,?,?,?,'in_progress',?,?)",
     applicantId,appId,hash,tokenHash,expiry(),await seal(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+applicantId,initialAnswers(d.name,d.email)),t,t),
   await event(env,appId,'started',{propertyId:listingId,formVersion:FORM18_VERSION},applicantId),
@@ -104,11 +105,12 @@ export async function rentalPage(env:Env,token:string){
    household.push({ordinal:p.ordinal,state:p.state,maskedEmail:maskedEmail(details.identity?.email??''),name:details.identity?.fullName??'Applicant'});
   }
  }
- const notice=JSON.parse(l.tenancy_database_notice_json) as {name:string;operatorContact:string;accessInstructions:string}[];
+ const configuredNotice=app.notice_envelope?await unseal<{mode:string;entries:{name:string;operatorContact:string;accessInstructions:string}[]}>(env.DATA_ENCRYPTION_KEY,'rental-notice:'+app.id,app.notice_envelope):null;
+ const notice=configuredNotice?.entries??JSON.parse(l.tenancy_database_notice_json) as {name:string;operatorContact:string;accessInstructions:string}[];
  return {reference:app.reference,status:app.status,version:person.version,role:person.role,ordinal:person.ordinal,
   state:person.state,declaredAt:person.declared_at,submittedAt:app.submitted_at,
   property:{title:l.title,address:l.display_address,suburb:l.suburb,agentName:l.agent_name},
-  notice:{mode:l.tenancy_database_notice_mode,entries:notice},answers,documents,household};
+  notice:{mode:configuredNotice?.mode??l.tenancy_database_notice_mode,entries:notice},answers,documents,household};
 }
 const allowedEdit=(status:string)=>['draft','information_requested'].includes(status);
 export async function saveRentalSection(env:Env,token:string,section:AnswerStep,raw:Record<string,unknown>,version:number){
@@ -120,7 +122,7 @@ export async function saveRentalSection(env:Env,token:string,section:AnswerStep,
  const values=cleanSection(section,raw);
  const updated={...answers,[section]:values};
  const result=await env.DB.batch([
-  statement(env.DB,"UPDATE rental_applicants SET answers_envelope=?,state='in_progress',declared_at=NULL,version=version+1,updated_at=? WHERE id=? AND version=? AND state!='removed'",
+  statement(env.DB,"UPDATE rental_applicants SET answers_envelope=?,state='in_progress',declared_at=NULL,notice_digest=NULL,version=version+1,updated_at=? WHERE id=? AND version=? AND state!='removed'",
     await seal(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+person.id,updated),now(),person.id,version),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   await event(env,app.id,'section_saved',{section},person.id),
@@ -198,9 +200,10 @@ export async function finishRentalApplicant(env:Env,token:string,consent:unknown
   notAnAgreement:z.literal(true),noticeAcknowledged:z.literal(true)}).parse(consent);
  const l=await listing(env,app.listing_id);
  assert(l.tenancy_database_notice_mode!=='unconfigured',503,'TENANCY_NOTICE_REQUIRED','Database notice has not been configured.');
+ const noticeDigest=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name]));
  const t=now();
  await env.DB.batch([
-  statement(env.DB,"UPDATE rental_applicants SET state='complete',declared_at=?,version=version+1,updated_at=? WHERE id=? AND version=?",t,t,person.id,version),
+  statement(env.DB,"UPDATE rental_applicants SET state='complete',declared_at=?,notice_digest=?,version=version+1,updated_at=? WHERE id=? AND version=?",t,noticeDigest,t,person.id,version),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   await event(env,app.id,'applicant_completed',{formVersion:FORM18_VERSION,noticeMode:l.tenancy_database_notice_mode,declarations:d,at:t},person.id),
   statement(env.DB,'DELETE FROM mutation_guards'),
@@ -211,9 +214,11 @@ export async function submitRental(env:Env,token:string){
  const {person,app,l,answers}=await tokenAccess(env,token);
  assert(person.role==='primary'&&allowedEdit(app.status),403,'SUBMISSION_NOT_ALLOWED','Only the primary applicant submits the household application.');
  active(l);
- const rows=(await statement(env.DB,"SELECT id,ordinal,state,declared_at FROM rental_applicants WHERE application_id=? AND state!='removed'",app.id).all<{id:string;ordinal:number;state:string;declared_at:string|null}>()).results;
+ const rows=(await statement(env.DB,"SELECT id,ordinal,state,declared_at,notice_digest FROM rental_applicants WHERE application_id=? AND state!='removed'",app.id).all<{id:string;ordinal:number;state:string;declared_at:string|null;notice_digest:string|null}>()).results;
  assert(rows.length>=1&&rows.every(x=>x.state==='complete'&&Boolean(x.declared_at)),422,'APPLICANTS_INCOMPLETE',
   'Every included applicant must complete their declaration before the application can be submitted.');
+ const noticeDigest=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name]));
+ assert(rows.every(x=>x.notice_digest===noticeDigest),409,'NOTICE_CHANGED','The tenancy database notice has changed. Every applicant must review and declare again.');
  assert(l.application_recipient_email&&l.tenancy_database_notice_mode!=='unconfigured',503,'APPLICATION_SETTINGS_REQUIRED','The application arrangements require review.');
  const notice={mode:l.tenancy_database_notice_mode,entries:JSON.parse(l.tenancy_database_notice_json),
   representative:l.agent_name,property:l.display_address,formVersion:FORM18_VERSION};
@@ -233,8 +238,8 @@ export async function submitRental(env:Env,token:string){
   applicants:completePeople,notice,documents:fileManifest};
  const submissionId=uid('ras');
  await env.DB.batch([
-  statement(env.DB,"UPDATE rental_applications SET status='submitted',notice_envelope=?,submitted_at=COALESCE(submitted_at,?),updated_at=?,version=version+1 WHERE id=? AND status IN('draft','information_requested') AND version=?",
-   await seal(env.DATA_ENCRYPTION_KEY,'rental-notice:'+app.id,notice),stamp,stamp,app.id,app.version),
+  statement(env.DB,"UPDATE rental_applications SET status='submitted',notice_envelope=?,submitted_at=COALESCE(submitted_at,?),retained_until=?,updated_at=?,version=version+1 WHERE id=? AND status IN('draft','information_requested') AND version=?",
+   await seal(env.DATA_ENCRYPTION_KEY,'rental-notice:'+app.id,notice),stamp,retentionDeadline(env,'submitted'),stamp,app.id,app.version),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   statement(env.DB,'INSERT INTO rental_application_submissions(id,application_id,submitted_by_applicant_id,version,form_version,snapshot_envelope,created_at) VALUES(?,?,?,?,?,?,?)',
    submissionId,app.id,person.id,snapshotVersion,FORM18_VERSION,
@@ -256,7 +261,7 @@ export async function withdrawRental(env:Env,token:string){
  assert(person.role==='primary'&&!['withdrawn','decision_recorded'].includes(app.status),403,'WITHDRAW_NOT_ALLOWED','Only the primary applicant can withdraw an active application.');
  const stamp=now();
  await env.DB.batch([
-  statement(env.DB,"UPDATE rental_applications SET status='withdrawn',withdrawn_at=?,updated_at=?,version=version+1 WHERE id=? AND version=? AND status NOT IN('withdrawn','decision_recorded')",
+  statement(env.DB,"UPDATE rental_applications SET status='withdrawn',withdrawn_at=?,retained_until=?,updated_at=?,version=version+1 WHERE id=? AND version=? AND status NOT IN('withdrawn','decision_recorded')",
    stamp,stamp,app.id,app.version),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   await event(env,app.id,'withdrawn',{at:stamp},person.id),
