@@ -4,7 +4,9 @@ import { seal, unseal } from '../../../../packages/auth/crypto';
 import { mailEvent } from '../../../../packages/notifications/server';
 import { operationsWrite } from '../../../../packages/authorization/server';
 import type { Principal } from '../../../../packages/domain/index';
-import { FORM18_VERSION, type Form18Answers } from '../../../../packages/marketing/form18';
+import { type Form18Answers } from '../../../../packages/marketing/form18';
+import { stageRentalAppsScriptHandoff } from './rental-handoff.server';
+import { listRentalPrivacyRequests } from './rental-privacy.server';
 
 function staff(user:Principal){
  operationsWrite(user);
@@ -33,43 +35,45 @@ export async function rentalStaffDetail(env:Env,user:Principal,id:string){
   const answers=await unseal<Form18Answers>(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+p.id,p.answers_envelope);
   applicants.push({id:p.id,ordinal:p.ordinal,role:p.role,state:p.state,declaredAt:p.declared_at,answers});
  }
- const documents=(await statement(env.DB,"SELECT id,applicant_id,category,filename,content_type,size_bytes,review_status,uploaded_at,reviewed_at FROM rental_application_documents WHERE application_id=? ORDER BY uploaded_at DESC",id).all()).results;
+ const documents=(await statement(env.DB,"SELECT id,applicant_id,category,filename,content_type,size_bytes,review_status,scan_status,scanned_at,uploaded_at,reviewed_at FROM rental_application_documents WHERE application_id=? ORDER BY uploaded_at DESC",id).all()).results;
  const history=(await statement(env.DB,"SELECT id,kind,created_at,actor_applicant_id,actor_staff_id FROM rental_application_events WHERE application_id=? ORDER BY created_at,id LIMIT 250",id).all()).results;
  const latest=await statement(env.DB,'SELECT id,version,snapshot_envelope,created_at FROM rental_application_submissions WHERE application_id=? ORDER BY version DESC LIMIT 1',id).first<{id:string;version:number;snapshot_envelope:string;created_at:string}>();
  const latestSubmission=latest?{version:latest.version,createdAt:latest.created_at,
   record:await unseal<Record<string,any>>(env.DATA_ENCRYPTION_KEY,'rental-submission:'+latest.id,latest.snapshot_envelope)}:null;
+ const handoffs=(await statement(env.DB,"SELECT id,status,format_version,staged_at,delivered_at FROM rental_application_handoffs WHERE application_id=? ORDER BY staged_at DESC",id).all()).results;
+ const privacyRequests=user.staffRole==='administrator'?await listRentalPrivacyRequests(env,user,id):[];
  const notice=app.notice_envelope?await unseal<Record<string,unknown>>(env.DATA_ENCRYPTION_KEY,'rental-notice:'+id,app.notice_envelope):
   {mode:app.tenancy_database_notice_mode,entries:JSON.parse(app.tenancy_database_notice_json)};
  await statement(env.DB,"INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?, 'rental_application.viewed','rental_application',?,'{}',?)",
   uid('aud'),user.id,id,now()).run();
- return {latestSubmission,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
+ return {latestSubmission,handoffs,privacyRequests,privacyHoldUntil:app.privacy_hold_until,retainedUntil:app.retained_until,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
   property:app.display_address,title:app.title,leasingRepresentative:app.agent_name,instructingClientId:app.instructed_by_client_id,
   forwardedAt:app.forwarded_at,noticeVersion:app.consent_version},applicants,documents,notice,history};
 }
 export async function updateRentalStatus(env:Env,user:Principal,id:string,input:unknown){
  staff(user);const app=await appRow(env,id);
  const d=z.object({version:z.number().int().positive(),
-  status:z.enum(['information_requested','ready_for_handoff','forwarded','decision_recorded']),
+  status:z.enum(['information_requested','ready_for_handoff']),
   note:z.string().trim().min(10).max(1200)}).parse(input);
  const valid:Record<string,string[]>={
   submitted:['information_requested','ready_for_handoff'],
   information_requested:[],
-  ready_for_handoff:['forwarded'],
-  forwarded:['decision_recorded'],
+  ready_for_handoff:[],
+  forwarded:[],
  };
  assert(valid[app.status]?.includes(d.status),409,'APPLICATION_TRANSITION','This state transition is not permitted.');
- if(d.status==='ready_for_handoff'){
-  const unreviewed=await statement(env.DB,"SELECT COUNT(*) AS n FROM rental_application_documents WHERE application_id=? AND review_status='quarantined'",id).first<{n:number}>();
-  assert((unreviewed?.n??0)===0,409,'DOCUMENTS_UNREVIEWED','Review or reject quarantined documents before forwarding.');
- }
+ let handoff:Awaited<ReturnType<typeof stageRentalAppsScriptHandoff>>|null=null;
+ if(d.status==='ready_for_handoff')handoff=await stageRentalAppsScriptHandoff(env,app as Parameters<typeof stageRentalAppsScriptHandoff>[1]);
  const t=now();
  const statements=[
-  statement(env.DB,"UPDATE rental_applications SET status=?,version=version+1,updated_at=?,forwarded_at=CASE WHEN ?='forwarded' THEN ? ELSE forwarded_at END,decision_recorded_at=CASE WHEN ?='decision_recorded' THEN ? ELSE decision_recorded_at END WHERE id=? AND version=?",
-   d.status,t,d.status,t,d.status,t,id,d.version),
+  statement(env.DB,"UPDATE rental_applications SET status=?,version=version+1,updated_at=?,review_request_envelope=CASE WHEN ?='information_requested' THEN ? ELSE review_request_envelope END WHERE id=? AND version=?",
+   d.status,t,d.status,d.status==='information_requested'?await seal(env.DATA_ENCRYPTION_KEY,'rental-followup:'+id,{instructions:d.note,at:t}):null,id,d.version),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
-  await audit(env,id,d.status,user.id,{note:d.note}),
+  await audit(env,id,d.status,user.id,{note:d.note,deliveryMethod:'future_google_apps_script'}),
  ];
+ if(handoff)statements.push(handoff.stage);
  if(d.status==='information_requested'){
+  statements.push(statement(env.DB,"UPDATE rental_applicants SET state='in_progress',declared_at=NULL,notice_digest=NULL,version=version+1,updated_at=? WHERE application_id=? AND state='complete'",t,id));
   const primary=await statement(env.DB,"SELECT id,answers_envelope FROM rental_applicants WHERE application_id=? AND ordinal=1",id).first<{id:string;answers_envelope:string}>();
   assert(primary,409,'PRIMARY_MISSING','Primary applicant missing.');
   const answers=await unseal<Form18Answers>(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+primary.id,primary.answers_envelope);
@@ -78,43 +82,36 @@ export async function updateRentalStatus(env:Env,user:Principal,id:string,input:
    heading:'Your rental application requires more information',body:'Please use the original private application link or request a fresh link from the property page. ProInspect will not request financial or identity documents by ordinary email.',
    facts:{Reference:app.reference},href:link,sensitive:true}));
  }
- if(d.status==='forwarded'){
-  assert(app.application_recipient_email,409,'RECIPIENT_NOT_CONFIGURED','A verified agency/landlord recipient must be configured.');
-  statements.push(await mailEvent(env,'rental.application.forwarded',{to:app.application_recipient_email,
-   subject:'Rental application ready for secure handoff — '+app.reference,
-   heading:'Rental application ready for review',
-   body:'A ProInspect residential application is ready. Request access through the previously agreed secure handoff channel. Personal documents and application answers are not included in this email.',
-   facts:{Reference:app.reference,Property:app.display_address},sensitive:true}));
- }
  statements.push(statement(env.DB,'DELETE FROM mutation_guards'));
  await env.DB.batch(statements);
- return {ok:true,status:d.status};
+ return {ok:true,status:d.status,delivery:handoff?'awaiting_google_apps_script':null};
 }
 export async function reviewRentalDocument(env:Env,user:Principal,appId:string,docId:string,input:unknown){
  staff(user);assert(user.staffRole==='administrator',403,'SECURITY_REVIEW_REQUIRED','Administrator review required.');
  await appRow(env,appId);
- const d=z.object({status:z.enum(['released','rejected']),scanReference:z.string().trim().min(8).max(180)}).parse(input);
- const row=await statement(env.DB,"SELECT id FROM rental_application_documents WHERE application_id=? AND id=? AND review_status='quarantined'",appId,docId).first();
- assert(row,409,'DOCUMENT_REVIEWED','This document has already been reviewed or is not associated with the application.');
+ const d=z.object({status:z.enum(['released','rejected']),note:z.string().trim().min(8).max(300)}).parse(input);
+ const row=await statement(env.DB,"SELECT id,scan_status FROM rental_application_documents WHERE application_id=? AND id=? AND review_status='quarantined'",appId,docId).first<{id:string;scan_status:string}>();
+ assert(row,409,'DOCUMENT_REVIEWED','Document is no longer awaiting review.');
+ assert(d.status!=='released'||row.scan_status==='clean',409,'TRUSTED_SCAN_REQUIRED','Only an independently scanned clean document can be released.');
  await env.DB.batch([
   statement(env.DB,"UPDATE rental_application_documents SET review_status=?,reviewed_by=?,reviewed_at=? WHERE application_id=? AND id=? AND review_status='quarantined'",d.status,user.id,now(),appId,docId),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
-  await audit(env,appId,'document_reviewed',user.id,{documentId:docId,status:d.status,scanReference:d.scanReference}),
+  await audit(env,appId,'document_reviewed',user.id,{documentId:docId,status:d.status,note:d.note,scanStatus:row.scan_status}),
   statement(env.DB,'DELETE FROM mutation_guards'),
  ]);
  return {ok:true};
 }
 export async function rentalDocumentDownload(env:Env,user:Principal,appId:string,docId:string,quarantine=false){
  staff(user);await appRow(env,appId);
- const doc=await statement(env.DB,"SELECT id,object_key,filename,review_status FROM rental_application_documents WHERE application_id=? AND id=?",appId,docId).first<{id:string;object_key:string;filename:string;review_status:string}>();
+ const doc=await statement(env.DB,"SELECT id,object_key,filename,review_status,scan_status FROM rental_application_documents WHERE application_id=? AND id=?",appId,docId).first<{id:string;object_key:string;filename:string;review_status:string;scan_status:string}>();
  assert(doc,404,'DOCUMENT_NOT_FOUND','Document unavailable.');
- assert(doc.review_status==='released'||(quarantine&&doc.review_status==='quarantined'&&user.staffRole==='administrator'),
- 403,'DOCUMENT_QUARANTINED','The document has not passed controlled security review.');
+ assert(doc.review_status==='released'&&doc.scan_status==='clean',
+ 403,'DOCUMENT_QUARANTINED','Document is unavailable until an approved malware scanner confirms it is clean.');
  const obj=await env.RESTRICTED_DOCUMENTS.get(doc.object_key);assert(obj,404,'DOCUMENT_UNAVAILABLE','Document not found.');
  await env.DB.batch([
   statement(env.DB,"INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?, 'rental_document.downloaded','rental_application_document',?,'{}',?)",
    uid('aud'),user.id,doc.id,now()),
-  await audit(env,appId,'document_reviewed',user.id,{documentId:docId,action:quarantine?'quarantine_download':'released_download'}),
+  await audit(env,appId,'document_reviewed',user.id,{documentId:docId,action:'released_download'}),
  ]);
  const name=doc.filename.replace(/[^a-zA-Z0-9 ._()-]/g,'_').slice(0,110)||'document';
  return new Response(obj.body,{headers:{'Content-Type':'application/octet-stream',
