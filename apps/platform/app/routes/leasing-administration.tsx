@@ -14,7 +14,7 @@ async function send(path:string,payload:unknown,files=false){
  return body;
 }
 function Notices({rows,setRows}:{rows:Notice[];setRows:(x:Notice[])=>void}){
- return <div className="stack"><p className="small">Provide the exact written notice details supplied by the authorised leasing representative (Form 18 Attachment A).</p>
+ return <div className="stack"><p className="small">Provide the exact written notice details supplied by the authorised leasing representative (WA tenancy database notice (Form 18A guidance)).</p>
  {rows.map((r,i)=><div className="panel" key={i}><h4>Tenancy database {i+1}</h4>
   {(['name','operatorContact','accessInstructions'] as const).map(field=><label className="field" key={field}>
    {field==='name'?'Database name':field==='operatorContact'?'Operator contact details':'How applicants can obtain information'}
@@ -34,7 +34,7 @@ function ModeFields({kind,mode,setMode,noticeMode,setNoticeMode,notices,setNotic
   <select name="applicationMode" value={mode} onChange={e=>setMode(e.target.value as Mode)}>
    <option value="unavailable">Applications not currently available</option>
    <option value="external">Agency/landlord application portal</option>
-   {kind==='residential'&&<option value="proinspect">ProInspect Form 18-based application</option>}
+   {kind==='residential'&&<option value="proinspect">ProInspect online rental application</option>}
   </select>
  </label>
  {mode==='external'&&<label className="field">Approved application URL<input type="url" name="applicationUrl" required placeholder="https://agency.example/apply/property" maxLength={1000}/></label>}
@@ -133,7 +133,7 @@ function EditApplicationSettings({listing}:{listing:any}){
   <div className="panel stack"><label className="field">Application method
    <select value={mode} onChange={e=>setMode(e.target.value as Mode)}>
     <option value="unavailable">No applications</option><option value="external">Agency's own application link</option>
-    {listing.kind==='residential'&&<option value="proinspect">ProInspect-hosted Form 18 application</option>}
+    {listing.kind==='residential'&&<option value="proinspect">ProInspect online rental application</option>}
    </select></label>
    {mode==='external'&&<label className="field">Approved external URL<input type="url" name="applicationUrl" defaultValue={listing.application_url??''} required/></label>}
    {mode==='proinspect'&&<>
@@ -177,7 +177,7 @@ export default function StaffLeasing(){
  const {listings,clients}=useLoaderData<typeof loader>() as any;
  const data=useWorkspace();
  return <><PageHeading title="Property leasing administration" eyebrow="ProInspect operations"
-  description="Create and publish approved leasing advertisements, identify the instructing client and choose whether applications use the agency's portal or the authorised ProInspect Form 18 process."/>
+  description="Create and publish approved leasing advertisements, identify the instructing client and choose whether applications use the agency's portal or the authorised ProInspect residential application process."/>
  <div className="actions"><Link className="button secondary" to={data.workspace.href+'/rental-applications'}>View submitted rental applications</Link></div>
  <div className="stack"><CreateListing clients={clients} properties={data.properties}/>
   <section className="panel stack"><h2>Leasing property records</h2>
