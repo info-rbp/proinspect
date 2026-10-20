@@ -10,7 +10,7 @@ import {
  type AnswerStep, type Form18Answers,
 } from '../../../../packages/marketing/form18';
 
-type RentalRow={id:string;listing_id:string;reference:string;status:string;version:number;submitted_at:string|null;notice_envelope:string|null;started_at:string};
+type RentalRow={id:string;listing_id:string;reference:string;status:string;version:number;submitted_at:string|null;notice_envelope:string|null;review_request_envelope:string|null;started_at:string};
 type ApplicantRow={id:string;application_id:string;role:string;ordinal:number;state:string;email_hash:string;answers_envelope:string;version:number;access_expires_at:string;declared_at:string|null};
 type RentalListing={id:string;slug:string;title:string;display_address:string;suburb:string;postcode:string;agent_name:string;agent_role:string;application_mode:string;tenancy_database_notice_mode:string;tenancy_database_notice_json:string;application_recipient_email:string|null;status:string;kind:string};
 export const rentalEnabled=(env:Env)=>env.RENTAL_APPLICATIONS_ENABLED==='true'&&Boolean(env.DATA_ENCRYPTION_KEY&&env.RESTRICTED_DOCUMENTS&&hasRentalRetentionPolicy(env));
@@ -106,11 +106,14 @@ export async function rentalPage(env:Env,token:string){
   }
  }
  const configuredNotice=app.notice_envelope?await unseal<{mode:string;entries:{name:string;operatorContact:string;accessInstructions:string}[]}>(env.DATA_ENCRYPTION_KEY,'rental-notice:'+app.id,app.notice_envelope):null;
- const notice=configuredNotice?.entries??JSON.parse(l.tenancy_database_notice_json) as {name:string;operatorContact:string;accessInstructions:string}[];
+ const notice=(configuredNotice?.entries??JSON.parse(l.tenancy_database_notice_json)) as {name:string;operatorContact:string;accessInstructions:string}[];
+ const moreInformation=app.status==='information_requested'&&app.review_request_envelope?
+  await unseal<{instructions:string}>(env.DATA_ENCRYPTION_KEY,'rental-followup:'+app.id,app.review_request_envelope):null;
+ const privacyRequests=(await statement(env.DB,"SELECT kind,status,created_at FROM rental_application_privacy_requests WHERE applicant_id=? ORDER BY created_at DESC LIMIT 12",person.id).all()).results;
  return {reference:app.reference,status:app.status,version:person.version,role:person.role,ordinal:person.ordinal,
   state:person.state,declaredAt:person.declared_at,submittedAt:app.submitted_at,
   property:{title:l.title,address:l.display_address,suburb:l.suburb,agentName:l.agent_name},
-  notice:{mode:configuredNotice?.mode??l.tenancy_database_notice_mode,entries:notice},answers,documents,household};
+  notice:{mode:configuredNotice?.mode??l.tenancy_database_notice_mode,entries:notice},moreInformation,privacyRequests,answers,documents,household};
 }
 const allowedEdit=(status:string)=>['draft','information_requested'].includes(status);
 export async function saveRentalSection(env:Env,token:string,section:AnswerStep,raw:Record<string,unknown>,version:number){
@@ -122,7 +125,7 @@ export async function saveRentalSection(env:Env,token:string,section:AnswerStep,
  const values=cleanSection(section,raw);
  const updated={...answers,[section]:values};
  const result=await env.DB.batch([
-  statement(env.DB,"UPDATE rental_applicants SET answers_envelope=?,state='in_progress',declared_at=NULL,notice_digest=NULL,version=version+1,updated_at=? WHERE id=? AND version=? AND state!='removed'",
+  statement(env.DB,"UPDATE rental_applicants SET answers_envelope=?,state='in_progress',declared_at=NULL,notice_digest=NULL,version=version+1,updated_at=? WHERE id=? AND version=? AND state!='removed' AND EXISTS(SELECT 1 FROM rental_applications a WHERE a.id=rental_applicants.application_id AND a.status IN('draft','information_requested'))",
     await seal(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+person.id,updated),now(),person.id,version),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   await event(env,app.id,'section_saved',{section},person.id),
@@ -203,7 +206,7 @@ export async function finishRentalApplicant(env:Env,token:string,consent:unknown
  const noticeDigest=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name]));
  const t=now();
  await env.DB.batch([
-  statement(env.DB,"UPDATE rental_applicants SET state='complete',declared_at=?,notice_digest=?,version=version+1,updated_at=? WHERE id=? AND version=?",t,noticeDigest,t,person.id,version),
+  statement(env.DB,"UPDATE rental_applicants SET state='complete',declared_at=?,notice_digest=?,version=version+1,updated_at=? WHERE id=? AND version=? AND EXISTS(SELECT 1 FROM rental_applications a WHERE a.id=rental_applicants.application_id AND a.status IN('draft','information_requested'))",t,noticeDigest,t,person.id,version),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   await event(env,app.id,'applicant_completed',{formVersion:FORM18_VERSION,noticeMode:l.tenancy_database_notice_mode,declarations:d,at:t},person.id),
   statement(env.DB,'DELETE FROM mutation_guards'),
@@ -263,6 +266,7 @@ export async function withdrawRental(env:Env,token:string){
  await env.DB.batch([
   statement(env.DB,"UPDATE rental_applications SET status='withdrawn',withdrawn_at=?,retained_until=?,updated_at=?,version=version+1 WHERE id=? AND version=? AND status NOT IN('withdrawn','decision_recorded')",
    stamp,retentionDeadline(env,'withdrawn'),stamp,app.id,app.version),
+  statement(env.DB,"UPDATE rental_application_handoffs SET status='cancelled' WHERE application_id=? AND status='awaiting_script'",app.id),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   await event(env,app.id,'withdrawn',{at:stamp},person.id),
   statement(env.DB,'DELETE FROM mutation_guards'),
@@ -306,10 +310,11 @@ export async function deleteRentalDocument(env:Env,token:string,docId:string){
  const row=await statement(env.DB,'SELECT id,object_key FROM rental_application_documents WHERE id=? AND applicant_id=? AND application_id=?',
  docId,person.id,app.id).first<{id:string;object_key:string}>();
  assert(row,404,'DOCUMENT_NOT_FOUND','Document unavailable.');
+ await env.RESTRICTED_DOCUMENTS.delete(row.object_key);
  await env.DB.batch([
+  statement(env.DB,'DELETE FROM rental_document_scan_receipts WHERE document_id=?',row.id),
   statement(env.DB,'DELETE FROM rental_application_documents WHERE id=? AND applicant_id=?',row.id,person.id),
   await event(env,app.id,'document_removed',{documentId:row.id},person.id),
  ]);
- await env.RESTRICTED_DOCUMENTS.delete(row.object_key);
  return {deleted:true};
 }
