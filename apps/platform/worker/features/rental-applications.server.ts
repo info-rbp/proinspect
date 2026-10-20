@@ -11,7 +11,7 @@ import {
 } from '../../../../packages/marketing/form18';
 
 type RentalRow={id:string;listing_id:string;reference:string;status:string;version:number;submitted_at:string|null;notice_envelope:string|null;review_request_envelope:string|null;started_at:string};
-type ApplicantRow={id:string;application_id:string;role:string;ordinal:number;state:string;email_hash:string;answers_envelope:string;version:number;access_expires_at:string;declared_at:string|null};
+type ApplicantRow={id:string;application_id:string;role:string;ordinal:number;state:string;email_hash:string;answers_envelope:string;version:number;access_expires_at:string;declared_at:string|null;notice_digest:string|null};
 type RentalListing={id:string;slug:string;title:string;display_address:string;suburb:string;postcode:string;agent_name:string;agent_role:string;application_mode:string;tenancy_database_notice_mode:string;tenancy_database_notice_json:string;application_recipient_email:string|null;status:string;kind:string};
 export const rentalEnabled=(env:Env)=>env.RENTAL_APPLICATIONS_ENABLED==='true'&&Boolean(env.DATA_ENCRYPTION_KEY&&env.RESTRICTED_DOCUMENTS&&hasRentalRetentionPolicy(env));
 const expiry=()=>new Date(Date.now()+30*86400000).toISOString();
@@ -86,7 +86,7 @@ export async function tokenAccess(env:Env,token:string){
  enabled(env);
  assert(/^[a-f0-9]{64}$/.test(token),404,'APPLICATION_LINK_INVALID','Application link unavailable.');
  const tokenHash=await digest(token);
- const person=await statement(env.DB,"SELECT id,application_id,role,ordinal,state,email_hash,answers_envelope,version,access_expires_at,declared_at FROM rental_applicants WHERE access_token_hash=? AND access_expires_at>? AND state!='removed'",tokenHash,now()).first<ApplicantRow>();
+ const person=await statement(env.DB,"SELECT id,application_id,role,ordinal,state,email_hash,answers_envelope,version,access_expires_at,declared_at,notice_digest FROM rental_applicants WHERE access_token_hash=? AND access_expires_at>? AND state!='removed'",tokenHash,now()).first<ApplicantRow>();
  assert(person,404,'APPLICATION_LINK_EXPIRED','This application link is unavailable or expired.');
  const app=await statement(env.DB,'SELECT * FROM rental_applications WHERE id=?',person.application_id).first<RentalRow>();
  assert(app,404,'APPLICATION_UNAVAILABLE','Application unavailable.');
@@ -97,12 +97,14 @@ export async function tokenAccess(env:Env,token:string){
 export async function rentalPage(env:Env,token:string){
  const {person,app,l,answers}=await tokenAccess(env,token);
  const documents=(await statement(env.DB,'SELECT id,category,filename,size_bytes,review_status,uploaded_at FROM rental_application_documents WHERE applicant_id=? ORDER BY uploaded_at DESC',person.id).all()).results;
+ const expectedNotice=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name]));
+ const noticeMatches=person.notice_digest===expectedNotice;
  const household:{ordinal:number;state:string;maskedEmail:string;name:string}[]=[];
  if(person.role==='primary'){
-  const rows=(await statement(env.DB,"SELECT id,ordinal,state,answers_envelope FROM rental_applicants WHERE application_id=? AND state!='removed' ORDER BY ordinal",app.id).all<{id:string;ordinal:number;state:string;answers_envelope:string}>()).results;
+  const rows=(await statement(env.DB,"SELECT id,ordinal,state,notice_digest,answers_envelope FROM rental_applicants WHERE application_id=? AND state!='removed' ORDER BY ordinal",app.id).all<{id:string;ordinal:number;state:string;notice_digest:string|null;answers_envelope:string}>()).results;
   for(const p of rows){
    const details=await unseal<Form18Answers>(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+p.id,p.answers_envelope);
-   household.push({ordinal:p.ordinal,state:p.state,maskedEmail:maskedEmail(details.identity?.email??''),name:details.identity?.fullName??'Applicant'});
+   household.push({ordinal:p.ordinal,state:p.state==='complete'&&p.notice_digest!==expectedNotice&&allowedEdit(app.status)?'needs_review':p.state,maskedEmail:maskedEmail(details.identity?.email??''),name:details.identity?.fullName??'Applicant'});
   }
  }
  const configuredNotice=app.notice_envelope?await unseal<{mode:string;entries:{name:string;operatorContact:string;accessInstructions:string}[]}>(env.DATA_ENCRYPTION_KEY,'rental-notice:'+app.id,app.notice_envelope):null;
@@ -111,7 +113,7 @@ export async function rentalPage(env:Env,token:string){
   await unseal<{instructions:string}>(env.DATA_ENCRYPTION_KEY,'rental-followup:'+app.id,app.review_request_envelope):null;
  const privacyRequests=(await statement(env.DB,"SELECT kind,status,created_at FROM rental_application_privacy_requests WHERE applicant_id=? ORDER BY created_at DESC LIMIT 12",person.id).all()).results;
  return {reference:app.reference,status:app.status,version:person.version,role:person.role,ordinal:person.ordinal,
-  state:person.state,declaredAt:person.declared_at,submittedAt:app.submitted_at,
+  state:person.state,noticeMatches,declaredAt:person.declared_at,submittedAt:app.submitted_at,
   property:{title:l.title,address:l.display_address,suburb:l.suburb,agentName:l.agent_name},
   notice:{mode:configuredNotice?.mode??l.tenancy_database_notice_mode,entries:notice},moreInformation,privacyRequests,answers,documents,household};
 }
