@@ -499,7 +499,7 @@ try {
     assert.equal(verify.status,200,JSON.stringify(verify.data));
     assert.equal((await api('/api/guest/verify',{body:{token:request.data.localVerifyToken}})).status,404);
     const t=verify.data.localManageToken;
-    const avail=await api('/api/guest/availability?service=routine-inspection&date='+visitDate);
+    const avail=await api('/api/guest/availability?token='+t+'&date='+visitDate);
     assert.equal(avail.status,200,JSON.stringify(avail.data));
     assert.ok(avail.data.slots.length);
     const firstSlot=avail.data.slots[0].start;
