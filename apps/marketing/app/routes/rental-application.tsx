@@ -5,6 +5,7 @@ import { runtimeContext } from '../../../../packages/database/context';
 import { AppError, type Env } from '../../../../packages/database/types';
 import { rentalPage,saveRentalSection,inviteRentalApplicant,resendRentalInvitation,removeRentalApplicant,finishRentalApplicant,
  submitRental,withdrawRental,uploadRentalDocument,deleteRentalDocument } from '../../../platform/worker/features/rental-applications.server';
+import { requestRentalPrivacy } from '../../../platform/worker/features/rental-privacy.server';
 import { ANSWER_STEPS,FIELDS,FORM18_STEPS,stepComplete,type Form18Field,
  type Form18Step,type AnswerStep,type Form18Answers } from '../../../../packages/marketing/form18';
 import '../../../../packages/ui/rental-application.css';
@@ -77,6 +78,10 @@ export async function action({context,params,request}:ActionFunctionArgs){
    await submitRental(env,token);
    return redirect(target('review'));
   }
+  if(intent==='privacy-request'){
+   await requestRentalPrivacy(env,token,{kind:form.get('kind'),note:form.get('note')??''});
+   return redirect(target('review'));
+  }
   if(intent==='withdraw'){
    await withdrawRental(env,token);
    return redirect(target('review'));
@@ -133,7 +138,7 @@ function Household({people,editable}:{
   <div className="rental-household">{people.map(p=><div className="rental-household-card" key={p.ordinal}><div>
    <strong>{p.ordinal===1?'Primary applicant':'Applicant '+p.ordinal} — {p.name}</strong>
    <small>{p.maskedEmail}</small></div>
-   <div><span className={'rental-state'+(p.state==='complete'?'':' waiting')}>{p.state==='complete'?'Complete':p.state==='invited'?'Invited':'In progress'}</span>
+   <div><span className={'rental-state'+(p.state==='complete'?'':' waiting')}>{p.state==='complete'?'Complete':p.state==='needs_review'?'Review notice':p.state==='invited'?'Invited':'In progress'}</span>
     {editable&&p.ordinal>1&&<Form method="post"><input type="hidden" name="intent" value="remove"/><input type="hidden" name="ordinal" value={p.ordinal}/>
       <button className="rental-inline-button" type="submit">Remove</button></Form>}
     {editable&&p.ordinal>1&&<Form method="post"><input type="hidden" name="intent" value="resend"/><input type="hidden" name="ordinal" value={p.ordinal}/><button className="rental-inline-button" type="submit">Resend private link</button></Form>}
@@ -173,6 +178,7 @@ function Review({page,editable}:{page:any;editable:boolean}){
  const submitted=['submitted','ready_for_handoff','forwarded','decision_recorded'].includes(page.status);
  if(page.status==='withdrawn')return <div role="status" className="rental-success"><h2>Application withdrawn</h2><p>This application is no longer active. Retained information remains subject to our privacy and retention policy.</p></div>;
  return <>
+  {page.moreInformation&&<div className="rental-notice" role="status"><h3>More information requested</h3><p>{page.moreInformation.instructions}</p><p>Update the relevant section, then review and complete your declaration again.</p></div>}
   <div className="rental-section-note">Review your answers below. Only your own personal details appear here. Your co-applicants' confidential answers are not displayed to you.</div>
   <div className="rental-summary">{ANSWER_STEPS.map(step=><details key={step} open={step==='identity'}>
     <summary>{FORM18_STEPS.find(x=>x.id===step)?.title} · {stepComplete(answers,step)?'Complete':'Needs attention'}</summary>
@@ -188,10 +194,10 @@ function Review({page,editable}:{page:any;editable:boolean}){
     <p>The leasing representative has confirmed that tenancy databases are not used for this application. If that changes, an appropriate written notice must be provided.</p>}
    <p className="rental-legal">This is an electronic residential application, not a signed lease. Do not lodge identification documents by ordinary email. Authorised staff review uploaded files through restricted document storage.</p>
   </section>
-  {page.state==='complete'&&editable?<div className="rental-success"><h3>Your declaration is complete</h3><p>If you edit any section, you must declare again.</p></div>:null}
-  {editable&&page.state!=='complete'&&<Form method="post" className="rental-form">
+  {page.state==='complete'&&page.noticeMatches&&editable?<div className="rental-success"><h3>Your declaration is complete</h3><p>If you edit any section, you must declare again.</p></div>:null}
+  {editable&&(page.state!=='complete'||!page.noticeMatches)&&<Form method="post" className="rental-form">
    <input type="hidden" name="intent" value="finish"/><input type="hidden" name="version" value={page.version}/>
-   <h3>Your declaration</h3>
+   <h3>Your declaration</h3>{!page.noticeMatches&&page.state==='complete'&&<p className="rental-section-note">The tenancy database notice has changed. Review the current notice and acknowledge it again before the household can submit.</p>}
    <label className="rental-check"><input name="accurate" type="checkbox" value="yes" required/><span>I have reviewed my answers and believe they are accurate.</span></label>
    <label className="rental-check"><input name="shareWithRepresentative" type="checkbox" value="yes" required/><span>I authorise ProInspect to share my application details with {page.property.agentName}, the responsible leasing representative, solely for this application.</span></label>
    <label className="rental-check"><input name="notAnAgreement" type="checkbox" value="yes" required/><span>I understand this application is not a tenancy agreement or approval.</span></label>
@@ -199,12 +205,23 @@ function Review({page,editable}:{page:any;editable:boolean}){
    <button className="button rental-full-button" type="submit" disabled={!complete}>Complete my declaration</button>
    {!complete&&<p className="rental-muted">Complete the required application sections before declaring.</p>}
   </Form>}
-  {page.role==='primary'&&page.state==='complete'&&editable&&<div className="rental-form"><h3>Submit household application</h3>
+  {page.role==='primary'&&page.state==='complete'&&page.noticeMatches&&editable&&<div className="rental-form"><h3>Submit household application</h3>
    <p className="rental-muted">Every included applicant must complete their own declaration before final submission.</p>
    <Form method="post"><input type="hidden" name="intent" value="submit"/><button type="submit" className="button rental-full-button" disabled={pending}>{pending?'Waiting for additional applicants':'Submit application securely →'}</button></Form>
   </div>}
   {page.role!=='primary'&&page.state==='complete'&&editable&&<p className="rental-success">Your section is complete. The primary applicant will submit the household application when everyone is ready.</p>}
   {submitted&&<div role="status" className="rental-success"><h2>Application received</h2><p>Reference: <strong>{page.reference}</strong></p><p>Your application was submitted for administrative handling by ProInspect. The landlord or authorised leasing representative makes the tenancy decision. This is not an offer of tenancy.</p></div>}
+  <section className="rental-notice"><h3>Privacy, access and corrections</h3>
+   <p>You can request access to your personal information, ask for a correction or request erasure. A privacy request is reviewed before any retained record is removed; legal or operational obligations may affect what can be deleted.</p>
+   {page.privacyRequests?.length>0&&<ul className="rental-document-list">{page.privacyRequests.map((r:any,i:number)=><li key={i}><strong>{r.kind.replaceAll('_',' ')} request</strong><span className="rental-state">{r.status.replaceAll('_',' ')}</span></li>)}</ul>}
+   <Form method="post" className="rental-form"><input type="hidden" name="intent" value="privacy-request"/>
+    <div className="rental-field"><label htmlFor="privacy-kind">What do you need?</label><select name="kind" id="privacy-kind" required>
+      <option value="access">Access my information</option><option value="correction">Correct my information</option><option value="erasure">Request deletion of my information</option>
+    </select></div>
+    <div className="rental-field"><label htmlFor="privacy-note">Additional details (optional)</label><textarea name="note" id="privacy-note" maxLength={1200} rows={3} placeholder="Do not include identity document numbers or financial account details."/></div>
+    <button type="submit" className="button secondary">Send privacy request</button>
+   </Form>
+  </section>
   {editable&&page.role==='primary'&&<div className="rental-actions"><Link to="?step=documents">← Supporting documents</Link><Form method="post"><input name="intent" value="withdraw" type="hidden"/><button type="submit" className="rental-inline-button">Withdraw this application</button></Form></div>}
  </>;
 }
