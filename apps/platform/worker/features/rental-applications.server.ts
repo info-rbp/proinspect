@@ -77,7 +77,7 @@ export async function startRental(env:Env,request:Request,listingId:string,input
   statement(env.DB,"INSERT INTO rental_applicants(id,application_id,ordinal,role,email_hash,access_token_hash,access_expires_at,answers_envelope,state,created_at,updated_at) VALUES(?,?,1,'primary',?,?,?,?,'in_progress',?,?)",
     applicantId,appId,hash,tokenHash,expiry(),await seal(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+applicantId,initialAnswers(d.name,d.email)),t,t),
   await event(env,appId,'started',{propertyId:listingId,formVersion:FORM18_VERSION},applicantId),
-  await mailEvent(env,'rental.application.started',{to:d.email,subject:'Your ProInspect rental application link',heading:'Start your rental application',body:'Use this private link to complete your Form 18-based application. You may save and return later. This is not a tenancy offer.',href:mailLink(env,token),sensitive:true}),
+  await mailEvent(env,'rental.application.started',{to:d.email,subject:'Your ProInspect rental application link',heading:'Start your rental application',body:'Use this private link to complete your residential application. You may save and return later. This is not a tenancy offer.',href:mailLink(env,token),sensitive:true}),
  ]);
  return {sent:true};
 }
@@ -145,7 +145,7 @@ export async function inviteRentalApplicant(env:Env,token:string,input:unknown){
   statement(env.DB,"INSERT INTO rental_applicants(id,application_id,ordinal,role,email_hash,access_token_hash,access_expires_at,answers_envelope,created_at,updated_at) VALUES(?,?,?,'coapplicant',?,?,?,?,?,?)",
    invite,app.id,ordinal,hash,await digest(secret),expiry(),await seal(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+invite,initialAnswers(d.name,d.email)),t,t),
   await event(env,app.id,'coapplicant_invited',{ordinal},person.id),
-  await mailEvent(env,'rental.coapplicant.invited',{to:d.email,subject:'Complete your part of a rental application',heading:'You have been invited to apply',body:'The primary applicant invited you to complete your own Form 18 information. Your answers and documents are private and are not shared with other applicants.',href:mailLink(env,secret),sensitive:true}),
+  await mailEvent(env,'rental.coapplicant.invited',{to:d.email,subject:'Complete your part of a rental application',heading:'You have been invited to apply',body:'The primary applicant invited you to complete your own rental application details. Your answers and documents are private and are not shared with other applicants.',href:mailLink(env,secret),sensitive:true}),
  ]);
  return {invited:true};
 }
@@ -193,7 +193,7 @@ export async function finishRentalApplicant(env:Env,token:string,consent:unknown
  const {person,app,answers}=await tokenAccess(env,token);
  assert(allowedEdit(app.status),409,'APPLICATION_LOCKED','This application has already been submitted.');
  assert(person.version===version,409,'DRAFT_CHANGED','Reload your information before declaring.');
- assert(allDetailsComplete(answers),422,'FORM18_INCOMPLETE','Complete the required Form 18 sections before declaring.');
+ assert(allDetailsComplete(answers),422,'APPLICATION_INCOMPLETE','Complete the required application sections before declaring.');
  const d=z.object({accurate:z.literal(true),shareWithRepresentative:z.literal(true),
   notAnAgreement:z.literal(true),noticeAcknowledged:z.literal(true)}).parse(consent);
  const l=await listing(env,app.listing_id);
