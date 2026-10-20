@@ -1,8 +1,8 @@
 # Public Leasing: marketing launch contract (draft branch Leasing)
 
 ## Boundary and claims
-- Public property advertisements are a marketing capability only. ProInspect is an inspection/attendance provider **on behalf of** an explicitly identified landlord, leasing agent or property manager; it is not the landlord, managing agent or leasing agent.
-- The commercial/property manager retains leasing decisions and application responsibility. Public forms accept contact details only and explicitly reject identity documents, bank statements, access codes or other sensitive material.
+- Public property advertisements and inspection-registration forms are marketing capabilities. The optional private rental application is a separately gated intake workflow. ProInspect is an inspection/attendance provider **on behalf of** an explicitly identified landlord, leasing agent or property manager; it is not the landlord, managing agent or leasing agent.
+- The landlord/agency retains leasing decisions. Public inspection and interest forms accept contact details only; confidential application documents are accepted solely through the separately protected residential application workflow.
 - Distinct indexable pathways: `/properties-for-lease/residential`, `/properties-for-lease/commercial`, and their property detail pages.
 - Empty-state directories stay useful; no synthetic properties are seeded or presented as live opportunities.
 - Marketing header, mobile menu, homepage CTA and footer link to public leasing, without changing authenticated portal navigation.
@@ -17,14 +17,14 @@
 - Contact information is AES-GCM encrypted at rest; email equality is stored as a one-way keyed hash, never the email address. Submit idempotency is based on a UUID and fingerprint.
 - Inspection capacity is claimed atomically with the registration write; a cancelled session or full capacity must reject the operation.
 - Public Turnstile uses action `leasing` and the active hostname. This is a distinct action from the existing contact form.
-- Rental application links must be independently verified HTTPS URLs nominated by the responsible representative. The public site does not accept application documents.
+- External agency application links must be independently verified HTTPS URLs. Application documents are accepted only through ProInspect's gated, private residential application route, never public inspection registration.
 
 ## Customer journeys
 1. Property discovery: marketing header → residential/commercial directory → property detail and verified images.
 2. Open inspection: choose session → name/email/phone + explicit event consent → Turnstile → receipt and reference → email confirmation where delivery is configured.
 3. No session: select register interest → lead receipt and representative review; does not imply a booking.
 4. Cancel: unique unpredictable link in the confirmation email → confirmation page → POST cancellation; freed capacity.
-5. Apply: labelled external handoff to the representative's application provider; no application decisions on ProInspect.
+5. Apply: use the approved agency HTTPS link, the gated ProInspect residential application, or no Apply action depending on the authorised listing settings. ProInspect never decides whether to offer a tenancy.
 
 ## Google Apps Script integration preparation, NOT activated
 - `leasing_email_events` is an append-only durable, encrypted business-event table. Each event references a lead ID and type:
@@ -47,96 +47,138 @@
 - [ ] Reconcile branch against newest main without overwriting existing Google Calendar integration
 - [ ] Merge only after accepted checks; production Worker deployment remains managed by main
 
-## Form 18-based residential tenancy applications (extension)
+## Optional ProInspect residential application workflow
 
-The optional ProInspect application feature is an administrative intake and
-handoff service, not a leasing decision engine, a tenancy agreement or an
-applicant scoring tool. It is disabled in production pending acceptance.
+### Legal scope and field reference
 
-### Listing configuration and agency-link precedence
+The WA Consumer Protection Form 18 is listed as **helpful / not mandatory**.
+It is a design/reference template, not the document ProInspect must use.
+The ProInspect Rental Application is an original digital intake with conditional
+fields and separate applicant-specific disclosures. This workflow does not
+replace mandatory tenancy agreements, prescribed notices or other legal forms.
+Official guidance: https://www.consumerprotection.wa.gov.au/rental-forms-and-notices
 
-Authorised staff choose among:
-- External agency portal: the specific approved HTTPS URL is shown on the
-  public property page. No ProInspect form is offered.
-- ProInspect Form 18: residential only, requires written application-processing
-  authority, a named verified recipient, and completed Form 18 Attachment A
-  notice configuration.
-- Applications unavailable: no Apply action; property inspection registrations
-  and general expressions of interest remain separate.
+The tenancy-database disclosure is a distinct responsibility. If a landlord or
+agent typically uses tenancy databases, the legally required written notice
+must still be given to applicants. Form 18A is a useful example of that notice:
+https://www.consumerprotection.wa.gov.au/tenancy-databases
 
-Where an agency-supplied application URL exists, the ProInspect-hosted form
-cannot also be enabled. Switching away from ProInspect is prohibited while
-active drafts or lodged applications exist, preventing silent abandonment.
+Staff must confirm authority, responsibility, the collection purpose, and the
+correct notice details. No applicant scoring, auto-selection, lease execution or
+property-management authority is implied.
 
-### Applicant journey
+### Listing-level application modes
 
-1. Applicant opens a published residential listing and chooses Apply.
-2. The primary applicant enters name/email and gets a unique private email
-   link protected by Turnstile and rate limits.
-3. A mobile-first Form 18 wizard covers identity/contact details, rental
-   history, employment and income, personal references/next of kin/emergency
-   contact, supporting documents, and final review/declaration.
-4. Sections save as encrypted drafts. Passwordless applicant-specific links
-   expire after 30 days; a fresh primary link can be requested.
-5. The primary applicant may invite up to nine additional adult applicants.
-   Each receives a private email link; co-applicants cannot view each other's
-   answers or files. The primary sees only name, masked email and completion
-   status. An invitation may be resent, and pre-submission invitees removed.
-6. Each applicant declares their own information and acknowledges the
-   property-specific tenancy database notice. The primary can submit only
-   after every active household member completes the declaration.
-7. Submission creates an immutable encrypted Form 18-format household
-   snapshot with recorded disclosures and a restricted document manifest.
-   Subsequent information requests require a further recorded submission.
-8. The authorised operations reviewer may verify completeness and notify
-   the named leasing representative via reference-only email. Secure
-   transfer of complete records is a separate approved manual process.
-   The landlord/agency alone makes a tenancy decision.
+A listing chooses exactly one application route:
+- External: use only the agency's independently approved HTTPS application URL.
+- ProInspect: residential only; requires an explicit written processing authority,
+  designated agency/landlord recipient and tenancy-database notice settings.
+- Unavailable: no Apply action.
 
-### Supporting documents and security
+External URL precedence is enforced in validation and D1. Active drafts and
+submissions cannot be silently moved to a different provider. Changing an
+authorised recipient while applications are active is blocked.
 
-- Supported uploads: PDF, JPEG, PNG, WebP; maximum 8 MB per file and ten files
-  per applicant; type and file signature checks, SHA-256 duplicate detection.
-- Stored in private RESTRICTED_DOCUMENTS R2, not public marketing storage.
-  Applicant answers are encrypted at rest; access links are hashed in D1.
-- New files are quarantined. An administrator may only mark them released
-  after recording an independently verified malware/security scan reference.
-  There is NO built-in malware scanner or automatic approval.
-- Authorised downloads are audit logged, forced as attachments and served
-  with no-store headers. Public property and inspection routes do not expose
-  rental applications or supporting documents.
-- Removed pre-submission applicants have their access revoked and uploaded
-  documents deleted. Failures in private R2 cleanup require operational review.
-- Current retention/deletion rules, access requests and incident-response
-  procedures need written approval before handling actual applicants.
+### Applicant experience
 
-### Application states and output
+The application uses a six-step mobile-friendly wizard for personal/contact
+information, rental history, income/employment, references, documents and
+review/declaration. Questions adapt to prior rental and employment circumstances.
+The primary applicant can invite up to nine additional applicants. Each has
+their own 30-day private access link, encrypted draft, supporting documents and
+personal declaration. Co-applicants cannot view other applicants' detailed
+answers or files.
 
-Draft -> Submitted -> Information requested (optional) -> Resubmitted ->
-Ready for secure handoff -> Forwarded -> Decision recorded.
-Primary applicants can withdraw permitted active applications.
-This module does not approve applicants, negotiate tenancy terms or sign a lease.
+Every applicant must complete their declaration. Declarations are bound to the
+property's exact tenancy-database notice. A changed notice requires a new
+acknowledgement. The primary applicant submits only when the household is
+ready. Each submission or revision is stored as an immutable encrypted snapshot.
+The applicant receives a reference and confirmation. Submission is not an
+offer or approval of tenancy.
 
-An authorised staff reviewer can print/save a Form 18-format PDF summary
-from the latest immutable encrypted submission snapshot, including applicant
-sections and Attachment A notice. The generated document is clearly labelled
-as a digital equivalent, not the government-issued Form 18 template.
+Applicant requests for access, correction and erasure are available from the
+private application. An approved administrator reviews privacy requests and may
+apply an expiring legal/privacy hold before any irreversible purge.
 
-### Google Apps Script boundary
+### Documents: scanning and release
 
-The existing ProInspect encrypted notification outbox supports application
-invitations and receipt/handoff notifications. The future Google Apps Script
-adapter remains UNBUILT and INACTIVE. Sensitive applicant answers, identity
-documents and financial details are NOT sent as ordinary email attachments.
+Documents: PDF, JPEG, PNG or WebP, up to 8 MB each and 10 per applicant.
+The Worker checks file size, file header and duplicates. Files are stored only
+in the restricted Cloudflare R2 bucket and start quarantined.
 
-### Launch gate
+New migration 0009 requires a **trusted clean malware scan result** before a
+file can be released. An internal callback contract verifies a timestamped
+HMAC-SHA256 signature and event idempotency; it records the scanner's verdict,
+document digest and encrypted evidence. An administrator cannot manually invent
+a clean result by entering a text reference. Unsafe files are rejected, and
+quarantined/unsafe files cannot be downloaded from the ordinary staff UI.
+The scanner itself is **NOT provided** by this branch. An approved private scanner
+must be procured/integrated, with a data processing agreement and a private
+quarantine access mechanism; public scanning services are unsuitable for
+confidential application documents without explicit assessment.
 
-The connected environment uses RENTAL_APPLICATIONS_ENABLED=false. Local
-development enables the feature for testing. Production activation requires
-signed instructions from the authorised leasing representative, appropriate
-WA licensing review, reviewed current Form 18 and Attachment A wording,
-a privacy/retention schedule and deletion controls, an approved malware scan
-process, isolated staging tests (including multiple applicants, document
-quarantine, invite renewal, review, submission and secure handoff), and
-explicit release approval. Merging code alone does not authorise collecting
-actual renter information.
+### Retention, privacy and erasure
+
+Three retention periods are explicit operational configuration settings:
+RENTAL_RETENTION_DRAFT_DAYS, RENTAL_RETENTION_SUBMITTED_DAYS and
+RENTAL_RETENTION_WITHDRAWN_DAYS. Missing or out-of-range settings stop the
+application workflow from enabling. The Wrangler local values are **examples**,
+not claims of a legislated retention period.
+
+An approved administrator can hold records, handle access/correction/deletion
+requests and purge closed applications. Purging deletes restricted R2 objects
+before D1 metadata, private answers, events, snapshots and tokens. A minimal
+non-personal irreversible audit receipt remains. Deletion is blocked when a
+legal/privacy hold or pending agency handoff exists. Errors leave records
+available for retry, rather than silently orphaning files.
+
+Scheduled expired-record cleanup is separately gated by
+RENTAL_RETENTION_AUTOPURGE_ENABLED (false in connected production). It only
+purges eligible closed or abandoned drafts; active submissions require review.
+Policies for legal holds, backups, erasure, correction requests and incident
+response must be approved before the automation is enabled.
+
+### Google Apps Script agency/landlord email handoff
+
+**Intended handoff: Google Apps Script sends the application data in a
+professionally formatted email to the verified agency/landlord recipient.**
+That script is intentionally left for the later integration stage.
+
+The Leasing branch now stages a recipient-bound, idempotent handoff referencing
+the precise immutable household submission. Its state is awaiting_script;
+no sensitive payload is sent and no agency delivery is claimed.
+The database prohibits a delivered handoff or forwarded application until a
+future audited integration and delivery acknowledgement are implemented.
+Applicants and operational staff receive only separately authorised lifecycle
+notices through the existing notification outbox.
+
+The future script must use authenticated, signed, expiring Worker-to-Script
+messages; deduplicate deliveries; escape HTML; send only to the verified
+recipient; respect withdrawal and scanned-document status; and return an
+authenticated acknowledgement. Personal financial/identity information and
+supporting files require a separately approved delivery-security decision
+before email sending is enabled. This is not a generic unsecured email dump.
+See docs/RENTAL_APPS_SCRIPT_HANDOFF.md for the proposed technical contract.
+
+### Production release prerequisites
+
+Connected production remains **RENTAL_APPLICATIONS_ENABLED=false**, with
+scanner credentials unconfigured and automatic retention purging disabled.
+No rental data should be collected through this new workflow until:
+
+- The instructing landlord or licensed agency's written authority and service
+  boundary have been independently reviewed.
+- The privacy notice, data collection/consent, third-party processing, retention
+  timeframes, deletion and incident-response procedure are approved.
+- The tenancy-database notice is supplied where legally required and checked.
+- A private malware scanner is connected to the signed scan callback and
+  demonstrated to reject malicious/non-scanned files.
+- A secure Google Apps Script email handoff, recipient verification, idempotent
+  receipt and privacy controls have been implemented and accepted.
+- Migration 0009 is verified in an isolated staging database and a full mobile,
+  co-applicant, scan, withdrawal, privacy and delivery-acknowledgement UAT runs.
+- The release owner explicitly approves activation; branch merge is not itself
+  authorisation to begin taking applications.
+
+This module does not perform a legal licensing assessment and should not be
+described as a fully operational leasing agency service.
