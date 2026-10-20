@@ -77,7 +77,7 @@ export default function ServicePage() {
               <p className="mkt-booking-note">Booking and timing are subject to confirmed scope, price, access and availability.</p>
             </div>
             <div className="mkt-detail-visual">
-              <PropertyArtwork kind={s.sectors.includes('commercial') && !s.sectors.includes('residential') ? 'commercial' : s.sectors.includes('strata-building') && !s.sectors.includes('residential') ? 'strata' : 'residential'} />
+              <PropertyArtwork slot="service-hero" kind={s.sectors.includes('commercial') && !s.sectors.includes('residential') ? 'commercial' : s.sectors.includes('strata-building') && !s.sectors.includes('residential') ? 'strata' : 'residential'} />
               <div className="mkt-detail-visual-tag">Property attendance <span aria-hidden="true">·</span> Recorded outcome</div>
             </div>
           </div>
