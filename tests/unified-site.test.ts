@@ -28,11 +28,16 @@ test('the public home, every service and all content routes are part of the one 
 test('public marketing pages are indexable only on the canonical domain, private pages never are', () => {
   for (const publicPath of ['/', '/services', '/contact', '/services/routine-inspection',
     '/sectors/strata-building', '/how-it-works', '/resources', '/resources/pre-vacate-vs-final',
-    '/why-proinspect', '/privacy', '/sitemap.xml', '/robots.txt']) {
+    '/why-proinspect', '/sitemap.xml', '/robots.txt']) {
     assert.equal(isPublicSitePath(publicPath), true, publicPath);
     assert.equal(shouldIndexPublicPage(publicPath, 'https://proinspect.systems', 'production'), true);
     assert.equal(shouldIndexPublicPage(publicPath, 'https://some-preview.workers.dev', 'production'), false);
     assert.equal(shouldIndexPublicPage(publicPath, 'https://proinspect.systems', 'local'), false);
+  }
+  // The drafts are public pages but must never be indexed until formally approved.
+  for (const draft of ['/privacy', '/terms']) {
+    assert.equal(isPublicSitePath(draft), true);
+    assert.equal(shouldIndexPublicPage(draft, 'https://proinspect.systems', 'production'), false);
   }
   for (const privatePath of ['/signin', '/auth/complete', '/account', '/onboarding',
     '/book/routine-inspection', '/w/landlord/abc', '/workspaces', '/api/session']) {
