@@ -6,6 +6,7 @@ import { consumeQueue, dispatchOutbox } from '../../../packages/notifications/se
 import { dispatchNotices } from '../../../packages/notifications/notices';
 import { dispatchIntegrations } from './features/integrations.server';
 import { dispatchLeasingReminders } from './features/leasing.server';
+import { dispatchRentalRetention } from './features/rental-privacy.server';
 import { shouldIndexPublicPage } from '../app/lib/public-routes';
 import { readOnlyCalendarDiagnostic, shouldRunCalendarReleaseProbe } from './features/google-calendar.server';
 export { BookingScheduler } from './scheduler';
@@ -41,6 +42,7 @@ export default {
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(dispatchLeasingReminders(env).then(() => dispatchNotices(env)).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchIntegrations(env));
+    ctx.waitUntil(dispatchRentalRetention(env));
     // Check the scheduled trigger time, not actual execution time: Cron
     // invocations may start later than their scheduled minute.
     // Temporary, automatically expiring read-only release smoke test.
