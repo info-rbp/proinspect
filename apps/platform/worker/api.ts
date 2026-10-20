@@ -1,5 +1,6 @@
 import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
 import { listRentalApplications,rentalStaffDetail,updateRentalStatus,reviewRentalDocument,rentalDocumentDownload } from './features/rental-review.server';
+import { acceptRentalScan } from './features/rental-malware.server';
 import { accountData, updateAccount, revokeSessions } from './features/account.server';
 import { receiveEnquiry } from './features/enquiries.server';
 import { ZodError, z } from 'zod';
@@ -277,6 +278,8 @@ export async function handleApi(
         { ok: true },
         { headers: { 'Set-Cookie': await signOut(request, env) } },
       );
+    if(path==='/api/internal/rental-document-scan' && method==='POST')
+      return Response.json(await acceptRentalScan(env,request));
     const user = await requireUser(request, env);
     const rentalStaff=path.match(/^\/api\/staff\/rental-applications(?:\/(.*))?$/);
     if(rentalStaff){
