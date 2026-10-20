@@ -94,3 +94,12 @@ CREATE INDEX rental_scan_receipts_doc ON rental_document_scan_receipts(document_
 
 -- Bind declarations to the exact tenancy database notice presented to each applicant.
 ALTER TABLE rental_applicants ADD COLUMN notice_digest TEXT;
+
+-- A withdrawal or purge in progress must also block an upload that was
+-- started before the application was withdrawn.
+CREATE TRIGGER rental_upload_requires_editable_application BEFORE INSERT ON rental_application_documents
+ WHEN NOT EXISTS(SELECT 1 FROM rental_applications a WHERE a.id=NEW.application_id
+ AND a.status IN('draft','information_requested'))
+ BEGIN SELECT RAISE(ABORT,'RENTAL_DOCUMENT_UPLOAD_CLOSED'); END;
+CREATE UNIQUE INDEX rental_privacy_one_open_request ON rental_application_privacy_requests(applicant_id,kind)
+ WHERE status IN('requested','in_review');
