@@ -19,6 +19,10 @@
     "APP_ORIGIN": "http://localhost:5173",
     "EMAIL_PROVIDER": "local",
     "RENTAL_APPLICATIONS_ENABLED": "true",
+    "RENTAL_RETENTION_DRAFT_DAYS": "30",
+    "RENTAL_RETENTION_SUBMITTED_DAYS": "180",
+    "RENTAL_RETENTION_WITHDRAWN_DAYS": "30",
+    "RENTAL_RETENTION_AUTOPURGE_ENABLED": "false",
     "MARKETING_ORIGIN": "http://localhost:5173"
   },
   "d1_databases": [
@@ -90,6 +94,7 @@
         "OPERATIONS_EMAIL": "info@proinspect.systems",
         "RESTRICTED_WORKFLOWS_ENABLED": "false",
         "RENTAL_APPLICATIONS_ENABLED": "false",
+        "RENTAL_RETENTION_AUTOPURGE_ENABLED": "false",
         "PLATFORM_ORIGIN": "https://proinspect-platform.delicate-dream-e4c9.workers.dev"
       },
       "d1_databases": [
