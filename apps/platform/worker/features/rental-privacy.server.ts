@@ -56,7 +56,7 @@ export async function resolveRentalPrivacyRequest(env:Env,user:Principal,appId:s
 }
 export async function setRentalPrivacyHold(env:Env,user:Principal,appId:string,input:unknown){
  administrator(user);
- const d=z.object({holdUntil:z.string().datetime({offset:true}).nullable(),
+ const d=z.object({holdUntil:z.string().datetime({offset:true}).nullable().optional().default(null),
   reason:z.string().trim().min(12).max(700)}).parse(input);
  if(d.holdUntil){
   const end=new Date(d.holdUntil).getTime();
