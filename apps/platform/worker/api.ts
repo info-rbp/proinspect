@@ -1,6 +1,7 @@
 import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
 import { listRentalApplications,rentalStaffDetail,updateRentalStatus,reviewRentalDocument,rentalDocumentDownload } from './features/rental-review.server';
 import { acceptRentalScan } from './features/rental-malware.server';
+import { setRentalPrivacyHold,resolveRentalPrivacyRequest,eraseRentalForRequest } from './features/rental-privacy.server';
 import { accountData, updateAccount, revokeSessions } from './features/account.server';
 import { receiveEnquiry } from './features/enquiries.server';
 import { ZodError, z } from 'zod';
@@ -288,6 +289,12 @@ export async function handleApi(
       if(method==='GET'&&tail.length===0)return Response.json(await listRentalApplications(env,user,url.searchParams.get('listingId')??undefined));
       if(method==='GET'&&tail.length===1)return Response.json(await rentalStaffDetail(env,user,tail[0]));
       if(method==='POST'&&tail.length===2&&tail[1]==='status')return Response.json(await updateRentalStatus(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===2&&tail[1]==='privacy-hold')
+        return Response.json(await setRentalPrivacyHold(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===2&&tail[1]==='erase')
+        return Response.json(await eraseRentalForRequest(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===3&&tail[1]==='privacy')
+        return Response.json(await resolveRentalPrivacyRequest(env,user,tail[0],tail[2],await json(request)));
       if(tail.length===4&&tail[1]==='documents'&&tail[3]==='review'&&method==='POST')
         return Response.json(await reviewRentalDocument(env,user,tail[0],tail[2],await json(request)));
       if(tail.length===4&&tail[1]==='documents'&&tail[3]==='download'&&method==='GET')
