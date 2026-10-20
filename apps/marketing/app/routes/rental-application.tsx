@@ -223,7 +223,7 @@ function Review({page,editable}:{page:any;editable:boolean}){
     <button type="submit" className="button secondary">Send privacy request</button>
    </Form>
   </section>
-  {editable&&page.role==='primary'&&<div className="rental-actions"><Link to="?step=documents">← Supporting documents</Link><Form method="post"><input name="intent" value="withdraw" type="hidden"/><button type="submit" className="rental-inline-button">Withdraw this application</button></Form></div>}
+  {page.role==='primary'&&editable&&<div className="rental-actions"><Link to="?step=documents">← Supporting documents</Link></div>}{page.role==='primary'&&!['withdrawn','decision_recorded'].includes(page.status)&&<div className="rental-actions"><Form method="post"><input name="intent" value="withdraw" type="hidden"/><button type="submit" className="rental-inline-button">Withdraw this application</button></Form></div>}
  </>;
 }
 function Entry({label,value}:{label:string;value:string}){return <><dt>{label}</dt><dd>{value}</dd></>;}
@@ -234,7 +234,7 @@ export default function RentalApplication(){
  const selected=params.get('step') as Form18Step;
  const step=FORM18_STEPS.some(s=>s.id===selected)?selected:'identity';
  const index=FORM18_STEPS.findIndex(s=>s.id===step);
- const editable=['draft','information_requested'].includes(page.status);
+ const editable=page.intakeEnabled&&['draft','information_requested'].includes(page.status);
  const stepDef=FORM18_STEPS[index];
  const percent=Math.round((index+1)/FORM18_STEPS.length*100);
  return <div className="rental-shell"><div className="site-container">
