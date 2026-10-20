@@ -8,7 +8,7 @@ const example={identity:{fullName:'Example Applicant',email:'example@example.tes
  rental:{hasRentalHistory:'No'},employment:{employmentType:'Student'},references:{}};
 test('digital Form 18 follows the uploaded form sections for each applicant',()=>{
  assert.deepEqual(FORM18_STEPS.map(x=>x.id),['identity','rental','employment','references','documents','review']);
- assert.ok(FORM18_VERSION.startsWith('form18-digital-'));
+ assert.ok(FORM18_VERSION.startsWith('proinspect-rental-application-'));
  assert.ok(FIELDS.identity.some(f=>f.key==='dateOfBirth'));
  assert.ok(FIELDS.rental.some(f=>f.key==='reasonLeaving'));
  assert.ok(FIELDS.employment.some(f=>f.key==='netIncome'));
