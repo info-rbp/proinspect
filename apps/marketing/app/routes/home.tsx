@@ -87,7 +87,7 @@ export default function Home() {
             <div className="mkt-hero-context">One property or a portfolio. A single attendance or an agreed ongoing scope.</div>
           </div>
           <div className="mkt-hero-visual">
-            <PropertyArtwork kind="residential" className="mkt-hero-property" />
+            <PropertyArtwork kind="residential" className="mkt-hero-property" slot="home-hero" />
             <div className="mkt-hero-overlay">
               <p className="mkt-kicker">The ProInspect approach</p>
               <div><span>01</span><strong>On-site work</strong></div>
@@ -137,7 +137,7 @@ export default function Home() {
           <div className="mkt-sector-grid">
             {sectorCards.map((sector) => (
               <Link className="mkt-sector-card" key={sector.id} to={'/sectors/' + sector.id}>
-                <PropertyArtwork kind={sector.artwork} />
+                <PropertyArtwork kind={sector.artwork} slot={sector.artwork === 'strata' ? 'sector-strata' : sector.artwork === 'commercial' ? 'sector-commercial' : 'sector-residential'} />
                 <div className="mkt-sector-content">
                   <span className="mkt-sector-label">{sector.label}</span>
                   <h3>{sector.heading}</h3>
