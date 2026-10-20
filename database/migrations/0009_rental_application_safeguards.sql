@@ -103,3 +103,6 @@ CREATE TRIGGER rental_upload_requires_editable_application BEFORE INSERT ON rent
  BEGIN SELECT RAISE(ABORT,'RENTAL_DOCUMENT_UPLOAD_CLOSED'); END;
 CREATE UNIQUE INDEX rental_privacy_one_open_request ON rental_application_privacy_requests(applicant_id,kind)
  WHERE status IN('requested','in_review');
+
+-- Information requests are displayed only behind the applicant's private link.
+ALTER TABLE rental_applications ADD COLUMN review_request_envelope TEXT;
