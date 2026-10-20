@@ -106,3 +106,14 @@ CREATE UNIQUE INDEX rental_privacy_one_open_request ON rental_application_privac
 
 -- Information requests are displayed only behind the applicant's private link.
 ALTER TABLE rental_applications ADD COLUMN review_request_envelope TEXT;
+
+CREATE TRIGGER rental_invitation_requires_editable_application BEFORE INSERT ON rental_applicants
+ WHEN NOT EXISTS(SELECT 1 FROM rental_applications a WHERE a.id=NEW.application_id
+ AND a.status IN('draft','information_requested'))
+ BEGIN SELECT RAISE(ABORT,'RENTAL_INVITATIONS_CLOSED'); END;
+-- Do not permit changing the designated recipient mid-application.
+CREATE TRIGGER rental_recipient_change_guard BEFORE UPDATE OF application_recipient_email ON leasing_listings
+ WHEN COALESCE(OLD.application_recipient_email,'')!=COALESCE(NEW.application_recipient_email,'')
+ AND EXISTS(SELECT 1 FROM rental_applications a WHERE a.listing_id=OLD.id
+ AND a.status IN('draft','submitted','information_requested','ready_for_handoff','forwarded'))
+ BEGIN SELECT RAISE(ABORT,'RENTAL_RECIPIENT_CHANGE_REQUIRES_RECONCILIATION'); END;
