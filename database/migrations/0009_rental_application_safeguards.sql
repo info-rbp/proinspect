@@ -91,3 +91,6 @@ CREATE TABLE rental_document_scan_receipts (
  received_at TEXT NOT NULL
 ) STRICT;
 CREATE INDEX rental_scan_receipts_doc ON rental_document_scan_receipts(document_id);
+
+-- Bind declarations to the exact tenancy database notice presented to each applicant.
+ALTER TABLE rental_applicants ADD COLUMN notice_digest TEXT;
