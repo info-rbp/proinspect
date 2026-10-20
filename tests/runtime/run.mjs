@@ -510,7 +510,7 @@ try {
     assert.equal(record.user_id,'usr_guest_booking_system');
     assert.equal((await first('SELECT status,total_cents FROM payments WHERE work_order_id=?',record.work_order_id)).status,'payment_required');
     assert.equal((await api('/api/guest/manage',{body:{token:'f'.repeat(64),action:'cancel'}})).status,404);
-    const busy=await api('/api/guest/availability?service=routine-inspection&date='+visitDate);
+    const busy=await api('/api/guest/availability?token='+t+'&date='+visitDate);
     assert.equal(busy.data.slots.some(s=>s.start===firstSlot),false);
     const cancelled=await api('/api/guest/manage',{body:{token:t,action:'cancel'}});
     assert.equal(cancelled.status,200,JSON.stringify(cancelled.data));
