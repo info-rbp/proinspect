@@ -230,7 +230,7 @@ export async function handleApi(
     if (path === '/api/guest/requests' && method === 'POST') return Response.json(await guest.beginGuest(request,env),{status:201});
     if (path === '/api/guest/verify' && method === 'POST') return Response.json(await guest.verifyGuest(request,env));
     if (path === '/api/guest/quote' && method === 'POST') return Response.json(await guest.acceptGuestQuote(request,env));
-    if (path === '/api/guest/manage' && method === 'POST') return guest.guestAction(request,env);
+    if (path === '/api/guest/manage' && method === 'POST') { const result=await guest.guestAction(request,env); return result instanceof Response?result:Response.json(result); }
     if (path === '/api/guest/status' && method === 'GET') return Response.json(await guest.guestStatus(env,url.searchParams.get('token')??''));
     if (path === '/api/guest/availability' && method === 'GET') return Response.json(await guest.guestAvailability(env,url.searchParams.get('service')??'',url.searchParams.get('date')??''));
     if (path === '/api/guest/report' && method === 'GET') return guest.guestReport(env,url.searchParams.get('token')??'');
