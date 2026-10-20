@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
-/** Form 18 (WA) field groups, reflowed for small screens. Not a tenancy agreement. */
+/** ProInspect intake categories informed by optional WA Form 18; they are not a prescribed form. */
 export const FORM18_STEPS = [
- {id:'identity', title:'Your details', help:'Identity and contact details from Form 18.'},
+ {id:'identity', title:'Your details', help:'Basic identity and contact information.'},
  {id:'rental', title:'Rental history', help:'Your previous rental arrangements, if any.'},
- {id:'employment', title:'Employment and income', help:'Employment and income information requested in Form 18.'},
+ {id:'employment', title:'Employment and income', help:'Employment and income information relevant to your application.'},
  {id:'references', title:'References and contacts', help:'Personal references, next of kin and an emergency contact.'},
  {id:'documents', title:'Supporting documents', help:'Attach documents requested for this application. You can remove a file before submission.'},
  {id:'review', title:'Review and declare', help:'Check your answers, review the notices and complete your declaration.'},
