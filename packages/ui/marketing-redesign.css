@@ -167,7 +167,7 @@
 .site .mkt-related-card { display:flex; flex-direction:column; gap:.7rem; padding:1.5rem; background:#fff; border:1px solid var(--mkt-line); border-radius:9px; }
 .site .mkt-related-card p:not(.mkt-kicker) { line-height:1.7; font-size:.85rem; flex:1; }
 @media(max-width:1170px) { .site .mkt-site-links { gap:.9rem; } .site .mkt-site-header { gap:1rem; } .site .mkt-hero-copy h1 { font-size:clamp(2.5rem,4.4vw,4.2rem); } }
-@media(max-width:1050px) {
+@media(max-width:1100px) {
   .site .mkt-site-links { display:none!important; }
   .site .marketing-menu { display:block; order:4; }
   .site .marketing-menu summary { color:#fff; display:flex; gap:.4rem; align-items:center; font-size:.8rem; }
@@ -346,4 +346,52 @@
 @media(max-width:540px) {
   .site .mkt-service-record-preview { padding:1.3rem; }
   .site .mkt-service-record-line { grid-template-columns:1fr; gap:.2rem; }
+}
+
+
+/* Merge-readiness a11y pass: darken informative small text (WCAG 2.2 AA targets).
+   These overrides affect public .site only, never authenticated workspaces. */
+.site .mkt-card-number,
+.site .mkt-inclusion-index,
+.site .mkt-report-top,
+.site .mkt-report-subtitle,
+.site .mkt-image-disclosure,
+.site .mkt-hero-context,
+.site .mkt-booking-note {
+  color: #476a65;
+}
+.site .mkt-card-number { font-size: .78rem; }
+.site .mkt-nav-caption { color: #49665f; font-size: .75rem; }
+.site .mkt-report-top { font-size: .75rem; }
+.site .mkt-report-subtitle { font-size: .76rem; }
+.site .mkt-report-row { font-size: .76rem; }
+.site .mkt-report-note { font-size: .78rem; color: #304d4a; }
+.site .mkt-image-disclosure { font-size: .8rem !important; }
+.site .mkt-hero-overlay .mkt-kicker { color: #cbece4; }
+.site .mkt-report-preview .mkt-report-brand { color: #174850; }
+.site .mkt-site-footer .mkt-nav-caption { color: #e8f5f1; }
+.site .mkt-hero-copy .eyebrow, .site .mkt-section .eyebrow { color: #0e6a65; }
+.site .mkt-process-section .eyebrow,
+.site .mkt-final-cta .eyebrow { color: #b9e1d4; }
+.site .mkt-sector-label,
+.site .mkt-kicker,
+.site .mkt-current-label { color: #0e6a65; }
+/* Ensure real text-link targets meet minimum touch size and focus stays visible. */
+.site .mkt-text-link,
+.site .mkt-footer-group a,
+.site .mkt-breadcrumbs a,
+.site .mkt-footer-bottom a { min-height: 28px; align-items: center; }
+.site .mkt-faq-list summary { min-height: 44px; }
+.site :is(a, button, summary, input, textarea, select):focus-visible {
+  outline: 3px solid #123e43;
+  outline-offset: 3px;
+}
+.site :is(.mkt-header-wrap, .mkt-final-cta, .mkt-process-section, .mkt-site-footer)
+:is(a, button, summary):focus-visible { outline-color: #f1c889; }
+.site :is(.mkt-header-wrap, .mkt-final-cta, .mkt-process-section, .mkt-site-footer)
+:is(a, button, summary):focus-visible { box-shadow: 0 0 0 2px #102e35; }
+@media (forced-colors: active) {
+  .site :is(a, button, summary, input, textarea, select):focus-visible { outline: 3px solid Highlight; }
+  .site .mkt-hero-overlay { background: Canvas; color: CanvasText; border: 1px solid CanvasText; }
+  .site .mkt-abstract-art { border: 1px solid CanvasText; }
 }
