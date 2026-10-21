@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse --abbrev-ref HEAD)" = HEAD
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git cat-file -e e819659dba660e85b88a013257806e6462f4c38e^{commit}
           git diff --exit-code e819659dba660e85b88a013257806e6462f4c38e HEAD -- 'database/migrations/000[1-6]_*.sql'
           node --check scripts/release/v3-staging-resources.mjs
