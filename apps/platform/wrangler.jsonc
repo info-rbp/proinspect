@@ -19,8 +19,6 @@
     "APP_ORIGIN": "http://localhost:5173",
     "EMAIL_PROVIDER": "local",
     "OPEN_HOME_SHEET_SYNC_ENABLED": "false",
-        "OPEN_HOME_REPORTS_ENABLED": "false",
-        "OPEN_HOME_REPORT_EMAIL_PROVIDER": "cloudflare",
     "OPEN_HOME_REPORTS_ENABLED": "false",
     "OPEN_HOME_REPORT_EMAIL_PROVIDER": "cloudflare",
     "RENTAL_APPLICATIONS_ENABLED": "true",
@@ -97,6 +95,8 @@
         "MARKETING_ORIGIN": "https://proinspect-platform.delicate-dream-e4c9.workers.dev",
         "EMAIL_PROVIDER": "resend",
         "OPEN_HOME_SHEET_SYNC_ENABLED": "false",
+        "OPEN_HOME_REPORTS_ENABLED": "false",
+        "OPEN_HOME_REPORT_EMAIL_PROVIDER": "cloudflare",
         "EMAIL_FROM": "info@proinspect.systems",
         "OPERATIONS_EMAIL": "info@proinspect.systems",
         "RESTRICTED_WORKFLOWS_ENABLED": "false",
@@ -160,7 +160,8 @@
       ],
       "triggers": {
         "crons": [
-          "*/2 * * * *"
+          "*/2 * * * *",
+          "0 1 * * *"
         ]
       }
     }
