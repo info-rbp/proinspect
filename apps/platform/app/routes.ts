@@ -35,6 +35,7 @@ export default [
   route('auth/complete', 'routes/auth-complete.tsx'),
   route('signout', 'routes/signout.tsx'),
   route('account', 'routes/account.tsx'),
+  route('open-home/report/:sessionId', 'routes/open-home-report.tsx'),
   route('onboarding', 'routes/onboarding.tsx'),
   route('organisation', 'routes/organisation.tsx'),
   route('owner-decisions', 'routes/owner-decisions.tsx'),
