@@ -38,7 +38,20 @@ try{
  await inspect('/properties-for-lease',200,true);
  await inspect('/open-home/check-in',200,true);
  await inspect('/api/public/open-home/sessions',200);
+ await inspect('/api/public/leasing',200);
+ await inspect('/api/catalogue',200);
+ await inspect('/signin',200,true);
+ await inspect('/privacy',200,true);
+ await inspect('/terms',200,true);
  await inspect('/api/guest/report?token='+('f'.repeat(64)),404);
+ // All of these requests are anonymous, synthetic, read-only and must never
+ // leak a tenant, client, staff, rental applicant or Open Home recipient record.
+ await inspect('/api/staff/open-home-checkins?listingId=lst_synthetic',401);
+ await inspect('/api/staff/rental-applications',401);
+ await inspect('/api/staff/calendar-diagnostic',401);
+ await inspect('/api/open-home/report/session_synthetic',401);
+ await inspect('/api/open-home/report/session_synthetic.csv',401);
+ await inspect('/api/w/landlord/scope_synthetic',401);
  mkdirSync('artifacts',{recursive:true});
  const report={status:'PASS',sourceSha:source,hostedSource:sourceCheck,origin:ORIGIN,
   containsCustomerData:false,productionWorkerNotTargeted:true,results,at:new Date().toISOString()};
