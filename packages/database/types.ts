@@ -9,6 +9,9 @@ export interface Env {
   SHEETS_WEBHOOK_SECRET?: string;
   OPEN_HOME_SHEET_SYNC_ENABLED?: string;
   OPEN_HOME_SHEET_API_SECRET?: string;
+  OPEN_HOME_REPORTS_ENABLED?: string;
+  OPEN_HOME_REPORT_EMAIL_PROVIDER?: 'cloudflare' | 'resend';
+  EMAIL?: SendEmail;
   GOOGLE_CALENDAR_ENABLED?: string;
   GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL?: string;
   GOOGLE_CALENDAR_PRIVATE_KEY?: string;
