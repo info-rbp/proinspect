@@ -1,3 +1,4 @@
+import { guestSchedulerOperation } from './features/guest-scheduler.server';
 import { changeBooking } from './features/bookings.server';
 import { nextMonthDate, guard, clearGuard, projection } from '../../../packages/operations/core';
 import { DurableObject } from 'cloudflare:workers';
@@ -131,6 +132,9 @@ export class BookingScheduler extends DurableObject<Env> {
   }
   private async reserve(request: Request) {
     try {
+      if(new URL(request.url).pathname==='/guest'){
+        return guestSchedulerOperation(this.env,await request.json());
+      }
       const {
         userId,
         clientId,

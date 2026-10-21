@@ -1,3 +1,4 @@
+import {dispatchGuestReminders} from './features/guest-reminders.server';
 import { createRequestHandler, RouterContextProvider } from 'react-router';
 import { runtimeContext } from '../../../packages/database/context';
 import type { Env } from '../../../packages/database/types';
@@ -41,7 +42,7 @@ export default {
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   },
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(dispatchNotices(env).then(() => dispatchOutbox(env)));
+    ctx.waitUntil(dispatchGuestReminders(env).then(() => dispatchNotices(env)).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchIntegrations(env));
     if (calendarSchedulingEnabled(env))
       ctx.waitUntil(dispatchCalendarSync(env).catch(() => console.error('calendar.sync_dispatch_failed')));

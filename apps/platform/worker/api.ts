@@ -1,3 +1,4 @@
+import * as guest from './features/guest.server';
 import { accountData, updateAccount, revokeSessions } from './features/account.server';
 import { receiveEnquiry } from './features/enquiries.server';
 import { ZodError, z } from 'zod';
@@ -227,6 +228,13 @@ export async function handleApi(
     const url = new URL(request.url),
       path = url.pathname,
       method = request.method;
+    if (path === '/api/guest/requests' && method === 'POST') return Response.json(await guest.beginGuest(request,env),{status:201});
+    if (path === '/api/guest/verify' && method === 'POST') return Response.json(await guest.verifyGuest(request,env));
+    if (path === '/api/guest/quote' && method === 'POST') return Response.json(await guest.acceptGuestQuote(request,env));
+    if (path === '/api/guest/manage' && method === 'POST') { const result=await guest.guestAction(request,env); return result instanceof Response?result:Response.json(result); }
+    if (path === '/api/guest/status' && method === 'GET') return Response.json(await guest.guestStatus(env,url.searchParams.get('token')??''));
+    if (path === '/api/guest/availability' && method === 'GET') return Response.json(await guest.guestAvailability(env,url.searchParams.get('token')??'',url.searchParams.get('date')??''));
+    if (path === '/api/guest/report' && method === 'GET') return guest.guestReport(env,url.searchParams.get('token')??'');
     if (path === '/api/webhooks/stripe' && method === 'POST')
       return Response.json(await stripeWebhook(env, request));
     if (path === '/api/public/enquiries' && method === 'POST')
@@ -285,6 +293,15 @@ export async function handleApi(
     if (path === '/api/staff/calendar-sync' && method === 'GET') {
       operationsWrite(user);
       return Response.json(await calendarSyncSummary(env));
+    }
+    if (path === '/api/staff/guest-orders' && method === 'GET') {
+      operationsWrite(user);
+      return Response.json(await guest.staffGuestOrders(env));
+    }
+    const guestStaffMatch = path.match(/^\/api\/staff\/guest-orders\/([a-zA-Z0-9_-]+)\/(quote|review)$/);
+    if (guestStaffMatch && method === 'POST') {
+      operationsWrite(user);
+      return Response.json(await guest.staffGuestAction(env, guestStaffMatch[1], guestStaffMatch[2], await json(request), user.id));
     }
     if (path === '/api/account' && method === 'GET')
       return Response.json(await accountData(request, env, user));
