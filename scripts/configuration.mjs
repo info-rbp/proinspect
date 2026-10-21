@@ -90,8 +90,8 @@ export function checkConfiguration(
   if(input.OPEN_HOME_REPORTS_ENABLED && !['true','false'].includes(input.OPEN_HOME_REPORTS_ENABLED))
     invalid.push({name:'OPEN_HOME_REPORTS_ENABLED',reason:'Use true or false.'});
   if(input.OPEN_HOME_REPORT_EMAIL_PROVIDER &&
-     !['cloudflare','resend'].includes(input.OPEN_HOME_REPORT_EMAIL_PROVIDER))
-    invalid.push({name:'OPEN_HOME_REPORT_EMAIL_PROVIDER',reason:'Use cloudflare or resend.'});
+     input.OPEN_HOME_REPORT_EMAIL_PROVIDER !== 'resend')
+    invalid.push({name:'OPEN_HOME_REPORT_EMAIL_PROVIDER',reason:'Use resend, which is already configured as the outbound Worker provider.'});
   if (input.EMAIL_PROVIDER && input.EMAIL_PROVIDER !== 'resend')
     invalid.push({
       name: 'EMAIL_PROVIDER',
