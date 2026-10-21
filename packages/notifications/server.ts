@@ -11,6 +11,7 @@ export interface MailJob {
   facts?: Record<string, string>;
   sensitive?: boolean;
   noticeAccess?: { noticeId: string; userId: string };
+  reportAccess?: { sessionId: string; recipientUserId: string };
 }
 export async function mailEvent(env: Env, kind: string, payload: MailJob, id = uid('evt')) {
   return statement(
@@ -93,6 +94,36 @@ export async function deliverEvent(env: Env, eventId: string) {
         return;
       }
     }
+    if (row.kind === 'open-home.inspection.report') {
+      // Report emails must never go to a stale, unverified or reallocated
+      // recipient, even after being queued but before the provider sends them.
+      const access = payload.reportAccess;
+      const current = access && await statement(
+        env.DB,
+        'SELECT r.session_id FROM open_home_inspection_reports r ' +
+        'JOIN leasing_sessions s ON s.id=r.session_id ' +
+        'JOIN leasing_listings l ON l.id=r.listing_id ' +
+        'JOIN open_home_report_settings cfg ON cfg.listing_id=r.listing_id ' +
+        'JOIN client_memberships m ON m.client_id IN(l.instructed_by_client_id,l.owner_client_id) ' +
+        'JOIN clients c ON c.id=m.client_id ' +
+        'JOIN users u ON u.id=m.user_id ' +
+        'WHERE r.outbox_id=? AND r.session_id=? AND r.recipient_user_id=? ' +
+        "AND cfg.enabled=1 AND cfg.recipient_user_id=r.recipient_user_id " +
+        "AND s.status='completed' AND m.active=1 AND m.role IN('owner','admin') " +
+        "AND c.status='active' AND u.active=1 AND u.verified_at IS NOT NULL " +
+        'AND u.id=? AND u.email=? COLLATE NOCASE LIMIT 1',
+        row.id, access?.sessionId ?? '', access?.recipientUserId ?? '',
+        access?.recipientUserId ?? '', payload.to,
+      ).first();
+      if (env.OPEN_HOME_REPORTS_ENABLED !== 'true' || !current) {
+        await statement(
+          env.DB,
+          "UPDATE outbox_events SET status='failed',error_code='REPORT_RECIPIENT_SUPPRESSED',lease_token=NULL,lease_until=NULL WHERE id=? AND lease_token=?",
+          row.id, lease,
+        ).run();
+        return;
+      }
+    }
     if (payload.noticeAccess) {
       const recipient = await noticeRecipient(
         env,
@@ -137,6 +168,31 @@ export async function deliverEvent(env: Env, eventId: string) {
       ).run();
       return;
     }
+    if (row.kind === 'open-home.inspection.report' &&
+        env.OPEN_HOME_REPORT_EMAIL_PROVIDER === 'cloudflare') {
+      if (!env.EMAIL || !env.EMAIL_FROM) throw new Error('EMAIL_NOT_CONFIGURED');
+      // The native binding requires an onboarded sending domain. The
+      // application still uses the existing encrypted D1 outbox and queue.
+      await env.EMAIL.send({
+        to: payload.to,
+        from: { email: env.EMAIL_FROM, name: 'ProInspect' },
+        subject: payload.subject,
+        html: renderMail(payload),
+        text: [payload.heading, payload.body,
+          ...Object.entries(payload.facts ?? {}).map(([k, v]) => k + ': ' + v),
+          payload.href ?? '',
+        ].filter(Boolean).join('\n\n'),
+      });
+      await statement(
+        env.DB,
+        "UPDATE outbox_events SET status='sent',sent_at=?,lease_token=NULL,lease_until=NULL,error_code=NULL WHERE id=? AND lease_token=?",
+        now(), row.id, lease,
+      ).run();
+      return;
+    }
+    if (row.kind === 'open-home.inspection.report' &&
+        env.OPEN_HOME_REPORT_EMAIL_PROVIDER !== 'resend')
+      throw new Error('EMAIL_REPORT_PROVIDER_NOT_CONFIGURED');
     if (env.EMAIL_PROVIDER !== 'resend' || !env.RESEND_API_KEY || !env.EMAIL_FROM)
       throw new Error('EMAIL_NOT_CONFIGURED');
     // Never redirect another person's sign-in token into a staging mailbox.
