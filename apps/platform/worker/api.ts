@@ -1,4 +1,6 @@
 import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
+import { publicOpenHomeSessions,staffOpenHomeCheckIns } from './features/open-home.server';
+import { authenticateOpenHomeSheetRequest,pendingOpenHomeSheetRows,acknowledgeOpenHomeSheetRow } from './features/open-home-sheet.server';
 import { listRentalApplications,rentalStaffDetail,updateRentalStatus,reviewRentalDocument,rentalDocumentDownload } from './features/rental-review.server';
 import { acceptRentalScan } from './features/rental-malware.server';
 import { setRentalPrivacyHold,resolveRentalPrivacyRequest,eraseRentalForRequest } from './features/rental-privacy.server';
@@ -260,6 +262,21 @@ export async function handleApi(
       requireOrigin(request,env);
       return Response.json(await cancelLead(env,request,cancel[1],await digest(env.DATA_ENCRYPTION_KEY+':cancel:'+(request.headers.get('CF-Connecting-IP')??'unknown'))));
     }
+    if(path==='/api/public/open-home/sessions'&&method==='GET')
+      return Response.json({sessions:await publicOpenHomeSessions(env)},{headers:{'Cache-Control':'private, no-store'}});
+    if(path==='/api/integrations/open-home-sheet/pending'&&method==='GET'){
+      await authenticateOpenHomeSheetRequest(env,request,'');
+      return Response.json(await pendingOpenHomeSheetRows(env),{headers:{'Cache-Control':'private, no-store'}});
+    }
+    if(path==='/api/integrations/open-home-sheet/ack'&&method==='POST'){
+      assert(Number(request.headers.get('content-length')??0)<=4096,413,'SHEET_REQUEST_TOO_LARGE','Integration request too large.');
+      const body=await request.text();
+      assert(body.length<=4096,413,'SHEET_REQUEST_TOO_LARGE','Integration request too large.');
+      await authenticateOpenHomeSheetRequest(env,request,body);
+      let input:unknown;
+      try{input=JSON.parse(body);}catch{throw new AppError(400,'SHEET_INVALID_JSON','Invalid sync acknowledgement.');}
+      return Response.json(await acknowledgeOpenHomeSheetRow(env,input),{headers:{'Cache-Control':'private, no-store'}});
+    }
     if (path === '/api/catalogue' && method === 'GET')
       return Response.json({ services: await catalogue(env) });
     if (path === '/api/auth/start' && method === 'POST') {
@@ -300,6 +317,12 @@ export async function handleApi(
       if(tail.length===4&&tail[1]==='documents'&&tail[3]==='download'&&method==='GET')
         return rentalDocumentDownload(env,user,tail[0],tail[2],url.searchParams.get('quarantine')==='1');
       throw new AppError(404,'NOT_FOUND','Unknown application action.');
+    }
+    if(path==='/api/staff/open-home-checkins' && method==='GET'){
+      const listingId=url.searchParams.get('listingId');
+      assert(listingId,400,'CHECK_IN_LISTING_REQUIRED','Choose a property listing.');
+      return Response.json(await staffOpenHomeCheckIns(env,user,listingId,
+        url.searchParams.get('sessionId')??undefined),{headers:{'Cache-Control':'private, no-store'}});
     }
     const leasingStaff=path.match(/^\/api\/staff\/leasing(?:\/(.*))?$/);
     if(leasingStaff) {
