@@ -61,8 +61,7 @@ export async function staffOpenHomeReportDetails(env:Env,user:Principal,listingI
   listingId,sessionId??null,sessionId??null).all()).results;
  return {
   enabledGlobally:env.OPEN_HOME_REPORTS_ENABLED==='true',
-  provider:env.OPEN_HOME_REPORT_EMAIL_PROVIDER==='cloudflare'?'Cloudflare Email Sending':
-   env.OPEN_HOME_REPORT_EMAIL_PROVIDER==='resend'?'Resend (existing outbox)':'Unconfigured',
+  provider:env.OPEN_HOME_REPORT_EMAIL_PROVIDER==='resend'?'Resend (existing outbox)':'Unconfigured',
   settings:settings?{
    enabled:settings.enabled===1,recipientUserId:settings.recipient_user_id,
    authorityReference:settings.authority_reference,version:settings.version,updatedAt:settings.updated_at,
@@ -167,9 +166,9 @@ export async function reportDeliveryStillAllowed(env:Env,outboxId:string,session
 }
 export async function readOpenHomeReport(env:Env,user:Principal,sessionId:string){
  const report=await statement(env.DB,
-  'SELECT r.session_id,r.listing_id,r.session_end_at,r.report_date_perth,r.attendance_count,r.preregistered_arrivals,r.walk_in_arrivals,r.registered_count,r.queued_at,s.starts_at,l.display_address,l.title,l.agent_name,e.status AS delivery_status FROM open_home_inspection_reports r JOIN leasing_sessions s ON s.id=r.session_id JOIN leasing_listings l ON l.id=r.listing_id JOIN outbox_events e ON e.id=r.outbox_id WHERE r.session_id=?',
+  'SELECT r.session_id,r.listing_id,r.recipient_user_id,r.session_end_at,r.report_date_perth,r.attendance_count,r.preregistered_arrivals,r.walk_in_arrivals,r.registered_count,r.queued_at,s.starts_at,l.display_address,l.title,l.agent_name,e.status AS delivery_status FROM open_home_inspection_reports r JOIN leasing_sessions s ON s.id=r.session_id JOIN leasing_listings l ON l.id=r.listing_id JOIN outbox_events e ON e.id=r.outbox_id WHERE r.session_id=?',
   sessionId).first<{
-   session_id:string;listing_id:string;session_end_at:string;report_date_perth:string;
+   session_id:string;listing_id:string;recipient_user_id:string;session_end_at:string;report_date_perth:string;
    attendance_count:number;preregistered_arrivals:number;walk_in_arrivals:number;registered_count:number;
    queued_at:string;starts_at:string;display_address:string;title:string;agent_name:string;delivery_status:string;
   }>();
@@ -179,7 +178,8 @@ export async function readOpenHomeReport(env:Env,user:Principal,sessionId:string
   const configured=await statement(env.DB,
    'SELECT recipient_user_id FROM open_home_report_settings WHERE listing_id=? AND enabled=1',
    report.listing_id).first<{recipient_user_id:string|null}>();
-  assert(configured?.recipient_user_id===user.id&&await authorisedReportRecipient(env,report.listing_id,user.id),
+  assert(report.recipient_user_id===user.id && configured?.recipient_user_id===user.id &&
+   await authorisedReportRecipient(env,report.listing_id,user.id),
    403,'OPEN_HOME_REPORT_ACCESS_DENIED','This report is restricted to the authorised leasing representative.');
  }
  const checkins=(await statement(env.DB,

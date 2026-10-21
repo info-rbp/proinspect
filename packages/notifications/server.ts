@@ -169,28 +169,6 @@ export async function deliverEvent(env: Env, eventId: string) {
       return;
     }
     if (row.kind === 'open-home.inspection.report' &&
-        env.OPEN_HOME_REPORT_EMAIL_PROVIDER === 'cloudflare') {
-      if (!env.EMAIL || !env.EMAIL_FROM) throw new Error('EMAIL_NOT_CONFIGURED');
-      // The native binding requires an onboarded sending domain. The
-      // application still uses the existing encrypted D1 outbox and queue.
-      await env.EMAIL.send({
-        to: payload.to,
-        from: { email: env.EMAIL_FROM, name: 'ProInspect' },
-        subject: payload.subject,
-        html: renderMail(payload),
-        text: [payload.heading, payload.body,
-          ...Object.entries(payload.facts ?? {}).map(([k, v]) => k + ': ' + v),
-          payload.href ?? '',
-        ].filter(Boolean).join('\n\n'),
-      });
-      await statement(
-        env.DB,
-        "UPDATE outbox_events SET status='sent',sent_at=?,lease_token=NULL,lease_until=NULL,error_code=NULL WHERE id=? AND lease_token=?",
-        now(), row.id, lease,
-      ).run();
-      return;
-    }
-    if (row.kind === 'open-home.inspection.report' &&
         env.OPEN_HOME_REPORT_EMAIL_PROVIDER !== 'resend')
       throw new Error('EMAIL_REPORT_PROVIDER_NOT_CONFIGURED');
     if (env.EMAIL_PROVIDER !== 'resend' || !env.RESEND_API_KEY || !env.EMAIL_FROM)
