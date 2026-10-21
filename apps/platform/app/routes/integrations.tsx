@@ -4,11 +4,13 @@ import { useWorkspace, workspaceApi } from '../lib/workspace';
 import { PageHeading, Badge } from '../../../../packages/ui/components';
 import { OperationForm, Panel } from '../components/OperationForm';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
-  return (await loadApi(
-    request,
-    context,
+  const info = await loadApi(request, context,
     `/api/w/${params.kind}/${params.scopeId}/integrations`,
-  )) as any;
+  );
+  const calendar = params.kind === 'staff'
+    ? await loadApi(request, context, '/api/staff/calendar-sync')
+    : null;
+  return { ...info, calendar } as any;
 }
 export default function Integrations() {
   const i = useLoaderData<typeof loader>(),
@@ -29,6 +31,31 @@ export default function Integrations() {
             </p>
           ))}
         </Panel>
+        {i.calendar && (
+          <Panel
+            title="ProInspect Google Calendar"
+            description="Bookings remain authoritative in ProInspect. Google availability is checked when enabled and external event failures are surfaced here."
+          >
+            <p className="small">
+              Scheduling integration: <strong>{i.calendar.enabled ? 'Enabled' : 'Not enabled (release gate closed)'}</strong>
+            </p>
+            {i.calendar.counts?.map((c: any) => (
+              <p key={c.status}>{c.status}: {c.count}</p>
+            ))}
+            {i.calendar.alerts?.length ? i.calendar.alerts.map((a: any) => (
+              <div className="record-row" key={a.booking_id}>
+                <div>
+                  <strong>Calendar sync needs review</strong>
+                  <p>Booking {a.booking_id} | {a.error_code}</p>
+                </div>
+                <OperationForm
+                  endpoint={`/api/staff/calendar-sync/${a.booking_id}/retry`}
+                  label="Retry after review"
+                />
+              </div>
+            )) : <p className="small">No calendar synchronisation alerts.</p>}
+          </Panel>
+        )}
         <Panel
           title="Report Tool authoring"
           description="Launch creates a signed, expiring handoff for this work order. Manual report upload remains available."

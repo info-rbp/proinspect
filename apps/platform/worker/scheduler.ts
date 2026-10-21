@@ -10,6 +10,7 @@ import { digest, seal } from '../../../packages/auth/crypto';
 import { mailEvent } from '../../../packages/notifications/server';
 import { audit, catalogue } from './services.server';
 import { includedSubscriptionBooking } from '../../../packages/authorization/subscription-booking';
+import { assertCalendarSlot, calendarSchedulingEnabled, calendarSyncStatement, googleBusy, overlaps } from './features/calendar-scheduling.server';
 
 export function appointmentWindow(service: Service, startsAt: string, clock = Date.now()) {
   const starts = new Date(startsAt);
@@ -68,7 +69,8 @@ export async function availability(env: Env, serviceId: string, date: string, in
     "SELECT id FROM schedule_resources WHERE id='default' AND active=1",
   ).first();
   if (!resource) return { slots: [], message: 'Online scheduling has not been opened yet.' };
-  const candidates = [];
+  const candidates: { start: string; end: string; label: string }[] = [];
+  const candidateReservations = new Map<string, { start: string; end: string }>();
   for (let minutes = 480; minutes < 1020; minutes += 15) {
     try {
       const start = `${date}T${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:00+08:00`;
@@ -81,7 +83,8 @@ export async function availability(env: Env, serviceId: string, date: string, in
         window.reservedEnd,
         window.reservedStart,
       ).first();
-      if (!conflict)
+      if (!conflict) {
+        candidateReservations.set(window.startsAt, { start: window.reservedStart, end: window.reservedEnd });
         candidates.push({
           start: window.startsAt,
           end: window.endsAt,
@@ -91,13 +94,32 @@ export async function availability(env: Env, serviceId: string, date: string, in
             timeZone: 'Australia/Perth',
           }).format(new Date(window.startsAt)),
         });
+      }
     } catch (error) {
       if (!(error instanceof AppError)) throw error;
     }
   }
+  let filtered = candidates;
+  if (calendarSchedulingEnabled(env) && candidates.length) {
+    const windows = [...candidateReservations.values()];
+    let busy: { start: string; end: string }[];
+    try {
+      busy = await googleBusy(
+        env,
+        windows.reduce((minimum, w) => w.start < minimum ? w.start : minimum, windows[0].start),
+        windows.reduce((maximum, w) => w.end > maximum ? w.end : maximum, windows[0].end),
+      );
+    } catch {
+      // An API outage cannot silently turn a busy Google Calendar into open slots.
+      throw new AppError(503, 'CALENDAR_UNAVAILABLE', 'Appointment availability cannot be verified right now.');
+    }
+    filtered = candidates.filter(slot =>
+      !busy.some(period => overlaps(period, candidateReservations.get(slot.start)!)),
+    );
+  }
   return {
-    slots: candidates,
-    message: candidates.length ? '' : 'No appointments are available for this date.',
+    slots: filtered,
+    message: filtered.length ? '' : 'No appointments are available for this date.',
   };
 }
 export class BookingScheduler extends DurableObject<Env> {
@@ -235,6 +257,7 @@ export class BookingScheduler extends DurableObject<Env> {
         );
       const scheme = schemes[0] ?? null;
       const window = appointmentWindow(service, data.startsAt);
+      await assertCalendarSlot(this.env, window);
       const id = uid('bkg'),
         reference = `PI-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
         woId = `wo_${id.slice(4)}`,
@@ -355,6 +378,7 @@ export class BookingScheduler extends DurableObject<Env> {
           guard(this.env),
           clearGuard(this.env),
         );
+      if (calendarSchedulingEnabled(this.env)) statements.push(calendarSyncStatement(this.env, id, 1));
       statements.push(
         projection(this.env, 'booking.created', id, {
           reference,

@@ -153,6 +153,13 @@
         "platform"
       ],
       "group": "calendar"
+    },
+    "GOOGLE_CALENDAR_BOOKINGS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "calendar",
+      "default": "false"
     }
   },
   "generated": [

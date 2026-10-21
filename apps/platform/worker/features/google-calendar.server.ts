@@ -39,7 +39,7 @@ function base64url(value: Uint8Array): string {
   return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
 }
 
-async function assertion(email: string, privateKey: string): Promise<string> {
+async function assertion(email: string, privateKey: string, scope = CALENDAR_SCOPE): Promise<string> {
   // The secret may be pasted as a PEM with real line breaks or JSON-escaped
   // newlines. Never include its contents in exception messages.
   const pem = privateKey.trim().replaceAll('\\n', '\n').replaceAll('\r', '').trim();
@@ -56,7 +56,7 @@ async function assertion(email: string, privateKey: string): Promise<string> {
   const unsigned = encoded({ typ: 'JWT', alg: 'RS256' }) + '.' +
     encoded({
       iss: email,
-      scope: CALENDAR_SCOPE,
+      scope,
       aud: TOKEN_URL,
       iat: stamp,
       exp: stamp + 900,
@@ -163,6 +163,44 @@ export async function readOnlyCalendarDiagnostic(
   } catch {
     return end('freebusy', 'FREEBUSY_NETWORK_ERROR');
   }
+}
+
+/**
+ * Issue a short-lived service-account token for the explicitly approved
+ * operational scopes. It is never returned from an HTTP diagnostic response.
+ */
+export async function googleServiceToken(
+  env: Pick<Env, 'GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL' | 'GOOGLE_CALENDAR_PRIVATE_KEY'>,
+  scope: string,
+): Promise<string> {
+  if (scope !== CALENDAR_SCOPE && scope !== 'https://www.googleapis.com/auth/calendar.events')
+    throw new Error('GOOGLE_SCOPE_NOT_ALLOWED');
+  const email = env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL?.trim();
+  const key = env.GOOGLE_CALENDAR_PRIVATE_KEY;
+  if (!email || !key || !email.endsWith('.iam.gserviceaccount.com') || !email.includes('@') || /\s/.test(email))
+    throw new Error('GOOGLE_CREDENTIALS_INVALID');
+  let jwt: string;
+  try { jwt = await assertion(email, key, scope); }
+  catch { throw new Error('GOOGLE_CREDENTIALS_INVALID'); }
+  let response: Response;
+  try {
+    response = await fetch(TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: jwt,
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch { throw new Error('GOOGLE_OAUTH_NETWORK'); }
+  if (!response.ok) throw new Error('GOOGLE_OAUTH_REJECTED');
+  let result: { access_token?: unknown };
+  try { result = await response.json(); }
+  catch { throw new Error('GOOGLE_OAUTH_RESPONSE_INVALID'); }
+  if (typeof result.access_token !== 'string' || !result.access_token)
+    throw new Error('GOOGLE_OAUTH_RESPONSE_INVALID');
+  return result.access_token;
 }
 
 /**

@@ -53,6 +53,44 @@ class SchemaTests(unittest.TestCase):
             0,
         )
 
+    def test_calendar_sync_jobs_are_versioned_idempotent_and_lease_safe(self):
+        booking_id = 'bkg_' + 'a' * 32
+        event_id = 'pi' + 'a' * 32
+        stamp = '2026-10-19T12:00:00.000Z'
+        self.booking(booking_id, '2026-10-27T01:00:00.000Z', '2026-10-27T02:00:00.000Z')
+        sql = (
+            "INSERT INTO booking_calendar_sync(booking_id,event_id,target_version,status,next_attempt_at,updated_at) "
+            "VALUES(?,?,?,'pending',?,?) ON CONFLICT(booking_id) DO UPDATE SET "
+            "target_version=excluded.target_version,status='pending',attempts=0,next_attempt_at=excluded.next_attempt_at,"
+            "updated_at=excluded.updated_at,lease_token=NULL,lease_until=NULL,error_code=NULL "
+            "WHERE excluded.target_version>booking_calendar_sync.target_version"
+        )
+        self.db.execute(sql, (booking_id, event_id, 1, stamp, stamp))
+        self.db.execute(
+            "UPDATE booking_calendar_sync SET status='synced',synced_version=1 WHERE booking_id=?",
+            (booking_id,),
+        )
+        self.db.execute(sql, (booking_id, event_id, 1, stamp, stamp))
+        self.assertEqual(
+            self.db.execute(
+                "SELECT status,synced_version,target_version FROM booking_calendar_sync WHERE booking_id=?",
+                (booking_id,),
+            ).fetchone(),
+            ('synced', 1, 1),
+        )
+        self.db.execute("UPDATE bookings SET version=2 WHERE id=?", (booking_id,))
+        self.db.execute(sql, (booking_id, event_id, 2, stamp, stamp))
+        self.assertEqual(
+            self.db.execute(
+                "SELECT status,synced_version,target_version FROM booking_calendar_sync WHERE booking_id=?",
+                (booking_id,),
+            ).fetchone(),
+            ('pending', 1, 2),
+        )
+        self.booking('bkg_' + 'b' * 32, '2026-10-27T03:00:00.000Z', '2026-10-27T04:00:00.000Z')
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute(sql, ('bkg_' + 'b' * 32, event_id, 1, stamp, stamp))
+
     def test_overlap_is_rejected_in_database(self):
         self.booking('a','2026-10-10T01:00:00.000Z','2026-10-10T02:00:00.000Z')
         with self.assertRaisesRegex(sqlite3.IntegrityError,'SCHEDULE_CONFLICT'):

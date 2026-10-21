@@ -22,6 +22,7 @@ import {
 import { catalogue } from '../services.server';
 import { appointmentWindow, availability } from '../scheduler';
 import { digest } from '../../../../packages/auth/crypto';
+import { assertCalendarSlot, calendarEventId, calendarSchedulingEnabled, calendarSyncStatement } from './calendar-scheduling.server';
 export async function changeBooking(
   env: Env,
   user: Principal,
@@ -100,6 +101,7 @@ export async function changeBooking(
     const service = (await catalogue(env)).find((s) => s.id === b.service_id);
     assert(service, 409, 'SERVICE_UNAVAILABLE', 'This service requires an operational review.');
     window = appointmentWindow(service, d.startsAt);
+    if (calendarSchedulingEnabled(env)) await assertCalendarSlot(env, window, calendarEventId(id));
   }
   const original = await statement(env.DB, 'SELECT email FROM users WHERE id=?', b.user_id).first<{
     email: string;
@@ -161,6 +163,7 @@ export async function changeBooking(
         facts: { Reference: b.reference, Status: result.status },
       }),
     );
+  if (calendarSchedulingEnabled(env)) statements.push(calendarSyncStatement(env, id, b.version + 1));
   await env.DB.batch(statements);
   return result;
 }

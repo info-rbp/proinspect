@@ -8,6 +8,7 @@ export interface Env {
   SHEETS_WEBHOOK_URL?: string;
   SHEETS_WEBHOOK_SECRET?: string;
   GOOGLE_CALENDAR_ENABLED?: string;
+  GOOGLE_CALENDAR_BOOKINGS_ENABLED?: string;
   GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL?: string;
   GOOGLE_CALENDAR_PRIVATE_KEY?: string;
   GOOGLE_CALENDAR_ID?: string;
@@ -38,7 +39,13 @@ export function envFrom(context: unknown): Env {
   return (context as CloudflareContext).cloudflare.env;
 }
 export class AppError extends Error {
-  constructor(public status: number, public code: string, message: string) { super(message); }
+  readonly status: number;
+  readonly code: string;
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
 }
 export function assert(condition: unknown,status: number,code: string,message: string): asserts condition {
   if (!condition) throw new AppError(status, code, message);
