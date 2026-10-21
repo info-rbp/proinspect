@@ -130,6 +130,11 @@ export async function changeBooking(
     ),
     guard(env),
     statement(env.DB, 'DELETE FROM tenant_inspections WHERE booking_id=?', id),
+    statement(env.DB,
+      "UPDATE wa_residential_form_cases SET notice_invalidated_at=?,notice_invalidated_reason=?,updated_at=?,version=version+1 WHERE booking_id=? AND form_code='WA_FORM_19' AND notice_invalidated_at IS NULL",
+      now(),d.action==='cancel'?'Booking cancelled':'Booking rescheduled: issue and service evidence must be reassessed',now(),id,
+    ),
+
     activity(
       env,
       user,
@@ -138,7 +143,7 @@ export async function changeBooking(
       id,
       b.property_id,
       b.scheme_id,
-      { reason: d.reason, startsAt: window.startsAt, tenantPublicationReset: true },
+      { reason: d.reason, startsAt: window.startsAt, tenantPublicationReset: true, statutoryNoticeInvalidated: true },
     ),
     projection(env, 'booking.updated', id, {
       reference: b.reference,

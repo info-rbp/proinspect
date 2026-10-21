@@ -13,9 +13,17 @@ import {
 } from '../components/OperationForm';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
   const base = `/api/w/${params.kind}/${params.scopeId}/tenancies/${params.tenancyId}`;
+  const detail = await loadApi(request, context, base);
+  const workspaceData = await loadApi(request, context, `/api/w/${params.kind}/${params.scopeId}`);
+  const residential = workspaceData.properties.some(
+    (p: any) => p.id === detail.tenancy.property_id && p.sector === 'residential',
+  );
   return {
-    detail: await loadApi(request, context, base),
-    forms: await loadApi(request, context, base + '/forms'),
+    detail,
+    residential,
+    forms: residential
+      ? await loadApi(request, context, base + '/forms')
+      : { definitions: [], forms: [] },
   } as any;
 }
 export default function TenancyDetail() {
@@ -146,7 +154,15 @@ export default function TenancyDetail() {
             </OperationForm>
           )}
         </Panel>
-        <Panel
+        {data.residential && (
+          <Panel title="WA Residential Statutory Forms" description="Guided residential-only official form intake, review, deadlines and document evidence. Commercial tenancies are excluded.">
+            <Link className="button" to={`${w.href}/tenancies/${t.id}/wa-forms`}>
+              Open WA Residential Forms Centre
+            </Link>
+            <p className="small">Preparation and review are not legally effective service or government lodgement. Follow the official instructions for every document.</p>
+          </Panel>
+        )}
+        {data.residential && <Panel
           title="Forms and bond coordination"
           description="This workflow collects instructions and tracks reviewed official documents. It does not generate a substitute prescribed form, lodge a bond, terminate a tenancy or serve a notice automatically."
         >
@@ -195,7 +211,7 @@ export default function TenancyDetail() {
               )}
             </details>
           ))}
-        </Panel>
+        </Panel>}
         {d.restrictedEnabled && tenant && (
           <Link to={`${w.href}/confidential`}>
             Confidential assistance - separate restricted workspace

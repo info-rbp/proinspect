@@ -57,6 +57,8 @@ export default function WorkspaceLayout() {
       w.kind === 'tenant' || w.kind === 'building' ? 'My requests' : 'Requests',
       '',
     ]);
+  if (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''))
+    items.push(['wa-form-queue', 'WA residential forms', '']);
   if (w.kind === 'tenant') items.push(['inspections', 'Inspections', '']);
   items.push(['documents', 'Documents & reports', '']);
   if (customer || (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? '')))
