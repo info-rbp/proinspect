@@ -91,6 +91,41 @@ class SchemaTests(unittest.TestCase):
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute(sql, ('bkg_' + 'b' * 32, event_id, 1, stamp, stamp))
 
+    def test_wa_residential_form_schema_enforces_property_sector_and_immutable_evidence(self):
+        self.db.execute(
+            "INSERT INTO tenancies(id,property_id,status,starts_at) VALUES('ten_res','p','active','2026-01-01')"
+        )
+        self.db.execute(
+            "INSERT INTO wa_residential_form_cases(id,tenancy_id,property_id,form_code,form_stage,initiator_id,initiator_kind,data_envelope,created_at,updated_at) VALUES('case1','ten_res','p','WA_FORM_25','active','u','tenant','encrypted','2026-01-01','2026-01-01')"
+        )
+        self.db.execute(
+            "INSERT INTO properties(id,address,suburb,postcode,address_key,sector,created_at) VALUES('p_com','2 Test St','Perth','6000','2|perth|6000','commercial','2026-01-01')"
+        )
+        self.db.execute(
+            "INSERT INTO tenancies(id,property_id,status,starts_at) VALUES('ten_com','p_com','active','2026-01-01')"
+        )
+        with self.assertRaisesRegex(sqlite3.IntegrityError, 'WA_FORMS_RESIDENTIAL_ONLY'):
+            self.db.execute(
+                "INSERT INTO wa_residential_form_cases(id,tenancy_id,property_id,form_code,form_stage,initiator_id,initiator_kind,data_envelope,created_at,updated_at) VALUES('case2','ten_com','p_com','WA_FORM_25','active','u','tenant','encrypted','2026-01-01','2026-01-01')"
+            )
+        with self.assertRaisesRegex(sqlite3.IntegrityError, 'WA_FORM_SCOPE_IMMUTABLE'):
+            self.db.execute("UPDATE wa_residential_form_cases SET property_id='p_com' WHERE id='case1'")
+        # Confidential Form 2 must never be stored for a commercial tenancy,
+        # even through a future API path that forgets to check the sector.
+        with self.assertRaisesRegex(sqlite3.IntegrityError, 'RESTRICTED_FORM_RESIDENTIAL_ONLY'):
+            self.db.execute(
+                "INSERT INTO restricted_form_cases(id,applicant_user_id,tenancy_id,envelope,created_at) VALUES('restricted_com','u','ten_com','sealed','2026-01-01')"
+            )
+        self.db.execute(
+            "INSERT INTO restricted_form_cases(id,applicant_user_id,tenancy_id,envelope,created_at) VALUES('restricted_res','u','ten_res','sealed','2026-01-01')"
+        )
+        self.db.execute(
+            "INSERT INTO wa_residential_form_events(id,case_id,actor_id,action,created_at) VALUES('event1','case1','u','draft_created','2026-01-01')"
+        )
+        with self.assertRaisesRegex(sqlite3.IntegrityError, 'AUDIT_IMMUTABLE'):
+            self.db.execute("DELETE FROM wa_residential_form_events WHERE id='event1'")
+        self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(), [])
+
     def test_overlap_is_rejected_in_database(self):
         self.booking('a','2026-10-10T01:00:00.000Z','2026-10-10T02:00:00.000Z')
         with self.assertRaisesRegex(sqlite3.IntegrityError,'SCHEDULE_CONFLICT'):

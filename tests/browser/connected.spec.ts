@@ -355,3 +355,52 @@ test('resident report reaches strata operations and council sees only its decisi
     await operator.context.close();
   }
 });
+
+
+
+test('WA Residential Forms Centre creates an authorised pet request without exposing commercial or confidential forms',async({browser})=>{
+ const landlord=await person(browser,'wa-landlord');
+ const tenant=await person(browser,'wa-tenant');
+ try{
+  const setup=await post(landlord.context,'/api/onboarding',{
+   displayName:'WA Forms Residential Owner',clientName:'WA Forms Test Landlord',landlordType:'residential'
+  });
+  const home=`/w/landlord/${setup.clientId}`,api=`/api/w/landlord/${setup.clientId}`;
+  const property=await post(landlord.context,api+'/properties',{
+   address:`${id()} Forms Test Street`,suburb:'Perth',postcode:'6000',propertyType:'House',selfManaged:true
+  });
+  const tenancy=await post(landlord.context,api+'/tenancies',{
+   propertyId:property.propertyId,email:`initial-${id()}@proinspect.test`,
+   startsAt:new Date(Date.now()-86400000).toISOString()
+  });
+  const invitation=await post(landlord.context,api+`/tenancies/${tenancy.id}/invite`,{
+   email:tenant.email
+  });
+  await post(tenant.context,'/api/invitations/accept',{
+   token:new URL(invitation.localInvitationUrl).searchParams.get('token')
+  });
+  const tenantHome=`/w/tenant/${tenancy.id}`;
+  await visit(tenant.page,tenantHome+`/tenancies/${tenancy.id}/wa-forms`,'WA Residential Tenancy Forms');
+  await expect(tenant.page.getByText('Form 19 — Notice of proposed entry')).toHaveCount(0);
+  await expect(tenant.page.getByText('Form 2 —')).toHaveCount(0);
+  const pet=tenant.page.locator('details').filter({has:tenant.page.locator('summary').filter({hasText:'Form 25 — Pet request'})});
+  await pet.locator('summary').click();
+  await pet.getByLabel('Type and description of pet').fill('Synthetic indoor cat');
+  await pet.getByLabel('Proposed arrangements').fill('Pet remains indoors and is supervised');
+  await pet.getByRole('button',{name:'Save form draft'}).click();
+  await saved(tenant.page);
+  const forms=await get(tenant.context,`/api/w/tenant/${tenancy.id}/tenancies/${tenancy.id}/wa-forms`);
+  const created=forms.cases.find((x:any)=>x.formCode==='WA_FORM_25');
+  expect(created.status).toBe('draft');
+  await visit(tenant.page,tenantHome+`/tenancies/${tenancy.id}/wa-forms/${created.id}`,
+    'Form 25 — Pet request');
+  await tenant.page.getByRole('button',{name:'Submit request for review'}).click();
+  await saved(tenant.page);
+  await expect(tenant.page.locator('[data-status="submitted"]').first()).toBeVisible();
+  const ownerForms=await get(landlord.context,api+`/tenancies/${tenancy.id}/wa-forms`);
+  expect(ownerForms.cases.some((x:any)=>x.id===created.id&&x.status==='submitted')).toBe(true);
+ }finally{
+  await landlord.context.close();
+  await tenant.context.close();
+ }
+});
