@@ -8,15 +8,17 @@ CREATE TABLE leasing_checkins (
  request_key TEXT NOT NULL UNIQUE,
  fingerprint TEXT NOT NULL,
  email_hash TEXT NOT NULL,
+ attendee_hash TEXT NOT NULL,
  contact_envelope TEXT NOT NULL,
  source TEXT NOT NULL CHECK(source IN('web','qr')),
  consent_version TEXT NOT NULL,
  arrived_at TEXT NOT NULL,
  created_at TEXT NOT NULL,
- UNIQUE(session_id,email_hash)
+ UNIQUE(session_id,attendee_hash)
 ) STRICT;
 CREATE INDEX leasing_checkins_by_session ON leasing_checkins(session_id,arrived_at);
 CREATE INDEX leasing_checkins_by_listing ON leasing_checkins(listing_id,arrived_at);
+CREATE INDEX leasing_checkins_by_email ON leasing_checkins(session_id,email_hash);
 CREATE TRIGGER leasing_checkins_session_guard BEFORE INSERT ON leasing_checkins BEGIN
  SELECT RAISE(ABORT,'OPEN_HOME_SESSION_NOT_LINKED') WHERE NOT EXISTS (
    SELECT 1 FROM leasing_sessions s JOIN leasing_listings l ON l.id=s.listing_id
