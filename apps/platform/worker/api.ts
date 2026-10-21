@@ -1,4 +1,8 @@
 import * as guest from './features/guest.server';
+import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
+import { listRentalApplications,rentalStaffDetail,updateRentalStatus,reviewRentalDocument,rentalDocumentDownload } from './features/rental-review.server';
+import { acceptRentalScan } from './features/rental-malware.server';
+import { setRentalPrivacyHold,resolveRentalPrivacyRequest,eraseRentalForRequest } from './features/rental-privacy.server';
 import { accountData, updateAccount, revokeSessions } from './features/account.server';
 import { receiveEnquiry } from './features/enquiries.server';
 import { ZodError, z } from 'zod';
@@ -257,6 +261,14 @@ export async function handleApi(
           env.DATA_ENCRYPTION_KEY && (env.APP_ENV === 'local' || env.RESEND_API_KEY),
         ),
       });
+    if (path==='/api/public/leasing' && method==='GET') return Response.json({listings:await publicListings(env,url.searchParams.get('kind')??undefined)});
+    const pubphoto=path.match(/^\/api\/public\/leasing\/photos\/([a-zA-Z0-9_-]+)(?:\/(cover))?$/);
+    if(pubphoto&&method==='GET')return publicPhoto(env,pubphoto[1]+(pubphoto[2]?'/cover':''));
+    const cancel=path.match(/^\/api\/public\/leasing\/cancel\/([a-f0-9]{64})$/);
+    if(cancel&&method==='POST'){
+      requireOrigin(request,env);
+      return Response.json(await cancelLead(env,request,cancel[1],await digest(env.DATA_ENCRYPTION_KEY+':cancel:'+(request.headers.get('CF-Connecting-IP')??'unknown'))));
+    }
     if (path === '/api/catalogue' && method === 'GET')
       return Response.json({ services: await catalogue(env) });
     if (path === '/api/auth/start' && method === 'POST') {
@@ -276,7 +288,33 @@ export async function handleApi(
         { ok: true },
         { headers: { 'Set-Cookie': await signOut(request, env) } },
       );
+    if(path==='/api/internal/rental-document-scan' && method==='POST')
+      return Response.json(await acceptRentalScan(env,request));
     const user = await requireUser(request, env);
+    const rentalStaff=path.match(/^\/api\/staff\/rental-applications(?:\/(.*))?$/);
+    if(rentalStaff){
+      const tail=(rentalStaff[1]??'').split('/').filter(Boolean);
+      if(method!=='GET'&&method!=='HEAD')requireOrigin(request,env);
+      if(method==='GET'&&tail.length===0)return Response.json(await listRentalApplications(env,user,url.searchParams.get('listingId')??undefined));
+      if(method==='GET'&&tail.length===1)return Response.json(await rentalStaffDetail(env,user,tail[0]));
+      if(method==='POST'&&tail.length===2&&tail[1]==='status')return Response.json(await updateRentalStatus(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===2&&tail[1]==='privacy-hold')
+        return Response.json(await setRentalPrivacyHold(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===2&&tail[1]==='erase')
+        return Response.json(await eraseRentalForRequest(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===3&&tail[1]==='privacy')
+        return Response.json(await resolveRentalPrivacyRequest(env,user,tail[0],tail[2],await json(request)));
+      if(tail.length===4&&tail[1]==='documents'&&tail[3]==='review'&&method==='POST')
+        return Response.json(await reviewRentalDocument(env,user,tail[0],tail[2],await json(request)));
+      if(tail.length===4&&tail[1]==='documents'&&tail[3]==='download'&&method==='GET')
+        return rentalDocumentDownload(env,user,tail[0],tail[2],url.searchParams.get('quarantine')==='1');
+      throw new AppError(404,'NOT_FOUND','Unknown application action.');
+    }
+    const leasingStaff=path.match(/^\/api\/staff\/leasing(?:\/(.*))?$/);
+    if(leasingStaff) {
+      if(method!=='GET'&&method!=='HEAD')requireOrigin(request,env);
+      return Response.json(await staffLeasing(env,user,request,leasingStaff[1]??''),{status:method==='POST'?201:200});
+    }
     if (method !== 'GET' && method !== 'HEAD') requireOrigin(request, env);
     if (path === '/api/staff/calendar-diagnostic' && method === 'GET') {
       // Genuine authenticated operations staff only; no public test trigger.

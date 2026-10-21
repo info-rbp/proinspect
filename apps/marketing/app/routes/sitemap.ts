@@ -1,9 +1,19 @@
+import { publicListings } from '../../../platform/worker/features/leasing.server';
+import { runtimeContext } from '../../../../packages/database/context';
+import type { Env } from '../../../../packages/database/types';
+import type { LoaderFunctionArgs } from 'react-router';
 import { ENGAGEMENTS, GUIDES } from '../../../../packages/marketing/content';
 import { SERVICE_SEEDS, FAMILIES } from '../../../../packages/service-catalogue/index';
-export function loader() {
+export async function loader({context}:LoaderFunctionArgs) {
+  const env=context.get(runtimeContext).env as Env;
+  const publicLeaseListings=env.DB?await publicListings(env):[];
+
   const paths = [
     '/',
     '/services',
+    '/properties-for-lease',
+    '/properties-for-lease/residential',
+    '/properties-for-lease/commercial',
     '/sectors/residential',
     '/sectors/commercial',
     '/sectors/strata-building',
@@ -18,6 +28,7 @@ export function loader() {
     ...Object.keys(ENGAGEMENTS).map((x) => `/how-we-work/${x}`),
     ...Object.keys(GUIDES).map((x) => `/resources/${x}`),
     ...SERVICE_SEEDS.map((s) => `/services/${s.id}`),
+    ...publicLeaseListings.map((p:any) => `/properties-for-lease/${p.kind}/${p.slug}`),
   ];
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map((path) => `<url><loc>https://proinspect.systems${path}</loc></url>`).join('')}</urlset>`,
