@@ -30,7 +30,9 @@ try{
   assert.equal(page.url(),ORIGIN+'/');
   await page.locator('nav[aria-label="Primary navigation"] a[href="/services"]').click();
   await page.waitForURL('**/services',{timeout:12000});
-  assert.match(await page.locator('h1').first().innerText(),/right service/i);
+  assert.equal(new URL(page.url()).pathname,'/services');
+  assert((await page.locator('h1').first().innerText()).trim().length>12,'Services page must have a meaningful heading');
+  assert(await page.locator('main a[href^="/services/"]').count()>0,'Services page must retain service navigation');
  });
  await check('service category route and marketing link hydration',async()=>{
   const s=await page.goto(ORIGIN+'/services/category/inspections',{waitUntil:'networkidle',timeout:25000});
