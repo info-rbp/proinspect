@@ -1,0 +1,19 @@
+/* Marketing-site leasing components reuse ProInspect variables and card language. */
+.leasing-role-note{max-width:75ch;border-left:3px solid #0b7777;padding:12px 16px;background:rgba(255,255,255,.12);font-size:.92rem;line-height:1.55}
+.leasing-card{overflow:hidden}.leasing-card .leasing-image{margin:-24px -24px 18px;aspect-ratio:16/10;background:#e5edeb}
+.leasing-card .leasing-image img{width:100%;height:100%;object-fit:cover}
+.leasing-price{font-size:1.3rem!important;font-weight:750;color:inherit!important}
+.leasing-filters{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;align-items:end;gap:14px;margin-bottom:30px}
+.leasing-filters label,.leasing-detail-grid label{display:grid;gap:6px;font-weight:650}
+.leasing-filters input,.leasing-filters select,.leasing-detail-grid input,.leasing-detail-grid select,.leasing-detail-grid textarea{width:100%;max-width:100%;min-height:44px}
+.leasing-filters .button{min-height:44px}
+.leasing-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:24px 0 0}
+.leasing-gallery img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px}
+.leasing-gallery img:first-child{grid-column:span 2;grid-row:span 2;height:100%}
+.leasing-detail-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(290px,1fr);align-items:start;gap:28px}
+.leasing-description{white-space:pre-line}.leasing-facts{display:flex;gap:8px;flex-wrap:wrap}.leasing-facts span{padding:8px 12px;background:#e9efec;border-radius:8px;font-size:.9rem}
+.leasing-session-list{padding:0;list-style:none;display:grid;gap:12px}
+.leasing-session-list li{border:1px solid #d4dfdd;border-radius:9px;padding:12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.leasing-session-list span{font-size:.85rem;color:#476669}.leasing-detail-grid .form{display:grid;gap:16px}
+@media(max-width:800px){.leasing-detail-grid{grid-template-columns:1fr}.leasing-filters{grid-template-columns:1fr 1fr}.leasing-filters button{grid-column:span 2}.leasing-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.leasing-gallery img:first-child{grid-column:span 2;grid-row:span 1;height:auto;aspect-ratio:16/9}}
+@media(max-width:520px){.leasing-filters{grid-template-columns:1fr}.leasing-filters button{grid-column:auto}.leasing-gallery{gap:6px}.leasing-gallery img{border-radius:6px}}

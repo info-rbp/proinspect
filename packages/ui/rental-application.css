@@ -1,0 +1,73 @@
+/* Residential application UI: restricted workflow, marketing visual language. */
+.rental-shell{background:linear-gradient(180deg,#f0f7f5 0,#f8faf9 310px,#f8faf9 100%);min-height:75vh;padding:2.3rem 0 5rem;color:var(--ink,#17363f)}
+.rental-shell h1{font-size:clamp(2rem,3.6vw,3.2rem);line-height:1.1;letter-spacing:-.038em}
+.rental-shell h2{font-size:clamp(1.35rem,2.3vw,1.9rem);letter-spacing:-.025em}
+.rental-shell h3{font-size:1.08rem;line-height:1.3}
+.rental-shell p{line-height:1.65}
+.rental-breadcrumb{display:flex;gap:.65rem;align-items:center;flex-wrap:wrap;color:#4a686b;font-size:.83rem;margin-bottom:2.2rem}
+.rental-breadcrumb a{color:#256e70;text-decoration:none}.rental-breadcrumb a:hover{text-decoration:underline}
+.rental-intro{max-width:850px;margin-bottom:2.6rem}.rental-intro h1{margin:.5rem 0 1rem}.rental-intro>p:last-child{max-width:710px;color:#526b6f;font-size:1.05rem}
+.rental-start-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(270px,.75fr);gap:1.6rem;align-items:start}
+.rental-paper{background:white;border:1px solid #dce9e6;border-radius:20px;padding:clamp(1.35rem,3vw,2.7rem);box-shadow:0 20px 55px rgba(21,63,68,.065)}
+.rental-paper>h2:first-child{margin-top:0}
+.rental-muted{font-size:.9rem;color:#566e72}.rental-side{display:grid;gap:1.25rem}
+.rental-property-panel{border:1px solid #d9e6e3;background:#fff;border-radius:16px;padding:1.5rem}
+.rental-property-panel h3{margin:0 0 .6rem}.rental-property-panel ol{margin:1rem 0;padding-left:1.2rem}
+.rental-property-panel li{padding-bottom:.7rem;line-height:1.5}
+.rental-form{display:grid;gap:1.25rem;margin-top:1.7rem}.rental-field{display:flex;flex-direction:column;gap:.43rem;min-width:0}
+.rental-field label,.rental-label{font-size:.9rem;color:#213f46;font-weight:690}
+.rental-field input,.rental-field select,.rental-field textarea{font:inherit;border-radius:9px;min-height:48px;border:1px solid #baccc9;background:white;color:#17343d;padding:.75rem .9rem;width:100%;max-width:100%;transition:box-shadow .15s,border-color .15s}
+.rental-field textarea{min-height:110px;resize:vertical}
+.rental-field input:focus,.rental-field select:focus,.rental-field textarea:focus{outline:2px solid #2d8582;outline-offset:2px;border-color:#287e7c}
+.rental-field small{font-size:.8rem;color:#61777a}
+.rental-field-group{border:0;min-width:0;padding:0;margin:1.9rem 0 0}
+.rental-field-group legend{font-weight:760;color:#24494a;letter-spacing:-.015em;margin-bottom:1.05rem;font-size:1.03rem}
+.rental-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.15rem 1.4rem}
+.rental-field.wide{grid-column:1/-1}
+.rental-check{display:flex;gap:.85rem;font-size:.9rem;align-items:flex-start;line-height:1.5}
+.rental-check input{width:20px;height:20px;flex:none;margin-top:.12rem;accent-color:#147b79}
+.rental-full-button{width:100%;justify-content:center}
+.rental-progress-header{margin-bottom:2.1rem;display:flex;align-items:center;justify-content:space-between;gap:1.5rem}
+.rental-progress-label{color:#42696b;font-weight:730;font-size:.8rem;letter-spacing:.09em;text-transform:uppercase}
+.rental-progress-bar{height:7px;border-radius:999px;background:#e0eae8;overflow:hidden;margin-top:.7rem}
+.rental-progress-bar>div{height:100%;background:#137978;border-radius:999px;transition:width .2s}
+.rental-steps{display:flex;flex-direction:column;gap:.55rem}
+.rental-step{display:flex;align-items:center;gap:.75rem;padding:.75rem .8rem;text-decoration:none;color:#45646a;border-radius:10px;border:1px solid transparent;font-size:.87rem;font-weight:650;transition:background .15s}
+.rental-step.active{background:#e9f4f1;border-color:#b6d8d1;color:#12696a}
+.rental-step:hover{background:#edf5f2}
+.rental-step-number{display:inline-flex;align-items:center;justify-content:center;height:28px;width:28px;border-radius:999px;background:#edf2f0;color:#557174;font-size:.74rem;font-weight:780;flex:none}
+.rental-step.active .rental-step-number{background:#137978;color:#fff}
+.rental-workspace{display:grid;grid-template-columns:240px minmax(0,1fr);align-items:start;gap:1.5rem}
+.rental-rail{position:sticky;top:22px;background:#fff;border:1px solid #dce9e6;border-radius:15px;padding:1rem}
+.rental-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.8rem}
+.rental-card-heading h2{margin:0 0 .55rem}.rental-card-heading p{color:#587176;font-size:.94rem;margin:0}
+.rental-actions{display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;justify-content:space-between;padding-top:1.6rem;margin-top:1.5rem;border-top:1px solid #e2e9e7}
+.rental-actions .button{min-height:48px}.rental-actions a{font-size:.9rem}
+.rental-section-note{padding:1.1rem 1.3rem;background:#eff6f4;border-left:3px solid #147b79;border-radius:0 10px 10px 0;color:#355b5e;font-size:.88rem;margin:1.1rem 0 1.6rem}
+.rental-success{background:#eef7f3;border:1px solid #b5d8c8;border-radius:14px;padding:1.6rem}
+.rental-success h2{margin-top:0}
+.rental-household{display:grid;gap:.65rem;margin:1rem 0}.rental-household-card{border:1px solid #dce8e4;border-radius:12px;background:#f8fbfa;padding:1rem;display:flex;justify-content:space-between;gap:.9rem;align-items:flex-start}
+.rental-household-card strong{display:block;font-size:.94rem}.rental-household-card small{display:block;color:#61787a}
+.rental-state{background:#e6f3ef;padding:.3rem .6rem;border-radius:999px;color:#216f6d;font-weight:740;font-size:.72rem;white-space:nowrap}
+.rental-state.waiting{background:#f2f0e7;color:#75673c}
+.rental-drop-zone{border:2px dashed #a9c9c3;border-radius:14px;background:#f6fbf8;padding:1.5rem}
+.rental-document-list{display:grid;gap:.65rem;padding:0;list-style:none}
+.rental-document-list li{display:flex;justify-content:space-between;gap:1rem;align-items:center;padding:.95rem 1rem;border:1px solid #dce9e6;border-radius:10px}
+.rental-document-list small{display:block;color:#5b7478}
+.rental-inline-button{padding:.35rem .5rem;border:0;background:transparent;color:#176b6e;text-decoration:underline;cursor:pointer}
+.rental-summary{display:grid;gap:.7rem}
+.rental-summary details{border:1px solid #dce8e4;border-radius:12px;background:#fbfdfc;padding:.95rem 1.1rem}
+.rental-summary summary{cursor:pointer;font-weight:730}
+.rental-summary dl{display:grid;grid-template-columns:minmax(130px,1fr) minmax(0,1.5fr);gap:.45rem 1rem;font-size:.86rem}
+.rental-summary dt{color:#647b7d}.rental-summary dd{margin:0;overflow-wrap:anywhere}
+.rental-notice{border:1px solid #d0e1dd;border-radius:14px;background:#f8fbfa;padding:1.25rem;margin-bottom:1.4rem}
+.rental-notice h3{margin-top:0}.rental-notice-list{display:grid;gap:.75rem}
+.rental-notice-list article{padding:.75rem 0;border-bottom:1px solid #dce8e4}
+.rental-notice-list article:last-child{border:0}
+.rental-legal{font-size:.79rem;color:#617478;max-width:64ch}
+.rental-quiet-link{font-size:.85rem;color:#476a6d}
+@media(max-width:1000px){.rental-workspace{grid-template-columns:190px minmax(0,1fr)}}
+@media(max-width:760px){.rental-shell{padding:1.25rem 0 3.5rem}.rental-start-grid,.rental-workspace{grid-template-columns:1fr}.rental-rail{position:static;overflow:auto}.rental-steps{display:flex;flex-direction:row;overflow-x:auto;padding-bottom:.15rem}.rental-step{white-space:nowrap}.rental-field-group{margin-top:1.5rem}.rental-fields{grid-template-columns:1fr}.rental-card-heading{display:block}}
+@media(max-width:520px){.rental-paper{border-radius:13px;padding:1.3rem 1rem}.rental-actions{flex-direction:column;align-items:stretch}.rental-actions .button{width:100%;justify-content:center}.rental-document-list li{align-items:flex-start}.rental-progress-header{display:block}}
+@media(prefers-reduced-motion:reduce){.rental-progress-bar>div,.rental-field input,.rental-step{transition:none}}
+@media print{.rental-rail,.rental-breadcrumb,.rental-actions,.site-header,.site-footer{display:none!important}.rental-paper{border:0;box-shadow:none}.rental-workspace{display:block}.rental-shell{background:white}}
