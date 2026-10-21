@@ -1,5 +1,5 @@
 -- Guest purchases are transactions, not customer portal memberships.
--- 0008 is the unique Version 3 candidate migration number; do not apply to production without ledger review.
+-- 0010 deliberately avoids draft-branch 0007/0008 migration-name collisions.
 INSERT INTO users(id,email,display_name,active,created_at)
 VALUES('usr_guest_booking_system','guest-bookings@proinspect.invalid','Guest booking system',0,strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 ON CONFLICT(id) DO NOTHING;
