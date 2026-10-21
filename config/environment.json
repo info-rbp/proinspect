@@ -237,6 +237,13 @@
       ],
       "group": "open-home",
       "default": "resend"
+    },
+    "WA_BONDS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
     }
   },
   "generated": [
