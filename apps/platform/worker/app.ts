@@ -6,6 +6,7 @@ import { consumeQueue, dispatchOutbox } from '../../../packages/notifications/se
 import { dispatchNotices } from '../../../packages/notifications/notices';
 import { dispatchIntegrations } from './features/integrations.server';
 import { dispatchLeasingReminders } from './features/leasing.server';
+import { dispatchNextDayOpenHomeReports } from './features/open-home-reports.server';
 import { dispatchRentalRetention } from './features/rental-privacy.server';
 import { shouldIndexPublicPage } from '../app/lib/public-routes';
 import { readOnlyCalendarDiagnostic, shouldRunCalendarReleaseProbe } from './features/google-calendar.server';
@@ -40,6 +41,15 @@ export default {
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   },
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
+    if (_event.cron === '0 1 * * *') {
+      // Cloudflare Cron is UTC: 01:00 UTC = 09:00 Australia/Perth.
+      // Calculate the preceding Perth day from scheduledTime, not Date.now().
+      ctx.waitUntil(dispatchNextDayOpenHomeReports(env,_event.scheduledTime)
+        .then(result => {
+          console.info(JSON.stringify({event:'open_home.next_day_report',...result}));
+          return dispatchOutbox(env);
+        }));
+    }
     ctx.waitUntil(dispatchLeasingReminders(env).then(() => dispatchNotices(env)).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchIntegrations(env));
     ctx.waitUntil(dispatchRentalRetention(env));
