@@ -12,7 +12,18 @@ async function inspect(path,expectStatus=200,expectNoIndex=false){
   const robots=response.headers.get('x-robots-tag')??'';
   const ok=response.status===expectStatus&&(!expectNoIndex||/noindex/i.test(robots));
   results.push({path,status:response.status,expectedStatus:expectStatus,noindex:robots,ok});
-  if(!ok)throw new Error('Staging HTTP gate failed for '+path+' status '+response.status);
+  if(!ok){
+    // All staging fixtures are synthetic. Capture bounded diagnostic headers,
+    // not response bodies, authentication cookies or user data.
+    console.error('Staging route diagnostic',JSON.stringify({
+      path,expectedStatus:expectStatus,actualStatus:response.status,
+      contentType:response.headers.get('content-type'),
+      workerHeader:response.headers.get('x-frame-options')??null,
+      cfRayPresent:Boolean(response.headers.get('cf-ray')),
+      robots,
+    }));
+    throw new Error('Staging HTTP gate failed for '+path+' status '+response.status);
+  }
   return response;
 }
 try{
