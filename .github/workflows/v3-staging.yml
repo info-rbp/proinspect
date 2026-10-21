@@ -7,6 +7,7 @@ on:
       - apps/platform/wrangler.jsonc
       - scripts/release/v3-staging-*
       - database/migrations/**
+      - docs/V3_PRODUCTION_CUTOVER.md
   workflow_dispatch:
 permissions:
   contents: read
