@@ -105,6 +105,9 @@ const buildConfig={
  vars:stage.vars,d1_databases:stage.d1_databases,r2_buckets:stage.r2_buckets,
  durable_objects:stage.durable_objects,migrations:stage.migrations,
  queues:stage.queues,triggers:stage.triggers,
+ // React Router SSR needs the Worker for deep application URLs. Client assets
+ // are excluded and continue to be served from Cloudflare's asset store.
+ assets:{...(config.assets??{}),run_worker_first:['/*','!/assets/*','!/favicon.ico']},
 };
 delete buildConfig.env;
 writeFileSync(wranglerFile,JSON.stringify(buildConfig,null,2)+'\n');
