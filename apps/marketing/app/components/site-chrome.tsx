@@ -38,6 +38,7 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
             </details>
             <Link to="/how-it-works" aria-current={pathname.startsWith('/how-') ? 'page' : undefined}>How we work</Link>
             <Link to="/why-proinspect" aria-current={pathname === '/why-proinspect' ? 'page' : undefined}>Why ProInspect</Link>
+            <Link to="/properties-for-lease" aria-current={pathname.startsWith('/properties-for-lease') ? 'page' : undefined}>Leasing</Link>
             <Link to="/resources" aria-current={pathname.startsWith('/resources') ? 'page' : undefined}>Resources</Link>
           </nav>
           <div className="mkt-header-actions">
@@ -52,6 +53,7 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
               {sectors.map((sector) => <Link key={sector.path} to={sector.path}>{sector.label}</Link>)}
               <Link to="/how-it-works">How we work</Link>
               <Link to="/why-proinspect">Why ProInspect</Link>
+              <Link to="/properties-for-lease">Leasing</Link>
               <Link to="/resources">Resources</Link>
               <Link to="/contact">Contact</Link>
               <a href={appOrigin + '/signin'}>Sign in</a>
@@ -76,6 +78,7 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
           <div className="mkt-footer-group">
             <h3>Explore</h3>
             <Link to="/services">All services</Link>
+            <Link to="/properties-for-lease">Properties for lease</Link>
             <Link to="/services/category/inspections">Inspections</Link>
             <Link to="/services/category/maintenance">Maintenance &amp; works</Link>
             <Link to="/how-it-works">How we work</Link>
