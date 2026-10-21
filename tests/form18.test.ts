@@ -48,7 +48,7 @@ test('external applications require HTTPS, internal applications require client 
 test('applicant access is separate from public listing, restricted R2 is used, production remains disabled',()=>{
  const read=(p:string)=>readFileSync(p,'utf8');
  const server=read('apps/platform/worker/features/rental-applications.server.ts');
- const migration=read('database/migrations/0008_rental_applications.sql');
+ const migration=read('database/migrations/0010_rental_applications.sql');
  const wrapper=read('apps/platform/wrangler.jsonc');
  assert.match(server,/RESTRICTED_DOCUMENTS\.put/);
  assert.match(server,/rental_applicants/);
@@ -74,7 +74,7 @@ test('handoff is staged for future Google Apps Script and cannot falsely claim e
  const read=(p:string)=>readFileSync(p,'utf8');
  const app=read('apps/platform/worker/features/rental-review.server.ts');
  const handoff=read('apps/platform/worker/features/rental-handoff.server.ts');
- const sql=read('database/migrations/0009_rental_application_safeguards.sql');
+ const sql=read('database/migrations/0011_rental_application_safeguards.sql');
  assert.match(app,/stageRentalAppsScriptHandoff/);
  assert.doesNotMatch(app,/rental\.application\.forwarded/);
  assert.match(handoff,/awaiting_script|rental-email-v1/);

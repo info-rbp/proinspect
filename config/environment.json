@@ -252,6 +252,7 @@
     "REPOSITORY_ACCEPTED_SHA"
   ],
   "bindings": [
+    "EMAIL",
     "DB",
     "DOCUMENTS",
     "RESTRICTED_DOCUMENTS",

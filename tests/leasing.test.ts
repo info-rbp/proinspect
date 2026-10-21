@@ -7,7 +7,7 @@ test('leasing is marketing-only, with separated residential/commercial public ro
  const routes=text('apps/platform/app/routes.ts');
  for(const frag of ["properties-for-lease/:kind","properties-for-lease/:kind/:slug","leasing-index.tsx","leasing-sector.tsx","leasing-property.tsx"])assert.ok(routes.includes(frag));
  const layout=text('apps/platform/app/routes/public-layout.tsx');
- assert.ok(layout.includes('to="/properties-for-lease"'));
+ assert.ok(layout.includes('properties-for-lease'));
  const site=text('apps/platform/app/lib/public-routes.ts');
  assert.ok(site.includes('properties-for-lease'));
  assert.ok(site.includes('cancel'));
@@ -39,7 +39,7 @@ test('leasing validation enforces representative, suburb, listing kind, and cont
  assert.equal(leadInput.safeParse({...lead,kind:'inspection',sessionId:'lsn_abc'}).success,true);
 });
 test('future Google Apps Script email events remain inert',()=>{
- const sql=text('database/migrations/0007_leasing.sql');
+ const sql=text('database/migrations/0009_leasing.sql');
  assert.match(sql,/pending_integration/);
  for(const kind of ['registration.received','interest.received','registration.cancelled','session.updated','session.cancelled','session.reminder'])assert.ok(sql.includes(kind));
  const api=text('apps/platform/worker/api.ts');

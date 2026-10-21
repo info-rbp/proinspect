@@ -54,7 +54,7 @@ test('Google Sheet synchronization is optional, versioned and records explicit c
 });
 test('visitor data never writes directly to Google Sheets on a public form submission',()=>{
  const server=readFileSync('apps/platform/worker/features/open-home.server.ts','utf8');
- const sql=readFileSync('database/migrations/0010_open_home_checkins.sql','utf8');
+ const sql=readFileSync('database/migrations/0012_open_home_checkins.sql','utf8');
  assert.match(server,/contact_envelope/);
  assert.match(server,/INSERT INTO open_home_sheet_events/);
  assert.match(server,/leasing_sessions s JOIN leasing_listings l/);
