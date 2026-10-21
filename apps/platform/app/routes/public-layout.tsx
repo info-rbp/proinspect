@@ -23,6 +23,7 @@ export default function PublicLayout() {
             <Link to="/sectors/strata-building">Strata &amp; buildings</Link>
             <Link to="/how-it-works">How it works</Link>
             <Link to="/properties-for-lease">Properties for lease</Link>
+            <Link to="/open-home/check-in">Open home check-in</Link>
           </nav>
           <details className="marketing-menu">
             <summary>Menu</summary>
@@ -34,6 +35,7 @@ export default function PublicLayout() {
               <Link to="/how-it-works">How we work</Link>
               <Link to="/why-proinspect">Why ProInspect</Link>
               <Link to="/properties-for-lease">Properties for lease</Link>
+              <Link to="/open-home/check-in">Open home check-in</Link>
               <Link to="/resources">Resources</Link>
               <Link to="/contact">Contact</Link>
             </nav>
@@ -67,6 +69,7 @@ export default function PublicLayout() {
               <Link to="/why-proinspect">Why ProInspect</Link>
               <Link to="/resources">Guides &amp; comparisons</Link>
               <Link to="/properties-for-lease">Properties for lease</Link>
+              <Link to="/open-home/check-in">Open home check-in</Link>
               <Link to="/areas-we-service">Service areas</Link>
               <Link to="/about">About</Link>
               <Link to="/contact">Contact</Link>
