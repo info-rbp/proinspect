@@ -80,8 +80,9 @@ workflows; there is no active data transfer to Google Sheets.
 ## Release prerequisites
 
 - Apply D1 migration 0011 after 0010 and run full schema tests.
-- Onboard ProInspect's sending domain to Cloudflare Email Service,
-  configure the optional EMAIL Worker binding and sender authentication.
+- Verify ProInspect's existing Resend sender domain, RESEND_API_KEY Worker
+  secret, EMAIL_FROM address and a restricted staging delivery test.
+  No paid Cloudflare Email Sending binding is required.
 - Approve authorised client recipient accounts, written property reporting
   authority, data privacy/retention and deletion procedures.
 - Test cross-client access, cancelled sessions, zero visitors, missing
@@ -90,4 +91,4 @@ workflows; there is no active data transfer to Google Sheets.
 - Keep the feature branch draft until reviewed and deliberately merged.
 
 See docs/OPEN_HOME_NEXT_DAY_REPORTS.md for precise instructions, especially
-the native Cloudflare email binding and 9:00 AWST scheduling behavior.
+the existing Resend integration and 9:00 AWST scheduling behavior.
