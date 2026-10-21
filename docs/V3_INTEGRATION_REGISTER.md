@@ -20,7 +20,7 @@ There are ten open PRs based on `main`, plus one newly open dependent PR #33 tar
 | #24 | `feature/guest-one-off-booking-20261018` | Guest quote, booking, report and reminder workflow | Adapt to approved service/pricing and calendar synchronization. No live paid-status assertion. |
 | #31 | `feature/marketing-home-service-ui-20261019` | Marketing UI, accessibility, legal and media gates | Reconcile public routes with Leasing and Open Home. Legal/media sign-off and Cloudflare preview mismatch unresolved. |
 | #29 | `Leasing` | Leasing listings and multi-applicant rental application | Keep applicant documents private, release gated and future Apps Script handoff marked unsent. |
-| #33 | `feature/open-home-check-in` (base: `Leasing`) | Open Home attendance, QR-ready links, pending Google Sheets event handoff | Dependent on #29; integrate only *incremental changes* beyond Leasing, avoiding double-application of its commits. Sheets sync disabled by default. |
+| #33 | `feature/open-home-check-in` (base: `Leasing`) | D1 check-in, 09:00 AWST next-day reports, Resend outbox, authorised protected report/CSV | Latest reviewed source `f22aa6d`; reconciled D1/Resend/report recipient security and imported synthetic Miniflare tests. Google Sheets/Apps Script is superseded for this feature. Production reporting disabled until approvals. |
 | #25 | `feature/wa-residential-statutory-forms-20261018` | WA residential forms, issuance, reviews, notices | Requires official master PDF approvals, legal rules and protected Form 2 review. No automatic government service/lodgement claim. |
 | #26 | `feature/wa-bond-management-full-20261018` | Residential bond tracking, release and reconciliations | Integrate with #25's bond-related workflow without duplicate authoritative records; government payouts remain external. |
 
@@ -44,12 +44,16 @@ There are ten open PRs based on `main`, plus one newly open dependent PR #33 tar
 6. Merge WA forms/bonds only after domain overlap and independent external legal/privacy approval.
 7. Integrate public marketing and dependent Open Home changes, with explicit preview-vs-production isolation.
 8. Run one *combined* dependency installation, TypeScript, SQL migration replay, domain, Worker/D1/R2/DO, Cloudflare dry-run and browser acceptance suite on exact V3 HEAD.
-9. Validate staged external Google event write/cancel, secure Apps Script/Sheets handoffs, Turnstile, real provider email, malware-scanning and hosted role-scoped UAT. Do not simulate these as complete.
+9. Validate staged Google Calendar event writes/cancels, rental-application Apps Script handoff where separately approved, Resend Open Home delivery (no Sheet needed), Turnstile, malware scanning and hosted role-scoped UAT. Do not simulate these as complete.
 10. Require human security/legal/commercial sign-offs and explicit release approval **before** making V3 ready for merging to main.
 
-## Current integration evidence
+## Current integration evidence — 21 October 2026
 
-- V3 branch created from exact `main` SHA listed above.
-- PR #30 documentation blobs integrated without replacing existing application source.
-- No other feature code has been merged or certified; existing draft PRs remain unchanged.
-- **Do not merge V3 into main yet.** The outstanding work is substantive implementation, not merely Git conflict resolution.
+- `main` remains at `e819659dba660e85b88a013257806e6462f4c38e`, and V3 was created from this exact baseline.
+- PR #30 planning files, cross-portal regression and live-read-only audit harness, the integrated scheduling/guest/marketing/leasing/open-home/form/bond modules, their shared routes and database migration candidates are present on V3. Presence and an isolated PR test pass are **not** proof of live readiness.
+- Unified numbered D1 migration files `0001`–`0019` exist on V3. The successful **read-only** production audit verified the actual `d1_migrations` table contains exactly six rows ending at `0006_all_inclusive_subscription.sql`, with no foreign-key violations; it did not execute `0007`–`0019` in production.
+- PR #33 latest reviewed head `f22aa6d1331a242a0f613aa5ba782ab046b767fe` uses 09:00 Perth next-day reports and Resend via the existing encrypted outbox, not Google Sheets. V3 includes a strict original-recipient access check and deterministic Resend/Miniflare integration tests. Existing historic Sheets tables/files are inert and must not be treated as live delivery.
+- Combined V3 `pnpm check`, Worker/D1/R2/DO integration and Wrangler dry-run checks passed on the first PR33-reconciled verification candidate. Browser acceptance **failed 2 of 31 tests** at that candidate: guest invalid-report-link HTTP 500 and mobile workspace test timeout. Corrections are under verification on a newer V3 head. Never quote an older run as proof of success on later commits.
+- The live read-only acceptance probe still has **five blockers**: incomplete verified test identities (1/8), no authenticated test sessions, missing cross-portal transaction evidence, unpriced request-mode service catalogue, and unresolved canonical domain. Tests only observed the current `main` deployment.
+- No independently verified V3 hosted staging Worker, staged D1 migration upgrade, rollback/restore rehearsal, genuine Resend recipient send or Google Calendar write acceptance has been established. WA legal/form/privacy/commercial signoffs remain required.
+- Production Cloudflare Worker deployment is connected to `main`. **Do not merge V3 into main until its exact head passes all checks, an independent staging migration and service-provider acceptance succeed, and the owner approves the migration/deployment order.** Some scheduled handlers require V3 schema tables; a code deploy onto production's six-migration database is not accepted.
