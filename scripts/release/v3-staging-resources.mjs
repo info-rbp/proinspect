@@ -98,7 +98,16 @@ await queue(NAMES.queue);
 // Mutates only the ephemeral CI checkout. The committed V3 config has no actual D1 ID.
 stage.d1_databases[0].database_id=uuid;
 stage.vars.BUILD_SHA=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
-writeFileSync(wranglerFile,JSON.stringify(config,null,2)+'\n');
+// Use an ephemeral, stage-only top-level configuration for Vite/React Router.
+// This prevents environment suffix rewriting or accidental 'connected' inheritance.
+const buildConfig={
+ ...config,name:stage.name,workers_dev:stage.workers_dev,preview_urls:stage.preview_urls,
+ vars:stage.vars,d1_databases:stage.d1_databases,r2_buckets:stage.r2_buckets,
+ durable_objects:stage.durable_objects,migrations:stage.migrations,
+ queues:stage.queues,triggers:stage.triggers,
+};
+delete buildConfig.env;
+writeFileSync(wranglerFile,JSON.stringify(buildConfig,null,2)+'\n');
 writeFileSync(new URL('../../wrangler.v3-staging-migration.json',import.meta.url),
  JSON.stringify({
    name:'proinspect-v3-staging-migrations-only',compatibility_date:'2026-07-01',
