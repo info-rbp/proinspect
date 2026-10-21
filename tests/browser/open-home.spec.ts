@@ -23,3 +23,16 @@ test('invalid QR-selected property and session values do not bypass published li
  // Invalid prefill parameters must not be reflected as an approved property.
  expect(await page.locator('option[value="not-a-listing"]').count()).toBe(0);
 });
+
+test('unauthenticated visitors cannot retrieve private attendance reports or exports',async({request,page})=>{
+ const view=await request.get('/api/open-home/report/lsn_synthetic');
+ const download=await request.get('/api/open-home/report/lsn_synthetic.csv');
+ const staffSettings=await request.post('/api/staff/open-home-checkins/settings',{
+  data:{listingId:'lst_synthetic',settings:{version:0,enabled:true,recipientUserId:'u',authorityReference:'synthetic'}},
+ });
+ expect(view.status()).toBe(401);
+ expect(download.status()).toBe(401);
+ expect(staffSettings.status()).toBe(401);
+ await page.goto('/open-home/report/lsn_synthetic');
+ await expect(page).toHaveURL(/\/signin(?:\?|$)/);
+});
