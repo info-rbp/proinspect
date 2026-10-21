@@ -167,6 +167,79 @@
           "0 1 * * *"
         ]
       }
+    },
+    "staging": {
+      "name": "proinspect-v3-staging",
+      "workers_dev": true,
+      "preview_urls": false,
+      "vars": {
+        "APP_ENV": "staging",
+        "APP_ORIGIN": "https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev",
+        "MARKETING_ORIGIN": "https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev",
+        "PLATFORM_ORIGIN": "https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev",
+        "EMAIL_PROVIDER": "local",
+        "RESTRICTED_WORKFLOWS_ENABLED": "false",
+        "GOOGLE_CALENDAR_BOOKINGS_ENABLED": "false",
+        "GUEST_BOOKINGS_ENABLED": "false",
+        "RENTAL_APPLICATIONS_ENABLED": "false",
+        "RENTAL_RETENTION_AUTOPURGE_ENABLED": "false",
+        "OPEN_HOME_SHEET_SYNC_ENABLED": "false",
+        "OPEN_HOME_REPORTS_ENABLED": "false",
+        "OPEN_HOME_REPORT_EMAIL_PROVIDER": "resend",
+        "WA_BONDS_ENABLED": "false"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "proinspect-v3-staging-data",
+          "migrations_dir": "../../database/migrations"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "DOCUMENTS",
+          "bucket_name": "proinspect-v3-staging-documents"
+        },
+        {
+          "binding": "RESTRICTED_DOCUMENTS",
+          "bucket_name": "proinspect-v3-staging-restricted"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "SCHEDULER",
+            "class_name": "BookingScheduler"
+          }
+        ]
+      },
+      "migrations": [
+        {
+          "tag": "v1",
+          "new_sqlite_classes": [
+            "BookingScheduler"
+          ]
+        }
+      ],
+      "queues": {
+        "producers": [
+          {
+            "binding": "EVENTS",
+            "queue": "proinspect-v3-staging-events"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "proinspect-v3-staging-events",
+            "max_batch_size": 10,
+            "max_retries": 5,
+            "dead_letter_queue": "proinspect-v3-staging-events-dlq"
+          }
+        ]
+      },
+      "triggers": {
+        "crons": []
+      }
     }
   }
 }
