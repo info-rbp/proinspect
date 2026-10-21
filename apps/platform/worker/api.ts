@@ -240,7 +240,7 @@ export async function handleApi(
     if (path === '/api/guest/manage' && method === 'POST') { const result=await guest.guestAction(request,env); return result instanceof Response?result:Response.json(result); }
     if (path === '/api/guest/status' && method === 'GET') return Response.json(await guest.guestStatus(env,url.searchParams.get('token')??''));
     if (path === '/api/guest/availability' && method === 'GET') return Response.json(await guest.guestAvailability(env,url.searchParams.get('token')??'',url.searchParams.get('date')??''));
-    if (path === '/api/guest/report' && method === 'GET') return guest.guestReport(env,url.searchParams.get('token')??'');
+    if (path === '/api/guest/report' && method === 'GET') return await guest.guestReport(env,url.searchParams.get('token')??'');
     if (path === '/api/webhooks/stripe' && method === 'POST')
       return Response.json(await stripeWebhook(env, request));
     if (path === '/api/public/enquiries' && method === 'POST')
