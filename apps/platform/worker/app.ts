@@ -6,6 +6,9 @@ import { handleApi } from './api';
 import { consumeQueue, dispatchOutbox } from '../../../packages/notifications/server';
 import { dispatchNotices } from '../../../packages/notifications/notices';
 import { dispatchIntegrations } from './features/integrations.server';
+import { dispatchLeasingReminders } from './features/leasing.server';
+import { dispatchRentalRetention } from './features/rental-privacy.server';
+import { dispatchNextDayOpenHomeReports } from './features/open-home-reports.server';
 import { shouldIndexPublicPage } from '../app/lib/public-routes';
 import { readOnlyCalendarDiagnostic, shouldRunCalendarReleaseProbe } from './features/google-calendar.server';
 import { calendarSchedulingEnabled, dispatchCalendarSync } from './features/calendar-scheduling.server';
@@ -42,7 +45,11 @@ export default {
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   },
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(dispatchGuestReminders(env).then(() => dispatchNotices(env)).then(() => dispatchOutbox(env)));
+    if (env.OPEN_HOME_REPORTS_ENABLED === 'true' && _event.cron === '0 1 * * *') {
+      ctx.waitUntil(dispatchNextDayOpenHomeReports(env, _event.scheduledTime).then(() => dispatchOutbox(env)));
+    }
+    ctx.waitUntil(dispatchGuestReminders(env).then(() => dispatchLeasingReminders(env)).then(() => dispatchNotices(env)).then(() => dispatchOutbox(env)));
+    ctx.waitUntil(dispatchRentalRetention(env));
     ctx.waitUntil(dispatchIntegrations(env));
     if (calendarSchedulingEnabled(env))
       ctx.waitUntil(dispatchCalendarSync(env).catch(() => console.error('calendar.sync_dispatch_failed')));
