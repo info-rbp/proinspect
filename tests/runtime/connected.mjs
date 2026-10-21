@@ -844,6 +844,120 @@ try {
       );
     },
   );
+
+  await check(
+    'agency approval escalation reaches only the verified owner and returns the decision to the work order',
+    async () => {
+      const propertyId = imported.propertyIds[1];
+      const order = await first(
+        "SELECT id,version FROM work_orders WHERE property_id=? AND client_id=? AND status IN('triage','quote_required','approved','scheduled','assigned') ORDER BY created_at DESC LIMIT 1",
+        propertyId,
+        pm.id,
+      );
+      assert.ok(order, 'Expected a canonical agency work order from bulk booking.');
+      const ownerId = await userId(owner);
+      const proposal = {
+        version: order.version,
+        amountCents: 155000,
+        summary: 'Agency-managed property repair escalation',
+        reference: 'Synthetic owner approval request',
+        targetUserId: ownerId,
+      };
+      assert.equal(
+        (
+          await api(`${pm.base}/work-orders/${order.id}/proposals`, {
+            cookie: agency.cookie,
+            body: { ...proposal, requestKey: requestKey() },
+          })
+        ).status,
+        422,
+        'Owner approval must fail without a verified ownership relationship.',
+      );
+      await ok(`${staffBase}/admin/ownership`, operator, {
+        propertyId,
+        clientId: client,
+        reference: 'Staff-verified synthetic property owner',
+      });
+      const approval = await ok(
+        `${pm.base}/work-orders/${order.id}/proposals`,
+        agency,
+        { ...proposal, requestKey: requestKey() },
+      );
+      assert.equal(approval.decisionScope, 'named_user');
+      assert.equal(
+        (await first('SELECT status FROM work_orders WHERE id=?', order.id)).status,
+        'awaiting_approval',
+      );
+      assert.ok(
+        (await ok('/api/my-approvals', owner)).approvals.some((a) => a.id === approval.id),
+      );
+      assert.ok(
+        !(await ok('/api/my-approvals', outsider)).approvals.some((a) => a.id === approval.id),
+      );
+      assert.ok(
+        (await ok(pm.base, agency)).approvals.some((a) => a.id === approval.id),
+      );
+      assert.equal(
+        (
+          await first(
+            "SELECT COUNT(*) AS n FROM notifications WHERE user_id=? AND href='/owner-decisions'",
+            ownerId,
+          )
+        ).n,
+        1,
+      );
+      assert.equal(
+        (
+          await api(`${staffBase}/work-orders/${order.id}`, {
+            cookie: operator.cookie,
+            body: { version: order.version + 1, status: 'approved' },
+          })
+        ).status,
+        409,
+      );
+      for (const actor of [agency, operator]) {
+        const route = actor === agency
+          ? `${pm.base}/approvals/${approval.id}/decision`
+          : `${staffBase}/approvals/${approval.id}/decision`;
+        assert.equal(
+          (
+            await api(route, {
+              cookie: actor.cookie,
+              body: { version: 1, decision: 'approved' },
+            })
+          ).status,
+          403,
+        );
+      }
+      assert.equal(
+        (
+          await api(`/api/my-approvals/${approval.id}`, {
+            cookie: outsider.cookie,
+            body: { version: 1, decision: 'approved' },
+          })
+        ).status,
+        404,
+      );
+      await ok(`/api/my-approvals/${approval.id}`, owner, {
+        version: 1,
+        decision: 'approved',
+      });
+      assert.equal(
+        (await first('SELECT status FROM work_orders WHERE id=?', order.id)).status,
+        'approved',
+      );
+      assert.equal(
+        (
+          await api(`/api/my-approvals/${approval.id}`, {
+            cookie: owner.cookie,
+            body: { version: 1, decision: 'declined' },
+          })
+        ).status,
+        409,
+      );
+    },
+  );
+
   const commercialUser = await login('commercial@tests.example'),
     commercial = await organisation(commercialUser, 'commercial', 'Example Commercial', operator);
   await check('new commercial account receives an all-inclusive plan without new portal roles', async () => {
@@ -1051,6 +1165,40 @@ try {
       assert.equal(visible.members.length, 0);
     },
   );
+
+  await check(
+    'one tenant resident and council member sees independent notices and loses only expired council access',
+    async () => {
+      const extra = await ok(`${strataOrg.base}/team/invite`, strataUser, {
+        email: tenant.email,
+        schemeId: scheme.id,
+        role: 'council_member',
+        endsAt: expires,
+      });
+      await invited(tenant, extra.localInvitationUrl);
+      const kinds = (await ok('/api/session', tenant)).workspaces.map((w) => w.kind);
+      for (const kind of ['tenant', 'building', 'council'])
+        assert.ok(kinds.includes(kind), `Expected independent ${kind} workspace`);
+      const buildingView = await ok(`${resident.base}/schemes/${scheme.id}`, tenant);
+      const councilView = await ok(`/api/w/council/${scheme.id}/schemes/${scheme.id}`, tenant);
+      assert.ok(buildingView.notices.some((n) => n.title === 'Lot 23 access'));
+      assert.ok(!buildingView.notices.some((n) => n.title === 'Council briefing'));
+      assert.ok(councilView.notices.some((n) => n.title === 'Council briefing'));
+      const member = await first(
+        "SELECT id FROM scheme_memberships WHERE user_id=? AND scheme_id=? AND role='council_member' AND ends_at>?",
+        await userId(tenant),
+        scheme.id,
+        new Date().toISOString(),
+      );
+      assert.ok(member);
+      await ok(`${strataOrg.base}/schemes/${scheme.id}/members/${member.id}/end`, strataUser, {});
+      assert.equal((await api(`/api/w/council/${scheme.id}`, { cookie: tenant.cookie })).status, 403);
+      assert.equal((await api(resident.base, { cookie: tenant.cookie })).status, 200);
+      assert.equal((await api(tenant.base, { cookie: tenant.cookie })).status, 200);
+      assert.ok(!(await ok('/api/session', tenant)).workspaces.some((w) => w.kind === 'council'));
+    },
+  );
+
   await check(
     'council term revocation removes the workspace without changing the person account',
     async () => {
