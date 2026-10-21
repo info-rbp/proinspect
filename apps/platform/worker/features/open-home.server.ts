@@ -74,17 +74,16 @@ export async function recordOpenHomeCheckIn(env:Env,request:Request,args:{input:
   env.DATA_ENCRYPTION_KEY,'leasing-lead:'+registration.id,registration.envelope):null;
  const matchingRegistration=registeredContact?.name.toLowerCase().replace(/\s+/g,' ').trim()===normalisedName;
 
- const id=uid('och'),eventId=uid('ohs'),stamp=now();
+ const id=uid('och'),stamp=now();
  try{
-  await env.DB.batch([
-   statement(env.DB,
+  // D1 is the attendance source of truth. No spreadsheet or external system
+  // receives visitor contact information when the public form is submitted.
+  await statement(env.DB,
     'INSERT INTO leasing_checkins(id,listing_id,session_id,registered_lead_id,request_key,fingerprint,email_hash,attendee_hash,contact_envelope,source,consent_version,arrived_at,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
     id,session.listing_id,session.id,matchingRegistration?registration?.id??null:null,d.requestKey,fingerprint,emailHash,attendeeHash,
     await seal(env.DATA_ENCRYPTION_KEY,'open-home-checkin:'+id,{
       name:d.name,email:d.email,phone:d.phone,consentAt:stamp,
-    }),d.source,CHECK_IN_CONSENT_VERSION,stamp,stamp),
-   statement(env.DB,'INSERT INTO open_home_sheet_events(id,checkin_id,created_at) VALUES(?,?,?)',eventId,id,stamp),
-  ]);
+    }),d.source,CHECK_IN_CONSENT_VERSION,stamp,stamp).run();
  }catch(error){
   const existing=await statement(env.DB,'SELECT id,fingerprint FROM leasing_checkins WHERE request_key=?',
     d.requestKey).first<{id:string;fingerprint:string}>();
@@ -114,17 +113,16 @@ export async function staffOpenHomeCheckIns(env:Env,user:Principal,listingId:str
   'SELECT id,starts_at,ends_at,status FROM leasing_sessions WHERE listing_id=? ORDER BY starts_at DESC LIMIT 100',
   listingId).all()).results;
  const rows=(await statement(env.DB,
-  'SELECT c.id,c.session_id,c.registered_lead_id,c.contact_envelope,c.consent_version,c.arrived_at,c.source,e.id AS sync_event_id,e.status AS sheet_status,s.starts_at FROM leasing_checkins c JOIN leasing_sessions s ON s.id=c.session_id JOIN open_home_sheet_events e ON e.checkin_id=c.id WHERE c.listing_id=? AND (? IS NULL OR c.session_id=?) ORDER BY c.arrived_at DESC LIMIT 500',
+  'SELECT c.id,c.session_id,c.registered_lead_id,c.contact_envelope,c.consent_version,c.arrived_at,c.source,s.starts_at FROM leasing_checkins c JOIN leasing_sessions s ON s.id=c.session_id WHERE c.listing_id=? AND (? IS NULL OR c.session_id=?) ORDER BY c.arrived_at DESC LIMIT 500',
   listingId,sessionId??null,sessionId??null).all<{
    id:string;session_id:string;registered_lead_id:string|null;contact_envelope:string;
-   consent_version:string;arrived_at:string;source:string;sync_event_id:string;
-   sheet_status:string;starts_at:string;
+   consent_version:string;arrived_at:string;source:string;starts_at:string;
   }>()).results;
- return {listing,sessions,sheetConnected:env.OPEN_HOME_SHEET_SYNC_ENABLED==='true',
+ return {listing,sessions,
   checkIns:await Promise.all(rows.map(async c=>({
    id:c.id,sessionId:c.session_id,preRegistered:Boolean(c.registered_lead_id),source:c.source,
    arrivedAt:c.arrived_at,sessionStart:c.starts_at,
-   sheetStatus:c.sheet_status,consentVersion:c.consent_version,
+   consentVersion:c.consent_version,
    contact:await unseal<{name:string;phone:string;email:string}>(
      env.DATA_ENCRYPTION_KEY,'open-home-checkin:'+c.id,c.contact_envelope),
   })))};
