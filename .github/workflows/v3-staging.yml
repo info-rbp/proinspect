@@ -1,0 +1,102 @@
+name: V3 isolated Cloudflare staging
+on:
+  push:
+    branches: [version-3-enhancements]
+    paths:
+      - .github/workflows/v3-staging.yml
+      - apps/platform/wrangler.jsonc
+      - scripts/release/v3-staging-*
+      - database/migrations/**
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v3-hosted-staging
+  cancel-in-progress: false
+jobs:
+  stage:
+    if: github.repository == 'info-rbp/proinspect' && github.ref == 'refs/heads/version-3-enhancements'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID || '8ca23ac6d2cc906d4dd13b8da5ea2b25' }}
+      V3_STAGING_PROVISION: '1'
+      CLOUDFLARE_ENV: staging
+      WORKERS_CI: '0'
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact V3 code, lockfile and baseline migration integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse --abbrev-ref HEAD)" = HEAD
+          git cat-file -e e819659dba660e85b88a013257806e6462f4c38e^{commit}
+          git diff --exit-code e819659dba660e85b88a013257806e6462f4c38e HEAD -- 'database/migrations/000[1-6]_*.sql'
+          node --check scripts/release/v3-staging-resources.mjs
+          node --check scripts/release/v3-staging-assert.mjs
+          node --check scripts/release/v3-staging-d1-verify.mjs
+          node --check scripts/release/v3-staging-smoke.mjs
+      - name: Install verified dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Re-run code, SQL and runtime integration checks before provisioning
+        run: |
+          pnpm check
+          pnpm test:integration
+          python3 scripts/release/v3-upgrade-rehearsal.py
+      - name: Require scoped Cloudflare credentials
+        shell: bash
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          test "$CLOUDFLARE_ENV" = staging
+          test "$V3_STAGING_PROVISION" = 1
+      - name: Provision or verify dedicated staging resources only
+        run: node scripts/release/v3-staging-resources.mjs
+      - name: Apply numbered migrations only to verified staging D1
+        run: pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.v3-staging-migration.json
+      - name: Verify actual staging D1 migration ledger and foreign keys
+        run: node scripts/release/v3-staging-d1-verify.mjs
+      - name: Build the staging Cloudflare environment, never connected
+        run: pnpm --dir apps/platform build
+      - name: Reject accidental production bindings in compiled Worker
+        run: node scripts/release/v3-staging-assert.mjs
+      - name: Stage-specific upload dry-run
+        run: pnpm --dir apps/platform exec wrangler deploy --dry-run
+      - name: Deploy verified code to independent staging Worker only
+        run: pnpm --dir apps/platform exec wrangler deploy
+      - name: Provision a persistent staging-only encryption key if absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          pnpm --dir apps/platform exec wrangler secret list --name proinspect-v3-staging --format json > artifacts/v3-staging-secret-names.json
+          if node -e 'const s=require("fs").readFileSync("artifacts/v3-staging-secret-names.json","utf8");const a=JSON.parse(s);process.exit(a.some(x=>x.name==="DATA_ENCRYPTION_KEY")?0:1)'; then
+            echo "Staging encryption secret already exists; preserving it"
+          else
+            key=$(openssl rand -base64 32)
+            printf '%s' "$key" | pnpm --dir apps/platform exec wrangler secret put DATA_ENCRYPTION_KEY --name proinspect-v3-staging
+            unset key
+            echo "Created independent staging encryption secret"
+          fi
+      - name: Verify hosted staging health, no-indexing and public/private routes
+        run: node scripts/release/v3-staging-smoke.mjs
+      - name: Save reproducible release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-hosted-staging-evidence
+          path: |
+            artifacts/v3-staging-resources.json
+            artifacts/v3-staging-d1-verification.json
+            artifacts/v3-staging-smoke.json
+            artifacts/v3-upgrade-rehearsal.json
+          if-no-files-found: warn
+          retention-days: 30
