@@ -9,6 +9,7 @@ export default [
   route('services/:slug', 'routes/service.tsx'),
   route('sectors/:sector', 'routes/sector.tsx'),
   route('properties-for-lease', 'routes/leasing-index.tsx'),
+  route('open-home/check-in', 'routes/open-home-check-in.tsx'),
   route('properties-for-lease/cancel/:token', 'routes/leasing-cancel.tsx'),
   route('properties-for-lease/:kind', 'routes/leasing-sector.tsx'),
   route('properties-for-lease/:kind/:slug/apply', 'routes/rental-start.tsx'),
