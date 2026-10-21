@@ -61,5 +61,5 @@ test('visitor data never writes directly to Google Sheets on a public form submi
  assert.match(server,/registered_lead_id/);
  assert.match(sql,/OPEN_HOME_SESSION_NOT_LINKED/);
  assert.match(sql,/OPEN_HOME_LEAD_NOT_LINKED/);
- assert.match(sql,/UNIQUE\(session_id,email_hash\)/);
+ assert.match(sql,/UNIQUE\(session_id,attendee_hash\)/);
 });
