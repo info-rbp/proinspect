@@ -61,8 +61,7 @@ export async function staffOpenHomeReportDetails(env:Env,user:Principal,listingI
   listingId,sessionId??null,sessionId??null).all()).results;
  return {
   enabledGlobally:env.OPEN_HOME_REPORTS_ENABLED==='true',
-  provider:env.OPEN_HOME_REPORT_EMAIL_PROVIDER==='cloudflare'?'Cloudflare Email Sending':
-   env.OPEN_HOME_REPORT_EMAIL_PROVIDER==='resend'?'Resend (existing outbox)':'Unconfigured',
+  provider:env.OPEN_HOME_REPORT_EMAIL_PROVIDER==='resend'?'Resend (existing outbox)':'Unconfigured',
   settings:settings?{
    enabled:settings.enabled===1,recipientUserId:settings.recipient_user_id,
    authorityReference:settings.authority_reference,version:settings.version,updatedAt:settings.updated_at,
