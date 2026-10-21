@@ -18,7 +18,7 @@ export function checkConfiguration(
     throw new Error('Use staging or production.');
   const enabled = new Set(groups);
   for (const group of enabled)
-    if (!['core', 'deploy', 'payments', 'reports', 'sheets', 'calendar'].includes(group))
+    if (!['core', 'deploy', 'payments', 'reports', 'sheets', 'calendar', 'open-home'].includes(group))
       throw new Error('Unknown configuration group.');
   if (environment === 'staging' && enabled.has('core')) enabled.add('staging');
   const entries = { ...environmentManifest.secrets, ...environmentManifest.variables },
@@ -87,6 +87,11 @@ export function checkConfiguration(
       name: 'STRIPE_SECRET_KEY',
       reason: 'Use a Stripe test-mode secret in staging.',
     });
+  if(input.OPEN_HOME_REPORTS_ENABLED && !['true','false'].includes(input.OPEN_HOME_REPORTS_ENABLED))
+    invalid.push({name:'OPEN_HOME_REPORTS_ENABLED',reason:'Use true or false.'});
+  if(input.OPEN_HOME_REPORT_EMAIL_PROVIDER &&
+     !['cloudflare','resend'].includes(input.OPEN_HOME_REPORT_EMAIL_PROVIDER))
+    invalid.push({name:'OPEN_HOME_REPORT_EMAIL_PROVIDER',reason:'Use cloudflare or resend.'});
   if (input.EMAIL_PROVIDER && input.EMAIL_PROVIDER !== 'resend')
     invalid.push({
       name: 'EMAIL_PROVIDER',
