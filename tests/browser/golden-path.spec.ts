@@ -35,7 +35,7 @@ test('marketing is server rendered and responsive', async ({ page, request }) =>
 });
 test('new Landlord signup auto-includes services, books, and hands work to Staff with report delivery', async ({ page, browser }) => {
   const email = `landlord-${Date.now()}@proinspect.test`;
-  await signIn(page, email, '/book/routine-inspection');
+  await signIn(page, email, '/book/subscriber/routine-inspection');
   await page.getByRole('link', { name: 'Set up account', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Start with the essentials.' })).toBeVisible();
   await page.getByLabel('Your name', { exact: true }).fill('Jordan Example');
@@ -98,7 +98,7 @@ test('new Landlord signup auto-includes services, books, and hands work to Staff
 
 test('commercial Landlord signup selects its type and books an included commercial inspection', async ({ page, browser }) => {
   const email = `commercial-owner-${Date.now()}@proinspect.test`;
-  await signIn(page, email, '/book/commercial-property-inspection');
+  await signIn(page, email, '/book/subscriber/commercial-property-inspection');
   await page.getByRole('link', { name: 'Set up account', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Start with the essentials.' })).toBeVisible();
   await page.getByLabel('Landlord type', { exact: true }).selectOption('commercial');
