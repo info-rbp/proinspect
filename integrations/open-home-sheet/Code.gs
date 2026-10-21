@@ -1,18 +1,23 @@
 /**
  * ProInspect Open Home Check-In → Google Sheet
  *
- * Standalone Apps Script. Not deployed. Create the Sheet later and set
- * Script Properties before running installOpenHomeTrigger().
+ * Standalone Apps Script. Prepared for the existing native Google Sheet.
+ * Not deployed or authorized. Script Properties and Worker security must
+ * be configured before installing the trigger.
  *
  * Properties:
  *   PROINSPECT_API_ORIGIN          e.g. https://proinspect.systems
- *   PROINSPECT_OPEN_HOME_SHEET_ID  target Google Sheet ID (NOT a full URL)
+ *   PROINSPECT_OPEN_HOME_SHEET_ID  optional override for the verified target Sheet
  *   PROINSPECT_OPEN_HOME_API_SECRET same 32+ character secret as the Worker
  *   PROINSPECT_OPEN_HOME_TAB       optional, default "Open Home Check-Ins"
  *
  * This script only synchronizes authorized open home check-in records.
  * It does NOT send rental application data or perform applicant screening.
  */
+// Verified native Google Sheet created for ProInspect's Open Home check-ins.
+// This identifier is not an authentication credential. Sheet permissions
+// remain private and are enforced independently by Google Workspace.
+const OPEN_HOME_SPREADSHEET_ID = '1hDd6PL3F9Xi9bwGpxBb9XagsesMH-8O_6U_3IMnq3rY';
 const OPEN_HOME_HEADERS = [
   'Check-in ID','Arrival (Australia/Perth)','Property','Property ID','Listing ID',
   'Session ID','Session start (Australia/Perth)','Name','Phone','Email',
@@ -22,7 +27,7 @@ const OPEN_HOME_HEADERS = [
 function proInspectCheckinConfig_(){
   const props=PropertiesService.getScriptProperties();
   const origin=props.getProperty('PROINSPECT_API_ORIGIN')||'';
-  const spreadsheetId=props.getProperty('PROINSPECT_OPEN_HOME_SHEET_ID')||'';
+  const spreadsheetId=props.getProperty('PROINSPECT_OPEN_HOME_SHEET_ID')||OPEN_HOME_SPREADSHEET_ID;
   const secret=props.getProperty('PROINSPECT_OPEN_HOME_API_SECRET')||'';
   const tab=props.getProperty('PROINSPECT_OPEN_HOME_TAB')||'Open Home Check-Ins';
   if(!/^https:\/\/[a-z0-9.-]+(?::443)?$/i.test(origin)||!spreadsheetId||secret.length<32){
