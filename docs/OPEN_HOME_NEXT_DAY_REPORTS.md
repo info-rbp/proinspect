@@ -88,29 +88,40 @@ Connected Wrangler environment has both the existing two-minute scheduled
 job and the new 0 1 * * * daily trigger.
 
 Feature flags:
-- OPEN_HOME_REPORTS_ENABLED=false (OFF in production by default)
-- OPEN_HOME_REPORT_EMAIL_PROVIDER=cloudflare (native email sender)
+- OPEN_HOME_REPORTS_ENABLED=false (OFF until production release acceptance)
+- OPEN_HOME_REPORT_EMAIL_PROVIDER=resend (existing Resend email adapter)
+- EMAIL_PROVIDER=resend (already configured for the connected Worker)
 - EMAIL_FROM=info@proinspect.systems (already present in connected config)
+- RESEND_API_KEY (existing Cloudflare Worker secret; never add to repository)
 
-The code supports a Cloudflare Email Sending Worker binding called EMAIL,
-but the native binding is NOT attached in the connected production
-environment. Onboard the ProInspect sender domain with Cloudflare Email
-Service, confirm the required DNS records and sending availability, and
-then add the following property to the connected Wrangler environment:
+### Resend delivery
 
-    "send_email": [
-      {
-        "name": "EMAIL",
-        "allowed_sender_addresses": ["info@proinspect.systems"]
-      }
-    ]
+No Cloudflare Email Sending purchase, `send_email` Worker binding,
+Google Sheet or Apps Script is required. The existing Worker outbox already
+uses the Resend REST API (`POST https://api.resend.com/emails`) with the
+`RESEND_API_KEY` secret and `EMAIL_FROM` sender address. The new open-home
+report job follows exactly the same path when
+`OPEN_HOME_REPORT_EMAIL_PROVIDER=resend`.
 
-Do not add this binding before the sender domain is properly onboarded,
-because deployment can fail even while the reporting flag is disabled.
-Cloudflare Email Sending can be used without Apps Script or Google
-credentials. The existing Resend adapter remains configured for other
-ProInspect transactional messages. A report-only optional fallback is
-OPEN_HOME_REPORT_EMAIL_PROVIDER=resend if explicitly approved.
+The daily Cloudflare Worker Cron stays at `0 1 * * *` (09:00 AWST).
+It creates one report and encrypted D1 outbox job for each eligible
+inspection. The existing Queues consumer sends the branded HTML/text email
+via Resend, updates the report delivery status, and applies a deterministic
+`Idempotency-Key` per report to avoid duplicate sends within Resend's
+24-hour deduplication window. Network failures are retried via the existing
+queue. A successful Resend API response means the provider accepted the
+message, not necessarily that the recipient received it in their inbox.
+
+Before enabling reports, verify **the actual deployed Worker** contains the
+`RESEND_API_KEY` secret and that `proinspect.systems` remains verified in
+Resend. The connected Wrangler environment specifies an existing sender, but
+this alone cannot prove that the credential and DNS configuration are live.
+Do not replace the established global `EMAIL_PROVIDER=resend` setting.
+
+For staging, enable reporting only in a controlled staging deployment with
+a real authorised test recipient and an appropriate `EMAIL_SINK`. Sensitive
+emails are intentionally blocked unless the recipient matches the test sink;
+this prevents accidental delivery of real attendance data.
 
 ## Validation and release
 
@@ -120,10 +131,10 @@ OPEN_HOME_REPORT_EMAIL_PROVIDER=resend if explicitly approved.
 3. Verify zero-attendance reports, cancelled sessions, authority revocation,
    tenant/client boundaries, duplicate scheduled runs and outbox retries.
 4. Verify that no real visitor data is accidentally sent to test inboxes.
-5. Onboard Cloudflare Email Sending and test the restricted EMAIL binding.
+5. Verify existing Resend domain authentication, Worker secret, sending quota and a safe staging delivery to an authorised test mailbox.
 6. Approve privacy/retention, sharing instructions and incident procedures.
 7. Enable OPEN_HOME_REPORTS_ENABLED=true only after operational and legal
-   review, approved migrations, correct bindings and staging UAT.
+   review, approved migrations, verified Resend configuration and staging UAT.
 
 The draft feature branch does not merge, deploy or activate this workflow.
 
