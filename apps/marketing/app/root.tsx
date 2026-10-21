@@ -13,6 +13,8 @@ import {
 import { runtimeContext } from '../../../packages/database/context';
 import '../../../packages/ui/styles.css';
 import '../../../packages/ui/marketing-nav.css';
+import '../../../packages/ui/marketing-redesign.css';
+import { MarketingHeader, MarketingFooter } from './components/site-chrome';
 export function loader({ context }: LoaderFunctionArgs) {
   const env = context.get(runtimeContext).env as Record<string, string>;
   return { appOrigin: env.PLATFORM_ORIGIN || 'https://app.proinspect.systems' };
@@ -41,80 +43,11 @@ export default function Root() {
   const { appOrigin } = useLoaderData<typeof loader>();
   return (
     <>
-      <div className="site-container">
-        <header className="site-header">
-          <Link className="brand" to="/">
-            ProInspect<span>PROPERTY SERVICES</span>
-          </Link>
-          <nav className="site-links" aria-label="Primary navigation">
-            <Link to="/services">Services</Link>
-            <Link to="/sectors/residential">Residential</Link>
-            <Link to="/sectors/commercial">Commercial</Link>
-            <Link to="/sectors/strata-building">Strata & buildings</Link>
-            <Link to="/how-it-works">How it works</Link>
-          </nav>
-          <details className="marketing-menu">
-            <summary>Menu</summary>
-            <nav aria-label="Mobile site navigation">
-              <Link to="/services">Services</Link>
-              <Link to="/sectors/residential">Residential</Link>
-              <Link to="/sectors/commercial">Commercial</Link>
-              <Link to="/sectors/strata-building">Strata &amp; buildings</Link>
-              <Link to="/how-it-works">How we work</Link>
-              <Link to="/why-proinspect">Why ProInspect</Link>
-              <Link to="/resources">Resources</Link>
-              <Link to="/contact">Contact</Link>
-            </nav>
-          </details>
-          <div className="actions">
-            <a className="small" href={`${appOrigin}/signin`}>
-              Sign in
-            </a>
-            <a className="button" href={`${appOrigin}/book`}>
-              Book a service
-            </a>
-          </div>
-        </header>
-      </div>
+      <MarketingHeader appOrigin={appOrigin} />
       <main id="main">
         <Outlet context={{ appOrigin }} />
       </main>
-      <footer className="site-footer">
-        <div className="site-container">
-          <div className="footer-grid">
-            <div>
-              <Link className="brand inverse" to="/">
-                ProInspect<span>PROPERTY OPERATIONS</span>
-              </Link>
-              <p>
-                Property inspections, on-site attendance and operational support, organised around
-                your property.
-              </p>
-            </div>
-            <div>
-              <h3>Explore ProInspect</h3>
-              <Link to="/services">All services</Link>
-              <Link to="/how-it-works">How we work</Link>
-              <Link to="/client-experience">Your property record</Link>
-              <Link to="/why-proinspect">Why ProInspect</Link>
-              <Link to="/resources">Guides &amp; comparisons</Link>
-              <Link to="/areas-we-service">Service areas</Link>
-              <Link to="/about">About</Link>
-              <Link to="/contact">Contact</Link>
-            </div>
-            <div>
-              <h3>Your workspace</h3>
-              <a href={`${appOrigin}/signin`}>Sign in</a>
-              <a href={`${appOrigin}/workspaces`}>Open your workspaces</a>
-              <Link to="/privacy">Privacy</Link>
-              <Link to="/terms">Service terms</Link>
-            </div>
-          </div>
-          <div className="copyright">
-            © {new Date().getFullYear()} ProInspect Property Services. Western Australia.
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter appOrigin={appOrigin} />
     </>
   );
 }

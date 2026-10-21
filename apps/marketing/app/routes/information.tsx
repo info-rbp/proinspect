@@ -1,4 +1,5 @@
 import { ENGAGEMENTS } from '../../../../packages/marketing/content';
+import { PUBLIC_LEGAL_DRAFTS, PUBLIC_LEGAL_APPROVAL } from '../../../../packages/marketing/legal-drafts';
 import {
   Link,
   useLoaderData,
@@ -7,6 +8,8 @@ import {
   type MetaFunction,
 } from 'react-router';
 import { seo } from '../lib/seo';
+import { MarketingCta } from '../components/marketing-ui';
+import { MarketingPageHero, MarketingSectionTitle, MarketingEditorialBlocks } from '../components/page-patterns';
 
 const pages: Record<string, { title: string; intro: string; sections: Array<[string, string]> }> = {
   'how-it-works': {
@@ -147,99 +150,127 @@ const pages: Record<string, { title: string; intro: string; sections: Array<[str
       ],
     ],
   },
-  privacy: {
-    title: 'Privacy information',
-    intro:
-      'Pre-release notice: the final business privacy policy must be approved before public registration opens.',
-    sections: [
-      [
-        'Purpose of this build',
-        'This environment is for validation of the rebuilt ProInspect platform. Use synthetic data during testing.',
-      ],
-      [
-        'Access to records',
-        'The application is designed to restrict property and tenancy information to authorised relationships. Customer files are not public marketing assets.',
-      ],
-      [
-        'Before launch',
-        'The operator must publish the approved collection, use, disclosure, retention, access and contact policy. This placeholder is not a substitute for that policy.',
-      ],
-    ],
-  },
-  terms: {
-    title: 'Service terms',
-    intro:
-      'Pre-release notice: approved commercial terms are required before public bookings are enabled.',
-    sections: [
-      [
-        'Confirmed scope',
-        'The service, price, access arrangements and appointment must be confirmed for each booking.',
-      ],
-      [
-        'Scope limitations',
-        'Catalogue descriptions do not establish a legal, engineering or emergency-response engagement.',
-      ],
-      [
-        'Before launch',
-        'The operator must approve cancellation, payment, service scope and complaint arrangements and publish the final terms.',
-      ],
-    ],
-  },
+
 };
 export function loader({ params }: LoaderFunctionArgs) {
-  const page = pages[params.page ?? ''];
+  const key = params.page ?? '';
+  if (key === 'privacy' || key === 'terms') {
+    return {
+      ...PUBLIC_LEGAL_DRAFTS[key],
+      path: '/' + key,
+      legalApproved: PUBLIC_LEGAL_APPROVAL[key].approved,
+    };
+  }
+  const page = pages[key];
   if (!page) throw new Response('Not found', { status: 404 });
-  return { ...page, path: `/${params.page}` };
+  return { ...page, path: '/' + key, legalApproved: true };
 }
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
-  loaderData ? seo(loaderData.title, loaderData.intro, loaderData.path) : [];
+  loaderData
+    ? [...seo(loaderData.title, loaderData.intro, loaderData.path),
+       ...(!loaderData.legalApproved ? [{ name: 'robots', content: 'noindex, nofollow' }] : [])]
+    : [];
 export default function Information() {
   const p = useLoaderData<typeof loader>();
   const { appOrigin } = useOutletContext<{ appOrigin: string }>();
+  const legal = p.path === '/privacy' || p.path === '/terms';
+  const how = p.path === '/how-it-works';
+  const client = p.path === '/client-experience';
+  const why = p.path === '/why-proinspect';
+  const serviceArea = p.path === '/areas-we-service';
+  const about = p.path === '/about';
+  const label = legal ? 'Legal documents — review drafts' : how ? 'How we work' : client ? 'The client experience' : why ? 'Why ProInspect' : serviceArea ? 'Where we work' : about ? 'About ProInspect' : 'Property services';
+  const visual = legal ? 'none' as const : client ? 'report' as const : how ? 'process' as const : serviceArea ? 'residential' as const : about ? 'commercial' as const : 'services' as const;
   return (
     <>
-      <header className="service-hero">
+      <MarketingPageHero
+        eyebrow={label}
+        title={p.title}
+        intro={p.intro}
+        crumbs={[{ label }]}
+        visual={visual}
+        primary={legal ? undefined : { label: how ? 'Explore services' : 'Discuss your needs', to: how ? '/services' : '/contact' }}
+      />
+      {legal && (
+        <section className="mkt-legal-notice" aria-label="Pre-release policy notice">
+          <div className="site-container">
+            <strong>Pre-release information</strong>
+            <span>{p.path === '/privacy' ? 'Privacy handling statements here are proposals pending operator review.' : 'The service terms here are proposals pending operator review.'} Do not treat this review draft as an approved policy or a binding contract.</span>
+          </div>
+        </section>
+      )}
+      <section className="section mkt-section">
         <div className="site-container">
-          <p className="eyebrow">ProInspect</p>
-          <h1>{p.title}</h1>
-          <p>{p.intro}</p>
-        </div>
-      </header>
-      <section className="section">
-        <div className="site-container">
-          <article className="prose">
-            {p.sections.map(([title, text]) => (
-              <section className="stack-sm" key={title}>
-                <h2>{title}</h2>
-                <p>{text}</p>
-              </section>
-            ))}
-            {p.path === '/how-it-works' && (
-              <nav className="stack" aria-label="Ways to work with ProInspect">
-                {Object.entries(ENGAGEMENTS).map(([slug, e]) => (
-                  <Link key={slug} to={`/how-we-work/${slug}`}>
-                    {e.title}
-                  </Link>
-                ))}
-              </nav>
-            )}
-            <div className="actions">
-              <Link className="button" to="/services">
-                Explore services
-              </Link>
-              {p.path === '/contact' ? (
-                <a className="button secondary" href="mailto:info@proinspect.systems">
-                  Email ProInspect
-                </a>
-              ) : (
-                <a className="button secondary" href={`${appOrigin}/signin`}>
-                  Open your account
-                </a>
-              )}
-            </div>
-          </article>
+          <MarketingSectionTitle
+            eyebrow={legal ? 'Current release information' : how ? 'A clear process' : why ? 'Our approach' : client ? 'Your property record' : serviceArea ? 'Location and availability' : 'What you should know'}
+            title={legal ? 'Review the proposed contents.' : how ? 'Simple steps. Agreed responsibilities.' : why ? 'What matters in a property service.' : client ? 'Property work with context.' : serviceArea ? 'Check your location before arranging attendance.' : 'The practical approach behind the work.'}
+            description={legal
+              ? 'The final policy or contract will take effect only after its actual operator, commitments, applicable disclosures and publication date have been approved.'
+              : 'We describe our service boundaries clearly and only make commitments once the instruction is confirmed.'}
+          />
+          <MarketingEditorialBlocks sections={p.sections} numbered={how} />
         </div>
       </section>
+
+      {how && (
+        <section className="section mkt-section mkt-stone">
+          <div className="site-container">
+            <MarketingSectionTitle eyebrow="Ways to work with ProInspect" title="A service when you need it. Support when it makes sense." description="Choose an individual instruction, an inspection arrangement or broader ongoing operational support. Every model requires a defined scope." />
+            <nav className="mkt-engagement-grid" aria-label="Ways to work with ProInspect">
+              {Object.entries(ENGAGEMENTS).map(([slug, engagement], i) => (
+                <Link className="mkt-engagement-card mkt-linked-card" key={slug} to={'/how-we-work/' + slug}>
+                  <span className="mkt-card-number">0{i + 1}</span>
+                  <h3>{engagement.title}</h3>
+                  <p>{engagement.intro}</p>
+                  <span className="mkt-text-link">Explore arrangement <span aria-hidden="true">↗</span></span>
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </section>
+      )}
+
+      {(why || client) && (
+        <section className="section mkt-section mkt-stone">
+          <div className="site-container mkt-callout-grid">
+            <div>
+              <p className="eyebrow">Evidence and outcomes</p>
+              <h2>Ask for the record that fits the instruction.</h2>
+              <p>Report content and supporting evidence vary by service. Defined scope, relevant observations and appropriate customer access matter more than unsupported marketing claims.</p>
+              <Link className="mkt-text-link" to="/services/routine-inspection">Explore a detailed service example <span aria-hidden="true">↗</span></Link>
+            </div>
+            <div className="mkt-callout-panel">
+              <span className="mkt-card-number">CLEAR EXPECTATIONS</span>
+              <h3>We distinguish services from specialist decisions.</h3>
+              <p>Documenting visible condition is not the same as technical certification, repairing a fault or deciding legal responsibility. Additional work requires an agreed scope.</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {(about || serviceArea) && (
+        <section className="section mkt-section mkt-stone">
+          <div className="site-container mkt-callout-grid">
+            <div><p className="eyebrow">Working with ProInspect</p><h2>Tell us about the property and the task.</h2><p>We can review a service request or a broader property operations requirement. Scope, coverage, access and availability are not guaranteed until confirmed.</p></div>
+            <div className="mkt-callout-panel"><span className="mkt-card-number">ENQUIRY CHECKLIST</span><ul className="mkt-check-list"><li>General location or suburb</li><li>Property type and intended outcome</li><li>Preferred timeframe and known access constraints</li></ul><p className="mkt-image-disclosure">Do not include private access codes or confidential tenancy information in a public enquiry.</p></div>
+          </div>
+        </section>
+      )}
+
+      {legal ? (
+        <section className="section mkt-section mkt-stone">
+          <div className="site-container mkt-callout-grid">
+            <div><p className="eyebrow">Further information</p><h2>Have a question about this notice?</h2><p>Contact ProInspect for the appropriate published documentation before relying on commercial or privacy commitments.</p></div>
+            <div className="mkt-callout-panel"><h3>Review the public information.</h3><p>Approved documents, once published, take precedence over these pre-release descriptions.</p><Link className="button secondary" to="/contact">Contact ProInspect <span aria-hidden="true">→</span></Link></div>
+          </div>
+        </section>
+      ) : (
+        <MarketingCta
+          title={how ? 'Ready to arrange property work?' : why ? 'See how ProInspect could help.' : client ? 'Give property work a clearer record.' : 'Discuss your property requirements.'}
+          description="Select an appropriate service or tell us what you need attended, inspected or documented. We confirm scope, availability and access before proceeding."
+          appOrigin={appOrigin}
+        />
+      )}
     </>
   );
 }
