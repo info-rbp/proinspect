@@ -45,6 +45,7 @@ jobs:
           node --check scripts/release/v3-staging-assert.mjs
           node --check scripts/release/v3-staging-d1-verify.mjs
           node --check scripts/release/v3-staging-smoke.mjs
+          node --check scripts/release/v3-staging-browser.mjs
       - name: Install verified dependencies
         run: pnpm install --frozen-lockfile
       - name: Re-run code, SQL and runtime integration checks before provisioning
@@ -89,6 +90,10 @@ jobs:
           fi
       - name: Verify hosted staging health, no-indexing and public/private routes
         run: node scripts/release/v3-staging-smoke.mjs
+      - name: Install isolated Chromium browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Exercise actual hosted staging navigation, hydration and responsive layout
+        run: node scripts/release/v3-staging-browser.mjs
       - name: Save reproducible release evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -98,6 +103,9 @@ jobs:
             artifacts/v3-staging-resources.json
             artifacts/v3-staging-d1-verification.json
             artifacts/v3-staging-smoke.json
+            artifacts/v3-staging-browser.json
+            artifacts/v3-hosted-desktop.png
+            artifacts/v3-hosted-mobile.png
             artifacts/v3-upgrade-rehearsal.json
           if-no-files-found: warn
           retention-days: 30
