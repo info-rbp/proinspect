@@ -209,6 +209,20 @@
       ],
       "group": "open-home-sheet",
       "default": "false"
+    },
+    "OPEN_HOME_REPORTS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "open-home",
+      "default": "false"
+    },
+    "OPEN_HOME_REPORT_EMAIL_PROVIDER": {
+      "targets": [
+        "platform"
+      ],
+      "group": "open-home",
+      "default": "cloudflare"
     }
   },
   "generated": [
@@ -228,12 +242,14 @@
     "DOCUMENTS",
     "RESTRICTED_DOCUMENTS",
     "SCHEDULER",
-    "EVENTS"
+    "EVENTS",
+    "EMAIL"
   ],
   "externalOnly": {
     "PROINSPECT_WEBHOOK_SECRET": "Apps Script property; same value as SHEETS_WEBHOOK_SECRET for that environment",
     "PROINSPECT_SPREADSHEET_ID": "Apps Script property; target spreadsheet ID",
     "PROINSPECT_OPEN_HOME_SHEET_API_SECRET": "Apps Script property, must match the Worker OPEN_HOME_SHEET_API_SECRET",
-    "PROINSPECT_OPEN_HOME_SPREADSHEET_ID": "Apps Script property, spreadsheet to be created later"
+    "PROINSPECT_OPEN_HOME_SPREADSHEET_ID": "Apps Script property, spreadsheet to be created later",
+    "CLOUDFLARE_EMAIL_SENDING_SETUP": "Onboard the ProInspect sender domain and add the restricted EMAIL send_email binding to connected Wrangler configuration before enabling reporting."
   }
 }
