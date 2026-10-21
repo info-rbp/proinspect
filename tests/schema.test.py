@@ -159,7 +159,11 @@ class PortalTestingSeedTests(unittest.TestCase):
         self.assertEqual(self.db.execute('SELECT count(*) FROM services').fetchone()[0], 23)
         self.assertEqual(self.db.execute('SELECT count(*) FROM properties').fetchone()[0], 5)
         self.assertEqual(self.db.execute('SELECT count(*) FROM scheme_memberships').fetchone()[0], 2)
-        self.assertEqual(self.db.execute('SELECT count(*) FROM clients').fetchone()[0], 4)
+        self.assertEqual(self.db.execute("SELECT count(*) FROM clients WHERE id!='cli_guest_transactions'").fetchone()[0], 4)
+        self.assertEqual(
+            self.db.execute("SELECT status,client_type FROM clients WHERE id='cli_guest_transactions'").fetchone(),
+            ('inactive','other'),
+        )
         before = [(name, self.db.execute('SELECT count(*) FROM ' + name).fetchone()[0])
                   for name in ['users','clients','client_memberships','client_entitlements','properties',
                                'scheme_client_links','scheme_memberships','tenancies','audit_events','services']]
