@@ -45,15 +45,15 @@ export async function recordOpenHomeCheckIn(env:Env,request:Request,args:{input:
  assert(env.DATA_ENCRYPTION_KEY&&args.clientKey,503,'CHECK_IN_UNAVAILABLE','Check-in is temporarily unavailable.');
  const d=openHomeCheckInInput.parse(args.input);
  const fingerprint=await digest(JSON.stringify(d));
+ await throttle(env,'ip:'+args.clientKey,20);
+ await throttle(env,'email:'+d.email,8);
+ await verifyTurnstile(env,request,args.turnstile,d.requestKey);
  const previous=await statement(env.DB,'SELECT id,fingerprint FROM leasing_checkins WHERE request_key=?',d.requestKey)
   .first<{id:string;fingerprint:string}>();
  if(previous){
   assert(previous.fingerprint===fingerprint,409,'CHECK_IN_CHANGED','Refresh the form and try again.');
   return {reference:previous.id,alreadyCheckedIn:true};
  }
- await throttle(env,'ip:'+args.clientKey,20);
- await throttle(env,'email:'+d.email,8);
- await verifyTurnstile(env,request,args.turnstile,d.requestKey);
  const session=await statement(env.DB,
   "SELECT s.id,s.listing_id,l.property_id,l.kind,l.slug,l.title,l.display_address,l.suburb,l.postcode,l.agent_name,s.starts_at,s.ends_at FROM leasing_sessions s JOIN leasing_listings l ON l.id=s.listing_id WHERE s.id=? AND s.listing_id=? AND s.status='scheduled' AND l.status='published'",
   d.sessionId,d.listingId).first<SessionRow>();
@@ -63,7 +63,7 @@ export async function recordOpenHomeCheckIn(env:Env,request:Request,args:{input:
  const emailHash=await digest(env.DATA_ENCRYPTION_KEY+':leasing-email:'+d.email);
  const already=await statement(env.DB,'SELECT id FROM leasing_checkins WHERE session_id=? AND email_hash=?',
   d.sessionId,emailHash).first<{id:string}>();
- if(already)return {reference:already.id,alreadyCheckedIn:true};
+ if(already)return {reference:'Previously recorded',alreadyCheckedIn:true};
  const registration=await statement(env.DB,
   "SELECT id FROM leasing_leads WHERE session_id=? AND listing_id=? AND kind='inspection' AND status='active' AND email_hash=? LIMIT 1",
   session.id,session.listing_id,emailHash).first<{id:string}>();
@@ -87,7 +87,7 @@ export async function recordOpenHomeCheckIn(env:Env,request:Request,args:{input:
   }
   const duplicate=await statement(env.DB,'SELECT id FROM leasing_checkins WHERE session_id=? AND email_hash=?',
    d.sessionId,emailHash).first<{id:string}>();
-  if(duplicate)return {reference:duplicate.id,alreadyCheckedIn:true};
+  if(duplicate)return {reference:'Previously recorded',alreadyCheckedIn:true};
   throw error;
  }
  return {reference:id,alreadyCheckedIn:false};
