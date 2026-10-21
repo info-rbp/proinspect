@@ -1,0 +1,29 @@
+.form18-print{max-width:930px;margin:0 auto;background:#fff;color:#253940;padding:2.5rem;border:1px solid #dce8e5;border-radius:14px;box-shadow:0 10px 32px rgba(20,40,48,.07)}
+.form18-print-actions{display:flex;gap:1rem;justify-content:space-between;align-items:center;margin-bottom:2rem}
+.form18-print h1{font-size:2.1rem;margin:0;letter-spacing:.05em}.form18-print h2{font-size:1.26rem;line-height:1.2;margin:.7rem 0}.form18-print h3{font-size:1.05rem;border-bottom:1px solid #d5e2df;padding-bottom:.5rem;margin:1.7rem 0 1rem}
+.form18-print-label{text-transform:uppercase;color:#137574;font-size:.7rem;letter-spacing:.12em;font-weight:800}
+.form18-print-disclaimer{font-size:.82rem;color:#65777a;max-width:690px}
+.form18-print dl{display:grid;grid-template-columns:1fr 1.7fr;margin:1rem 0;gap:0}
+.form18-print dt,.form18-print dd{padding:.44rem .7rem;border-bottom:1px solid #e3eae9;margin:0;font-size:.87rem;overflow-wrap:anywhere}
+.form18-print dt{color:#54666b}.form18-print dd{font-weight:550}
+.form18-print-applicant{padding:1.7rem 0;border-top:3px solid #137b79;margin-top:2rem}
+.form18-print-applicant>section{break-inside:avoid}
+.form18-print-row{display:contents}
+.form18-print-cover{padding-bottom:1rem}
+.form18-print-notice{margin-top:2rem;border-top:3px solid #137b79;padding-top:1.5rem}
+@media(max-width:700px){.form18-print{padding:1rem;border-radius:0}.form18-print dl{grid-template-columns:1fr}.form18-print dd{border-bottom:1px solid #dae6e2}.form18-print dt{border-bottom:0;padding-bottom:0}}
+@media print{
+ @page{size:A4;margin:16mm 15mm}
+ body{background:#fff!important;color:#000!important}
+ .sidebar,.topbar,.form18-print-actions,.site-header,.site-footer,.mobile-toggle,.skip-link{display:none!important}
+ .app-main{margin:0!important;padding:0!important;width:100%!important}
+ .content{padding:0!important;max-width:none!important}
+ .form18-print{width:100%;max-width:100%;margin:0;padding:0;border:0;box-shadow:none;border-radius:0}
+ .form18-print-cover{break-after:page}
+ .form18-print-applicant{break-before:page;border-top:0}
+ .form18-print-notice{break-before:page}
+ .form18-print h1{font-size:20pt}.form18-print h2{font-size:14pt}.form18-print h3{font-size:11pt}
+ .form18-print dt,.form18-print dd{font-size:9pt;line-height:1.35}
+ .form18-print .form18-print-row{break-inside:avoid}
+ a{color:#000!important;text-decoration:none!important}
+}

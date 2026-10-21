@@ -14,7 +14,12 @@ import { runtimeContext } from '../../../packages/database/context';
 import '../../../packages/ui/styles.css';
 import '../../../packages/ui/portal.css';
 import '../../../packages/ui/marketing-nav.css';
-import { isPublicSitePath } from './lib/public-routes';
+import '../../../packages/ui/marketing-redesign.css';
+import '../../../packages/ui/leasing.css';
+import '../../../packages/ui/rental-application.css';
+import '../../../packages/ui/rental-print.css';
+import '../../../packages/ui/open-home.css';
+import { isMarketingStylePath } from './lib/public-routes';
 export function loader({ context }: LoaderFunctionArgs) {
   return { nonce: context.get(runtimeContext).nonce };
 }
@@ -29,7 +34,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className={isPublicSitePath(pathname) ? 'site' : undefined}>
+      <body className={isMarketingStylePath(pathname) ? 'site' : undefined}>
         <a className="skip-link" href="#main">
           Skip to content
         </a>

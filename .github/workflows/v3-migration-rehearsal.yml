@@ -1,0 +1,40 @@
+name: V3 isolated migration and recovery rehearsal
+on:
+  push:
+    branches: [version-3-enhancements]
+    paths:
+      - database/migrations/**
+      - scripts/release/**
+      - .github/workflows/v3-migration-rehearsal.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v3-migration-rehearsal-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  rehearse:
+    if: github.repository == 'info-rbp/proinspect' && github.ref == 'refs/heads/version-3-enhancements'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify immutable existing production migration files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e e819659dba660e85b88a013257806e6462f4c38e^{commit}
+          git diff --exit-code e819659dba660e85b88a013257806e6462f4c38e HEAD -- 'database/migrations/000[1-6]_*.sql'
+          test "$(ls -1 database/migrations/*.sql | wc -l)" -eq 19
+      - name: Rehearse synthetic baseline upgrade and SQLite backup restore
+        run: python3 scripts/release/v3-upgrade-rehearsal.py
+      - name: Retain exact-head rehearsal evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-migration-upgrade-rehearsal
+          path: artifacts/v3-upgrade-rehearsal.json
+          if-no-files-found: warn
+          retention-days: 30

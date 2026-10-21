@@ -71,6 +71,20 @@
         "platform"
       ],
       "group": "calendar"
+    },
+    "RENTAL_SCANNER_WEBHOOK_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "format": "signing-key"
+    },
+    "OPEN_HOME_SHEET_API_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "open-home-sheet",
+      "format": "signing-key"
     }
   },
   "variables": {
@@ -153,6 +167,83 @@
         "platform"
       ],
       "group": "calendar"
+    },
+    "GOOGLE_CALENDAR_BOOKINGS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "calendar",
+      "default": "false"
+    },
+    "GUEST_BOOKINGS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "RENTAL_APPLICATIONS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "RENTAL_RETENTION_DRAFT_DAYS": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-privacy",
+      "default": ""
+    },
+    "RENTAL_RETENTION_SUBMITTED_DAYS": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-privacy",
+      "default": ""
+    },
+    "RENTAL_RETENTION_WITHDRAWN_DAYS": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-privacy",
+      "default": ""
+    },
+    "RENTAL_RETENTION_AUTOPURGE_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-privacy",
+      "default": "false"
+    },
+    "OPEN_HOME_SHEET_SYNC_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "open-home-sheet",
+      "default": "false"
+    },
+    "OPEN_HOME_REPORTS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "open-home",
+      "default": "false"
+    },
+    "OPEN_HOME_REPORT_EMAIL_PROVIDER": {
+      "targets": [
+        "platform"
+      ],
+      "group": "open-home",
+      "default": "resend"
+    },
+    "WA_BONDS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
     }
   },
   "generated": [
@@ -168,6 +259,7 @@
     "REPOSITORY_ACCEPTED_SHA"
   ],
   "bindings": [
+    "EMAIL",
     "DB",
     "DOCUMENTS",
     "RESTRICTED_DOCUMENTS",
@@ -176,6 +268,8 @@
   ],
   "externalOnly": {
     "PROINSPECT_WEBHOOK_SECRET": "Apps Script property; same value as SHEETS_WEBHOOK_SECRET for that environment",
-    "PROINSPECT_SPREADSHEET_ID": "Apps Script property; target spreadsheet ID"
+    "PROINSPECT_SPREADSHEET_ID": "Apps Script property; target spreadsheet ID",
+    "PROINSPECT_OPEN_HOME_SHEET_API_SECRET": "Apps Script property; must match the Worker OPEN_HOME_SHEET_API_SECRET",
+    "PROINSPECT_OPEN_HOME_SPREADSHEET_ID": "App Script property; no live Sheet is provisioned"
   }
 }

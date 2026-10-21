@@ -1,3 +1,10 @@
+import * as guest from './features/guest.server';
+import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
+import { publicOpenHomeSessions,staffOpenHomeCheckIns } from './features/open-home.server';
+import { staffOpenHomeReportDetails,saveOpenHomeReportSettings,readOpenHomeReport,exportOpenHomeReportCsv } from './features/open-home-reports.server';
+import { listRentalApplications,rentalStaffDetail,updateRentalStatus,reviewRentalDocument,rentalDocumentDownload } from './features/rental-review.server';
+import { acceptRentalScan } from './features/rental-malware.server';
+import { setRentalPrivacyHold,resolveRentalPrivacyRequest,eraseRentalForRequest } from './features/rental-privacy.server';
 import { accountData, updateAccount, revokeSessions } from './features/account.server';
 import { receiveEnquiry } from './features/enquiries.server';
 import { ZodError, z } from 'zod';
@@ -47,6 +54,7 @@ import { stripeWebhook, decideApproval } from './features/finance.server';
 import { reportCallback } from './features/integrations.server';
 import { booksServices, managesProperty } from '../../../packages/authorization/server';
 import { readOnlyCalendarDiagnostic } from './features/google-calendar.server';
+import { calendarSyncSummary, retryCalendarSync } from './features/calendar-scheduling.server';
 
 async function json(request: Request) {
   assert(
@@ -226,6 +234,13 @@ export async function handleApi(
     const url = new URL(request.url),
       path = url.pathname,
       method = request.method;
+    if (path === '/api/guest/requests' && method === 'POST') return Response.json(await guest.beginGuest(request,env),{status:201});
+    if (path === '/api/guest/verify' && method === 'POST') return Response.json(await guest.verifyGuest(request,env));
+    if (path === '/api/guest/quote' && method === 'POST') return Response.json(await guest.acceptGuestQuote(request,env));
+    if (path === '/api/guest/manage' && method === 'POST') { const result=await guest.guestAction(request,env); return result instanceof Response?result:Response.json(result); }
+    if (path === '/api/guest/status' && method === 'GET') return Response.json(await guest.guestStatus(env,url.searchParams.get('token')??''));
+    if (path === '/api/guest/availability' && method === 'GET') return Response.json(await guest.guestAvailability(env,url.searchParams.get('token')??'',url.searchParams.get('date')??''));
+    if (path === '/api/guest/report' && method === 'GET') return await guest.guestReport(env,url.searchParams.get('token')??'');
     if (path === '/api/webhooks/stripe' && method === 'POST')
       return Response.json(await stripeWebhook(env, request));
     if (path === '/api/public/enquiries' && method === 'POST')
@@ -248,6 +263,16 @@ export async function handleApi(
           env.DATA_ENCRYPTION_KEY && (env.APP_ENV === 'local' || env.RESEND_API_KEY),
         ),
       });
+    if (path==='/api/public/leasing' && method==='GET') return Response.json({listings:await publicListings(env,url.searchParams.get('kind')??undefined)});
+    const pubphoto=path.match(/^\/api\/public\/leasing\/photos\/([a-zA-Z0-9_-]+)(?:\/(cover))?$/);
+    if(pubphoto&&method==='GET')return publicPhoto(env,pubphoto[1]+(pubphoto[2]?'/cover':''));
+    const cancel=path.match(/^\/api\/public\/leasing\/cancel\/([a-f0-9]{64})$/);
+    if(cancel&&method==='POST'){
+      requireOrigin(request,env);
+      return Response.json(await cancelLead(env,request,cancel[1],await digest(env.DATA_ENCRYPTION_KEY+':cancel:'+(request.headers.get('CF-Connecting-IP')??'unknown'))));
+    }
+    if(path==='/api/public/open-home/sessions'&&method==='GET')
+      return Response.json({sessions:await publicOpenHomeSessions(env)},{headers:{'Cache-Control':'private, no-store'}});
     if (path === '/api/catalogue' && method === 'GET')
       return Response.json({ services: await catalogue(env) });
     if (path === '/api/auth/start' && method === 'POST') {
@@ -267,13 +292,87 @@ export async function handleApi(
         { ok: true },
         { headers: { 'Set-Cookie': await signOut(request, env) } },
       );
+    if(path==='/api/internal/rental-document-scan' && method==='POST')
+      return Response.json(await acceptRentalScan(env,request));
     const user = await requireUser(request, env);
+    const openHomeReport=path.match(/^\/api\/open-home\/report\/([a-zA-Z0-9_-]+)(\.csv)?$/);
+    if(openHomeReport&&method==='GET'){
+      const report=await readOpenHomeReport(env,user,openHomeReport[1]);
+      if(openHomeReport[2]){
+        const csv=exportOpenHomeReportCsv(report);
+        return new Response(csv,{headers:{
+          'Content-Type':'text/csv; charset=utf-8',
+          'Content-Disposition':'attachment; filename="ProInspect-open-home-'+openHomeReport[1]+'.csv"',
+          'Cache-Control':'private, no-store',
+          'X-Content-Type-Options':'nosniff',
+        }});
+      }
+      return Response.json(report,{headers:{'Cache-Control':'private, no-store'}});
+    }
+    const rentalStaff=path.match(/^\/api\/staff\/rental-applications(?:\/(.*))?$/);
+    if(rentalStaff){
+      const tail=(rentalStaff[1]??'').split('/').filter(Boolean);
+      if(method!=='GET'&&method!=='HEAD')requireOrigin(request,env);
+      if(method==='GET'&&tail.length===0)return Response.json(await listRentalApplications(env,user,url.searchParams.get('listingId')??undefined));
+      if(method==='GET'&&tail.length===1)return Response.json(await rentalStaffDetail(env,user,tail[0]));
+      if(method==='POST'&&tail.length===2&&tail[1]==='status')return Response.json(await updateRentalStatus(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===2&&tail[1]==='privacy-hold')
+        return Response.json(await setRentalPrivacyHold(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===2&&tail[1]==='erase')
+        return Response.json(await eraseRentalForRequest(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===3&&tail[1]==='privacy')
+        return Response.json(await resolveRentalPrivacyRequest(env,user,tail[0],tail[2],await json(request)));
+      if(tail.length===4&&tail[1]==='documents'&&tail[3]==='review'&&method==='POST')
+        return Response.json(await reviewRentalDocument(env,user,tail[0],tail[2],await json(request)));
+      if(tail.length===4&&tail[1]==='documents'&&tail[3]==='download'&&method==='GET')
+        return rentalDocumentDownload(env,user,tail[0],tail[2],url.searchParams.get('quarantine')==='1');
+      throw new AppError(404,'NOT_FOUND','Unknown application action.');
+    }
+    if(path==='/api/staff/open-home-checkins/settings' && method==='POST'){
+      requireOrigin(request,env);
+      const input=await json(request) as {listingId?:unknown;settings?:unknown};
+      assert(typeof input.listingId==='string'&&input.listingId.length<=120,400,
+        'CHECK_IN_LISTING_REQUIRED','Choose a property listing.');
+      return Response.json(await saveOpenHomeReportSettings(env,user,input.listingId,input.settings));
+    }
+    if(path==='/api/staff/open-home-checkins' && method==='GET'){
+      const listingId=url.searchParams.get('listingId');
+      assert(listingId,400,'CHECK_IN_LISTING_REQUIRED','Choose a property listing.');
+      const sessionId=url.searchParams.get('sessionId')??undefined;
+      const attendance=await staffOpenHomeCheckIns(env,user,listingId,sessionId);
+      const reporting=await staffOpenHomeReportDetails(env,user,listingId,sessionId);
+      return Response.json({...attendance,reporting},{headers:{'Cache-Control':'private, no-store'}});
+    }
+    const leasingStaff=path.match(/^\/api\/staff\/leasing(?:\/(.*))?$/);
+    if(leasingStaff) {
+      if(method!=='GET'&&method!=='HEAD')requireOrigin(request,env);
+      return Response.json(await staffLeasing(env,user,request,leasingStaff[1]??''),{status:method==='POST'?201:200});
+    }
     if (method !== 'GET' && method !== 'HEAD') requireOrigin(request, env);
     if (path === '/api/staff/calendar-diagnostic' && method === 'GET') {
       // Genuine authenticated operations staff only; no public test trigger.
       // Google calendar IDs, private keys and OAuth tokens are never returned.
       operationsWrite(user);
       return Response.json(await readOnlyCalendarDiagnostic(env));
+    }
+    const calendarRetry = path.startsWith('/api/staff/calendar-sync/') && path.endsWith('/retry')
+      ? path.slice('/api/staff/calendar-sync/'.length, -'/retry'.length) : null;
+    if (calendarRetry && /^bkg_[0-9a-f]{32}$/.test(calendarRetry) && method === 'POST') {
+      operationsWrite(user);
+      return Response.json(await retryCalendarSync(env, calendarRetry, user.id));
+    }
+    if (path === '/api/staff/calendar-sync' && method === 'GET') {
+      operationsWrite(user);
+      return Response.json(await calendarSyncSummary(env));
+    }
+    if (path === '/api/staff/guest-orders' && method === 'GET') {
+      operationsWrite(user);
+      return Response.json(await guest.staffGuestOrders(env));
+    }
+    const guestStaffMatch = path.match(/^\/api\/staff\/guest-orders\/([a-zA-Z0-9_-]+)\/(quote|review)$/);
+    if (guestStaffMatch && method === 'POST') {
+      operationsWrite(user);
+      return Response.json(await guest.staffGuestAction(env, guestStaffMatch[1], guestStaffMatch[2], await json(request), user.id));
     }
     if (path === '/api/account' && method === 'GET')
       return Response.json(await accountData(request, env, user));

@@ -57,6 +57,8 @@ export default function WorkspaceLayout() {
       w.kind === 'tenant' || w.kind === 'building' ? 'My requests' : 'Requests',
       '',
     ]);
+  if (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''))
+    items.push(['wa-form-queue', 'WA residential forms', '']);
   if (w.kind === 'tenant') items.push(['inspections', 'Inspections', '']);
   items.push(['documents', 'Documents & reports', '']);
   if (customer || (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? '')))
@@ -76,7 +78,7 @@ export default function WorkspaceLayout() {
       ['services', 'Service catalogue', ''],
     );
   if (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''))
-    items.push(['enquiries', 'Marketing enquiries', ''], ['integrations', 'Integrations', '']);
+    items.push(['enquiries', 'Marketing enquiries', ''], ['leasing', 'Property leasing', ''], ['open-home-checkins', 'Open home attendance', ''], ['rental-applications', 'Rental applications', ''], ['guest-orders', 'One-off booking requests', ''], ['integrations', 'Integrations', '']);
   if (data.restrictedEnabled && (w.kind === 'tenant' || staff))
     items.push(['confidential', 'Confidential assistance', '']);
   return (

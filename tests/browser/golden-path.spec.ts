@@ -22,11 +22,11 @@ test('marketing is server rendered and responsive', async ({ page, request }) =>
   expect(response.status()).toBe(200);
   const html = await response.text();
   expect(html).toContain('Routine Inspection');
-  expect(html).toContain('Clear work. A useful record.');
+  expect(html).toContain('What is a Routine Inspection?');
   expect(html).toContain('rel="canonical"');
   expect(html).not.toContain('<title>Service not found');
   await page.goto('http://127.0.0.1:5173');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('The work gets done.');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Real property work.');
   mkdirSync('artifacts/screenshots', { recursive: true });
   await page.screenshot({ path: 'artifacts/screenshots/marketing-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -35,7 +35,7 @@ test('marketing is server rendered and responsive', async ({ page, request }) =>
 });
 test('new Landlord signup auto-includes services, books, and hands work to Staff with report delivery', async ({ page, browser }) => {
   const email = `landlord-${Date.now()}@proinspect.test`;
-  await signIn(page, email, '/book/routine-inspection');
+  await signIn(page, email, '/book/subscriber/routine-inspection');
   await page.getByRole('link', { name: 'Set up account', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Start with the essentials.' })).toBeVisible();
   await page.getByLabel('Your name', { exact: true }).fill('Jordan Example');
@@ -98,7 +98,7 @@ test('new Landlord signup auto-includes services, books, and hands work to Staff
 
 test('commercial Landlord signup selects its type and books an included commercial inspection', async ({ page, browser }) => {
   const email = `commercial-owner-${Date.now()}@proinspect.test`;
-  await signIn(page, email, '/book/commercial-property-inspection');
+  await signIn(page, email, '/book/subscriber/commercial-property-inspection');
   await page.getByRole('link', { name: 'Set up account', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Start with the essentials.' })).toBeVisible();
   await page.getByLabel('Landlord type', { exact: true }).selectOption('commercial');

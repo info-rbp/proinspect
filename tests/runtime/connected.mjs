@@ -225,6 +225,86 @@ try {
     )
   ).propertyId;
   const tenant = await makeTenant(owner, base, propertyId, 'tenant@tests.example');
+  await check('WA residential form catalogue, private draft, review, delivery evidence and commercial denial', async () => {
+    const defs = await ok(`${tenant.base}/tenancies/${tenant.tenancyId}/wa-forms`, tenant);
+    assert.ok(defs.definitions.some(f => f.code === 'WA_FORM_25'));
+    assert.ok(!defs.definitions.some(f => f.code === 'WA_FORM_19'));
+    assert.ok(!defs.definitions.some(f => f.code === 'WA_FORM_2'));
+    const commercial = await ok('/api/onboarding', owner, {
+      displayName:'Test Owner',clientName:'Commercial Fixture',landlordType:'commercial'
+    },201);
+    assert.equal((await api(`/api/w/commercial/${commercial.clientId}/tenancies/${tenant.tenancyId}/wa-forms`,
+      {cookie:owner.cookie})).status,403);
+    const commercialBase=`/api/w/commercial/${commercial.clientId}`;
+    const commercialProperty=await ok(commercialBase+'/properties',owner,{
+      address:'987 Commercial Forms Isolation Avenue',suburb:'Perth',postcode:'6000',
+      propertyType:'Office',selfManaged:true
+    },201);
+    const commercialTenant=await makeTenant(owner,commercialBase,commercialProperty.propertyId,
+      'commercial-forms-tenant@tests.example');
+    assert.equal((await api(
+      `${commercialTenant.base}/tenancies/${commercialTenant.tenancyId}/wa-forms`,
+      {cookie:commercialTenant.cookie})).status,403);
+    assert.equal((await api(`${commercialTenant.base}/wa-forms`,{
+      cookie:commercialTenant.cookie,body:{tenancyId:commercialTenant.tenancyId,
+       formCode:'WA_FORM_25',answers:{animal:'Dog',arrangements:'Indoor'}}
+    })).status,403);
+    assert.equal((await api(`${commercialTenant.base}/confidential`,
+      {cookie:commercialTenant.cookie})).status,403);
+    assert.equal((await api(`${commercialTenant.base}/confidential`,{
+      cookie:commercialTenant.cookie,body:{details:'Commercial tenancy does not use residential Form 2',
+        reviewerId:'staff_reviewer_fixture'}
+    })).status,403);
+    assert.equal((await api(`${tenant.base}/wa-forms`, {cookie:tenant.cookie,body:{
+      tenancyId:tenant.tenancyId,formCode:'WA_FORM_19',answers:{entryPurpose:'Routine',entryDate:'2026-11-20'}
+    }})).status,422);
+    const created = await ok(`${tenant.base}/wa-forms`, tenant, {
+      tenancyId:tenant.tenancyId, formCode:'WA_FORM_25',
+      answers:{animal:'One indoor cat',arrangements:'Indoor, supervised'},
+      notes:'Synthetic test only'
+    });
+    assert.equal(created.status,'draft');
+    assert.equal((await api(`${base}/wa-forms/${created.id}`,{
+      cookie:outsider.cookie,body:{version:1,status:'submitted'}})).status,403);
+    await ok(`${tenant.base}/wa-forms/${created.id}`,tenant,{version:1,status:'submitted'});
+    const managerNotification=await first('SELECT user_id,message FROM notifications WHERE id=?',
+      `wa_new_${created.id}_${await userId(owner)}`);
+    assert.ok(managerNotification,'Submitting a tenant form must notify the authorised landlord');
+    assert.ok(!managerNotification.message.includes('One indoor cat'),
+      'Tenant answers must never leak into general landlord notification text');
+    assert.equal((await first('SELECT COUNT(*) AS n FROM outbox_events WHERE id=? AND kind=?',
+      `wa_new_${created.id}_${await userId(owner)}`,'wa_form.review_required')).n,1);
+    assert.equal((await api(`${base}/wa-forms/${created.id}`,{cookie:owner.cookie,
+      body:{version:2,status:'approved',reviewReference:'Owner cannot act as legal reviewer'}})).status,403);
+    await ok(`${staffBase}/wa-forms/${created.id}`,operator,{
+      version:2,status:'under_review',reviewReference:'Synthetic Staff review'
+    });
+    await ok(`${staffBase}/wa-forms/${created.id}`,operator,{
+      version:3,status:'approved',reviewReference:'Synthetic legal-template pending'
+    });
+    const delivery=await ok(`${staffBase}/wa-forms/${created.id}/delivery`,operator,{
+      recipientKind:'tenant',recipientReference:'fixture@example.test',
+      deliveryMethod:'email',deliveryAt:new Date().toISOString(),
+      evidenceReference:'Test delivery attempt only',outcome:'attempted'
+    });
+    assert.equal(delivery.legalServiceConfirmed,false);
+    const receipt=await ok(`${base}/wa-forms/${created.id}/receipt`,owner,{
+      version:4,receivedAt:new Date().toISOString(),evidenceReference:'Synthetic actual receipt evidence'
+    });
+    assert.equal(receipt.legallyVerified,false);
+    assert.ok(new Date(receipt.dueAt).getTime()>Date.now());
+    const decision=await ok(`${base}/wa-forms/${created.id}/decision`,owner,{
+      version:5,decision:'approved',explanation:'Approved pet arrangement for the synthetic fixture.'
+    });
+    assert.equal(decision.legalDecisionConfirmed,false);
+    assert.equal((await api(`${base}/wa-forms/${created.id}/decision`,{cookie:owner.cookie,
+      body:{version:5,decision:'approved',explanation:'Duplicate decision not allowed.'}})).status,409);
+    const forms=await ok(`${tenant.base}/tenancies/${tenant.tenancyId}/wa-forms`,tenant);
+    assert.ok(forms.cases.some(f=>f.id===created.id&&f.status==='approved'));
+    assert.equal((await first('SELECT COUNT(*) n FROM wa_residential_form_events WHERE case_id=?',created.id)).n,7);
+    assert.equal((await first('SELECT COUNT(*) n FROM wa_residential_form_delivery WHERE case_id=?',created.id)).n,1);
+  });
+
   const b = await book(owner, base, propertyId);
   await check(
     'published inspection follows the correct tenancy and rescheduling withdraws stale information',
@@ -235,6 +315,17 @@ try {
         noticeReference: 'Actual notice reference fixture',
       });
       assert.equal((await ok(tenant.base, tenant)).inspections.length, 1);
+      const scheduled=await first('SELECT starts_at FROM bookings WHERE id=?',b.id);
+      const perthDate=new Date(new Date(scheduled.starts_at).getTime()+8*3600000).toISOString().slice(0,10);
+      assert.equal((await api(base+'/wa-forms',{cookie:owner.cookie,body:{
+        tenancyId:tenant.tenancyId,formCode:'WA_FORM_19',bookingId:'another_book',
+        answers:{entryPurpose:'routine',entryDate:perthDate}
+      }})).status,422);
+      const entryNotice=await ok(base+'/wa-forms',owner,{
+        tenancyId:tenant.tenancyId,formCode:'WA_FORM_19',bookingId:b.id,
+        answers:{entryPurpose:'routine',entryDate:perthDate}
+      });
+      assert.equal(entryNotice.status,'draft');
       const slots = await ok(
           `${base}/availability?service=routine-inspection&date=${futureDate()}`,
           owner,
@@ -248,6 +339,8 @@ try {
           accessConfirmed: true,
         };
       await ok(`${base}/bookings/${b.id}/change`, owner, input);
+      const stale=await first('SELECT notice_invalidated_at FROM wa_residential_form_cases WHERE id=?',entryNotice.id);
+      assert.ok(stale.notice_invalidated_at,'Rescheduling must invalidate any linked Form 19');
       assert.equal((await ok(tenant.base, tenant)).inspections.length, 0);
       assert.equal((await ok(`${base}/bookings/${b.id}/change`, owner, input)).replayed, true);
       assert.equal(
@@ -548,6 +641,127 @@ try {
       });
     },
   );
+  await check('WA Form 1 cannot issue without independent PCR report prerequisite verification',async()=>{
+    const form=await ok(base+'/wa-forms',owner,{
+      tenancyId:tenant.tenancyId,formCode:'WA_FORM_1',
+      answers:{inspectionDate:'2026-11-20',inspectionReference:'Synthetic initial PCR'}
+    });
+    await ok(base+'/wa-forms/'+form.id,owner,{version:1,status:'submitted'});
+    await ok(staffBase+'/wa-forms/'+form.id,operator,{version:2,status:'under_review',reviewReference:'PCR reviewer'});
+    await ok(staffBase+'/wa-forms/'+form.id,operator,{version:3,status:'approved',reviewReference:'PCR legal document review'});
+    const attempt=await api(staffBase+'/wa-forms/'+form.id+'/issue',{cookie:operator.cookie,
+      body:{documentId:'synthetic_pcr_document',templateVersion:'synthetic-2026-wa-form1',reference:'Synthetic issuance attempt'}
+    });
+    assert.equal(attempt.status,422);
+    assert.equal(attempt.data.code,'ISSUE_REQUIREMENTS_OUTSTANDING');
+    assert.match(attempt.data.message,/issued_pcr_report/);
+  });
+  await check('WA official-PDF template bytes, issued tenancy grant, reviewed decisions and safe administrative close',async()=>{
+    const submission=await ok(tenant.base+'/wa-forms',tenant,{
+      tenancyId:tenant.tenancyId,formCode:'WA_FORM_25',
+      answers:{animal:'One synthetic indoor dog',arrangements:'Attested indoor supervision'}
+    });
+    await ok(`${tenant.base}/wa-forms/${submission.id}`,tenant,{version:1,status:'submitted'});
+    await ok(`${staffBase}/wa-forms/${submission.id}`,operator,{
+      version:2,status:'under_review',reviewReference:'Synthetic document-review intake'
+    });
+    await ok(`${staffBase}/wa-forms/${submission.id}`,operator,{
+      version:3,status:'approved',reviewReference:'Synthetic reviewed official output'
+    });
+    const uploaded=await ok(base+'/documents/upload',owner,upload({
+      title:'Synthetic properly issued WA Form 25 PDF',category:'tenancy_document',propertyId
+    },pdf('WA official form test fixture')));
+    await ok(`${base}/documents/${uploaded.id}/issue`,owner,{
+      audience:'tenancy',recipientId:tenant.tenancyId,
+      reviewReference:'Synthetic tenancy-specific official PDF grant'
+    });
+    const blocked=await api(`${staffBase}/wa-forms/${submission.id}/issue`,{cookie:operator.cookie,
+      body:{documentId:uploaded.id,templateVersion:'2026-test-no-bytes',reference:'No source registered'}
+    });
+    assert.equal(blocked.status,422);
+    const template=new FormData();
+    for(const [k,v] of Object.entries({
+      formCode:'WA_FORM_25',templateVersion:'synthetic-2026-10-wa25',
+      officialSourceUrl:'https://www.consumerprotection.wa.gov.au/rental-forms-and-notices',
+      legalReviewReference:'Synthetic reviewer attestation, NOT approval for live legal use'
+    }))template.set(k,v);
+    template.set('file',new File([pdf('Synthetic source PDF')],
+      'wa-form25-test.pdf',{type:'application/pdf'}));
+    const stored=await ok(`${staffBase}/wa-form-templates/upload`,operator,template);
+    assert.equal(stored.formCode,'WA_FORM_25');
+    assert.match(stored.sha256,/^[a-f0-9]{64}$/);
+    assert.equal((await api(`${staffBase}/wa-forms/${submission.id}/issue`,{
+      cookie:operator.cookie,body:{documentId:uploaded.id,templateVersion:stored.version,
+        reference:'Unapproved master must not issue'}
+    })).status,422);
+    assert.equal((await api(`${staffBase}/wa-form-templates/WA_FORM_25/approve`,{
+      cookie:operator.cookie,body:{templateVersion:stored.version,reviewReference:'Same uploader cannot approve'}
+    })).status,403);
+    const reviewed=await ok(`${staffBase}/wa-form-templates/WA_FORM_25/approve`,admin,{
+      templateVersion:stored.version,
+      reviewReference:'Separate synthetic administrator source and legal review'
+    });
+    assert.equal(reviewed.releaseApproved,true);
+    const linked=await ok(`${staffBase}/wa-forms/${submission.id}/issue`,operator,{
+      documentId:uploaded.id,templateVersion:stored.version,
+      reference:'Synthetic reviewed issuance match'
+    });
+    assert.equal(linked.legalServiceConfirmed,false);
+    assert.equal((await api(`${base}/wa-forms/${submission.id}/signature-evidence`,{
+      cookie:owner.cookie,body:{signedDocumentId:uploaded.id,signerKind:'landlord',
+        method:'wet_ink',evidenceReference:'Synthetic signature'} })).status,403);
+    await ok(`${staffBase}/wa-forms/${submission.id}/receipt`,operator,{
+      version:5,receivedAt:new Date().toISOString(),evidenceReference:'Synthetic verified receipt'
+    });
+    await ok(`${base}/wa-forms/${submission.id}/decision`,owner,{
+      version:6,decision:'approved',explanation:'Approved the synthetic household pet request.'
+    });
+    const delivered=await ok(`${staffBase}/wa-forms/${submission.id}/delivery`,operator,{
+      recipientKind:'tenant',recipientReference:'synthetic tenant fixture',
+      deliveryMethod:'in_person',deliveryAt:new Date().toISOString(),
+      evidenceReference:'Synthetic delivered source evidence',outcome:'delivered'
+    });
+    assert.equal(delivered.legalServiceConfirmed,false);
+    const final=await ok(`${staffBase}/wa-forms/${submission.id}/complete`,operator,{
+      version:7,completionReference:'Synthetic administrative closure review'
+    });
+    assert.equal(final.legalValidityCertified,false);
+    const last=await first('SELECT status,decision_status FROM wa_residential_form_cases WHERE id=?',submission.id);
+    assert.equal(last.status,'completed');
+    assert.equal(last.decision_status,'approved');
+  });
+  await check('WA 2026 bond release tracks documented external submission and determination without transacting',async()=>{
+    const submitted=await ok(base+'/wa-forms',owner,{
+      tenancyId:tenant.tenancyId,formCode:'WA_BOND_RELEASE',
+      answers:{bondReference:'synthetic-wa-bond',claimAmount:0,
+        allocation:'Synthetic full release to named tenants; external government process'}
+    });
+    await ok(`${base}/wa-forms/${submitted.id}`,owner,{version:1,status:'submitted'});
+    await ok(`${staffBase}/wa-forms/${submitted.id}`,operator,{
+      version:2,status:'under_review',reviewReference:'Synthetic bond application review'
+    });
+    await ok(`${staffBase}/wa-forms/${submitted.id}`,operator,{
+      version:3,status:'approved',reviewReference:'Synthetic reviewed submission'
+    });
+    assert.equal((await api(`${staffBase}/wa-forms/${submitted.id}/external`,{
+      cookie:operator.cookie,body:{version:4,action:'confirmed',provider:'bonds_administration',
+        externalReference:'bond-fixture-0001',evidenceReference:'Without actual prior submission',
+        effectiveAt:new Date().toISOString()}
+    })).status,409);
+    await ok(`${staffBase}/wa-forms/${submitted.id}/external`,operator,{
+      version:4,action:'submitted',provider:'bonds_administration',
+      externalReference:'synthetic-bonds-submission-001',
+      evidenceReference:'Synthetic portal submission evidence',effectiveAt:new Date().toISOString()
+    });
+    const confirmed=await ok(`${staffBase}/wa-forms/${submitted.id}/external`,operator,{
+      version:5,action:'confirmed',provider:'bonds_administration',
+      externalReference:'synthetic-bonds-confirmed-001',
+      evidenceReference:'Synthetic government receipt fixture',effectiveAt:new Date().toISOString()
+    });
+    assert.equal(confirmed.governmentTransactionPerformed,false);
+    assert.equal((await first('SELECT external_status FROM wa_residential_form_cases WHERE id=?',submitted.id)).external_status,'confirmed');
+    assert.equal((await first('SELECT COUNT(*) AS n FROM wa_residential_form_external_events WHERE case_id=?',submitted.id)).n,2);
+  });
   const wo = (await ok(`${staffBase}/requests/${maintenance.id}/convert`, operator, {})).id;
   await check(
     'pending cost proposal blocks operational bypass and only commissioning landlord can decide',
@@ -844,6 +1058,120 @@ try {
       );
     },
   );
+
+  await check(
+    'agency approval escalation reaches only the verified owner and returns the decision to the work order',
+    async () => {
+      const propertyId = imported.propertyIds[1];
+      const order = await first(
+        "SELECT id,version FROM work_orders WHERE property_id=? AND client_id=? AND status IN('triage','quote_required','approved','scheduled','assigned') ORDER BY created_at DESC LIMIT 1",
+        propertyId,
+        pm.id,
+      );
+      assert.ok(order, 'Expected a canonical agency work order from bulk booking.');
+      const ownerId = await userId(owner);
+      const proposal = {
+        version: order.version,
+        amountCents: 155000,
+        summary: 'Agency-managed property repair escalation',
+        reference: 'Synthetic owner approval request',
+        targetUserId: ownerId,
+      };
+      assert.equal(
+        (
+          await api(`${pm.base}/work-orders/${order.id}/proposals`, {
+            cookie: agency.cookie,
+            body: { ...proposal, requestKey: requestKey() },
+          })
+        ).status,
+        422,
+        'Owner approval must fail without a verified ownership relationship.',
+      );
+      await ok(`${staffBase}/admin/ownership`, operator, {
+        propertyId,
+        clientId: client,
+        reference: 'Staff-verified synthetic property owner',
+      });
+      const approval = await ok(
+        `${pm.base}/work-orders/${order.id}/proposals`,
+        agency,
+        { ...proposal, requestKey: requestKey() },
+      );
+      assert.equal(approval.decisionScope, 'named_user');
+      assert.equal(
+        (await first('SELECT status FROM work_orders WHERE id=?', order.id)).status,
+        'awaiting_approval',
+      );
+      assert.ok(
+        (await ok('/api/my-approvals', owner)).approvals.some((a) => a.id === approval.id),
+      );
+      assert.ok(
+        !(await ok('/api/my-approvals', outsider)).approvals.some((a) => a.id === approval.id),
+      );
+      assert.ok(
+        (await ok(pm.base, agency)).approvals.some((a) => a.id === approval.id),
+      );
+      assert.equal(
+        (
+          await first(
+            "SELECT COUNT(*) AS n FROM notifications WHERE user_id=? AND href='/owner-decisions'",
+            ownerId,
+          )
+        ).n,
+        1,
+      );
+      assert.equal(
+        (
+          await api(`${staffBase}/work-orders/${order.id}`, {
+            cookie: operator.cookie,
+            body: { version: order.version + 1, status: 'approved' },
+          })
+        ).status,
+        409,
+      );
+      for (const actor of [agency, operator]) {
+        const route = actor === agency
+          ? `${pm.base}/approvals/${approval.id}/decision`
+          : `${staffBase}/approvals/${approval.id}/decision`;
+        assert.equal(
+          (
+            await api(route, {
+              cookie: actor.cookie,
+              body: { version: 1, decision: 'approved' },
+            })
+          ).status,
+          403,
+        );
+      }
+      assert.equal(
+        (
+          await api(`/api/my-approvals/${approval.id}`, {
+            cookie: outsider.cookie,
+            body: { version: 1, decision: 'approved' },
+          })
+        ).status,
+        404,
+      );
+      await ok(`/api/my-approvals/${approval.id}`, owner, {
+        version: 1,
+        decision: 'approved',
+      });
+      assert.equal(
+        (await first('SELECT status FROM work_orders WHERE id=?', order.id)).status,
+        'approved',
+      );
+      assert.equal(
+        (
+          await api(`/api/my-approvals/${approval.id}`, {
+            cookie: owner.cookie,
+            body: { version: 1, decision: 'declined' },
+          })
+        ).status,
+        409,
+      );
+    },
+  );
+
   const commercialUser = await login('commercial@tests.example'),
     commercial = await organisation(commercialUser, 'commercial', 'Example Commercial', operator);
   await check('new commercial account receives an all-inclusive plan without new portal roles', async () => {
@@ -1051,6 +1379,40 @@ try {
       assert.equal(visible.members.length, 0);
     },
   );
+
+  await check(
+    'one tenant resident and council member sees independent notices and loses only expired council access',
+    async () => {
+      const extra = await ok(`${strataOrg.base}/team/invite`, strataUser, {
+        email: tenant.email,
+        schemeId: scheme.id,
+        role: 'council_member',
+        endsAt: expires,
+      });
+      await invited(tenant, extra.localInvitationUrl);
+      const kinds = (await ok('/api/session', tenant)).workspaces.map((w) => w.kind);
+      for (const kind of ['tenant', 'building', 'council'])
+        assert.ok(kinds.includes(kind), `Expected independent ${kind} workspace`);
+      const buildingView = await ok(`${resident.base}/schemes/${scheme.id}`, tenant);
+      const councilView = await ok(`/api/w/council/${scheme.id}/schemes/${scheme.id}`, tenant);
+      assert.ok(buildingView.notices.some((n) => n.title === 'Lot 23 access'));
+      assert.ok(!buildingView.notices.some((n) => n.title === 'Council briefing'));
+      assert.ok(councilView.notices.some((n) => n.title === 'Council briefing'));
+      const member = await first(
+        "SELECT id FROM scheme_memberships WHERE user_id=? AND scheme_id=? AND role='council_member' AND ends_at>?",
+        await userId(tenant),
+        scheme.id,
+        new Date().toISOString(),
+      );
+      assert.ok(member);
+      await ok(`${strataOrg.base}/schemes/${scheme.id}/members/${member.id}/end`, strataUser, {});
+      assert.equal((await api(`/api/w/council/${scheme.id}`, { cookie: tenant.cookie })).status, 403);
+      assert.equal((await api(resident.base, { cookie: tenant.cookie })).status, 200);
+      assert.equal((await api(tenant.base, { cookie: tenant.cookie })).status, 200);
+      assert.ok(!(await ok('/api/session', tenant)).workspaces.some((w) => w.kind === 'council'));
+    },
+  );
+
   await check(
     'council term revocation removes the workspace without changing the person account',
     async () => {

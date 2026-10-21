@@ -1,3 +1,4 @@
+import {dispatchGuestReminders} from './features/guest-reminders.server';
 import { createRequestHandler, RouterContextProvider } from 'react-router';
 import { runtimeContext } from '../../../packages/database/context';
 import type { Env } from '../../../packages/database/types';
@@ -5,8 +6,14 @@ import { handleApi } from './api';
 import { consumeQueue, dispatchOutbox } from '../../../packages/notifications/server';
 import { dispatchNotices } from '../../../packages/notifications/notices';
 import { dispatchIntegrations } from './features/integrations.server';
+import { dispatchLeasingReminders } from './features/leasing.server';
+import { dispatchRentalRetention } from './features/rental-privacy.server';
+import { dispatchWaResidentialReminders } from './features/wa-reminders.server';
+import { dispatchBondAlerts } from './features/bond-alerts.server';
+import { dispatchNextDayOpenHomeReports } from './features/open-home-reports.server';
 import { shouldIndexPublicPage } from '../app/lib/public-routes';
 import { readOnlyCalendarDiagnostic, shouldRunCalendarReleaseProbe } from './features/google-calendar.server';
+import { calendarSchedulingEnabled, dispatchCalendarSync } from './features/calendar-scheduling.server';
 export { BookingScheduler } from './scheduler';
 export { BookingCoordinator } from './legacy-booking-coordinator';
 const handle = createRequestHandler(() => import('virtual:react-router/server-build'),import.meta.env.MODE);
@@ -35,11 +42,21 @@ export default {
       headers.set('Content-Security-Policy',`default-src 'self'; script-src 'self' 'nonce-${nonce}' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`);
     }
     if (request.method === 'POST') ctx.waitUntil(dispatchNotices(env).then(() => dispatchOutbox(env)).catch(() => console.error('outbox.dispatch_failed')));
+    if (request.method === 'POST' && calendarSchedulingEnabled(env))
+      ctx.waitUntil(dispatchCalendarSync(env, 1).catch(() => console.error('calendar.sync_dispatch_failed')));
     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
   },
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(dispatchNotices(env).then(() => dispatchOutbox(env)));
+    if (env.OPEN_HOME_REPORTS_ENABLED === 'true' && _event.cron === '0 1 * * *') {
+      ctx.waitUntil(dispatchNextDayOpenHomeReports(env, _event.scheduledTime).then(() => dispatchOutbox(env)));
+    }
+    ctx.waitUntil(dispatchGuestReminders(env).then(() => dispatchLeasingReminders(env)).then(() => dispatchNotices(env)).then(() => dispatchOutbox(env)));
+    ctx.waitUntil(dispatchRentalRetention(env));
+    ctx.waitUntil(dispatchWaResidentialReminders(env).then(() => dispatchOutbox(env)));
+    if (env.WA_BONDS_ENABLED === 'true') ctx.waitUntil(dispatchBondAlerts(env).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchIntegrations(env));
+    if (calendarSchedulingEnabled(env))
+      ctx.waitUntil(dispatchCalendarSync(env).catch(() => console.error('calendar.sync_dispatch_failed')));
     // Check the scheduled trigger time, not actual execution time: Cron
     // invocations may start later than their scheduled minute.
     // Temporary, automatically expiring read-only release smoke test.

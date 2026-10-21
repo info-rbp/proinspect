@@ -1,3 +1,4 @@
+import { calendarSchedulingEnabled, calendarSyncStatement } from './features/calendar-scheduling.server';
 import { activity, projection } from '../../../packages/operations/core';
 import type { Env } from '../../../packages/database/types';
 import { assert, statement, now, uid } from '../../../packages/database/types';
@@ -20,6 +21,7 @@ import {
   booksServices,
   clientAdmin,
 } from '../../../packages/authorization/server';
+import { guestReportDelivery } from './features/guest-report.server';
 import { mailEvent } from '../../../packages/notifications/server';
 import { digest } from '../../../packages/auth/crypto';
 
@@ -430,6 +432,12 @@ export async function updateWorkOrder(
         order.request_id,
       ),
     );
+  if (order.booking_id && ['completed', 'cancelled'].includes(next) && calendarSchedulingEnabled(env)) {
+    const existingBooking = await statement(env.DB, 'SELECT version FROM bookings WHERE id=?', order.booking_id)
+      .first<{ version: number }>();
+    if (existingBooking)
+      updates.push(calendarSyncStatement(env, order.booking_id, existingBooking.version + 1));
+  }
   updates.push(
     projection(env, 'work_order.updated', id, {
       workOrderId: id,
@@ -594,6 +602,8 @@ export async function issueReport(
         }),
       );
     }
+    const guestDelivery=order.booking_id ? await guestReportDelivery(env,order.booking_id,id,title):null;
+    if(guestDelivery) statements.push(...guestDelivery);
     await env.DB.batch(statements);
   } catch (error) {
     await env.DOCUMENTS.delete(objectKey);

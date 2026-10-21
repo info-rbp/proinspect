@@ -22,6 +22,7 @@ import {
 import { catalogue } from '../services.server';
 import { appointmentWindow, availability } from '../scheduler';
 import { digest } from '../../../../packages/auth/crypto';
+import { assertCalendarSlot, calendarEventId, calendarSchedulingEnabled, calendarSyncStatement } from './calendar-scheduling.server';
 export async function changeBooking(
   env: Env,
   user: Principal,
@@ -100,6 +101,7 @@ export async function changeBooking(
     const service = (await catalogue(env)).find((s) => s.id === b.service_id);
     assert(service, 409, 'SERVICE_UNAVAILABLE', 'This service requires an operational review.');
     window = appointmentWindow(service, d.startsAt);
+    if (calendarSchedulingEnabled(env)) await assertCalendarSlot(env, window, calendarEventId(id));
   }
   const original = await statement(env.DB, 'SELECT email FROM users WHERE id=?', b.user_id).first<{
     email: string;
@@ -128,6 +130,11 @@ export async function changeBooking(
     ),
     guard(env),
     statement(env.DB, 'DELETE FROM tenant_inspections WHERE booking_id=?', id),
+    statement(env.DB,
+      "UPDATE wa_residential_form_cases SET notice_invalidated_at=?,notice_invalidated_reason=?,updated_at=?,version=version+1 WHERE booking_id=? AND form_code='WA_FORM_19' AND notice_invalidated_at IS NULL",
+      now(),d.action==='cancel'?'Booking cancelled':'Booking rescheduled: issue and service evidence must be reassessed',now(),id,
+    ),
+
     activity(
       env,
       user,
@@ -136,7 +143,7 @@ export async function changeBooking(
       id,
       b.property_id,
       b.scheme_id,
-      { reason: d.reason, startsAt: window.startsAt, tenantPublicationReset: true },
+      { reason: d.reason, startsAt: window.startsAt, tenantPublicationReset: true, statutoryNoticeInvalidated: true },
     ),
     projection(env, 'booking.updated', id, {
       reference: b.reference,
@@ -161,6 +168,7 @@ export async function changeBooking(
         facts: { Reference: b.reference, Status: result.status },
       }),
     );
+  if (calendarSchedulingEnabled(env)) statements.push(calendarSyncStatement(env, id, b.version + 1));
   await env.DB.batch(statements);
   return result;
 }

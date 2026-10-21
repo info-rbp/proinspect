@@ -8,6 +8,7 @@ import { SERVICE_SEEDS as SERVICES } from '../../../../packages/service-catalogu
 import { Field } from '../../../../packages/ui/components';
 import { Turnstile } from '../../../../packages/ui/Turnstile';
 import { seo } from '../lib/seo';
+import { MarketingPageHero } from '../components/page-patterns';
 export const meta=()=>seo('Discuss your property requirements','Enquire about a ProInspect service, portfolio or strata arrangement.','/contact');
 export function loader({request,context}:LoaderFunctionArgs) {
  const env=context.get(runtimeContext).env as Record<string,string>;
@@ -52,9 +53,9 @@ export default function Contact() {
  const field=(name:string)=>({'aria-invalid':!!result?.fields?.[name],'aria-describedby':result?.fields?.[name]?`${name}-error`:undefined});
  const error=(name:string)=>result?.fields?.[name]?.length?<p className="error-text" id={`${name}-error`}>{result.fields[name].join(' ')}</p>:null;
  return <>
-  <header className="service-hero"><div className="site-container"><p className="eyebrow">Talk to ProInspect</p><h1>Tell us what the property needs.</h1><p>Start with one service, a portfolio or ongoing building support.</p></div></header>
-  <section className="section"><div className="site-container contact-grid">
-   <article className="panel">
+  <MarketingPageHero eyebrow="Talk to ProInspect" title="Tell us what the property needs." intro="Start with one service, a property portfolio or an ongoing building support requirement. Describe the outcome you want and we can clarify the appropriate next step." crumbs={[{ label: 'Contact' }]} visual="process" />
+  <section className="section mkt-section mkt-contact-section"><div className="site-container contact-grid mkt-contact-grid">
+   <article className="panel mkt-contact-form-panel">
     {result?.reference?<div role="status" className="stack"><h2>Your enquiry has been received.</h2><p>Reference <strong>{result.reference}</strong></p><p>ProInspect will review your requirements and contact you using the details supplied. This is not a confirmed booking or an account registration.</p><Link className="button" to="/services">Explore services</Link></div>:<>
     <h2>Your requirements</h2><p className="small">Use general property information only. Do not include keys, access codes, confidential evidence or sensitive tenant information.</p>
     {!settings.ready&&<p role="status">The enquiry service is not configured in this environment. Use synthetic information for repository testing.</p>}
@@ -75,7 +76,7 @@ export default function Contact() {
       <button className="button" disabled={pending||!settings.ready}>{pending?'Sending enquiry...':'Send enquiry'}</button>
     </Form></>}
    </article>
-   <aside className="stack"><section className="panel"><h2>Know the service you need?</h2><p>Explore the scope, then sign in to select your property and confirm a booking.</p><Link className="button secondary" to="/services">Explore services</Link></section><section className="panel"><h2>What happens next</h2><p>Your enquiry goes to the ProInspect operations team, who will review the scope, service area and next step with you.</p><p>No property access or management authority is created by submitting this form.</p></section></aside>
+   <aside className="stack mkt-contact-sidebar"><section className="panel mkt-contact-support-panel"><h2>Know the service you need?</h2><p>Explore the scope, then sign in to select your property and confirm a booking.</p><Link className="button secondary" to="/services">Explore services</Link></section><section className="panel mkt-contact-support-panel"><h2>What happens next</h2><p>Your enquiry goes to the ProInspect operations team, who will review the scope, service area and next step with you.</p><p>No property access or management authority is created by submitting this form.</p></section></aside>
   </div></section>
  </>;
 }

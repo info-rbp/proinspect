@@ -89,6 +89,11 @@ export function OperationForm({
 const numberFields = new Set([
   'version',
   'amountCents',
+  'generalCents',
+  'petCents',
+  'weeklyRentCents',
+  'generalDeltaCents',
+  'petDeltaCents',
   'amountExGstCents',
   'gstCents',
   'rentCents',
@@ -102,6 +107,7 @@ const boolFields = new Set([
   'acceptCondition',
   'selfManaged',
   'noticeConfirmed',
+  'acknowledgeExternalProcess',
 ]);
 export function formValues(form: FormData) {
   const data: Record<string, unknown> = {};
@@ -110,7 +116,7 @@ export function formValues(form: FormData) {
     if (numberFields.has(key)) data[key] = Number(value);
     else if (boolFields.has(key)) data[key] = value === 'true' || value === 'on';
     else if (
-      ['startsAt', 'endsAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt'].includes(key)
+      ['startsAt', 'endsAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'holdUntil', 'receivedAt', 'deliveryAt', 'effectiveAt', 'verifiedAt', 'paidAt', 'responseDueAt', 'decisionAt', 'appealDueAt'].includes(key)
     )
       data[key] = new Date(String(value)).toISOString();
     else if (key === 'propertyIds')
@@ -120,7 +126,7 @@ export function formValues(form: FormData) {
         .filter(Boolean);
     else data[key] = value;
   }
-  for (const prefix of ['access', 'answers']) {
+  for (const prefix of ['access', 'answers', 'fields']) {
     const nested: Record<string, unknown> = {};
     for (const key of Object.keys(data)) {
       if (key.startsWith(prefix + '.')) {

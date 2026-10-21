@@ -19,6 +19,11 @@ import * as strata from './strata.server';
 import * as tenancy from './tenancies.server';
 import * as admin from './admin.server';
 import * as forms from './forms.server';
+import * as waResidential from './wa-residential.server';
+import * as waLifecycle from './wa-lifecycle.server';
+import * as waIssuance from './wa-issuance.server';
+import * as bonds from './bonds.server';
+import * as bondCompletion from './bond-completion.server';
 import * as integrations from './integrations.server';
 /** Feature endpoints run only after authentication, origin and workspace checks. */
 export async function featureApi(
@@ -85,8 +90,20 @@ export async function featureApi(
       return documents.downloadAttachment(env, user, w, id);
     if (area === 'tenancies' && id && parts.length === 2)
       return ok(await tenancy.tenancyDetail(env, user, w, id));
+    if (area === 'tenancies' && id && action === 'bonds')
+      return ok(await bonds.listBonds(env,user,w,id));
+    if (area === 'bonds' && id && parts.length === 2)
+      return ok(await bonds.getBond(env,user,w,id));
     if (area === 'tenancies' && id && action === 'forms')
       return ok(await forms.formsData(env, user, w, id));
+    if (area === 'tenancies' && id && action === 'wa-forms')
+      return ok(await waResidential.waFormsData(env, user, w, id));
+    if (tail === 'wa-form-queue')
+      return ok(await waLifecycle.waReviewQueue(env,user,w));
+    if (tail === 'wa-form-templates')
+      return ok(await waLifecycle.waTemplatesData(env,user,w));
+    if (area === 'wa-forms' && id && parts.length === 2)
+      return ok(await waLifecycle.waCaseDetail(env,user,w,id));
     if (area === 'schemes' && id && parts.length === 2)
       return ok(await strata.schemeData(env, user, w, id));
     if (area === 'approvals' && id && parts.length === 2) {
@@ -211,6 +228,66 @@ export async function featureApi(
     return ok(await finance.recordPayment(env, user, w, id, await body()));
   if (area === 'payments' && id && action === 'checkout')
     return ok(await finance.checkout(env, user, w, id));
+  if (tail === 'bonds') return ok(await bonds.createBond(env,user,w,await body()));
+  if (area === 'bonds' && id && action === 'parties' && !child)
+    return ok(await bonds.addParticipant(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'parties' && child && parts[4]==='status')
+    return ok(await bonds.updateParticipant(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'contributions')
+    return ok(await bondCompletion.addBondContribution(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'verifications')
+    return ok(await bondCompletion.verifyExternalBondDocument(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'exceptions' && !child)
+    return ok(await bondCompletion.createBondException(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'exceptions' && child && parts[4]==='status')
+    return ok(await bondCompletion.changeBondException(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='prepare')
+    return ok(await bondCompletion.prepareBondForm(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='allocations')
+    return ok(await bondCompletion.addBondAllocation(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='payout')
+    return ok(await bondCompletion.reconcileBondPayout(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'receipts')
+    return ok(await bonds.recordReceipt(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && !child)
+    return ok(await bonds.createTransaction(env,user,w,id,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='status')
+    return ok(await bonds.confirmTransaction(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='claims')
+    return ok(await bonds.addClaim(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='notices')
+    return ok(await bonds.addNotice(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'transactions' && child && parts[4]==='case')
+    return ok(await bonds.recordCase(env,user,w,id,child,await body()));
+  if (area === 'bonds' && id && action === 'evidence')
+    return ok(await bonds.addEvidence(env,user,w,id,await body()));
+  if (tail === 'wa-form-templates/upload')
+    return ok(await waLifecycle.waUploadTemplate(env,user,w,await request.formData()));
+  if (area === 'wa-form-templates' && id && action === 'approve')
+    return ok(await waLifecycle.waApproveTemplate(env,user,w,id,await body()));
+
+  if (tail === 'wa-forms')
+    return ok(await waResidential.waCreateForm(env,user,w,await body()));
+  if (area === 'wa-forms' && id && action === 'issue')
+    return ok(await waResidential.waLinkIssuedDocument(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'verify')
+    return ok(await waIssuance.waVerifyRequirement(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'complete')
+    return ok(await waIssuance.waCompleteAdministrativeCase(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'receipt')
+    return ok(await waLifecycle.waConfirmReceipt(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'tenant-answer')
+    return ok(await waLifecycle.waTenantAnswer(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'decision')
+    return ok(await waLifecycle.waDecision(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'external')
+    return ok(await waLifecycle.waExternalEvent(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'signature-evidence')
+    return ok(await waLifecycle.waSignatureEvidence(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'delivery')
+    return ok(await waResidential.waRecordDelivery(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && parts.length === 2)
+    return ok(await waResidential.waUpdateForm(env,user,w,id,await body()));
   if (tail === 'forms') return ok(await forms.createForm(env, user, w, await body()));
   if (area === 'forms' && id && parts.length === 2)
     return ok(await forms.updateForm(env, user, w, id, await body()));

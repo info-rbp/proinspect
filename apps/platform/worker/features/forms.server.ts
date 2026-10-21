@@ -42,8 +42,18 @@ export const FORM_DEFINITIONS = [
     audience: 'both',
   },
 ];
+async function ordinaryResidentialScope(env: Env, user: Principal, w: Workspace, tenancyId: string, write = false) {
+  assert(
+    ['tenant','landlord','property-manager','staff'].includes(w.kind),
+    403,'RESIDENTIAL_FORMS_ONLY','WA residential forms are not available to commercial workspaces.',
+  );
+  const t = await tenancyAccess(env,user,w,tenancyId,write && w.kind !== 'tenant');
+  const p = await statement(env.DB,'SELECT sector FROM properties WHERE id=?',t.property_id).first<{sector:string}>();
+  assert(p?.sector==='residential',403,'RESIDENTIAL_FORMS_ONLY','WA residential forms require residential property.');
+  return t;
+}
 export async function formsData(env: Env, user: Principal, w: Workspace, tenancyId: string) {
-  await tenancyAccess(env, user, w, tenancyId);
+  await ordinaryResidentialScope(env, user, w, tenancyId);
   const rows = (
     await statement(
       env.DB,
@@ -53,7 +63,7 @@ export async function formsData(env: Env, user: Principal, w: Workspace, tenancy
     ).all<Record<string, any>>()
   ).results;
   return {
-    definitions: FORM_DEFINITIONS,
+    definitions: FORM_DEFINITIONS.filter((f) => f.code !== 'WA_BOND_DISPOSAL'),
     forms: await Promise.all(
       rows.map(async (r) => ({
         id: r.id,
@@ -73,7 +83,9 @@ export async function createForm(env: Env, user: Principal, w: Workspace, input:
   const d = z
     .object({ tenancyId: recordId, formCode: z.string(), details: z.string().min(10).max(6000) })
     .parse(input);
-  const t = await tenancyAccess(env, user, w, d.tenancyId, w.kind !== 'tenant');
+  assert(d.formCode!=='WA_BOND_DISPOSAL',422,'SUPERSEDED_BOND_PROCESS',
+   'The legacy bond-disposal workflow is archived. Use the 2026 Security Bond Release Application.');
+  const t = await ordinaryResidentialScope(env, user, w, d.tenancyId, w.kind !== 'tenant');
   assert(
     t.status === 'active' || d.formCode === 'WA_BOND_DISPOSAL',
     409,
@@ -122,7 +134,7 @@ export async function updateForm(
     Record<string, any>
   >();
   assert(f, 404, 'FORM_NOT_FOUND', 'Form not found.');
-  const t = await tenancyAccess(env, user, w, f.tenancy_id, w.kind !== 'tenant');
+  const t = await ordinaryResidentialScope(env, user, w, f.tenancy_id, w.kind !== 'tenant');
   const d = z
     .object({
       version,
@@ -218,7 +230,8 @@ function restrictedEnabled(env: Env) {
 }
 async function caseAccess(env: Env, user: Principal, id: string) {
   restrictedEnabled(env);
-  const c = await statement(env.DB, 'SELECT * FROM restricted_form_cases WHERE id=?', id).first<
+  const c = await statement(env.DB,
+   "SELECT c.* FROM restricted_form_cases c JOIN tenancies t ON t.id=c.tenancy_id JOIN properties p ON p.id=t.property_id AND p.sector='residential' WHERE c.id=?", id).first<
     Record<string, any>
   >();
   const allowed =
@@ -252,10 +265,14 @@ export async function restrictedData(env: Env, user: Principal, w: Workspace) {
     'CONFIDENTIAL_ACCESS',
     'This workspace cannot open confidential cases.',
   );
+  if (w.kind === 'tenant')
+    await ordinaryResidentialScope(env, user, w, w.scopeId);
   const cases = (
     await statement(
       env.DB,
-      `SELECT c.id,c.status,c.version,c.created_at FROM restricted_form_cases c WHERE (c.applicant_user_id=? ${w.kind === 'tenant' ? 'AND c.tenancy_id=?' : ''}) OR EXISTS(SELECT 1 FROM restricted_case_grants g JOIN restricted_reviewers r ON r.staff_user_id=g.staff_user_id AND r.active=1 JOIN staff_profiles s ON s.user_id=g.staff_user_id AND s.active=1 WHERE g.case_id=c.id AND g.staff_user_id=?) ORDER BY c.created_at DESC`,
+      `SELECT c.id,c.status,c.version,c.created_at FROM restricted_form_cases c
+       JOIN tenancies t ON t.id=c.tenancy_id JOIN properties p ON p.id=t.property_id AND p.sector='residential'
+       WHERE (c.applicant_user_id=? ${w.kind === 'tenant' ? 'AND c.tenancy_id=?' : ''}) OR EXISTS(SELECT 1 FROM restricted_case_grants g JOIN restricted_reviewers r ON r.staff_user_id=g.staff_user_id AND r.active=1 JOIN staff_profiles s ON s.user_id=g.staff_user_id AND s.active=1 WHERE g.case_id=c.id AND g.staff_user_id=?) ORDER BY c.created_at DESC`,
       user.id,
       ...(w.kind === 'tenant' ? [w.scopeId] : []),
       user.id,
@@ -277,7 +294,7 @@ export async function createRestrictedCase(
 ) {
   restrictedEnabled(env);
   assert(w.kind === 'tenant', 403, 'TENANT_REQUIRED', 'Open this intake from your own tenancy.');
-  await tenancyAccess(env, user, w, w.scopeId);
+  await ordinaryResidentialScope(env, user, w, w.scopeId);
   const d = z
     .object({
       details: z.string().min(10).max(6000),
