@@ -19,6 +19,10 @@
     "APP_ORIGIN": "http://localhost:5173",
     "EMAIL_PROVIDER": "local",
     "OPEN_HOME_SHEET_SYNC_ENABLED": "false",
+        "OPEN_HOME_REPORTS_ENABLED": "false",
+        "OPEN_HOME_REPORT_EMAIL_PROVIDER": "cloudflare",
+    "OPEN_HOME_REPORTS_ENABLED": "false",
+    "OPEN_HOME_REPORT_EMAIL_PROVIDER": "cloudflare",
     "RENTAL_APPLICATIONS_ENABLED": "true",
     "RENTAL_RETENTION_DRAFT_DAYS": "30",
     "RENTAL_RETENTION_SUBMITTED_DAYS": "180",
@@ -78,7 +82,8 @@
   },
   "triggers": {
     "crons": [
-      "*/2 * * * *"
+      "*/2 * * * *",
+      "0 1 * * *"
     ]
   },
   "env": {
