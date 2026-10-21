@@ -97,6 +97,7 @@ await queue(NAMES.dlq);
 await queue(NAMES.queue);
 // Mutates only the ephemeral CI checkout. The committed V3 config has no actual D1 ID.
 stage.d1_databases[0].database_id=uuid;
+stage.vars.BUILD_SHA=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
 writeFileSync(wranglerFile,JSON.stringify(config,null,2)+'\n');
 writeFileSync(new URL('../../wrangler.v3-staging-migration.json',import.meta.url),
  JSON.stringify({
