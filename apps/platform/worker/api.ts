@@ -1,6 +1,6 @@
 import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
 import { publicOpenHomeSessions,staffOpenHomeCheckIns } from './features/open-home.server';
-import { authenticateOpenHomeSheetRequest,pendingOpenHomeSheetRows,acknowledgeOpenHomeSheetRow } from './features/open-home-sheet.server';
+import { staffOpenHomeReportDetails,saveOpenHomeReportSettings,readOpenHomeReport,exportOpenHomeReportCsv } from './features/open-home-reports.server';
 import { listRentalApplications,rentalStaffDetail,updateRentalStatus,reviewRentalDocument,rentalDocumentDownload } from './features/rental-review.server';
 import { acceptRentalScan } from './features/rental-malware.server';
 import { setRentalPrivacyHold,resolveRentalPrivacyRequest,eraseRentalForRequest } from './features/rental-privacy.server';
@@ -264,19 +264,6 @@ export async function handleApi(
     }
     if(path==='/api/public/open-home/sessions'&&method==='GET')
       return Response.json({sessions:await publicOpenHomeSessions(env)},{headers:{'Cache-Control':'private, no-store'}});
-    if(path==='/api/integrations/open-home-sheet/pending'&&method==='GET'){
-      await authenticateOpenHomeSheetRequest(env,request,'');
-      return Response.json(await pendingOpenHomeSheetRows(env),{headers:{'Cache-Control':'private, no-store'}});
-    }
-    if(path==='/api/integrations/open-home-sheet/ack'&&method==='POST'){
-      assert(Number(request.headers.get('content-length')??0)<=4096,413,'SHEET_REQUEST_TOO_LARGE','Integration request too large.');
-      const body=await request.text();
-      assert(body.length<=4096,413,'SHEET_REQUEST_TOO_LARGE','Integration request too large.');
-      await authenticateOpenHomeSheetRequest(env,request,body);
-      let input:unknown;
-      try{input=JSON.parse(body);}catch{throw new AppError(400,'SHEET_INVALID_JSON','Invalid sync acknowledgement.');}
-      return Response.json(await acknowledgeOpenHomeSheetRow(env,input),{headers:{'Cache-Control':'private, no-store'}});
-    }
     if (path === '/api/catalogue' && method === 'GET')
       return Response.json({ services: await catalogue(env) });
     if (path === '/api/auth/start' && method === 'POST') {
@@ -299,6 +286,20 @@ export async function handleApi(
     if(path==='/api/internal/rental-document-scan' && method==='POST')
       return Response.json(await acceptRentalScan(env,request));
     const user = await requireUser(request, env);
+    const openHomeReport=path.match(/^\/api\/open-home\/report\/([a-zA-Z0-9_-]+)(\.csv)?$/);
+    if(openHomeReport&&method==='GET'){
+      const report=await readOpenHomeReport(env,user,openHomeReport[1]);
+      if(openHomeReport[2]){
+        const csv=exportOpenHomeReportCsv(report);
+        return new Response(csv,{headers:{
+          'Content-Type':'text/csv; charset=utf-8',
+          'Content-Disposition':'attachment; filename="ProInspect-open-home-'+openHomeReport[1]+'.csv"',
+          'Cache-Control':'private, no-store',
+          'X-Content-Type-Options':'nosniff',
+        }});
+      }
+      return Response.json(report,{headers:{'Cache-Control':'private, no-store'}});
+    }
     const rentalStaff=path.match(/^\/api\/staff\/rental-applications(?:\/(.*))?$/);
     if(rentalStaff){
       const tail=(rentalStaff[1]??'').split('/').filter(Boolean);
@@ -318,11 +319,20 @@ export async function handleApi(
         return rentalDocumentDownload(env,user,tail[0],tail[2],url.searchParams.get('quarantine')==='1');
       throw new AppError(404,'NOT_FOUND','Unknown application action.');
     }
+    if(path==='/api/staff/open-home-checkins/settings' && method==='POST'){
+      requireOrigin(request,env);
+      const input=await json(request) as {listingId?:unknown;settings?:unknown};
+      assert(typeof input.listingId==='string'&&input.listingId.length<=120,400,
+        'CHECK_IN_LISTING_REQUIRED','Choose a property listing.');
+      return Response.json(await saveOpenHomeReportSettings(env,user,input.listingId,input.settings));
+    }
     if(path==='/api/staff/open-home-checkins' && method==='GET'){
       const listingId=url.searchParams.get('listingId');
       assert(listingId,400,'CHECK_IN_LISTING_REQUIRED','Choose a property listing.');
-      return Response.json(await staffOpenHomeCheckIns(env,user,listingId,
-        url.searchParams.get('sessionId')??undefined),{headers:{'Cache-Control':'private, no-store'}});
+      const sessionId=url.searchParams.get('sessionId')??undefined;
+      const attendance=await staffOpenHomeCheckIns(env,user,listingId,sessionId);
+      const reporting=await staffOpenHomeReportDetails(env,user,listingId,sessionId);
+      return Response.json({...attendance,reporting},{headers:{'Cache-Control':'private, no-store'}});
     }
     const leasingStaff=path.match(/^\/api\/staff\/leasing(?:\/(.*))?$/);
     if(leasingStaff) {
