@@ -176,6 +176,47 @@ class SchemaTests(unittest.TestCase):
         with self.assertRaisesRegex(sqlite3.IntegrityError,'RENTAL_SUBMISSION_IMMUTABLE'):
             self.db.execute("DELETE FROM rental_application_submissions WHERE id='sub1'")
 
+    def test_open_home_report_recipient_is_verified_and_one_report_per_session(self):
+        self.db.execute("INSERT INTO users(id,email,verified_at,created_at) VALUES('rep','rep@example.test','2026-10-20','2026-10-20')")
+        self.db.execute("INSERT INTO users(id,email,verified_at,created_at) VALUES('other','other@example.test','2026-10-20','2026-10-20')")
+        self.db.execute("INSERT INTO clients(id,name,client_type,created_at) VALUES('other_c','Unrelated company','agency','2026-10-20')")
+        self.db.execute("INSERT INTO client_memberships(id,client_id,user_id,role,created_at) VALUES('rep_m','c','rep','admin','2026-10-20')")
+        self.db.execute("INSERT INTO client_memberships(id,client_id,user_id,role,created_at) VALUES('other_m','other_c','other','admin','2026-10-20')")
+        self.db.execute("""INSERT INTO leasing_listings(id,property_id,instructed_by_client_id,kind,slug,title,description,display_address,suburb,postcode,agent_name,agent_role,created_by,status,created_at,updated_at)
+         VALUES('report_listing','p','c','residential','report-property','Example rental listing','A property description sufficient for the approved public listing.','1 Test St','Perth','6000','Example agent','leasing_agent','u','published','2026-10-20','2026-10-20')""")
+        self.db.execute("""INSERT INTO leasing_sessions(id,listing_id,starts_at,ends_at,created_at,updated_at)
+         VALUES('session_r','report_listing','2026-10-21T02:00:00Z','2026-10-21T03:00:00Z','2026-10-20','2026-10-20')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'OPEN_HOME_REPORT_RECIPIENT_UNAUTHORISED'):
+            self.db.execute("""INSERT INTO open_home_report_settings(listing_id,enabled,recipient_user_id,authority_reference,configured_by,updated_at)
+             VALUES('report_listing',1,'other','external instruction','u','2026-10-20')""")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute("""INSERT INTO open_home_report_settings(listing_id,enabled,recipient_user_id,authority_reference,configured_by,updated_at)
+             VALUES('report_listing',1,'u','instruction','u','2026-10-20')""")
+        self.db.execute("""INSERT INTO open_home_report_settings(listing_id,enabled,recipient_user_id,authority_reference,configured_by,updated_at)
+         VALUES('report_listing',1,'rep','written approval ref','u','2026-10-20')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'OPEN_HOME_REPORT_RECIPIENT_UNAUTHORISED'):
+            self.db.execute("UPDATE open_home_report_settings SET recipient_user_id='other' WHERE listing_id='report_listing'")
+        self.db.execute("""INSERT INTO outbox_events(id,kind,envelope,available_at,created_at)
+         VALUES('evt_report','open-home.inspection.report','sealed','2026-10-22','2026-10-22')""")
+        self.db.execute("""INSERT INTO open_home_inspection_reports(
+         session_id,listing_id,outbox_id,recipient_user_id,session_end_at,
+         report_date_perth,attendance_count,preregistered_arrivals,walk_in_arrivals,registered_count,queued_at)
+         VALUES('session_r','report_listing','evt_report','rep','2026-10-21T03:00:00Z',
+         '2026-10-21',3,1,2,2,'2026-10-22')""")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute("""INSERT INTO open_home_inspection_reports(
+             session_id,listing_id,outbox_id,recipient_user_id,session_end_at,
+             report_date_perth,attendance_count,preregistered_arrivals,walk_in_arrivals,registered_count,queued_at)
+             VALUES('session_r','report_listing','evt_report','rep','2026-10-21T03:00:00Z',
+             '2026-10-21',3,1,2,2,'2026-10-22')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'OPEN_HOME_REPORT_IMMUTABLE'):
+            self.db.execute("UPDATE open_home_inspection_reports SET attendance_count=7 WHERE session_id='session_r'")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'OPEN_HOME_REPORT_IMMUTABLE'):
+            self.db.execute("DELETE FROM open_home_inspection_reports WHERE session_id='session_r'")
+        self.assertEqual(self.db.execute(
+            "SELECT COUNT(*) FROM open_home_inspection_reports WHERE session_id='session_r'"
+        ).fetchone()[0],1)
+
     def test_open_home_checkin_attendance_maps_to_published_property_session_and_lead(self):
         self.db.execute("""INSERT INTO leasing_listings(id,property_id,instructed_by_client_id,kind,slug,title,description,display_address,suburb,postcode,agent_name,agent_role,created_by,status,created_at,updated_at)
          VALUES('lst','p','c','residential','test-home','Example home for lease','A property description long enough for the listing administration workflow.','1 Test St','Perth','6000','Example Agent','leasing_agent','u','published','2026-10-21','2026-10-21')""")
