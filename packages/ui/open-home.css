@@ -1,0 +1,52 @@
+/* Open home check-in: marketing typography, responsive visitor registration. */
+.openhome-hero{background:linear-gradient(120deg,#132f39 0%,#194a4e 66%,#186664 100%);padding:clamp(44px,7vw,100px) 0;color:#fff}
+.openhome-hero .site-container{max-width:1160px}
+.openhome-hero h1{font-size:clamp(2.3rem,5vw,4.5rem);max-width:790px;line-height:1.07;letter-spacing:-.035em;margin:14px 0 18px;color:#fff}
+.openhome-hero p{max-width:750px;line-height:1.65;color:#e6f0ef}
+.openhome-hero a{color:#b6e8e1}
+.openhome-kicker{font-size:.75rem;letter-spacing:.16em;font-weight:800;text-transform:uppercase}
+.openhome-hero .openhome-attribution{font-size:.83rem;max-width:735px;border-left:3px solid #86c8c1;padding:6px 16px;margin-top:28px;color:#dfefee}
+.openhome-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,.8fr);gap:clamp(18px,4vw,48px);align-items:start;max-width:1160px}
+.openhome-form-card{background:#fff;border:1px solid #d4dfdb;border-radius:18px;box-shadow:0 18px 55px rgba(18,52,59,.07);padding:clamp(22px,4vw,43px)}
+.openhome-form-top{margin-bottom:29px}.openhome-form-top h2{font-size:clamp(1.5rem,3vw,2rem);letter-spacing:-.025em;margin:5px 0 8px}
+.openhome-form-top p:last-child{font-size:.93rem;color:#537277;max-width:60ch}
+.openhome-form{display:grid;gap:12px}
+.openhome-form label{font-weight:680;color:#253f45;font-size:.9rem}
+.openhome-form input:not([type=checkbox]),.openhome-form select{
+ width:100%;min-height:49px;border:1px solid #bfcfcc;border-radius:9px;padding:11px 13px;color:#203941;background:#fff;box-sizing:border-box;font:inherit
+}
+.openhome-form input:focus-visible,.openhome-form select:focus-visible{outline:3px solid #56a6a7;outline-offset:2px}
+.openhome-form select:disabled{background:#f0f4f3;color:#617578}
+.openhome-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.openhome-form-grid>div{display:grid;gap:7px}
+.openhome-form>label:not(.openhome-consent){margin-top:4px}
+.openhome-step-label{display:flex;gap:12px;align-items:center;color:#145e62;font-size:.84rem;font-weight:800;letter-spacing:.02em;margin-top:16px;margin-bottom:5px}
+.openhome-step-label span{display:inline-grid;place-items:center;width:31px;height:31px;border-radius:50%;background:#e6f1ef;font-size:.72rem}
+.openhome-property-notice{border:1px solid #d5e6e1;background:#eef7f5;border-radius:9px;padding:14px;display:grid;gap:4px;color:#2a5358;font-size:.86rem}
+.openhome-property-notice span{color:#4c6a6c}
+.openhome-consent{display:flex;gap:12px;align-items:flex-start;margin-top:19px;line-height:1.6;cursor:pointer}
+.openhome-consent input{width:18px;height:18px;flex:none;margin-top:3px;accent-color:#0c7777}
+.openhome-hint{font-size:.8rem;line-height:1.55;color:#52696b;margin:3px 0 13px}
+.openhome-hint a{color:#126e6c;text-decoration:underline}
+.openhome-submit{width:100%;min-height:54px;margin-top:8px;text-align:center}
+.openhome-submit:disabled{cursor:not-allowed;opacity:.58}
+.openhome-aside{display:grid;gap:20px}.openhome-side-card{border:1px solid #dce8e4;border-radius:15px;padding:28px;background:#f2f7f5}
+.openhome-side-card h2{font-size:1.45rem;margin:6px 0 24px}
+.openhome-side-card ol{list-style:none;padding:0;counter-reset:arrival;display:grid;gap:22px}
+.openhome-side-card li{counter-increment:arrival;display:grid;grid-template-columns:30px 1fr;column-gap:11px;row-gap:2px}
+.openhome-side-card li::before{content:counter(arrival);width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.75rem;background:#d9ebe7;color:#125c5d;grid-row:span 2}
+.openhome-side-card li strong{font-size:.91rem}.openhome-side-card li span{font-size:.85rem;line-height:1.5;color:#536e70}
+.openhome-side-note{border-left:3px solid #177b77;padding:6px 20px;font-size:.88rem;color:#3d6064}
+.openhome-side-note p{margin:7px 0;line-height:1.6}
+.openhome-back-link{font-weight:680;color:#136965;font-size:.89rem}
+.openhome-empty{padding:16px;background:#edf5f3;border-radius:12px}
+.openhome-success{text-align:center;display:grid;justify-items:center;gap:13px;padding:20px 0}
+.openhome-success-symbol{border-radius:50%;width:54px;height:54px;display:grid;place-items:center;background:#e0f3ea;color:#156b51;font-size:1.5rem;font-weight:900}
+.openhome-success h2{font-size:2rem;margin:5px 0}.openhome-success p{margin:0;color:#4d696c;line-height:1.5}
+.openhome-confirmation{display:grid;background:#eef5f3;border-radius:10px;padding:14px 22px;gap:5px;margin:10px 0!important}
+.openhome-confirmation span{font-size:.73rem;color:#426e6c}.openhome-confirmation strong{font-size:.95rem;color:#244146;overflow-wrap:anywhere}
+@media(max-width:850px){.openhome-layout{grid-template-columns:1fr}.openhome-aside{grid-template-columns:1fr 1fr}.openhome-back-link{grid-column:span 2}}
+@media(max-width:560px){.openhome-hero{padding:44px 0}.openhome-hero h1{font-size:2.35rem}
+ .openhome-form-card{padding:22px 17px;border-radius:12px}.openhome-form-grid,.openhome-aside{grid-template-columns:1fr}
+ .openhome-back-link{grid-column:span 1}.openhome-form input:not([type=checkbox]),.openhome-form select{font-size:16px}
+}
