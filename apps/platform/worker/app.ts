@@ -9,6 +9,7 @@ import { dispatchIntegrations } from './features/integrations.server';
 import { dispatchLeasingReminders } from './features/leasing.server';
 import { dispatchRentalRetention } from './features/rental-privacy.server';
 import { dispatchWaResidentialReminders } from './features/wa-reminders.server';
+import { dispatchBondAlerts } from './features/bond-alerts.server';
 import { dispatchNextDayOpenHomeReports } from './features/open-home-reports.server';
 import { shouldIndexPublicPage } from '../app/lib/public-routes';
 import { readOnlyCalendarDiagnostic, shouldRunCalendarReleaseProbe } from './features/google-calendar.server';
@@ -52,6 +53,7 @@ export default {
     ctx.waitUntil(dispatchGuestReminders(env).then(() => dispatchLeasingReminders(env)).then(() => dispatchNotices(env)).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchRentalRetention(env));
     ctx.waitUntil(dispatchWaResidentialReminders(env).then(() => dispatchOutbox(env)));
+    if (env.WA_BONDS_ENABLED === 'true') ctx.waitUntil(dispatchBondAlerts(env).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchIntegrations(env));
     if (calendarSchedulingEnabled(env))
       ctx.waitUntil(dispatchCalendarSync(env).catch(() => console.error('calendar.sync_dispatch_failed')));

@@ -59,6 +59,7 @@ export default [
     route('document-operations', 'routes/document-operations.tsx'),
     route('document-requests/:documentRequestId', 'routes/document-request.tsx'),
     route('tenancies/:tenancyId', 'routes/tenancy-detail.tsx'),
+    route('tenancies/:tenancyId/bonds', 'routes/tenancy-bonds.tsx'),
     route('tenancies/:tenancyId/wa-forms', 'routes/wa-residential-forms.tsx'),
     route('tenancies/:tenancyId/wa-forms/:caseId', 'routes/wa-form-case.tsx'),
     route('wa-form-queue', 'routes/wa-form-queue.tsx'),

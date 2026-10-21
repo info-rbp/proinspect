@@ -162,6 +162,11 @@ export default function TenancyDetail() {
             <p className="small">Preparation and review are not legally effective service or government lodgement. Follow the official instructions for every document.</p>
           </Panel>
         )}
+        {data.residential && (
+          <Panel title="Bond register and government transactions" description="Track bond receipts, changes, releases, disputes and evidence of external decisions.">
+            <Link to={`${w.href}/tenancies/${t.id}/bonds`}>Open bond register and workflows →</Link>
+          </Panel>
+        )}
         {data.residential && <Panel
           title="Forms and bond coordination"
           description="This workflow collects instructions and tracks reviewed official documents. It does not generate a substitute prescribed form, lodge a bond, terminate a tenancy or serve a notice automatically."
