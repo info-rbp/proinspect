@@ -78,6 +78,13 @@
       ],
       "group": "rental-security",
       "format": "signing-key"
+    },
+    "OPEN_HOME_SHEET_API_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "open-home-sheet",
+      "format": "signing-key"
     }
   },
   "variables": {
@@ -195,6 +202,13 @@
       ],
       "group": "rental-privacy",
       "default": "false"
+    },
+    "OPEN_HOME_SHEET_SYNC_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "open-home-sheet",
+      "default": "false"
     }
   },
   "generated": [
@@ -218,6 +232,8 @@
   ],
   "externalOnly": {
     "PROINSPECT_WEBHOOK_SECRET": "Apps Script property; same value as SHEETS_WEBHOOK_SECRET for that environment",
-    "PROINSPECT_SPREADSHEET_ID": "Apps Script property; target spreadsheet ID"
+    "PROINSPECT_SPREADSHEET_ID": "Apps Script property; target spreadsheet ID",
+    "PROINSPECT_OPEN_HOME_SHEET_API_SECRET": "Apps Script property, must match the Worker OPEN_HOME_SHEET_API_SECRET",
+    "PROINSPECT_OPEN_HOME_SPREADSHEET_ID": "Apps Script property, spreadsheet to be created later"
   }
 }
