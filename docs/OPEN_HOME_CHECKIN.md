@@ -1,137 +1,94 @@
-# ProInspect Open Home Check-In
+# ProInspect Public Open Home Check-In and Reporting
 
-Branch: feature/open-home-check-in (created from Leasing).
-Release state: development only. The live Google Sheet and Apps Script do not
-exist and no integration has been enabled.
+Source: PR #33; integrated candidate: version-3-enhancements.
+Release status: development only. Not live or merged.
 
-## Public page
+The implementation covers:
+- Public check-in page /open-home/check-in (name, phone, email, consent)
+- Canonical property/session linkage and optional matched registration
+- Restricted operations attendance register
+- Automatic next-day report email scheduled for 9:00 AM Australia/Perth
+- Verified agency/landlord account access to protected reports and CSV
+- Delivery status tracking in the existing Cloudflare D1 outbox
 
-URL: /open-home/check-in
-
-- Responsive ProInspect marketing-site check-in form with property, session,
-  name, phone, email and explicit attendance-only consent.
-- Property and inspection session can be selected manually.
-- Session-specific QR-ready URL:
-  https://YOUR-PROINSPECT-ORIGIN/open-home/check-in?property=LISTING_ID&session=SESSION_ID
-- Check-in is allowed from 30 minutes before the start until 45 minutes
-  after the scheduled end, while the listing is published and session scheduled.
-- Checks origin, body size, Turnstile action/hostname, honeypot and rate limits.
-- Records attendee contact information encrypted in Cloudflare D1.
-- Duplicate arrivals for the same session, normalised name and email do not create new records. Separate people sharing an email address can still check in.
-- This form is NOT a rental application and does not opt anyone into marketing.
+Full report architecture, mail provider setup and activation checklist:
+docs/OPEN_HOME_NEXT_DAY_REPORTS.md
 
 ## Existing property linkage
 
-The implementation does not create a second property directory:
+No duplicate property directory is created:
 
-Canonical properties.id -> leasing_listings.property_id ->
-leasing_sessions.listing_id -> leasing_checkins.listing_id/session_id.
+  properties.id
+  -> leasing_listings.property_id
+  -> leasing_sessions.listing_id
+  -> leasing_checkins.session_id / leasing_checkins.listing_id
 
-If the visitor registered online beforehand using the same name and email, the system
-links the check-in to the existing leasing_leads record for that listing and
-session. Walk-in guests can check in without an advance registration and do
-not consume booking capacity. Neither checkout nor check-in changes the
-number of advance registrations.
+Only properties with approved published leasing advertisements and scheduled
+inspection sessions appear in the public visitor check-in. The address,
+representative and inspection session always come from existing records.
 
-## Staff register
+QR-ready per-inspection link:
 
-Page: /w/staff/SCOPE_ID/open-home-checkins
+  https://YOUR-PROINSPECT-ORIGIN/open-home/check-in?property=LISTING_ID&session=SESSION_ID
 
-Only authorised administrators and operations managers can select a property
-and inspection session, see arrivals, contact information, preregistration
-matches, and Sheet sync status. QR-ready property/session links are available
-for use on signage. The public API never provides guest contact information.
+The URL contains public IDs, not contact details or credentials. The server
+checks the listing/session relationship and available arrival window,
+30 minutes before the published start until 45 minutes after the end.
+Visitors can check in without advance registration. When the same name
+and email match an existing advance registration for the same session,
+the attendance links to it. Different household members sharing an email
+are still recorded as distinct visitors.
 
-## Google Sheet to create later
+The public POST uses a Turnstile action, origin verification, request limits,
+an invisible honeypot, rate limiting, encrypted contact storage, and request
+deduplication. Nothing in this form creates a rental application, grants a
+tenancy, or constitutes marketing consent.
 
-ProInspect D1 remains the authoritative attendance record. Every check-in
-queues one durable Sheet event with status pending, rather than directly
-submitting data to an unconfigured spreadsheet.
+## Staff access
 
-Create a Google Sheet in the approved ProInspect Google Workspace account.
-The intended worksheet is called "Open Home Check-Ins". Required column
-headers, in order, are:
+Authorised operations managers and administrators use:
 
-1. Check-in ID
-2. Arrival (Australia/Perth)
-3. Property
-4. Property ID
-5. Listing ID
-6. Session ID
-7. Session start (Australia/Perth)
-8. Name
-9. Phone
-10. Email
-11. Advance registration
-12. Leasing representative
-13. Consent version
-14. Sync event ID
+  /w/staff/operations/open-home-checkins
 
-The standalone Google Apps Script template is in:
-integrations/open-home-sheet/Code.gs
+They can filter by the advertised property and session, view arrivals, access
+QR-ready session URLs, choose an authorised verified account to receive a
+report, and see report dispatch/acceptance status. The public API exposes no
+visitor names or contact information. The authorised client report is
+available via an authenticated URL linked in the recipient's email.
 
-The design uses a five-minute scheduled pull and acknowledgement rather
-than posting directly from the visitor's browser to the Sheet. The Apps
-Script checks existing Sync event IDs to prevent duplicate rows after retries.
-It also escapes spreadsheet-formula input before saving contact details.
+## Daily automatic email timing
 
-Worker endpoints (disabled until manually approved/configured):
-- GET /api/integrations/open-home-sheet/pending
-- POST /api/integrations/open-home-sheet/ack
-  JSON: { "eventId": "EVENT_ID", "rowNumber": 2 }
+At 09:00 AWST on the day AFTER each inspection ends, Cloudflare Cron
+(0 1 * * * in UTC) prepares a unique session report and queues a branded
+email to the selected, authorised, verified leasing representative account.
+The report contains attendance totals and a login-protected full register,
+with CSV export from ProInspect itself. Cancelled sessions are excluded.
+If the session is manually marked completed earlier, the email still
+waits until the scheduled next-day 09:00 AWST job.
 
-Both are authenticated with timestamp, nonce, signed request method/path/body
-and HMAC-SHA256 signature. The nonce is stored and protected against reuse.
-Required Worker configuration:
-- OPEN_HOME_SHEET_SYNC_ENABLED = false until approved
-- OPEN_HOME_SHEET_API_SECRET = secret, minimum 32 characters
+No Google Workspace authorization or Apps Script project is required.
 
-Required Apps Script Properties:
-- PROINSPECT_API_ORIGIN = deployed Worker HTTPS origin
-- PROINSPECT_OPEN_HOME_SHEET_ID = Sheet ID when created
-- PROINSPECT_OPEN_HOME_API_SECRET = identical private shared secret
-- PROINSPECT_OPEN_HOME_TAB = optional tab name
+## Retired Google Sheets path
 
-Signing headers:
-- X-ProInspect-Timestamp: Unix epoch seconds
-- X-ProInspect-Nonce: unique UUID
-- X-ProInspect-Signature: lowercase hex HMAC of the concatenation of
-  timestamp, nonce, uppercase HTTP method, request pathname and exact raw
-  body, separated by newline characters.
+The earlier future Google Sheet sync/API proposal has been superseded
+by Cloudflare D1 reporting. The new visitor submission no longer writes
+Sheet sync events. The Apps Script API endpoints are no longer exposed.
+Some legacy table definitions and source files remain inert on this
+development branch solely for compatibility and possible future export
+workflows; there is no active data transfer to Google Sheets.
 
-The Worker verifies requests within a five-minute clock window.
+## Release prerequisites
 
-## Activation procedure
+- Apply D1 migration 0011 after 0010 and run full schema tests.
+- Verify ProInspect's existing Resend sender domain, RESEND_API_KEY Worker
+  secret, EMAIL_FROM address and a restricted staging delivery test.
+  No paid Cloudflare Email Sending binding is required.
+- Approve authorised client recipient accounts, written property reporting
+  authority, data privacy/retention and deletion procedures.
+- Test cross-client access, cancelled sessions, zero visitors, missing
+  recipients, errors and duplicate Cron invocations in staging.
+- Enable OPEN_HOME_REPORTS_ENABLED only after successful controlled UAT.
+- Keep the feature branch draft until reviewed and deliberately merged.
 
-1. Approve the attendance privacy notice, agent/landlord disclosure terms,
-   role-based Sheet access and retention/deletion schedule in D1 and Sheets.
-2. Create the Sheet and share only with authorised ProInspect staff.
-3. Create the standalone Apps Script and copy the tested source file.
-4. Set Script Properties and the Worker secret independently; do not put
-   secrets in the Sheet, GitHub or public pages.
-5. Run migration 0010 in isolated staging, publish an approved test property
-   and session, and test check-ins using synthetic attendee details.
-6. Test replays, duplicates, malicious formula values, failed network
-   acknowledgements, expired sessions and cross-property isolation.
-7. Only after acceptance turn on OPEN_HOME_SHEET_SYNC_ENABLED in the Worker
-   and run installOpenHomeTrigger() in the Apps Script editor. The five-minute
-   script will begin syncing queued attendance. Use stopOpenHomeTrigger() to
-   suspend the polling job without deleting D1 attendance.
-
-A completed network request to Google Sheets is not by itself proof the
-leasing representative received an email. This integration copies records
-to a Sheet; notifications/agency handoff are separate optional workflows.
-
-## Privacy and retention
-
-Contact details are for the named property/session and may be given to its
-authorised leasing representative. They are not a marketing mailing list.
-Before live use, implement the agreed rights process for viewing, correcting
-and erasing attendee data in BOTH D1 and any synchronized Google Sheet copies.
-Account for backups and logs. Do not publish the spreadsheet to the web.
-
-## Validation
-
-Run GitHub Actions, TypeScript, SQLite migrations and application builds.
-Verify the end-to-end acceptance flow on a staging hostname before merge.
-The branch is not merged into Leasing or main and is not deployed.
+See docs/OPEN_HOME_NEXT_DAY_REPORTS.md for precise instructions, especially
+the existing Resend integration and 9:00 AWST scheduling behavior.
