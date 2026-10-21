@@ -14,6 +14,7 @@ import { runtimeContext } from '../../../packages/database/context';
 import '../../../packages/ui/styles.css';
 import '../../../packages/ui/portal.css';
 import '../../../packages/ui/marketing-nav.css';
+import '../../../packages/ui/marketing-redesign.css';
 import { isPublicSitePath } from './lib/public-routes';
 export function loader({ context }: LoaderFunctionArgs) {
   return { nonce: context.get(runtimeContext).nonce };
