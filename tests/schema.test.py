@@ -183,19 +183,23 @@ class SchemaTests(unittest.TestCase):
          VALUES('session','lst','2026-10-21T03:00:00Z','2026-10-21T04:00:00Z','2026-10-21','2026-10-21')""")
         self.db.execute("""INSERT INTO leasing_leads(id,listing_id,session_id,kind,request_key,fingerprint,email_hash,envelope,cancel_token_hash,created_at)
          VALUES('lead','lst','session','inspection','request1','fingerprint','visitor-hash','encrypted-contact','cancel-hash','2026-10-21')""")
-        self.db.execute("""INSERT INTO leasing_checkins(id,listing_id,session_id,registered_lead_id,request_key,fingerprint,email_hash,contact_envelope,source,consent_version,arrived_at,created_at)
-         VALUES('visitor','lst','session','lead','checkin1','digest','visitor-hash','encrypted','qr','open-home-attendance-v1','2026-10-21','2026-10-21')""")
+        self.db.execute("""INSERT INTO leasing_checkins(id,listing_id,session_id,registered_lead_id,request_key,fingerprint,email_hash,attendee_hash,contact_envelope,source,consent_version,arrived_at,created_at)
+         VALUES('visitor','lst','session','lead','checkin1','digest','visitor-hash','person-one-hash','encrypted','qr','open-home-attendance-v1','2026-10-21','2026-10-21')""")
         self.db.execute("""INSERT INTO open_home_sheet_events(id,checkin_id,created_at) VALUES('event1','visitor','2026-10-21')""")
         linked=self.db.execute("""SELECT c.id,c.registered_lead_id,l.property_id,s.id
          FROM leasing_checkins c JOIN leasing_listings l ON l.id=c.listing_id
          JOIN leasing_sessions s ON s.id=c.session_id WHERE c.id='visitor'""").fetchone()
         self.assertEqual(linked,('visitor','lead','p','session'))
         with self.assertRaises(sqlite3.IntegrityError):
-            self.db.execute("""INSERT INTO leasing_checkins(id,listing_id,session_id,request_key,fingerprint,email_hash,contact_envelope,source,consent_version,arrived_at,created_at)
-             VALUES('visitor2','lst','session','checkin2','digest2','visitor-hash','sealed','web','open-home-attendance-v1','2026-10-21','2026-10-21')""")
+            self.db.execute("""INSERT INTO leasing_checkins(id,listing_id,session_id,request_key,fingerprint,email_hash,attendee_hash,contact_envelope,source,consent_version,arrived_at,created_at)
+             VALUES('visitor2','lst','session','checkin2','digest2','visitor-hash','person-one-hash','sealed','web','open-home-attendance-v1','2026-10-21','2026-10-21')""")
+        # Multiple adults may share an email but must have distinct attendee hashes.
+        self.db.execute("""INSERT INTO leasing_checkins(id,listing_id,session_id,request_key,fingerprint,email_hash,attendee_hash,contact_envelope,source,consent_version,arrived_at,created_at)
+         VALUES('visitor4','lst','session','checkin4','digest4','visitor-hash','person-two-hash','sealed','web','open-home-attendance-v1','2026-10-21','2026-10-21')""")
+        self.assertIsNone(self.db.execute("SELECT registered_lead_id FROM leasing_checkins WHERE id='visitor4'").fetchone()[0])
         with self.assertRaisesRegex(sqlite3.IntegrityError,'OPEN_HOME_LEAD_NOT_LINKED'):
-            self.db.execute("""INSERT INTO leasing_checkins(id,listing_id,session_id,registered_lead_id,request_key,fingerprint,email_hash,contact_envelope,source,consent_version,arrived_at,created_at)
-             VALUES('visitor3','lst','session','lead','checkin3','digest3','different-hash','sealed','web','open-home-attendance-v1','2026-10-21','2026-10-21')""")
+            self.db.execute("""INSERT INTO leasing_checkins(id,listing_id,session_id,registered_lead_id,request_key,fingerprint,email_hash,attendee_hash,contact_envelope,source,consent_version,arrived_at,created_at)
+             VALUES('visitor3','lst','session','lead','checkin3','digest3','different-hash','person-three-hash','sealed','web','open-home-attendance-v1','2026-10-21','2026-10-21')""")
         with self.assertRaisesRegex(sqlite3.IntegrityError,'OPEN_HOME_SHEET_EVENT_IMMUTABLE'):
             self.db.execute("DELETE FROM open_home_sheet_events WHERE id='event1'")
         self.db.execute("UPDATE open_home_sheet_events SET status='synced',synced_at='2026-10-21',sheet_row_number=2 WHERE id='event1'")
