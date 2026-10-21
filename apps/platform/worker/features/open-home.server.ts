@@ -61,18 +61,25 @@ export async function recordOpenHomeCheckIn(env:Env,request:Request,args:{input:
  assert(isOpenHomeCheckInAvailable(session),409,'CHECK_IN_WINDOW_CLOSED',
   'Check-in opens 30 minutes before the inspection and closes 45 minutes after it ends.');
  const emailHash=await digest(env.DATA_ENCRYPTION_KEY+':leasing-email:'+d.email);
- const already=await statement(env.DB,'SELECT id FROM leasing_checkins WHERE session_id=? AND email_hash=?',
-  d.sessionId,emailHash).first<{id:string}>();
+ const normalisedName=d.name.toLowerCase().replace(/\s+/g,' ').trim();
+ const attendeeHash=await digest(env.DATA_ENCRYPTION_KEY+':open-home-attendee:'+
+  d.sessionId+':'+d.email+':'+normalisedName);
+ const already=await statement(env.DB,'SELECT id FROM leasing_checkins WHERE session_id=? AND attendee_hash=?',
+  d.sessionId,attendeeHash).first<{id:string}>();
  if(already)return {reference:'Previously recorded',alreadyCheckedIn:true};
  const registration=await statement(env.DB,
-  "SELECT id FROM leasing_leads WHERE session_id=? AND listing_id=? AND kind='inspection' AND status='active' AND email_hash=? LIMIT 1",
-  session.id,session.listing_id,emailHash).first<{id:string}>();
+  "SELECT id,envelope FROM leasing_leads WHERE session_id=? AND listing_id=? AND kind='inspection' AND status='active' AND email_hash=? LIMIT 1",
+  session.id,session.listing_id,emailHash).first<{id:string;envelope:string}>();
+ const registeredContact=registration?await unseal<{name:string}>(
+  env.DATA_ENCRYPTION_KEY,'leasing-lead:'+registration.id,registration.envelope):null;
+ const matchingRegistration=registeredContact?.name.toLowerCase().replace(/\s+/g,' ').trim()===normalisedName;
+
  const id=uid('och'),eventId=uid('ohs'),stamp=now();
  try{
   await env.DB.batch([
    statement(env.DB,
-    'INSERT INTO leasing_checkins(id,listing_id,session_id,registered_lead_id,request_key,fingerprint,email_hash,contact_envelope,source,consent_version,arrived_at,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
-    id,session.listing_id,session.id,registration?.id??null,d.requestKey,fingerprint,emailHash,
+    'INSERT INTO leasing_checkins(id,listing_id,session_id,registered_lead_id,request_key,fingerprint,email_hash,attendee_hash,contact_envelope,source,consent_version,arrived_at,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
+    id,session.listing_id,session.id,matchingRegistration?registration?.id??null:null,d.requestKey,fingerprint,emailHash,attendeeHash,
     await seal(env.DATA_ENCRYPTION_KEY,'open-home-checkin:'+id,{
       name:d.name,email:d.email,phone:d.phone,consentAt:stamp,
     }),d.source,CHECK_IN_CONSENT_VERSION,stamp,stamp),
@@ -85,8 +92,8 @@ export async function recordOpenHomeCheckIn(env:Env,request:Request,args:{input:
    assert(existing.fingerprint===fingerprint,409,'CHECK_IN_CHANGED','Refresh and try again.');
    return {reference:existing.id,alreadyCheckedIn:true};
   }
-  const duplicate=await statement(env.DB,'SELECT id FROM leasing_checkins WHERE session_id=? AND email_hash=?',
-   d.sessionId,emailHash).first<{id:string}>();
+  const duplicate=await statement(env.DB,'SELECT id FROM leasing_checkins WHERE session_id=? AND attendee_hash=?',
+   d.sessionId,attendeeHash).first<{id:string}>();
   if(duplicate)return {reference:'Previously recorded',alreadyCheckedIn:true};
   throw error;
  }
