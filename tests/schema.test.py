@@ -176,6 +176,36 @@ class SchemaTests(unittest.TestCase):
         with self.assertRaisesRegex(sqlite3.IntegrityError,'RENTAL_SUBMISSION_IMMUTABLE'):
             self.db.execute("DELETE FROM rental_application_submissions WHERE id='sub1'")
 
+    def test_open_home_checkin_attendance_maps_to_published_property_session_and_lead(self):
+        self.db.execute("""INSERT INTO leasing_listings(id,property_id,instructed_by_client_id,kind,slug,title,description,display_address,suburb,postcode,agent_name,agent_role,created_by,status,created_at,updated_at)
+         VALUES('lst','p','c','residential','test-home','Example home for lease','A property description long enough for the listing administration workflow.','1 Test St','Perth','6000','Example Agent','leasing_agent','u','published','2026-10-21','2026-10-21')""")
+        self.db.execute("""INSERT INTO leasing_sessions(id,listing_id,starts_at,ends_at,created_at,updated_at)
+         VALUES('session','lst','2026-10-21T03:00:00Z','2026-10-21T04:00:00Z','2026-10-21','2026-10-21')""")
+        self.db.execute("""INSERT INTO leasing_leads(id,listing_id,session_id,kind,request_key,fingerprint,email_hash,envelope,cancel_token_hash,created_at)
+         VALUES('lead','lst','session','inspection','request1','fingerprint','visitor-hash','encrypted-contact','cancel-hash','2026-10-21')""")
+        self.db.execute("""INSERT INTO leasing_checkins(id,listing_id,session_id,registered_lead_id,request_key,fingerprint,email_hash,contact_envelope,source,consent_version,arrived_at,created_at)
+         VALUES('visitor','lst','session','lead','checkin1','digest','visitor-hash','encrypted','qr','open-home-attendance-v1','2026-10-21','2026-10-21')""")
+        self.db.execute("""INSERT INTO open_home_sheet_events(id,checkin_id,created_at) VALUES('event1','visitor','2026-10-21')""")
+        linked=self.db.execute("""SELECT c.id,c.registered_lead_id,l.property_id,s.id
+         FROM leasing_checkins c JOIN leasing_listings l ON l.id=c.listing_id
+         JOIN leasing_sessions s ON s.id=c.session_id WHERE c.id='visitor'""").fetchone()
+        self.assertEqual(linked,('visitor','lead','p','session'))
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute("""INSERT INTO leasing_checkins(id,listing_id,session_id,request_key,fingerprint,email_hash,contact_envelope,source,consent_version,arrived_at,created_at)
+             VALUES('visitor2','lst','session','checkin2','digest2','visitor-hash','sealed','web','open-home-attendance-v1','2026-10-21','2026-10-21')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'OPEN_HOME_LEAD_NOT_LINKED'):
+            self.db.execute("""INSERT INTO leasing_checkins(id,listing_id,session_id,registered_lead_id,request_key,fingerprint,email_hash,contact_envelope,source,consent_version,arrived_at,created_at)
+             VALUES('visitor3','lst','session','lead','checkin3','digest3','different-hash','sealed','web','open-home-attendance-v1','2026-10-21','2026-10-21')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'OPEN_HOME_SHEET_EVENT_IMMUTABLE'):
+            self.db.execute("DELETE FROM open_home_sheet_events WHERE id='event1'")
+        self.db.execute("UPDATE open_home_sheet_events SET status='synced',synced_at='2026-10-21',sheet_row_number=2 WHERE id='event1'")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'OPEN_HOME_SHEET_EVENT_INVALID_TRANSITION'):
+            self.db.execute("UPDATE open_home_sheet_events SET sheet_row_number=3 WHERE id='event1'")
+        self.db.execute("INSERT INTO open_home_sheet_nonces(nonce_hash,expires_at) VALUES('hash','2026-10-21')")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute("INSERT INTO open_home_sheet_nonces(nonce_hash,expires_at) VALUES('hash','2026-10-21')")
+        self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(), [])
+
     def test_overlap_is_rejected_in_database(self):
         self.booking('a','2026-10-10T01:00:00.000Z','2026-10-10T02:00:00.000Z')
         with self.assertRaisesRegex(sqlite3.IntegrityError,'SCHEDULE_CONFLICT'):
