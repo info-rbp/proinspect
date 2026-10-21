@@ -1,8 +1,12 @@
 /** Fail closed if a Vite/Wrangler build is not bound to the V3 staging resources. */
 import {readFileSync} from 'node:fs';
 
-const config=JSON.parse(readFileSync(
- new URL('../../apps/platform/.wrangler/deploy/config.json',import.meta.url),'utf8'));
+// Vite/Wrangler's .wrangler/deploy/config.json is a redirect pointer, not the config itself.
+const pointerFile=new URL('../../apps/platform/.wrangler/deploy/config.json',import.meta.url);
+const pointer=JSON.parse(readFileSync(pointerFile,'utf8'));
+if(typeof pointer.configPath!=='string'||!pointer.configPath.endsWith('.json'))
+ throw new Error('Staging deployment BLOCKED: Vite deploy redirect missing or unexpected.');
+const config=JSON.parse(readFileSync(new URL(pointer.configPath,pointerFile),'utf8'));
 const input=JSON.parse(readFileSync(
  new URL('../../apps/platform/wrangler.jsonc',import.meta.url),'utf8'));
 const stage=input; // CI bootstrap creates an ephemeral stage-only top-level config
