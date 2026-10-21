@@ -230,4 +230,26 @@ class PortalTestingSeedTests(unittest.TestCase):
         self.assertEqual(self.db.execute("SELECT user_id FROM client_memberships WHERE client_id='cli_pi_test_landlord'").fetchone()[0], 'usr_preexisting')
         self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(), [])
 
+    def test_guest_purchase_is_not_a_subscription_or_membership(self):
+        self.assertEqual(self.db.execute("SELECT status FROM clients WHERE id='cli_guest_transactions'").fetchone()[0], 'inactive')
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM subscriptions WHERE client_id='cli_guest_transactions'").fetchone()[0], 0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM client_memberships WHERE client_id='cli_guest_transactions'").fetchone()[0], 0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM client_entitlements WHERE client_id='cli_guest_transactions'").fetchone()[0], 0)
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'GUEST_CLIENT_CANNOT_ACTIVATE'):
+            self.db.execute("UPDATE clients SET status='active' WHERE id='cli_guest_transactions'")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'GUEST_MEMBERSHIPS_FORBIDDEN'):
+            self.db.execute("INSERT INTO client_memberships(id,client_id,user_id,role,created_at) VALUES('guestbad','cli_guest_transactions','u','owner','2026-01-01')")
+        self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(),[])
+
+    def test_guest_order_keys_and_access_tokens_are_unique(self):
+        self.seed()
+        self.db.execute("INSERT INTO guest_service_orders(id,reference,request_key,fingerprint,envelope,service_id,sector,price_basis,price_ex_gst_cents,created_at,updated_at) VALUES('g1','G-1','k1','hash','encrypted','routine-inspection','residential','published',12000,'2026-01-01','2026-01-01')")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute("INSERT INTO guest_service_orders(id,reference,request_key,fingerprint,envelope,service_id,sector,price_basis,price_ex_gst_cents,created_at,updated_at) VALUES('g2','G-2','k1','hash','encrypted','routine-inspection','residential','published',12000,'2026-01-01','2026-01-01')")
+        self.db.execute("INSERT INTO guest_access_links(token_hash,order_id,purpose,expires_at,created_at) VALUES('tokenhash','g1','verify','2027-01-01','2026-01-01')")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute("INSERT INTO guest_access_links(token_hash,order_id,purpose,expires_at,created_at) VALUES('tokenhash','g1','manage','2027-01-01','2026-01-01')")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.db.execute("INSERT INTO guest_access_links(token_hash,order_id,purpose,expires_at,created_at) VALUES('badreport','g1','report','2027-01-01','2026-01-01')")
+
 if __name__=='__main__': unittest.main()
