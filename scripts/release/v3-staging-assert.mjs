@@ -5,13 +5,14 @@ const config=JSON.parse(readFileSync(
  new URL('../../apps/platform/.wrangler/deploy/config.json',import.meta.url),'utf8'));
 const input=JSON.parse(readFileSync(
  new URL('../../apps/platform/wrangler.jsonc',import.meta.url),'utf8'));
-const stage=input.env?.staging;
+const stage=input; // CI bootstrap creates an ephemeral stage-only top-level config
 const expected='proinspect-v3-staging';
 const db=stage?.d1_databases?.[0];
 function requireSafe(value,message){if(!value)throw new Error('Staging deployment BLOCKED: '+message);}
 requireSafe(process.env.GITHUB_REF==='refs/heads/version-3-enhancements','wrong GitHub branch');
-requireSafe(process.env.CLOUDFLARE_ENV==='staging','CLOUDFLARE_ENV must be staging at BUILD time');
-requireSafe(config.name===expected,'flattened Worker target is not '+expected);
+requireSafe(!process.env.CLOUDFLARE_ENV,'Build must use the stage-only top-level config, not connected env');
+requireSafe(stage.name===expected,'bootstrap configuration target is not '+expected);
+requireSafe(config.name===expected,'flattened Worker target is not '+expected+' (got '+config.name+')');
 requireSafe(config.vars?.APP_ENV==='staging','flattened APP_ENV not staging');
 requireSafe(config.vars?.APP_ORIGIN==='https://'+expected+'.delicate-dream-e4c9.workers.dev',
   'unexpected Worker origin');
