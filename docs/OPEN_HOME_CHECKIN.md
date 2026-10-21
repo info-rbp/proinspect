@@ -17,7 +17,7 @@ URL: /open-home/check-in
   after the scheduled end, while the listing is published and session scheduled.
 - Checks origin, body size, Turnstile action/hostname, honeypot and rate limits.
 - Records attendee contact information encrypted in Cloudflare D1.
-- Duplicate arrivals for the same session and email do not create new records.
+- Duplicate arrivals for the same session, normalised name and email do not create new records. Separate people sharing an email address can still check in.
 - This form is NOT a rental application and does not opt anyone into marketing.
 
 ## Existing property linkage
@@ -27,7 +27,7 @@ The implementation does not create a second property directory:
 Canonical properties.id -> leasing_listings.property_id ->
 leasing_sessions.listing_id -> leasing_checkins.listing_id/session_id.
 
-If the visitor registered online beforehand using the same email, the system
+If the visitor registered online beforehand using the same name and email, the system
 links the check-in to the existing leasing_leads record for that listing and
 session. Walk-in guests can check in without an advance registration and do
 not consume booking capacity. Neither checkout nor check-in changes the
