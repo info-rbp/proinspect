@@ -72,12 +72,17 @@ test('Cloudflare reports run at exactly 09:00 Australia/Perth (01:00 UTC), inclu
  });
  assert.match(formatPerthReportTime('2026-10-21T05:00:00Z'),/1:00/);
 });
-test('next-day report dispatch and Cloudflare email are fail-closed with scoped client recipients',()=>{
+test('next-day report dispatch and Resend email are fail-closed with scoped client recipients',()=>{
  const wrangler=JSON.parse(readFileSync('apps/platform/wrangler.jsonc','utf8'));
  assert.ok(wrangler.triggers.crons.includes('0 1 * * *'));
  assert.ok(wrangler.env.connected.triggers.crons.includes('0 1 * * *'));
  assert.equal(wrangler.vars.OPEN_HOME_REPORTS_ENABLED,'false');
  assert.equal(wrangler.env.connected.vars.OPEN_HOME_REPORTS_ENABLED,'false');
+ assert.equal(wrangler.vars.OPEN_HOME_REPORT_EMAIL_PROVIDER,'resend');
+ assert.equal(wrangler.env.connected.vars.OPEN_HOME_REPORT_EMAIL_PROVIDER,'resend');
+ assert.equal(wrangler.env.connected.vars.EMAIL_PROVIDER,'resend');
+ assert.equal(wrangler.env.connected.vars.EMAIL_FROM,'info@proinspect.systems');
+ assert.equal(JSON.parse(readFileSync('config/environment.json','utf8')).variables.OPEN_HOME_REPORT_EMAIL_PROVIDER.default,'resend');
  const worker=readFileSync('apps/platform/worker/app.ts','utf8');
  const report=readFileSync('apps/platform/worker/features/open-home-reports.server.ts','utf8');
  const mail=readFileSync('packages/notifications/server.ts','utf8');
@@ -87,7 +92,9 @@ test('next-day report dispatch and Cloudflare email are fail-closed with scoped 
  assert.match(report,/open_home_inspection_reports/);
  assert.match(report,/session\.ends_at/);
  assert.match(mail,/REPORT_RECIPIENT_SUPPRESSED/);
- assert.match(mail,/env\.EMAIL\.send/);
+ assert.match(mail,/https:\/\/api\.resend\.com\/emails/);
+ assert.match(mail,/Idempotency-Key/);
+ assert.match(mail,/RESEND_API_KEY/);
  assert.match(mail,/OPEN_HOME_REPORT_EMAIL_PROVIDER/);
  assert.match(mail,/reportAccess/);
 });
