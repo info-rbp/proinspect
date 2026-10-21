@@ -19,6 +19,6 @@ export function shouldIndexPublicPage(pathname: string, requestOrigin: string, a
 }
 /** Sensitive applicant links share the marketing styling but are NEVER indexable. */
 export function isMarketingStylePath(pathname:string):boolean {
- return isPublicSitePath(pathname)||/^\/rental-application\/[a-f0-9]{64}$/.test(pathname)||
+ return pathname==='/open-home/check-in'||isPublicSitePath(pathname)||/^\/rental-application\/[a-f0-9]{64}$/.test(pathname)||
   /^\/properties-for-lease\/residential\/[a-z0-9-]+\/apply$/.test(pathname);
 }
