@@ -375,17 +375,30 @@ export async function updateWorkOrder(
       'APPROVAL_REQUIRED',
       'A recorded approval is required.',
     );
-  if (next === 'completed' && order.booking_id)
-    assert(
-      await statement(
-        env.DB,
-        "SELECT id FROM documents WHERE work_order_id=? AND status='issued'",
-        id,
-      ).first(),
-      409,
-      'REPORT_REQUIRED',
-      'Issue the service report before completing this booking.',
-    );
+  if (next === 'completed') {
+    // Once native report creation is started it becomes the authoritative output
+    // gate. An unrelated/manual PDF is not enough to complete that Work Order.
+    const native = await statement(
+      env.DB,
+      'SELECT status,approved_version_id,issued_document_id FROM inspection_reports WHERE work_order_id=?',
+      id,
+    ).first<{status:string;approved_version_id:string|null;issued_document_id:string|null}>();
+    if (native) {
+      const reviewedOutput = native.status === 'issued' && native.approved_version_id && native.issued_document_id
+        ? await statement(env.DB,`SELECT d.id FROM documents d JOIN report_render_manifests m
+           ON m.document_id=d.id AND m.report_version_id=?
+           WHERE d.id=? AND d.work_order_id=? AND d.status='issued'`,
+          native.approved_version_id,native.issued_document_id,id).first()
+        : null;
+      assert(reviewedOutput,409,'APPROVED_REPORT_REQUIRED',
+        'Issue the independently reviewed native report version before completing this work.');
+    } else if (order.booking_id) {
+      assert(
+        await statement(env.DB,"SELECT id FROM documents WHERE work_order_id=? AND status='issued'",id).first(),
+        409,'REPORT_REQUIRED','Issue the service report before completing this booking.'
+      );
+    }
+  }
   const time = now();
   const updates = [
     statement(

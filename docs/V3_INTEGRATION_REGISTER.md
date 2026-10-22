@@ -1,3 +1,5 @@
+> Current release note (22 October 2026): the V3 baseline was merged via PR #34 and deployed on 21 October, with migrations 0001-0019 confirmed in production. The material below is a historical source-branch snapshot, not current deployment status. See [RELEASE_RECONCILIATION_2026-10-22.md](RELEASE_RECONCILIATION_2026-10-22.md) for this integration candidate and remaining acceptance gates.
+
 # Version 3 Enhancements — Integration and Release Register
 
 Status: **IN PROGRESS / NOT MERGE-READY**. Baseline: `main` at `e819659dba660e85b88a013257806e6462f4c38e` (21 October 2026 review). Branch: `version-3-enhancements`.

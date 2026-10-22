@@ -26,6 +26,7 @@ export default function Workspaces() {
           </p>
         </div>
         <div className="actions">
+          <Link className="button secondary" to="/my-properties">All my properties</Link>
           <Link className="button secondary" to="/account">
             Account &amp; sign-in security
           </Link>

@@ -1,3 +1,5 @@
+> Current release note (22 October 2026): the V3 baseline was merged via PR #34 and deployed on 21 October, with migrations 0001-0019 confirmed in production. The material below is a historical source-branch snapshot, not current deployment status. See [RELEASE_RECONCILIATION_2026-10-22.md](RELEASE_RECONCILIATION_2026-10-22.md) for this integration candidate and remaining acceptance gates.
+
 # Build status: connected portal workflows
 
 This ledger describes implemented source and bounded acceptance, not a production certificate. Cloudflare now builds the platform directly from `main`; hosted deployment and external-service acceptance must be verified separately. No customer data migration, DNS change, live payment, external email or hosted integration is claimed.

@@ -1,3 +1,4 @@
+import { canonicalPageRedirect } from '../../../packages/security/canonical';
 import {dispatchGuestReminders} from './features/guest-reminders.server';
 import { createRequestHandler, RouterContextProvider } from 'react-router';
 import { runtimeContext } from '../../../packages/database/context';
@@ -19,6 +20,8 @@ export { BookingCoordinator } from './legacy-booking-coordinator';
 const handle = createRequestHandler(() => import('virtual:react-router/server-build'),import.meta.env.MODE);
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    const canonical = canonicalPageRedirect(request, env.APP_ORIGIN, env.APP_ENV);
+    if (canonical) return canonical;
     const nonce = btoa(crypto.randomUUID());
     const context = new RouterContextProvider();
     context.set(runtimeContext, { env, ctx, nonce });

@@ -7,6 +7,7 @@ import {
 } from './records.server';
 import { downloadWorkspaceDocument } from '../../../../packages/authorization/documents';
 import * as enquiries from './enquiries.server';
+import { v2StaffData,v2CustomerData,v2Command } from './v2-business.server';
 import { type Env, assert, statement } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
 import { readJson } from '../../../../packages/operations/core';
@@ -25,6 +26,11 @@ import * as waIssuance from './wa-issuance.server';
 import * as bonds from './bonds.server';
 import * as bondCompletion from './bond-completion.server';
 import * as integrations from './integrations.server';
+import {reportRoutes} from './report-router.server';
+import { maintenanceData, maintenanceCommand } from './v2-maintenance.server';
+import {estateRegister,estateCommand} from './v2-estates.server';
+import {sectorData,sectorCommand} from './v2-sectors.server';
+import {intelligenceData,intelligenceCommand,intelligenceExport} from './v2-intelligence.server';
 /** Feature endpoints run only after authentication, origin and workspace checks. */
 export async function featureApi(
   request: Request,
@@ -59,11 +65,19 @@ export async function featureApi(
   }
   const body = () => readJson(request),
     ok = (value: unknown) => Response.json(value);
+  if(area==='reports')return reportRoutes(request,env,user,w,tail);
   const staff = () => {
     assert(w.kind === 'staff', 403, 'STAFF_REQUIRED', 'Use the Staff workspace.');
     operationsWrite(user);
   };
   if (method === 'GET') {
+    if (tail === 'v2') return ok(await v2StaffData(env,user,w,url.searchParams.get('market') ?? 'RES'));
+    if (tail === 'v2-account') return ok(await v2CustomerData(env,user,w));
+    if (tail === 'v2-maintenance') return ok(await maintenanceData(env,user,w,url.searchParams.get('orderId')));
+    if(tail==='v2-estates') return ok(await estateRegister(env,user,w));
+    if(tail==='v2-sectors') return ok(await sectorData(env,user,w));
+    if(tail==='v2-intelligence') return ok(await intelligenceData(env,user,w,url.searchParams));
+    if(tail==='v2-intelligence/export') return intelligenceExport(env,user,w,url.searchParams);
     if (tail === 'records') return ok(await recordPage(env, user, w, url));
     if (tail === 'reporting') return ok(await operationalReport(env, user, w));
     if (area === 'work-orders' && id && parts.length === 2)
@@ -124,6 +138,13 @@ export async function featureApi(
       return forms.downloadRestrictedEvidence(env, user, id);
   }
   if (method !== 'POST') return null;
+  if (area==='v2-maintenance' && parts.length>=2 && parts.length<=4)
+    return ok(await maintenanceCommand(env,user,w,parts.slice(1),await body()));
+  if(area==='v2-estates' && parts.length>=2 && parts.length<=4) return ok(await estateCommand(env,user,w,parts.slice(1),await body()));
+  if(area==='v2-sectors' && parts.length>=2 && parts.length<=4) return ok(await sectorCommand(env,user,w,parts.slice(1),await body()));
+  if(area==='v2-intelligence' && parts.length>=2 && parts.length<=4) return ok(await intelligenceCommand(env,user,w,parts.slice(1),await body()));
+  if (area === 'v2' && parts.length<=4)
+    return ok(await v2Command(env,user,w,id,action,parts[3],await body()));
   if (area === 'enquiries' && id) {
     if (action === 'reply')
       return ok(await enquiries.replyToEnquiry(env, user, w, id, await body()));

@@ -1,0 +1,2 @@
+// Minimal type-only compatibility seam for upstream pure report modules.
+export type ReportLifecycleStatus = 'draft'|'internal_review'|'photos_uploaded'|'analysis_queued'|'analysis_running'|'analysis_complete'|'review_required'|'changes_requested'|'approved_for_issue'|'issued_to_tenant'|'tenant_response_in_progress'|'tenant_submitted'|'agent_response_required'|'finalisation_ready'|'finalised'|'archived'|'cancelled';

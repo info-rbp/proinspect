@@ -24,7 +24,7 @@ export function shouldIndexPublicPage(pathname: string, requestOrigin: string, a
 }
 /** Render private applicant, check-in and cancellation journeys with marketing chrome without indexing them. */
 export function isMarketingStylePath(pathname: string): boolean {
-  return isPublicSitePath(pathname) || /^\/rental-application\/[a-f0-9]{64}$/.test(pathname) ||
+  return isPublicSitePath(pathname) || /^\/guest\/(?:book(?:\/[a-z0-9-]+)?|verify|manage|quote)$/.test(pathname) || /^\/rental-application\/[a-f0-9]{64}$/.test(pathname) ||
     pathname === '/open-home/check-in' || /^\/properties-for-lease\/cancel\/[a-f0-9]{64}$/.test(pathname) ||
     /^\/properties-for-lease\/residential\/[a-z0-9-]+\/apply$/.test(pathname);
 }

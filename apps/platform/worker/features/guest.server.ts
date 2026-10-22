@@ -8,7 +8,7 @@ import { guestBookingSchema, guestChangeSchema, guestQuoteSchema, isGuestDirectB
 import { addressKey } from '../../../../packages/validation/index';
 import { catalogue } from '../services.server';
 import { availability } from '../scheduler';
-import { readJson } from '../../../../packages/operations/core';
+import { readJson, guard, clearGuard } from '../../../../packages/operations/core';
 
 type Order = {id:string;reference:string;status:string;envelope:string;service_id:string;sector:string;price_basis:'published'|'quote';price_ex_gst_cents:number|null;property_id:string|null;booking_id:string|null;fingerprint:string;quote_expires_at:string|null;verified_at:string|null};
 const SYSTEM='usr_guest_booking_system';
@@ -43,6 +43,7 @@ async function notify(env:Env,order:Order,input:GuestBookingInput,subject:string
 }
 export async function beginGuest(request:Request,env:Env){
  requireOrigin(request,env);
+ assert(env.GUEST_BOOKINGS_ENABLED==='true',503,'GUEST_BOOKINGS_UNAVAILABLE','Online one-off bookings are not currently enabled. Contact ProInspect for assistance.');
  const input=guestBookingSchema.parse(await readJson(request));
  assert(!input.website,422,'BOT_REJECTED','Invalid request.');
  await limit(env,'ip:'+request.headers.get('CF-Connecting-IP'),12);
@@ -71,11 +72,12 @@ export async function verifyGuest(request:Request,env:Env){
  await limit(env,'verify:'+request.headers.get('CF-Connecting-IP'),25);
  const order=await lookup(env,token,'verify');
  const input=await unseal<GuestBookingInput>(env.DATA_ENCRYPTION_KEY,'guest:'+order.id,order.envelope);
- const manage=await link(env,order.id,'manage');
+ const manage=randomToken(), time=now();
  const next=order.price_basis==='quote'?'quote_requested':'verified';
  await env.DB.batch([
-  statement(env.DB,'UPDATE guest_access_links SET consumed_at=? WHERE token_hash=? AND consumed_at IS NULL',now(),order.token_hash),
-  statement(env.DB,"UPDATE guest_service_orders SET verified_at=?,status=?,updated_at=? WHERE id=? AND status='pending_verification'",now(),next,now(),order.id),
+  statement(env.DB,'UPDATE guest_access_links SET consumed_at=? WHERE token_hash=? AND consumed_at IS NULL AND expires_at>?',time,order.token_hash,time), guard(env),
+  statement(env.DB,"UPDATE guest_service_orders SET verified_at=?,status=?,updated_at=? WHERE id=? AND status='pending_verification'",time,next,time,order.id), guard(env),
+  statement(env.DB,"INSERT INTO guest_access_links(token_hash,order_id,purpose,expires_at,created_at) VALUES(?,?,'manage',?,?)",await digest(manage),order.id,new Date(Date.now()+30*86400000).toISOString(),time), clearGuard(env),
   await notify(env,order,input,'Your ProInspect request is verified','Request received',order.price_basis==='quote'?'We will review the service scope and provide a quote. This is not a confirmed appointment.':'Your email is confirmed. Continue using your private link to request an appointment.',env.APP_ORIGIN+'/guest/manage?token='+manage)
  ]);
  return {reference:order.reference,status:next,...(isLocal(request,env)?{localManageToken:manage}:{}),message:'Email verified. Open the management link sent to your inbox.'};
@@ -124,9 +126,11 @@ export async function staffGuestAction(env:Env,id:string,action:string,body:unkn
   const quote=guestQuoteSchema.parse(body);
   assert(order.price_basis==='quote' && ['quote_requested','quote_sent'].includes(order.status),409,'NOT_QUOTABLE','Request is not awaiting a quotation.');
   const expiry=new Date(Date.now()+quote.validDays*86400000).toISOString();
-  const token=await link(env,id,'quote');
+  const token=randomToken(),time=now();
   await env.DB.batch([
-   statement(env.DB,"UPDATE guest_service_orders SET price_ex_gst_cents=?,quote_expires_at=?,status='quote_sent',updated_at=? WHERE id=?",quote.priceExGstCents,expiry,now(),id),
+   statement(env.DB,"UPDATE guest_service_orders SET price_ex_gst_cents=?,quote_expires_at=?,status='quote_sent',updated_at=? WHERE id=? AND status IN('quote_requested','quote_sent')",quote.priceExGstCents,expiry,time,id), guard(env),
+   statement(env.DB,"UPDATE guest_access_links SET consumed_at=? WHERE order_id=? AND purpose='quote' AND consumed_at IS NULL",time,id),
+   statement(env.DB,"INSERT INTO guest_access_links(token_hash,order_id,purpose,expires_at,created_at) VALUES(?,?,'quote',?,?)",await digest(token),id,expiry,time), clearGuard(env),
    await notify(env,order,input,'Your ProInspect service quotation','Review your quotation','Your price is '+new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(quote.priceExGstCents/100)+' excluding GST. You may accept it before its expiry. A date will be selected separately.',env.APP_ORIGIN+'/guest/quote?token='+token)
   ]);
   return {ok:true};
@@ -143,16 +147,24 @@ export async function staffGuestAction(env:Env,id:string,action:string,body:unkn
  }
  assert(false,404,'NOT_FOUND','Action not available.');
 }
+export async function guestQuotePreview(env:Env,token:string){
+ const order=await lookup(env,token,'quote');
+ assert(order.status==='quote_sent' && order.quote_expires_at && order.quote_expires_at>now() && order.price_ex_gst_cents!==null,409,'QUOTE_EXPIRED','The quotation is no longer available.');
+ const service=(await catalogue(env,true)).find(s=>s.id===order.service_id);
+ return {...safe(order),serviceName:service?.name??order.service_id,expiresAt:order.quote_expires_at};
+}
 export async function acceptGuestQuote(request:Request,env:Env){
  requireOrigin(request,env);
- const data=z.object({token:z.string()}).parse(await readJson(request));
+ const data=z.object({token:z.string(),priceExGstCents:z.number().int().min(0),accept:z.literal(true)}).parse(await readJson(request));
  const order=await lookup(env,data.token,'quote');
+ assert(order.price_ex_gst_cents===data.priceExGstCents,409,'QUOTE_CHANGED','The price has changed. Reload and review the current quotation.');
  assert(order.status==='quote_sent'&&order.quote_expires_at&&order.quote_expires_at>now(),409,'QUOTE_EXPIRED','The quotation is no longer available.');
  const input=await unseal<GuestBookingInput>(env.DATA_ENCRYPTION_KEY,'guest:'+order.id,order.envelope);
- const manage=await link(env,order.id,'manage');
+ const manage=randomToken(),time=now();
  await env.DB.batch([
- statement(env.DB,'UPDATE guest_access_links SET consumed_at=? WHERE token_hash=? AND consumed_at IS NULL',now(),order.token_hash),
- statement(env.DB,"UPDATE guest_service_orders SET status='awaiting_appointment',updated_at=? WHERE id=? AND status='quote_sent'",now(),order.id),
+ statement(env.DB,'UPDATE guest_access_links SET consumed_at=? WHERE token_hash=? AND consumed_at IS NULL AND expires_at>?',time,order.token_hash,time), guard(env),
+ statement(env.DB,"UPDATE guest_service_orders SET status='awaiting_appointment',updated_at=? WHERE id=? AND status='quote_sent' AND price_ex_gst_cents=? AND quote_expires_at>?",time,order.id,data.priceExGstCents,time), guard(env),
+ statement(env.DB,"INSERT INTO guest_access_links(token_hash,order_id,purpose,expires_at,created_at) VALUES(?,?,'manage',?,?)",await digest(manage),order.id,new Date(Date.now()+30*86400000).toISOString(),time), clearGuard(env),
  await notify(env,order,input,'ProInspect quotation accepted','Quotation accepted','Your quote is accepted. Your appointment is not yet reserved. Select an available date using this link.',env.APP_ORIGIN+'/guest/manage?token='+manage)
  ]);
  return {ok:true,reference:order.reference,...(isLocal(request,env)?{localManageToken:manage}:{})};

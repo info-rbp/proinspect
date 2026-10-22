@@ -1,0 +1,24 @@
+{
+  "source": "5c7034262bc29c99be6144bc09c198c0033838b6",
+  "migrations": {
+    "database/migrations/0001_core.sql": "36646689645247e3e1ac158fbdaba548531cb6ba",
+    "database/migrations/0002_guards.sql": "97ad57958e2a109e87cbbefe2269f203494ea872",
+    "database/migrations/0003_connected_operations.sql": "aa30e4075f55fd027b96e3b171dd1b2f051d71a5",
+    "database/migrations/0004_enquiries_notices.sql": "20b6cbdb53700794eb6a8a77d201d16da239bfe2",
+    "database/migrations/0005_account.sql": "a860f8b430970f524a9d2eff19a70f9f9d1066f8",
+    "database/migrations/0006_all_inclusive_subscription.sql": "f34f0d0d0f9dbfcfcb5df51c629ad0c274203706",
+    "database/migrations/0007_calendar_sync.sql": "33a88960a9fe7587c87d5b1ed4f4e558476a7df8",
+    "database/migrations/0008_guest_one_off_bookings.sql": "95bbb0e0db42d3b54407bfdbee0f436a8c3744bf",
+    "database/migrations/0009_leasing.sql": "0847dfc2e724cea55afed6804c7229adef86020d",
+    "database/migrations/0010_rental_applications.sql": "714d3c7ced896e3a41e938f66f0823b6a4cc0913",
+    "database/migrations/0011_rental_application_safeguards.sql": "d6608bf7e1211c0772fc2b7090bf8a11e8f25f63",
+    "database/migrations/0012_open_home_checkins.sql": "ab62d6a0d94ba61906e389d5ceca2f93d696c608",
+    "database/migrations/0013_wa_residential_forms.sql": "2d5f4791b44adfe1ca49b8dc59bafc2094a0641f",
+    "database/migrations/0014_wa_residential_workflows.sql": "cfc17ee6c7f228e4c80601e22309f08afe725cd8",
+    "database/migrations/0015_wa_residential_entry_reminders.sql": "8944f4d7e28e88b78da5fc820014b199fec994c2",
+    "database/migrations/0016_wa_review_requirements.sql": "f154763c49eb09c9a836ccc0cb2c681755b60123",
+    "database/migrations/0017_wa_form_release_approval.sql": "9902e5024f73acc46016806215e1dc1f28681e30",
+    "database/migrations/0018_wa_bonds.sql": "58ff5273d691fc19b4a215d53b0590c7ed11af2c",
+    "database/migrations/0019_open_home_reports.sql": "cb77e616948680d084619929da7b611bd7f1a2d7"
+  }
+}

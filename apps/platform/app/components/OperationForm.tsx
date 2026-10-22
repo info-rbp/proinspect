@@ -98,6 +98,14 @@ const numberFields = new Set([
   'gstCents',
   'rentCents',
   'intervalMonths',
+  'hoursMilli', 'visits', 'quantity', 'complexityBp', 'externalPassThroughCents',
+  'includedHoursMilli', 'includedVisits', 'includedTickets', 'includedReports',
+  'monthlyFeeCents', 'loadedHourlyCents', 'travelVisitCents', 'fixedAdminCents',
+  'contingencyBp', 'targetMarginBp', 'gstBp', 'limitQuantity', 'agreedMonthlyCents',
+  'budgetCeilingCents','weekday','startsMinute','endsMinute','hourlyCostCents',
+  'designLifeMonths','replacementCostCents','score','cadenceMonths','leadDays','recurrenceMonths',
+  'likelihood','impact','baselineBudgetCents','estimatedCents','proposedCents','forecastTotalCents',
+  'revision','windowDays',
 ]);
 const boolFields = new Set([
   'active',
@@ -107,6 +115,7 @@ const boolFields = new Set([
   'acceptCondition',
   'selfManaged',
   'noticeConfirmed',
+  'approvalRequired',
   'acknowledgeExternalProcess',
 ]);
 export function formValues(form: FormData) {
@@ -116,7 +125,7 @@ export function formValues(form: FormData) {
     if (numberFields.has(key)) data[key] = Number(value);
     else if (boolFields.has(key)) data[key] = value === 'true' || value === 'on';
     else if (
-      ['startsAt', 'endsAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'holdUntil', 'receivedAt', 'deliveryAt', 'effectiveAt', 'verifiedAt', 'paidAt', 'responseDueAt', 'decisionAt', 'appealDueAt'].includes(key)
+      ['startsAt', 'endsAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'holdUntil', 'receivedAt', 'deliveryAt', 'effectiveAt', 'verifiedAt', 'paidAt', 'responseDueAt', 'decisionAt', 'appealDueAt', 'periodStart', 'periodEnd', 'startedAt', 'endedAt', 'effectiveFrom'].includes(key)
     )
       data[key] = new Date(String(value)).toISOString();
     else if (key === 'propertyIds')
@@ -126,7 +135,7 @@ export function formValues(form: FormData) {
         .filter(Boolean);
     else data[key] = value;
   }
-  for (const prefix of ['access', 'answers', 'fields']) {
+  for (const prefix of ['access', 'answers', 'fields', 'facts']) {
     const nested: Record<string, unknown> = {};
     for (const key of Object.keys(data)) {
       if (key.startsWith(prefix + '.')) {

@@ -432,3 +432,15 @@
     max-width: calc(100vw - 2.2rem);
   }
 }
+
+/* Shared header controls must remain aligned when details is open. */
+@media (min-width: 381px) { .site .mkt-site-header { flex-wrap: nowrap; } }
+.site .mkt-site-links { gap: clamp(.8rem, 1.5vw, 1.55rem); }
+.site .mkt-site-links > a, .site .mkt-nav-dropdown > summary { white-space: nowrap; }
+.site .mkt-site-header details, .site .mkt-site-header details[open] > summary { margin: 0; }
+.site .mkt-site-header summary::marker { content: ''; }
+.site .mkt-header-actions { flex-shrink: 0; }
+@media (min-width: 381px) and (max-width: 1100px) {
+  .site .mkt-site-header { gap: .8rem; }
+  .site .mkt-header-actions { margin-left: auto; }
+}

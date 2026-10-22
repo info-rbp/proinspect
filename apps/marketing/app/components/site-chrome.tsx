@@ -15,6 +15,26 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
     if (mobileMenu.current) mobileMenu.current.open = false;
     if (audienceMenu.current) audienceMenu.current.open = false;
   }, [pathname]);
+  useEffect(() => {
+    function closeOutside(event: PointerEvent) {
+      for (const menu of [mobileMenu.current, audienceMenu.current])
+        if (menu?.open && !menu.contains(event.target as Node)) menu.open = false;
+    }
+    function closeEscape(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return;
+      for (const menu of [mobileMenu.current, audienceMenu.current]) {
+        if (!menu?.open) continue;
+        menu.open = false;
+        menu.querySelector('summary')?.focus();
+      }
+    }
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('keydown', closeEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('keydown', closeEscape);
+    };
+  }, []);
   return (
     <div className="mkt-header-wrap">
       <div className="site-container">

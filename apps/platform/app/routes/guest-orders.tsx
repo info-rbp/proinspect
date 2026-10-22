@@ -20,7 +20,7 @@ export default function GuestOrders(){
  {result?.error&&<p role="alert">{result.error}</p>}{result?.ok&&<p role="status">Request updated. Reload to see current status.</p>}
  {orders.map((o:any)=><section className="panel stack" key={o.id}>
  <h2>{o.reference} · {o.status.replaceAll('_',' ')}</h2><p>{o.name} — {o.email}</p><p>{o.property} · {o.service_id}</p>
- {o.status==='quote_requested'&&<Form method="post" className="form"><input type="hidden" name="id" value={o.id}/><input type="hidden" name="task" value="quote"/>
+ {['quote_requested','quote_sent'].includes(o.status)&&<Form method="post" className="form"><input type="hidden" name="id" value={o.id}/><input type="hidden" name="task" value="quote"/>
  <label>Quote amount excluding GST (AUD)<input name="price" type="number" min="0" max="1000000" step="0.01" required/></label>
  <label>Validity days<input name="validDays" type="number" min="1" max="30" defaultValue="14" required/></label>
  <button className="button">Issue quote</button></Form>}

@@ -5,7 +5,7 @@ test('public one-off booking does not require a portal sign-in and explains pric
  await page.getByRole('link',{name:'Book once'}).click();
  await expect(page).toHaveURL(/\/guest\/book\/routine-inspection/);
  await expect(page.getByRole('heading',{name:'Book a one-off ProInspect service'})).toBeVisible();
- await expect(page.getByText(/Published service price:|requires a quotation/)).toBeVisible();
+ await expect(page.getByText(/Published service price:|does not currently have an approved online booking price/)).toBeVisible();
  await expect(page.getByLabel('Email address')).toBeVisible();
  await expect(page.getByLabel('Street address')).toBeVisible();
  await expect(page.locator('input[name="requestKey"]')).not.toHaveValue('');

@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "sourceRepository": "info-rbp/ProInspect-Report-Creation-App",
+  "sourceCommit": "f890584b5759edbf342bceab9db7dde9ce8fa3d2",
+  "files": [
+    {
+      "sourcePath": "packages/domain/src/inspectionPolicy.ts",
+      "targetPath": "packages/report-engine/upstream/inspectionPolicy.ts",
+      "sourceBlobSha": "e65996bf33dbd521a494047f7d364dbccccc5469"
+    },
+    {
+      "sourcePath": "packages/domain/src/reportModel.ts",
+      "targetPath": "packages/report-engine/upstream/reportModel.ts",
+      "sourceBlobSha": "9f165dd277d27ed7e19b5d6e6059c23b78907e01"
+    },
+    {
+      "sourcePath": "packages/domain/src/reportOperations.ts",
+      "targetPath": "packages/report-engine/upstream/reportOperations.ts",
+      "sourceBlobSha": "70457be2d2f3f48e9afc335faf68440de9818e07"
+    }
+  ],
+  "reviewedAt": "2026-10-11",
+  "baseBranch": "integration/report-creation-tool",
+  "policy": "Updates only by reviewed pull request. Never auto-merge or deploy from this branch."
+}
