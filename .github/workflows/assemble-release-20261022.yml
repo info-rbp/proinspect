@@ -1,0 +1,73 @@
+name: Assemble reviewed release candidate
+on:
+  push:
+    branches: [fix/release-readiness-20261022]
+    paths: [.github/workflows/assemble-release-20261022.yml]
+permissions:
+  contents: write
+jobs:
+  assemble:
+    if: github.repository == 'info-rbp/proinspect' && github.ref == 'refs/heads/fix/release-readiness-20261022'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Assemble pinned sources and verified patch without touching main
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release-evidence"
+          cp .github/release-assembly/patch-*.txt "$RUNNER_TEMP/release-evidence/"
+          python - <<'PY'
+          from pathlib import Path
+          import base64, hashlib, os, subprocess, zlib
+          def git(*args, **kwargs):
+              return subprocess.check_output(['git', *args], **kwargs)
+          main = '5c7034262bc29c99be6144bc09c198c0033838b6'
+          assert git('rev-parse', 'origin/main').decode().strip() == main, 'Main changed; reconcile again'
+          assert git('rev-parse', 'HEAD').decode().strip() == os.environ['GITHUB_SHA']
+          payload = ''.join(Path(f'.github/release-assembly/patch-{i}.txt').read_text().strip() for i in range(4))
+          # Correct three transport duplications; the authoritative patch hash remains mandatory.
+          for old, new in [('svtP1a2I2I0', 'svtP1a2I0'), ('SrfijjpjpOt', 'SrfijjpOt'), ('fuobZZnpnak', 'fuobZnpnak')]:
+              payload = payload.replace(old, new)
+          patch = zlib.decompress(base64.b64decode(payload, validate=True))
+          assert hashlib.sha256(patch).hexdigest() == '07a579b505fb4a72fbdf9dcaa4d1e86ab808870430ccece01f94cf227d3c6a03', 'Patch transport mismatch'
+          git('rm', '--', '.github/workflows/assemble-release-20261022.yml', *[f'.github/release-assembly/patch-{i}.txt' for i in range(4)])
+          refs = ['493be9080a778252ebe12267c8d6e3a46059d997', 'c3c4cf7bad3e3da9ff40ab35ae6c51c2715f744a']
+          for ref in refs:
+              base = git('merge-base', main, ref).decode().strip()
+              for path in git('diff', '--diff-filter=A', '--name-only', base, ref).decode().splitlines():
+                  if path == '.github/workflows/sync-report-engine.yml':
+                      continue
+                  target = path
+                  if path.startswith('database/migrations/'):
+                      name = Path(path).name
+                      number = 20 if 'reporting_engine' in name else int(name[:4]) + 15
+                      target = f'database/migrations/{number:04d}' + name[4:]
+                  dest = Path(target)
+                  assert not dest.is_absolute() and '..' not in dest.parts
+                  dest.parent.mkdir(parents=True, exist_ok=True)
+                  dest.write_bytes(git('show', f'{ref}:{path}'))
+          path = 'apps/platform/worker/features/owner-portfolio.server.ts'
+          Path(path).write_bytes(git('show', f'46b92eed87b54fced1c30d7dcd4a420f90571174:{path}'))
+          git('add', '-A')
+          assert git('write-tree').decode().strip() == '02d59aebfe70b82cb237fb43d1cd58e3f5612e6c', 'Imported source tree mismatch'
+          subprocess.run(['git', 'apply', '--index', '--unidiff-zero'], input=patch, check=True)
+          git('diff', '--cached', '--check')
+          tree = git('write-tree').decode().strip()
+          assert tree == '986568b5e6890f594eb28103cfd6af96fd4ef5d5', 'Final reviewed tree mismatch'
+          Path(os.environ['RUNNER_TEMP'], 'release-evidence', 'verified-tree.txt').write_text(tree + '\n')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat: reconcile native reporting and V2 with secured guest bookings and unified navigation'
+          git push origin HEAD:refs/heads/fix/release-readiness-20261022
+          git rev-parse HEAD > "$RUNNER_TEMP/release-evidence/source-sha.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-assembly-evidence
+          path: ${{ runner.temp }}/release-evidence/
+          retention-days: 3
