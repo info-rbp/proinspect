@@ -1,0 +1,34 @@
+name: Development review 2026-10-22
+on:
+  push:
+    branches: [fix/release-readiness-20261022]
+    paths: [.github/workflows/development-review-20261022.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Capture repository history without credentials or runtime data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p artifacts
+          git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
+          git bundle create artifacts/repository.bundle --all
+          gh api --paginate 'repos/info-rbp/proinspect/pulls?state=all&per_page=100' --jq '.[] | {number,title,state,draft,merged_at,head: .head.ref,head_sha: .head.sha,base: .base.ref,url: .html_url}' > artifacts/pull-requests.jsonl
+          git log origin/main --first-parent --format='%h %aI %s' > artifacts/main-history.txt
+          git for-each-ref --format='%(refname:short) %(objectname)' refs/remotes/origin > artifacts/branches.txt
+          cat artifacts/main-history.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: development-review-20261022
+          path: artifacts/
+          retention-days: 3
