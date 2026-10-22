@@ -1202,3 +1202,42 @@ summary {
 .operation-form textarea {
   max-width: 100%;
 }
+
+/* Scope responsive containment to complex V2 operations screens. Large data tables scroll inside the panel. */
+.v2-responsive {
+  min-width: 0;
+  max-width: 100%;
+  grid-template-columns: minmax(0, 1fr);
+}
+.v2-responsive > *,
+.v2-responsive .panel,
+.v2-responsive .grid-2 > *,
+.v2-responsive .grid-4 > *,
+.v2-responsive details,
+.v2-responsive .table-wrap {
+  min-width: 0;
+  max-width: 100%;
+}
+.v2-responsive .table-wrap {
+  overflow-x: auto;
+}
+.v2-responsive summary,
+.v2-responsive .panel-header,
+.v2-responsive td,
+.v2-responsive th {
+  overflow-wrap: anywhere;
+}
+.v2-responsive .operation-form input,
+.v2-responsive .operation-form select,
+.v2-responsive .operation-form textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (max-width: 800px) {
+  .v2-responsive .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .v2-responsive .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

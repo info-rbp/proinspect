@@ -9,7 +9,7 @@ export async function action(args: ActionFunctionArgs) {
     args,
     `services/${encodeURIComponent(String(f.get('serviceId')))}`,
     {
-      priceExGstCents: Math.round(Number(f.get('price')) * 100),
+      priceExGstCents: String(f.get('price')??'').trim()===''?null:Math.round(Number(f.get('price')) * 100),
       bookingMode: f.get('bookingMode'),
       active: f.get('active') === 'yes',
     },
@@ -35,7 +35,7 @@ export default function Services() {
       <PageHeading
         eyebrow="Single service catalogue"
         title="Services & booking configuration"
-        description="Publish an approved price before enabling instant booking. A service with no confirmed price is not treated as free."
+        description="Set each approved one-off rate here, then choose Instant booking. Leave the price blank for quotation-only services. Stripe does not populate this catalogue. Subscription-included bookings remain unchanged."
       />
       <div className="stack">
         <Feedback value={result} />
@@ -63,7 +63,6 @@ export default function Services() {
                       min="0"
                       max="1000000"
                       step="0.01"
-                      required
                       defaultValue={s.price_ex_gst_cents === null ? '' : s.price_ex_gst_cents / 100}
                     />
                   </Field>

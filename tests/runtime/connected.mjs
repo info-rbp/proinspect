@@ -1233,6 +1233,14 @@ try {
         buildingId: scheme.buildingId,
         propertyId,
       });
+      const singleDigit = await ok(`${strataOrg.base}/schemes/${scheme.id}/structure`, strataUser, {
+        kind: 'lot',
+        name: '1',
+        buildingId: scheme.buildingId,
+      });
+      assert.equal((await first('SELECT lot_number FROM strata_lots WHERE id=?',singleDigit.id)).lot_number,'1');
+      const invalidArea=await api(`${strataOrg.base}/schemes/${scheme.id}/structure`,strataUser,{kind:'area',name:'A',buildingId:scheme.buildingId});
+      assert.notEqual(invalidArea.status,200);
       await ok(`${strataOrg.base}/schemes/${scheme.id}/structure`, strataUser, {
         kind: 'area',
         name: 'Basement',

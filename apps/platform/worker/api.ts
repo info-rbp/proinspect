@@ -1,3 +1,4 @@
+import { ownerPortfolio } from './features/owner-portfolio.server';
 import * as guest from './features/guest.server';
 import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
 import { publicOpenHomeSessions,staffOpenHomeCheckIns } from './features/open-home.server';
@@ -88,7 +89,7 @@ export function apiError(error: unknown) {
     );
   if (
     error instanceof Error &&
-    /UNIQUE constraint|CHECK constraint|SCHEDULE_CONFLICT|APPROVAL_REQUIRED|CONTEXT_MISMATCH|TENANCY_OVERLAP/.test(
+    /UNIQUE constraint|CHECK constraint|SCHEDULE_CONFLICT|APPROVAL_REQUIRED|CONTEXT_MISMATCH|TENANCY_OVERLAP|V2_[A-Z_]+/.test(
       error.message,
     )
   )
@@ -236,6 +237,7 @@ export async function handleApi(
       method = request.method;
     if (path === '/api/guest/requests' && method === 'POST') return Response.json(await guest.beginGuest(request,env),{status:201});
     if (path === '/api/guest/verify' && method === 'POST') return Response.json(await guest.verifyGuest(request,env));
+    if (path === '/api/guest/quote' && method === 'GET') return Response.json(await guest.guestQuotePreview(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
     if (path === '/api/guest/quote' && method === 'POST') return Response.json(await guest.acceptGuestQuote(request,env));
     if (path === '/api/guest/manage' && method === 'POST') { const result=await guest.guestAction(request,env); return result instanceof Response?result:Response.json(result); }
     if (path === '/api/guest/status' && method === 'GET') return Response.json(await guest.guestStatus(env,url.searchParams.get('token')??''));
@@ -380,6 +382,7 @@ export async function handleApi(
       return Response.json(await updateAccount(env, user, await json(request)));
     if (path === '/api/account/sessions/revoke' && method === 'POST')
       return revokeSessions(request, env, user, await json(request));
+    if (path === '/api/owner-portfolio' && method === 'GET') return Response.json(await ownerPortfolio(env,user));
     if (path === '/api/session' && method === 'GET')
       return Response.json({ user, workspaces: await workspaces(env, user) });
     if (path === '/api/onboarding' && method === 'POST')
@@ -573,10 +576,11 @@ export async function handleApi(
       operationsWrite(user);
       const data = z
         .object({
-          priceExGstCents: z.number().int().min(0).max(100000000),
+          priceExGstCents: z.number().int().min(0).max(100000000).nullable(),
           bookingMode: z.enum(['instant', 'request']),
           active: z.boolean(),
         })
+        .refine(d=>d.bookingMode!=='instant'||d.priceExGstCents!==null,{message:'An explicit approved price is required for instant booking.',path:['priceExGstCents']})
         .parse(await json(request));
       await env.DB.batch([
         statement(

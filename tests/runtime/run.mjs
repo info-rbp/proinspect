@@ -28,6 +28,7 @@ const mf = new Miniflare({
   durableObjects: { SCHEDULER: { className: 'BookingScheduler', useSQLite: true } },
   bindings: {
     APP_ENV: 'local',
+    GUEST_BOOKINGS_ENABLED: 'true',
     APP_ORIGIN: 'http://localhost',
     DATA_ENCRYPTION_KEY: key,
     EMAIL_PROVIDER: 'local',
@@ -517,6 +518,60 @@ try {
     assert.equal(cancelled.data.status,'cancelled');
     assert.equal((await first('SELECT status FROM bookings WHERE id=?',record.id)).status,'cancelled');
     assert.equal((await first("SELECT count(*) n FROM subscriptions WHERE client_id='cli_guest_transactions'")).n,0);
+  });
+  await check('owner portfolio combines only live authorised ownership across account sectors', async () => {
+    assert.equal((await api('/api/owner-portfolio')).status,401);
+    const mine=await api('/api/owner-portfolio',{cookie:owner.cookie});
+    assert.equal(mine.status,200,JSON.stringify(mine.data));
+    assert.ok(mine.data.properties.some(p=>p.id===propertyId));
+    assert.ok(mine.data.accounts.some(a=>a.sector==='residential'));
+    assert.ok(mine.data.accounts.some(a=>a.sector==='commercial'));
+    const other=await api('/api/owner-portfolio',{cookie:outsider.cookie});
+    assert.equal(other.data.properties.some(p=>p.id===propertyId),false);
+    await run('UPDATE client_property_links SET ends_at=? WHERE client_id=? AND property_id=?',new Date(Date.now()-1000).toISOString(),clientId,propertyId);
+    assert.equal((await api('/api/owner-portfolio',{cookie:owner.cookie})).data.properties.some(p=>p.id===propertyId),false);
+    await run('UPDATE client_property_links SET ends_at=NULL WHERE client_id=? AND property_id=?',clientId,propertyId);
+  });
+  await check('guest switch, quote preview, replacement and concurrent acceptance are fail-closed', async () => {
+    const input={requestKey:crypto.randomUUID(),name:'Quote Guest',email:'quote-guest@example.test',phone:'0400000002',
+      serviceId:'property-condition-report',sector:'residential',address:'191 Quote Test Street',suburb:'Perth',postcode:'6000',propertyType:'House',
+      access:{method:'owner',instructions:'Synthetic quote testing',noticeConfirmed:true},consent:true,website:''};
+    const before=(await first('SELECT COUNT(*) n FROM guest_service_orders')).n;
+    assert.equal((await api('/__test__/guest-disabled',{body:input})).status,503);
+    assert.equal((await first('SELECT COUNT(*) n FROM guest_service_orders')).n,before);
+    const started=await api('/api/guest/requests',{body:input});assert.equal(started.status,201,JSON.stringify(started.data));
+    const verified=await Promise.all([1,2].map(()=>api('/api/guest/verify',{body:{token:started.data.localVerifyToken}})));
+    assert.equal(verified.filter(x=>x.status===200).length,1);
+    assert.ok(verified.filter(x=>x.status!==200).every(x=>[404,409].includes(x.status)));
+    const order=await first('SELECT id FROM guest_service_orders WHERE reference=?',started.data.reference);
+    async function quoteToken(){
+      const events=(await sql.prepare('SELECT id,envelope FROM outbox_events').all()).results;
+      const quotes=[];
+      for(const event of events){const message=await unseal(key,'outbox:'+event.id,event.envelope);
+        if(message.subject==='Your ProInspect service quotation'&&message.facts?.Reference===started.data.reference)quotes.push({id:event.id,token:new URL(message.href).searchParams.get('token')});}
+      return quotes;
+    }
+    const endpoint='/api/staff/guest-orders/'+order.id+'/quote';
+    assert.equal((await api(endpoint,{cookie:owner.cookie,body:{priceExGstCents:15000,validDays:14}})).status,403);
+    assert.equal((await api(endpoint,{cookie:operator.cookie,body:{priceExGstCents:15000,validDays:14}})).status,200);
+    const old=(await quoteToken())[0];
+    const preview=await api('/api/guest/quote?token='+old.token);assert.equal(preview.status,200);
+    assert.equal(preview.data.priceExGstCents,15000);assert.equal(preview.data.email,undefined);assert.equal(preview.data.envelope,undefined);
+    assert.equal((await api(endpoint,{cookie:operator.cookie,body:{priceExGstCents:18000,validDays:14}})).status,200);
+    const current=(await quoteToken()).find(x=>x.id!==old.id);
+    assert.equal((await api('/api/guest/quote?token='+old.token)).status,404);
+    assert.equal((await api('/api/guest/quote',{body:{token:current.token,priceExGstCents:15000,accept:true}})).status,409);
+    const accepts=await Promise.all([1,2].map(()=>api('/api/guest/quote',{body:{token:current.token,priceExGstCents:18000,accept:true}})));
+    assert.equal(accepts.filter(x=>x.status===200).length,1,JSON.stringify(accepts.map(x=>x.status)));
+    assert.ok(accepts.filter(x=>x.status!==200).every(x=>[404,409].includes(x.status)));
+    assert.equal((await first('SELECT status FROM guest_service_orders WHERE id=?',order.id)).status,'awaiting_appointment');
+    assert.equal((await first('SELECT COUNT(*) n FROM bookings WHERE client_id=?','cli_guest_transactions')).n,1);
+  });
+  await check('service settings preserve quotation-only null pricing rather than silently publishing zero',async()=>{
+    const endpoint='/api/w/staff/operations/services/property-condition-report';
+    assert.equal((await api(endpoint,{cookie:operator.cookie,body:{priceExGstCents:null,bookingMode:'instant',active:true}})).status,422);
+    assert.equal((await api(endpoint,{cookie:operator.cookie,body:{priceExGstCents:null,bookingMode:'request',active:true}})).status,200);
+    assert.equal((await first("SELECT price_ex_gst_cents FROM services WHERE id='property-condition-report'")).price_ex_gst_cents,null);
   });
   await check('audit immutability and database referential integrity hold', async () => {
     await assert.rejects(() => run('DELETE FROM audit_events'));
