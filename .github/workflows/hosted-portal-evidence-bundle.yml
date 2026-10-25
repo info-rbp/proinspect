@@ -1,0 +1,42 @@
+name: Eight-portal hosted evidence bundle (redacted only)
+on:
+  push:
+    branches: ['acceptance/evidence-*']
+    paths:
+      - 'artifacts/portal-acceptance/**'
+      - '.github/workflows/hosted-portal-evidence-bundle.yml'
+permissions:
+  contents: read
+jobs:
+  bundle:
+    if: github.repository == 'info-rbp/proinspect'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reject unsafe unredacted evidence before uploading
+        run: |
+          node --input-type=module -e '
+            import {existsSync,readdirSync,lstatSync,readFileSync} from "node:fs";
+            import {join} from "node:path";
+            const root="artifacts/portal-acceptance";
+            if(!existsSync(join(root,"hosted-evidence.json")))throw Error("No hosted-evidence.json");
+            const bad=/(?:-----BEGIN (?:RSA )?PRIVATE KEY-----|sk_(?:live|test)_[A-Za-z0-9]{8,}|whsec_[A-Za-z0-9]{8,}|[?&](?:token|code|session|password)=|(?:cookie|authorization|set-cookie)\s*:)/i;
+            function walk(dir){for(const name of readdirSync(dir)){
+              const path=join(dir,name),meta=lstatSync(path);
+              if(meta.isSymbolicLink())throw Error("Symlinked evidence forbidden");
+              if(meta.isDirectory()){walk(path);continue}
+              if(!meta.isFile()||meta.size>4194304)throw Error("Invalid evidence file");
+              if(path.endsWith(".json")){const text=readFileSync(path,"utf8");if(bad.test(text))throw Error("Secret-shaped evidence forbidden");JSON.parse(text)}
+              else throw Error("Only redacted JSON receipt evidence is accepted in Git history");
+            }}walk(root);
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: proinspect-portal-hosted-evidence
+          path: artifacts/portal-acceptance/
+          retention-days: 30
+          if-no-files-found: error
