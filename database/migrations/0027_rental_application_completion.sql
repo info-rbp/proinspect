@@ -121,5 +121,3 @@ CREATE TRIGGER rental_outcome_immutable_delete BEFORE DELETE ON rental_applicati
  WHEN NOT EXISTS(SELECT 1 FROM rental_application_purge_permits p WHERE p.application_id=OLD.application_id)
 BEGIN SELECT RAISE(ABORT,'RENTAL_OUTCOME_IMMUTABLE'); END;
 
--- Preserve minimal audit evidence when privacy erasure is lawfully performed.
--- Outcome rows must be deleted before their parent during an authorised purge.
