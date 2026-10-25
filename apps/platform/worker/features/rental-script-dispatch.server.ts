@@ -34,8 +34,8 @@ export async function dispatchRentalHandoffs(env:Env){
    const stamp=Math.floor(Date.now()/1000).toString();
    const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);
    const sig=[...new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(stamp+'.'+body)))].map(x=>x.toString(16).padStart(2,'0')).join('');
-   const res=await fetch(endpoint.href,{method:'POST',headers:{'Content-Type':'application/json',
-    'X-ProInspect-Time':stamp,'X-ProInspect-Signature':'sha256='+sig},body,signal:AbortSignal.timeout(20000)});
+   const envelope=JSON.stringify({timestamp:stamp,data:body,signature:'sha256='+sig});
+   const res=await fetch(endpoint.href,{method:'POST',headers:{'Content-Type':'application/json'},body:envelope,signal:AbortSignal.timeout(20000)});
    if(!res.ok)throw Error('SCRIPT_TRANSPORT');
    const receipt=await res.json() as {accepted?:boolean;idempotencyKey?:string;messageReference?:string};
    assert(receipt.accepted===true&&receipt.idempotencyKey===h.idempotency_key&&typeof receipt.messageReference==='string'&&receipt.messageReference.length>=6,
