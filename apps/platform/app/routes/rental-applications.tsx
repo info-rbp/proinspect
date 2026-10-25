@@ -9,7 +9,7 @@ export async function loader({request,context}:LoaderFunctionArgs){
 export default function RentalApplicationsQueue(){
  const d=useLoaderData<typeof loader>(),w=useWorkspace().workspace;
  return <><PageHeading title="Residential rental applications" eyebrow="Restricted leasing records"
- description="Form 18-based applications collected on behalf of the named landlord or agency. ProInspect administers the information; the responsible representative makes tenancy decisions."/>
+ description="ProInspect Residential Rental Applications collected on behalf of the named landlord or agency. ProInspect administers the information; the responsible representative makes tenancy decisions."/>
  <div className="actions"><Link className="button secondary" to={w.href+'/leasing'}>Manage property application settings</Link></div>
  <section className="panel stack">
  <h2>Submitted applications</h2>

@@ -9,7 +9,7 @@ import type { Principal } from '../../../../packages/domain/index';
 import { operationsWrite } from '../../../../packages/authorization/server';
 import { isLocal } from '../../../../packages/auth/server';
 
-const cols='id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,agent_name,agent_role,application_url,application_mode,published_at';
+const cols='id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,agent_name,agent_role,application_url,application_mode,rental_approval_state,rental_recipient_verified_at,published_at';
 export async function publicListings(env:Env,kind?:string){
  const rows=await statement(env.DB,`SELECT ${cols} FROM leasing_listings WHERE status='published' AND (? IS NULL OR kind=?) ORDER BY published_at DESC LIMIT 100`,kind??null,kind??null).all();
  return rows.results;
