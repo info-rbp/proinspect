@@ -4,7 +4,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 
 const origin = process.env.PROINSPECT_ORIGIN ||
-  'https://proinspect-platform.delicate-dream-e4c9.workers.dev';
+  'https://proinspect.systems';
 const account = process.env.CLOUDFLARE_ACCOUNT_ID ||
   '8ca23ac6d2cc906d4dd13b8da5ea2b25';
 const expectedDatabase = 'dd4f4bc7-cd24-433a-a9ee-d1ffbcc229ea';
@@ -212,9 +212,14 @@ async function run() {
     "SELECT booking_mode, COUNT(*) AS services, " +
     "SUM(CASE WHEN price_ex_gst_cents IS NOT NULL THEN 1 ELSE 0 END) AS priced " +
     "FROM services WHERE active=1 GROUP BY booking_mode");
-  check('instant_booking_ready',
-    catalogueModes.some(x => x.booking_mode === 'instant' && x.priced > 0),
-    { modeSummary: catalogueModes }, 'blocker');
+  // One-off guest prices are separate from all-inclusive subscribed portal bookings.
+  report.informational = report.informational || [];
+  report.informational.push({
+    name: 'guest_instant_pricing_configured',
+    configured: catalogueModes.some(x => x.booking_mode === 'instant' && x.priced > 0),
+    modeSummary: catalogueModes,
+    note: 'Not an eight-portal acceptance gate',
+  });
 
   const integrity = await query(db, 'PRAGMA foreign_key_check');
   check('database_foreign_key_integrity', integrity.length === 0,

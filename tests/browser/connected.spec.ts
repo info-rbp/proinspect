@@ -93,6 +93,9 @@ test('tenant evidence, reviewed PCR and cost approval connect to the self-managi
     });
     const tenantApi = `/api/w/tenant/${t.id}`,
       tenantHref = `/w/tenant/${t.id}`;
+    expect((await tenant.context.request.get(base)).status()).toBe(403);
+    expect((await owner.context.request.get(tenantApi)).status()).toBe(403);
+    expect((await tenant.context.request.get(`${base}/finance`)).status()).toBe(403);
     await visit(owner.page, href + '/document-operations', 'Document preparation and issue');
     const upload = panel(owner.page, 'Upload document for review');
     await upload.getByLabel('Document title', { exact: true }).fill('Browser reviewed PCR');
@@ -242,6 +245,8 @@ test('professional portfolio import, recurring plan and commercial workspace are
       `/api/w/landlord/${commercialWorkspace.clientId}`,
     );
     expect(response.status()).toBe(403);
+    expect((await agency.context.request.get(commercialWorkspace.api)).status()).toBe(403);
+    expect((await commercial.context.request.get(pm.api)).status()).toBe(403);
   } finally {
     await agency.context.close();
     await operator.context.close();
@@ -295,6 +300,9 @@ test('resident report reaches strata operations and council sees only its decisi
     await saved(manager.page);
     const residentHref = `/w/building/${schemeId}`,
       councilHref = `/w/council/${schemeId}`;
+    expect((await resident.context.request.get(`/api/w/council/${schemeId}`)).status()).toBe(403);
+    expect((await council.context.request.get(`/api/w/building/${schemeId}`)).status()).toBe(403);
+    expect((await resident.context.request.get(`${firm.api}/schemes/${schemeId}`)).status()).toBe(403);
     await visit(resident.page, `${residentHref}/schemes/${schemeId}`, name);
     await expect(resident.page.getByText('Browser council-only briefing')).toHaveCount(0);
     await resident.page.getByLabel('Where is the issue?').selectOption('common');
