@@ -6,6 +6,7 @@ import { PageHeading } from '../../../../packages/ui/components';
 import { COMPONENT_CLEANLINESS_CATEGORIES,COMPONENT_CONDITION_CATEGORIES,COMPONENT_WORKING_STATUSES,COMPONENT_TEST_STATUSES,COMPONENT_COMPARISON_STATUSES } from '../../../../packages/report-engine/upstream/reportModel';
 import type { ReportDraft } from '../../../../packages/report-engine/adapter';
 import {ReportOfflineControls} from '../components/ReportOfflineControls';
+import {InspectorFieldMode} from '../components/InspectorFieldMode';
 export async function loader({request,context,params}:LoaderFunctionArgs){
  return loadApi(request,context,`/api/w/${params.kind}/${params.scopeId}/reports/${params.reportId}`);
 }
@@ -48,6 +49,8 @@ function componentUpdate(draft:ReportDraft,area:number,component:number,field:st
 }
 function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:any}){
  const [draft,setDraft]=useState<ReportDraft>(initial),[dirty,setDirty]=useState(false);
+ const [fieldMode,setFieldMode]=useState(false);
+ useEffect(()=>{setFieldMode(window.matchMedia('(max-width: 680px)').matches);},[]);
  useEffect(()=>{setDraft(initial);setDirty(false);},[record.revision]);
  const change=(value:ReportDraft)=>{setDraft(value);setDirty(true);};
  const locked=!['draft','changes_requested'].includes(record.status);
@@ -59,11 +62,13 @@ function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:an
  } ]})});
  return <section className="panel stack">
    <div><h2>Inspection report draft</h2><p className="small muted">Capture visible conditions and commentary. Changes remain drafts until submitted and independently reviewed.</p></div>
+   <div className="actions"><button type="button" className="button secondary small" aria-pressed={fieldMode} onClick={()=>setFieldMode(v=>!v)}>{fieldMode?'Use full editor':'Use mobile field mode'}</button></div>
    <Form method="post" className="stack">
      <input type="hidden" name="intent" value="save"/><input type="hidden" name="revision" value={record.revision}/>
      <input type="hidden" name="content" value={JSON.stringify(draft)}/>
      <label>Inspection summary<textarea disabled={locked} rows={4} value={draft.summary} onChange={e=>change({...draft,summary:e.target.value})}/></label>
-     {draft.areas.map((area,ai)=><div className="panel stack-sm" key={area.id}>
+     {fieldMode&&<InspectorFieldMode draft={draft} onChange={change} locked={locked} dirty={dirty}/>}
+     {!fieldMode&&draft.areas.map((area,ai)=><div className="panel stack-sm" key={area.id}>
        <label>Area name<input disabled={locked} value={area.name} onChange={e=>change({...draft,areas:draft.areas.map((a,j)=>ai===j?{...a,name:e.target.value}:a)})}/></label>
        {area.components.map((c,ci)=><fieldset className="stack-sm" key={c.id}>
          <legend><strong>Component {ci+1}</strong></legend>
@@ -81,11 +86,11 @@ function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:an
        </fieldset>)}
        {!locked&&<button className="button secondary small" type="button" onClick={()=>addComponent(ai)}>Add component</button>}
      </div>)}
-     {!locked&&<div className="actions"><button type="button" className="button secondary" onClick={addArea}>Add area</button>
+     {!locked&&<div className="actions">{!fieldMode&&<button type="button" className="button secondary" onClick={addArea}>Add area</button>}
        <button className="primary">Save draft{dirty?' *':''}</button></div>}
    </Form>
    {!locked&&<ReportOfflineControls reportId={record.id} revision={record.revision} draft={draft} onRestore={change}/>}
-   {!locked&&<div className="stack-sm">
+   {!locked&&!fieldMode&&<div className="stack-sm">
      <h3>Attach photographic evidence</h3>
      <p className="small muted">JPEG up to 5 MB. Uploaded evidence remains private and awaits independent review. Save draft changes before uploading photos.</p>
      {draft.areas.map(a=><Form key={a.id} method="post" encType="multipart/form-data" className="form stack-sm">
