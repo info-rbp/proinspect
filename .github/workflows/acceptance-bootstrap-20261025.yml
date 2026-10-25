@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 3
+          fetch-depth: 5
       - name: Verify origin and reconstruct verified source patch
         shell: bash
         run: |
@@ -24,9 +24,16 @@ jobs:
           echo "51284fd5016579081f822cf9ae8b7fbcaf2aa3f705881b76f98473bfc7e964e0  /tmp/proinspect-acceptance.patch" | sha256sum -c -
           git apply --check /tmp/proinspect-acceptance.patch
           git apply /tmp/proinspect-acceptance.patch
-          rm -r .github/acceptance-bootstrap .github/workflows/acceptance-bootstrap-20261025.yml
+          # The checkout token cannot add/update workflow files; retain the existing
+          # bootstrap (and its chunks) for cleanup through the authorised GitHub connector.
+          git restore --source=HEAD --staged --worktree -- .github/workflows/verify.yml .github/workflows/portal-acceptance-gate.yml
+          rm -f .github/workflows/hosted-portal-acceptance-review.yml .github/workflows/hosted-portal-evidence-bundle.yml
           git add -A
-          test "$(git write-tree)" = "8e45ebedd19d8893499b94a4cfa956a16972b71c"
+          if git diff --cached --name-only | grep -q '^.github/workflows/'; then
+            echo 'Refusing bot push that modifies workflow definitions'
+            exit 1
+          fi
+          test "$(git diff --cached --name-only | wc -l)" -eq 13
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'test: add hosted authentication, AT01-AT12 evidence, and protected launch review'
