@@ -12,6 +12,7 @@ export const ROLE_ALIASES = Object.freeze({
   staff: 'staff-testing@proinspect.systems',
 });
 
+const ROLE_WORKSPACE_KIND = Object.freeze({property_manager:'property-manager',strata_manager:'strata-manager'});
 const scenario = (id, actors, success, denial, cleanup, isolated, browser = []) =>
   Object.freeze({ id, actors, success, denial, cleanup, isolated, browser });
 export const SCENARIOS = Object.freeze([
@@ -118,7 +119,7 @@ export function validateSessionObservation(role, observedEmail, workspaces, requ
   if (!Object.hasOwn(ROLE_ALIASES, role)) throw new Error('Unknown role');
   if (typeof observedEmail !== 'string' || observedEmail.toLowerCase() !== ROLE_ALIASES[role])
     return { role, confirmed: false, reason: 'Session does not belong to the expected alias' };
-  if (!Array.isArray(workspaces) || !workspaces.some(x => x.kind === role))
+  if (!Array.isArray(workspaces) || !workspaces.some(x => x.kind === (ROLE_WORKSPACE_KIND[role] ?? role)))
     return { role, confirmed: false, reason: 'Expected scoped workspace missing' };
   if (requestStatus !== 200)
     return { role, confirmed: false, reason: 'Authenticated session endpoint did not return 200' };
