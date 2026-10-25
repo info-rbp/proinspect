@@ -78,7 +78,7 @@ export async function createSubscriptionCheckout(env: Env, user: Principal, w: W
   const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY!}`,
       'Content-Type': 'application/x-www-form-urlencoded',
       'Stripe-Version': '2026-08-26.dahlia',
       'Idempotency-Key': 'proinspect-subscription-' + id,

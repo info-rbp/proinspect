@@ -5,11 +5,11 @@ import { useWorkspace } from '../lib/workspace';
 import { PageHeading, Badge, EmptyState } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
-  const d = await loadApi(
+  const d = (await loadApi(
     request,
     context,
     `/api/w/${params.kind}/${params.scopeId}/properties/${params.propertyId}`,
-  );
+  )) as { property: any };
   const env = platformEnv(context);
   return { ...d, stripeSubscriptionsEnabled: env.APP_ENV === 'staging' && env.STRIPE_BILLING_ENABLED === 'true' && env.STRIPE_TAX_READY === 'true' };
 }
