@@ -1,7 +1,6 @@
 import { assert,statement,now,type Env } from '../../../../packages/database/types';
 import { checkedHttpsEndpoint,nextRetry } from '../../../../packages/marketing/rental-governance';
-import { digest,unseal } from '../../../../packages/auth/crypto';
-import type { Form18Answers } from '../../../../packages/marketing/form18';
+import { unseal } from '../../../../packages/auth/crypto';
 
 /** HMAC-signed Google Apps Script transport, disabled without explicit opt-in.
  * Sensitive scanned files are not attached; only approved staff can download them.

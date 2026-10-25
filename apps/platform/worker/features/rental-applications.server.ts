@@ -310,6 +310,7 @@ export async function uploadRentalDocument(env:Env,token:string,form:FormData){
    statement(env.DB,'INSERT INTO rental_application_documents(id,application_id,applicant_id,object_key,category,filename,content_type,size_bytes,sha256,uploaded_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
    id,app.id,person.id,objectKey,category,filename,file.type,file.size,sha,now()),
    await event(env,app.id,'document_uploaded',{documentId:id,category},person.id),
+   statement(env.DB,'INSERT INTO rental_document_scan_jobs(document_id,next_attempt_at) VALUES(?,?)',id,now()),
   ]);
  }catch(error){await env.RESTRICTED_DOCUMENTS.delete(objectKey);throw error;}
  return {uploaded:true};
@@ -324,6 +325,7 @@ export async function deleteRentalDocument(env:Env,token:string,docId:string){
  await env.RESTRICTED_DOCUMENTS.delete(row.object_key);
  await env.DB.batch([
   statement(env.DB,'DELETE FROM rental_document_scan_receipts WHERE document_id=?',row.id),
+  statement(env.DB,'DELETE FROM rental_document_scan_jobs WHERE document_id=?',row.id),
   statement(env.DB,'DELETE FROM rental_application_documents WHERE id=? AND applicant_id=?',row.id,person.id),
   await event(env,app.id,'document_removed',{documentId:row.id},person.id),
  ]);

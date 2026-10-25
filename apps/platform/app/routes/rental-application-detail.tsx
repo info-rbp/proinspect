@@ -51,6 +51,10 @@ export default function RentalApplicationDetail(){
    {d.handoffs?.length>0?d.handoffs.map((h:any)=><div className="record-row" key={h.id}><div><strong>Submission handoff: {h.status.replaceAll('_',' ')}</strong><p className="small">Staged {new Date(h.staged_at).toLocaleString('en-AU')} · {h.format_version}</p></div></div>):<p className="small">No handoff staged. Review uploaded documents and move the application to ready for handoff when appropriate.</p>}
    <p className="small">No personal data or files are sent to the agency until a separately approved script, secure delivery method, acknowledgement and consent controls exist.</p>
   </Panel>
+  {a.status==='forwarded'&&<Panel title="Record agency decision"><p>Only record a decision communicated by the responsible landlord or agency.</p>
+   <OperationForm endpoint={base+'/outcome'} label="Record verified outcome" defaults={{version:a.version,notifyApplicants:true}}>
+    <Select name="outcome" label="Decision" options={choices(['successful','unsuccessful'])}/><Input name="authorityReference" label="Decision reference"/><TextArea name="note" label="Source and details of instruction"/>
+   </OperationForm></Panel>}
   {role==='administrator'&&<Panel title="Privacy and retention controls">
    <p className="small">Retention deadline: {d.retainedUntil?new Date(d.retainedUntil).toLocaleString('en-AU'):'Not assigned — investigate before enabling intake'}</p>
    <p className="small">Privacy/legal hold: {d.privacyHoldUntil?new Date(d.privacyHoldUntil).toLocaleString('en-AU'):'None'}</p>

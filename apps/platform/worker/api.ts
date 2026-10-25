@@ -4,6 +4,7 @@ import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from
 import { publicOpenHomeSessions,staffOpenHomeCheckIns } from './features/open-home.server';
 import { staffOpenHomeReportDetails,saveOpenHomeReportSettings,readOpenHomeReport,exportOpenHomeReportCsv } from './features/open-home-reports.server';
 import { listRentalApplications,rentalStaffDetail,updateRentalStatus,reviewRentalDocument,rentalDocumentDownload } from './features/rental-review.server';
+import { recordRentalOutcome } from './features/rental-outcomes.server';
 import { verifyRecipient } from './features/rental-governance.server';
 import { acceptRentalScan } from './features/rental-malware.server';
 import { setRentalPrivacyHold,resolveRentalPrivacyRequest,eraseRentalForRequest } from './features/rental-privacy.server';
@@ -322,6 +323,7 @@ export async function handleApi(
       if(method!=='GET'&&method!=='HEAD')requireOrigin(request,env);
       if(method==='GET'&&tail.length===0)return Response.json(await listRentalApplications(env,user,url.searchParams.get('listingId')??undefined));
       if(method==='GET'&&tail.length===1)return Response.json(await rentalStaffDetail(env,user,tail[0]));
+      if(method==='POST'&&tail.length===2&&tail[1]==='outcome')return Response.json(await recordRentalOutcome(env,user,tail[0],await json(request)));
       if(method==='POST'&&tail.length===2&&tail[1]==='status')return Response.json(await updateRentalStatus(env,user,tail[0],await json(request)));
       if(method==='POST'&&tail.length===2&&tail[1]==='privacy-hold')
         return Response.json(await setRentalPrivacyHold(env,user,tail[0],await json(request)));
