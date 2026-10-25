@@ -67,30 +67,47 @@ export async function ingestPropertyReportTool(env:Env,request:Request){
  const booking=order.booking_id?await statement(env.DB,'SELECT service_id FROM bookings WHERE id=?',order.booking_id).first<{service_id:string}>():null;
  const requiredType=booking&&templateForBooking(booking.service_id);
  assert(!!requiredType&&request.headers.get('x-report-template-type')===requiredType,422,'TEMPLATE_MISMATCH','The returned report must match the inspected service and signed template.');
- // Stream into private R2 without buffering the complete PDF in Worker memory.
- // The incremental digest is calculated over exactly the accepted bytes, not an unchecked sender header.
+ // R2 multipart upload: bounded 6 MiB parts, a streamed SHA-256 and 90 MiB total ceiling.
+ // Ordinary R2.put() cannot accept an arbitrary transformed stream in all Worker runtimes.
  assert(request.body,422,'PDF_REQUIRED','An upload body is required.');
  const id=uid('doc'),objectKey='report-tool/'+handoffId+'/'+id+'.pdf',time=now();
- const hasher=createHash('sha256');
+ const hasher=createHash('sha256'),partSize=6*1024*1024;
  const prefix=new Uint8Array(5);let prefixCount=0,total=0;
- const boundedPdf=new TransformStream<Uint8Array,Uint8Array>({
-   transform(chunk,controller){
-     total+=chunk.byteLength;
-     if(total>maxPdfBytes)throw new Error('PDF_STREAM_LIMIT');
-     for(let i=0;i<chunk.byteLength&&prefixCount<5;i++)prefix[prefixCount++]=chunk[i];
-     if(prefixCount===5&&new TextDecoder().decode(prefix)!=='%PDF-')throw new Error('PDF_SIGNATURE_INVALID');
-     hasher.update(chunk);controller.enqueue(chunk);
-   }
- });
+ const reader=request.body.getReader();
+ const multipart=await env.DOCUMENTS.createMultipartUpload(objectKey,{httpMetadata:{contentType:'application/pdf'}});
+ const uploaded:R2UploadedPart[]=[];let queued:Uint8Array[] = [],queuedBytes=0;
+ const flush=async()=>{
+   if(!queuedBytes)return;
+   const bytes=new Uint8Array(queuedBytes);let position=0;
+   for(const piece of queued){bytes.set(piece,position);position+=piece.length;}
+   uploaded.push(await multipart.uploadPart(uploaded.length+1,bytes));
+   queued=[];queuedBytes=0;
+ };
  try{
-   const stored=await env.DOCUMENTS.put(objectKey,request.body.pipeThrough(boundedPdf),{httpMetadata:{contentType:'application/pdf'}});
-   assert(stored&&stored.size===total&&total>5&&prefixCount===5,422,'INVALID_PDF','The uploaded PDF was incomplete.');
+   while(true){
+     const next=await reader.read();
+     if(next.done)break;
+     const chunk=next.value;
+     total+=chunk.byteLength;
+     assert(total<=maxPdfBytes,413,'FILE_SIZE','The PDF exceeds 90 MB.');
+     for(let i=0;i<chunk.byteLength&&prefixCount<5;i++)prefix[prefixCount++]=chunk[i];
+     assert(prefixCount<5||new TextDecoder().decode(prefix)==='%PDF-',422,'INVALID_PDF','The document does not contain a PDF header.');
+     hasher.update(chunk);
+     for(let offset=0;offset<chunk.byteLength;){
+       const amount=Math.min(partSize-queuedBytes,chunk.byteLength-offset);
+       queued.push(chunk.subarray(offset,offset+amount));queuedBytes+=amount;offset+=amount;
+       if(queuedBytes===partSize)await flush();
+     }
+   }
+   assert(total>5&&prefixCount===5,422,'INVALID_PDF','The PDF upload was incomplete.');
+   await flush(); // R2 permits a smaller final part.
+   const stored=await multipart.complete(uploaded);
+   assert(stored.size===total,409,'PDF_TRANSFER_MISMATCH','The report did not transfer completely.');
  }catch(e){
+   await multipart.abort().catch(()=>undefined);
    await env.DOCUMENTS.delete(objectKey).catch(()=>undefined);
-   if(e instanceof Error && e.message.includes('PDF_STREAM_LIMIT'))assert(false,413,'FILE_SIZE','The PDF exceeds 90 MB.');
-   if(e instanceof Error && e.message.includes('PDF_SIGNATURE_INVALID'))assert(false,422,'INVALID_PDF','The document does not contain a PDF header.');
    throw e;
- }
+ }finally{reader.releaseLock();}
  const hash=hasher.digest('hex');
  try{
    const previous=await statement(env.DB,'SELECT d.id,d.sha256 FROM documents d JOIN property_report_bridge_handoffs h ON h.document_id=d.id WHERE h.id=?',handoffId).first<{id:string,sha256:string}>();
