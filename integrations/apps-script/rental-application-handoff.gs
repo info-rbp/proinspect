@@ -33,7 +33,7 @@ function doPost(e) {
         .slice(0,44);
       const existing=props.getProperty(key);
       if(existing){
-        if(existing.startsWith('accepted:'))return reply({accepted:true,idempotencyKey:payload.idempotencyKey,messageReference:existing.slice(9)});
+        if(existing.startsWith('accepted:'))return reply(acceptedReceipt(secret,payload.idempotencyKey,existing.slice(9)));
         // Unknown outcome after a worker interruption: DO NOT retry blindly.
         throw Error('SEND_OUTCOME_UNKNOWN');
       }
@@ -43,13 +43,18 @@ function doPost(e) {
       MailApp.sendEmail({to:recipient,subject:'ProInspect residential rental application — '+String(payload.reference||''),
         htmlBody:msg.html,body:msg.text,name:'ProInspect'});
       props.setProperty(key,'accepted:'+ref);
-      return reply({accepted:true,idempotencyKey:payload.idempotencyKey,messageReference:ref});
+      return reply(acceptedReceipt(secret,payload.idempotencyKey,ref));
     } finally {lock.releaseLock();}
   }catch(error){
     // Apps Script web apps normally reply HTTP 200 even for application errors.
     // The Worker rejects anything without a signed, matching acceptance receipt.
     return reply({accepted:false,code:error instanceof Error?error.message:'HANDOFF_FAILED'});
   }
+}
+function acceptedReceipt(secret,key,reference){
+ const sig=Utilities.computeHmacSha256Signature(key+'.'+reference+'.accepted',secret);
+ const hex=sig.map(b=>('0'+(b<0?b+256:b).toString(16)).slice(-2)).join('');
+ return {accepted:true,idempotencyKey:key,messageReference:reference,signature:'sha256='+hex};
 }
 function constantTimeEqual(a,b){
   if(a.length!==b.length)return false;

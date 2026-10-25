@@ -37,8 +37,10 @@ export async function dispatchRentalHandoffs(env:Env){
    const envelope=JSON.stringify({timestamp:stamp,data:body,signature:'sha256='+sig});
    const res=await fetch(endpoint.href,{method:'POST',headers:{'Content-Type':'application/json'},body:envelope,signal:AbortSignal.timeout(20000)});
    if(!res.ok)throw Error('SCRIPT_TRANSPORT');
-   const receipt=await res.json() as {accepted?:boolean;idempotencyKey?:string;messageReference?:string};
-   assert(receipt.accepted===true&&receipt.idempotencyKey===h.idempotency_key&&typeof receipt.messageReference==='string'&&receipt.messageReference.length>=6,
+   const receipt=await res.json() as {accepted?:boolean;idempotencyKey?:string;messageReference?:string;signature?:string};
+   const confirmation=String(receipt.idempotencyKey??'')+'.'+String(receipt.messageReference??'')+'.accepted';
+   const signed=[...new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(confirmation)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+   assert(receipt.accepted===true&&receipt.signature==='sha256='+signed&&receipt.idempotencyKey===h.idempotency_key&&typeof receipt.messageReference==='string'&&receipt.messageReference.length>=6,
     502,'SCRIPT_RECEIPT_INVALID','Provider did not confirm mail submission.');
    const t=now();
    await env.DB.batch([
