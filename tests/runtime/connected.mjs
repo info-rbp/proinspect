@@ -48,6 +48,9 @@ const mf = new Miniflare({
     STRIPE_WEBHOOK_SECRET: webhookSecret,
     REPORT_TOOL_SECRET: reportSecret,
     REPORT_TOOL_ORIGIN: 'https://reports.example.test',
+    REPORT_TOOL_V2_ORIGIN: 'https://report.creation.proinspect.systems',
+    REPORT_TOOL_V2_HANDOFF_KEY: 'synthetic-v2-handoff-key-for-test-only',
+    REPORT_TOOL_V2_INGEST_TOKEN: 'synthetic-v2-ingest-token-not-for-production-0001',
     APP_ORIGIN: 'http://localhost',
     DATA_ENCRYPTION_KEY: key,
     EMAIL_PROVIDER: 'local',
@@ -306,6 +309,75 @@ try {
   });
 
   const b = await book(owner, base, propertyId);
+
+  await check('signed report creation, 11MB streaming PDF, private review and idempotent publication',async()=>{
+    const order=await first('SELECT id FROM work_orders WHERE booking_id=?',b.id);
+    const adminId=await userId(admin);
+    await run('UPDATE work_orders SET assigned_staff_id=? WHERE id=?',adminId,order.id);
+    const launchPath='/api/staff/work-orders/'+order.id+'/property-report-tool';
+    assert.equal((await api(launchPath,{cookie:owner.cookie,body:{}})).status,403);
+    const link=await ok(launchPath,admin,{});
+    assert.equal(link.reportType,'Routine');
+    const url=new URL(link.url);
+    assert.equal(url.origin,'https://report.creation.proinspect.systems');
+    const [payload,signature]=url.searchParams.get('proinspect_handoff').split('.');
+    assert.equal(signature,createHmac('sha256','synthetic-v2-handoff-key-for-test-only').update(payload).digest('base64url'));
+    const signed=JSON.parse(Buffer.from(payload,'base64url').toString());
+    assert.equal(signed.workOrderId,order.id);
+    assert.equal(signed.issuedByEmail,admin.email);
+    assert.ok(signed.exp>Math.floor(Date.now()/1000));
+
+    const source='synthetic-report-00000001';
+    const pdfBytes=new Uint8Array(11*1024*1024+80); // Above the previous 10 MB intake ceiling.
+    pdfBytes.set(new TextEncoder().encode('%PDF-1.7\nSynthetic 11MB reporting acceptance\n'));
+    pdfBytes.set(new TextEncoder().encode('\n%%EOF'),pdfBytes.length-6);
+    const headers={
+      'content-type':'application/pdf',
+      'content-length':String(pdfBytes.length),
+      'x-report-ingest-token':'synthetic-v2-ingest-token-not-for-production-0001',
+      'x-report-handoff-id':signed.handoffId,
+      'x-report-source-id':source,
+      'x-report-template-type':'Routine',
+      'x-work-order-id':order.id,
+      'x-property-id':propertyId
+    };
+    async function ingest(change={}) {
+      const response=await mf.dispatchFetch('http://localhost/api/integrations/property-report-tool/ingest',{
+        method:'POST',headers:{...headers,...change},body:pdfBytes
+      });
+      return {status:response.status,result:await response.json()};
+    }
+    assert.equal((await ingest({'x-report-ingest-token':'incorrect'})).status,403);
+    assert.equal((await ingest({'x-report-template-type':'Entry'})).status,422);
+    assert.equal((await ingest({'content-length':String(91*1024*1024)})).status,413);
+    const firstResult=await ingest();
+    assert.equal(firstResult.status,200,JSON.stringify(firstResult.result));
+    assert.equal(firstResult.result.status,'review');
+    const docRow=await first('SELECT * FROM documents WHERE id=?',firstResult.result.id);
+    assert.equal(docRow.status,'review');
+    assert.equal(docRow.size,pdfBytes.byteLength);
+    assert.equal(docRow.sha256,createHash('sha256').update(pdfBytes).digest('hex'));
+    assert.equal((await first('SELECT COUNT(*) AS n FROM document_grants WHERE document_id=?',docRow.id)).n,0);
+    assert.equal((await api('/api/documents/'+docRow.id+'/download',{cookie:owner.cookie})).status,404);
+    assert.equal((await api('/api/documents/'+docRow.id+'/download',{cookie:outsider.cookie})).status,404);
+    const replay=await ingest();
+    assert.equal(replay.status,200,JSON.stringify(replay.result));
+    assert.equal(replay.result.replayed,true);
+    assert.equal(replay.result.id,docRow.id);
+    const changed=new Uint8Array(pdfBytes);changed[100]=7;
+    const altered=await mf.dispatchFetch('http://localhost/api/integrations/property-report-tool/ingest',{
+      method:'POST',headers,body:changed
+    });
+    assert.equal(altered.status,409);
+    assert.equal((await first('SELECT COUNT(*) AS n FROM documents WHERE source_report_id=?','tool:'+signed.handoffId)).n,1);
+    // Customer issue remains an explicit separate ProInspect Staff decision.
+    await ok(staffBase+'/documents/'+docRow.id+'/issue',admin,{
+      audience:'client',recipientId:client,reviewReference:'Synthetic independent issue approval'
+    });
+    assert.equal((await api('/api/documents/'+docRow.id+'/download',{cookie:owner.cookie})).status,200);
+    assert.equal((await api('/api/documents/'+docRow.id+'/download',{cookie:outsider.cookie})).status,404);
+    assert.equal((await api('/api/documents/'+docRow.id+'/download',{cookie:tenant.cookie})).status,404);
+  });
   await check(
     'published inspection follows the correct tenancy and rescheduling withdraws stale information',
     async () => {
