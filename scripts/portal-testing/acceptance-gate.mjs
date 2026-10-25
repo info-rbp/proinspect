@@ -1,43 +1,124 @@
-import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
-const roles=['landlord','property_manager','commercial','strata_manager','tenant','building','council','staff'];
-const gates=['identities','onboarding','portal_journeys','connected_handoffs','isolation','revocation','private_documents','transaction_reliability','provider_delivery','accessibility','defect_review','deployment_recovery'];
-const cases=Array.from({length:12},(_,i)=>'AT-'+String(i+1).padStart(2,'0'));
-const sha=x=>typeof x==='string'&&/^[0-9a-f]{40}$/.test(x);
-const date=x=>typeof x==='string'&&Number.isFinite(Date.parse(x));
-const artifact=x=>typeof x==='string'&&(/^(artifacts\/[a-zA-Z0-9_./-]+)$/.test(x)||/^https:\/\/github\.com\/info-rbp\/proinspect\/actions\/runs\/\d+$/.test(x));
-const secret=x=>/(?:sk_(?:test|live)_[a-z0-9]{8,}|whsec_[a-z0-9]{8,}|-----BEGIN (?:RSA )?PRIVATE KEY-----|[?&](?:token|code|session)=|cookie\s*:|authorization\s*:)/i.test(JSON.stringify(x));
-export function assess(e,expected,clock=Date.now()){
- if(!e||typeof e!=='object'||Array.isArray(e))throw Error('Evidence object required');
- if(!sha(expected)||e.sourceSha!==expected)throw Error('Source mismatch');
- if(secret(e))throw Error('Evidence must never contain credentials or authentication links');
- if(e.schema!==1||e.environment!=='production'||e.dataMode!=='approved-synthetic')throw Error('Invalid environment or schema');
- if(!date(e.observedAt)||clock-Date.parse(e.observedAt)<0||clock-Date.parse(e.observedAt)>86400000)throw Error('Stale evidence');
- const result={},scenarios={};
- for(const id of gates){
-  const x=e.criteria?.[id];
-  const valid=x&&['pass','fail','blocked'].includes(x.status)&&date(x.observedAt)&&clock-Date.parse(x.observedAt)>=0&&clock-Date.parse(x.observedAt)<=86400000&&artifact(x.evidenceRef)&&Array.isArray(x.caseIds)&&x.caseIds.length>0&&x.caseIds.every(k=>cases.includes(k));
-  result[id]={status:valid?x.status:'blocked',reason:valid?null:'Missing, stale or invalid evidence'};
- }
- const unique=new Set();
- for(const role of roles){
-  const x=e.identities?.[role];
-  if(!x||x.authenticated!==true||x.authorisedScope!==true||x.accessRevocationChecked!==true||!artifact(x.evidenceRef)||!date(x.observedAt)||!x.identityRef||unique.has(x.identityRef)){result.identities.status='blocked';break;}
-  unique.add(x.identityRef);
- }
- if(unique.size!==roles.length)result.identities.status='blocked';
- for(const id of cases){
-  const x=e.cases?.[id];scenarios[id]=x?.status==='pass'&&artifact(x.evidenceRef)&&date(x.observedAt)?'pass':'blocked';
- }
- if(!Array.isArray(e.defects)||e.defects.some(x=>['critical','high'].includes(x.severity)&&x.status!=='resolved'))result.defect_review.status='blocked';
- if(e.deployment?.workerSha!==expected||e.deployment?.recoveryVerified!==true)result.deployment_recovery.status='blocked';
- const counts={criteriaPassed:Object.values(result).filter(x=>x.status==='pass').length,criteriaTotal:gates.length,casesPassed:Object.values(scenarios).filter(x=>x==='pass').length,casesTotal:cases.length};
- return {schema:1,sourceSha:expected,acceptedForProduction:counts.criteriaPassed===gates.length&&counts.casesPassed===cases.length,criteria:result,cases:scenarios,counts};
+#!/usr/bin/env node
+/**
+ * Fail-closed review of external, human-observed hosted acceptance evidence.
+ * This never creates identities, sessions, credentials or production transactions.
+ * A successful schema check is NOT independent proof that the referenced evidence is true.
+ */
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+
+export const ROLES = Object.freeze([
+  'landlord', 'property_manager', 'commercial', 'strata_manager',
+  'tenant', 'building', 'council', 'staff',
+]);
+export const CASES = Object.freeze(Array.from({ length: 12 }, (_, i) =>
+  `AT-${String(i + 1).padStart(2, '0')}`));
+export const REQUIRED_CASES = Object.freeze({
+  identities: ['AT-01'],
+  onboarding: ['AT-01', 'AT-12'],
+  portal_journeys: CASES,
+  connected_handoffs: ['AT-02', 'AT-03', 'AT-04', 'AT-05', 'AT-06', 'AT-07', 'AT-09', 'AT-10', 'AT-11', 'AT-12'],
+  isolation: ['AT-01', 'AT-04', 'AT-05', 'AT-08', 'AT-09', 'AT-10', 'AT-12'],
+  revocation: ['AT-08', 'AT-10'],
+  private_documents: ['AT-09'],
+  transaction_reliability: ['AT-03', 'AT-05'],
+  provider_delivery: ['AT-01', 'AT-09', 'AT-10', 'AT-11'],
+  accessibility: ['AT-01'],
+  defect_review: CASES,
+  deployment_recovery: ['AT-01'],
+});
+const validSha = x => typeof x === 'string' && /^[a-f0-9]{40}$/.test(x);
+const observed = (value, now, windowStart) => {
+  if (typeof value !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?Z$/.test(value)) return false;
+  const t = Date.parse(value);
+  return Number.isFinite(t) && t >= windowStart && t <= now;
+};
+const artifact = value => typeof value === 'string' && (
+  /^https:\/\/github\.com\/info-rbp\/proinspect\/actions\/runs\/[1-9]\d*$/.test(value) ||
+  /^artifacts\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-][a-zA-Z0-9_.-]*$/.test(value)
+) && !/(?:^|\/)\.\.(?:\/|$)/.test(value);
+const containsSecrets = value => /(?:sk_(?:test|live)_[a-z0-9]{8,}|whsec_[a-z0-9]{8,}|-----BEGIN (?:RSA )?PRIVATE KEY-----|[?&](?:token|code|session|secret|password)=|(?:cookie|authorization|set-cookie)\s*:)/i.test(JSON.stringify(value));
+
+export function assess(evidence, expectedSource, clock = Date.now()) {
+  if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence)) throw new Error('Evidence object required');
+  if (!validSha(expectedSource) || evidence.sourceSha !== expectedSource) throw new Error('Source mismatch');
+  if (containsSecrets(evidence)) throw new Error('Evidence must never contain credentials or authentication links');
+  if (evidence.schema !== 2 || evidence.environment !== 'production' || evidence.dataMode !== 'approved-synthetic')
+    throw new Error('Invalid environment or schema');
+  const windowStart = clock - 24 * 60 * 60 * 1000;
+  if (!observed(evidence.observedAt, clock, windowStart)) throw new Error('Stale evidence');
+  const cases = {};
+  for (const id of CASES) {
+    const x = evidence.cases?.[id];
+    cases[id] = x?.status === 'pass' && x.sourceSha === expectedSource &&
+      x.positiveAccessChecked === true && x.negativeAccessChecked === true &&
+      observed(x.observedAt, clock, windowStart) && artifact(x.evidenceRef) ? 'pass' : 'blocked';
+  }
+  const unique = new Set();
+  let identitiesValid = true;
+  for (const role of ROLES) {
+    const x = evidence.identities?.[role];
+    if (!x || x.authenticated !== true || x.authorisedScope !== true ||
+      x.accessRevocationChecked !== true || x.emailLinkRedeemed !== true || x.turnstileChecked !== true ||
+      x.sourceSha !== expectedSource || !observed(x.observedAt, clock, windowStart) || !artifact(x.evidenceRef) ||
+      typeof x.identityRef !== 'string' || !/^[a-zA-Z0-9_-]{4,120}$/.test(x.identityRef) || unique.has(x.identityRef)) {
+      identitiesValid = false;
+      break;
+    }
+    unique.add(x.identityRef);
+  }
+  if (unique.size !== ROLES.length) identitiesValid = false;
+  const reviewValid = evidence.releaseReview?.decision === 'approved' &&
+    /^[a-zA-Z0-9 _.-]{3,100}$/.test(evidence.releaseReview?.reviewerRef ?? '') &&
+    artifact(evidence.releaseReview?.evidenceRef) &&
+    observed(evidence.releaseReview?.observedAt, clock, windowStart) &&
+    Array.isArray(evidence.defects) && !evidence.defects.some(d =>
+      ['critical', 'high'].includes(d.severity) && d.status !== 'resolved');
+  const deploymentValid = evidence.deployment?.workerSha === expectedSource &&
+    evidence.deployment?.recoveryVerified === true && artifact(evidence.deployment?.evidenceRef) &&
+    observed(evidence.deployment?.observedAt, clock, windowStart);
+  const criteria = {};
+  for (const [id, required] of Object.entries(REQUIRED_CASES)) {
+    const x = evidence.criteria?.[id];
+    const complete = x?.status === 'pass' && x.sourceSha === expectedSource &&
+      observed(x.observedAt, clock, windowStart) && artifact(x.evidenceRef) &&
+      Array.isArray(x.caseIds) && required.every(caseId => x.caseIds.includes(caseId) && cases[caseId] === 'pass');
+    const verified = complete &&
+      (id !== 'identities' || identitiesValid) &&
+      (id !== 'defect_review' || reviewValid) &&
+      (id !== 'deployment_recovery' || deploymentValid);
+    criteria[id] = { status: verified ? 'pass' : 'blocked' };
+  }
+  const counts = {
+    criteriaPassed: Object.values(criteria).filter(x => x.status === 'pass').length,
+    criteriaTotal: Object.keys(REQUIRED_CASES).length,
+    casesPassed: Object.values(cases).filter(x => x === 'pass').length,
+    casesTotal: CASES.length,
+    identitiesPassed: identitiesValid ? ROLES.length : 0,
+    identitiesTotal: ROLES.length,
+  };
+  return {
+    schema: 2, sourceSha: expectedSource,
+    acceptedForProduction: counts.criteriaPassed === counts.criteriaTotal &&
+      counts.casesPassed === counts.casesTotal && identitiesValid && reviewValid && deploymentValid,
+    criteria, cases, counts,
+    note: 'The assessor validates the evidence contract only; a human must independently verify artifact authenticity and service delivery.',
+  };
 }
-if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href&&process.argv[2]){
- try{
-  const result=assess(JSON.parse(readFileSync(process.argv[2],'utf8')),process.argv[3]||process.env.EXPECTED_SOURCE_SHA);
-  mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/portal-acceptance-result.json',JSON.stringify(result,null,2)+'\n');
-  console.log(JSON.stringify(result.counts));
-  if(!result.acceptedForProduction){console.error('NO GO: hosted portal acceptance is incomplete');process.exitCode=1}
- }catch(error){console.error('NO GO: '+error.message);process.exitCode=1}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href && process.argv[2]) {
+  try {
+    const report = assess(JSON.parse(readFileSync(process.argv[2], 'utf8')),
+      process.argv[3] || process.env.EXPECTED_SOURCE_SHA);
+    mkdirSync('artifacts', { recursive: true });
+    writeFileSync('artifacts/portal-acceptance-result.json', JSON.stringify(report, null, 2) + '\n');
+    console.log(JSON.stringify(report.counts));
+    if (!report.acceptedForProduction) {
+      console.error('NO GO: authenticated eight-portal acceptance is incomplete');
+      process.exitCode = 1;
+    }
+  } catch (error) {
+    console.error('NO GO: ' + error.message);
+    process.exitCode = 1;
+  }
 }
