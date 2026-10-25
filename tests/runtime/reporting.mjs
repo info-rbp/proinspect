@@ -127,6 +127,23 @@ try{
   assert.equal((await api('/api/w/landlord/'+outsiderHome.clientId+'/reports/'+reportId,outsider)).status,404);
   assert.equal((await api('/api/w/landlord/'+outsiderHome.clientId+'/documents/'+doc+'/download',outsider)).status,404);
  });
+ await check('historical comparison accepts only earlier issued report versions for the same property',async()=>{
+  await new Promise(resolve=>setTimeout(resolve,15));
+  const stamp=new Date().toISOString();
+  await run("INSERT INTO work_orders(id,reference,client_id,property_id,title,status,assigned_staff_id,created_at,updated_at) VALUES('work_repeat','WO-REPEAT',?,'report_property','Follow-up report','assigned',?,?,?)",clientId,inspector.id,stamp,stamp);
+  const second=await ok(staffBase+'/reports/create',inspector,{workOrderId:'work_repeat',reportType:'maintenance'});
+  const history=await ok(staffBase+'/reports/'+second.id+'/history',inspector);
+  assert.equal(history.selectedBaselineId,reportId);
+  assert.equal(history.choices.length,1);
+  assert.equal(history.comparison.baselineReportId,reportId);
+  assert.equal(history.comparison.currentReportId,second.id);
+  assert.equal(history.comparison.newItems,0);
+  assert.equal(history.comparison.missingItems,0);
+  assert.equal(history.reviewOnly,true);
+  assert.equal((await api(staffBase+'/reports/'+second.id+'/history?baselineReportId=other-tenant',inspector)).status,404);
+  assert.equal((await api('/api/w/landlord/'+clientId+'/reports/'+second.id+'/history',owner)).status,404);
+  assert.equal((await first('SELECT COUNT(*) AS n FROM requests WHERE title LIKE ?', 'Report follow-up:%')).n,0);
+ });
  await check('reviewed maintenance findings create candidates, not unapproved work orders',async()=>{
   const result=await ok(base+'/maintenance/candidates',ops,{});
   assert.equal(result.reviewedCandidates,1);assert.equal(result.workOrdersCreated,0);
