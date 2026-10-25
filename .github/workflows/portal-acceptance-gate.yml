@@ -4,6 +4,11 @@ on:
     paths:
       - 'scripts/portal-testing/acceptance-gate.mjs'
       - 'tests/portal-acceptance-gate.test.mjs'
+      - 'tests/portal-execution.test.mjs'
+      - 'tests/portal-launch-evidence.test.mjs'
+      - 'scripts/portal-testing/acceptance-manifest.mjs'
+      - 'scripts/portal-testing/isolated-scenario-coverage.mjs'
+      - 'scripts/portal-testing/verify-launch-evidence.mjs'
       - '.github/workflows/portal-acceptance-gate.yml'
   workflow_dispatch:
 permissions:
@@ -17,4 +22,4 @@ jobs:
         with:
           node-version: '22'
       - name: Verify fail-closed acceptance gate
-        run: node --test tests/portal-acceptance-gate.test.mjs
+        run: node --test tests/portal-acceptance-gate.test.mjs tests/portal-execution.test.mjs tests/portal-launch-evidence.test.mjs

@@ -41,7 +41,9 @@ jobs:
           pnpm local:init --test-fixtures
           pnpm exec playwright install --with-deps chromium
       - name: Browser acceptance and responsive screenshots
-        run: pnpm test:browser
+        run: |
+          pnpm test:browser
+          node scripts/portal-testing/isolated-scenario-coverage.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
