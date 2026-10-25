@@ -214,7 +214,8 @@ function Review({page,editable}:{page:any;editable:boolean}){
   {submitted&&<div role="status" className="rental-success"><h2>Application received</h2><p>Reference: <strong>{page.reference}</strong></p><p>Your application was submitted for administrative handling by ProInspect. The landlord or authorised leasing representative makes the tenancy decision. This is not an offer of tenancy.</p></div>}
   <section className="rental-notice"><h3>Privacy, access and corrections</h3>
    <p>You can request access to your personal information, ask for a correction or request erasure. A privacy request is reviewed before any retained record is removed; legal or operational obligations may affect what can be deleted.</p>
-   {page.privacyRequests?.length>0&&<ul className="rental-document-list">{page.privacyRequests.map((r:any,i:number)=><li key={i}><strong>{r.kind.replaceAll('_',' ')} request</strong><span className="rental-state">{r.status.replaceAll('_',' ')}</span></li>)}</ul>}
+   <p>If this link expires, you can request fresh private access from <Link to="/rental-application/recover">Application access recovery</Link> using your reference and verified email address.</p>
+    {page.privacyRequests?.length>0&&<ul className="rental-document-list">{page.privacyRequests.map((r:any,i:number)=><li key={i}><strong>{r.kind.replaceAll('_',' ')} request</strong><span className="rental-state">{r.status.replaceAll('_',' ')}</span></li>)}</ul>}
    <Form method="post" className="rental-form"><input type="hidden" name="intent" value="privacy-request"/>
     <div className="rental-field"><label htmlFor="privacy-kind">What do you need?</label><select name="kind" id="privacy-kind" required>
       <option value="access">Access my information</option><option value="correction">Correct my information</option><option value="erasure">Request deletion of my information</option>

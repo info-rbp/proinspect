@@ -331,3 +331,28 @@ export async function deleteRentalDocument(env:Env,token:string,docId:string){
  ]);
  return {deleted:true};
 }
+
+
+/** Recovery after a private link expires. Do not reveal whether the reference exists. */
+export async function recoverRentalAccess(env:Env,request:Request,input:unknown,security?:string){
+ existingAccess(env);
+ const d=z.object({reference:z.string().trim().min(7).max(100),email:z.string().trim().email().max(254).transform(x=>x.toLowerCase())}).parse(input);
+ const ip=await digest(env.DATA_ENCRYPTION_KEY+':rental-recovery:'+String(request.headers.get('CF-Connecting-IP')??'unknown'));
+ await limit(env,'recover-ip:'+ip,6);await limit(env,'recover-email:'+d.email,4);
+ await turnstile(env,request,security);
+ const hash=await emailHash(env,d.email);
+ const match=await statement(env.DB,"SELECT p.id,a.id AS application_id FROM rental_applicants p JOIN rental_applications a ON a.id=p.application_id WHERE a.reference=? AND p.email_hash=? AND p.state!='removed' AND a.status!='decision_recorded-purged' LIMIT 1",
+ d.reference,hash).first<{id:string;application_id:string}>();
+ if(match){
+  const token=randomToken(),t=now();
+  await env.DB.batch([
+   statement(env.DB,'UPDATE rental_applicants SET access_token_hash=?,access_expires_at=?,updated_at=? WHERE id=?',
+    await digest(token),expiry(),t,match.id),
+   await event(env,match.application_id,'resumed',{channel:'recovery'},match.id),
+   await mailEvent(env,'rental.application.recovery',{to:d.email,subject:'Your ProInspect application access link',
+    heading:'Secure application access',body:'A private link was requested for your residential application. If you did not request this, do not use the link.',
+    href:mailLink(env,token),sensitive:true})
+  ]);
+ }
+ return {received:true};
+}
