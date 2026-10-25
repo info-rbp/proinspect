@@ -528,9 +528,25 @@ try {
     assert.ok(mine.data.accounts.some(a=>a.sector==='commercial'));
     const other=await api('/api/owner-portfolio',{cookie:outsider.cookie});
     assert.equal(other.data.properties.some(p=>p.id===propertyId),false);
-    await run('UPDATE client_property_links SET ends_at=? WHERE client_id=? AND property_id=?',new Date(Date.now()-1000).toISOString(),clientId,propertyId);
+    // Backdate the synthetic link before ending it. Ending an account created less than
+    // one second earlier must never violate the real starts_at < ends_at constraint.
+    const existingLink = await first(
+      'SELECT starts_at FROM client_property_links WHERE client_id=? AND property_id=?',
+      clientId, propertyId,
+    );
+    assert.ok(existingLink?.starts_at);
+    await run(
+      'UPDATE client_property_links SET starts_at=?,ends_at=? WHERE client_id=? AND property_id=?',
+      new Date(Date.now()-120000).toISOString(),
+      new Date(Date.now()-60000).toISOString(),
+      clientId, propertyId,
+    );
     assert.equal((await api('/api/owner-portfolio',{cookie:owner.cookie})).data.properties.some(p=>p.id===propertyId),false);
-    await run('UPDATE client_property_links SET ends_at=NULL WHERE client_id=? AND property_id=?',clientId,propertyId);
+    // Restore the exact original effective start for subsequent scenarios.
+    await run(
+      'UPDATE client_property_links SET starts_at=?,ends_at=NULL WHERE client_id=? AND property_id=?',
+      existingLink.starts_at, clientId, propertyId,
+    );
   });
   await check('guest switch, quote preview, replacement and concurrent acceptance are fail-closed', async () => {
     const input={requestKey:crypto.randomUUID(),name:'Quote Guest',email:'quote-guest@example.test',phone:'0400000002',
