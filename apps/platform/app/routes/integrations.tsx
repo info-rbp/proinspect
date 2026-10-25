@@ -56,6 +56,17 @@ export default function Integrations() {
             )) : <p className="small">No calendar synchronisation alerts.</p>}
           </Panel>
         )}
+        <Panel title="Property Report Tool — integrated report creation"
+          description="Create a signed, time-limited Staff handoff to the dedicated 23-template Report Tool. Completed PDFs return to ProInspect for independent review before client issue.">
+          {d.workOrders.filter((o:any)=>o.property_id && o.booking_id && !['completed','cancelled'].includes(o.status)).map((o:any)=>(
+            <details key={'new-'+o.id}>
+              <summary>{o.title}</summary>
+              <OperationForm endpoint={'/api/staff/work-orders/'+o.id+'/property-report-tool'}
+                label="Create report in Property Report Tool"
+                result={(r:any)=><a className="button secondary" href={r.url} target="_blank" rel="noreferrer">Open report editor</a>}/>
+            </details>
+          ))}
+        </Panel>
         <Panel
           title="Report Tool authoring"
           description="Launch creates a signed, expiring handoff for this work order. Manual report upload remains available."

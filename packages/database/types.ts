@@ -5,6 +5,9 @@ export interface Env {
   STRIPE_WEBHOOK_SECRET?: string;
   REPORT_TOOL_ORIGIN?: string;
   REPORT_TOOL_SECRET?: string;
+  REPORT_TOOL_V2_ORIGIN?: string;
+  REPORT_TOOL_V2_HANDOFF_KEY?: string;
+  REPORT_TOOL_V2_INGEST_TOKEN?: string;
   SHEETS_WEBHOOK_URL?: string;
   SHEETS_WEBHOOK_SECRET?: string;
   OPEN_HOME_SHEET_SYNC_ENABLED?: string;

@@ -53,6 +53,7 @@ import {
 } from './features/portfolio.server';
 import { stripeWebhook, decideApproval } from './features/finance.server';
 import { reportCallback } from './features/integrations.server';
+import { launchPropertyReportTool, ingestPropertyReportTool } from './features/property-report-bridge.server';
 import { booksServices, managesProperty } from '../../../packages/authorization/server';
 import { readOnlyCalendarDiagnostic } from './features/google-calendar.server';
 import { calendarSyncSummary, retryCalendarSync } from './features/calendar-scheduling.server';
@@ -247,6 +248,8 @@ export async function handleApi(
       return Response.json(await stripeWebhook(env, request));
     if (path === '/api/public/enquiries' && method === 'POST')
       return Response.json(await receiveEnquiry(env, request), { status: 201 });
+    if (path === '/api/integrations/property-report-tool/ingest' && method === 'POST')
+      return Response.json(await ingestPropertyReportTool(env,request));
     if (path === '/api/integrations/report-tool/callback' && method === 'POST')
       return Response.json(await reportCallback(env, request));
     if (path === '/api/health')
@@ -297,6 +300,11 @@ export async function handleApi(
     if(path==='/api/internal/rental-document-scan' && method==='POST')
       return Response.json(await acceptRentalScan(env,request));
     const user = await requireUser(request, env);
+    const propertyReportLaunch=path.match(/^\/api\/staff\/work-orders\/([a-zA-Z0-9_-]+)\/property-report-tool$/);
+    if(propertyReportLaunch && method==='POST'){
+      requireOrigin(request,env);
+      return Response.json(await launchPropertyReportTool(env,user,propertyReportLaunch[1]));
+    }
     const openHomeReport=path.match(/^\/api\/open-home\/report\/([a-zA-Z0-9_-]+)(\.csv)?$/);
     if(openHomeReport&&method==='GET'){
       const report=await readOpenHomeReport(env,user,openHomeReport[1]);
