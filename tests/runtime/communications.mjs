@@ -7,7 +7,7 @@ import {Miniflare} from 'miniflare';
 import {catalogueSql} from '../../scripts/catalogue-sql.mjs';
 import {unseal,seal} from '../../packages/auth/crypto.ts';
 mkdirSync('artifacts',{recursive:true});
-await build({entryPoints:['tests/runtime/communications-entry.ts'],outfile:'artifacts/communications-worker.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',external:['cloudflare:workers']});
+await build({entryPoints:['tests/runtime/communications-entry.ts'],outfile:'artifacts/communications-worker.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',external: ['cloudflare:workers', 'node:crypto']});
 const key=randomBytes(32).toString('base64'),gateway=randomBytes(32).toString('hex'),mail=[];
 let failMail=false;
 const mf=new Miniflare({

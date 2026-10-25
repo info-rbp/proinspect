@@ -14,7 +14,7 @@ await build({
   format: 'esm',
   platform: 'browser',
   target: 'es2022',
-  external: ['cloudflare:workers'],
+  external: ['cloudflare:workers', 'node:crypto'],
 });
 const key = randomBytes(32).toString('base64'),
   mail = [],

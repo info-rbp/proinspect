@@ -6,7 +6,7 @@ import {build} from 'esbuild';
 import {Miniflare} from 'miniflare';
 import {catalogueSql} from '../../scripts/catalogue-sql.mjs';
 mkdirSync('artifacts',{recursive:true});
-await build({entryPoints:['tests/runtime/entry.ts'],outfile:'artifacts/report-worker.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',external:['cloudflare:workers']});
+await build({entryPoints:['tests/runtime/entry.ts'],outfile:'artifacts/report-worker.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',external: ['cloudflare:workers', 'node:crypto']});
 const mf=new Miniflare({modules:true,scriptPath:'artifacts/report-worker.mjs',compatibilityDate:'2026-07-01',compatibilityFlags:['nodejs_compat'],
  d1Databases:{DB:'reports'},r2Buckets:{DOCUMENTS:'documents',RESTRICTED_DOCUMENTS:'restricted'},durableObjects:{SCHEDULER:{className:'BookingScheduler',useSQLite:true}},
  bindings:{APP_ENV:'local',APP_ORIGIN:'http://localhost',DATA_ENCRYPTION_KEY:randomBytes(32).toString('base64'),EMAIL_PROVIDER:'local'}});
