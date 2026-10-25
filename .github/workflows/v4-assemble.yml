@@ -1,0 +1,59 @@
+name: Assemble Version 4 Guest Booking Finalisation
+on:
+  push:
+    branches:
+      - version-4-guest-booking-finalisation
+    paths:
+      - v4-transfer-patch.b64
+      - .github/workflows/v4-assemble.yml
+permissions:
+  contents: write
+concurrency:
+  group: v4-assemble
+  cancel-in-progress: true
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+      - name: Verify pinned base and exact source patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e eea7584fc612d3b4d872434165008d0d77dc9b74^{commit}
+          git merge-base --is-ancestor eea7584fc612d3b4d872434165008d0d77dc9b74 HEAD
+          base64 --decode v4-transfer-patch.b64 | xz -d > /tmp/v4.patch
+          echo "460ba70d9ac0c240afaacd3e9b0576140ef8231e42bdcef5d362b8f341372899  /tmp/v4.patch" | sha256sum -c -
+          git apply --check /tmp/v4.patch
+          git apply /tmp/v4.patch
+          rm -f v4-transfer-patch.b64 .github/workflows/v4-assemble.yml
+          git add -A
+          git diff --cached --check
+          actual="$(git write-tree)"
+          test "$actual" = "ab43e72a010ab14df12193e08e3e9d6adb922fb0"
+          echo "Verified Version 4 release-candidate tree: $actual"
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install exact dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck, tests, migration invariants and both builds
+        run: pnpm check
+      - name: Isolated Worker and portal integration checks
+        run: pnpm test:integration
+      - name: Both Cloudflare Worker dry-runs (no deployment)
+        run: |
+          pnpm --dir apps/marketing exec wrangler deploy --dry-run
+          pnpm --dir apps/platform exec wrangler deploy --dry-run
+      - name: Commit verified changes only to Version 4 branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "ProInspect Version 4 build"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "feat(v4): catalogue 174 PAYG services and gated request workflows"
+          git push origin HEAD:version-4-guest-booking-finalisation
