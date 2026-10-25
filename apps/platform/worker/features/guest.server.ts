@@ -100,7 +100,7 @@ export async function guestCheckout(request:Request,env:Env){
  const session=await res.json() as {id?:string;url?:string;livemode?:boolean;mode?:string};
  assert(session.id?.startsWith('cs_test_')&&session.livemode===false&&session.mode==='payment'&&session.url?.startsWith('https://checkout.stripe.com/'),502,'GUEST_CHECKOUT_INVALID','Invalid checkout response.');
  await env.DB.batch([
-  statement(env.DB,"UPDATE payments SET provider='stripe',checkout_session_id=?,checkout_url=?,version=version+1,updated_at=? WHERE id=? AND version=? AND status IN('payment_required','failed')",session.id,session.url,now(),payment.id,payment.version),guard(env),clearGuard(env)
+  statement(env.DB,"UPDATE payments SET provider='stripe',checkout_session_id=?,checkout_url=?,version=version+1,updated_at=? WHERE id=? AND version=? AND status IN('payment_required','failed')",session.id!,session.url!,now(),payment.id,payment.version),guard(env),clearGuard(env)
  ]);
  return {checkoutUrl:session.url};
 }

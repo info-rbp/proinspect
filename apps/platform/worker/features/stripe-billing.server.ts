@@ -91,7 +91,7 @@ export async function createSubscriptionCheckout(env: Env, user: Principal, w: W
   assert(session.id?.startsWith('cs_test_') && session.livemode === false && session.mode === 'subscription' && session.url?.startsWith('https://checkout.stripe.com/'), 502, 'STRIPE_RESPONSE_INVALID', 'Invalid subscription Checkout response.');
   await statement(env.DB,
     "UPDATE stripe_billing_links SET session_id=?,checkout_url=?,updated_at=? WHERE id=? AND status='pending' AND (session_id IS NULL OR session_id=?)",
-    session.id, session.url, now(), id, session.id,
+    session.id!, session.url!, now(), id, session.id!,
   ).run();
   return { checkoutUrl: session.url };
 }
