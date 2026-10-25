@@ -12,7 +12,7 @@ import {
 
 type RentalRow={id:string;listing_id:string;reference:string;status:string;version:number;submitted_at:string|null;notice_envelope:string|null;review_request_envelope:string|null;started_at:string};
 type ApplicantRow={id:string;application_id:string;role:string;ordinal:number;state:string;email_hash:string;answers_envelope:string;version:number;access_expires_at:string;declared_at:string|null;notice_digest:string|null};
-type RentalListing={id:string;slug:string;title:string;display_address:string;suburb:string;postcode:string;agent_name:string;agent_role:string;application_mode:string;tenancy_database_notice_mode:string;tenancy_database_notice_json:string;application_recipient_email:string|null;status:string;kind:string};
+type RentalListing={id:string;slug:string;title:string;display_address:string;suburb:string;postcode:string;agent_name:string;agent_role:string;application_mode:string;tenancy_database_notice_mode:string;tenancy_database_notice_json:string;application_recipient_email:string|null;status:string;kind:string;rental_approval_state:string;rental_recipient_verified_at:string|null};
 export const rentalEnabled=(env:Env)=>env.RENTAL_APPLICATIONS_ENABLED==='true'&&Boolean(env.DATA_ENCRYPTION_KEY&&env.RESTRICTED_DOCUMENTS&&hasRentalRetentionPolicy(env));
 const expiry=()=>new Date(Date.now()+30*86400000).toISOString();
 const mailLink=(env:Env,token:string)=>env.APP_ORIGIN+'/rental-application/'+token;
@@ -40,18 +40,18 @@ async function turnstile(env:Env,request:Request,token?:string){
   403,'RENTAL_SECURITY_CHECK','Security verification has expired. Please try again.');
 }
 async function listing(env:Env,id:string){
- const r=await statement(env.DB,'SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email FROM leasing_listings WHERE id=?',id).first<RentalListing>();
+ const r=await statement(env.DB,'SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email,rental_approval_state,rental_recipient_verified_at FROM leasing_listings WHERE id=?',id).first<RentalListing>();
  assert(r,404,'PROPERTY_NOT_AVAILABLE','Property not available.');
  return r;
 }
 function active(r:RentalListing){
- assert(r.kind==='residential'&&r.status==='published'&&r.application_mode==='proinspect',404,
+ assert(r.kind==='residential'&&r.status==='published'&&r.application_mode==='proinspect'&&r.rental_approval_state==='approved'&&Boolean(r.rental_recipient_verified_at),404,
  'RENTAL_APPLICATION_UNAVAILABLE','This property does not accept ProInspect applications.');
 }
 function enabled(env:Env){assert(rentalEnabled(env),503,'RENTAL_NOT_ENABLED','New application processing is temporarily unavailable.');}
 function existingAccess(env:Env){assert(Boolean(env.DATA_ENCRYPTION_KEY&&env.RESTRICTED_DOCUMENTS),503,'APPLICATION_ACCESS_UNAVAILABLE','Private application records are temporarily unavailable.');}
 export async function rentalStartPage(env:Env,slug:string){
- const row=await statement(env.DB,"SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email FROM leasing_listings WHERE kind='residential' AND slug=? AND status='published' AND application_mode='proinspect'",slug).first<RentalListing>();
+ const row=await statement(env.DB,"SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email FROM leasing_listings WHERE kind='residential' AND slug=? AND status='published' AND application_mode='proinspect' AND rental_approval_state='approved' AND rental_recipient_verified_at IS NOT NULL",slug).first<RentalListing>();
  assert(row,404,'RENTAL_APPLICATION_UNAVAILABLE','Online applications are unavailable for this property.');
  return {listing:{id:row.id,slug:row.slug,title:row.title,address:row.display_address,suburb:row.suburb,agentName:row.agent_name},
   enabled:rentalEnabled(env),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??''};

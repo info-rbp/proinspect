@@ -4,6 +4,7 @@ import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from
 import { publicOpenHomeSessions,staffOpenHomeCheckIns } from './features/open-home.server';
 import { staffOpenHomeReportDetails,saveOpenHomeReportSettings,readOpenHomeReport,exportOpenHomeReportCsv } from './features/open-home-reports.server';
 import { listRentalApplications,rentalStaffDetail,updateRentalStatus,reviewRentalDocument,rentalDocumentDownload } from './features/rental-review.server';
+import { verifyRecipient } from './features/rental-governance.server';
 import { acceptRentalScan } from './features/rental-malware.server';
 import { setRentalPrivacyHold,resolveRentalPrivacyRequest,eraseRentalForRequest } from './features/rental-privacy.server';
 import { accountData, updateAccount, revokeSessions } from './features/account.server';
@@ -294,6 +295,10 @@ export async function handleApi(
         { ok: true },
         { headers: { 'Set-Cookie': await signOut(request, env) } },
       );
+    if(path.match(/^\/api\/public\/rental-recipient\/verify\/[a-f0-9]{64}$/)&&method==='POST'){
+      requireOrigin(request,env);
+      return Response.json(await verifyRecipient(env,path.split('/').pop()!));
+    }
     if(path==='/api/internal/rental-document-scan' && method==='POST')
       return Response.json(await acceptRentalScan(env,request));
     const user = await requireUser(request, env);

@@ -1,3 +1,4 @@
+import { issueRecipientChallenge,approveRentalListing } from './rental-governance.server';
 import { applicationSettingsSchema } from '../../../../packages/marketing/form18';
 import { z } from 'zod';
 import { statement, assert, now, uid, type Env } from '../../../../packages/database/types';
@@ -171,6 +172,8 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   const details=await statement(env.DB,'SELECT * FROM leasing_listings WHERE id=?',listingId).first();
   return {listing:details,sessions,photos,leads};
  }
+ if(method==='POST'&&section==='recipient-challenge')return issueRecipientChallenge(env,user,listingId,body);
+ if(method==='POST'&&section==='rental-approve')return approveRentalListing(env,user,listingId,body);
  if(method==='POST'&&section==='application-settings'){
   const d=applicationSettingsSchema.parse(body),settingsVersion=z.number().int().positive().parse((body as Record<string,unknown>).version);
   assert(listing.kind==='residential'||d.applicationMode!=='proinspect',422,'RESIDENTIAL_APPLICATION_ONLY','The WA Form 18 workflow is available for residential leasing only.');

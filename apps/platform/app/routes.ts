@@ -25,6 +25,7 @@ export default [
     route('properties-for-lease/:kind', '../../marketing/app/routes/leasing-sector.tsx'),
     route('properties-for-lease/:kind/:slug/apply', '../../marketing/app/routes/rental-start.tsx'),
     route('rental-application/:token', '../../marketing/app/routes/rental-application.tsx'),
+     route('rental-recipient/verify/:token','../../marketing/app/routes/rental-recipient-verify.tsx'),
     route('properties-for-lease/:kind/:slug', '../../marketing/app/routes/leasing-property.tsx'),
     route('contact', 'routes/public-contact.tsx'),
     route('guest/book/:serviceId?', 'routes/guest-book.tsx'),
