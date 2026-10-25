@@ -32,6 +32,7 @@ async function check(name,fn) { await fn();checks.push(name); console.log('PASS 
 const statementSql = JSON.parse(execFileSync('python3', ['scripts/schema-statements.py'], {encoding:'utf8'}));
 try {
   for (const sql of statementSql) await db.prepare(sql).run();
+  const subscriptionsBefore = (await get('SELECT COUNT(*) n FROM subscriptions')).n;
   await run("INSERT INTO clients(id,name,client_type,created_at) VALUES('cli_stripe_test','Sandbox account','landlord','2026-10-25')");
   await run("INSERT INTO properties(id,address,suburb,postcode,address_key,sector,created_at) VALUES('prop_stripe_test','1 Test Street','Perth','6000','test-stripe-25','residential','2026-10-25')");
   await run("INSERT INTO stripe_billing_links(id,client_id,property_id,sector,price_id,session_id,status,created_at,updated_at) VALUES('sbl_stripe_test','cli_stripe_test','prop_stripe_test','residential','price_1UUOxKEv62nbUZoksUBo5igf','cs_test_stripe_sub','pending','2026-10-25','2026-10-25')");
@@ -53,7 +54,7 @@ try {
     const e=event('checkout.session.completed',{id:'cs_test_stripe_sub',mode:'subscription',client_reference_id:'sbl_stripe_test',subscription:s.id,customer:s.customer,payment_status:'unpaid'},100);
     const r=await webhook(e);assert.equal(r.status,200,JSON.stringify(r.body));
     assert.equal((await get('SELECT status FROM stripe_billing_links WHERE id=?','sbl_stripe_test')).status,'incomplete');
-    assert.equal((await get('SELECT COUNT(*) n FROM subscriptions')).n,0);
+    assert.equal((await get('SELECT COUNT(*) n FROM subscriptions')).n,subscriptionsBefore);
   });
   const active=event('customer.subscription.created',{...s,status:'active'},300);
   await check('lifecycle webhook updates sandbox billing ledger once',async()=>{
@@ -71,7 +72,7 @@ try {
     const r=await webhook(event('invoice.paid',invoice,350));
     assert.equal(r.status,200,JSON.stringify(r.body));
     assert.equal((await get("SELECT needs_reconciliation FROM stripe_billing_events WHERE event_type='invoice.paid'")).needs_reconciliation,1);
-    assert.equal((await get('SELECT COUNT(*) n FROM subscriptions')).n,0);
+    assert.equal((await get('SELECT COUNT(*) n FROM subscriptions')).n,subscriptionsBefore);
   });
   await check('wrong subscription price fails closed',async()=>{
     const bad={...s,items:{data:[{price:{id:'price_unapproved'}}]},status:'active'};
