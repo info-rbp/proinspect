@@ -2,6 +2,10 @@ export interface Env {
   APP_ENV: 'local' | 'staging' | 'production';
   BUILD_SHA?: string;
   STRIPE_SECRET_KEY?: string;
+  STRIPE_ACCOUNT_ID?: string;
+  STRIPE_BILLING_ENABLED?: string;
+  STRIPE_GUEST_CHECKOUT_ENABLED?: string;
+  STRIPE_TAX_READY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   REPORT_TOOL_ORIGIN?: string;
   REPORT_TOOL_SECRET?: string;

@@ -9,6 +9,7 @@ import { addressKey } from '../../../../packages/validation/index';
 import { catalogue } from '../services.server';
 import { availability } from '../scheduler';
 import { readJson, guard, clearGuard } from '../../../../packages/operations/core';
+import { billingReady } from './stripe-billing.server';
 
 type Order = {id:string;reference:string;status:string;envelope:string;service_id:string;sector:string;price_basis:'published'|'quote';price_ex_gst_cents:number|null;property_id:string|null;booking_id:string|null;fingerprint:string;quote_expires_at:string|null;verified_at:string|null};
 const SYSTEM='usr_guest_booking_system';
@@ -81,6 +82,27 @@ export async function verifyGuest(request:Request,env:Env){
   await notify(env,order,input,'Your ProInspect request is verified','Request received',order.price_basis==='quote'?'We will review the service scope and provide a quote. This is not a confirmed appointment.':'Your email is confirmed. Continue using your private link to request an appointment.',env.APP_ORIGIN+'/guest/manage?token='+manage)
  ]);
  return {reference:order.reference,status:next,...(isLocal(request,env)?{localManageToken:manage}:{}),message:'Email verified. Open the management link sent to your inbox.'};
+}
+export async function guestCheckout(request:Request,env:Env){
+ requireOrigin(request,env);
+ billingReady(env, 'guest');
+ const {token}=z.object({token:z.string().regex(/^[a-f0-9]{64}$/)}).parse(await readJson(request));
+ await limit(env,'guest_checkout:'+request.headers.get('CF-Connecting-IP'),15);
+ const order=await lookup(env,token,'manage');
+ assert(order.status==='confirmed' && order.booking_id,409,'BOOKING_REQUIRED','Confirm an appointment before payment.');
+ const payment=await statement(env.DB,"SELECT p.* FROM payments p JOIN work_orders w ON w.id=p.work_order_id WHERE w.booking_id=? AND p.client_id=?",order.booking_id,CLIENT).first<{id:string;version:number;status:string;total_cents:number;description:string;checkout_url:string|null;client_id:string}>();
+ assert(payment && ['payment_required','failed'].includes(payment.status),409,'PAYMENT_UNAVAILABLE','This payment is not awaiting collection.');
+ assert(payment.total_cents > 0,409,'PAYMENT_AMOUNT_INVALID','This service does not have a payable amount.');
+ if(payment.checkout_url) return {checkoutUrl:payment.checkout_url};
+ const body=new URLSearchParams({mode:'payment',success_url:env.APP_ORIGIN+'/guest/checkout-result?status=returned',cancel_url:env.APP_ORIGIN+'/guest/checkout-result?status=cancelled','line_items[0][price_data][currency]':'aud','line_items[0][price_data][unit_amount]':String(payment.total_cents),'line_items[0][price_data][product_data][name]':payment.description,'line_items[0][quantity]':'1','metadata[payment_id]':payment.id,'metadata[client_id]':CLIENT,client_reference_id:payment.id});
+ const res=await fetch('https://api.stripe.com/v1/checkout/sessions',{method:'POST',headers:{Authorization:'Bearer '+env.STRIPE_SECRET_KEY,'Content-Type':'application/x-www-form-urlencoded','Idempotency-Key':'proinspect-guest-'+payment.id+'-'+payment.version,'Stripe-Version':'2026-08-26.dahlia'},body,signal:AbortSignal.timeout(15000)});
+ assert(res.ok,502,'GUEST_CHECKOUT_UNAVAILABLE','The sandbox checkout could not be opened.');
+ const session=await res.json() as {id?:string;url?:string;livemode?:boolean;mode?:string};
+ assert(session.id?.startsWith('cs_test_')&&session.livemode===false&&session.mode==='payment'&&session.url?.startsWith('https://checkout.stripe.com/'),502,'GUEST_CHECKOUT_INVALID','Invalid checkout response.');
+ await env.DB.batch([
+  statement(env.DB,"UPDATE payments SET provider='stripe',checkout_session_id=?,checkout_url=?,version=version+1,updated_at=? WHERE id=? AND version=? AND status IN('payment_required','failed')",session.id,session.url,now(),payment.id,payment.version),guard(env),clearGuard(env)
+ ]);
+ return {checkoutUrl:session.url};
 }
 export async function guestStatus(env:Env,token:string){
  const order=await lookup(env,token,'manage');

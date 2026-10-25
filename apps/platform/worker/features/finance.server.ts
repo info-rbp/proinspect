@@ -1,3 +1,4 @@
+import {billingEvent} from './stripe-billing.server';
 import { z } from 'zod';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
@@ -522,7 +523,7 @@ export async function checkout(env: Env, user: Principal, w: Workspace, id: stri
     'Online payment is not configured. The payment request remains available for manual reconciliation.',
   );
   assert(
-    env.APP_ENV === 'production' || env.STRIPE_SECRET_KEY.startsWith('sk_test_'),
+    env.APP_ENV === 'production' || /^(rk|sk)_test_/.test(env.STRIPE_SECRET_KEY),
     503,
     'TEST_KEY_REQUIRED',
     'Only test-mode payment credentials are accepted outside production.',
@@ -633,6 +634,10 @@ export async function stripeWebhook(env: Env, request: Request) {
     'LIVE_EVENT_BLOCKED',
     'Live events are blocked in this environment.',
   );
+  if (event.type === 'checkout.session.completed' && event.data?.object?.mode === 'subscription')
+    return billingEvent(env,event,raw);
+  if (['customer.subscription.created','customer.subscription.updated','customer.subscription.deleted','invoice.paid','invoice.payment_failed'].includes(event.type))
+    return billingEvent(env,event,raw);
   if (
     !['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)
   )

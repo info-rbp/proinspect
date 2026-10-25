@@ -1,3 +1,4 @@
+import { createSubscriptionCheckout } from './features/stripe-billing.server';
 import { ownerPortfolio } from './features/owner-portfolio.server';
 import * as guest from './features/guest.server';
 import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
@@ -240,6 +241,7 @@ export async function handleApi(
     if (path === '/api/guest/quote' && method === 'GET') return Response.json(await guest.guestQuotePreview(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
     if (path === '/api/guest/quote' && method === 'POST') return Response.json(await guest.acceptGuestQuote(request,env));
     if (path === '/api/guest/manage' && method === 'POST') { const result=await guest.guestAction(request,env); return result instanceof Response?result:Response.json(result); }
+    if (path === '/api/guest/checkout' && method === 'POST') return Response.json(await guest.guestCheckout(request,env));
     if (path === '/api/guest/status' && method === 'GET') return Response.json(await guest.guestStatus(env,url.searchParams.get('token')??''));
     if (path === '/api/guest/availability' && method === 'GET') return Response.json(await guest.guestAvailability(env,url.searchParams.get('token')??'',url.searchParams.get('date')??''));
     if (path === '/api/guest/report' && method === 'GET') return await guest.guestReport(env,url.searchParams.get('token')??'');
@@ -382,6 +384,12 @@ export async function handleApi(
       return Response.json(await updateAccount(env, user, await json(request)));
     if (path === '/api/account/sessions/revoke' && method === 'POST')
       return revokeSessions(request, env, user, await json(request));
+    if (path === '/api/stripe/subscription-checkout' && method === 'POST') {
+      requireOrigin(request,env);
+      const body=z.object({workspaceKind:z.enum(['landlord','commercial']),clientId:z.string(),propertyId:z.string()}).parse(await json(request));
+      const w=await workspace(env,user,body.workspaceKind,body.clientId);
+      return Response.json(await createSubscriptionCheckout(env,user,w,body.propertyId));
+    }
     if (path === '/api/owner-portfolio' && method === 'GET') return Response.json(await ownerPortfolio(env,user));
     if (path === '/api/session' && method === 'GET')
       return Response.json({ user, workspaces: await workspaces(env, user) });
