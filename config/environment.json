@@ -244,6 +244,33 @@
       ],
       "group": "release",
       "default": "false"
+    },
+    "STRIPE_ACCOUNT_ID": {
+      "targets": [
+        "platform"
+      ],
+      "group": "payments"
+    },
+    "STRIPE_BILLING_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "STRIPE_GUEST_CHECKOUT_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "STRIPE_TAX_READY": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
     }
   },
   "generated": [

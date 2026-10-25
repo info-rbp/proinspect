@@ -81,7 +81,7 @@ export function checkConfiguration(
   if (
     input.STRIPE_SECRET_KEY &&
     environment === 'staging' &&
-    !/^sk_test_/.test(input.STRIPE_SECRET_KEY)
+    ! /^(sk_test_|rk_test_)/.test(input.STRIPE_SECRET_KEY)
   )
     invalid.push({
       name: 'STRIPE_SECRET_KEY',
