@@ -1281,6 +1281,51 @@ try {
       assert.ok(!JSON.stringify(await ok(resident.base, resident)).includes('response_envelope'));
     },
   );
+  await check(
+    'eight independent portal identities remain isolated across every unrelated workspace and scheme',
+    async () => {
+      const buildingOnly = await login('resident-only@tests.example');
+      const invite = await ok(`${strataOrg.base}/team/invite`, strataUser, {
+        email: buildingOnly.email, schemeId: scheme.id, lotId: lot.id, role: 'resident',
+      });
+      await invited(buildingOnly, invite.localInvitationUrl);
+      const roles = [
+        { name: 'landlord', actor: owner, href: base },
+        { name: 'property-manager', actor: agency, href: pm.base },
+        { name: 'commercial', actor: commercialUser, href: commercial.base },
+        { name: 'strata-manager', actor: strataUser, href: strataOrg.base },
+        { name: 'tenant', actor: tenant, href: tenant.base },
+        { name: 'building', actor: buildingOnly, href: `/api/w/building/${scheme.id}` },
+        { name: 'council', actor: council, href: council.base },
+        { name: 'staff', actor: operator, href: staffBase },
+      ];
+      for (const { name, actor, href } of roles) {
+        assert.equal((await api(href, { cookie: actor.cookie })).status, 200, `${name} own scope`);
+        for (const other of roles) {
+          if (other.href === href || (name === 'tenant' && other.name === 'building')) continue;
+          assert.equal(
+            (await api(other.href, { cookie: actor.cookie })).status, 403,
+            `${name} cannot open ${other.name}`,
+          );
+        }
+      }
+      assert.deepEqual(
+        (await ok('/api/session', buildingOnly)).workspaces.map(w => w.kind),
+        ['building'],
+        'Resident cannot inherit council/tenancy authority',
+      );
+      const independent = await ok(`${strataOrg.base}/schemes`, strataUser, {
+        name: 'Separate Scheme Isolation Fixture', schemeNumber: 'SP-TEST-201',
+        address: '81 Independent Strata Street', suburb: 'Perth', postcode: '6000',
+        authorityReference: 'Independent synthetic management agreement', validUntil: expires,
+      });
+      assert.equal((await api(`${strataOrg.base}/schemes/${independent.id}`, {cookie: strataUser.cookie})).status, 200);
+      for (const actor of [tenant, buildingOnly, council]) {
+        for (const kind of ['building', 'council'])
+          assert.equal((await api(`/api/w/${kind}/${independent.id}`, {cookie: actor.cookie})).status, 403);
+      }
+    },
+  );
   let issue, buildingWo;
   await check(
     'resident inside-lot maintenance routes to tenancy while common-property issue routes to the scheme',

@@ -1,3 +1,5 @@
+> **25 October 2026 update:** This file preserves the dated Stage 2 observations from 15 October. Current production runs at `https://proinspect.systems`; the eight-portal evidence gate and current instructions are in [EIGHT_PORTAL_ACCEPTANCE.md](EIGHT_PORTAL_ACCEPTANCE.md). A new read-only query found 8 registered testing identities, 1 verified identity, zero active sessions, and zero D1 foreign-key violations. This does not prove any of the AT-01 through AT-12 real authenticated journeys. Instant guest pricing is a separate commercial gate, not a reason to mark included subscriber portal bookings as broken.
+
 # Stage 2 — Hosted cross-portal acceptance register
 
 > **Observed 15 October 2026.** The isolated Stage 1 suites are green; this file does not certify production acceptance.
