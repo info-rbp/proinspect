@@ -14,7 +14,8 @@ class ReleaseUpgrade(unittest.TestCase):
    db.execute("INSERT INTO work_orders(id,reference,client_id,property_id,title,status,created_at,updated_at) VALUES('upgrade-work','UPGRADE-WO','upgrade-client','upgrade-property','Existing work','triage','2026-10-01','2026-10-01')")
    snapshots={table:db.execute('SELECT * FROM '+table+' ORDER BY id').fetchall() for table in ['users','clients','properties','work_orders']}
    additions=[p for p in sorted(pathlib.Path('database/migrations').glob('*.sql')) if str(p) not in manifest]
-   self.assertEqual(len(additions),7)
+   self.assertEqual(len(additions),8)
+   self.assertEqual(additions[-1].name,"0027_v4_service_requests.sql")
    for path in additions:db.executescript(path.read_text())
    for table,rows in snapshots.items():self.assertEqual(db.execute('SELECT * FROM '+table+' ORDER BY id').fetchall(),rows,table)
    self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(),[])

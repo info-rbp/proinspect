@@ -1,5 +1,6 @@
 import { ownerPortfolio } from './features/owner-portfolio.server';
 import * as guest from './features/guest.server';
+import * as v4 from './features/v4-service-requests.server';
 import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
 import { publicOpenHomeSessions,staffOpenHomeCheckIns } from './features/open-home.server';
 import { staffOpenHomeReportDetails,saveOpenHomeReportSettings,readOpenHomeReport,exportOpenHomeReportCsv } from './features/open-home-reports.server';
@@ -235,6 +236,15 @@ export async function handleApi(
     const url = new URL(request.url),
       path = url.pathname,
       method = request.method;
+    if (path === '/api/v4/catalogue' && method === 'GET') return Response.json(await v4.publicCatalogue(env,url.searchParams.get('sector')??undefined),{headers:{'Cache-Control':'private, no-store'}});
+    const v4Item=path.match(/^\/api\/v4\/catalogue\/((?:RES|COM)-\d{3})$/);
+    if(v4Item && method==='GET')return Response.json(await v4.publicService(env,v4Item[1]),{headers:{'Cache-Control':'private, no-store'}});
+    if(path==='/api/v4/requests' && method==='POST')return Response.json(await v4.begin(request,env),{status:201});
+    if(path==='/api/v4/requests/verify' && method==='POST')return Response.json(await v4.verify(request,env));
+    if(path==='/api/v4/requests/status' && method==='GET')return Response.json(await v4.status(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
+    if(path==='/api/v4/requests/cancel' && method==='POST')return Response.json(await v4.cancel(request,env));
+    if(path==='/api/v4/requests/quote' && method==='GET')return Response.json(await v4.quotePreview(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
+    if(path==='/api/v4/requests/quote/accept' && method==='POST')return Response.json(await v4.acceptQuote(request,env));
     if (path === '/api/guest/requests' && method === 'POST') return Response.json(await guest.beginGuest(request,env),{status:201});
     if (path === '/api/guest/verify' && method === 'POST') return Response.json(await guest.verifyGuest(request,env));
     if (path === '/api/guest/quote' && method === 'GET') return Response.json(await guest.guestQuotePreview(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
@@ -366,6 +376,16 @@ export async function handleApi(
     if (path === '/api/staff/calendar-sync' && method === 'GET') {
       operationsWrite(user);
       return Response.json(await calendarSyncSummary(env));
+    }
+    if(path==='/api/v4/staff/requests' && method==='GET'){
+      operationsWrite(user);return Response.json(await v4.staffList(env,user),{headers:{'Cache-Control':'private, no-store'}});
+    }
+    const v4Staff=path.match(/^\/api\/v4\/staff\/requests\/([a-zA-Z0-9_-]+)$/);
+    if(v4Staff && method==='GET'){
+      operationsWrite(user);return Response.json(await v4.staffDetail(env,user,v4Staff[1]),{headers:{'Cache-Control':'private, no-store'}});
+    }
+    if(v4Staff && method==='POST'){
+      operationsWrite(user);return Response.json(await v4.staffChange(env,user,v4Staff[1],await json(request)));
     }
     if (path === '/api/staff/guest-orders' && method === 'GET') {
       operationsWrite(user);
