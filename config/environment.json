@@ -85,6 +85,20 @@
       ],
       "group": "open-home-sheet",
       "format": "signing-key"
+    },
+    "RENTAL_SCANNER_OUTBOUND_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "format": "signing-key"
+    },
+    "RENTAL_APPS_SCRIPT_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "format": "signing-key"
     }
   },
   "variables": {
@@ -244,6 +258,48 @@
       ],
       "group": "release",
       "default": "false"
+    },
+    "RENTAL_SCANNER_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": "false"
+    },
+    "RENTAL_APPS_SCRIPT_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": "false"
+    },
+    "RENTAL_SCANNER_ENDPOINT": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": ""
+    },
+    "RENTAL_SCANNER_ALLOWED_HOST": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": ""
+    },
+    "RENTAL_APPS_SCRIPT_ENDPOINT": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": ""
+    },
+    "RENTAL_APPS_SCRIPT_ALLOWED_HOST": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": ""
     }
   },
   "generated": [
