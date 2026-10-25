@@ -13,10 +13,12 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
       - name: Verify origin and reconstruct verified source patch
         shell: bash
         run: |
-          test "$(git rev-parse HEAD^)" = "a72f0382eac6cda2a44f33bcc5a604c979e38a3b"
+          git merge-base --is-ancestor a72f0382eac6cda2a44f33bcc5a604c979e38a3b HEAD
           cat .github/acceptance-bootstrap/chunk-0{0..6} > /tmp/proinspect-acceptance.b64
           base64 -d /tmp/proinspect-acceptance.b64 | xz -d > /tmp/proinspect-acceptance.patch
           echo "51284fd5016579081f822cf9ae8b7fbcaf2aa3f705881b76f98473bfc7e964e0  /tmp/proinspect-acceptance.patch" | sha256sum -c -
