@@ -3,6 +3,8 @@ import { loadApi } from '../lib/api.server';
 import { useWorkspace,workspaceApi } from '../lib/workspace';
 import { PageHeading,Badge } from '../../../../packages/ui/components';
 import { OperationForm,Input,TextArea,Panel,Select } from '../components/OperationForm';
+import {FORM_1AA_SECTIONS} from '../../../../packages/wa-residential/form1aa';
+import {specFor} from '../../../../packages/wa-residential/form-specifications';
 
 type Field={key:string;label:string;type:string;required:boolean};
 type Definition={code:string;name:string;stage:string;audience:string;purpose:string;fields:Field[];kind:string;signature:string;responseDays?:number};
@@ -39,11 +41,21 @@ export default function WAResidentialForms(){
    <a href={d.source} target="_blank" rel="noopener noreferrer">WA Consumer Protection official forms</a>
    {w.kind==='staff'&&<Link to={`${w.href}/wa-form-templates`}>Official-template library</Link>}
   </div>
+  <div className="grid-2">
+   <Panel title="Documents awaiting action" description="Forms requiring signatures, decisions, Staff review or official issuance.">
+     <p>{d.cases.filter(x=>['submitted','under_review','approved','document_issued'].includes(x.status)).length} forms requiring attention</p>
+     <p className="small">A request, approval, signature, delivery and legal service are separate actions.</p>
+   </Panel>
+   <Panel title="Completed tenancy documents" description="Completed records remain tied to this tenancy and must be specifically issued.">
+     <p>{d.cases.filter(x=>x.status==='completed').length} administratively completed form cases</p>
+     <Link to={`${w.href}/documents`}>View authorised completed documents</Link>
+   </Panel>
+  </div>
   <Panel title="Existing tenancy form cases">
    {d.cases.length===0&&<p>No residential statutory form cases are recorded for this tenancy.</p>}
    {d.cases.map(c=><div className="record-row" key={c.id}>
     <div>
-     <strong>{d.definitions.find(x=>x.code===c.formCode)?.name??c.formCode}</strong>
+     <strong>{d.definitions.find(x=>x.code===c.formCode)?.name??specFor(c.formCode)?.name??c.formCode}</strong>
      <p className="small">Created {c.createdAt}</p>
      <Badge status={c.status}/>
      {c.decisionStatus&&<p>Recorded response: {c.decisionStatus.replaceAll('_',' ')}</p>}
@@ -61,12 +73,24 @@ export default function WAResidentialForms(){
     {definitions.map(form=><details key={form.code}>
      <summary>{form.name}</summary>
      <p>{form.purpose}</p>
+     <p className="small">Handling: {specFor(form.code)?.route.replaceAll('_',' ')}. A reviewed official PDF and legally valid issue/service evidence are separate requirements.</p>
      {form.responseDays&&<p className="small">Indicative response period: {form.responseDays} days after verified receipt, subject to current WA law and exceptions.</p>}
      <OperationForm endpoint={`${prefix}/wa-forms`}
       defaults={{tenancyId,formCode:form.code}} label="Save form draft">
+      {form.code==='WA_FORM_1AA'&&<div className="stack">
+       <p className="small">Preparation worksheet only; the official WA Form 1AA text must not be replaced. Every verified tenant signs separately after approved document review.</p>
+       {FORM_1AA_SECTIONS.map(section=><details key={section.id} open={section.id==='parties'}>
+        <summary>{section.label}</summary><div className="stack">
+         {section.fields.map(field=>field.type==='textarea'?
+          <TextArea key={field.key} name={`answers.${field.key}`} label={field.label} required={['startsAt','rentFrequency','rentAmount','bondAmount'].includes(field.key)}/>:
+          <Input key={field.key} name={`answers.${field.key}`} label={field.label}
+           type={field.type==='date'?'date':field.type==='number'?'number':'text'}
+           required={['startsAt','rentFrequency','rentAmount','bondAmount'].includes(field.key)}/>)}
+        </div></details>)}
+       </div>}
       {form.code==='WA_FORM_19'&&<Select name="bookingId" label="Confirmed inspection booking"
         options={bookings.map(booking=>({value:booking.id,label:booking.reference??booking.id}))}/>}
-      {form.fields.map(field=>field.key==='entryPurpose'?
+      {form.code!=='WA_FORM_1AA'&&form.fields.map(field=>field.key==='entryPurpose'?
        <Select key={field.key} name={`answers.${field.key}`} label={field.label}
         options={[
          {value:'routine',label:'Routine inspection'},
