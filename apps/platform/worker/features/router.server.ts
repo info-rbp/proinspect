@@ -21,6 +21,7 @@ import * as tenancy from './tenancies.server';
 import * as admin from './admin.server';
 import * as forms from './forms.server';
 import * as waResidential from './wa-residential.server';
+import * as waSigning from './wa-agreement-signing.server';
 import * as waLifecycle from './wa-lifecycle.server';
 import * as waIssuance from './wa-issuance.server';
 import * as bonds from './bonds.server';
@@ -116,6 +117,8 @@ export async function featureApi(
       return ok(await waLifecycle.waReviewQueue(env,user,w));
     if (tail === 'wa-form-templates')
       return ok(await waLifecycle.waTemplatesData(env,user,w));
+    if (area === 'wa-forms' && id && action === 'agreement' && parts.length === 3)
+      return ok(await waSigning.signingStatus(env,user,w,id));
     if (area === 'wa-forms' && id && parts.length === 2)
       return ok(await waLifecycle.waCaseDetail(env,user,w,id));
     if (area === 'schemes' && id && parts.length === 2)
@@ -287,6 +290,14 @@ export async function featureApi(
   if (area === 'wa-form-templates' && id && action === 'approve')
     return ok(await waLifecycle.waApproveTemplate(env,user,w,id,await body()));
 
+  if (area === 'wa-forms' && id && action === 'agreement' && child === 'start')
+    return ok(await waSigning.prepareAgreement(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'agreement' && child === 'consent')
+    return ok(await waSigning.consentAgreement(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'agreement' && child === 'finalise')
+    return ok(await waSigning.finaliseAgreement(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'agreement' && child === 'void')
+    return ok(await waSigning.voidAgreement(env,user,w,id,await body()));
   if (tail === 'wa-forms')
     return ok(await waResidential.waCreateForm(env,user,w,await body()));
   if (area === 'wa-forms' && id && action === 'issue')
