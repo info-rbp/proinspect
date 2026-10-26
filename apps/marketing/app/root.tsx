@@ -18,6 +18,7 @@ import '../../../packages/ui/leasing.css';
 import '../../../packages/ui/rental-application.css';
 import '../../../packages/ui/rental-print.css';
 import '../../../packages/ui/open-home.css';
+import '../../../packages/ui/pcr-offer.css';
 import { MarketingHeader, MarketingFooter } from './components/site-chrome';
 export function loader({ context }: LoaderFunctionArgs) {
   const env = context.get(runtimeContext).env as Record<string, string>;

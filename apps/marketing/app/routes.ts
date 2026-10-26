@@ -18,6 +18,8 @@ export default [
    route('rental-recipient/verify/:token','routes/rental-recipient-verify.tsx'),
   route('properties-for-lease/:kind/:slug', 'routes/leasing-property.tsx'),
   route('contact', 'routes/contact.tsx'),
+  route('offers/pcr-100', 'routes/pcr-offer.tsx'),
+  route('offers/pcr/sample', 'routes/pcr-sample.ts'),
   route(':page', 'routes/information.tsx'),
   route('sitemap.xml', 'routes/sitemap.ts'),
   route('robots.txt', 'routes/robots.ts'),

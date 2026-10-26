@@ -29,6 +29,8 @@ export default [
      route('rental-recipient/verify/:token','../../marketing/app/routes/rental-recipient-verify.tsx'),
     route('properties-for-lease/:kind/:slug', '../../marketing/app/routes/leasing-property.tsx'),
     route('contact', 'routes/public-contact.tsx'),
+    route('offers/pcr-100', '../../marketing/app/routes/pcr-offer.tsx'),
+    route('offers/pcr/sample', '../../marketing/app/routes/pcr-sample.ts'),
     route('guest/book/:serviceId?', 'routes/guest-book.tsx'),
     route('owner-invitation','routes/owner-invitation.tsx'),
     route('guest/verify', 'routes/guest-verify.tsx'),
