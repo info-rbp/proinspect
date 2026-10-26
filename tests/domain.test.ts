@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { WORKSPACES, CLIENT_TYPES, safeReturnTo, canTransition } from '../packages/domain/index.ts';
 import { seal, unseal, digest, randomToken } from '../packages/auth/crypto.ts';
 test('portal family preserves distinct landlord, agency, strata, occupancy and staff workspaces', () => {
-  assert.equal(Object.keys(WORKSPACES).length, 8);
+  assert.equal(Object.keys(WORKSPACES).length, 9);
+  assert.ok(Object.hasOwn(WORKSPACES,'building-manager'));
+  assert.notDeepEqual(WORKSPACES['building-manager'],WORKSPACES.building);
   assert.ok(CLIENT_TYPES.includes('landlord'));
   assert.ok(!CLIENT_TYPES.includes('individual' as never));
 });

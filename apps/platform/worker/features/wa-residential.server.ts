@@ -29,8 +29,10 @@ async function entry(env:Env,user:Principal,w:Workspace,id:string){
  assert(c,404,'WA_FORM_NOT_FOUND','The form record is unavailable.');
  const t=await scope(env,user,w,c.tenancy_id);
  if(w.kind==='tenant'&&c.initiator_id!==user.id){
-  assert(c.form_code==='WA_FORM_28'&&c.issued_document_id &&
-   await documentAllowed(env,user,c.issued_document_id),
+  assert(c.issued_document_id && await documentAllowed(env,user,c.issued_document_id) && (
+    c.form_code==='WA_FORM_28' || (c.form_code==='WA_FORM_1AA' &&
+    await statement(env.DB,`SELECT 1 FROM wa_agreement_signers s JOIN wa_agreement_envelopes e ON e.id=s.envelope_id
+    WHERE e.case_id=? AND s.user_id=? AND s.role='tenant'`,c.id,user.id).first())),
     403,'WA_FORM_PRIVATE','This record has not been issued to you.');
  }
  return {c,t};
@@ -40,11 +42,14 @@ export async function waFormsData(env:Env,user:Principal,w:Workspace,tenancyId:s
  const q=w.kind==='tenant'
    ? `SELECT * FROM wa_residential_form_cases
       WHERE tenancy_id=? AND (initiator_id=? OR
-       (form_code='WA_FORM_28' AND issued_document_id IN
+       ((form_code='WA_FORM_28' OR (form_code='WA_FORM_1AA' AND EXISTS(
+         SELECT 1 FROM wa_agreement_signers s JOIN wa_agreement_envelopes e ON e.id=s.envelope_id
+         WHERE e.case_id=wa_residential_form_cases.id AND s.user_id=?
+       ))) AND issued_document_id IN
         (SELECT document_id FROM document_grants WHERE recipient_kind='tenancy' AND recipient_id=?)))
       ORDER BY created_at DESC`
    : 'SELECT * FROM wa_residential_form_cases WHERE tenancy_id=? ORDER BY created_at DESC';
- const rows=(await statement(env.DB,q,tenancyId,...(w.kind==='tenant'?[user.id,tenancyId]:[])).all<Record<string,any>>()).results;
+ const rows=(await statement(env.DB,q,tenancyId,...(w.kind==='tenant'?[user.id,user.id,tenancyId]:[])).all<Record<string,any>>()).results;
  return {propertyId:tenancy.property_id,definitions:waAvailableForms(w.kind),source:OFFICIAL_WA_FORMS_URL,cases:await Promise.all(rows.map(async r=>({
   id:r.id,formCode:r.form_code,status:r.status,version:r.version,createdAt:r.created_at,
   dueAt:r.due_at,dueBasis:r.due_basis,receiptAt:r.received_at,
@@ -61,7 +66,7 @@ export async function waCreateForm(env:Env,user:Principal,w:Workspace,input:unkn
  const t=await scope(env,user,w,q.tenancyId,w.kind!=='tenant');
  const f=waForm(q.formCode);
  assert(f&&waAvailableForms(w.kind).some(x=>x.code===q.formCode),422,'FORM_UNAVAILABLE','The selected form is not available to this user.');
- assert(t.status==='active'||f.stage==='bond',409,'TENANCY_ENDED','Only bond finalisation is permitted after the tenancy ends.');
+ assert(t.status==='active'||f.stage==='bond'||(t.status==='pending'&&f.stage==='commencement'),409,'TENANCY_ENDED','Only bond finalisation is permitted after the tenancy ends.');
  const values:Record<string,string|number>={};
  for(const field of f.fields){
   const v=q.answers[field.key];

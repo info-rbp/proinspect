@@ -1,3 +1,4 @@
+import { boundedText } from '../http-bodies';
 import { z } from 'zod';
 import { assert, AppError, now, statement, uid, type Env } from '../database/types';
 import type { Principal } from '../domain/index';
@@ -18,7 +19,7 @@ export const dateOnly = z
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .refine((s) => !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0, 10) === s);
 export async function readJson(request: Request): Promise<unknown> {
-  const text = await request.text();
+  const text = await boundedText(request);
   assert(text.length <= 65536, 413, 'PAYLOAD_TOO_LARGE', 'The submission exceeds the limit.');
   try {
     return JSON.parse(text);

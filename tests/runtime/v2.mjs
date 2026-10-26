@@ -8,7 +8,7 @@ import { Miniflare } from 'miniflare';
 // Real local Worker + D1 + R2 + Durable Object; no production network, email or money.
 mkdirSync('artifacts',{recursive:true});
 await build({entryPoints:['tests/runtime/entry.ts'],outfile:'artifacts/v2-api-worker.mjs',
- bundle:true,format:'esm',platform:'browser',target:'es2022',external:['cloudflare:workers']});
+ bundle:true,format:'esm',platform:'browser',target:'es2022',external: ['cloudflare:workers', 'node:crypto']});
 const mf=new Miniflare({
  modules:true,scriptPath:'artifacts/v2-api-worker.mjs',compatibilityDate:'2026-07-01',
  compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'v2-integration'},

@@ -1,3 +1,4 @@
+import {LegalAcceptance} from '../../../platform/app/components/LegalAcceptance';
 import { useState } from 'react';
 import { Form, Link, redirect, data, useLoaderData, useActionData, useSearchParams,
  type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
@@ -70,7 +71,7 @@ export async function action({context,params,request}:ActionFunctionArgs){
     accurate:form.get('accurate')==='yes',
     shareWithRepresentative:form.get('shareWithRepresentative')==='yes',
     notAnAgreement:form.get('notAnAgreement')==='yes',
-    noticeAcknowledged:form.get('noticeAcknowledged')==='yes'
+    noticeAcknowledged:form.get('noticeAcknowledged')==='yes',legalConsent:form.get('legalConsent')
    },Number(form.get('version')));
    return redirect(target('review'));
   }
@@ -197,7 +198,7 @@ function Review({page,editable}:{page:any;editable:boolean}){
   </section>
   {page.state==='complete'&&page.noticeMatches&&editable?<div className="rental-success"><h3>Your declaration is complete</h3><p>If you edit any section, you must declare again.</p></div>:null}
   {editable&&(page.state!=='complete'||!page.noticeMatches)&&<Form method="post" className="rental-form">
-   <input type="hidden" name="intent" value="finish"/><input type="hidden" name="version" value={page.version}/>
+   <input type="hidden" name="intent" value="finish"/><LegalAcceptance purpose="rental"/><input type="hidden" name="version" value={page.version}/>
    <h3>Your declaration</h3>{!page.noticeMatches&&page.state==='complete'&&<p className="rental-section-note">The tenancy database notice has changed. Review the current notice and acknowledge it again before the household can submit.</p>}
    <label className="rental-check"><input name="accurate" type="checkbox" value="yes" required/><span>I have reviewed my answers and believe they are accurate.</span></label>
    <label className="rental-check"><input name="shareWithRepresentative" type="checkbox" value="yes" required/><span>I authorise ProInspect to share my application details with {page.property.agentName}, the responsible leasing representative, solely for this application.</span></label>
@@ -214,7 +215,8 @@ function Review({page,editable}:{page:any;editable:boolean}){
   {submitted&&<div role="status" className="rental-success"><h2>Application received</h2><p>Reference: <strong>{page.reference}</strong></p><p>Your application was submitted for administrative handling by ProInspect. The landlord or authorised leasing representative makes the tenancy decision. This is not an offer of tenancy.</p></div>}
   <section className="rental-notice"><h3>Privacy, access and corrections</h3>
    <p>You can request access to your personal information, ask for a correction or request erasure. A privacy request is reviewed before any retained record is removed; legal or operational obligations may affect what can be deleted.</p>
-   {page.privacyRequests?.length>0&&<ul className="rental-document-list">{page.privacyRequests.map((r:any,i:number)=><li key={i}><strong>{r.kind.replaceAll('_',' ')} request</strong><span className="rental-state">{r.status.replaceAll('_',' ')}</span></li>)}</ul>}
+   <p>If this link expires, you can request fresh private access from <Link to="/rental-application/recover">Application access recovery</Link> using your reference and verified email address.</p>
+    {page.privacyRequests?.length>0&&<ul className="rental-document-list">{page.privacyRequests.map((r:any,i:number)=><li key={i}><strong>{r.kind.replaceAll('_',' ')} request</strong><span className="rental-state">{r.status.replaceAll('_',' ')}</span></li>)}</ul>}
    <Form method="post" className="rental-form"><input type="hidden" name="intent" value="privacy-request"/>
     <div className="rental-field"><label htmlFor="privacy-kind">What do you need?</label><select name="kind" id="privacy-kind" required>
       <option value="access">Access my information</option><option value="correction">Correct my information</option><option value="erasure">Request deletion of my information</option>

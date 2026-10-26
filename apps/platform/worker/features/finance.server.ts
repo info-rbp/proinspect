@@ -1,3 +1,9 @@
+import {requireReleaseApproval} from './release-governance.server';
+import {legalStatements} from './legal-acceptance.server';
+import { openPaymentCheckout, paymentSessionEvent, adjustmentEvent, type PaymentRecord } from './payment-lifecycle.server';
+import { boundedText } from '../../../../packages/http-bodies';
+import {billingEvent} from './stripe-billing.server';
+import {contractorCheckoutEvent} from './contractor-payments.server';
 import { z } from 'zod';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
@@ -23,7 +29,7 @@ import {
   receipt,
 } from '../../../../packages/operations/core';
 import { mailEvent } from '../../../../packages/notifications/server';
-import { digest } from '../../../../packages/auth/crypto';
+import { digest,seal } from '../../../../packages/auth/crypto';
 
 async function authorityLimit(
   env: Env,
@@ -307,6 +313,17 @@ export async function decideApproval(
   ]);
   return { id, status: d.decision };
 }
+export async function councilConflict(env:Env,user:Principal,w:Workspace,id:string,input:unknown){
+ assert(w.kind==='council',403,'COUNCIL_REQUIRED','Use the Council workspace.');
+ await requireReleaseApproval(env,'council');
+ const a=await approvalAccess(env,user,w,id);assert(a.decision_scope==='council'&&a.status==='pending',409,'DECISION_CLOSED','This proposal is closed.');await schemeAccess(env,user,w,a.scheme_id);
+ const d=z.object({status:z.enum(['clear','declared','unsure']),reason:z.string().trim().max(2000).optional()}).parse(input);
+ assert(d.status==='clear'||(d.reason&&d.reason.length>=8),422,'CONFLICT_REASON_REQUIRED','Record the relevant interest or uncertainty.');
+ const old=await statement(env.DB,'SELECT status FROM council_conflict_declarations WHERE approval_id=? AND user_id=?',id,user.id).first<{status:string}>();
+ assert(!old,409,'DECLARATION_RECORDED','This declaration is already recorded. A change of circumstances requires a new reviewed proposal; do not overwrite the original evidence.');
+ await env.DB.batch([statement(env.DB,'INSERT INTO council_conflict_declarations(approval_id,user_id,status,reason_envelope,declared_at) VALUES(?,?,?,?,?)',id,user.id,d.status,d.reason?await seal(env.DATA_ENCRYPTION_KEY,`council-conflict:${id}:${user.id}`,{reason:d.reason}):null,now()),activity(env,user,'council.interest_declared','approval',id,a.property_id,a.scheme_id,{status:d.status})]);
+ return {status:d.status,message:'An operational declaration is recorded. It is not a statutory voting determination.'};
+}
 export async function councilResponse(
   env: Env,
   user: Principal,
@@ -338,6 +355,7 @@ export async function councilResponse(
     now(),
   ).first<{ id: string }>();
   assert(m, 403, 'TERM_ENDED', 'Council membership has ended.');
+  if(env.COUNCIL_GOVERNANCE_ENABLED==='true'){await requireReleaseApproval(env,'council');const declaration=await statement(env.DB,'SELECT status FROM council_conflict_declarations WHERE approval_id=? AND user_id=?',id,user.id).first<{status:string}>();assert(declaration,409,'DECLARATION_REQUIRED','Record an interest declaration before responding.');assert(declaration.status==='clear'||d.response==='information',403,'COUNCIL_INTEREST_REQUIRES_REVIEW','A declared or uncertain interest permits information requests only; an authorised external decision process is required.');}
   await env.DB.batch([
     statement(
       env.DB,
@@ -500,86 +518,13 @@ export async function recordPayment(
   ]);
   return { id, status: d.status };
 }
-export async function checkout(env: Env, user: Principal, w: Workspace, id: string) {
-  const p = await paymentAccess(env, user, w, id);
-  assert(
-    booksServices(w),
-    403,
-    'CUSTOMER_REQUIRED',
-    'Use the commissioning customer account to pay.',
-  );
-  await clientMembership(env, user, w.scopeId, true);
-  assert(
-    ['payment_required', 'failed'].includes(p.status),
-    409,
-    'PAYMENT_CLOSED',
-    'This payment is not awaiting collection.',
-  );
-  assert(
-    env.STRIPE_SECRET_KEY,
-    503,
-    'PAYMENT_PROVIDER_UNCONFIGURED',
-    'Online payment is not configured. The payment request remains available for manual reconciliation.',
-  );
-  assert(
-    env.APP_ENV === 'production' || env.STRIPE_SECRET_KEY.startsWith('sk_test_'),
-    503,
-    'TEST_KEY_REQUIRED',
-    'Only test-mode payment credentials are accepted outside production.',
-  );
-  if (p.checkout_url) return { url: p.checkout_url };
-  const body = new URLSearchParams({
-    mode: 'payment',
-    success_url: `${env.APP_ORIGIN}${w.href}/finance?checkout=returned`,
-    cancel_url: `${env.APP_ORIGIN}${w.href}/finance`,
-    'line_items[0][price_data][currency]': 'aud',
-    'line_items[0][price_data][unit_amount]': String(p.total_cents),
-    'line_items[0][price_data][product_data][name]': p.description,
-    'line_items[0][quantity]': '1',
-    'metadata[payment_id]': id,
-    'metadata[client_id]': p.client_id,
-    client_reference_id: id,
-  });
-  const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Idempotency-Key': `proinspect-payment-${id}-${p.version}`,
-    },
-    body,
-    signal: AbortSignal.timeout(15000),
-  });
-  assert(
-    response.ok,
-    502,
-    'PAYMENT_PROVIDER_ERROR',
-    'Checkout could not be opened. No payment has been marked as paid.',
-  );
-  const session = (await response.json()) as Record<string, any>;
-  assert(
-    typeof session.id === 'string' &&
-      typeof session.url === 'string' &&
-      new URL(session.url).origin === 'https://checkout.stripe.com',
-    502,
-    'CHECKOUT_INVALID',
-    'Invalid checkout response.',
-  );
-  await env.DB.batch([
-    statement(
-      env.DB,
-      "UPDATE payments SET provider='stripe',checkout_session_id=?,checkout_url=?,version=version+1,updated_at=? WHERE id=? AND version=? AND status IN('payment_required','failed')",
-      session.id,
-      session.url,
-      now(),
-      id,
-      p.version,
-    ),
-    guard(env),
-    activity(env, user, 'payment.checkout_opened', 'payment', id, p.property_id),
-    clearGuard(env),
-  ]);
-  return { url: session.url };
+export async function checkout(env: Env, user: Principal, w: Workspace, id: string, legalConsent?:unknown) {
+ await requireReleaseApproval(env,'stripe_payments');
+ const payment = await paymentAccess(env,user,w,id);
+ assert(booksServices(w),403,'CUSTOMER_REQUIRED','Use the commissioning account to pay.');
+ await clientMembership(env,user,w.scopeId,true);
+ const receipts=await legalStatements(env,{kind:'user',id:user.id},'payment',id,{paymentId:id,totalCents:payment.total_cents,currency:'AUD'},legalConsent);
+ return openPaymentCheckout(env,payment as PaymentRecord,{success:`${env.APP_ORIGIN}${w.href}/finance?checkout=returned`,cancel:`${env.APP_ORIGIN}${w.href}/finance`},user,receipts);
 }
 export async function verifyHmac(secret: string, payload: string, hex: string) {
   if (!/^[a-f0-9]{64}$/i.test(hex)) return false;
@@ -604,9 +549,8 @@ export async function stripeWebhook(env: Env, request: Request) {
     'WEBHOOK_UNCONFIGURED',
     'Payment webhook is not configured.',
   );
-  const raw = await request.text();
-  assert(raw.length <= 65536, 413, 'PAYLOAD_TOO_LARGE', 'Payload exceeds the limit.');
-  const parts = (request.headers.get('stripe-signature') ?? '').split(','),
+  const raw = await boundedText(request, 1024 * 1024);
+  const parts = (request.headers.get('stripe-signature') ?? '').split(',').map(p=>p.trim()),
     timestamps = parts.filter((p) => p.startsWith('t='));
   assert(timestamps.length === 1, 400, 'SIGNATURE_INVALID', 'Invalid webhook signature.');
   const t = Number(timestamps[0].slice(2));
@@ -620,7 +564,8 @@ export async function stripeWebhook(env: Env, request: Request) {
   for (const s of parts.filter((p) => p.startsWith('v1=')))
     if (await verifyHmac(env.STRIPE_WEBHOOK_SECRET, `${t}.${raw}`, s.slice(3))) verified = true;
   assert(verified, 400, 'SIGNATURE_INVALID', 'Invalid webhook signature.');
-  const event = JSON.parse(raw);
+  let decoded:unknown; try { decoded=JSON.parse(raw); } catch { assert(false,400,'EVENT_JSON_INVALID','Invalid signed event JSON.'); }
+  const event = z.object({id:z.string().regex(/^evt_[A-Za-z0-9_]+$/),type:z.string().min(1).max(100),created:z.number().int().nonnegative().optional(),livemode:z.boolean(),data:z.object({object:z.record(z.string(),z.any())})}).parse(decoded);
   assert(
     typeof event.id === 'string' && typeof event.livemode === 'boolean',
     422,
@@ -628,88 +573,22 @@ export async function stripeWebhook(env: Env, request: Request) {
     'Invalid provider event.',
   );
   assert(
-    env.APP_ENV === 'production' || event.livemode === false,
+    event.livemode === (env.APP_ENV === 'production'),
     400,
     'LIVE_EVENT_BLOCKED',
     'Live events are blocked in this environment.',
   );
-  if (
-    !['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)
-  )
-    return { received: true, ignored: true };
-  const s = event.data?.object;
-  assert(s && s.mode === 'payment', 422, 'EVENT_INVALID', 'Invalid checkout event.');
-  if (s.payment_status !== 'paid') return { received: true, unpaid: true };
-  const p = await statement(
-    env.DB,
-    'SELECT * FROM payments WHERE id=?',
-    String(s.metadata?.payment_id ?? ''),
-  ).first<Record<string, any>>();
-  assert(
-    p &&
-      p.provider === 'stripe' &&
-      p.checkout_session_id === s.id &&
-      p.client_id === s.metadata?.client_id &&
-      p.total_cents === s.amount_total &&
-      s.currency === 'aud',
-    409,
-    'PAYMENT_MISMATCH',
-    'Payment event does not match the recorded checkout.',
-  );
-  const hash = await digest(raw),
-    prior = await statement(
-      env.DB,
-      "SELECT payload_hash FROM webhook_receipts WHERE provider='stripe' AND event_id=?",
-      event.id,
-    ).first<{ payload_hash: string }>();
-  if (prior) {
-    assert(
-      prior.payload_hash === hash,
-      409,
-      'EVENT_REPLAY_MISMATCH',
-      'Event content differs from the accepted receipt.',
-    );
-    return { received: true, replayed: true };
+  if (String(event.type).startsWith('checkout.session.') && event.data?.object?.metadata?.contractor_plan_id) {
+    const result=await contractorCheckoutEvent(env,event);
+    if(result)return result;
   }
-  const statements = [
-    statement(
-      env.DB,
-      "INSERT INTO webhook_receipts(provider,event_id,payload_hash,created_at) VALUES('stripe',?,?,?)",
-      event.id,
-      hash,
-      now(),
-    ),
-  ];
-  if (p.status !== 'paid') {
-    assert(
-      ['pending', 'payment_required', 'failed'].includes(p.status),
-      409,
-      'PAYMENT_STATE_CONFLICT',
-      'Payment requires reconciliation.',
-    );
-    statements.push(
-      statement(
-        env.DB,
-        "UPDATE payments SET status='paid',version=version+1,external_reference=?,updated_at=? WHERE id=? AND version=?",
-        s.id,
-        now(),
-        p.id,
-        p.version,
-      ),
-      guard(env),
-      statement(
-        env.DB,
-        "INSERT INTO payment_events(id,payment_id,from_status,to_status,reference,created_at) VALUES(?,?,?,'paid',?,?)",
-        uid('pe'),
-        p.id,
-        p.status,
-        event.id,
-        now(),
-      ),
-      projection(env, 'payment.paid', p.id, { status: 'paid', workOrderId: p.work_order_id }),
-      clearGuard(env),
-    );
-  }
-  await env.DB.batch(statements);
-  return { received: true };
+  if (String(event.type).startsWith('checkout.session.') && event.data?.object?.mode === 'subscription')
+    return billingEvent(env,event,raw);
+  if (['customer.subscription.created','customer.subscription.updated','customer.subscription.deleted','invoice.paid','invoice.payment_failed','invoice.finalized','invoice.voided','invoice.marked_uncollectible'].includes(event.type))
+    return billingEvent(env,event,raw);
+  if (['checkout.session.completed','checkout.session.async_payment_succeeded','checkout.session.async_payment_failed','checkout.session.expired'].includes(event.type))
+    return paymentSessionEvent(env,event,raw);
+  if (['charge.refunded','refund.created','refund.updated','refund.failed','charge.dispute.created','charge.dispute.updated','charge.dispute.closed'].includes(event.type))
+    return adjustmentEvent(env,event,raw);
+  return {received:true,ignored:true};
 }

@@ -16,7 +16,7 @@ await build({
  entryPoints:['tests/runtime/open-home-resend-entry.ts'],
  outfile:'artifacts/open-home-resend-worker.mjs',
  bundle:true,format:'esm',platform:'browser',target:'es2022',
- external:['cloudflare:workers'],
+ external: ['cloudflare:workers', 'node:crypto'],
 });
 const secret=randomBytes(32).toString('base64');
 const sent=[];

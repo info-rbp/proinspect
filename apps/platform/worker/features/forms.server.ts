@@ -5,6 +5,7 @@ import { operationsWrite, administrator } from '../../../../packages/authorizati
 import { tenancyAccess } from './tenancies.server';
 import {
   recordId,
+  dateOnly,
   shortText,
   reference,
   version,
@@ -353,6 +354,11 @@ export async function restrictedDetail(env: Env, user: Principal, id: string) {
         id,
       ).all()
     ).results,
+    form2Preparations: (
+      await statement(env.DB, `SELECT p.id,p.created_at,p.prepared_by,r.outcome,r.reviewed_at
+        FROM restricted_form2_preparations p LEFT JOIN restricted_form2_reviews r ON r.preparation_id=p.id
+        WHERE p.case_id=? ORDER BY p.created_at DESC`,id).all()
+    ).results,
   };
 }
 export async function uploadRestrictedEvidence(
@@ -496,4 +502,48 @@ export async function setRestrictedReviewer(env: Env, user: Principal, input: un
     }),
   ]);
   return { ok: true };
+}
+
+/** Confidential Form 2 preparation is deliberately NOT the official form or legal service. */
+export async function grantRestrictedSecondReviewer(env:Env,user:Principal,id:string,input:unknown){
+ const c=await caseAccess(env,user,id);
+ assert(c.applicant_user_id===user.id,403,'CASE_CONSENT_REQUIRED','Only the applicant can approve additional case access.');
+ const d=z.object({reviewerId:recordId,confirmExplicitAccess:z.literal(true)}).parse(input);
+ assert(await statement(env.DB,"SELECT 1 FROM restricted_reviewers r JOIN staff_profiles s ON s.user_id=r.staff_user_id AND s.active=1 WHERE r.staff_user_id=? AND r.active=1",d.reviewerId).first(),
+  422,'REVIEWER_UNAVAILABLE','Select an active confidential reviewer.');
+ await env.DB.batch([
+  statement(env.DB,'INSERT OR IGNORE INTO restricted_case_grants(case_id,staff_user_id,granted_by) VALUES(?,?,?)',id,d.reviewerId,user.id),
+  privateAudit(env,user,id,'additional_reviewer_explicitly_granted')
+ ]);
+ return {ok:true};
+}
+export async function prepareRestrictedForm2(env:Env,user:Principal,id:string,input:unknown){
+ const c=await caseAccess(env,user,id);
+ assert(c.applicant_user_id!==user.id&&c.status==='under_review',403,'CASE_REVIEW_STAGE','A designated reviewer must prepare this case in the review stage.');
+ const d=z.object({officialEdition:z.string().trim().min(4).max(80),plannedNoticeDate:dateOnly,
+  servicePlan:z.string().trim().min(10).max(1500),noAutomaticService:z.literal(true)}).parse(input);
+ const prepId=uid('form2prep');
+ await env.DB.batch([
+  statement(env.DB,'INSERT INTO restricted_form2_preparations(id,case_id,encrypted_worksheet,prepared_by,created_at) VALUES(?,?,?,?,?)',
+   prepId,id,await seal(env.DATA_ENCRYPTION_KEY,`form2-prep:${prepId}`,d),user.id,now()),
+  privateAudit(env,user,id,'manual_form2_preparation_recorded')
+ ]);
+ return {preparationId:prepId,status:'draft',legalServicePerformed:false};
+}
+export async function reviewRestrictedForm2(env:Env,user:Principal,id:string,preparationId:string,input:unknown){
+ const c=await caseAccess(env,user,id);
+ assert(c.applicant_user_id!==user.id&&c.status==='under_review',403,'CASE_REVIEW_STAGE','An authorised second reviewer is required.');
+ const p=await statement(env.DB,'SELECT id,prepared_by FROM restricted_form2_preparations WHERE id=? AND case_id=?',preparationId,id)
+  .first<{id:string;prepared_by:string}>();
+ assert(p,404,'FORM2_PREPARATION_NOT_FOUND','Preparation not found.');
+ assert(p.prepared_by!==user.id,403,'FORM2_INDEPENDENT_REVIEW','The preparer cannot approve their own worksheet.');
+ const d=z.object({outcome:z.enum(['reviewed_for_manual_handling','requires_revision']),
+  officialFormChecked:z.literal(true),noAutomaticService:z.literal(true)}).parse(input);
+ const reviewId=uid('form2review');
+ await env.DB.batch([
+  statement(env.DB,'INSERT INTO restricted_form2_reviews(id,preparation_id,reviewer_id,outcome,reviewed_at) VALUES(?,?,?,?,?)',
+   reviewId,preparationId,user.id,d.outcome,now()),
+  privateAudit(env,user,id,'manual_form2_independent_review')
+ ]);
+ return {reviewId,outcome:d.outcome,legalServicePerformed:false,documentIssued:false};
 }

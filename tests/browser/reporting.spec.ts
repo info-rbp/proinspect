@@ -40,3 +40,48 @@ test('customer reporting routes disclose no Staff draft creation or private Work
    headers:{Origin:origin},data:{workOrderId:'fake-work-order'}})).status()).toBe(403);
  }finally{await c.close();}
 });
+
+test('mobile inspector captures reviewed evidence without horizontal overflow',async({browser})=>{
+ const ownerCtx=await browser.newContext({baseURL:origin});
+ const staffCtx=await browser.newContext({baseURL:origin,viewport:{width:390,height:844}});
+ try{
+  const email='field-owner-'+randomUUID()+'@proinspect.test';
+  await login(ownerCtx,email);
+  const account=await post(ownerCtx,'/api/onboarding',{displayName:'Field fixture',clientName:'Field fixture owner'});
+  const base='/api/w/landlord/'+account.clientId;
+  const property=await post(ownerCtx,base+'/properties',{address:'37 Field Inspection Road '+randomUUID().slice(0,4),suburb:'Perth',postcode:'6000',propertyType:'House',selfManaged:true});
+  const date=new Date(Date.now()+14*86400000);
+  while([0,6].includes(date.getUTCDay()))date.setUTCDate(date.getUTCDate()+1);
+  const slots=await ownerCtx.request.get(base+'/availability?service=routine-inspection&date='+date.toISOString().slice(0,10)+'&property='+property.propertyId);
+  expect(slots.ok()).toBe(true);
+  const available=(await slots.json()).slots;
+  expect(available.length).toBeGreaterThan(0);
+  const booking=await post(ownerCtx,base+'/bookings',{propertyId:property.propertyId,serviceId:'routine-inspection',
+   startsAt:available[0].start,requestKey:randomUUID().replaceAll('-',''),
+   access:{method:'owner',instructions:'Synthetic browser field report test',noticeConfirmed:true}});
+  await login(staffCtx,'review-staff@proinspect.test');
+  const report=await post(staffCtx,'/api/w/staff/operations/reports/create',{workOrderId:booking.workOrderId});
+  const page=await staffCtx.newPage();
+  await page.goto('/w/staff/operations/reports/'+report.id);
+  await expect(page.getByRole('region',{name:'Mobile field inspection'})).toBeVisible();
+  await expect(page.getByRole('progressbar',{name:'Inspection assessment progress'})).toBeVisible();
+  await page.getByRole('button',{name:'Intact'}).click();
+  await page.getByLabel('Observation and context').fill('Synthetic observation for responsive field capture.');
+  await page.getByRole('button',{name:/Save draft/}).click();
+  await expect(page.getByText(/Report action completed/)).toBeVisible();
+  const photo=page.getByLabel('Take or select evidence photo');
+  await photo.setInputFiles('tests/fixtures/report-photo.jpg');
+  await expect.poll(async()=>{
+    const response=await staffCtx.request.get('/api/w/staff/operations/reports/'+report.id);
+    if(!response.ok())return -1;
+    return ((await response.json()).evidence??[]).length;
+  },{timeout:20000,message:'Camera photo must reach private inspection evidence API'}).toBe(1);
+  const evidence=await staffCtx.request.get('/api/w/staff/operations/reports/'+report.id);
+  expect(evidence.ok()).toBe(true);
+  const current=await evidence.json();
+  expect(current.evidence[0].status).toBe('pending');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
+  mkdirSync('artifacts/screenshots',{recursive:true});
+  await page.screenshot({path:'artifacts/screenshots/field-inspector-mobile.png',fullPage:true});
+ }finally{await ownerCtx.close();await staffCtx.close();}
+});

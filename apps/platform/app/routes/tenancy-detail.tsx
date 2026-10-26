@@ -163,6 +163,11 @@ export default function TenancyDetail() {
           </Panel>
         )}
         {data.residential && (
+          <Panel title="Rent routing and external reconciliation" description="Plan the lawful payment destination and track independently evidenced external receipts. There is no rent checkout or disbursement from ProInspect.">
+            <Link to={`${w.href}/tenancies/${t.id}/rent-routing`}>Open proposed rent route and evidence register →</Link>
+          </Panel>
+        )}
+        {data.residential && (
           <Panel title="Bond register and government transactions" description="Track bond receipts, changes, releases, disputes and evidence of external decisions.">
             <Link to={`${w.href}/tenancies/${t.id}/bonds`}>Open bond register and workflows →</Link>
           </Panel>

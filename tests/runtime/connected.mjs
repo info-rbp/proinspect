@@ -15,7 +15,7 @@ await build({
   format: 'esm',
   platform: 'browser',
   target: 'es2022',
-  external: ['cloudflare:workers'],
+  external: ['cloudflare:workers','node:*'],
 });
 const key = randomBytes(32).toString('base64');
 const webhookSecret = 'whsec_synthetic_fixture_only',
@@ -31,12 +31,14 @@ const mf = new Miniflare({
   durableObjects: { SCHEDULER: { className: 'BookingScheduler', useSQLite: true } },
   outboundService: async (request) => {
     const url = new URL(request.url);
+    if(url.origin==='https://api.stripe.com'&&url.pathname==='/v1/account')return Response.json({id:'acct_1USumhEv62nbUZok'});
     if (url.origin === 'https://api.stripe.com' && url.pathname === '/v1/checkout/sessions') {
       const data = new URLSearchParams(await request.text());
       checkouts.push(Object.fromEntries(data));
       return Response.json({
         id: 'cs_test_' + data.get('metadata[payment_id]'),
         url: 'https://checkout.stripe.com/c/pay/test_' + data.get('metadata[payment_id]'),
+        livemode:false,mode:'payment',status:'open',amount_total:Number(data.get('line_items[0][price_data][unit_amount]')),currency:'aud',expires_at:Math.floor(Date.now()/1000)+3600,client_reference_id:data.get('client_reference_id'),metadata:{payment_id:data.get('metadata[payment_id]'),client_id:data.get('metadata[client_id]'),payment_attempt_id:data.get('metadata[payment_attempt_id]')},
       });
     }
     throw new Error('Unexpected external request blocked: ' + url.origin);
@@ -45,6 +47,7 @@ const mf = new Miniflare({
     APP_ENV: 'local',
     RESTRICTED_WORKFLOWS_ENABLED: 'true',
     STRIPE_SECRET_KEY: 'sk_test_fixture_only',
+    STRIPE_ACCOUNT_ID:'acct_1USumhEv62nbUZok',STRIPE_PAYMENTS_ENABLED:'true',
     STRIPE_WEBHOOK_SECRET: webhookSecret,
     REPORT_TOOL_SECRET: reportSecret,
     REPORT_TOOL_ORIGIN: 'https://reports.example.test',
@@ -848,6 +851,7 @@ try {
       assert.notEqual(stored.status, 'paid');
       const event = {
           id: 'evt_synthetic_paid',
+          created:Math.floor(Date.now()/1000),
           livemode: false,
           type: 'checkout.session.completed',
           data: {
@@ -857,7 +861,9 @@ try {
               payment_status: 'paid',
               amount_total: 9900,
               currency: 'aud',
-              metadata: { payment_id: p.id, client_id: client },
+              client_reference_id:checkouts.at(-1).client_reference_id,
+              payment_intent:'pi_synthetic_payment',
+              metadata: { payment_id: p.id, client_id: client,payment_attempt_id:checkouts.at(-1)['metadata[payment_attempt_id]'] },
             },
           },
         },

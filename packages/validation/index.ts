@@ -12,6 +12,7 @@ export const signInSchema = z.object({
 });
 export const landlordTypes = ['residential', 'commercial'] as const;
 export const onboardingSchema = z.object({
+  legalConsent: z.unknown().optional(),
   displayName: z.string().trim().min(2).max(100),
   clientName: z.string().trim().min(2).max(160),
   // Legacy API clients are residential unless they explicitly select commercial.
@@ -28,6 +29,7 @@ export const propertySchema = z.object({
   selfManaged: z.literal(true),
 });
 export const bookingSchema = z.object({
+  legalConsent: z.unknown().optional(),
   propertyId: id,
   serviceId: id,
   startsAt: z.string().datetime({ offset: true }),

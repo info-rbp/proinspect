@@ -148,6 +148,31 @@ function EditApplicationSettings({listing}:{listing:any}){
   {message&&<p role="status">{message}</p>}
  </form>;
 }
+function ApprovalControls({listing}:{listing:any}){
+ const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),revalidator=useRevalidator();
+ const submit=async(action:string,payload:Record<string,unknown>)=>{
+  setBusy(true);setMessage('');
+  try{await send('/api/staff/leasing/'+listing.id+'/'+action,{version:listing.version,...payload});
+    setMessage(action==='recipient-challenge'?'Verification email queued for the configured recipient.':'Application authority approved.');revalidator.revalidate();}
+  catch(error){setMessage(error instanceof Error?error.message:'Approval action failed.');}finally{setBusy(false);}
+ };
+ if(listing.kind!=='residential'||listing.application_mode!=='proinspect')return null;
+ return <section className="panel stack"><h4>Residential application approval</h4>
+ <p className="small">Approval: {listing.rental_approval_state??'pending'} · Recipient verified: {listing.rental_recipient_verified_at?'Yes':'No'}</p>
+ <button className="button secondary" type="button" disabled={busy} onClick={()=>submit('recipient-challenge',{})}>Send recipient verification email</button>
+ <form className="stack" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);submit('rental-approve',{
+ authorityAttestation:String(f.get('authorityAttestation')),authorityDocumentReference:String(f.get('authorityDocumentReference')),
+ privacyNoticeVersion:String(f.get('privacyNoticeVersion')),confirmAuthority:f.get('confirmAuthority')==='on',
+ confirmNotice:f.get('confirmNotice')==='on',confirmRecipient:f.get('confirmRecipient')==='on'});}}>
+ <label className="field">Written instruction reference<input name="authorityDocumentReference" minLength={6} required/></label>
+ <label className="field">Authority evidence and approval notes<textarea name="authorityAttestation" rows={3} minLength={30} required/></label>
+ <label className="field">Approved privacy collection notice version<input name="privacyNoticeVersion" minLength={3} required/></label>
+ <label><input type="checkbox" name="confirmAuthority" required/> I have checked the written application-processing authority.</label>
+ <label><input type="checkbox" name="confirmNotice" required/> I have checked the approved privacy and tenancy-database notices.</label>
+ <label><input type="checkbox" name="confirmRecipient" required/> The verified recipient is authorised for this listing.</label>
+ <button className="button" type="submit" disabled={busy||!listing.rental_recipient_verified_at}>Record administrator approval</button></form>
+ {message&&<p role="status">{message}</p>}</section>;
+}
 function ListingOperations({listing}:{listing:any}){
  const [message,setMessage]=useState(''),[busy,setBusy]=useState(false),revalidator=useRevalidator();
  const publish=async(status:string)=>{setBusy(true);setMessage('');try{await send('/api/staff/leasing/'+listing.id+'/status',{version:listing.version,status});revalidator.revalidate();setMessage('Listing updated.');}catch(e){setMessage(e instanceof Error?e.message:'Action unsuccessful.');}finally{setBusy(false);}};
@@ -163,6 +188,7 @@ function ListingOperations({listing}:{listing:any}){
    <button type="submit" className="button secondary" disabled={busy}>Upload photo (6 MB maximum)</button>
   </form></details>
   <details><summary>Edit application-handling settings</summary><EditApplicationSettings key={listing.version} listing={listing}/></details>
+   <ApprovalControls listing={listing}/>
   {message&&<p role="status">{message}</p>}
  </div>;
 }

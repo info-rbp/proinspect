@@ -1,3 +1,4 @@
+import {requireReleaseApproval} from './release-governance.server';
 import type { Env } from '../../../../packages/database/types';
 import { now, statement, uid, AppError } from '../../../../packages/database/types';
 import { mailEvent } from '../../../../packages/notifications/server';
@@ -19,6 +20,7 @@ export function calendarSyncStatement(env: Env, bookingId: string, targetVersion
 }
 export async function dispatchCalendarSync(env: Env, maxJobs = 4): Promise<void> {
   if (!calendarSchedulingEnabled(env)) return;
+  await requireReleaseApproval(env,'calendar');
   const candidates = await statement(env.DB,
     "SELECT booking_id FROM booking_calendar_sync WHERE (status='pending' AND next_attempt_at<=?) " +
     "OR (status='processing' AND lease_until<?) ORDER BY updated_at LIMIT ?",

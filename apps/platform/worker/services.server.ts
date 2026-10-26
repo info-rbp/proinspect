@@ -1,3 +1,4 @@
+import { legalStatements } from './features/legal-acceptance.server';
 import { calendarSchedulingEnabled, calendarSyncStatement } from './features/calendar-scheduling.server';
 import { activity, projection } from '../../../packages/operations/core';
 import type { Env } from '../../../packages/database/types';
@@ -90,7 +91,9 @@ export async function onboard(env: Env, user: Principal, input: unknown) {
   const salt = residential ? 'landlord' : 'commercial_landlord';
   const clientId = `cli_${(await digest(`${salt}:${user.id}`)).slice(0, 32)}`;
   const membershipId = `mem_${clientId.slice(4)}`;
+  const legal = await legalStatements(env,{kind:'user',id:user.id},'onboarding',clientId,{clientId,clientName:data.clientName,landlordType:data.landlordType},data.legalConsent);
   await env.DB.batch([
+    ...legal,
     statement(
       env.DB,
       `INSERT INTO clients(id,name,client_type,billing_email,created_at) VALUES(?,?,?,?,?)

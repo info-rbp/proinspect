@@ -17,6 +17,7 @@ export const ENABLED_WORKSPACES: readonly WorkspaceKind[] = [
   'building',
   'council',
   'staff',
+  'building-manager',
 ];
 export const PROPERTY_WORKSPACES = ['landlord', 'property-manager', 'commercial'] as const;
 export function managesProperty(w: Workspace) {
@@ -65,6 +66,17 @@ export async function workspaces(env: Env, user: Principal): Promise<Workspace[]
     const kind = s.role === 'council_member' ? 'council' : 'building';
     if (!result.some((w) => w.kind === kind && w.scopeId === s.id))
       result.push({ kind, scopeId: s.id, name: s.name, role: s.role, href: `/w/${kind}/${s.id}` });
+  }
+  if (env.BUILDING_OPERATIONS_ENABLED === 'true') {
+    const assigned = await statement(env.DB, `SELECT DISTINCT b.id,b.name,s.name AS scheme_name
+      FROM building_manager_assignments a JOIN scheme_buildings b ON b.id=a.building_id
+      JOIN strata_schemes s ON s.id=b.scheme_id JOIN clients c ON c.id=a.client_id AND c.status='active'
+      JOIN users u ON u.id=a.user_id AND u.active=1 AND u.verified_at IS NOT NULL
+      JOIN scheme_client_links l ON l.client_id=a.client_id AND l.scheme_id=b.scheme_id
+      WHERE a.user_id=? AND a.status='approved' AND a.revoked_at IS NULL AND a.starts_at<=? AND a.ends_at>?
+      AND l.role IN('building_manager','strata_manager') AND l.starts_at<=? AND (l.ends_at IS NULL OR l.ends_at>?)`,
+      user.id,now(),now(),now(),now()).all<{id:string;name:string;scheme_name:string}>();
+    for (const b of assigned.results) result.push({kind:'building-manager',scopeId:b.id,name:b.scheme_name+' / '+b.name,role:'building_manager',href:'/w/building-manager/'+b.id});
   }
   if (user.staffRole)
     result.push({
@@ -167,6 +179,7 @@ export function propertyScope(
           values: [user.id],
         }
       : { sql: '1=1', values: [] };
+  if (w.kind === 'building-manager') return {sql:'0=1',values:[]};
   if (w.kind === 'tenant')
     return {
       sql: `EXISTS(SELECT 1 FROM tenancies t JOIN tenancy_memberships m ON m.tenancy_id=t.id WHERE t.property_id=${alias}.id AND t.id=? AND m.user_id=? AND m.starts_at<=?)`,

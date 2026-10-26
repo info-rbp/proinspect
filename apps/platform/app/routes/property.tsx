@@ -1,18 +1,21 @@
 import { loadApi } from '../lib/api.server';
+import { platformEnv } from '../../../../packages/database/context';
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { useWorkspace } from '../lib/workspace';
 import { PageHeading, Badge, EmptyState } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
-  return loadApi(
+  const d = (await loadApi(
     request,
     context,
     `/api/w/${params.kind}/${params.scopeId}/properties/${params.propertyId}`,
-  );
+  )) as { property: any };
+  const env = platformEnv(context);
+  return { ...d, stripeSubscriptionsEnabled: env.APP_ENV === 'staging' && env.STRIPE_BILLING_ENABLED === 'true' && env.STRIPE_TAX_READY === 'true' };
 }
 export default function Property() {
   const d = useWorkspace();
-  const { property: p } = useLoaderData<typeof loader>();
+  const { property: p, stripeSubscriptionsEnabled } = useLoaderData<typeof loader>();
   if (!p)
     return (
       <EmptyState
@@ -45,6 +48,7 @@ export default function Property() {
           )}
       </PageHeading>
       <div className="stack">
+        {stripeSubscriptionsEnabled && ['landlord', 'commercial'].includes(d.workspace.kind) && ['owner', 'admin'].includes(d.workspace.role) && (p.sector === 'residential' || p.sector === 'commercial') && <Link className="button secondary" to={`${d.workspace.href}/stripe-subscribe/${p.id}`}>Start subscription — Stripe sandbox</Link>}
         <Link to={`${d.workspace.href}/records/documents?property=${p.id}`}>
           Browse the full document history
         </Link>

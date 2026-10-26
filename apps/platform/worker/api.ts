@@ -1,9 +1,20 @@
+import {ownerInvitationPreview,claimOwnerInvitation} from './features/agency-owner-invitations.server';
+import {releaseReadiness,releaseCommand,requireReleaseApproval} from './features/release-governance.server';
+import * as legalAcceptance from './features/legal-acceptance.server';
+import { boundedText } from '../../../packages/http-bodies';
+import {pricingAdmin,pricingCommand,guestPriceVariants} from './features/service-pricing.server';
+import { createSubscriptionCheckout } from './features/stripe-billing.server';
+import { contractorConnectWebhook } from './features/contractor-payments.server';
+import * as agencyOutsourcing from './features/agency-outsourcing.server';
 import { ownerPortfolio } from './features/owner-portfolio.server';
 import * as guest from './features/guest.server';
+import * as v4 from './features/v4-service-requests.server';
 import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
 import { publicOpenHomeSessions,staffOpenHomeCheckIns } from './features/open-home.server';
 import { staffOpenHomeReportDetails,saveOpenHomeReportSettings,readOpenHomeReport,exportOpenHomeReportCsv } from './features/open-home-reports.server';
 import { listRentalApplications,rentalStaffDetail,updateRentalStatus,reviewRentalDocument,rentalDocumentDownload } from './features/rental-review.server';
+import { recordRentalOutcome } from './features/rental-outcomes.server';
+import { verifyRecipient } from './features/rental-governance.server';
 import { acceptRentalScan } from './features/rental-malware.server';
 import { setRentalPrivacyHold,resolveRentalPrivacyRequest,eraseRentalForRequest } from './features/rental-privacy.server';
 import { accountData, updateAccount, revokeSessions } from './features/account.server';
@@ -53,25 +64,17 @@ import {
 } from './features/portfolio.server';
 import { stripeWebhook, decideApproval } from './features/finance.server';
 import { reportCallback } from './features/integrations.server';
+import { launchPropertyReportTool, ingestPropertyReportTool } from './features/property-report-bridge.server';
 import { booksServices, managesProperty } from '../../../packages/authorization/server';
 import { readOnlyCalendarDiagnostic } from './features/google-calendar.server';
 import { calendarSyncSummary, retryCalendarSync } from './features/calendar-scheduling.server';
 
 async function json(request: Request) {
-  assert(
-    Number(request.headers.get('content-length') ?? 0) < 65536,
-    413,
-    'PAYLOAD_TOO_LARGE',
-    'This submission is too large.',
-  );
-  const text = await request.text();
-  assert(text.length < 65536, 413, 'PAYLOAD_TOO_LARGE', 'This submission is too large.');
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new AppError(400, 'INVALID_JSON', 'Invalid request format.');
-  }
+  const text = await boundedText(request);
+  try { return JSON.parse(text); }
+  catch { throw new AppError(400, 'INVALID_JSON', 'Invalid request format.'); }
 }
+
 function placeholders(ids: string[]) {
   return ids.map(() => '?').join(',') || "''";
 }
@@ -235,18 +238,38 @@ export async function handleApi(
     const url = new URL(request.url),
       path = url.pathname,
       method = request.method;
+    if (path === '/api/v4/catalogue' && method === 'GET') return Response.json(await v4.publicCatalogue(env,url.searchParams.get('sector')??undefined),{headers:{'Cache-Control':'private, no-store'}});
+    const v4Item=path.match(/^\/api\/v4\/catalogue\/((?:RES|COM)-\d{3})$/);
+    if(v4Item && method==='GET')return Response.json(await v4.publicService(env,v4Item[1]),{headers:{'Cache-Control':'private, no-store'}});
+    if(path==='/api/v4/requests' && method==='POST')return Response.json(await v4.begin(request,env),{status:201});
+    if(path==='/api/v4/requests/verify' && method==='POST')return Response.json(await v4.verify(request,env));
+    if(path==='/api/v4/requests/status' && method==='GET')return Response.json(await v4.status(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
+    if(path==='/api/v4/requests/cancel' && method==='POST')return Response.json(await v4.cancel(request,env));
+    if(path==='/api/legal/requirements' && method==='GET')return Response.json(await legalAcceptance.legalRequirements(env,url.searchParams.get('purpose')??''),{headers:{'Cache-Control':'no-store'}});
+    const legalDoc=path.match(/^\/api\/legal\/documents\/([a-zA-Z0-9_-]+)$/);
+    if(legalDoc&&method==='GET')return Response.json(await legalAcceptance.approvedLegalDocument(env,legalDoc[1]),{headers:{'Cache-Control':'no-store'}});
+    if(path==='/api/v4/requests/quote' && method==='GET')return Response.json(await v4.quotePreview(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
+    if(path==='/api/v4/requests/quote/accept' && method==='POST')return Response.json(await v4.acceptQuote(request,env));
+    if(path==='/api/guest/prices'&&method==='GET')return Response.json(await guestPriceVariants(env,url.searchParams.get('serviceId')??'',url.searchParams.get('postcode')??'',url.searchParams.get('propertyType')??''),{headers:{'Cache-Control':'no-store'}});
     if (path === '/api/guest/requests' && method === 'POST') return Response.json(await guest.beginGuest(request,env),{status:201});
     if (path === '/api/guest/verify' && method === 'POST') return Response.json(await guest.verifyGuest(request,env));
     if (path === '/api/guest/quote' && method === 'GET') return Response.json(await guest.guestQuotePreview(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
     if (path === '/api/guest/quote' && method === 'POST') return Response.json(await guest.acceptGuestQuote(request,env));
     if (path === '/api/guest/manage' && method === 'POST') { const result=await guest.guestAction(request,env); return result instanceof Response?result:Response.json(result); }
+    if (path === '/api/guest/checkout' && method === 'POST') return Response.json(await guest.guestCheckout(request,env));
     if (path === '/api/guest/status' && method === 'GET') return Response.json(await guest.guestStatus(env,url.searchParams.get('token')??''));
     if (path === '/api/guest/availability' && method === 'GET') return Response.json(await guest.guestAvailability(env,url.searchParams.get('token')??'',url.searchParams.get('date')??''));
     if (path === '/api/guest/report' && method === 'GET') return await guest.guestReport(env,url.searchParams.get('token')??'');
+    if (path === '/api/webhooks/stripe/connect-platform' && method === 'POST')
+      return Response.json(await contractorConnectWebhook(env,request,'platform'));
+    if (path === '/api/webhooks/stripe/connect-recipients' && method === 'POST')
+      return Response.json(await contractorConnectWebhook(env,request,'recipients'));
     if (path === '/api/webhooks/stripe' && method === 'POST')
       return Response.json(await stripeWebhook(env, request));
     if (path === '/api/public/enquiries' && method === 'POST')
       return Response.json(await receiveEnquiry(env, request), { status: 201 });
+    if (path === '/api/integrations/property-report-tool/ingest' && method === 'POST')
+      return Response.json(await ingestPropertyReportTool(env,request));
     if (path === '/api/integrations/report-tool/callback' && method === 'POST')
       return Response.json(await reportCallback(env, request));
     if (path === '/api/health')
@@ -294,9 +317,29 @@ export async function handleApi(
         { ok: true },
         { headers: { 'Set-Cookie': await signOut(request, env) } },
       );
+    if(path.match(/^\/api\/public\/rental-recipient\/verify\/[a-f0-9]{64}$/)&&method==='POST'){
+      requireOrigin(request,env);
+      return Response.json(await verifyRecipient(env,path.split('/').pop()!));
+    }
     if(path==='/api/internal/rental-document-scan' && method==='POST')
       return Response.json(await acceptRentalScan(env,request));
     const user = await requireUser(request, env);
+    const propertyReportLaunch=path.match(/^\/api\/staff\/work-orders\/([a-zA-Z0-9_-]+)\/property-report-tool$/);
+    if(propertyReportLaunch && method==='POST'){
+      requireOrigin(request,env);
+      return Response.json(await launchPropertyReportTool(env,user,propertyReportLaunch[1]));
+    }
+    if(path==='/api/agency-owner-invitations'&&method==='GET')return Response.json(await ownerInvitationPreview(env,user,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
+    if(path==='/api/agency-owner-invitations/claim'&&method==='POST'){requireOrigin(request,env);return Response.json(await claimOwnerInvitation(env,user,await json(request)));}
+    if(path==='/api/my-agency-managed-properties'&&method==='GET')
+      return Response.json(await agencyOutsourcing.ownerView(env,user),{headers:{'Cache-Control':'private, no-store'}});
+    const ownerFile=path.match(/^\/api\/my-agency-managed-properties\/reports\/([a-zA-Z0-9_-]+)\/download$/);
+    if(ownerFile&&method==='GET')return agencyOutsourcing.ownerReportDownload(env,user,ownerFile[1]);
+    const agencyStaff=path.match(/^\/api\/staff\/agency-outsourcing\/(grant-owner|draft-agreement|set-rate|approve-agreement)$/);
+    if(agencyStaff&&method==='POST'){requireOrigin(request,env);return Response.json(await agencyOutsourcing.staffAgencyCommand(env,user,agencyStaff[1],await json(request)));}
+    const agencyBilling=path.match(/^\/api\/staff\/agency-billing\/(record-work|prepare-statement|approve-statement)$/);
+    if(agencyBilling&&method==='POST'){requireOrigin(request,env);return Response.json(await agencyOutsourcing.agencyBillingCommand(env,user,agencyBilling[1],await json(request)));}
+    if(path==='/api/staff/agency-outsourcing'&&method==='GET')return Response.json(await agencyOutsourcing.agencyStaffOverview(env,user),{headers:{'Cache-Control':'private, no-store'}});
     const openHomeReport=path.match(/^\/api\/open-home\/report\/([a-zA-Z0-9_-]+)(\.csv)?$/);
     if(openHomeReport&&method==='GET'){
       const report=await readOpenHomeReport(env,user,openHomeReport[1]);
@@ -317,6 +360,7 @@ export async function handleApi(
       if(method!=='GET'&&method!=='HEAD')requireOrigin(request,env);
       if(method==='GET'&&tail.length===0)return Response.json(await listRentalApplications(env,user,url.searchParams.get('listingId')??undefined));
       if(method==='GET'&&tail.length===1)return Response.json(await rentalStaffDetail(env,user,tail[0]));
+      if(method==='POST'&&tail.length===2&&tail[1]==='outcome')return Response.json(await recordRentalOutcome(env,user,tail[0],await json(request)));
       if(method==='POST'&&tail.length===2&&tail[1]==='status')return Response.json(await updateRentalStatus(env,user,tail[0],await json(request)));
       if(method==='POST'&&tail.length===2&&tail[1]==='privacy-hold')
         return Response.json(await setRentalPrivacyHold(env,user,tail[0],await json(request)));
@@ -367,10 +411,29 @@ export async function handleApi(
       operationsWrite(user);
       return Response.json(await calendarSyncSummary(env));
     }
+    if(path==='/api/v4/staff/requests' && method==='GET'){
+      operationsWrite(user);return Response.json(await v4.staffList(env,user),{headers:{'Cache-Control':'private, no-store'}});
+    }
+    const v4Staff=path.match(/^\/api\/v4\/staff\/requests\/([a-zA-Z0-9_-]+)$/);
+    if(v4Staff && method==='GET'){
+      operationsWrite(user);return Response.json(await v4.staffDetail(env,user,v4Staff[1]),{headers:{'Cache-Control':'private, no-store'}});
+    }
+    if(v4Staff && method==='POST'){
+      operationsWrite(user);return Response.json(await v4.staffChange(env,user,v4Staff[1],await json(request)));
+    }
     if (path === '/api/staff/guest-orders' && method === 'GET') {
       operationsWrite(user);
       return Response.json(await guest.staffGuestOrders(env));
     }
+    if(path==='/api/staff/pricing'&&method==='GET')return Response.json(await pricingAdmin(env,user));
+    const pricingAction=path.match(/^\/api\/staff\/pricing\/(draft|approve|withdraw)$/);
+    if(pricingAction&&method==='POST')return Response.json(await pricingCommand(env,user,pricingAction[1],await json(request)));
+    if(path==='/api/staff/release-readiness'&&method==='GET')return Response.json(await releaseReadiness(env,user));
+    const releaseAction=path.match(/^\/api\/staff\/release-approvals\/(request|approve|reject|revoke)$/);
+    if(releaseAction&&method==='POST')return Response.json(await releaseCommand(env,user,releaseAction[1],await json(request)));
+    if(path==='/api/staff/legal'&&method==='GET')return Response.json(await legalAcceptance.legalAdminData(env,user));
+    const legalAction=path.match(/^\/api\/staff\/legal\/(draft|approve|withdraw)$/);
+    if(legalAction&&method==='POST')return Response.json(await legalAcceptance.legalCommand(env,user,legalAction[1],await json(request)));
     const guestStaffMatch = path.match(/^\/api\/staff\/guest-orders\/([a-zA-Z0-9_-]+)\/(quote|review)$/);
     if (guestStaffMatch && method === 'POST') {
       operationsWrite(user);
@@ -382,6 +445,12 @@ export async function handleApi(
       return Response.json(await updateAccount(env, user, await json(request)));
     if (path === '/api/account/sessions/revoke' && method === 'POST')
       return revokeSessions(request, env, user, await json(request));
+    if (path === '/api/stripe/subscription-checkout' && method === 'POST') {
+      requireOrigin(request,env);
+      const body=z.object({workspaceKind:z.enum(['landlord','commercial']),clientId:z.string(),propertyId:z.string(),legalConsent:z.unknown().optional()}).parse(await json(request));
+      const w=await workspace(env,user,body.workspaceKind,body.clientId);
+      return Response.json(await createSubscriptionCheckout(env,user,w,body.propertyId,body.legalConsent));
+    }
     if (path === '/api/owner-portfolio' && method === 'GET') return Response.json(await ownerPortfolio(env,user));
     if (path === '/api/session' && method === 'GET')
       return Response.json({ user, workspaces: await workspaces(env, user) });
@@ -456,6 +525,13 @@ export async function handleApi(
       tail = match[3] ?? '';
     if (method === 'GET' && (!tail || tail === 'data'))
       return Response.json(await expandedWorkspaceData(env, user, w));
+    if(w.kind==='property-manager'&&tail==='outsourcing'&&method==='GET')
+      return Response.json(await agencyOutsourcing.agencyDashboard(env,user,w),{headers:{'Cache-Control':'private, no-store'}});
+    if(w.kind==='property-manager'&&tail==='outsourcing/action'&&method==='POST'){
+      const input=await json(request) as Record<string,unknown>;
+      assert(typeof input.action==='string',422,'ACTION_REQUIRED','Choose an agency action.');
+      return Response.json(await agencyOutsourcing.agencyAdminCommand(env,user,w,input.action as string,input));
+    }
     const feature = await featureApi(request, env, user, w, tail);
     if (feature) return feature;
     if (method === 'GET' && tail === 'availability') {

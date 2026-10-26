@@ -416,3 +416,17 @@ export async function updateParticipant(env:Env,user:Principal,w:Workspace,bondI
  activity(env,user,'bond.participant_'+d.status,'bond',bondId,b.property_id)
  ],{partyId:id,status:d.status});
 }
+
+/** Aggregate operational bond queue; deliberately excludes confidential cases and parties. */
+export async function bondReviewQueue(env:Env,user:Principal,w:Workspace){
+ assert(w.kind==='staff'&&['administrator','operations_manager'].includes(user.staffRole??''),403,
+  'BOND_STAFF_REQUIRED','This operational queue is limited to authorised Staff reviewers.');
+ const rows=(await statement(env.DB,`SELECT b.id,b.tenancy_id,b.status,b.bond_reference,b.updated_at,
+  p.address,p.suburb,p.postcode,
+  (SELECT MIN(d.due_at) FROM bond_deadlines d WHERE d.bond_id=b.id AND d.completed_at IS NULL) next_deadline,
+  (SELECT COUNT(*) FROM bond_transactions tx WHERE tx.bond_id=b.id AND tx.status='submitted') submitted_count,
+  (SELECT COUNT(*) FROM bond_exception_cases e WHERE e.bond_id=b.id AND e.status!='resolved') open_exceptions
+ FROM bonds b JOIN properties p ON p.id=b.property_id WHERE p.sector='residential'
+ ORDER BY CASE WHEN next_deadline IS NULL THEN 1 ELSE 0 END,next_deadline,b.updated_at DESC LIMIT 100`).all()).results;
+ return {rows,externalOnly:true,notice:'Government submission and payout evidence must be independently verified. Confidential Form 2 cases are excluded.'};
+}

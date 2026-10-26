@@ -32,6 +32,7 @@ export default function WorkspaceLayout() {
     staff = w.kind === 'staff';
   if (management || staff)
     items.push(['properties', management ? 'My properties' : 'Properties', '']);
+  if (w.kind === 'property-manager') items.push(['outsourcing','Outsourced ProInspect services','']);
   if (management)
     items.push([
       'portfolio',
@@ -58,7 +59,7 @@ export default function WorkspaceLayout() {
       '',
     ]);
   if (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''))
-    items.push(['wa-form-queue', 'WA residential forms', '']);
+    items.push(['wa-form-queue', 'WA residential forms', ''], ['bond-review-queue', 'WA bond operations', '']);
   if (w.kind === 'tenant') items.push(['inspections', 'Inspections', '']);
   items.push(['reports', w.kind === 'staff' ? 'Report creation & review' : 'Issued inspection reports', '']);
   items.push(['documents', 'Documents & reports', '']);
@@ -66,6 +67,10 @@ export default function WorkspaceLayout() {
     items.push(['document-operations', 'Document preparation', '']);
   if (customer) items.push(['service-agreements', 'Service agreements', '']);
   if (staff && ['administrator','operations_manager'].includes(user.staffRole??'')) {
+    items.push(['release-readiness','Release acceptance','']);
+    items.push(['pricing-administration','Service price approvals','']);
+    items.push(['legal-administration','Legal versions & acceptance','']);
+    items.push(['agency-administration','Agency contracts & statements','']);
     items.push(['v2-business','Business services & agreements','']);
     items.push(['maintenance-delivery','Maintenance delivery','']);
     items.push(['asset-compliance','Assets & compliance','']);
@@ -78,6 +83,10 @@ export default function WorkspaceLayout() {
       w.kind === 'council' ? 'Council decisions' : 'Approvals & payments',
       '',
     ]);
+  if((customer&&['owner','admin'].includes(w.role))||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['billing','Billing & reconciliation','']);
+  if ((management && ['owner','admin'].includes(w.role)) ||
+    (staff && ['administrator','operations_manager'].includes(user.staffRole ?? '')))
+    items.push(['contractor-payments','Contractor payments','']);
   if (customer || w.kind === 'council' || (staff && user.staffRole !== 'inspector'))
     items.push(['reporting', 'Operational reporting', '']);
   if (customer && ['owner', 'admin'].includes(w.role)) items.push(['team', 'Team & access', '']);
@@ -87,9 +96,14 @@ export default function WorkspaceLayout() {
       ['services', 'Service catalogue', ''],
     );
   if (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''))
-    items.push(['enquiries', 'Marketing enquiries', ''], ['leasing', 'Property leasing', ''], ['open-home-checkins', 'Open home attendance', ''], ['rental-applications', 'Rental applications', ''], ['guest-orders', 'One-off booking requests', ''], ['integrations', 'Integrations', '']);
+    items.push(['enquiries', 'Marketing enquiries', ''], ['leasing', 'Property leasing', ''], ['open-home-checkins', 'Open home attendance', ''], ['rental-applications', 'Rental applications', ''], ['guest-orders', 'One-off booking requests', ''], ['v4-service-requests','V4 service requests',''], ['integrations', 'Integrations', '']);
   if (data.restrictedEnabled && (w.kind === 'tenant' || staff))
     items.push(['confidential', 'Confidential assistance', '']);
+  if((w.kind==='property-manager'&&['owner','admin'].includes(w.role))||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['owner-invitations','Owner visibility invitations','']);
+  if(['commercial','property-manager'].includes(w.kind)||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['commercial-leases','Lease obligations & dates','']);
+  if(['strata-manager','building','council'].includes(w.kind)||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['facilities','Building operations','']);
+  if(w.kind==='strata-manager'||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['building-communications','Notice draft reviews','']);
+  if(w.kind==='building-manager')items.splice(0,items.length,['','Overview',''],['facilities','Building operations',''],['building-communications','Notice drafts',''],['documents','Authorised building reports','']);
   return (
     <div className="app-shell">
       {pending && <div className="loading-line" role="progressbar" aria-label="Loading page" />}

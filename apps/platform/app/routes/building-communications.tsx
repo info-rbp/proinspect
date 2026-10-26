@@ -1,0 +1,10 @@
+import {useLoaderData,type LoaderFunctionArgs} from 'react-router';
+import {loadApi} from '../lib/api.server';
+import {useWorkspace,workspaceApi} from '../lib/workspace';
+import {PageHeading} from '../../../../packages/ui/components';
+import {OperationForm,Input,TextArea,Select,Panel,choices,options} from '../components/OperationForm';
+export async function loader({request,context,params}:LoaderFunctionArgs){return loadApi(request,context,`/api/w/${params.kind}/${params.scopeId}/facilities/notice-drafts`);}
+export default function BuildingCommunications(){const d=useLoaderData<typeof loader>(),{workspace:w,user}=useWorkspace(),api=workspaceApi(w.kind,w.scopeId)+'/facilities/notice-drafts';return <><PageHeading title="Building notice preparation" description="Drafts remain private. A separate authorised managing representative reviews the exact message before publication. This is an operational notice, not statutory service."/>
+<Panel title="Prepare targeted notice"><OperationForm endpoint={api+'/create'} label="Submit for independent review"><Select name="buildingId" label="Assigned building" options={options(d.buildings)}/><Input name="title" label="Notice title"/><TextArea name="body" label="Public message"/><Select name="audience" label="Intended audience" options={choices(['all_members','residents','owners','council'])}/><Input name="startsAt" type="datetime-local" label="Publish from" required={false}/><Input name="expiresAt" type="datetime-local" label="Expiry" required={false}/></OperationForm></Panel>
+{d.drafts.map((n:any)=><Panel key={n.id} title={n.title} description={`${n.audience} / ${n.status}`}><p className="preserve-lines">{n.body}</p><p>{n.starts_at} to {n.expires_at??'No expiry'}</p>{n.status==='submitted'&&w.kind!=='building-manager'&&n.created_by!==user.id&&<><OperationForm endpoint={api+'/publish'} defaults={{draftId:n.id}} label="Approve and publish"><Input name="reference" label="Independent publication authority"/></OperationForm><OperationForm endpoint={api+'/reject'} defaults={{draftId:n.id}} label="Reject draft"><Input name="reference" label="Review reason"/></OperationForm></>}</Panel>)}
+</>;}

@@ -22,6 +22,17 @@ export function documentScope(user: Principal, w: Workspace, alias = 'd') {
       values: [w.scopeId, w.scopeId, ...(assignment ? [w.scopeId, user.id] : [])],
     };
   }
+  if (w.kind === 'building-manager') return {
+    sql: `${alias}.status='issued' AND ${alias}.tenancy_id IS NULL AND EXISTS(
+      SELECT 1 FROM building_report_grants g JOIN scheme_buildings b ON b.id=g.building_id
+      JOIN building_manager_assignments a ON a.building_id=b.id
+      JOIN clients c ON c.id=a.client_id AND c.status='active'
+      JOIN scheme_client_links l ON l.scheme_id=b.scheme_id AND l.client_id=a.client_id
+      WHERE g.document_id=${alias}.id AND g.building_id=? AND g.revoked_at IS NULL
+      AND a.user_id=? AND a.status='approved' AND a.revoked_at IS NULL AND a.starts_at<=? AND a.ends_at>?
+      AND l.role IN('building_manager','strata_manager') AND l.starts_at<=? AND (l.ends_at IS NULL OR l.ends_at>?))`,
+    values:[w.scopeId,user.id,time,time,time,time],
+  };
   if (w.kind === 'tenant')
     return {
       sql: `${issued} AND EXISTS(SELECT 1 FROM document_grants g JOIN tenancy_memberships tm ON tm.tenancy_id=g.recipient_id WHERE g.document_id=${alias}.id AND g.recipient_kind='tenancy' AND g.recipient_id=? AND tm.user_id=? AND tm.starts_at<=${alias}.issued_at AND (tm.ends_at IS NULL OR tm.ends_at>=${alias}.issued_at))`,

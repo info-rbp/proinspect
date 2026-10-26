@@ -5,6 +5,7 @@ import { displayDate } from '../../../../packages/domain/index';
 export default function Overview() {
   const d = useWorkspace();
   const w = d.workspace;
+  if(w.kind==='building-manager')return <><PageHeading title={w.name} description="Your building assignment does not grant access to private tenancy records, other buildings or financial decisions."/><section className="panel stack"><h2>Professional building operations</h2><p>Coordinate incidents, daily logs, asset maintenance, site access and resident moves within your delegated authority.</p><Link className="button" to={w.href+'/facilities'}>Open building operations</Link><Link to={w.href+'/documents'}>Authorised building reports</Link></section></>;
   const active = d.requests.filter((r) => !['closed', 'completed'].includes(r.status));
   const upcoming = d.bookings.filter(
     (b) => b.status === 'confirmed' && b.starts_at > new Date().toISOString(),
