@@ -4,6 +4,8 @@ import { clientAdmin, clientMembership, operationsWrite } from '../../../../pack
 import { activity, guard, clearGuard, reference, recordId } from '../../../../packages/operations/core';
 import { digest } from '../../../../packages/auth/crypto';
 import { z } from 'zod';
+import {projectInvoiceObservation,type InvoiceSnapshot} from '../../../../packages/finance/invoice-observation';
+import {reconciliation} from './payment-lifecycle.server';
 import type { ProviderEvent } from './payment-lifecycle.server';
 import {sandboxConfiguration,stripeApi,verifySandboxAccount,SANDBOX_ACCOUNT} from './stripe-client.server';
 import {requireReleaseApproval} from './release-governance.server';
@@ -75,9 +77,15 @@ export async function invoiceObservation(env:Env,event:ProviderEvent){
  const prior=await statement(env.DB,'SELECT * FROM billing_invoices WHERE stripe_invoice_id=?',String(o.id??'')).first<Record<string,any>>();
  if(!prior)return null;
  assert(o.customer===prior.stripe_customer_id&&o.currency==='aud',409,'INVOICE_IDENTITY_MISMATCH','Invoice identity or currency differs.');
- const matched=Number.isSafeInteger(o.total)&&o.total===prior.total_cents&&Number.isSafeInteger(o.amount_paid)&&Number.isSafeInteger(o.amount_remaining)&&o.amount_paid>=0&&o.amount_remaining>=0;
- const paid=event.type==='invoice.paid'&&matched&&o.paid===true&&o.status==='paid'&&o.amount_remaining===0&&o.amount_paid===prior.total_cents;
- const status=paid?'paid':event.type==='invoice.voided'?'void':event.type==='invoice.marked_uncollectible'?'uncollectible':matched?'open':'review';
- const created=Number.isSafeInteger(event.created)?event.created!:0;
- return {matched:!!paid,steps:[statement(env.DB,'INSERT INTO billing_reconciliations(id,provider_event_id,stripe_invoice_id,matched,reason,created_at) VALUES(?,?,?,?,?,?)',uid('bre'),event.id,o.id,+!!paid,paid?'approved_statement_settled':matched?'provider_state_observed':'amount_requires_review',now()),statement(env.DB,"UPDATE billing_invoices SET status=CASE WHEN status='paid' AND ?!='paid' THEN status ELSE ? END,paid_cents=MAX(paid_cents,?),remaining_cents=CASE WHEN status='paid' THEN 0 ELSE ? END,reconciliation=?,last_provider_created=?,updated_at=? WHERE stripe_invoice_id=? AND last_provider_created<=?",status,status,Number.isSafeInteger(o.amount_paid)?o.amount_paid:prior.paid_cents,Number.isSafeInteger(o.amount_remaining)?o.amount_remaining:prior.remaining_cents,paid?'matched':'exception',created,now(),o.id,created)]};
+ const decision=projectInvoiceObservation(prior as InvoiceSnapshot,event.type,o,Number(event.created));
+ const steps:D1PreparedStatement[]=[statement(env.DB,'INSERT INTO billing_reconciliations(id,provider_event_id,stripe_invoice_id,matched,reason,created_at) VALUES(?,?,?,?,?,?)',uid('bre'),event.id,o.id,+decision.matched,decision.reason,now())];
+ if(decision.needsReview)steps.push(reconciliation(env,event.id,null,decision.reason,String(o.id)));
+ if(decision.apply){
+  // Compare-and-swap the whole observed financial snapshot. A concurrent event rolls
+  // back this receipt and retries rather than mixing balances from two snapshots.
+  steps.push(statement(env.DB,`UPDATE billing_invoices SET status=?,paid_cents=?,remaining_cents=?,reconciliation=?,last_provider_created=?,updated_at=?
+   WHERE stripe_invoice_id=? AND last_provider_created=? AND status=? AND paid_cents=? AND remaining_cents=? AND reconciliation=?`,
+   decision.status,decision.paidCents,decision.remainingCents,decision.reconciliation,decision.providerCreated,now(),o.id,prior.last_provider_created,prior.status,prior.paid_cents,prior.remaining_cents,prior.reconciliation),guard(env),clearGuard(env));
+ }
+ return {matched:decision.matched,steps};
 }

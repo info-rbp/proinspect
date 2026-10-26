@@ -73,7 +73,29 @@ try{
  await check('disputes create a Staff exception without silently refunding or revoking entitlements',async()=>{const before=await first('SELECT count(*) AS n FROM subscriptions');assert.equal((await webhook('charge.dispute.created',{id:'dp_sprint',payment_intent:paidSession.payment_intent,charge:'ch_sprint_source',amount:1000,currency:'aud',status:'needs_response'})).status,200);assert.ok(await first("SELECT id FROM payment_reconciliation_items WHERE payment_id='pay_sprint' AND code='dispute_needs_response'"));assert.equal((await first('SELECT count(*) AS n FROM subscriptions')).n,before.n);});
  await run("INSERT INTO payments(id,client_id,description,amount_ex_gst_cents,gst_cents,total_cents,status,provider,stripe_payment_intent_id,created_at) VALUES('pay_refund','cli_sprint','Refund fixture',10000,1000,11000,'paid','stripe','pi_refund_source',?)",past);let refundRequest;
  await check('refunds require independent approval and cannot overcommit the refundable balance',async()=>{refundRequest=await ok(staff+'/billing/refunds/request',admin,{paymentId:'pay_refund',amountCents:5000,reason:'Synthetic approved refund evidence',requestKey:crypto.randomUUID()});await api(staff+'/billing/refunds/'+refundRequest.id+'/approve',admin,{reference:'SELF-APPROVAL-TEST'},403);await ok(staff+'/billing/refunds/'+refundRequest.id+'/approve',reviewer,{reference:'INDEPENDENT-REFUND-TEST'});const excess=await ok(staff+'/billing/refunds/request',admin,{paymentId:'pay_refund',amountCents:7000,reason:'Excess refund test request',requestKey:crypto.randomUUID()});const r=await api(staff+'/billing/refunds/'+excess.id+'/approve',reviewer,{reference:'OVERCOMMITTED-REFUND'});assert.ok(r.status>=400);});
+ await check('revoked refund approval cannot authorize a provider instruction',async()=>{
+  await run('UPDATE staff_profiles SET active=0 WHERE user_id=?',reviewer.id);
+  try{await api(staff+'/billing/refunds/'+refundRequest.id+'/execute',admin,{reference:'REVOKED-APPROVER-TEST'},403);assert.equal(requests.filter(x=>x.path==='/v1/refunds').length,0);}
+  finally{await run('UPDATE staff_profiles SET active=1 WHERE user_id=?',reviewer.id);}
+ });
  await check('refund submission is idempotent and not falsely marked settled',async()=>{const a=await ok(staff+'/billing/refunds/'+refundRequest.id+'/execute',reviewer,{reference:'PROVIDER-EXECUTION-TEST'});assert.equal(a.settled,false);const b=await ok(staff+'/billing/refunds/'+refundRequest.id+'/execute',reviewer,{reference:'PROVIDER-EXECUTION-TEST'});assert.equal(a.providerId,b.providerId);assert.equal(requests.filter(x=>x.path==='/v1/refunds').length,1);assert.equal((await first("SELECT refunded_cents FROM payments WHERE id='pay_refund'")).refunded_cents,0);});
+ await run("INSERT INTO billing_invoices(stripe_invoice_id,client_id,stripe_customer_id,currency,subtotal_cents,total_cents,remaining_cents,status,reconciliation,created_at,updated_at) VALUES('in_sprint','cli_sprint','cus_sprint','AUD',10000,11000,11000,'open','exception',?,?)",past,past);
+ const invoice={id:'in_sprint',customer:'cus_sprint',currency:'aud',total:11000,amount_paid:0,amount_remaining:11000,status:'open',paid:false};
+ await check('inconsistent invoice totals create a review exception without corrupting financial balances',async()=>{
+  assert.equal((await webhook('invoice.payment_failed',{...invoice,amount_paid:1000},{created:100})).status,200);
+  const i=await first("SELECT * FROM billing_invoices WHERE stripe_invoice_id='in_sprint'");assert.equal(i.paid_cents,0);assert.equal(i.remaining_cents,11000);
+  assert.ok(await first("SELECT id FROM payment_reconciliation_items WHERE code='invoice_balance_requires_review'"));
+ });
+ await check('settled invoice remains matched after older and same-second failed events',async()=>{
+  assert.equal((await webhook('invoice.paid',{...invoice,amount_paid:11000,amount_remaining:0,status:'paid',paid:true},{created:200})).status,200);
+  for(const created of [100,200])assert.equal((await webhook('invoice.payment_failed',invoice,{created})).status,200);
+  const i=await first("SELECT * FROM billing_invoices WHERE stripe_invoice_id='in_sprint'");assert.equal(i.status,'paid');assert.equal(i.reconciliation,'matched');assert.equal(i.paid_cents,11000);assert.equal(i.remaining_cents,0);
+ });
+ await check('newer contradictory invoice snapshots preserve settlement and require Staff reconciliation',async()=>{
+  assert.equal((await webhook('invoice.payment_failed',invoice,{created:300})).status,200);
+  const i=await first("SELECT * FROM billing_invoices WHERE stripe_invoice_id='in_sprint'");assert.equal(i.status,'paid');assert.equal(i.remaining_cents,0);
+  assert.ok(await first("SELECT id FROM payment_reconciliation_items WHERE code='settled_invoice_not_downgraded'"));
+ });
  await check('revoking a professional assignment invalidates existing access',async()=>{await ok(staff+'/facilities/assignments/revoke',reviewer,{assignmentId:assignment.id,reference:'ASSIGNMENT-REVOKED-TEST'});await api(bm+'/facilities',manager,undefined,403);});
  await check('full combined schema remains referentially consistent',async()=>{assert.deepEqual((await db.prepare('PRAGMA foreign_key_check').all()).results,[]);});
  writeFileSync('artifacts/final-sprint-runtime.json',JSON.stringify({environment:'isolated-local',provider:'mocked-no-live-calls',passed:checks.length,checks},null,2));

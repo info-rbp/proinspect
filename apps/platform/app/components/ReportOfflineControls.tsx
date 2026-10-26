@@ -52,6 +52,10 @@ export function ReportOfflineControls(props:{
  async function synchronise(){
   // Draft first: a successful photo upload increments the authoritative report revision.
   const updated=await syncOfflineDraft(scope,phrase,base);
+  if(updated?.retainedNewerDraft){
+   setStatus('The uploaded draft was acknowledged, but a newer encrypted copy was saved during sync. It has been retained. Reconcile that copy before synchronising photos or reloading.');
+   return;
+  }
   const photos=await syncOfflinePhotos(scope,phrase,base);
   setStatus((updated?'Draft synchronised. ':'')+photos+' queued photo(s) uploaded. Reloading authoritative report.');
   window.location.reload();
