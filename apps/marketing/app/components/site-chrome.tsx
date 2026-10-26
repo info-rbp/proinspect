@@ -120,7 +120,7 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
         </div>
         <div className="mkt-footer-bottom">
           <span>© {new Date().getFullYear()} ProInspect Property Services · Western Australia</span>
-          <div><Link to="/privacy">Privacy</Link><Link to="/terms">Service terms</Link></div>
+          <div><Link to="/privacy">Privacy</Link><Link to="/website-terms">Website terms</Link><Link to="/platform-terms">Platform terms</Link><Link to="/terms">Service terms</Link><Link to="/booking-policy">Booking &amp; refunds</Link><Link to="/service-scopes">Service scopes</Link><Link to="/subscription-terms">Plans</Link></div>
         </div>
       </div>
     </footer>
