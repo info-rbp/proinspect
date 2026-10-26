@@ -1,3 +1,4 @@
+import * as agencyOutsourcing from './features/agency-outsourcing.server';
 import { ownerPortfolio } from './features/owner-portfolio.server';
 import * as guest from './features/guest.server';
 import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
@@ -297,6 +298,12 @@ export async function handleApi(
     if(path==='/api/internal/rental-document-scan' && method==='POST')
       return Response.json(await acceptRentalScan(env,request));
     const user = await requireUser(request, env);
+    if(path==='/api/my-agency-managed-properties'&&method==='GET')
+      return Response.json(await agencyOutsourcing.ownerView(env,user),{headers:{'Cache-Control':'private, no-store'}});
+    const ownerFile=path.match(/^\/api\/my-agency-managed-properties\/reports\/([a-zA-Z0-9_-]+)\/download$/);
+    if(ownerFile&&method==='GET')return agencyOutsourcing.ownerReportDownload(env,user,ownerFile[1]);
+    const agencyStaff=path.match(/^\/api\/staff\/agency-outsourcing\/(grant-owner|draft-agreement|set-rate|approve-agreement)$/);
+    if(agencyStaff&&method==='POST')return Response.json(await agencyOutsourcing.staffAgencyCommand(env,user,agencyStaff[1],await json(request)));
     const openHomeReport=path.match(/^\/api\/open-home\/report\/([a-zA-Z0-9_-]+)(\.csv)?$/);
     if(openHomeReport&&method==='GET'){
       const report=await readOpenHomeReport(env,user,openHomeReport[1]);
@@ -456,6 +463,13 @@ export async function handleApi(
       tail = match[3] ?? '';
     if (method === 'GET' && (!tail || tail === 'data'))
       return Response.json(await expandedWorkspaceData(env, user, w));
+    if(w.kind==='property-manager'&&tail==='outsourcing'&&method==='GET')
+      return Response.json(await agencyOutsourcing.agencyDashboard(env,user,w),{headers:{'Cache-Control':'private, no-store'}});
+    if(w.kind==='property-manager'&&tail==='outsourcing/action'&&method==='POST'){
+      const input=await json(request) as Record<string,unknown>;
+      assert(typeof input.action==='string',422,'ACTION_REQUIRED','Choose an agency action.');
+      return Response.json(await agencyOutsourcing.agencyAdminCommand(env,user,w,input.action as string,input));
+    }
     const feature = await featureApi(request, env, user, w, tail);
     if (feature) return feature;
     if (method === 'GET' && tail === 'availability') {
