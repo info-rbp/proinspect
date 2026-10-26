@@ -100,7 +100,8 @@ const numberFields = new Set([
   'intervalMonths',
   'hoursMilli', 'visits', 'quantity', 'complexityBp', 'externalPassThroughCents',
   'includedHoursMilli', 'includedVisits', 'includedTickets', 'includedReports',
-  'monthlyFeeCents', 'loadedHourlyCents', 'travelVisitCents', 'fixedAdminCents',
+  'monthlyFeeCents',
+  'baseMonthlyCents', 'gstBasisPoints', 'rateCents', 'loadedHourlyCents', 'travelVisitCents', 'fixedAdminCents',
   'contingencyBp', 'targetMarginBp', 'gstBp', 'limitQuantity', 'agreedMonthlyCents',
   'budgetCeilingCents','weekday','startsMinute','endsMinute','hourlyCostCents',
   'designLifeMonths','replacementCostCents','score','cadenceMonths','leadDays','recurrenceMonths',
@@ -116,6 +117,7 @@ const boolFields = new Set([
   'selfManaged',
   'noticeConfirmed',
   'approvalRequired',
+  'allowInspections', 'allowReports', 'included',
   'acknowledgeExternalProcess',
 ]);
 export function formValues(form: FormData) {
