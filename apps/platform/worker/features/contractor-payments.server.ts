@@ -278,9 +278,12 @@ export async function executeContractorTransfer(env:Env,user:Principal,w:Workspa
   assert(p.stripe_payment_intent_id,409,'PAYMENT_INTENT_REQUIRED','The collected charge must be reconciled first.');
   const pi=await stripeRequest(env,`/v1/payment_intents/${encodeURIComponent(p.stripe_payment_intent_id)}?expand%5B%5D=latest_charge`,'GET');
   const chargeId=typeof pi.latest_charge==='string'?pi.latest_charge:pi.latest_charge?.id;
+  const charge=typeof pi.latest_charge==='object' ? pi.latest_charge : null;
   assert(pi.status==='succeeded'&&pi.currency==='aud'&&pi.amount_received===p.gross_cents&&pi.transfer_group===p.id&&
-    pi.metadata?.contractor_plan_id===p.id&&typeof chargeId==='string'&&chargeId.startsWith('ch_'),
-    409,'PAYMENT_UNRECONCILED','The payment amount, charge and transfer group must match.');
+    pi.metadata?.contractor_plan_id===p.id&&typeof chargeId==='string'&&chargeId.startsWith('ch_')&&
+    charge?.status==='succeeded'&&charge?.paid===true&&charge?.refunded===false&&
+    charge?.disputed===false&&charge?.amount_refunded===0&&charge?.amount===p.gross_cents,
+    409,'PAYMENT_UNRECONCILED','The paid charge, amount and refund/dispute state must match before transfer.');
   const net=p.gross_cents-p.platform_fee_cents;
   // Reserve the one-and-only execution attempt before the external call.
   await updateState(env,p,'transfer_initiated',user.id,{transfer_initiated_by:user.id,transfer_initiated_at:now(),
@@ -338,8 +341,18 @@ export async function contractorConnectWebhook(env:Env,request:Request,source:'p
       if(plan)assert(object.destination === (await statement(env.DB,'SELECT recipient_account_id FROM contractor_payment_plans WHERE id=?',plan.id).first<{recipient_account_id:string|null}>())?.recipient_account_id,
         409,'TRANSFER_DESTINATION_MISMATCH','Transfer event destination differs from approved recipient.');
     } else if(event.type.startsWith('charge.')) {
+      // Refunds can occur BEFORE a transfer is requested and before stripe_charge_id
+      // was stored. Match the underlying PaymentIntent, never only the charge.
       const chargeId=event.type.startsWith('charge.dispute.')?object.charge:object.id;
-      plan=await statement(env.DB,'SELECT * FROM contractor_payment_plans WHERE stripe_charge_id=?',String(chargeId??'')).first<Plan>();
+      let paymentIntent=typeof object.payment_intent==='string'?object.payment_intent:null;
+      if(!paymentIntent && event.type.startsWith('charge.dispute.') &&
+        typeof chargeId==='string' && chargeId.startsWith('ch_')) {
+        const origin=await stripeRequest(env,`/v1/charges/${encodeURIComponent(chargeId)}`,'GET');
+        paymentIntent=typeof origin.payment_intent==='string'?origin.payment_intent:null;
+      }
+      plan=await statement(env.DB,
+        'SELECT * FROM contractor_payment_plans WHERE stripe_charge_id=? OR stripe_payment_intent_id=?',
+        String(chargeId??''),String(paymentIntent??'')).first<Plan>();
     }
   }
   const change=plan&&['transfer.reversed','charge.refunded','charge.dispute.created'].includes(event.type)&&

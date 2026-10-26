@@ -32,3 +32,11 @@ test('external payer reports cannot assert Stripe settlement',()=>{
  assert.match(source,/export async function reportExternalPayment/);
  assert.match(source,/verifyExternalPayment/);
 });
+
+test('refunds and disputes before a transfer cannot permit contractor release',()=>{
+ assert.match(source,/charge\?\.refunded===false/);
+ assert.match(source,/charge\?\.disputed===false/);
+ assert.match(source,/charge\?\.amount_refunded===0/);
+ assert.match(source,/stripe_payment_intent_id=\?/);
+ assert.match(source,/\/v1\/charges\/\$\{encodeURIComponent\(chargeId\)\}/);
+});
