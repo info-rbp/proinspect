@@ -67,6 +67,7 @@ export default function WorkspaceLayout() {
     items.push(['document-operations', 'Document preparation', '']);
   if (customer) items.push(['service-agreements', 'Service agreements', '']);
   if (staff && ['administrator','operations_manager'].includes(user.staffRole??'')) {
+    items.push(['agency-administration','Agency contracts & statements','']);
     items.push(['v2-business','Business services & agreements','']);
     items.push(['maintenance-delivery','Maintenance delivery','']);
     items.push(['asset-compliance','Assets & compliance','']);
