@@ -1,0 +1,52 @@
+name: Recover final sprint sources
+on:
+  push:
+    branches: [integration/final-platform-release-20261026]
+    paths: [.github/workflows/final-sprint-recovery.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Capture committed sources and review inventory only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p recovery
+          git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
+          git bundle create recovery/repository.bundle --all
+          git for-each-ref --format='%(refname:short) %(objectname)' refs/remotes/origin > recovery/branches.txt
+          gh api --paginate 'repos/info-rbp/proinspect/pulls?state=open&per_page=100' --jq '.[] | {number,title,state,draft,head: .head.ref,head_sha: .head.sha,base: .base.ref,url: .html_url,body}' > recovery/open-prs.jsonl
+          git log origin/main --first-parent --format='%H %aI %s' -20 > recovery/main-history.txt
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare pinned dependencies without application secrets
+        run: |
+          set -euo pipefail
+          git worktree add --detach /tmp/proinspect-dependencies 9e5ea2c05668b7f9d4c47d1245714591aa103831
+          cd /tmp/proinspect-dependencies
+          pnpm install --frozen-lockfile
+          find . -name node_modules -type d -prune -print0 | tar --null -T - -czf "$GITHUB_WORKSPACE/recovery/dependencies.tar.gz"
+          mkdir -p /tmp/proinspect-offline-tools
+          cp "$(command -v node)" /tmp/proinspect-offline-tools/node
+          cp -a "$(dirname "$(dirname "$(readlink -f "$(command -v pnpm)")")")" /tmp/proinspect-offline-tools/pnpm
+          tar -C /tmp/proinspect-offline-tools -czf "$GITHUB_WORKSPACE/recovery/tools.tar.gz" .
+          node --version > "$GITHUB_WORKSPACE/recovery/tool-versions.txt"
+          pnpm --version >> "$GITHUB_WORKSPACE/recovery/tool-versions.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-sprint-recovery
+          path: recovery/
+          retention-days: 3
+          compression-level: 0
