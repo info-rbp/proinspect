@@ -42,6 +42,8 @@ if (testFixtures)
     "INSERT INTO users(id,email,display_name,created_at,verified_at) VALUES('usr_test_review','review-staff@proinspect.test','Test Review','2026-01-01','2026-01-01') ON CONFLICT(id) DO NOTHING;\nINSERT INTO staff_profiles(user_id,role,active) VALUES('usr_test_review','operations_manager',1) ON CONFLICT(user_id) DO NOTHING;\n";
 if (testFixtures)
   sql += "INSERT INTO users(id,email,display_name,created_at,verified_at) VALUES('usr_test_release_admin','release-admin@proinspect.test','Synthetic Release Administrator','2026-01-01','2026-01-01') ON CONFLICT(id) DO NOTHING;\nINSERT INTO staff_profiles(user_id,role,active) VALUES('usr_test_release_admin','administrator',1) ON CONFLICT(user_id) DO NOTHING;\n";
+if (testFixtures)
+  sql += "INSERT INTO users(id,email,display_name,created_at,verified_at) VALUES('usr_test_sprint_ops','sprint-ops@proinspect.test','Synthetic Sprint Operations','2026-01-01','2026-01-01') ON CONFLICT(id) DO NOTHING;\nINSERT INTO staff_profiles(user_id,role,active) VALUES('usr_test_sprint_ops','operations_manager',1) ON CONFLICT(user_id) DO NOTHING;\n";
 writeFileSync('artifacts/local-seed.sql', sql);
 execFileSync('pnpm', ['exec', 'wrangler', 'd1', 'migrations', 'apply', 'DB', '--local'], {
   cwd: app,

@@ -59,3 +59,12 @@
  .pi-inspector-nav { display:grid; grid-template-columns:1fr 1fr; }
  .pi-inspector-nav button { width:100%; }
 }
+
+/* Single-column content must shrink to the viewport, including intrinsic-width selects and IDs. */
+.stack, .stack-sm { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.panel { min-width: 0; overflow-wrap: anywhere; }
+.panel > *, .panel form, .panel fieldset { min-width: 0; max-width: 100%; }
+.panel input, .panel select, .panel textarea { min-width: 0; max-width: 100%; }
+.pi-inspector-field fieldset { min-inline-size: 0; }
+.pi-inspector-header > div { min-width: 0; }
+.pi-inspector-chip { max-width: 100%; overflow-wrap: anywhere; }

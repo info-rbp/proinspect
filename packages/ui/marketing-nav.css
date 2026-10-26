@@ -32,3 +32,11 @@
     flex-wrap: wrap;
   }
 }
+
+/* Legal navigation grows with policy coverage; every link remains reachable on narrow screens. */
+.site .mkt-site-footer .mkt-footer-bottom > div {
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+  row-gap: .7rem;
+}
