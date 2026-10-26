@@ -40,3 +40,9 @@ test('refunds and disputes before a transfer cannot permit contractor release',(
  assert.match(source,/stripe_payment_intent_id=\?/);
  assert.match(source,/\/v1\/charges\/\$\{encodeURIComponent\(chargeId\)\}/);
 });
+
+test('canceled work orders and changed contractor assignments block collection',()=>{
+ assert.match(source,/CONTRACTOR_ASSIGNMENT_CHANGED/);
+ assert.match(source,/order\.status!=='cancelled'/);
+ assert.match(source,/order\.contractor_id===p\.contractor_id/);
+});

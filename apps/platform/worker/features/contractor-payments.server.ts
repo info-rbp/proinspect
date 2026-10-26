@@ -123,6 +123,10 @@ export async function authoriseContractorPayment(env:Env,user:Principal,w:Worksp
   const d=z.object({authorityReference:referenceValue}).parse(input);
   const p=await getPlan(env,user,w,id);
   assert(p.status==='draft',409,'PAYMENT_NOT_DRAFT','This payment arrangement is no longer a draft.');
+  const order=await workOrderAccess(env,user,w,p.work_order_id);
+  assert(order.status!=='cancelled'&&order.contractor_id===p.contractor_id&&
+    order.client_id===p.client_id&&order.property_id===p.property_id,409,'CONTRACTOR_ASSIGNMENT_CHANGED',
+    'The work order or its contractor has changed; review payment authority before proceeding.');
   await updateState(env,p,p.mode==='payer_direct'?'external_due':'awaiting_checkout',user.id,
     {payer_approved_by:user.id,payer_approved_at:now(),payer_authority_reference:d.authorityReference});
   return {id,status:p.mode==='payer_direct'?'external_due':'awaiting_checkout'};
@@ -195,6 +199,10 @@ export async function contractorCheckout(env:Env,user:Principal,w:Workspace,id:s
   assert(p.mode==='platform_collect'&&['awaiting_checkout','checkout_open'].includes(p.status),409,
     'PLATFORM_PAYMENT_NOT_READY','The platform collection is not authorised.');
   assert(collectionsEnabled(env),503,'MARKETPLACE_NOT_APPROVED','Marketplace collection is disabled pending Stripe, legal and tax approval.');
+  const order=await workOrderAccess(env,user,w,p.work_order_id);
+  assert(order.status!=='cancelled'&&order.contractor_id===p.contractor_id&&
+    order.client_id===p.client_id&&order.property_id===p.property_id,409,'CONTRACTOR_ASSIGNMENT_CHANGED',
+    'The work order or contractor has changed; do not collect payment.');
   if(p.checkout_session_id) return {url:(await statement(env.DB,'SELECT checkout_url FROM contractor_payment_plans WHERE id=?',p.id).first<{checkout_url:string|null}>())?.checkout_url};
   const form=new URLSearchParams({mode:'payment',
     success_url:`${env.APP_ORIGIN}${w.href}/contractor-payments?checkout=returned`,
