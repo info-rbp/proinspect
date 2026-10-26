@@ -3,6 +3,8 @@ import { loadApi } from '../lib/api.server';
 import { useWorkspace,workspaceApi } from '../lib/workspace';
 import { PageHeading,Badge } from '../../../../packages/ui/components';
 import { OperationForm,Input,TextArea,Panel,Select } from '../components/OperationForm';
+import {WaAgreementPanel,type AgreementView} from '../components/WaAgreementPanel';
+import {specFor} from '../../../../packages/wa-residential/form-specifications';
 
 type WaCase={
  id:string;tenancyId:string;formCode:string;version:number;status:string;
@@ -23,8 +25,12 @@ export async function loader({request,context,params}:LoaderFunctionArgs){
  const data=await loadApi(request,context,`${base}/tenancies/${params.tenancyId}/wa-forms`) as {
   definitions:{code:string;name:string}[];
  };
+ const agreement=record.formCode==='WA_FORM_1AA'?
+  await loadApi(request,context,`${base}/wa-forms/${params.caseId}/agreement`) as AgreementView:null;
+ const tenancy=agreement&&['landlord','property-manager','staff'].includes(params.kind??'')
+  ? await loadApi(request,context,`${base}/tenancies/${params.tenancyId}`) as any:null;
  const library=params.kind==='staff' ? await loadApi(request,context,base+'/wa-form-templates') as {templates:Template[]} : {templates:[] as Template[]};
- return {record,definitions:data.definitions,templates:library.templates};
+ return {record,definitions:data.definitions,templates:library.templates,agreement,tenancy};
 }
 const manualRequirements=[
  'verified_prior_form_21','statutory_grounds_review','legal_service_review',
@@ -40,7 +46,7 @@ export default function WaFormCase() {
   doc.tenancy_id===c.tenancyId&&doc.status==='issued');
  const templateOptions=d.templates.filter(t=>t.form_code===c.formCode&&t.release_approved_at)
    .map(t=>({value:t.version,label:`${t.version} (reviewed ${t.approved_at.slice(0,10)})`}));
- const label=d.definitions.find(f=>f.code===c.formCode)?.name??c.formCode;
+ const label=d.definitions.find(f=>f.code===c.formCode)?.name??specFor(c.formCode)?.name??c.formCode;
  return <div className="stack">
    <PageHeading title={label}
     description="Form preparation, decisions, official document evidence and external lodgement are separate actions. None alone establishes legal validity."/>
@@ -52,9 +58,13 @@ export default function WaFormCase() {
     {c.noticeInvalidatedAt&&<p>Linked inspection has changed. Recheck notice date, issue and service evidence.</p>}
     {c.decision&&<p>Recorded response: {c.decision}</p>}
     {c.externalStatus&&<p>Recorded external status: {c.externalStatus}</p>}
-    {c.issuedDocumentId&&<p>Issued document: {c.issuedDocumentId}</p>}
+    {c.issuedDocumentId&&<p><a href={`/api/w/${w.kind}/${w.scopeId}/documents/${c.issuedDocumentId}/download`}>Download authorised tenancy PDF</a></p>}
+    <p className="small">Form handling: {specFor(c.formCode)?.route.replaceAll('_',' ')}; legally approved issue and delivery remain separate.</p>
     {c.issueReadiness&&<p className="small">Issue prerequisites: {c.issueReadiness.ready?'Recorded':'Outstanding: '+c.issueReadiness.missing.join(', ')}</p>}
    </Panel>
+   {c.formCode==='WA_FORM_1AA'&&d.agreement&&
+    <WaAgreementPanel caseId={c.id} tenancyId={c.tenancyId} caseStatus={c.status}
+     agreement={d.agreement} tenantMembers={d.tenancy?.members??[]} issuedDocuments={workspace.documents as any}/>}
    {c.status==='draft'&&<Panel title="Submit draft">
      <OperationForm endpoint={`${base}/wa-forms/${c.id}`} defaults={{version:c.version,status:'submitted'}}
       label="Submit request for review" />
