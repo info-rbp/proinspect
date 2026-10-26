@@ -1,5 +1,5 @@
 import { ENGAGEMENTS } from '../../../../packages/marketing/content';
-import { PUBLIC_LEGAL_DRAFTS, PUBLIC_LEGAL_APPROVAL } from '../../../../packages/marketing/legal-drafts';
+import { PUBLIC_LEGAL_DRAFTS, PUBLIC_LEGAL_APPROVAL, type PublicLegalKey } from '../../../../packages/marketing/legal-drafts';
 import {
   Link,
   useLoaderData,
@@ -154,11 +154,12 @@ const pages: Record<string, { title: string; intro: string; sections: Array<[str
 };
 export function loader({ params }: LoaderFunctionArgs) {
   const key = params.page ?? '';
-  if (key === 'privacy' || key === 'terms') {
+  if (Object.prototype.hasOwnProperty.call(PUBLIC_LEGAL_DRAFTS,key)) {
+    const legalKey = key as PublicLegalKey;
     return {
-      ...PUBLIC_LEGAL_DRAFTS[key],
+      ...PUBLIC_LEGAL_DRAFTS[legalKey],
       path: '/' + key,
-      legalApproved: PUBLIC_LEGAL_APPROVAL[key].approved,
+      legalApproved: PUBLIC_LEGAL_APPROVAL[legalKey].approved,
     };
   }
   const page = pages[key];
@@ -173,7 +174,7 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
 export default function Information() {
   const p = useLoaderData<typeof loader>();
   const { appOrigin } = useOutletContext<{ appOrigin: string }>();
-  const legal = p.path === '/privacy' || p.path === '/terms';
+  const legal = Object.prototype.hasOwnProperty.call(PUBLIC_LEGAL_DRAFTS,p.path.slice(1));
   const how = p.path === '/how-it-works';
   const client = p.path === '/client-experience';
   const why = p.path === '/why-proinspect';
@@ -195,7 +196,7 @@ export default function Information() {
         <section className="mkt-legal-notice" aria-label="Pre-release policy notice">
           <div className="site-container">
             <strong>Pre-release information</strong>
-            <span>{p.path === '/privacy' ? 'Privacy handling statements here are proposals pending operator review.' : 'The service terms here are proposals pending operator review.'} Do not treat this review draft as an approved policy or a binding contract.</span>
+            <span>{p.path === '/privacy' ? 'Privacy handling statements here are proposals pending operator review.' : 'These legal conditions are proposals pending operator review.'} Do not treat this review draft as an approved policy or a binding contract.</span>
           </div>
         </section>
       )}
