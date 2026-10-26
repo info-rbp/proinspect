@@ -121,3 +121,73 @@ export async function staffAgencyCommand(env:Env,user:Principal,command:string,i
  }
  assert(false,404,'ACTION_UNKNOWN','Unknown Staff agency action.');
 }
+
+export async function agencyBillingCommand(env:Env,user:Principal,command:string,input:unknown){
+ operationsWrite(user);
+ if(command==='record-work'){
+  const d=z.object({agreementId:id,workOrderId:id}).parse(input);
+  const w=await statement(env.DB,`SELECT wo.id,wo.client_id,wo.property_id,wo.updated_at,b.service_id
+    FROM work_orders wo JOIN bookings b ON b.id=wo.booking_id
+    WHERE wo.id=? AND wo.status='completed' AND wo.client_id IS NOT NULL AND wo.property_id IS NOT NULL`,d.workOrderId).first<any>();
+  assert(w,422,'COMPLETED_WORK_REQUIRED','Choose a completed agency booking.');
+  const agreement=await statement(env.DB,`SELECT a.id,r.rate_cents,r.included FROM agency_commercial_agreements a
+    JOIN agency_contract_rates r ON r.agreement_id=a.id AND r.service_id=?
+    WHERE a.id=? AND a.client_id=? AND a.status='approved' AND a.effective_at<=?`,
+    w.service_id,d.agreementId,w.client_id,w.updated_at).first<any>();
+  assert(agreement&&!agreement.included&&agreement.rate_cents>0,422,'CHARGEABLE_RATE_REQUIRED','A signed, approved service charge must exist.');
+  const management=await statement(env.DB,`SELECT id FROM property_management_relationships WHERE property_id=? AND manager_client_id=? AND mode='agency_managed'
+    AND starts_at<=? AND (ends_at IS NULL OR ends_at>?)`,w.property_id,w.client_id,w.updated_at,w.updated_at).first();
+  assert(management,403,'MANAGEMENT_REQUIRED','The agency was not appointed when the work was completed.');
+  const eventId=uid('ab');
+  await env.DB.batch([statement(env.DB,`INSERT INTO agency_billable_work(id,agreement_id,work_order_id,property_id,service_id,charge_cents,completed_at,recorded_by)
+    VALUES(?,?,?,?,?,?,?,?)`,eventId,d.agreementId,w.id,w.property_id,w.service_id,agreement.rate_cents,w.updated_at,user.id),
+    activity(env,user,'agency.billable_work_recorded','agency_billable_work',eventId,w.property_id)]);
+  return {id:eventId,chargeCents:agreement.rate_cents};
+ }
+ if(command==='prepare-statement'){
+  const d=z.object({agreementId:id,period:z.string().regex(/^20\d\d-(0[1-9]|1[0-2])$/)}).parse(input);
+  const a=await statement(env.DB,"SELECT * FROM agency_commercial_agreements WHERE id=? AND status='approved'",d.agreementId).first<any>();
+  assert(a,422,'APPROVED_AGREEMENT_REQUIRED','Choose an approved agreement.');
+  const start=d.period+'-01T00:00:00.000Z',year=Number(d.period.slice(0,4)),m=Number(d.period.slice(5,7));
+  const end=new Date(Date.UTC(year,m,1)).toISOString();
+  assert(end<=now(),422,'MONTH_NOT_CLOSED','Statements require a completed calendar month.');
+  assert(a.effective_at<=start,422,'PARTIAL_MONTH_REVIEW_REQUIRED','A partial-month retainer requires separately reviewed proration.');
+  const existing=await statement(env.DB,"SELECT id,status FROM agency_monthly_statements WHERE agreement_id=? AND period=?",d.agreementId,d.period).first();
+  if(existing)return existing;
+  const rows=(await statement(env.DB,`SELECT bw.id,bw.property_id,bw.charge_cents,wo.reference FROM agency_billable_work bw
+    JOIN work_orders wo ON wo.id=bw.work_order_id WHERE bw.agreement_id=? AND bw.completed_at>=? AND bw.completed_at<?
+    AND NOT EXISTS(SELECT 1 FROM agency_statement_lines sl WHERE sl.billable_work_id=bw.id)
+    ORDER BY bw.completed_at,bw.id`,d.agreementId,start,end).all<any>()).results;
+  const retainer=a.pricing_model==='per_service'?0:a.base_monthly_cents;
+  const subtotal=retainer+rows.reduce((t:number,r:any)=>t+r.charge_cents,0);
+  assert(Number.isSafeInteger(subtotal)&&subtotal<=100000000,422,'INVOICE_AMOUNT_INVALID','Statement exceeds approved limits.');
+  const gst=Math.round(subtotal*a.gst_basis_points/10000),key=uid('ast');
+  await env.DB.batch([
+    statement(env.DB,`INSERT INTO agency_monthly_statements(id,agreement_id,period,subtotal_cents,gst_cents,total_cents,prepared_by,created_at) VALUES(?,?,?,?,?,?,?,?)`,key,d.agreementId,d.period,subtotal,gst,subtotal+gst,user.id,now()),
+    ...(retainer?[statement(env.DB,`INSERT INTO agency_statement_lines(id,statement_id,description,amount_cents) VALUES(?,?,?,?)`,uid('asl'),key,'Monthly approved contractual base',retainer)]:[]),
+    ...rows.map((r:any)=>statement(env.DB,`INSERT INTO agency_statement_lines(id,statement_id,billable_work_id,property_id,description,amount_cents) VALUES(?,?,?,?,?,?)`,uid('asl'),key,r.id,r.property_id,'Completed Work Order '+r.reference,r.charge_cents)),
+    activity(env,user,'agency.statement_prepared','agency_monthly_statement',key)
+  ]);
+  return {id:key,status:'draft',subtotalCents:subtotal,gstCents:gst,totalCents:subtotal+gst};
+ }
+ if(command==='approve-statement'){
+  const d=z.object({statementId:id,reviewReference:ref}).parse(input);
+  const row=await statement(env.DB,"SELECT prepared_by,status FROM agency_monthly_statements WHERE id=?",d.statementId).first<any>();
+  assert(row&&row.status==='draft',409,'STATEMENT_LOCKED','Statement is not a draft.');
+  assert(row.prepared_by!==user.id,403,'INDEPENDENT_REVIEW','A different Staff reviewer must approve this statement.');
+  await env.DB.batch([statement(env.DB,"UPDATE agency_monthly_statements SET status='approved',approved_by=? WHERE id=? AND status='draft'",user.id,d.statementId),
+    activity(env,user,'agency.statement_approved','agency_monthly_statement',d.statementId,null,null,{reference:d.reviewReference})]);
+  return {id:d.statementId,status:'approved',sent:false,paid:false};
+ }
+ assert(false,404,'ACTION_UNKNOWN','Unknown agency billing command.');
+}
+export async function agencyStaffOverview(env:Env,user:Principal){
+ operationsWrite(user);
+ const [agencies,agreements,services,works,statements]=await Promise.all([
+ statement(env.DB,`SELECT c.id,c.name FROM clients c JOIN client_entitlements e ON e.client_id=c.id AND e.workspace_kind='property-manager' AND e.active=1 AND e.approved_by IS NOT NULL WHERE c.client_type='agency' AND c.status='active' ORDER BY c.name`).all(),
+ statement(env.DB,'SELECT * FROM agency_commercial_agreements ORDER BY created_at DESC LIMIT 100').all(),
+ statement(env.DB,"SELECT id,name FROM services WHERE active=1 ORDER BY name").all(),
+ statement(env.DB,"SELECT w.id,w.reference,w.title,w.client_id FROM work_orders w JOIN clients c ON c.id=w.client_id WHERE c.client_type='agency' AND w.status='completed' ORDER BY w.updated_at DESC LIMIT 100").all(),
+ statement(env.DB,'SELECT * FROM agency_monthly_statements ORDER BY created_at DESC LIMIT 100').all()]);
+ return {agencies:agencies.results,agreements:agreements.results,services:services.results,works:works.results,statements:statements.results};
+}
