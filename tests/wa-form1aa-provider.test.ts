@@ -40,7 +40,7 @@ test('sandbox draft never sends, rejects production host and never leaks bearer 
   called=true;assert.match(String(req),/demo\.docusign\.net\/restapi\/v2\.1\/accounts/);
   const sent=JSON.parse(String(init?.body));
   assert.equal(sent.status,'created');
-  assert.equal(init?.headers?.Authorization,'Bearer synthetic-token');
+  assert.equal(new Headers(init?.headers).get('Authorization'),'Bearer synthetic-token');
   return Response.json({envelopeId:'demo-envelope',status:'created'}, {status:201});
  });
  assert.equal(called,true);assert.equal(result.status,'created');
