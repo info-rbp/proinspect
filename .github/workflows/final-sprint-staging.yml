@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      SOURCE_SHA: b15326175da6d4e6fdc77b17b3efcd02e0b1e74c
+      SOURCE_SHA: 0e992ae3a8127f0945e8a10295c0a11bf617a5a4
       CLOUDFLARE_ACCOUNT_ID: 8ca23ac6d2cc906d4dd13b8da5ea2b25
       CLOUDFLARE_ENV: ''
       WORKERS_CI: '0'
@@ -27,7 +27,7 @@ jobs:
         run: cp ops/final-sprint-staging.mjs /tmp/final-sprint-staging.mjs
       - uses: actions/checkout@v4
         with:
-          ref: b15326175da6d4e6fdc77b17b3efcd02e0b1e74c
+          ref: 0e992ae3a8127f0945e8a10295c0a11bf617a5a4
           fetch-depth: 0
           persist-credentials: false
       - uses: pnpm/action-setup@v4
@@ -41,7 +41,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           for attempt in $(seq 1 60); do
-            result=$(gh api "repos/info-rbp/proinspect/actions/runs/40348050967" --jq '[.head_sha,.status,(.conclusion // "pending")] | @tsv')
+            result=$(gh api "repos/info-rbp/proinspect/actions/runs/40350486042" --jq '[.head_sha,.status,(.conclusion // "pending")] | @tsv')
             test "$(printf '%s' "$result" | cut -f1)" = "$SOURCE_SHA"
             status=$(printf '%s' "$result" | cut -f2)
             conclusion=$(printf '%s' "$result" | cut -f3)
