@@ -1,0 +1,87 @@
+name: Final sprint live read-only verification
+on:
+  push:
+    branches: [ops/final-sprint-validation-20261026]
+    paths: [.github/workflows/final-sprint-live-observation.yml]
+permissions:
+  contents: read
+concurrency:
+  group: final-sprint-live-observation
+  cancel-in-progress: false
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SOURCE_SHA: 82fe6d236885d18e2baac4a7923272c0d7503762
+      STAGING_SHA: 0e992ae3a8127f0945e8a10295c0a11bf617a5a4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 82fe6d236885d18e2baac4a7923272c0d7503762
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked browser tooling without production credentials
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: Verify deployed source, public routes and anonymous authorization
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {mkdirSync,writeFileSync} from 'node:fs';
+          const prod='https://proinspect.systems',staging='https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev';
+          mkdirSync('artifacts',{recursive:true});
+          let ready=false;
+          for(let i=0;i<60;i++){
+            const r=await fetch(prod+'/api/health',{signal:AbortSignal.timeout(15000)});
+            if(r.ok&&(await r.json()).source===process.env.SOURCE_SHA){ready=true;break;}
+            await new Promise(r=>setTimeout(r,10000));
+          }
+          assert.ok(ready,'Expected merged source is not deployed');
+          const legal=['/privacy','/terms','/platform-terms','/website-terms','/booking-policy','/service-scopes','/subscription-terms'];
+          const checks=[];
+          for(const [origin,sha] of [[prod,process.env.SOURCE_SHA],[staging,process.env.STAGING_SHA]]){
+            const h=await fetch(origin+'/api/health');assert.equal(h.status,200);assert.equal((await h.json()).source,sha);
+            for(const path of ['/','/services','/book','/guest/book','/signin','/properties-for-lease','/open-home/check-in',...legal]){
+              const r=await fetch(origin+path,{redirect:'manual',signal:AbortSignal.timeout(20000)}),body=await r.text();
+              assert.equal(r.status,200,origin+path);
+              if(legal.includes(path))assert.ok(/noindex/i.test(r.headers.get('x-robots-tag')||'')||/name="robots"[^>]+noindex/i.test(body),'Draft legal page must remain noindex '+path);
+              checks.push({origin,path,status:r.status,unapprovedLegal:legal.includes(path)});
+            }
+            for(const kind of ['landlord','tenant','property-manager','commercial','strata-manager','building','strata-council','staff','building-manager']){
+              const path='/api/w/'+kind+'/not-authorized/overview',r=await fetch(origin+path,{redirect:'manual'});
+              assert.ok([401,403].includes(r.status),'Anonymous workspace request not denied '+kind);checks.push({origin,path,status:r.status});
+            }
+            for(const path of ['/api/staff/release-readiness','/api/staff/legal']){const r=await fetch(origin+path,{redirect:'manual'});assert.ok([401,403].includes(r.status));checks.push({origin,path,status:r.status});}
+          }
+          const old=await fetch('https://proinspect-platform.delicate-dream-e4c9.workers.dev/signin',{redirect:'manual'});assert.ok([301,302,307,308].includes(old.status));assert.equal(new URL(old.headers.get('location'),'https://proinspect.systems').origin,prod);
+          writeFileSync('artifacts/live-readonly.json',JSON.stringify({productionSource:process.env.SOURCE_SHA,stagingSource:process.env.STAGING_SHA,checks,legacyRedirect:old.status,authenticatedAcceptance:false,providerAcceptance:false,customerTransactionsCreated:0},null,2));
+          JS
+      - name: Check actual production navigation and narrow-screen rendering
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {chromium} from '@playwright/test';
+          import {writeFileSync} from 'node:fs';
+          const browser=await chromium.launch(),checks=[];
+          try{for(const width of [320,390,1100,1440]){
+            const page=await browser.newPage({viewport:{width,height:950}});
+            for(const path of ['/','/services','/guest/book','/signin','/privacy','/platform-terms']){
+              const r=await page.goto('https://proinspect.systems'+path,{waitUntil:'networkidle'});assert.equal(r?.status(),200,path);
+              const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);assert.equal(overflow,false,`${width} ${path}`);
+              checks.push({width,path,status:r.status(),overflow});
+              if(path==='/'||path==='/guest/book')await page.screenshot({path:`artifacts/live-${path==='/'?'home':'guest'}-${width}.png`,fullPage:true});
+            }await page.close();
+          }}finally{await browser.close()}
+          writeFileSync('artifacts/live-browser.json',JSON.stringify({source:process.env.SOURCE_SHA,checks,authenticatedAcceptance:false},null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-sprint-live-readonly-evidence
+          path: artifacts/
+          retention-days: 30
