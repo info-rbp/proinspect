@@ -123,6 +123,17 @@ export async function finaliseAgreement(env:Env,user:Principal,w:Workspace,id:st
  assert(d&&d.sha256!==e.source_sha256&&await env.DOCUMENTS.head(d.object_key),422,'SIGNED_PDF_NOT_VERIFIED','A different reviewed and issued signed official PDF is required.');
  const people=await getSigners(env,e.id);
  assert(people.length>=2&&people.every(p=>p.status==='consented'),409,'SIGNING_INCOMPLETE','All required identities must have consented.');
+ const manager=await statement(env.DB,`SELECT pm.manager_client_id FROM property_management_relationships pm
+ WHERE pm.property_id=? AND pm.ends_at IS NULL`,t.property_id).first<{manager_client_id:string}>();
+ assert(manager,403,'LESSOR_AUTHORITY_CHANGED','The property manager changed; re-authorise the signed copy before distribution.');
+ for(const p of people){
+  const current=p.role==='tenant'
+    ?await statement(env.DB,`SELECT 1 FROM tenancy_memberships m JOIN users u ON u.id=m.user_id AND u.active=1 AND u.verified_at IS NOT NULL
+     WHERE m.tenancy_id=? AND m.user_id=? AND m.starts_at<=? AND (m.ends_at IS NULL OR m.ends_at>?)`,t.id,p.user_id,now(),now()).first()
+    :await statement(env.DB,`SELECT 1 FROM client_memberships m JOIN users u ON u.id=m.user_id AND u.active=1 AND u.verified_at IS NOT NULL
+     WHERE m.client_id=? AND m.user_id=? AND m.active=1 AND m.role IN('owner','admin')`,manager.manager_client_id,p.user_id).first();
+  assert(current,403,'SIGNER_ACCESS_REVOKED','A signer lost current authority; do not distribute until reviewed.');
+ }
  const time=now(),messages=[];
  for(const p of people){
   const u=await statement(env.DB,'SELECT email FROM users WHERE id=? AND active=1',p.user_id).first<{email:string}>();
@@ -148,6 +159,12 @@ export async function voidAgreement(env:Env,user:Principal,w:Workspace,id:string
  if(w.kind==='staff')operationsWrite(user);
  const {t}=await getCase(env,user,w,id),e=await getEnvelope(env,id);
  assert(e&&['collecting','all_consented'].includes(e.status),409,'CANNOT_VOID','Only pending agreements can be voided.');
+ if(w.kind!=='staff'){
+  const allowed=await statement(env.DB,`SELECT 1 FROM property_management_relationships pm
+   JOIN client_memberships m ON m.client_id=pm.manager_client_id AND m.active=1 AND m.role IN('owner','admin')
+   WHERE pm.property_id=? AND pm.manager_client_id=? AND pm.ends_at IS NULL AND m.user_id=?`,t.property_id,w.scopeId,user.id).first();
+  assert(allowed,403,'LESSOR_AUTHORITY_REQUIRED','Only the current authorised lessor/manager can void an agreement.');
+ }
  const q=z.object({version,reason:z.string().trim().min(10).max(2000)}).parse(input);
  assert(e.version===q.version,409,'AGREEMENT_CHANGED','Refresh the signing record.');
  await env.DB.batch([
