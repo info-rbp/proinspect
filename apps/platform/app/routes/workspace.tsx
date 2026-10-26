@@ -58,7 +58,7 @@ export default function WorkspaceLayout() {
       '',
     ]);
   if (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''))
-    items.push(['wa-form-queue', 'WA residential forms', '']);
+    items.push(['wa-form-queue', 'WA residential forms', ''], ['bond-review-queue', 'WA bond operations', '']);
   if (w.kind === 'tenant') items.push(['inspections', 'Inspections', '']);
   items.push(['reports', w.kind === 'staff' ? 'Report creation & review' : 'Issued inspection reports', '']);
   items.push(['documents', 'Documents & reports', '']);

@@ -24,6 +24,7 @@ import * as waResidential from './wa-residential.server';
 import * as waLifecycle from './wa-lifecycle.server';
 import * as waIssuance from './wa-issuance.server';
 import * as bonds from './bonds.server';
+import * as rentPlanning from './rent-planning.server';
 import * as bondCompletion from './bond-completion.server';
 import * as integrations from './integrations.server';
 import {reportRoutes} from './report-router.server';
@@ -112,6 +113,9 @@ export async function featureApi(
       return ok(await forms.formsData(env, user, w, id));
     if (area === 'tenancies' && id && action === 'wa-forms')
       return ok(await waResidential.waFormsData(env, user, w, id));
+    if (tail === 'bond-review-queue') return ok(await bonds.bondReviewQueue(env,user,w));
+    if (area === 'tenancies' && id && action === 'rent-routing')
+      return ok(await rentPlanning.rentPlanData(env,user,w,id));
     if (tail === 'wa-form-queue')
       return ok(await waLifecycle.waReviewQueue(env,user,w));
     if (tail === 'wa-form-templates')
@@ -249,6 +253,12 @@ export async function featureApi(
     return ok(await finance.recordPayment(env, user, w, id, await body()));
   if (area === 'payments' && id && action === 'checkout')
     return ok(await finance.checkout(env, user, w, id));
+  if (area === 'tenancies' && id && action === 'rent-routing')
+    return ok(await rentPlanning.createRentPlan(env,user,w,id,await body()));
+  if (area === 'rent-plans' && id && action === 'external-records' && !child)
+    return ok(await rentPlanning.recordExternalRentEvent(env,user,w,id,await body()));
+  if (area === 'rent-plans' && id && action === 'external-records' && child && parts[4]==='verify')
+    return ok(await rentPlanning.verifyExternalRentEvent(env,user,w,id,child,await body()));
   if (tail === 'bonds') return ok(await bonds.createBond(env,user,w,await body()));
   if (area === 'bonds' && id && action === 'parties' && !child)
     return ok(await bonds.addParticipant(env,user,w,id,await body()));
@@ -314,6 +324,12 @@ export async function featureApi(
     return ok(await forms.updateForm(env, user, w, id, await body()));
   if (tail === 'confidential')
     return ok(await forms.createRestrictedCase(env, user, w, await body()));
+  if (area === 'confidential' && id && action === 'reviewers')
+    return ok(await forms.grantRestrictedSecondReviewer(env,user,id,await body()));
+  if (area === 'confidential' && id && action === 'form2-preparations' && !child)
+    return ok(await forms.prepareRestrictedForm2(env,user,id,await body()));
+  if (area === 'confidential' && id && action === 'form2-preparations' && child && parts[4]==='review')
+    return ok(await forms.reviewRestrictedForm2(env,user,id,child,await body()));
   if (area === 'confidential' && id && action === 'evidence')
     return ok(await forms.uploadRestrictedEvidence(env, user, id, await request.formData()));
   if (area === 'confidential' && id && parts.length === 2)

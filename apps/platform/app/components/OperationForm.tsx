@@ -117,6 +117,9 @@ const boolFields = new Set([
   'noticeConfirmed',
   'approvalRequired',
   'acknowledgeExternalProcess',
+  'confirmExplicitAccess',
+  'noAutomaticService',
+  'officialFormChecked',
 ]);
 export function formValues(form: FormData) {
   const data: Record<string, unknown> = {};

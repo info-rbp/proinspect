@@ -52,7 +52,7 @@ export default function Confidential() {
               redirect={(r) => `${w.href}/confidential/${r.id}`}
             >
               <TextArea name="details" label="Details for your chosen reviewer" />
-              <Input name="safeContact" label="Safe contact instructions" required={false} />
+              <Input name="safeContact" label="Safe method of contact (never use an unsafe channel)" required={false} />
               <Select
                 name="reviewerId"
                 label="Authorise this reviewer to access this case"
