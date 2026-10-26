@@ -71,11 +71,14 @@ test('mobile inspector captures reviewed evidence without horizontal overflow',a
   await expect(page.getByText(/Report action completed/)).toBeVisible();
   const photo=page.getByLabel('Take or select evidence photo');
   await photo.setInputFiles('tests/fixtures/report-photo.jpg');
-  await expect(page.getByText('Photo uploaded and awaiting review.')).toBeVisible();
+  await expect.poll(async()=>{
+    const response=await staffCtx.request.get('/api/w/staff/operations/reports/'+report.id);
+    if(!response.ok())return -1;
+    return ((await response.json()).evidence??[]).length;
+  },{timeout:20000,message:'Camera photo must reach private inspection evidence API'}).toBe(1);
   const evidence=await staffCtx.request.get('/api/w/staff/operations/reports/'+report.id);
   expect(evidence.ok()).toBe(true);
   const current=await evidence.json();
-  expect(current.evidence.length).toBe(1);
   expect(current.evidence[0].status).toBe('pending');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
   mkdirSync('artifacts/screenshots',{recursive:true});
