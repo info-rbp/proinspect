@@ -58,6 +58,7 @@ export default [
     route('work-orders/:workOrderId', 'routes/work-order-detail.tsx'),
     route('portfolio', 'routes/portfolio.tsx'),
     route('outsourcing', 'routes/agency-outsourcing.tsx'),
+    route('agency-administration', 'routes/agency-administration.tsx'),
     route('team', 'routes/team.tsx'),
     route('schemes', 'routes/schemes.tsx'),
     route('schemes/:schemeId', 'routes/scheme.tsx'),
