@@ -303,7 +303,10 @@ export async function handleApi(
     const ownerFile=path.match(/^\/api\/my-agency-managed-properties\/reports\/([a-zA-Z0-9_-]+)\/download$/);
     if(ownerFile&&method==='GET')return agencyOutsourcing.ownerReportDownload(env,user,ownerFile[1]);
     const agencyStaff=path.match(/^\/api\/staff\/agency-outsourcing\/(grant-owner|draft-agreement|set-rate|approve-agreement)$/);
-    if(agencyStaff&&method==='POST')return Response.json(await agencyOutsourcing.staffAgencyCommand(env,user,agencyStaff[1],await json(request)));
+    if(agencyStaff&&method==='POST'){requireOrigin(request,env);return Response.json(await agencyOutsourcing.staffAgencyCommand(env,user,agencyStaff[1],await json(request)));}
+    const agencyBilling=path.match(/^\/api\/staff\/agency-billing\/(record-work|prepare-statement|approve-statement)$/);
+    if(agencyBilling&&method==='POST'){requireOrigin(request,env);return Response.json(await agencyOutsourcing.agencyBillingCommand(env,user,agencyBilling[1],await json(request)));}
+    if(path==='/api/staff/agency-outsourcing'&&method==='GET')return Response.json(await agencyOutsourcing.agencyStaffOverview(env,user),{headers:{'Cache-Control':'private, no-store'}});
     const openHomeReport=path.match(/^\/api\/open-home\/report\/([a-zA-Z0-9_-]+)(\.csv)?$/);
     if(openHomeReport&&method==='GET'){
       const report=await readOpenHomeReport(env,user,openHomeReport[1]);
