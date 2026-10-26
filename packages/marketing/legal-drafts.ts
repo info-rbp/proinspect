@@ -1,80 +1,169 @@
+import { SERVICE_SCOPE_SECTIONS } from './service-scopes';
+
 /**
- * REVIEW DRAFTS ONLY. This module intentionally does not constitute approved
- * business privacy policy or service terms. Do not flip the approval flags
- * without independently verified operator/legal review.
+ * PUBLICATION LOCK: substantial working drafts based on the 43-page
+ * "ProInspect Universal Terms of Engagement - Legal Review 2026" supplied
+ * by the business (negotiation draft of 21 October 2026).
  *
- * Source of technical facts: docs/ARCHITECTURE.md, docs/AUTHORIZATION.md,
- * docs/UNIFIED_SITE.md, and the actual contact/booking/records code.
+ * A draft document is NOT an accepted rate card, charge, client contract or
+ * approved privacy statement. Operator + WA legal review and verification of
+ * the actual application/providers are required before any approval flag flips.
  */
+export type PublicLegalKey =
+  | 'privacy' | 'terms' | 'website-terms' | 'platform-terms'
+  | 'booking-policy' | 'service-scopes' | 'subscription-terms';
+
+export const PUBLIC_LEGAL_VERSION = '2026-10-25-review-1' as const;
+
+/** Each document must be individually approved and versioned, not enabled globally. */
 export const PUBLIC_LEGAL_APPROVAL = {
   privacy: { approved: false, reviewedBy: null, effectiveDate: null },
   terms: { approved: false, reviewedBy: null, effectiveDate: null },
+  'website-terms': { approved: false, reviewedBy: null, effectiveDate: null },
+  'platform-terms': { approved: false, reviewedBy: null, effectiveDate: null },
+  'booking-policy': { approved: false, reviewedBy: null, effectiveDate: null },
+  'service-scopes': { approved: false, reviewedBy: null, effectiveDate: null },
+  'subscription-terms': { approved: false, reviewedBy: null, effectiveDate: null },
 } as const;
 
 type LegalSection = [heading: string, body: string];
-export const PUBLIC_LEGAL_DRAFTS: Record<'privacy' | 'terms', {
+export type PublicLegalDocument = {
   title: string;
   intro: string;
   sections: LegalSection[];
-}> = {
+  version: string;
+};
+export const PUBLIC_LEGAL_DRAFTS: Record<PublicLegalKey, PublicLegalDocument> = {
   privacy: {
-    title: 'Privacy information and handling practices',
-    intro: 'Review draft: this document explains the platform’s known information flows. It has not yet been approved as ProInspect’s final privacy policy.',
+    title: 'Privacy Policy — review draft',
+    intro: 'ProInspect Property Services processes information about enquiries, properties and people. This draft describes the intended handling arrangements; it is not yet the approved operative privacy policy.',
+    version: PUBLIC_LEGAL_VERSION,
     sections: [
-      ['Who operates this service',
-        'ProInspect provides property-inspection and property-operations services in Western Australia. Before this notice becomes the operative privacy policy, the business must confirm its contracting legal entity, ABN (if applicable), postal address, telephone contact and designated privacy contact. For questions about this draft, use info@proinspect.systems.'],
-      ['Information requested',
-        'A public enquiry can include your name, email, optional telephone number, organisation, general suburb, selected service and description of the property task. Authenticated workflows can include account and organisation details, property and tenancy relationships, appointments, access instructions, contractor/work-order records, uploaded material and issued reports. The exact information requested depends on your role and the task.'],
-      ['How information is received',
-        'Information is entered directly in forms, supplied by appropriately authorised clients, staff or invited participants, or generated through the service workflow (for example, a work-order status or an inspection record). Email sign-in and relationship invitations may also produce authentication and activity records.'],
-      ['Why information is used',
-        'The application uses relevant information to identify users, verify authorised relationships, respond to enquiries, assess service suitability, coordinate property attendance, manage work orders, issue records and reports, provide customer support and maintain audit and security controls. Public enquiry consent relates to responding to that enquiry; it is not an automatic marketing subscription.'],
-      ['Who may receive information',
-        'The application is designed to provide access according to verified property, tenancy, organisation, scheme or work assignments. Authorised staff may process the information required for their role. Where an approved workflow uses a contractor, email, payment or hosting provider, limited information may be processed to deliver that function. The actual providers, contractual roles and disclosures must be verified before this draft is approved.'],
-      ['Property records and restricted material',
-        'Issued property documents are held in private storage and require a specific authorised relationship or grant before download. The platform distinguishes ordinary operational records from restricted information. Initial public enquiries should not include entry codes, confidential tenant material or sensitive evidence. This is an architectural control description, not a guarantee that a particular account already has production access.'],
-      ['Security and account access',
-        'The application uses verified sessions, server-side authorisation, access restrictions, audit events and encrypted storage for selected sensitive information. No internet service can guarantee absolute security. Do not use the public contact form for emergencies or confidential evidence.'],
-      ['Access and correction requests',
-        'For a request concerning your personal information, email info@proinspect.systems with “Privacy access or correction” in the subject. ProInspect must confirm an identity-verification and response procedure, a responsible contact person, and lawful exceptions before approving this draft. Access to another person’s tenancy or property record is not granted simply by knowing its identifier.'],
-      ['Complaints and privacy concerns',
-        'Send a privacy concern to info@proinspect.systems with a general description and safe contact method. The business must publish its nominated privacy officer, complaint assessment and escalation procedure, and the process for applicable external review before activating this as its final policy.'],
-      ['Retention, correction and deletion',
-        'Some service, compliance, audit and issued-document records may need to be retained after an engagement ends. The operator has not yet approved the applicable retention periods, secure disposal process, statutory exceptions or destruction/de-identification schedule. No promise of immediate deletion or indefinite retention is made here.'],
-      ['Hosting and overseas recipients',
-        'The service is built on Cloudflare infrastructure and may use contracted communications or payment integrations. The business must audit the actual recipients, applicable countries, data-transfer arrangements and any legally required overseas-disclosure statement before this policy becomes final. No claim of exclusively Australian storage is made.'],
-      ['Changes and approval',
-        'This is a review draft, not an operative final privacy policy. The final policy requires a named approved operator, published effective date, finalised handling/disclosure/retention details and review of applicable Australian privacy obligations.'],
+      ['Operator and contact', 'The supplied Terms of Engagement identify the proposed provider as Gianpaulo Umberto Coletti ABN 76 098 718 150, trading as Remote Business Partner / ProInspect Property Services. The legal identity, public contact address, privacy contact and ABN are to be verified before publication. Privacy enquiries may provisionally be directed to info@proinspect.systems.'],
+      ['Scope and relevant law', 'This policy is intended to govern the website, guest booking, customer accounts, portal invitations, inspection and property workflows, reports and related support. Whether the Privacy Act 1988 (Cth) applies directly depends on the operator and applicable exemptions or exceptions. ProInspect intends to use Australian Privacy Principles as its design baseline.'],
+      ['Information collected', 'Depending on your interaction, this may include name, email, phone, billing details, account role, property identifiers, tenancy and scheme membership, access instructions, service bookings, quotations, reports, comments, inspection images, contractor contacts, invoices, security logs and documents you choose to submit. More sensitive rental-applicant and restricted-case evidence is collected only if the related feature is separately enabled.'],
+      ['Sources of information', 'Details may be supplied directly by you, through a verified client or landlord, by an authorised agent or strata representative, by an invited tenant or resident, through inspector attendance, or as audit and service records generated by the platform. Not every record about a property is necessarily information supplied by the person accessing it.'],
+      ['Purposes', 'ProInspect may use necessary information to verify identity and authority, answer enquiries, assess service suitability, organise lawful property access, schedule and complete jobs, coordinate approved contractors, generate and issue reports, communicate with authorised participants, process legitimate charges, secure systems and meet applicable record-keeping obligations. Information is not collected through an ordinary enquiry for unsolicited marketing enrolment.'],
+      ['Recipients and sharing controls', 'Information is shared only with recipients justified by the instruction and lawful relationship, such as the instructing client, authorised landlord or agency, intended tenant, named strata representative, assigned inspector, approved contractor or delivery processor. Property membership does not automatically authorise access to every tenancy document. Leasing interest/attendance information is shared with a named representative only under the applicable notice and authority.'],
+      ['External service providers and overseas processing', 'The architecture uses Cloudflare Workers, D1 and private R2, with integrations including email delivery, Google Calendar and Stripe when enabled. The actual provider contracts, locations, overseas disclosures and international safeguards must be confirmed for the final policy. No Australia-only storage or permanent vendor promise is made by this draft.'],
+      ['Financial details', 'When payment collection is activated, an authorised payment provider may process payment-card details. ProInspect records permitted transaction references, billing status and reconciliation records rather than promising to store full card information. Subscriptions currently recorded as application entitlements do not by themselves establish recurring payments.'],
+      ['Special and restricted data', 'Access codes, private tenancy evidence, applicant identification or financial records and family-violence-related information require stricter controls. ProInspect must obtain a lawful basis, limit recipients, audit access and apply approved secure retention and deletion controls before activating those workflows. Avoid putting such details in general enquiries or ordinary email.'],
+      ['Security', 'Designed safeguards include verified sign-in, server-side relationship checks, restricted storage, encryption for selected sensitive records, document-grant controls, monitoring and audit events. No online system provides an absolute security guarantee. A live malware-scanning service and some external integration acceptance remain release dependencies.'],
+      ['Access and correction', 'People may request access to or correction of their personal information by contacting info@proinspect.systems with a safe reply method. The operator must verify identity, assess affected third-party rights and apply lawful exceptions and its approved response process. An account closure request does not automatically remove records that must be lawfully preserved.'],
+      ['Retention and deletion', 'Information must be retained only for approved operational, contractual, legal, safety and audit purposes. Specific periods for service reports, guest records, tenancy files, identity documents, provider backups and security logs are pending a documented retention schedule. No unconditional promise of immediate or indefinite retention is made.'],
+      ['Complaints and incidents', 'Privacy concerns can be sent to info@proinspect.systems. The approved policy must identify a responsible officer and complaint escalation, access/correction response process and applicable external review. The internal incident response policy will assess notification requirements under the Notifiable Data Breaches scheme when applicable.'],
+      ['Communications and choices', 'Essential service messages, security links and transactional notifications are separate from optional promotional communications. Commercial electronic messages require the applicable consent, sender details and unsubscribe mechanism. Optional marketing choices must be recorded independently of service terms.'],
+      ['Automated decision transparency', 'As at this review, the platform should not be described as making tenancy selection or other regulated decisions on behalf of owners or agents. Before any qualifying automated decisions are activated, assess the additional APP 1 privacy-policy transparency requirements commencing 10 December 2026 for covered entities and publish the applicable decision and information categories.'],
+      ['Policy changes', 'The final approved version must display its effective date, version, accountable operator and material changes. Previously collected data must be handled consistently with applicable law, original notices and any necessary new notification or consent.'],
+    ],
+  },
+  'website-terms': {
+    title: 'Website Terms of Use — review draft',
+    intro: 'Rules for visitors to the ProInspect public website. Service bookings, authenticated portal use and paid plans have separate proposed documents.',
+    version: PUBLIC_LEGAL_VERSION,
+    sections: [
+      ['Who operates the site', 'The proposed operator is the person legally trading as Remote Business Partner / ProInspect Property Services, subject to verification of the final contracting particulars. The site is focused on property services in Western Australia.'],
+      ['Using website information', 'Service descriptions, illustrative reports, areas and booking entry points are general information. Only a confirmed instruction, accepted scope and applicable commercial conditions establish a service commitment.'],
+      ['Leasing listings and agency responsibilities', 'Where property listings are displayed, ProInspect publishes approved information and may conduct inspections on behalf of the responsible leasing agent, agency or landlord. Publication does not make ProInspect the landlord, licensed leasing agent or property manager or grant authority to select tenants.'],
+      ['External rental application portals', 'When an agency nominates an external application provider, the approved external link takes precedence. Its own terms and privacy practices govern that application; a link click is not an application submission.'],
+      ['Copyright and content', 'ProInspect retains rights to its site, branding, software, templates and original materials. Property owners, agents and other contributors must provide rights-cleared content, authorisations and accurate listings. No public reuse of customer reports or private images is authorised by merely visiting the site.'],
+      ['Prohibited use', 'Do not try to gain access to another user account, scrape personal records, publish false listings, submit abusive content, interfere with security controls or misuse property-access information.'],
+      ['Enquiries and communications', 'A contact submission is an enquiry, not a confirmed appointment, and should not include access codes or sensitive tenant evidence. Commercial communications are subject to separate marketing consent and applicable unsubscribe obligations.'],
+      ['Availability and accuracy', 'Published content may change, and an appointment or quoted price becomes binding only as permitted under the accepted terms. The website is not an emergency response channel or substitute for official statutory notice.'],
+      ['Other agreements and rights', 'Use of customer portals is governed by Platform Terms; actual services by Service Terms, booking conditions and any accepted signed agreement. No website term removes rights that cannot lawfully be excluded.'],
+      ['Contact and updates', 'Questions and reports of site misuse can be directed to info@proinspect.systems. Approved revisions will carry a date and version; significant adverse contractual changes are not imposed retrospectively through a website edit.'],
+    ],
+  },
+  'platform-terms': {
+    title: 'Platform Terms of Use — review draft',
+    intro: 'Proposed terms for ProInspect accounts, property records and authorised client, tenant, building, strata and Staff portals.',
+    version: PUBLIC_LEGAL_VERSION,
+    sections: [
+      ['Account eligibility and identity', 'Users sign in with a verified identity and may receive access to several workspaces. A verified email does not itself establish property ownership, management, tenancy, council membership, financial authority or the right to inspect a document.'],
+      ['Organisation and property roles', 'Client and portal actions are limited by current ownership, management, delegated approval, tenancy or scheme membership. Landlord self-management is distinct from professional agency management. Council recommendations are not automatically statutory resolutions.'],
+      ['Security and access', 'Keep sign-in links and accounts private; do not share another person\'s session. Notify ProInspect of suspected compromise, remove departing team members promptly and do not bypass access or document controls.'],
+      ['Submissions and acceptable use', 'Provide accurate information and upload only documents you are authorised to use. Do not record or expose another person\'s protected information without lawful authority, submit malicious files or falsify attendance, signatures, approvals or reports.'],
+      ['Workflows and evidence', 'Bookings, Work Orders, reports, notifications and audit events may provide evidence of system events. They are not conclusive proof that legal service, entry notices, statutory execution, a board resolution or regulated decision has occurred.'],
+      ['Rights to records', 'Clients retain lawful rights to their supplied materials. ProInspect retains the software, templates, workflow systems and intellectual property. Access to issued property reports is restricted to designated recipients; no broad right to reproduce the platform is granted.'],
+      ['Tenant and resident rights', 'Portal terms do not replace a residential tenancy agreement or override tenants\' statutory rights. A tenant may report concerns or access authorised documents without becoming responsible for the landlord\'s ProInspect charges. Restricted safety cases require dedicated controls.'],
+      ['Third-party integrations', 'Email, calendar, payments and other integrations may be available only when configured and accepted. A module shown in an interface is not a promise that every integration, statutory filing or financial settlement is live.'],
+      ['Service interruptions and handover', 'The service may be temporarily unavailable. ProInspect will use an appropriately secure agreed fallback for material operational needs and reconcile relevant records. Urgent threats and essential-service emergencies are directed to responsible emergency channels, not portal response assumptions.'],
+      ['Permissions, suspension and termination', 'Access may change when a tenancy ends, a portfolio relationship is revoked or an account is lawfully suspended. Necessary historical records and legally required information remain governed by retention, safety and access rules; unrelated documents do not become visible to former members.'],
+      ['Privacy, communications and changes', 'Privacy handling is described in the approved Privacy Policy and collection notices. Mandatory service notifications are distinct from optional marketing. Material adverse service obligations require appropriate contractual agreement, not silent acceptance through a new portal screen.'],
+      ['Conflict and governing framework', 'If the user is operating for a company or agency, organisational and signed service terms govern that principal\'s commercial obligations. Nothing transfers personal liability or creates a guarantee solely because a representative signs in. Applicable non-excludable rights remain effective.'],
     ],
   },
   terms: {
-    title: 'Property service terms — review draft',
-    intro: 'These proposed service terms explain the intended booking and attendance model. They are not an approved customer contract.',
+    title: 'Master Service Terms & Conditions — review draft',
+    intro: 'Proposed general conditions for Residential, Commercial and Strata inspections, property attendance and operational support. Particular services require an accepted Work Order, agreed price and the relevant scope schedule.',
+    version: PUBLIC_LEGAL_VERSION,
     sections: [
-      ['Parties and document status',
-        'This is a draft for review. The operating legal entity, ABN if applicable, business contact details, effective date and any organisation-specific contract hierarchy must be confirmed before these terms can be offered to customers.'],
-      ['Services and agreed scope',
-        'The online catalogue describes possible inspections, attendance, contractor-access support, documentation and operational services. Every engagement is limited to the confirmed instruction, relevant property, agreed output and any exclusions communicated before acceptance. A catalogue description is not an unlimited service obligation.'],
-      ['Requests, quotations and confirmation',
-        'Selecting a service or sending an enquiry does not automatically create a confirmed appointment. Available services and times, location, access, pricing and applicable customer approval are checked through the authorised booking or instruction workflow. The accepted booking or individual agreement records what has been confirmed.'],
-      ['Authority to instruct and access',
-        'The person instructing ProInspect must hold the required authority for the property and provide lawful access arrangements. A verified email or property reference alone does not confer ownership, tenancy management or strata decision-making authority. Access requirements for occupied properties and common areas remain subject to applicable law and the agreed instruction.'],
-      ['Pricing, inclusions and payment',
-        'An applicable price, inclusion entitlement, GST treatment, authorised payment mechanism and any additional charges must be disclosed and confirmed for the particular booking or commercial arrangement. Published marketing pages do not independently establish a quote. Payment processes and reconciliation are handled through authorised application workflows.'],
-      ['Cancellation, changes and missed access',
-        'The operator must approve and publish the cancellation, rescheduling, notice, missed-access and refund arrangements before these terms become operative. No universal cancellation fee, non-refundable deposit or unilateral pricing-change right is created by this draft.'],
-      ['Condition reports and service outputs',
-        'Reports and property attendance records document only the observations and activities within the accepted service scope. Unless separately agreed by an appropriately qualified provider, ordinary inspections do not constitute engineering certification, electrical compliance assessments, building warranties, statutory determinations or emergency response.'],
-      ['Follow-up work and contractor responsibilities',
-        'Observing a matter that may need further attention does not itself authorise repairs, specialist assessments, additional expenditure or third-party works. Additional work requires the appropriate instruction, contractor agreement and approvals. Scheme governance and council decisions remain with the authorised parties.'],
-      ['Customer materials, privacy and secure records',
-        'Customers should provide necessary accurate property information and avoid including confidential evidence in the public enquiry channel. Reports and issued documents are made available only through authorised application access. Refer to the applicable approved privacy policy once published.'],
-      ['Consumer and statutory rights',
-        'Nothing in an approved service contract should exclude, restrict or modify non-excludable rights or remedies under the Australian Consumer Law or other applicable law. The final terms must be reviewed for fairness, clarity and consistency with consumer and small-business protections.'],
-      ['Concerns and dispute handling',
-        'Service concerns may be raised through info@proinspect.systems. The operator must approve escalation contacts, response commitments, any complaint process and the applicable governing-business details before this draft is published as binding terms.'],
-      ['Release approval',
-        'These are proposed terms only. The final document requires a confirmed contracting entity and approved commercial schedules, authorised cancellation terms, payment/refund and dispute procedures, legal review and a published effective date.'],
+      ['Legal provider and contract documents', 'The supplied negotiated reference identifies the proposed Provider as Gianpaulo Umberto Coletti ABN 76 098 718 150 trading as Remote Business Partner / ProInspect Property Services; verification and commercial sign-off remain outstanding. For professional or recurring arrangements, the signed Key Facts, Engagement Particulars, selected service matrix and individually accepted Work Orders take precedence as stated in the final signed agreement.'],
+      ['Independent contractor and regulatory boundary', 'ProInspect delivers commissioned inspection and property-operations support as an independent contractor. It is not automatically appointed a real estate agent, licensed property manager, strata manager, engineer, builder, legal adviser, valuer, insurance assessor or statutory decision-maker. Work requiring a licence, professional qualification or formal appointment cannot be performed on an administrative instruction alone.'],
+      ['Formation of an order', 'An enquiry, catalogue view, tentative calendar time or request for quotation is not a confirmed appointment. A PAYG order becomes accepted only on an identifiable ProInspect confirmation or other agreed acceptance; included services operate only under a valid separately elected subscription or existing lawful entitlement. Accepted changes require the appropriate authorisation.'],
+      ['Service families and 23 service schedules', 'The scope schedules at /service-scopes describe all 23 current platform services: residential and commercial inspections, common-property and building attendance, maintenance and completion evidence, contractor access, keys, moves and custom visits. Each is limited to its confirmed property, purpose, service area and stated deliverable. A catalogue entry does not guarantee availability or a published fixed price.'],
+      ['Visual inspection methodology', 'Ordinary inspections are visual, non-invasive and limited to reasonably accessible and safe areas at the inspection time. No hidden defect detection, dismantling, lift/roof access, confined-space work, structural diagnosis, pest/asbestos/mould analysis, building-services certification or electrical/gas/plumbing compliance is included without an appropriately authorised separate scope.'],
+      ['Residential tenancy responsibilities', 'The legally responsible landlord or authorised manager retains statutory notices, valid entry authority, rental decisions, tenancy agreement obligations, bond dealings, legal service and required timelines. WA statutory PCRs must use the current Form 1 content. A ProInspect appointment confirmation is not Form 19 and does not itself satisfy notice of entry.'],
+      ['Commercial and strata responsibilities', 'Commercial lease interpretation, make-good liability, legal rent review and outgoings decisions remain with the authorised party and any qualified adviser. Strata companies or appointed managers retain governance and statutory powers; portal recommendations do not become resolutions. No strata subscription or scheme management appointment arises merely from these Terms.'],
+      ['Client authority and lawful access', 'The instructing client must identify the real contracting principal, payer, property, safety risks, lawful access arrangements, notices and approval contacts. ProInspect may decline unsafe, unlawful, incomplete or outside-area instructions. The default independent maintenance spending authority is zero unless a specific lawful signed delegation states otherwise.'],
+      ['Photographs, reports and delivery', 'ProInspect may collect necessary lawful evidence within the commissioned scope. Reports must identify actual attendance and relevant restrictions; they must not claim unperformed inspections. The client receives the agreed final deliverable through authorised channels and may raise factual corrections. Appropriate statutory delivery duties remain with the legally responsible issuer.'],
+      ['Payments, GST and extras', 'Prices, GST treatment, payer, due date and accepted Extras must be disclosed for each work order or separately signed plan. The reference negotiation draft proposes PAYG invoices due seven calendar days after proper tax invoice, but that term is not activated by publishing this draft. Extras cannot be billed retrospectively without an accepted basis, and included work must not be double charged.'],
+      ['Contractor work and approvals', 'Coordination, quotations and photographic completion observations do not themselves approve repairs, bind a third-party principal, guarantee contractor workmanship or include trade labour/materials. The applicable Work Order must identify the contracting payer and authorised expenditure limit.'],
+      ['Safety and emergencies', 'Unsafe site work may be refused or paused with prompt notification. Ordinary services are not a guaranteed emergency response, after-hours hotline, hazard certification or statutory repair provider. Urgent obligations stay with the legally responsible party unless separately and lawfully agreed.'],
+      ['Cancellation, failed access and rescheduling', 'A separate proposed Booking, Cancellation & Refund Policy explains the source agreement\'s capped and loss-based attendance charges. No penalty, duplicate fee or payment is imposed merely because this unapproved draft exists. Specific negotiated and lawful cancellation conditions must be displayed before accepting the order.'],
+      ['Subscription elections and boundaries', 'The attached agreement proposes $150 plus GST per enrolled residential dwelling monthly for future expressly elected new contracts; commercial subscriptions require individually signed fees, units and included-work matrices, while strata is quoted PAYG. The live platform\'s current all-inclusive account entitlements are not automatically converted to paid or limited plans by this draft.'],
+      ['Privacy and confidentiality', 'Each party must protect access details, property and tenancy records, commercial information and private photographs. Sharing and retention follow the approved Privacy Policy, secure access grants, lawful record-keeping and any customer-specific data-sharing agreement. Sensitive evidence is not emailed or disclosed to every property user by default.'],
+      ['Liability, care and statutory rights', 'Each party remains responsible for its own breach and negligence. The source proposes a qualified liability cap and balanced indemnities, subject to a detailed fairness and insurance review; these are not automatically binding under this draft. Nothing excludes Australian Consumer Law guarantees or other non-excludable rights.'],
+      ['Intellectual property and permitted report use', 'ProInspect retains rights to its proprietary software, templates, branding and processes. A properly authorised client receives a lawful non-exclusive licence to use and share the final paid report for the relevant property and legitimate tenancy, management, insurance, regulatory or dispute purposes. No false attribution, resale or unrelated reuse is authorised.'],
+      ['Term, termination and data export', 'PAYG obligations relate to accepted orders. Fixed subscription terms must be positively selected and agreed; no new fixed-term renewal arises by default. The attached reference proposes rolling monthly continuation and a capped, loss-based early-exit arrangement, subject to approval. On termination, lawful client records and completed reports are made available through appropriate secure export, preserving statutory and third-party privacy restrictions.'],
+      ['Disputes and formal notices', 'The reference proposes senior-contact escalation, good-faith resolution and possible mediation in Perth, WA. Contract notices require an authorised destination and record of receipt where legally relevant. A portal event is not a substitute for a prescribed legal notice.'],
+      ['No automatic security, guarantee or first right', 'Ordinary website, portal or PAYG acceptance does not create a personal guarantee, PPSA interest, land charge, caveat, first-opportunity right, exclusivity or personal responsibility of a director/owner. The source document treats these as exceptional separately negotiated, capped and independently signed business instruments that must receive dedicated legal review.'],
+    ],
+  },
+  'booking-policy': {
+    title: 'Booking, Cancellation & Refund Policy — review draft',
+    intro: 'Proposed terms for one-off services and subscription appointments. The source agreement provides potential fee ceilings, but these are not active operational charges until accepted and approved.',
+    version: PUBLIC_LEGAL_VERSION,
+    sections: [
+      ['When an appointment exists', 'A service request is not a reservation. For quotation-only services, a price must be reviewed and accepted and a time subsequently confirmed. A valid booking confirmation identifies the relevant property, service, date, scope, payer and arrangements.'],
+      ['Guest and subscription bookings', 'Guest PAYG customers may order without an account when enabled; a separate verified email link gives limited booking or report access. Customer accounts can book eligible currently included services under an active entitlement. Included is not a promise of unlimited physical attendance under any new commercial contract that expressly sets fair-use terms.'],
+      ['Proposed ordinary cancellation windows', 'The attached negotiation draft proposes no ordinary cancellation fee more than 48 hours before a confirmed visit, up to 25% of the agreed visit rate for 24–48 hours, and up to 50% for under 24 hours, only to the extent of legitimate evidenced wasted capacity and mitigated loss. These are review proposals, not current configured fees. No duplicative recovery.'],
+      ['Proposed unsuccessful-access charge', 'The reference proposes up to 50% of the pre-disclosed visit rate for unavoidable wasted travel or reserved capacity after lawful attempted attendance caused by an access failure outside ProInspect\'s control. An ordinary remote-only request is not a physical access event. No fee applies for ProInspect-caused failure, and the same event must not be billed as both cancellation and unsuccessful access.'],
+      ['Changes and extra work', 'A feasible advance time change may be free. Repeat travel, new reports, urgent attendance, unusual regional costs, third-party bookings or expanded work require clear advance approval and pricing, unless law provides otherwise.'],
+      ['Payment and invoice arrangements', 'The approved booking shows the applicable price, GST, subscription inclusion or accepted quotation and the agreed time for payment. Card checkout is not represented as operational until an actual provider-tested payment integration is live. The source proposes PAYG payment within seven days of invoice, subject to the final commercial policy.'],
+      ['Cancellation of subscriptions', 'Cancelling a single appointment does not cancel a service plan. Subscription initial term, rolling continuation, cancellation method and documented early-exit formula, if any, belong to a separately accepted subscription schedule; no fixed term arises automatically from an account creation.'],
+      ['Refunds and remedies', 'Applicable Australian Consumer Law rights to repair, repeat performance, cancellation, refund or compensation remain intact. Refund and credit treatment must distinguish work performed, unearned amounts, genuine approved third-party commitments and permitted cancellation charges.'],
+      ['Service unavailability and emergencies', 'Availability, weather, access, safety and legally mandated notice periods can require changed arrangements. ProInspect will communicate changes and lawful remedies; an urgent service request is not guaranteed 24-hour coverage unless separately accepted.'],
+      ['Reviews and disputed charges', 'Billing and performance concerns can be raised through info@proinspect.systems with the booking reference. A disputed charge is reviewed on supporting facts, not automatically imposed, and no separate security or guarantee arises from a fee dispute.'],
+      ['Business approval dependency', 'Before publication, the operator must decide exact cancellation and no-access policies, GST calculations, appointment/time zone definitions, payment before/after work, genuine loss substantiation, provider support for refunds and any required per-service variations.'],
+    ],
+  },
+  'subscription-terms': {
+    title: 'Subscription & Service Plans — review draft',
+    intro: 'Proposed separately elected recurring client agreements. These terms do not change the current application\'s auto-provisioned service entitlements.',
+    version: PUBLIC_LEGAL_VERSION,
+    sections: [
+      ['Client-specific election', 'A binding fixed-term subscription requires an identified legal client, enrolled properties or billing units, selected price, commencement, term, approved inclusions and signed Key Facts or a separately authorised equivalent digital contract. A basic portal account or platform entitlement does not silently create a monthly invoice.'],
+      ['Residential proposed price', 'The attached document proposes a Residential Property Support Subscription of AUD $150 plus GST per enrolled dwelling per month for new expressly elected contracts. This is not approved as the live account price and is not imported into Stripe or the public booking catalogue.'],
+      ['Residential proposed included work', 'The draft describes routine visual inspections, incoming/outgoing condition reports on genuine tenancy events, inventory/vacancy and pre-leasing checks, maintenance photographic follow-ups, ordinary open homes and limited administration within transparent service allowances. Legitimate extras and statutory decisions remain outside the scope unless separately authorised.'],
+      ['Allowance conflict pending decision', 'The supplied two-page Key Facts baseline refers to quarterly Routine Inspections, but clause 8.2 and clause 1.4 use up to two routine inspections per rolling twelve months. The final executed agreement must resolve this conflict. No automatic allowance or overage enforcement is implemented from this draft.'],
+      ['Commercial individually negotiated plans', 'No universal commercial price or quantity exists in the source. Every commercial plan requires a signed workstream matrix identifying unit, frequency, reporting scope, geography, exclusions, additional rates, minimum commitment and approval contacts.'],
+      ['Strata quoted model', 'The source proposes Strata PAYG or project quotations, without a default strata subscription or implied appointment as strata manager.'],
+      ['Term and renewal', 'The source proposes affirmatively selected 12-month, six-month or rolling monthly terms, followed by month-to-month continuation (not another fixed term) with 30 days written notice. Any early termination fee is capped and based on demonstrable unamortised unavoidable loss, subject to legality and separate approval.'],
+      ['Price adjustment', 'The source proposes an optional expressly elected annual Perth CPI formula with a plus/minus 5% cap and at least 45 days advance notice, rather than unilateral in-term changes. No adjustment is enabled unless specifically accepted.'],
+      ['Usage and authorised extras', 'The source proposes advance warning and written acceptance of additional PAYG work, not retrospective overage or double charging. No broad statutory or contractor spending power arises from an included-service label.'],
+      ['No automatic security or personal obligations', 'No ordinary signup or renewal creates PPSA security, a land charge, personal guarantee, default interest election or first-opportunity obligation. Any exceptional business-security provision requires separate lawful execution.'],
+      ['Legacy and current entitlements', 'Existing customer entitlements and previously agreed inclusions remain subject to their actual terms. A new paid schedule is not to be applied retrospectively or to silently revoke services from existing accounts.'],
+    ],
+  },
+  'service-scopes': {
+    title: 'Service Scope & Report Schedules — review drafts',
+    intro: 'Draft descriptions of the exact 23 ProInspect catalogue services. These explain proposed work, deliverables and key limitations; they do not publish or activate a price.',
+    version: PUBLIC_LEGAL_VERSION,
+    sections: [
+      ['How these schedules operate', 'The accepted property, scope, approved price or subscription entitlement, lawful access and Work Order determine what is commissioned. This schedule does not supply a binding quote or confer statutory/licensed authority. Residential, commercial and strata services retain separate legal responsibilities.'],
+      ['Inspection and report standard', 'Reports are factual, visual and based on safely accessible areas at the documented time. Images are taken only for authorised purposes; statutory WA Form 1 and Form 19 requirements cannot be replaced by an ordinary booking or generic report. Technical compliance and concealed defects require independent specialist scope.'],
+      ...SERVICE_SCOPE_SECTIONS,
     ],
   },
 };
