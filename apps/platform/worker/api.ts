@@ -1,4 +1,5 @@
 import { createSubscriptionCheckout } from './features/stripe-billing.server';
+import { contractorConnectWebhook } from './features/contractor-payments.server';
 import { ownerPortfolio } from './features/owner-portfolio.server';
 import * as guest from './features/guest.server';
 import { staffLeasing,publicListings,publicListing,publicPhoto,cancelLead } from './features/leasing.server';
@@ -245,6 +246,10 @@ export async function handleApi(
     if (path === '/api/guest/status' && method === 'GET') return Response.json(await guest.guestStatus(env,url.searchParams.get('token')??''));
     if (path === '/api/guest/availability' && method === 'GET') return Response.json(await guest.guestAvailability(env,url.searchParams.get('token')??'',url.searchParams.get('date')??''));
     if (path === '/api/guest/report' && method === 'GET') return await guest.guestReport(env,url.searchParams.get('token')??'');
+    if (path === '/api/webhooks/stripe/connect-platform' && method === 'POST')
+      return Response.json(await contractorConnectWebhook(env,request,'platform'));
+    if (path === '/api/webhooks/stripe/connect-recipients' && method === 'POST')
+      return Response.json(await contractorConnectWebhook(env,request,'recipients'));
     if (path === '/api/webhooks/stripe' && method === 'POST')
       return Response.json(await stripeWebhook(env, request));
     if (path === '/api/public/enquiries' && method === 'POST')

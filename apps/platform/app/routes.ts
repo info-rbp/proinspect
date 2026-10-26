@@ -73,6 +73,7 @@ export default [
     route('book/:serviceId?', 'routes/book.tsx'),
     route('booking-changes', 'routes/booking-changes.tsx'),
     route('finance', 'routes/finance.tsx'),
+    route('contractor-payments', 'routes/contractor-payments.tsx'),
     route('stripe-subscribe/:propertyId', 'routes/stripe-subscribe.tsx'),
     route('requests/:requestId', 'routes/request-detail.tsx'),
     route('bookings', 'routes/bookings.tsx'),

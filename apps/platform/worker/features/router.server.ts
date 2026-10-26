@@ -16,6 +16,7 @@ import * as portfolio from './portfolio.server';
 import * as booking from './bookings.server';
 import * as documents from './documents.server';
 import * as finance from './finance.server';
+import * as contractorPayments from './contractor-payments.server';
 import * as strata from './strata.server';
 import * as tenancy from './tenancies.server';
 import * as admin from './admin.server';
@@ -74,6 +75,7 @@ export async function featureApi(
     if (tail === 'v2') return ok(await v2StaffData(env,user,w,url.searchParams.get('market') ?? 'RES'));
     if (tail === 'v2-account') return ok(await v2CustomerData(env,user,w));
     if (tail === 'v2-maintenance') return ok(await maintenanceData(env,user,w,url.searchParams.get('orderId')));
+    if (tail === 'contractor-payments') return ok(await contractorPayments.listContractorPayments(env,user,w));
     if(tail==='v2-estates') return ok(await estateRegister(env,user,w));
     if(tail==='v2-sectors') return ok(await sectorData(env,user,w));
     if(tail==='v2-intelligence') return ok(await intelligenceData(env,user,w,url.searchParams));
@@ -244,6 +246,28 @@ export async function featureApi(
     return ok(await finance.decideApproval(env, user, w, id, await body()));
   if (area === 'approvals' && id && action === 'response')
     return ok(await finance.councilResponse(env, user, w, id, await body()));
+  if (area === 'contractor-payments') {
+    assert(env.CONTRACTOR_PAYMENTS_ENABLED === 'true',503,'CONTRACTOR_PAYMENTS_DISABLED',
+      'Contractor payment workflow is not enabled for this environment.');
+    if (tail === 'contractor-payments')
+      return ok(await contractorPayments.createContractorPayment(env,user,w,await body()));
+    if (tail === 'contractor-payments/recipients')
+      return ok(await contractorPayments.registerContractorRecipient(env,user,w,await body()));
+    if (!id || !action || child) return null;
+    if (action === 'authorise')
+      return ok(await contractorPayments.authoriseContractorPayment(env,user,w,id,await body()));
+    if (action === 'external-payment')
+      return ok(await contractorPayments.reportExternalPayment(env,user,w,id,await body()));
+    if (action === 'verify-external')
+      return ok(await contractorPayments.verifyExternalPayment(env,user,w,id,await body()));
+    if (action === 'checkout')
+      return ok(await contractorPayments.contractorCheckout(env,user,w,id));
+    if (action === 'release-approval')
+      return ok(await contractorPayments.approveContractorRelease(env,user,w,id,await body()));
+    if (action === 'execute-transfer')
+      return ok(await contractorPayments.executeContractorTransfer(env,user,w,id));
+    return null;
+  }
   if (tail === 'payments') return ok(await finance.createPayment(env, user, w, await body()));
   if (area === 'payments' && id && action === 'record')
     return ok(await finance.recordPayment(env, user, w, id, await body()));

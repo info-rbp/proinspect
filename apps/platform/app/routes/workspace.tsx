@@ -78,6 +78,9 @@ export default function WorkspaceLayout() {
       w.kind === 'council' ? 'Council decisions' : 'Approvals & payments',
       '',
     ]);
+  if ((management && ['owner','admin'].includes(w.role)) ||
+    (staff && ['administrator','operations_manager'].includes(user.staffRole ?? '')))
+    items.push(['contractor-payments','Contractor payments','']);
   if (customer || w.kind === 'council' || (staff && user.staffRole !== 'inspector'))
     items.push(['reporting', 'Operational reporting', '']);
   if (customer && ['owner', 'admin'].includes(w.role)) items.push(['team', 'Team & access', '']);

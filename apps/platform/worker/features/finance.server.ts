@@ -1,4 +1,5 @@
 import {billingEvent} from './stripe-billing.server';
+import {contractorCheckoutEvent} from './contractor-payments.server';
 import { z } from 'zod';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
@@ -634,6 +635,10 @@ export async function stripeWebhook(env: Env, request: Request) {
     'LIVE_EVENT_BLOCKED',
     'Live events are blocked in this environment.',
   );
+  if (String(event.type).startsWith('checkout.session.') && event.data?.object?.metadata?.contractor_plan_id) {
+    const result=await contractorCheckoutEvent(env,event);
+    if(result)return result;
+  }
   if (event.type === 'checkout.session.completed' && event.data?.object?.mode === 'subscription')
     return billingEvent(env,event,raw);
   if (['customer.subscription.created','customer.subscription.updated','customer.subscription.deleted','invoice.paid','invoice.payment_failed'].includes(event.type))

@@ -85,6 +85,20 @@
       ],
       "group": "open-home-sheet",
       "format": "signing-key"
+    },
+    "STRIPE_CONNECT_PLATFORM_WEBHOOK_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "payments",
+      "format": "signing-key"
+    },
+    "STRIPE_CONNECT_RECIPIENT_WEBHOOK_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "payments",
+      "format": "signing-key"
     }
   },
   "variables": {
@@ -266,6 +280,34 @@
       "default": "false"
     },
     "STRIPE_TAX_READY": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "CONTRACTOR_PAYMENTS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "STRIPE_CONNECT_MARKETPLACE_APPROVED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "STRIPE_CONNECT_COLLECTION_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "STRIPE_CONNECT_TRANSFERS_ENABLED": {
       "targets": [
         "platform"
       ],
