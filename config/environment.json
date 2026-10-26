@@ -244,6 +244,13 @@
       ],
       "group": "release",
       "default": "false"
+    },
+    "RENT_PAYMENT_PLANNING_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
     }
   },
   "generated": [

@@ -102,6 +102,8 @@ export function checkConfiguration(
       name: 'RESTRICTED_WORKFLOWS_ENABLED',
       reason: 'Keep false until the separate restricted-case release review.',
     });
+  if (input.RENT_PAYMENT_PLANNING_ENABLED && input.RENT_PAYMENT_PLANNING_ENABLED !== 'false')
+    invalid.push({name:'RENT_PAYMENT_PLANNING_ENABLED',reason:'Keep false until a separate rent-planning release review.'});
   const signing = [
     'DATA_ENCRYPTION_KEY',
     'ENQUIRY_GATEWAY_SECRET',
