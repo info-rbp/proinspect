@@ -1,0 +1,101 @@
+name: Final sprint isolated staging
+on:
+  push:
+    branches: [ops/final-sprint-validation-20261026]
+    paths: [.github/workflows/final-sprint-staging.yml]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: proinspect-staging-release
+  cancel-in-progress: false
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SOURCE_SHA: b15326175da6d4e6fdc77b17b3efcd02e0b1e74c
+      CLOUDFLARE_ACCOUNT_ID: 8ca23ac6d2cc906d4dd13b8da5ea2b25
+      CLOUDFLARE_ENV: ''
+      WORKERS_CI: '0'
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Preserve reviewed operations helper outside candidate source
+        run: cp ops/final-sprint-staging.mjs /tmp/final-sprint-staging.mjs
+      - uses: actions/checkout@v4
+        with:
+          ref: b15326175da6d4e6fdc77b17b3efcd02e0b1e74c
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require exact-source full verification before changing staging
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          for attempt in $(seq 1 60); do
+            result=$(gh api "repos/info-rbp/proinspect/actions/runs/40348050967" --jq '[.head_sha,.status,(.conclusion // "pending")] | @tsv')
+            test "$(printf '%s' "$result" | cut -f1)" = "$SOURCE_SHA"
+            status=$(printf '%s' "$result" | cut -f2)
+            conclusion=$(printf '%s' "$result" | cut -f3)
+            if [ "$status" = completed ]; then test "$conclusion" = success; exit 0; fi
+            sleep 15
+          done
+          echo 'Exact-source verification did not finish successfully'; exit 1
+      - name: Install locked dependencies without Cloudflare credentials
+        run: pnpm install --frozen-lockfile
+      - name: Prepare isolated target and build without deployment credentials
+        run: |
+          node /tmp/final-sprint-staging.mjs prepare
+          pnpm --dir apps/platform build
+          pnpm --dir apps/platform exec wrangler deploy --dry-run
+          pnpm exec playwright install --with-deps chromium
+      - name: Verify existing staging identity and retain recovery point
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: node /tmp/final-sprint-staging.mjs before
+      - name: Apply only reviewed additive staging migrations
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.final-staging-migration.json
+          node /tmp/final-sprint-staging.mjs after-schema
+      - name: Deploy verified candidate to existing staging Worker only
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          pnpm --dir apps/platform exec wrangler deploy --keep-vars
+          node /tmp/final-sprint-staging.mjs after-deploy
+      - name: Inspect real public staging pages and responsive navigation
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {chromium} from '@playwright/test';
+          import {writeFileSync} from 'node:fs';
+          const browser=await chromium.launch(),results=[];
+          try { for(const width of [320,390,1100,1440]){
+            const page=await browser.newPage({viewport:{width,height:950}});
+            for(const path of ['/','/services','/book','/guest/book','/signin','/privacy']){
+              const response=await page.goto('https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev'+path,{waitUntil:'networkidle'});
+              assert.ok(response&&response.status()<500,path);
+              const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);
+              assert.equal(overflow,false,`Overflow ${width} ${path}`);
+              results.push({width,path,status:response.status(),overflow});
+              if(path==='/')await page.screenshot({path:`artifacts/staging-final-${width}.png`,fullPage:true});
+            }await page.close();
+          }}finally{await browser.close()}
+          writeFileSync('artifacts/staging-browser.json',JSON.stringify({source:process.env.SOURCE_SHA,checks:results,authenticatedAcceptance:false},null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-sprint-staging-evidence
+          path: artifacts/
+          retention-days: 30
