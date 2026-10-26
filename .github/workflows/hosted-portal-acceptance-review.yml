@@ -1,0 +1,71 @@
+name: Eight-portal hosted production acceptance (independent review)
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Full 40-character reviewed production Worker source SHA
+        required: true
+        type: string
+      evidence_run_id:
+        description: Actions run ID containing the approved redacted hosted evidence bundle
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: hosted-acceptance-review
+  cancel-in-progress: false
+jobs:
+  evaluate:
+    if: github.repository == 'info-rbp/proinspect' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production-acceptance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require explicit independent reviewer protection configuration
+        env:
+          REVIEWER_PROTECTION: ${{ vars.PROINSPECT_ACCEPTANCE_REVIEWERS_CONFIGURED }}
+        run: |
+          if [ "$REVIEWER_PROTECTION" != true ]; then
+            echo 'NO GO: Configure required independent reviewers for production-acceptance environment and enable explicit confirmation variable.'
+            exit 1
+          fi
+      - name: Verify exact deployed Worker and reviewed source before reading evidence
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          node --input-type=module -e '
+            const expected=process.env.EXPECTED_SHA;
+            if(!/^[0-9a-f]{40}$/.test(expected)||expected!==process.env.GITHUB_SHA) throw Error("NO GO: expected SHA is not exact checked-out main");
+            const r=await fetch("https://proinspect.systems/api/health",{redirect:"manual",signal:AbortSignal.timeout(12000)});
+            if(!r.ok||r.redirected) throw Error("NO GO: canonical Worker health unavailable");
+            const health=await r.json();
+            if(health.source!==expected)throw Error("NO GO: deployed Worker SHA differs from the reviewed source");
+          '
+      - name: Download separately captured redacted hosted proof bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: proinspect-portal-hosted-evidence
+          run-id: ${{ inputs.evidence_run_id }}
+          github-token: ${{ github.token }}
+          path: artifacts/portal-acceptance
+      - name: Run final fail-closed production acceptance proof gate
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          PROINSPECT_PROTECTED_REVIEW_APPROVED: 'true'
+        run: |
+          node scripts/portal-testing/verify-launch-evidence.mjs \
+            artifacts/portal-acceptance/hosted-evidence.json "$EXPECTED_SHA"
+      - name: Upload source-bound launch decision (GO or NO GO)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proinspect-portal-launch-decision
+          path: artifacts/eight-portal-launch-decision.json
+          retention-days: 30
+          if-no-files-found: warn

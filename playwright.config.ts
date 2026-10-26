@@ -6,7 +6,7 @@ export default defineConfig({
   workers: 1,
   timeout: 90000,
   expect: { timeout: 15000 },
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [['list'], ['html', { open: 'never' }], ['json', { outputFile: 'artifacts/browser-results.json' }]],
   use: {
     baseURL: 'http://127.0.0.1:5173',
     launchOptions: process.env.PROINSPECT_CHROMIUM

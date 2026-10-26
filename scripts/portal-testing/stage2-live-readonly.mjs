@@ -2,6 +2,7 @@
 // They never create login tokens, authorise accounts, change Worker settings,
 // or insert synthetic transactions into the deployed production database.
 import { mkdir, writeFile } from 'node:fs/promises';
+import { evaluateIdentityReadiness } from './acceptance-manifest.mjs';
 
 const origin = process.env.PROINSPECT_ORIGIN ||
   'https://proinspect.systems';
@@ -174,6 +175,30 @@ async function run() {
     { total: identities.total, active: identities.active });
   check('test_identities_verified', identities.verified === 8,
     { verified: identities.verified, total: identities.total }, 'blocker');
+  // Designated test identities only. Role labels and booleans are recorded;
+  // raw emails, token hashes and session identifiers are never exported.
+  const identityRoles = await query(db, [
+    'SELECT CASE',
+    " WHEN email='landlord-testing@proinspect.systems' THEN 'landlord'",
+    " WHEN email='property-manager-testing@proinspect.systems' THEN 'property_manager'",
+    " WHEN email='commercial-testing@proinspect.systems' THEN 'commercial'",
+    " WHEN email='strata-manager-testing@proinspect.systems' THEN 'strata_manager'",
+    " WHEN email='tenant-testing@proinspect.systems' THEN 'tenant'",
+    " WHEN email='building-resident-testing@proinspect.systems' THEN 'building'",
+    " WHEN email='building-council-testing@proinspect.systems' THEN 'council'",
+    " WHEN email='staff-testing@proinspect.systems' THEN 'staff' END AS role,",
+    ' active, CASE WHEN verified_at IS NOT NULL THEN 1 ELSE 0 END AS verified,',
+    ' (SELECT COUNT(*) FROM sessions s WHERE s.user_id=users.id AND s.revoked_at IS NULL',
+    " AND s.expires_at>strftime('%Y-%m-%dT%H:%M:%fZ','now')) AS live_sessions",
+    "FROM users WHERE email LIKE '%-testing@proinspect.systems'"
+  ].join(' '));
+  report.identityReadiness = evaluateIdentityReadiness(identityRoles);
+  check('identity_role_readiness_observed', report.identityReadiness.registered === 8 &&
+    report.identityReadiness.verified === 8,
+    { registered: report.identityReadiness.registered, verified: report.identityReadiness.verified,
+      activeSessionsByRole: report.identityReadiness.activeSessionsByRole,
+      note: 'D1 observations only. A human must still redeem and verify each new session.' }, 'blocker');
+
 
   const memberships = await row(db, [
     "SELECT",
