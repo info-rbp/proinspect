@@ -40,6 +40,10 @@ export default function ContractorPayments(){
          <Select name="contractorId" label="Contractor" options={options(data.contractors)}/>
          <Input name="stripeAccountId" label="Stripe-connected account ID (acct_...)"/>
        </OperationForm>
+       <OperationForm endpoint={`${api}/contractor-payments/recipients/verify`} label="Independently verify recipient identity and Stripe capabilities">
+         <Select name="contractorId" label="Contractor to verify" options={options(data.contractors)}/>
+         <Input name="identityVerificationReference" label="Separate reviewer: legal identity evidence / confirmation reference"/>
+       </OperationForm>
      </Panel>}
      <Panel title="Contractor payment register" description="A completed Checkout is not proof of settlement. Direct payments require independent verification; a Stripe transfer is not proof that the contractor's bank payout has arrived.">
        {items.length===0&&<p>No contractor payment arrangements have been recorded for this workspace.</p>}

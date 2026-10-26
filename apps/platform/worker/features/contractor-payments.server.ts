@@ -103,9 +103,9 @@ export async function createContractorPayment(env: Env,user: Principal,w: Worksp
   const contractor = await statement(env.DB,'SELECT id FROM contractors WHERE id=? AND active=1',wo.contractor_id).first();
   assert(contractor,409,'CONTRACTOR_INACTIVE','The selected contractor is not active.');
   const approved=await statement(env.DB,
-    "SELECT id,amount_cents,authority_reference FROM approvals WHERE work_order_id=? AND status='approved' AND amount_cents>=? ORDER BY decided_at DESC LIMIT 1",
+    "SELECT id,amount_cents,authority_reference FROM approvals WHERE work_order_id=? AND status='approved' AND decided_at IS NOT NULL AND amount_cents>=? ORDER BY decided_at DESC LIMIT 1",
     wo.id,d.grossCents).first<{id:string;amount_cents:number;authority_reference:string|null}>();
-  assert(approved&&approved.authority_reference,409,'APPROVED_QUOTE_REQUIRED',
+  assert(approved,409,'APPROVED_QUOTE_REQUIRED',
     'An authorised approval covering the full contractor amount is required.');
   const id=uid('cp'),time=now(),output={id,mode:d.mode,status:'draft'};
   await env.DB.batch([
@@ -153,7 +153,7 @@ export async function registerContractorRecipient(env:Env,user:Principal,w:Works
   // This is a reference only. No Stripe identity, bank destination or capability
   // can be self-certified: each transfer rechecks the live v2 recipient status.
   await statement(env.DB,`INSERT INTO contractor_connect_recipients(contractor_id,stripe_account_id,status,recorded_by,created_at,updated_at)
-    VALUES(?,?,'pending',?,?,?) ON CONFLICT(contractor_id) DO UPDATE SET stripe_account_id=excluded.stripe_account_id,status='pending',recorded_by=excluded.recorded_by,updated_at=excluded.updated_at`,
+    VALUES(?,?,'pending',?,?,?) ON CONFLICT(contractor_id) DO UPDATE SET stripe_account_id=excluded.stripe_account_id,status='pending',recorded_by=excluded.recorded_by,updated_at=excluded.updated_at,identity_verification_reference=NULL,identity_verified_by=NULL,identity_verified_at=NULL`,
     d.contractorId,d.stripeAccountId,user.id,now(),now()).run();
   return {contractorId:d.contractorId,status:'pending',providerVerificationRequired:true};
 }
@@ -168,6 +168,27 @@ async function stripeRequest(env:Env,path:string,method:'GET'|'POST',form?:URLSe
   assert(res.ok,502,'STRIPE_PROVIDER_UNAVAILABLE','Stripe could not verify this financial instruction. No settlement has been confirmed.');
   return res.json() as Promise<Record<string,any>>;
 }
+export async function verifyContractorRecipient(env:Env,user:Principal,w:Workspace,input:unknown) {
+  staff(user,w);
+  const d=z.object({contractorId:recordId,identityVerificationReference:referenceValue}).parse(input);
+  const row=await statement(env.DB,'SELECT * FROM contractor_connect_recipients WHERE contractor_id=?',d.contractorId)
+    .first<{stripe_account_id:string;recorded_by:string;status:string}>();
+  assert(row&&row.status==='pending',409,'RECIPIENT_NOT_PENDING','A Stripe recipient must first be linked by operations.');
+  assert(row.recorded_by!==user.id,403,'INDEPENDENT_REVIEW_REQUIRED',
+    'The reviewer must be different from the operator who linked this recipient.');
+  const account=await stripeRequest(env,`/v2/core/accounts/${encodeURIComponent(row.stripe_account_id)}?include%5B%5D=configuration.recipient&include%5B%5D=identity`,'GET');
+  const caps=account.configuration?.recipient?.capabilities?.stripe_balance;
+  assert(account.id===row.stripe_account_id&&account.identity?.country==='AU'&&
+    caps?.stripe_transfers?.status==='active'&&caps?.payouts?.status==='active',409,'RECIPIENT_NOT_VERIFIED',
+    'Recipient verification and Stripe transfer/payout capabilities must be active.');
+  // The reference identifies the independently reviewed legal-identity evidence.
+  // No bank account numbers, KYC documents or personal identifiers are retained here.
+  await statement(env.DB,`UPDATE contractor_connect_recipients SET status='verified',
+    identity_verification_reference=?,identity_verified_by=?,identity_verified_at=?,updated_at=?
+    WHERE contractor_id=? AND status='pending'`,d.identityVerificationReference,user.id,now(),now(),d.contractorId).run();
+  return {contractorId:d.contractorId,status:'verified'};
+}
+
 export async function contractorCheckout(env:Env,user:Principal,w:Workspace,id:string) {
   await payer(env,user,w);
   const p=await getPlan(env,user,w,id);
@@ -245,8 +266,8 @@ export async function executeContractorTransfer(env:Env,user:Principal,w:Workspa
   assert(p.mode==='platform_collect'&&p.status==='release_approved'&&p.release_approved_by&&p.release_approved_by!==user.id,
     409,'RELEASE_APPROVAL_REQUIRED','Independent client approval is required.');
   assert(transfersEnabled(env),503,'STRIPE_TRANSFERS_DISABLED','Connect transfers are disabled pending provider and compliance approval.');
-  const recipient=await statement(env.DB,'SELECT stripe_account_id FROM contractor_connect_recipients WHERE contractor_id=? AND status=?',
-    p.contractor_id,'pending').first<{stripe_account_id:string}>();
+  const recipient=await statement(env.DB,'SELECT stripe_account_id FROM contractor_connect_recipients WHERE contractor_id=? AND status=? AND identity_verified_by IS NOT NULL',
+    p.contractor_id,'verified').first<{stripe_account_id:string}>();
   assert(recipient,409,'RECIPIENT_NOT_REGISTERED','Connect recipient onboarding must be completed first.');
   // Check the actual v2 capability every time, never infer it from a stored ID.
   const account=await stripeRequest(env,`/v2/core/accounts/${encodeURIComponent(recipient.stripe_account_id)}?include%5B%5D=configuration.recipient&include%5B%5D=defaults&include%5B%5D=identity`,'GET');

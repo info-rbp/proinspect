@@ -253,6 +253,8 @@ export async function featureApi(
       return ok(await contractorPayments.createContractorPayment(env,user,w,await body()));
     if (tail === 'contractor-payments/recipients')
       return ok(await contractorPayments.registerContractorRecipient(env,user,w,await body()));
+    if (tail === 'contractor-payments/recipients/verify')
+      return ok(await contractorPayments.verifyContractorRecipient(env,user,w,await body()));
     if (!id || !action || child) return null;
     if (action === 'authorise')
       return ok(await contractorPayments.authoriseContractorPayment(env,user,w,id,await body()));

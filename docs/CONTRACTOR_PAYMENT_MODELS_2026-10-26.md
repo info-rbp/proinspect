@@ -46,7 +46,7 @@ These are not to be stored in source code or pasted into chat. The two Connect w
 
 - `/w/:kind/:scopeId/contractor-payments` — the finance page for allowed customer/property manager/commercial and staff operations workspaces.
 - Workspace API under `/api/w/:kind/:scopeId/contractor-payments` — list, draft, authorise, external payment report/verification, sandbox Checkout, release approval and controlled transfer request.
-- Operations may link an existing `acct_...` account to an active contractor as a **pending reference**, not as a verified payee. Recipients must complete Stripe-hosted/embedded KYC onboarding and obtain active v2 transfer and payout capabilities.
+- Operations may link an existing `acct_...` account to an active contractor as a **pending reference**, not as a verified payee. A **different** operations reviewer must record independent legal-identity evidence, while Stripe v2 recipient transfer and payout capabilities are confirmed active, before the reference can be marked verified. Recipients must complete Stripe-hosted/embedded KYC onboarding. Any replacement account reverts to pending review.
 - `/api/webhooks/stripe/connect-platform` and `/connect-recipients` — signed, separately configured webhooks; no arbitrary public caller may change financial status.
 
 ### Release gates

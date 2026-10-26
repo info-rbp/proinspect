@@ -16,6 +16,7 @@ test('collection and transfer are independently disabled until all approvals',()
  assert.match(source,/STRIPE_TRANSFERS_DISABLED/);
  assert.match(source,/PAYMENT_UNRECONCILED/);
  assert.match(source,/RECIPIENT_NOT_VERIFIED/);
+ assert.match(source,/INDEPENDENT_REVIEW_REQUIRED/);
 });
 test('separate charges and transfers do not auto-transfer or use an application fee',()=>{
  assert.ok(source.includes("'/v1/transfers'"));
