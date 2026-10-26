@@ -115,6 +115,16 @@ export async function staffAgencyCommand(env:Env,user:Principal,command:string,i
  const row=await statement(env.DB,"SELECT * FROM agency_commercial_agreements WHERE id=? AND status='draft'",d.agreementId).first<any>();
  assert(row,409,'AGREEMENT_LOCKED','Agreement is not a draft.');
  assert(row.created_by!==user.id,403,'INDEPENDENT_REVIEW','A different authorised Staff member must approve.');
+ const properties=await statement(env.DB,`SELECT COUNT(DISTINCT property_id) AS n FROM property_management_relationships
+    WHERE manager_client_id=? AND mode='agency_managed' AND starts_at<=? AND (ends_at IS NULL OR ends_at>?)`,
+    row.client_id,now(),now()).first<{n:number}>();
+ const quantity=properties?.n??0;
+ const band=quantity>=50&&quantity<150?'50_149':quantity>=150&&quantity<500?'150_499':quantity>=500&&quantity<=1000?'500_1000':'custom';
+ assert(row.tier===band,409,'AGENCY_BAND_MISMATCH','Update the draft to the verified portfolio band before approving.');
+ assert(row.pricing_model==='per_service'||row.base_monthly_cents>0,422,'BASE_FEE_REQUIRED','A retainer or hybrid agreement requires a positive approved monthly fee.');
+ const overlap=await statement(env.DB,`SELECT id FROM agency_commercial_agreements WHERE client_id=? AND id!=? AND status='approved'`,
+ row.client_id,d.agreementId).first();
+ assert(!overlap,409,'AGREEMENT_OVERLAP','End or reconcile the existing approved commercial contract first.');
  const count=await statement(env.DB,"SELECT COUNT(*) AS n FROM agency_contract_rates WHERE agreement_id=?",d.agreementId).first<{n:number}>();
  assert((count?.n??0)>0,422,'RATES_REQUIRED','At least one contract service must be reviewed.');
  await env.DB.batch([statement(env.DB,"UPDATE agency_commercial_agreements SET status='approved',approved_by=?,approval_reference=? WHERE id=? AND status='draft'",user.id,d.approvalReference,d.agreementId),activity(env,user,'agency.agreement_approved','agency_commercial_agreement',d.agreementId)]);return {status:'approved'};
