@@ -32,6 +32,7 @@ export default function WorkspaceLayout() {
     staff = w.kind === 'staff';
   if (management || staff)
     items.push(['properties', management ? 'My properties' : 'Properties', '']);
+  if (w.kind === 'property-manager') items.push(['outsourcing','Outsourced ProInspect services','']);
   if (management)
     items.push([
       'portfolio',
