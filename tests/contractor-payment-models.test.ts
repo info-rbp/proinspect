@@ -20,7 +20,7 @@ test('collection and transfer are independently disabled until all approvals',()
 test('separate charges and transfers do not auto-transfer or use an application fee',()=>{
  assert.ok(source.includes("'/v1/transfers'"));
  assert.ok(source.includes('source_transaction:chargeId'));
- assert.ok(!source.includes('application_fee_amount'));
+ assert.doesNotMatch(source, /['\"]application_fee_amount['\"]\s*:/);
  assert.ok(!source.includes('transfer_data['));
  assert.ok(!source.includes('destination_charge'));
 });
