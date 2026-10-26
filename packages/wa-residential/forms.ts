@@ -1,4 +1,4 @@
-import {FORM_1AA_FIELDS} from './form1aa';
+import {FORM_1AA_FIELDS} from './form1aa.ts';
 /**
  * WA residential tenancy forms registry.
  * This is a workflow/index contract, not an authorised reproduction of a
