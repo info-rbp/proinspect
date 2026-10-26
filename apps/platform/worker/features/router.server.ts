@@ -25,6 +25,7 @@ import * as waLifecycle from './wa-lifecycle.server';
 import * as waIssuance from './wa-issuance.server';
 import * as bonds from './bonds.server';
 import * as rentPlanning from './rent-planning.server';
+import * as rentConnect from './rent-connect.server';
 import * as bondCompletion from './bond-completion.server';
 import * as integrations from './integrations.server';
 import {reportRoutes} from './report-router.server';
@@ -113,6 +114,7 @@ export async function featureApi(
       return ok(await forms.formsData(env, user, w, id));
     if (area === 'tenancies' && id && action === 'wa-forms')
       return ok(await waResidential.waFormsData(env, user, w, id));
+    if (area === 'rent-plans' && id && action === 'connect-summary') return ok(await rentConnect.connectSummary(env,user,w,id));
     if (tail === 'bond-review-queue') return ok(await bonds.bondReviewQueue(env,user,w));
     if (area === 'tenancies' && id && action === 'rent-routing')
       return ok(await rentPlanning.rentPlanData(env,user,w,id));
@@ -255,6 +257,7 @@ export async function featureApi(
     return ok(await finance.checkout(env, user, w, id));
   if (area === 'tenancies' && id && action === 'rent-routing')
     return ok(await rentPlanning.createRentPlan(env,user,w,id,await body()));
+  if (area === 'rent-plans' && id && action === 'connect-onboard') return ok(await rentConnect.connectOnboard(env,user,w,id));
   if (area === 'rent-plans' && id && action === 'external-records' && !child)
     return ok(await rentPlanning.recordExternalRentEvent(env,user,w,id,await body()));
   if (area === 'rent-plans' && id && action === 'external-records' && child && parts[4]==='verify')

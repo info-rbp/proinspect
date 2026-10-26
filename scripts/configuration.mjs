@@ -104,6 +104,8 @@ export function checkConfiguration(
     });
   if (input.RENT_PAYMENT_PLANNING_ENABLED && input.RENT_PAYMENT_PLANNING_ENABLED !== 'false')
     invalid.push({name:'RENT_PAYMENT_PLANNING_ENABLED',reason:'Keep false until a separate rent-planning release review.'});
+  if (input.RENT_CONNECT_SANDBOX_ENABLED && input.RENT_CONNECT_SANDBOX_ENABLED !== 'false')
+    invalid.push({name:'RENT_CONNECT_SANDBOX_ENABLED',reason:'Keep false until sandbox Connect release review.'});
   const signing = [
     'DATA_ENCRYPTION_KEY',
     'ENQUIRY_GATEWAY_SECRET',
