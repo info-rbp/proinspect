@@ -1,7 +1,7 @@
 /** Explicit ordinary WA form handling map; all automated issuance disabled.
  * Official editions, signing requirements and deadline exceptions require review.
  */
-import {WA_RESIDENTIAL_FORMS,OFFICIAL_WA_FORMS_URL,WA_BOND_FORMS_URL,type WaDefinition} from './forms';
+import {WA_RESIDENTIAL_FORMS,OFFICIAL_WA_FORMS_URL,WA_BOND_FORMS_URL,type WaDefinition} from './forms.ts';
 export type SigningRoute='both_parties'|'issuer_review'|'tenant_request'|'tenant_response'|'physical_or_government'|'external';
 export type DeliveryRoute='executed_copy'|'reviewed_notice'|'request_and_written_response'|'external_authority';
 export type StatutorySpec={code:string;name:string;stage:string;actor:string;route:SigningRoute;delivery:DeliveryRoute;response:string;templateUrl:string;requiredFields:string[];releaseChecks:readonly string[];issuerEnabled:false};
