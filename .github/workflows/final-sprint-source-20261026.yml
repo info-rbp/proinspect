@@ -50,9 +50,14 @@ jobs:
           cp "$(command -v node)" artifacts/runtime/node
           pnpm_root="$(dirname "$(dirname "$(readlink -f "$(command -v pnpm)")")")"
           cp -a "$pnpm_root" artifacts/runtime/pnpm
-          tar -czf artifacts/dependencies.tar.gz node_modules apps/marketing/node_modules apps/platform/node_modules
+          dirs=(node_modules)
+          for d in apps/marketing/node_modules apps/platform/node_modules; do
+            if [ -d "$d" ]; then dirs+=("$d"); fi
+          done
+          tar -czf artifacts/dependencies.tar.gz "${dirs[@]}"
           du -h artifacts/dependencies.tar.gz artifacts/repository.bundle
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: final-sprint-source-runtime
           path: artifacts/
