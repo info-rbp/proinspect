@@ -5,7 +5,7 @@ const baseline='9e5ea2c05668b7f9d4c47d1245714591aa103831',source=process.env.SOU
 assert.match(source??'',/^[a-f0-9]{40}$/);assert.equal(execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),source);
 mkdirSync('artifacts',{recursive:true});const save=(name,x)=>writeFileSync('artifacts/'+name+'.json',JSON.stringify(x,null,2)+'\n');
 const files=readdirSync('database/migrations').filter(x=>x.endsWith('.sql')).sort();assert.equal(files.length,44);
-const tables=['users','clients','properties','client_memberships','tenancies','bookings','work_orders','subscriptions','documents','email_outbox','payments'];
+const tables=['users','clients','properties','client_memberships','tenancies','bookings','work_orders','subscriptions','documents','outbox_events','payments'];
 async function cf(path,method='GET',body){assert.ok(process.env.CLOUDFLARE_API_TOKEN);const r=await fetch('https://api.cloudflare.com/client/v4/accounts/'+account+path,{method,headers:{Authorization:'Bearer '+process.env.CLOUDFLARE_API_TOKEN,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(30000)});const j=await r.json();assert.ok(r.ok&&j.success,`${method} ${path}: HTTP ${r.status}; codes ${(j.errors||[]).map(x=>x.code).join(',')}`);return j.result;}
 async function query(sql,id=db){const r=await cf('/d1/database/'+id+'/query','POST',{sql});assert.ok(r.every(x=>x.success));return r.map(x=>x.results);}
 async function settings(name){const s=await cf('/workers/scripts/'+name+'/settings');return {bindings:s.bindings||[],vars:Object.fromEntries((s.bindings||[]).filter(x=>x.type==='plain_text').map(x=>[x.name,x.text])),secrets:(s.bindings||[]).filter(x=>x.type==='secret_text').map(x=>x.name).sort()};}
