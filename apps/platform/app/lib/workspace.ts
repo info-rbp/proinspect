@@ -7,6 +7,7 @@ export interface RecordRow {
 export interface WorkspaceData {
   user: Principal;
   workspace: Workspace;
+  councilGovernanceEnabled?:boolean;
   properties: Property[];
   bookings: RecordRow[];
   workOrders: RecordRow[];

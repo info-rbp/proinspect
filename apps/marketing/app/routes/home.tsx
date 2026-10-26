@@ -54,9 +54,9 @@ const engagementCards = [
 ];
 
 const processSteps = [
-  ['01', 'Tell us what you need', 'Choose a service and provide the property task, context and access details.'],
-  ['02', 'Confirm the instruction', 'Availability, timing, scope and any required price approval are confirmed.'],
-  ['03', 'We attend the property', 'The agreed work is completed within the authorised scope and access arrangements.'],
+  ['01', 'Choose your service', 'Browse an inspection or property attendance service, or describe a custom requirement.'],
+  ['02', 'Arrange the work', 'Existing eligible subscribers can book an included service; one-off customers follow the available request or quotation process.'],
+  ['03', 'We attend the property', 'Once an appointment is confirmed, ProInspect carries out the agreed work subject to authorised, safe access.'],
   ['04', 'Receive the outcome', 'Issued observations and documents connect to the authorised property record.'],
 ];
 
@@ -64,7 +64,7 @@ const questions = [
   ['Do I need an ongoing arrangement?', 'No. You can request an individual service. Repeated or portfolio-wide support can be discussed separately.'],
   ['Can ProInspect attend any property?', 'Coverage, safe access, service suitability and appointment availability are confirmed before an attendance is accepted.'],
   ['What happens if further work is identified?', 'The findings can be documented for your review. Specialist assessments, repairs and additional attendance require the appropriate separate instruction.'],
-  ['Can I choose a service without signing in?', 'You can explore the entire public service catalogue without an account. Booking moves to the secure application, and a general enquiry can be sent through the public contact page.'],
+  ['Can I choose a service without signing in?', 'Yes. You can explore all services and submit a one-off enquiry without an account. Online guest bookings are introduced only when enabled; existing clients use their secure portal to book included services.'],
 ];
 
 export default function Home() {
@@ -84,7 +84,8 @@ export default function Home() {
               <Link className="button" to="/services">Explore services <span aria-hidden="true">→</span></Link>
               <Link className="button secondary" to="/contact">Discuss your needs</Link>
             </div>
-            <div className="mkt-hero-context">One property or a portfolio. A single attendance or an agreed ongoing scope.</div>
+            <div className="mkt-hero-context">One property or a portfolio. One-off services or eligible subscription bookings, subject to confirmed scope and availability.</div>
+            <p className="mkt-section-footnote">New to ProInspect? <Link to="/contact">Request a one-off service</Link>. Already a customer? <a href={appOrigin + '/signin'}>Sign in to your property portal</a>.</p>
           </div>
           <div className="mkt-hero-visual">
             <PropertyArtwork kind="residential" className="mkt-hero-property" slot="home-hero" />

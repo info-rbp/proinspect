@@ -1,3 +1,4 @@
+import { issueRecipientChallenge,approveRentalListing } from './rental-governance.server';
 import { applicationSettingsSchema } from '../../../../packages/marketing/form18';
 import { z } from 'zod';
 import { statement, assert, now, uid, type Env } from '../../../../packages/database/types';
@@ -8,7 +9,7 @@ import type { Principal } from '../../../../packages/domain/index';
 import { operationsWrite } from '../../../../packages/authorization/server';
 import { isLocal } from '../../../../packages/auth/server';
 
-const cols='id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,agent_name,agent_role,application_url,application_mode,published_at';
+const cols='id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,agent_name,agent_role,application_url,application_mode,rental_approval_state,rental_recipient_verified_at,published_at';
 export async function publicListings(env:Env,kind?:string){
  const rows=await statement(env.DB,`SELECT ${cols} FROM leasing_listings WHERE status='published' AND (? IS NULL OR kind=?) ORDER BY published_at DESC LIMIT 100`,kind??null,kind??null).all();
  return rows.results;
@@ -171,6 +172,8 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   const details=await statement(env.DB,'SELECT * FROM leasing_listings WHERE id=?',listingId).first();
   return {listing:details,sessions,photos,leads};
  }
+ if(method==='POST'&&section==='recipient-challenge')return issueRecipientChallenge(env,user,listingId,body);
+ if(method==='POST'&&section==='rental-approve')return approveRentalListing(env,user,listingId,body);
  if(method==='POST'&&section==='application-settings'){
   const d=applicationSettingsSchema.parse(body),settingsVersion=z.number().int().positive().parse((body as Record<string,unknown>).version);
   assert(listing.kind==='residential'||d.applicationMode!=='proinspect',422,'RESIDENTIAL_APPLICATION_ONLY','The WA Form 18 workflow is available for residential leasing only.');

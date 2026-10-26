@@ -1,3 +1,4 @@
+import { LegalAcceptance } from '../components/LegalAcceptance';
 import {
   Form, Link, useActionData, useLoaderData, useNavigation, redirect, data,
   type LoaderFunctionArgs, type ActionFunctionArgs,
@@ -30,6 +31,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       displayName: form.get('displayName'),
       clientName: form.get('clientName'),
       landlordType,
+      legalConsent: form.get('legalConsent'),
     },
   });
   const result = (await response.json()) as Record<string, any>;
@@ -81,6 +83,7 @@ export default function Onboarding() {
             <input type="checkbox" name="selfManaged" value="yes" required />
             <span>I own and self-manage the properties added to this account.</span>
           </label>
+          <LegalAcceptance purpose="onboarding"/>
           <p className="small">
             Managing properties for other owners as a professional organisation requires
             a separate reviewed organisation setup.

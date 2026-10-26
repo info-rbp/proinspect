@@ -43,6 +43,7 @@ export const WORKSPACES = {
     purpose: 'Review issues and operational decisions',
     scope: 'scheme',
   },
+  'building-manager': { name: 'Building Management', purpose: 'Operate assigned buildings and facilities', scope: 'building' },
   staff: { name: 'Staff / Admin', purpose: 'Deliver ProInspect services', scope: 'staff' },
 } as const;
 export type WorkspaceKind = keyof typeof WORKSPACES;

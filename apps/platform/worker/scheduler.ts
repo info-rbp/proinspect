@@ -1,3 +1,4 @@
+import { legalStatements } from './features/legal-acceptance.server';
 import { guestSchedulerOperation } from './features/guest-scheduler.server';
 import { changeBooking } from './features/bookings.server';
 import { nextMonthDate, guard, clearGuard, projection } from '../../../packages/operations/core';
@@ -266,7 +267,9 @@ export class BookingScheduler extends DurableObject<Env> {
         reference = `PI-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
         woId = `wo_${id.slice(4)}`,
         time = now();
+      const legal = await legalStatements(this.env,{kind:'user',id:user.id},'booking',id,{clientId,propertyId:property.id,serviceId:service.id,startsAt:window.startsAt,priceExGstCents:includedSubscription?0:service.price_ex_gst_cents,subscriptionId:includedSubscription?.id??null,access:data.access},data.legalConsent);
       const statements = [
+        ...legal,
         statement(
           this.env.DB,
           `INSERT INTO bookings(id,reference,client_id,user_id,property_id,service_id,resource_id,starts_at,ends_at,reserved_start,reserved_end,price_ex_gst_cents,snapshot_json,request_key,fingerprint,created_at) VALUES(?,?,?,?,?,?,'default',?,?,?,?,?,?,?,?,?)`,

@@ -85,6 +85,34 @@
       ],
       "group": "open-home-sheet",
       "format": "signing-key"
+    },
+    "STRIPE_CONNECT_PLATFORM_WEBHOOK_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "payments",
+      "format": "signing-key"
+    },
+    "STRIPE_CONNECT_RECIPIENT_WEBHOOK_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "payments",
+      "format": "signing-key"
+    },
+    "RENTAL_SCANNER_OUTBOUND_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "format": "signing-key"
+    },
+    "RENTAL_APPS_SCRIPT_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "format": "signing-key"
     }
   },
   "variables": {
@@ -244,27 +272,217 @@
       ],
       "group": "release",
       "default": "false"
+    },
+    "STRIPE_ACCOUNT_ID": {
+      "targets": [
+        "platform"
+      ],
+      "group": "payments"
+    },
+    "STRIPE_BILLING_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "STRIPE_GUEST_CHECKOUT_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "STRIPE_TAX_READY": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "CONTRACTOR_PAYMENTS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "STRIPE_CONNECT_MARKETPLACE_APPROVED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "STRIPE_CONNECT_COLLECTION_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "STRIPE_CONNECT_TRANSFERS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "RENT_PAYMENT_PLANNING_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "RENT_CONNECT_SANDBOX_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "RENTAL_SCANNER_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": "false"
+    },
+    "RENTAL_APPS_SCRIPT_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": "false"
+    },
+    "RENTAL_SCANNER_ENDPOINT": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": ""
+    },
+    "RENTAL_SCANNER_ALLOWED_HOST": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": ""
+    },
+    "RENTAL_APPS_SCRIPT_ENDPOINT": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": ""
+    },
+    "RENTAL_APPS_SCRIPT_ALLOWED_HOST": {
+      "targets": [
+        "platform"
+      ],
+      "group": "rental-security",
+      "default": ""
+    },
+    "WA_AGREEMENT_ESIGN_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "BUILDING_OPERATIONS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
+    },
+    "COMMERCIAL_OPERATIONS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
+    },
+    "COUNCIL_GOVERNANCE_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
+    },
+    "NOTICE_LIFECYCLE_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
+    },
+    "AGENCY_OWNER_INVITATIONS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
+    },
+    "LEGAL_ACCEPTANCE_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
+    },
+    "SERVICE_SALE_VARIANTS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
+    },
+    "STRIPE_CUSTOMER_PORTAL_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
+    },
+    "STRIPE_INVOICING_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
+    },
+    "STRIPE_REFUNDS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
+    },
+    "STRIPE_PAYMENTS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
+    },
+    "PAYMENT_RECONCILIATION_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional"
     }
   },
   "generated": [
     "APP_ENV",
     "APP_ORIGIN",
+    "BUILD_SHA",
+    "EMAIL_PROVIDER",
     "MARKETING_ORIGIN",
     "PLATFORM_ORIGIN",
-    "BUILD_SHA",
-    "SOURCE_SHA",
-    "EMAIL_PROVIDER"
+    "SOURCE_SHA"
   ],
   "releaseControls": [
     "REPOSITORY_ACCEPTED_SHA"
   ],
   "bindings": [
-    "EMAIL",
     "DB",
     "DOCUMENTS",
+    "EMAIL",
+    "EVENTS",
     "RESTRICTED_DOCUMENTS",
-    "SCHEDULER",
-    "EVENTS"
+    "SCHEDULER"
   ],
   "externalOnly": {
     "PROINSPECT_WEBHOOK_SECRET": "Apps Script property; same value as SHEETS_WEBHOOK_SECRET for that environment",

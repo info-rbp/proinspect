@@ -36,3 +36,35 @@
     gap: 0.5rem;
   }
 }
+
+/* Mobile field reporting controls: 44px touch targets, readable labels, no horizontal scrolling. */
+.pi-inspector-field { min-width:0; border:1px solid var(--border,#d0d8e0); border-radius:12px; padding:1rem; }
+.pi-inspector-header { display:flex; align-items:start; justify-content:space-between; gap:1rem; }
+.pi-inspector-header h3 { margin:0; overflow-wrap:anywhere; }
+.pi-inspector-progress { display:block; width:100%; height:10px; accent-color:#087d7f; }
+.pi-inspector-chips { display:flex; flex-wrap:wrap; gap:.5rem; }
+.pi-inspector-chip { min-height:44px; padding:.55rem .85rem; background:#f4f6f7; border:1px solid #83929a; border-radius:8px; color:#182b35; font:inherit; }
+.pi-inspector-chip[aria-pressed="true"] { background:#0e5661; color:#fff; border-color:#0e5661; }
+.pi-inspector-chip:focus-visible { outline:3px solid #bd6500; outline-offset:2px; }
+.pi-inspector-field label,.pi-inspector-field select,.pi-inspector-field textarea { min-width:0; max-width:100%; }
+.pi-inspector-field select { min-height:44px; }
+.pi-inspector-check { display:flex; align-items:center; gap:.6rem; }
+.pi-inspector-check input { width:22px; height:22px; }
+.pi-inspector-camera { border-top:1px solid #d3dce0; padding-top:1rem; }
+.pi-inspector-camera input[type=file] { display:block; max-width:100%; padding:.7rem 0; }
+.pi-inspector-nav button { min-height:44px; }
+@media(max-width:680px){
+ .pi-inspector-field { padding:.85rem; }
+ .pi-inspector-header h3 { font-size:1rem; }
+ .pi-inspector-nav { display:grid; grid-template-columns:1fr 1fr; }
+ .pi-inspector-nav button { width:100%; }
+}
+
+/* Single-column content must shrink to the viewport, including intrinsic-width selects and IDs. */
+.stack, .stack-sm { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.panel { min-width: 0; overflow-wrap: anywhere; }
+.panel > *, .panel form, .panel fieldset { min-width: 0; max-width: 100%; }
+.panel input, .panel select, .panel textarea { min-width: 0; max-width: 100%; }
+.pi-inspector-field fieldset { min-inline-size: 0; }
+.pi-inspector-header > div { min-width: 0; }
+.pi-inspector-chip { max-width: 100%; overflow-wrap: anywhere; }

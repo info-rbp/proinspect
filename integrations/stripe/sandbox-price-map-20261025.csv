@@ -1,0 +1,163 @@
+sku,sector,name,amount_ex_gst_cents,currency,product_id,price_id,tax_behavior,source
+pi-commercial-42e76353c48f,Commercial,Commercial Routine Inspection,15000,aud,prod_VVPnQFpIiYYsmM,price_1UUOxkEv62nbUZokx0tXFiZf,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-2e9860e73e42,Commercial,Commercial Property Condition Report,35000,aud,prod_VVPnyCEHFLPAgi,price_1UUOxlEv62nbUZokknxItPQx,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-a3711fbce998,Commercial,Commercial Exit / Handover Inspection,30000,aud,prod_VVPn5YGK7kGZWo,price_1UUOxnEv62nbUZokwba7bkwq,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-c8eabf8ec680,Commercial,Commercial Inventory Report,30000,aud,prod_VVPniQMtOgUGy8,price_1UUOxpEv62nbUZokAK8jvnOE,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-e0ea232c089d,Commercial,Commercial Maintenance Inspection,18000,aud,prod_VVPn4QYXjkGUgj,price_1UUOxrEv62nbUZokLdMqT8bF,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-6d3c6b747097,Commercial,Commercial Vacant Property Check,12000,aud,prod_VVPn7V3u7AujvM,price_1UUOxtEv62nbUZokpgV6IxBH,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-c23861e2bcc4,Commercial,Commercial Contractor Completion Inspection,18000,aud,prod_VVPn7Q2EooqRpV,price_1UUOxuEv62nbUZokNF2v9SkY,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-6521232fc006,Commercial,Commercial Photographic Update,12000,aud,prod_VVPnNUTYDlWm5l,price_1UUOxwEv62nbUZok7dgTTbBV,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-cb4a4e1053a3,Commercial,Common Area Inspection,15000,aud,prod_VVPnBpl4QcYHbM,price_1UUOxyEv62nbUZokGn5a729t,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-69ff9917915d,Commercial,Asset Condition Inspection,30000,aud,prod_VVPnmG9WcHHsb1,price_1UUOy0Ev62nbUZokmDmDDJk4,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-54495ce542ed,Commercial,Defect Inspection,18000,aud,prod_VVPnBhdgq7JWFS,price_1UUOy2Ev62nbUZokSI7jhNii,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-09d6392a9052,Commercial,Make-Good Condition Evidence,25000,aud,prod_VVPnf8VKOZEiOt,price_1UUOy3Ev62nbUZok2TT3WhdN,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-cfae035e1c96,Commercial,Building Services Observation Report,25000,aud,prod_VVPn0f83yecwlI,price_1UUOy5Ev62nbUZokILlkr9lK,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-3ddd9ec9e43f,Commercial,Commercial Inspection Scheduling,7500,aud,prod_VVPnjDEXGvUKhB,price_1UUOy7Ev62nbUZokAQKBCxch,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-5efbbf3cb388,Commercial,Occupier Inspection Communication,5000,aud,prod_VVPntr9SoJTwjK,price_1UUOy9Ev62nbUZokX7EwkTpS,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-c5cb908812fa,Commercial,Commercial Access Coordination,7500,aud,prod_VVPnQYTvmdnqKU,price_1UUOyBEv62nbUZokfKqmewl8,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-0aecd0783e72,Commercial,Contractor Access Coordination,7500,aud,prod_VVPnO466vuISPq,price_1UUOyCEv62nbUZokMDI04Xwj,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-cdc12a3b1c60,Commercial,Key / Access Card Coordination,7500,aud,prod_VVPnNi3a2uW3mk,price_1UUOyEEv62nbUZokclhVGaNT,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-a1b210116830,Commercial,Commercial Inspection Calendar Management,15000,aud,prod_VVPn5jUAyzMNkK,price_1UUOyGEv62nbUZokVHK13BSu,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-876c3314ea5c,Commercial,Commercial Inspection Evidence Filing,5000,aud,prod_VVPnolFul0lOMR,price_1UUOyIEv62nbUZokJamFTte8,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-7a2e7ce7a14b,Commercial,Commercial Follow-Up Task Creation,5000,aud,prod_VVQM9O06nxMNLZ,price_1UUPVPEv62nbUZokBn4nsdqh,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-fc5d52ac9447,Commercial,Defect Register Update,10000,aud,prod_VVQMxU42mqioU2,price_1UUPVREv62nbUZokh9wDcZNb,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-cfa58d3d3b34,Commercial,Commercial Lease Data Abstraction,25000,aud,prod_VVQMBCLnyiSqKO,price_1UUPVTEv62nbUZokiKHHlo8c,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-e8e7c962ca00,Commercial,Commercial Tenant File Setup,15000,aud,prod_VVQMGBvZ2MVV0i,price_1UUPVVEv62nbUZokJJvf5NMh,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-05bdcf320fac,Commercial,Lease Register Setup,25000,aud,prod_VVQM0D6CDBqKxT,price_1UUPVXEv62nbUZokUegPcnJm,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-7f977973b342,Commercial,Lease Commencement Date Recording,5000,aud,prod_VVQMZNbgE4GvPJ,price_1UUPVaEv62nbUZok8msD4Nzm,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-59c6200ea5a2,Commercial,Lease Expiry Date Recording,5000,aud,prod_VVQMncsUrcQpYk,price_1UUPVbEv62nbUZok6L5Wnaxl,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-190cb919ac63,Commercial,Option Date Tracking,7500,aud,prod_VVQMLGA8f4Wqk9,price_1UUPVdEv62nbUZok5XgqffQQ,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-6bcbc760e2da,Commercial,Rent Review Date Tracking,7500,aud,prod_VVQMmw378YBHJa,price_1UUPVgEv62nbUZokEN51sY1L,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-271399b6a66f,Commercial,CPI / Review Workflow Administration,15000,aud,prod_VVQMxgDG0YDIKw,price_1UUPViEv62nbUZokf7dhw5hY,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-02f3b4a72a71,Commercial,Insurance Expiry Tracking,7500,aud,prod_VVQMKm65CC3jGc,price_1UUPVvEv62nbUZok1odCkhGJ,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-ad3009931f83,Commercial,Security / Guarantee Record Administration,10000,aud,prod_VVQMVpm3W0tUAT,price_1UUPVxEv62nbUZokv2Vp1OW4,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-beda95f15a42,Commercial,Commercial Critical-Date Register,20000,aud,prod_VVQM92uxQUKW6i,price_1UUPVzEv62nbUZokkgkV2EcD,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-9cd030872fd3,Commercial,Commercial Lease Administration Pack,25000,aud,prod_VVQMCmeRqQYDjB,price_1UUPW1Ev62nbUZokNY2oVGeT,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-014a569f90c3,Commercial,Commercial Lease Document Circulation,10000,aud,prod_VVQMLfdIMLaOJh,price_1UUPW4Ev62nbUZok99s6zh9z,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-cd775e4111c3,Commercial,Commercial Lease Execution Tracking,10000,aud,prod_VVQMC3SxMAwLbh,price_1UUPW6Ev62nbUZok3TVTfveW,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-fc3f59d57f88,Commercial,Commercial Lease Documentation Support,20000,aud,prod_VVQMUA6lKwsUrp,price_1UUPW8Ev62nbUZok508x3QKX,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-2ebcb2493138,Commercial,Commercial Renewal Workflow Administration,25000,aud,prod_VVQM8ZrgqfNPD7,price_1UUPWAEv62nbUZokKhD7cPiv,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-180d3979198a,Commercial,Assignment / Sublease Administration Support,35000,aud,prod_VVQMlRtwHVNFfm,price_1UUPWEEv62nbUZokBPFndRY3,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-4ae62d8c2e48,Commercial,Make-Good Administration Support,35000,aud,prod_VVQNdT6IVrhj4D,price_1UUPWHEv62nbUZokVM9lbQOb,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-467d0d3995cc,Commercial,Property Accounts & Outgoings Coordination,15000,aud,prod_VVQNvcBJXwOxAj,price_1UUPWJEv62nbUZok2bZAIHI5,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-d4a40862f219,Commercial,Property Expenditure Register,15000,aud,prod_VVQNkLtCyi37Qc,price_1UUPWMEv62nbUZokmutEmUfh,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-9556b58d8d57,Commercial,Outgoings Information Collation,20000,aud,prod_VVQNezWhTFpGnL,price_1UUPWOEv62nbUZokXLEB8eBh,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-c41b1a79a986,Commercial,Recovery Schedule Administration,25000,aud,prod_VVQNPAGCdGwKJ8,price_1UUPWQEv62nbUZokn75UQtSz,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-b8e33489aee1,Commercial,Outgoings Reconciliation Administration,45000,aud,prod_VVQNCemvEYvaRG,price_1UUPWSEv62nbUZoklHl4DqPi,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-7fa7002421d2,Commercial,Supporting Invoice Collation,15000,aud,prod_VVQNOM9gq9A0E7,price_1UUPWUEv62nbUZokNu9AXdNE,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-1d0c83276998,Commercial,Budget Support Administration,30000,aud,prod_VVQNBSppt5cXXu,price_1UUPWVEv62nbUZokLXxehAtp,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-63d094f9e68a,Commercial,Approval Workflow Administration,10000,aud,prod_VVQNNSbE5gI9ex,price_1UUPWXEv62nbUZokV308U3Xq,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-acc259c94698,Commercial,Commercial Expenditure Reporting,20000,aud,prod_VVQNrGZgTxkyi9,price_1UUPWZEv62nbUZokqr9Sblmh,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-cd5502cd8f61,Commercial,Tenant Account Information Administration,10000,aud,prod_VVQNhrQgmFCPF8,price_1UUPX1Ev62nbUZokqxCA3pd0,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-577bfefcdf30,Commercial,Commercial Maintenance Request Intake,5000,aud,prod_VVQNU1ZlOonZAC,price_1UUPX3Ev62nbUZokTByfI4Rf,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-c791d4c15414,Commercial,Commercial Contractor Sourcing,15000,aud,prod_VVQNoVC0lAXfc8,price_1UUPX5Ev62nbUZok6NPdn1H0,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-bff31046bc04,Commercial,Commercial Quote Procurement,15000,aud,prod_VVQNkkWP3TLqxZ,price_1UUPX7Ev62nbUZokmWNrNI2E,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-414d99b5a560,Commercial,Commercial Work Order Administration,10000,aud,prod_VVQN9hnAPPcTTg,price_1UUPX9Ev62nbUZokCzqxG0Iy,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-5f89d2a7a864,Commercial,Occupier Maintenance Appointment Coordination,7500,aud,prod_VVQNPfOAzofUQx,price_1UUPXCEv62nbUZok96FNL8ur,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-71fdb8581fb4,Commercial,Commercial Trade Access Attendance,18000,aud,prod_VVQOc5e1y2B2xA,price_1UUPXEEv62nbUZokpjxrjh7A,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-61b3ce2fcfb1,Commercial,Commercial Contractor Follow-Up,7500,aud,prod_VVQOl0O3Vq8GJt,price_1UUPXGEv62nbUZok59C64h2F,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-e5006186ce67,Commercial,Planned Preventative Maintenance Coordination,25000,aud,prod_VVQOVWwMFfjFfS,price_1UUPXIEv62nbUZokjIjwjvLQ,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-4347f7fa18ca,Commercial,Building Services Scheduling,10000,aud,prod_VVQO0raXp4I9YR,price_1UUPXJEv62nbUZokT8rTehLT,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-2b6a65f5a224,Commercial,Air-Conditioning Contractor Coordination,10000,aud,prod_VVQOIPi0sIhN8N,price_1UUPXaEv62nbUZokk4X1czre,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-72fce9b9e3b1,Commercial,Electrical Contractor Coordination,10000,aud,prod_VVQOBUxV5E15Gq,price_1UUPXcEv62nbUZokVLAYXcj6,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-0187c7dbd3b3,Commercial,Plumbing Contractor Coordination,10000,aud,prod_VVQOXtjW0QQSRX,price_1UUPXeEv62nbUZokRCuuNkPA,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-98c333e2b920,Commercial,Fire-Service Coordination,10000,aud,prod_VVQOhajqv1WRkU,price_1UUPXgEv62nbUZok9SfJ9xFV,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-8e3f3d8cf9a0,Commercial,Lift Contractor Coordination,10000,aud,prod_VVQOSHOFDYvqrv,price_1UUPXiEv62nbUZokow5kzYOW,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-959d7828fb5a,Commercial,Cleaning Contractor Coordination,10000,aud,prod_VVQO6pGgMCvj1N,price_1UUPXkEv62nbUZokpE8STEnH,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-7b5d2156c5d4,Commercial,Landscaping Contractor Coordination,10000,aud,prod_VVQOU9YliStITo,price_1UUPXmEv62nbUZokC0NMIn3Z,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-4a47156163ae,Commercial,Commercial Defect Tracking,15000,aud,prod_VVQOyLi3y788Ni,price_1UUPXoEv62nbUZokA0llMTIi,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-db0ab7611f84,Commercial,Commercial Completion Inspection,18000,aud,prod_VVQOq8HxI74X7s,price_1UUPXqEv62nbUZokTvMM6w7N,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-8ba47d832766,Commercial,Commercial Rectification Follow-Up,10000,aud,prod_VVQObIzahharCl,price_1UUPXsEv62nbUZokDKtcNd6U,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-ff3d6faa35ac,Commercial,Commercial Maintenance Reporting,15000,aud,prod_VVQOdpjVtegxHb,price_1UUPXuEv62nbUZok7hy4ww90,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-2ebf1a59774c,Commercial,Commercial Occupier Enquiry Handling,5000,aud,prod_VVQORv96HSgl7x,price_1UUPXwEv62nbUZokeOOxUwpX,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-da405b03190c,Commercial,Commercial Maintenance Communication,5000,aud,prod_VVQOBjxzmHy7t4,price_1UUPY6Ev62nbUZokL7guSv0O,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-421c42d424c6,Commercial,Contractor Attendance Communication,5000,aud,prod_VVQOVei51uD3dq,price_1UUPY9Ev62nbUZok9k2tTEB4,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-3d39a2754173,Commercial,Commercial Access Coordination Communication,5000,aud,prod_VVQO66sX9zOdmm,price_1UUPYBEv62nbUZokFX4RuMOu,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-d472e2f695f5,Commercial,Approved Operational Updates,5000,aud,prod_VVQPlmXIypFF1V,price_1UUPYCEv62nbUZokfo1Jy8eh,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-5d56b14e51c1,Commercial,Insurance Document Follow-Up,7500,aud,prod_VVQPNEXcgkibUK,price_1UUPYFEv62nbUZokYrNbBGjD,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-029a64b14bd2,Commercial,Compliance Document Follow-Up,7500,aud,prod_VVQPRowl134UXk,price_1UUPYIEv62nbUZok5KHLHYEW,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-14002419a707,Commercial,Lease Document Administration Communication,7500,aud,prod_VVQPoZu3iToUsb,price_1UUPYKEv62nbUZokWJNaqnWW,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-c1fcd85d8b46,Commercial,Outstanding Information Follow-Up,7500,aud,prod_VVQP6rSwLcRwsM,price_1UUPYMEv62nbUZokhuuH6YcI,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-e046b7f3b90d,Commercial,Commercial Communication Record Management,7500,aud,prod_VVQP1xyLNQ6iY7,price_1UUPYOEv62nbUZokgmnyp1VX,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-f140afbd9ec1,Commercial,Commercial Property File & CRM Support,15000,aud,prod_VVQPRZf276sLb0,price_1UUPYQEv62nbUZokjj6PsK1r,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-dd925e3c7804,Commercial,Commercial New Management Takeover Pack,50000,aud,prod_VVQPwxW0WAhmoc,price_1UUPYREv62nbUZokpTCxeNDI,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-aba49c062762,Commercial,Commercial Document Management,15000,aud,prod_VVQPtTXMi5V0QT,price_1UUPYTEv62nbUZokwN5U9D3H,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-050222097d35,Commercial,Commercial Lease Register Maintenance,15000,aud,prod_VVQPuMe2AMkxW9,price_1UUPYdEv62nbUZokWqpSnKWh,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-05a3349b936d,Commercial,Contractor Record Management,10000,aud,prod_VVQP8IYwqUNJXJ,price_1UUPYfEv62nbUZok97t6VPVf,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-b16c5177c2cf,Commercial,Insurance Record Management,10000,aud,prod_VVQPLVee8wnHgI,price_1UUPYiEv62nbUZokO6n21AE4,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-21024cca6fa5,Commercial,Building Services Record Management,10000,aud,prod_VVQPmdppzhtEgQ,price_1UUPYkEv62nbUZokDpFiUDLj,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-fdf08f53a868,Commercial,Commercial Property Onboarding,50000,aud,prod_VVQP6xZXSvVMgL,price_1UUPYmEv62nbUZok0BAEaCNA,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-48c175cc38c8,Commercial,Commercial CRM / System Updates,7500,aud,prod_VVQPEGtDxdxDUu,price_1UUPYpEv62nbUZoknPNMLOvG,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-e563fc7cdd97,Commercial,Commercial Document Pack Preparation,20000,aud,prod_VVQPbRxgSd4s5X,price_1UUPYrEv62nbUZokYYt5araz,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-666292ba8c69,Commercial,Insurance Certificate Register,15000,aud,prod_VVQPSqGA3cfBTt,price_1UUPYtEv62nbUZokN6ymo0qO,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-398202c55180,Commercial,Compliance Document Register,15000,aud,prod_VVQPQtazbDBwSM,price_1UUPYvEv62nbUZokr7yOp4J8,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-e49cba79436b,Commercial,Contractor Insurance Register,15000,aud,prod_VVQPOUdCGVvUI0,price_1UUPYxEv62nbUZokYo7T4zOk,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-9cc49c59e2e5,Commercial,Service Certificate Tracking,10000,aud,prod_VVQPjcb5L39y6a,price_1UUPYzEv62nbUZok2L3730PK,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-41022b447b37,Commercial,Commercial Lease Notice Administration,15000,aud,prod_VVQPgx1jRYsBO1,price_1UUPZ1Ev62nbUZokpb1l2tEi,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-82dea2f87e9a,Commercial,Commercial Critical-Date Reminders,7500,aud,prod_VVQQnWgPMZlqYk,price_1UUPZEEv62nbUZokdowMzPEV,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-d7c486ad7038,Commercial,Approved Commercial Correspondence Preparation,10000,aud,prod_VVQQefNH5Qp27N,price_1UUPZGEv62nbUZokKhyACcqS,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-a2b70c73b7c3,Commercial,Commercial Evidence / Document Pack,25000,aud,prod_VVQQ8UpOnH4dva,price_1UUPZJEv62nbUZok2MQ1IJPb,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-f7105138cfc0,Commercial,Outstanding Compliance Follow-Up,10000,aud,prod_VVQQd3uPYXo49H,price_1UUPZLEv62nbUZokmR1kV8L7,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-f0d1ae12cdfc,Commercial,Commercial Key Collection & Return,15000,aud,prod_VVQQ9tJcQSypYT,price_1UUPZNEv62nbUZok5EneWCMy,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-cc98241914f4,Commercial,Access Card Administration,7500,aud,prod_VVQQ9JWxsKZmj4,price_1UUPZPEv62nbUZokCc15zpUG,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-6e715e248a3b,Commercial,Commercial Key Register,10000,aud,prod_VVQQL2caHp07c0,price_1UUPZREv62nbUZokyifd8hwt,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-0334582a8518,Commercial,Contractor Key Coordination,7500,aud,prod_VVQQzxn8e6LNLd,price_1UUPZTEv62nbUZokRceb50nf,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-f02413e06a61,Commercial,Commercial Lockbox Management,15000,aud,prod_VVQQwE0SrFvdRu,price_1UUPZWEv62nbUZokZo4Cs8g8,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-5dd8c0400d0e,Commercial,Commercial Property Access Setup,20000,aud,prod_VVQQTAueeDi38d,price_1UUPZYEv62nbUZokRGq0rESM,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-5273792c29dd,Commercial,After-Hours Access Coordination,25000,aud,prod_VVQQ1y9o9AAHYQ,price_1UUPZaEv62nbUZok5cly2v9U,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-0ce9b9bd4ea2,Commercial,Commercial Access Device Register,10000,aud,prod_VVQQpZ371swQ1Q,price_1UUPZcEv62nbUZok82LJTLaM,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-280af0b90ec7,Commercial,Commercial Property Operations Report,25000,aud,prod_VVQQuCRuRPFr6n,price_1UUPZsEv62nbUZok5BYBm2Dj,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-d437a7caa570,Commercial,Commercial Defect Register Report,15000,aud,prod_VVQQ42SL50e2pG,price_1UUPZvEv62nbUZokOZxjw2rQ,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-7703d9ebba2c,Commercial,Commercial Maintenance Report,15000,aud,prod_VVQQV01G0uq0lx,price_1UUPZyEv62nbUZoku9vVWB7o,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-e027d9becaee,Commercial,Lease Critical-Date Report,15000,aud,prod_VVQQgj9eJTtbd8,price_1UUPa2Ev62nbUZok9CLOlJjQ,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-070bcbf673f3,Commercial,Outgoings Administration Report,20000,aud,prod_VVQQo6fn8FchPb,price_1UUPa4Ev62nbUZokIGExokOV,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-7b27117a19df,Commercial,Commercial Contractor Performance Report,20000,aud,prod_VVQQOXnNw0OFJU,price_1UUPa6Ev62nbUZokFocq5Na4,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-e5770b2aad29,Commercial,Commercial Outstanding Approvals Report,15000,aud,prod_VVQRLNxntaDWkR,price_1UUPa8Ev62nbUZokOxgCFaga,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-3db749ecafd8,Commercial,Insurance / Compliance Status Report,15000,aud,prod_VVQRo7BCyaWMIT,price_1UUPaBEv62nbUZok9JOJx4KS,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-commercial-762c1bf4ce9d,Commercial,Monthly Commercial Asset Operations Dashboard,30000,aud,prod_VVQRTsgCNM9396,price_1UUPaEEv62nbUZokuszGhqPf,exclusive,ProInspect Commercial Schedule of Fees - Commercial.docx
+pi-residential-57869b6aaeb1,Residential,Property Condition Report,20000,aud,prod_VVQR5hGl8xpyfi,price_1UUPaFEv62nbUZokahohjaLs,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-9a9b5426d5d3,Residential,Routine Inspection,6000,aud,prod_VVQRwm6EwkjlWu,price_1UUPaHEv62nbUZokQ3Luhdb9,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-6c1ab7c29f86,Residential,Follow-Up Routine Inspections,6000,aud,prod_VVQRAWChpsLB1X,price_1UUPaJEv62nbUZokqgPlTc5M,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-9412766ae7f0,Residential,Exit Inspection,10000,aud,prod_VVQREI4oUiblAd,price_1UUPaVEv62nbUZokF7umuUVP,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-14df4d1ad15b,Residential,Property Inventory Report,20000,aud,prod_VVQR0FqtCXpZpt,price_1UUPaXEv62nbUZokvpydfvxF,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-fad65c232a52,Residential,Vacant Property Check,5000,aud,prod_VVQRUWzoD7KV2F,price_1UUPaZEv62nbUZokQUIHDqLl,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-36dca8df56d1,Residential,Annual Inspection Planning and Management,10000,aud,prod_VVQRRCTcoKZuIX,price_1UUPabEv62nbUZok62vJBdU7,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-dc9dd6a39bad,Residential,Maintenance Inspection,12000,aud,prod_VVQRAwKPUKW8fe,price_1UUPadEv62nbUZokKoxwgQB4,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-0a0a63896f2f,Residential,Maintenance Follow-Up Inspection and Maintenance Photo Update,12000,aud,prod_VVQRFrcT1jfeeO,price_1UUPaeEv62nbUZokzpk2YPeL,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-65fd02497fa5,Residential,End of Short Stay Property Inspection,10000,aud,prod_VVQR8cSAVfM800,price_1UUPahEv62nbUZokMmE0YdSa,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-8b6d4bfa1744,Residential,Contractor Completion Inspection,12000,aud,prod_VVQRodntP0zLUP,price_1UUPakEv62nbUZokxF50WMO9,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-a0a1a8d6605b,Residential,Pre-Leasing Condition Inspection,10000,aud,prod_VVQRhv5Ut4FLYh,price_1UUPamEv62nbUZoklrwv8VMf,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-31adece6d5e7,Residential,Open Home,5000,aud,prod_VVQRvkaYy5UW2B,price_1UUPaoEv62nbUZokoZHeTxMH,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-a7d6049295f2,Residential,Open Home (Private),5000,aud,prod_VVQR4CoHqp1sf7,price_1UUPaqEv62nbUZokCfs6qVfR,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-ba8ca95c0211,Residential,Video Walkthrough of Property,15000,aud,prod_VVQRYuvD54XD7J,price_1UUPasEv62nbUZoktwX4fqTq,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-b168150c8a90,Residential,Prospective Tenant Enquiry Handling and Application Support,25000,aud,prod_VVQREw4SvF0bmD,price_1UUPb3Ev62nbUZokJVfVI5iS,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-3b2310b5e757,Residential,Prospective Tenant Reference Checks,10000,aud,prod_VVQRM8rqzbqE15,price_1UUPb5Ev62nbUZokrjzvuxPs,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-143b03f52e2e,Residential,Tenant Move-In and Handover Support,10000,aud,prod_VVQScewARiVFTX,price_1UUPb8Ev62nbUZok4KB8jaq8,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-73f863ceae89,Residential,Rent Review and Renewal Support,25000,aud,prod_VVQSbEoSz9Zv1a,price_1UUPbAEv62nbUZokMMtCoM0M,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-40ad0d91f7a7,Residential,Vacate Administration,25000,aud,prod_VVQSI8KOqT42C1,price_1UUPbCEv62nbUZokyJRi9IBk,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-4e945e2daf57,Residential,Key Collection,10000,aud,prod_VVQS9ZVEyxHe2m,price_1UUPbEEv62nbUZokL2faXlTI,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-28054f2c9d33,Residential,Key Safe Installation,12000,aud,prod_VVQSAxtMpWqf7S,price_1UUPbIEv62nbUZok8ygohH5U,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-fee5764f14b0,Residential,Key Safe Removal or Relocation,12000,aud,prod_VVQS61QEdJJopK,price_1UUPbKEv62nbUZok1Wkl42gl,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-417f1b2e3af2,Residential,Locksmith Services,55000,aud,prod_VVQSxKiuVIMjp0,price_1UUPbMEv62nbUZoku3QOymEP,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-d1d2efce64a8,Residential,Maintenance Coordination Fee,5000,aud,prod_VVQSCaTV3F37nx,price_1UUPbOEv62nbUZokoHePXV2T,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-7feb26d827c7,Residential,Maintenance Completion Inspection,5000,aud,prod_VVQSkisztqF32w,price_1UUPbQEv62nbUZokMgWc3V8D,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-8275aa6c654b,Residential,Urgent Maintenance/Make Good Works,10000,aud,prod_VVQSiEe29jnu45,price_1UUPbSEv62nbUZokJTYXw7uA,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-c1a35f4b0b2d,Residential,Insurance Claims Management and Facilitation,50000,aud,prod_VVQSRSbXDZSJco,price_1UUPbgEv62nbUZokiFGD7lzy,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-a855603ad621,Residential,Residential Tenancy Lease Agreement (Form 1AA),25000,aud,prod_VVQTvcsiX9p2PX,price_1UUPcIEv62nbUZokfgJUMyNb,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-8ba7754950c8,Residential,Lodgement of Security Bond Money Form Preparation,10000,aud,prod_VVQT4lvLhiznsk,price_1UUPcKEv62nbUZokhv8ZCR8U,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-78e5ce64b310,Residential,Variation of Security Bond Money Form,10000,aud,prod_VVQT6vlIhSd4Tr,price_1UUPcMEv62nbUZokWxHzQH4c,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-1193b04fe275,Residential,Joint Application for Disposal of Security Bond,10000,aud,prod_VVQTUxny3EIkWu,price_1UUPcOEv62nbUZokydjwFih8,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-fbe609b38b1d,Residential,Notice to Tenant of Rent Increase (Form 10),10000,aud,prod_VVQTgm5zWbgKXO,price_1UUPcREv62nbUZokByFE1vJm,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-cf90ef6b04db,Residential,Notice to Tenant of Rent Increase Calculated by Tenant’s Income (Form 11),10000,aud,prod_VVQTOeSWWGqoEt,price_1UUPcTEv62nbUZok8PfHUBQb,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-41aa9e5772dc,Residential,Notice of Proposed Entry to Premises (Form 19),10000,aud,prod_VVQTJrR9IUlfYw,price_1UUPcVEv62nbUZokBuGDrRak,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-7c76ae5e7b06,Residential,Notice to Tenant of Breach of Agreement (Form 20),10000,aud,prod_VVQTCd9twpC5Jv,price_1UUPcXEv62nbUZokVoV3995Z,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-5ebc04fe18cd,Residential,Breach notice for Non-Payment of Rent (Form 21),10000,aud,prod_VVQTMNC7WN0P30,price_1UUPcZEv62nbUZokETgHuM9c,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-6046cf184ebf,Residential,Notice of Termination of Tenant’s Interest in Residential Tenancy Agreement on Grounds of Family Violence (Form 2),10000,aud,prod_VVQTjRT25J6bGY,price_1UUPcbEv62nbUZok1UreUwyE,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-691f3fe12a37,Residential,Notice of Termination for Non-Payment of Rent (Form 1A),10000,aud,prod_VVQT9wTaZExiUc,price_1UUPceEv62nbUZok1haZbekj,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-25760d2a1800,Residential,Notice of Termination for Non-Payment of Rent (Form 1B),10000,aud,prod_VVQT9Zy7h0r1zo,price_1UUPcgEv62nbUZoknxxuJlwk,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-d6b68495d4d7,Residential,Notice of Termination Other Than Non-Payment of Rent (Form 1C),10000,aud,prod_VVQTJEmhN4ZA4b,price_1UUPcrEv62nbUZokttC27JRw,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-07154720fc5d,Residential,Notice to Former Tenant as to Disposal of Goods (Form CP2),10000,aud,prod_VVQTBgRas0F0UQ,price_1UUPctEv62nbUZokoYLftfna,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-0fb70e7b385c,Residential,Notice as to Disposal of Goods (Form 3),10000,aud,prod_VVQTzmpzw2Omg8,price_1UUPcwEv62nbUZoktWsGgcIR,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-ec73ddc6409a,Residential,Notice to Tenants of Abandonment of Premises (Form 12),10000,aud,prod_VVQTPskpvxvcff,price_1UUPcyEv62nbUZokRGqbvhAj,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-fc12d87a522a,Residential,Notice of Termination to Tenant if Premises Abandoned (Form 13),10000,aud,prod_VVQTwrpEYi9FaP,price_1UUPd0Ev62nbUZokdtbFbDtG,exclusive,ProInspect Schedule of Fees - Updated.docx
+pi-residential-ffa97f089c3b,Residential,Abandoned Goods Administration,25000,aud,prod_VVQUm4DIJMXmDM,price_1UUPdPEv62nbUZoklDDdTdoM,exclusive,ProInspect Schedule of Fees - Updated.docx

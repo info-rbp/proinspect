@@ -87,7 +87,7 @@ export function OperationForm({
   );
 }
 const numberFields = new Set([
-  'version',
+  'version', 'dueDays',
   'amountCents',
   'generalCents',
   'petCents',
@@ -100,7 +100,8 @@ const numberFields = new Set([
   'intervalMonths',
   'hoursMilli', 'visits', 'quantity', 'complexityBp', 'externalPassThroughCents',
   'includedHoursMilli', 'includedVisits', 'includedTickets', 'includedReports',
-  'monthlyFeeCents', 'loadedHourlyCents', 'travelVisitCents', 'fixedAdminCents',
+  'monthlyFeeCents',
+  'baseMonthlyCents', 'gstBasisPoints', 'rateCents', 'loadedHourlyCents', 'travelVisitCents', 'fixedAdminCents',
   'contingencyBp', 'targetMarginBp', 'gstBp', 'limitQuantity', 'agreedMonthlyCents',
   'budgetCeilingCents','weekday','startsMinute','endsMinute','hourlyCostCents',
   'designLifeMonths','replacementCostCents','score','cadenceMonths','leadDays','recurrenceMonths',
@@ -116,7 +117,15 @@ const boolFields = new Set([
   'selfManaged',
   'noticeConfirmed',
   'approvalRequired',
+  'consent',
+  'allowInspections', 'allowReports', 'included',
   'acknowledgeExternalProcess',
+  'confirmExplicitAccess',
+  'noAutomaticService',
+  'officialFormChecked','publicVisible','revoke',
+  'providerEvidenceVerified','authorityVerified','recoveryOwnerConfirmed',
+  'scopeAndServiceAreaConfirmed','taxTreatmentConfirmed','paymentTermsConfirmed',
+  'finalTextConfirmed','operatorIdentityVerified','commercialConflictsResolved',
 ]);
 export function formValues(form: FormData) {
   const data: Record<string, unknown> = {};
@@ -128,13 +137,14 @@ export function formValues(form: FormData) {
       ['startsAt', 'endsAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'holdUntil', 'receivedAt', 'deliveryAt', 'effectiveAt', 'verifiedAt', 'paidAt', 'responseDueAt', 'decisionAt', 'appealDueAt', 'periodStart', 'periodEnd', 'startedAt', 'endedAt', 'effectiveFrom'].includes(key)
     )
       data[key] = new Date(String(value)).toISOString();
-    else if (key === 'propertyIds')
+    else if (key === 'propertyTypes' || key === 'propertyIds' || key === 'tenantUserIds')
       data[key] = form
         .getAll(key)
         .flatMap((v) => String(v).split(/[\s,]+/))
         .filter(Boolean);
     else data[key] = value;
   }
+  for(const name of ['publicVisible','revoke','allowInspections','allowReports'])if(form.has('_'+name+'Present')&&!Object.hasOwn(data,name))data[name]=false;
   for (const prefix of ['access', 'answers', 'fields', 'facts']) {
     const nested: Record<string, unknown> = {};
     for (const key of Object.keys(data)) {

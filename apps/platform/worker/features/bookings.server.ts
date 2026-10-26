@@ -1,3 +1,4 @@
+import {requireReleaseApproval} from './release-governance.server';
 import { z } from 'zod';
 import { statement, assert, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
@@ -101,7 +102,8 @@ export async function changeBooking(
     const service = (await catalogue(env)).find((s) => s.id === b.service_id);
     assert(service, 409, 'SERVICE_UNAVAILABLE', 'This service requires an operational review.');
     window = appointmentWindow(service, d.startsAt);
-    if (calendarSchedulingEnabled(env)) await assertCalendarSlot(env, window, calendarEventId(id));
+    if (calendarSchedulingEnabled(env)) await (calendarSchedulingEnabled(env)?requireReleaseApproval(env,'calendar'):Promise.resolve());
+ await assertCalendarSlot(env, window, calendarEventId(id));
   }
   const original = await statement(env.DB, 'SELECT email FROM users WHERE id=?', b.user_id).first<{
     email: string;

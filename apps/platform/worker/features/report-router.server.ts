@@ -4,6 +4,7 @@ import {listReports,reportDetail,createReport,saveReport,assignReviewer,submitRe
 import {uploadReportEvidence,reviewReportEvidence,downloadReportEvidence} from './report-evidence.server';
 import {renderApprovedReport,issueApprovedReport,respondToIssuedReport,extractMaintenanceCandidates,resolveReportResponse,createMaintenanceRequest} from './report-issue.server';
 import {readJson} from '../../../../packages/operations/core';
+import {reportHistory} from './report-history.server';
 async function payload(request:Request,large=false){
  if(!large)return readJson(request);
  const text=await request.text();
@@ -17,6 +18,7 @@ export async function reportRoutes(request:Request,env:Env,user:Principal,w:Work
  if(method==='GET'){
   if(!id)return ok(await listReports(env,user,w));
   if(id && !action)return ok(await reportDetail(env,user,w,id));
+  if(id && action==='history')return ok(await reportHistory(env,user,w,id,new URL(request.url).searchParams.get('baselineReportId')??undefined));
   if(id&&action==='evidence'&&child&&subaction==='download')return downloadReportEvidence(env,user,w,id,child);
  }
  if(method!=='POST')return null;

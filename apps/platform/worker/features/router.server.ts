@@ -1,3 +1,10 @@
+import * as buildingOps from './building-operations.server';
+import * as commercialOps from './commercial-operations.server';
+import * as ownerInvites from './agency-owner-invitations.server';
+import * as billingAccounts from './billing-accounts.server';
+import * as refunds from './refunds.server';
+import * as noticeLifecycle from './notice-lifecycle.server';
+import {requireReleaseApproval} from './release-governance.server';
 import {
   recordPage,
   operationalReport,
@@ -16,14 +23,18 @@ import * as portfolio from './portfolio.server';
 import * as booking from './bookings.server';
 import * as documents from './documents.server';
 import * as finance from './finance.server';
+import * as contractorPayments from './contractor-payments.server';
 import * as strata from './strata.server';
 import * as tenancy from './tenancies.server';
 import * as admin from './admin.server';
 import * as forms from './forms.server';
 import * as waResidential from './wa-residential.server';
+import * as waSigning from './wa-agreement-signing.server';
 import * as waLifecycle from './wa-lifecycle.server';
 import * as waIssuance from './wa-issuance.server';
 import * as bonds from './bonds.server';
+import * as rentPlanning from './rent-planning.server';
+import * as rentConnect from './rent-connect.server';
 import * as bondCompletion from './bond-completion.server';
 import * as integrations from './integrations.server';
 import {reportRoutes} from './report-router.server';
@@ -71,9 +82,17 @@ export async function featureApi(
     operationsWrite(user);
   };
   if (method === 'GET') {
+    if(tail==='facilities')return ok(await buildingOps.buildingDashboard(env,user,w,url.searchParams.get('buildingId')??undefined));
+    if(tail==='facilities/notice-drafts')return ok(await noticeLifecycle.noticeDraftData(env,user,w));
+    if(tail==='commercial-leases')return ok(await commercialOps.commercialData(env,user,w));
+    if(tail==='owner-invitations')return ok(await ownerInvites.ownerInvitationList(env,user,w));
+    if(tail==='billing')return ok(await billingAccounts.billingDashboard(env,user,w));
+    if(area==='schemes'&&id&&action==='notices'&&child&&parts[4]==='history')return ok(await noticeLifecycle.noticeHistory(env,user,w,id,child));
+
     if (tail === 'v2') return ok(await v2StaffData(env,user,w,url.searchParams.get('market') ?? 'RES'));
     if (tail === 'v2-account') return ok(await v2CustomerData(env,user,w));
     if (tail === 'v2-maintenance') return ok(await maintenanceData(env,user,w,url.searchParams.get('orderId')));
+    if (tail === 'contractor-payments') return ok(await contractorPayments.listContractorPayments(env,user,w));
     if(tail==='v2-estates') return ok(await estateRegister(env,user,w));
     if(tail==='v2-sectors') return ok(await sectorData(env,user,w));
     if(tail==='v2-intelligence') return ok(await intelligenceData(env,user,w,url.searchParams));
@@ -112,10 +131,16 @@ export async function featureApi(
       return ok(await forms.formsData(env, user, w, id));
     if (area === 'tenancies' && id && action === 'wa-forms')
       return ok(await waResidential.waFormsData(env, user, w, id));
+    if (area === 'rent-plans' && id && action === 'connect-summary') return ok(await rentConnect.connectSummary(env,user,w,id));
+    if (tail === 'bond-review-queue') return ok(await bonds.bondReviewQueue(env,user,w));
+    if (area === 'tenancies' && id && action === 'rent-routing')
+      return ok(await rentPlanning.rentPlanData(env,user,w,id));
     if (tail === 'wa-form-queue')
       return ok(await waLifecycle.waReviewQueue(env,user,w));
     if (tail === 'wa-form-templates')
       return ok(await waLifecycle.waTemplatesData(env,user,w));
+    if (area === 'wa-forms' && id && action === 'agreement' && parts.length === 3)
+      return ok(await waSigning.signingStatus(env,user,w,id));
     if (area === 'wa-forms' && id && parts.length === 2)
       return ok(await waLifecycle.waCaseDetail(env,user,w,id));
     if (area === 'schemes' && id && parts.length === 2)
@@ -138,6 +163,30 @@ export async function featureApi(
       return forms.downloadRestrictedEvidence(env, user, id);
   }
   if (method !== 'POST') return null;
+  if(tail==='facilities/items')return ok(await buildingOps.createBuildingItem(env,user,w,await body()));
+  if(area==='facilities'&&id==='items'&&action&&child)return ok(await buildingOps.changeBuildingItem(env,user,w,action,child,await body()));
+  if(tail==='facilities/assets')return ok(await buildingOps.createBuildingAsset(env,user,w,await body()));
+  if(tail==='facilities/assets/link')return ok(await buildingOps.linkBuildingAsset(env,user,w,await body()));
+  if(area==='facilities'&&id==='assignments'&&action)return ok(await buildingOps.assignmentCommand(env,user,w,action,await body()));
+  if(tail==='facilities/moves/request')return ok(await buildingOps.moveCommand(env,user,w,'request',undefined,await body()));
+  if(area==='facilities'&&id==='moves'&&action&&child)return ok(await buildingOps.moveCommand(env,user,w,child,action,await body()));
+  if(tail==='facilities/devices/create')return ok(await buildingOps.deviceCommand(env,user,w,'create',undefined,await body()));
+  if(area==='facilities'&&id==='devices'&&action&&child)return ok(await buildingOps.deviceCommand(env,user,w,child,action,await body()));
+  if(tail==='facilities/reports')return ok(await buildingOps.buildingReportGrant(env,user,w,await body()));
+  if(area==='facilities'&&id==='plans'&&action&&child==='request')return ok(await buildingOps.requestPreventiveAttendance(env,user,w,action,await body()));
+  if(area==='facilities'&&id==='notice-drafts'&&action)return ok(await noticeLifecycle.noticeDraftCommand(env,user,w,action,await body()));
+  if(area==='commercial-leases'&&id)return ok(await commercialOps.commercialCommand(env,user,w,id,await body()));
+  if(tail==='owner-invitations/invite')return ok(await ownerInvites.inviteOwner(env,user,w,await body()));
+  if(area==='owner-invitations'&&['approve','revoke'].includes(id))return ok(await ownerInvites.reviewOwnerInvitation(env,user,w,id,await body()));
+  if(tail==='billing/portal')return ok(await billingAccounts.billingPortal(env,user,w));
+  if(area==='billing'&&id==='invoices'&&action==='export'){staff();return ok(await billingAccounts.exportStatement(env,user,await body()));}
+  if(area==='billing'&&id==='invoices'&&action==='finalize'){staff();return ok(await billingAccounts.finalizeStatement(env,user,await body()));}
+  if(tail==='billing/refunds/request'){staff();return ok(await refunds.refundCommand(env,user,'request',null,await body()));}
+  if(area==='billing'&&id==='refunds'&&action&&child){staff();return ok(await refunds.refundCommand(env,user,child,action,await body()));}
+  if(area==='billing'&&id==='reconciliation'&&action){staff();return ok(await refunds.resolvePaymentException(env,user,action,await body()));}
+  if(area==='approvals'&&id&&action==='conflict')return ok(await finance.councilConflict(env,user,w,id,await body()));
+  if(area==='schemes'&&id&&action==='notices'&&child&&parts[4]==='revise')return ok(await noticeLifecycle.reviseNotice(env,user,w,id,child,await body()));
+
   if (area==='v2-maintenance' && parts.length>=2 && parts.length<=4)
     return ok(await maintenanceCommand(env,user,w,parts.slice(1),await body()));
   if(area==='v2-estates' && parts.length>=2 && parts.length<=4) return ok(await estateCommand(env,user,w,parts.slice(1),await body()));
@@ -244,11 +293,43 @@ export async function featureApi(
     return ok(await finance.decideApproval(env, user, w, id, await body()));
   if (area === 'approvals' && id && action === 'response')
     return ok(await finance.councilResponse(env, user, w, id, await body()));
+  if (area === 'contractor-payments') {
+    await requireReleaseApproval(env,'contractor');
+    assert(env.CONTRACTOR_PAYMENTS_ENABLED === 'true',503,'CONTRACTOR_PAYMENTS_DISABLED',
+      'Contractor payment workflow is not enabled for this environment.');
+    if (tail === 'contractor-payments')
+      return ok(await contractorPayments.createContractorPayment(env,user,w,await body()));
+    if (tail === 'contractor-payments/recipients')
+      return ok(await contractorPayments.registerContractorRecipient(env,user,w,await body()));
+    if (tail === 'contractor-payments/recipients/verify')
+      return ok(await contractorPayments.verifyContractorRecipient(env,user,w,await body()));
+    if (!id || !action || child) return null;
+    if (action === 'authorise')
+      return ok(await contractorPayments.authoriseContractorPayment(env,user,w,id,await body()));
+    if (action === 'external-payment')
+      return ok(await contractorPayments.reportExternalPayment(env,user,w,id,await body()));
+    if (action === 'verify-external')
+      return ok(await contractorPayments.verifyExternalPayment(env,user,w,id,await body()));
+    if (action === 'checkout')
+      return ok(await contractorPayments.contractorCheckout(env,user,w,id));
+    if (action === 'release-approval')
+      return ok(await contractorPayments.approveContractorRelease(env,user,w,id,await body()));
+    if (action === 'execute-transfer')
+      return ok(await contractorPayments.executeContractorTransfer(env,user,w,id));
+    return null;
+  }
   if (tail === 'payments') return ok(await finance.createPayment(env, user, w, await body()));
   if (area === 'payments' && id && action === 'record')
     return ok(await finance.recordPayment(env, user, w, id, await body()));
   if (area === 'payments' && id && action === 'checkout')
-    return ok(await finance.checkout(env, user, w, id));
+    return ok(await finance.checkout(env,user,w,id,(await body() as Record<string,unknown>).legalConsent));
+  if (area === 'tenancies' && id && action === 'rent-routing')
+    return ok(await rentPlanning.createRentPlan(env,user,w,id,await body()));
+  if (area === 'rent-plans' && id && action === 'connect-onboard') return ok(await rentConnect.connectOnboard(env,user,w,id));
+  if (area === 'rent-plans' && id && action === 'external-records' && !child)
+    return ok(await rentPlanning.recordExternalRentEvent(env,user,w,id,await body()));
+  if (area === 'rent-plans' && id && action === 'external-records' && child && parts[4]==='verify')
+    return ok(await rentPlanning.verifyExternalRentEvent(env,user,w,id,child,await body()));
   if (tail === 'bonds') return ok(await bonds.createBond(env,user,w,await body()));
   if (area === 'bonds' && id && action === 'parties' && !child)
     return ok(await bonds.addParticipant(env,user,w,id,await body()));
@@ -287,6 +368,14 @@ export async function featureApi(
   if (area === 'wa-form-templates' && id && action === 'approve')
     return ok(await waLifecycle.waApproveTemplate(env,user,w,id,await body()));
 
+  if (area === 'wa-forms' && id && action === 'agreement' && child === 'start')
+    return ok(await waSigning.prepareAgreement(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'agreement' && child === 'consent')
+    return ok(await waSigning.consentAgreement(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'agreement' && child === 'finalise')
+    return ok(await waSigning.finaliseAgreement(env,user,w,id,await body()));
+  if (area === 'wa-forms' && id && action === 'agreement' && child === 'void')
+    return ok(await waSigning.voidAgreement(env,user,w,id,await body()));
   if (tail === 'wa-forms')
     return ok(await waResidential.waCreateForm(env,user,w,await body()));
   if (area === 'wa-forms' && id && action === 'issue')
@@ -314,6 +403,12 @@ export async function featureApi(
     return ok(await forms.updateForm(env, user, w, id, await body()));
   if (tail === 'confidential')
     return ok(await forms.createRestrictedCase(env, user, w, await body()));
+  if (area === 'confidential' && id && action === 'reviewers')
+    return ok(await forms.grantRestrictedSecondReviewer(env,user,id,await body()));
+  if (area === 'confidential' && id && action === 'form2-preparations' && !child)
+    return ok(await forms.prepareRestrictedForm2(env,user,id,await body()));
+  if (area === 'confidential' && id && action === 'form2-preparations' && child && parts[4]==='review')
+    return ok(await forms.reviewRestrictedForm2(env,user,id,child,await body()));
   if (area === 'confidential' && id && action === 'evidence')
     return ok(await forms.uploadRestrictedEvidence(env, user, id, await request.formData()));
   if (area === 'confidential' && id && parts.length === 2)

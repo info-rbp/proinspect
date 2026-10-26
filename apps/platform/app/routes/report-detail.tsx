@@ -6,8 +6,13 @@ import { PageHeading } from '../../../../packages/ui/components';
 import { COMPONENT_CLEANLINESS_CATEGORIES,COMPONENT_CONDITION_CATEGORIES,COMPONENT_WORKING_STATUSES,COMPONENT_TEST_STATUSES,COMPONENT_COMPARISON_STATUSES } from '../../../../packages/report-engine/upstream/reportModel';
 import type { ReportDraft } from '../../../../packages/report-engine/adapter';
 import {ReportOfflineControls} from '../components/ReportOfflineControls';
+import {InspectorFieldMode} from '../components/InspectorFieldMode';
 export async function loader({request,context,params}:LoaderFunctionArgs){
- return loadApi(request,context,`/api/w/${params.kind}/${params.scopeId}/reports/${params.reportId}`);
+ const base=`/api/w/${params.kind}/${params.scopeId}/reports/${params.reportId}`;
+ const detail=await loadApi(request,context,base);
+ const selected=new URL(request.url).searchParams.get('baselineReportId');
+ const history=params.kind==='staff'?await loadApi(request,context,base+'/history'+(selected?'?baselineReportId='+encodeURIComponent(selected):'')):null;
+ return {...detail,history};
 }
 export async function action({request,context,params}:ActionFunctionArgs){
  const f=await request.formData(),id=params.reportId,base=`/api/w/${params.kind}/${params.scopeId}/reports/${id}`,intent=String(f.get('intent')||'');
@@ -48,6 +53,8 @@ function componentUpdate(draft:ReportDraft,area:number,component:number,field:st
 }
 function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:any}){
  const [draft,setDraft]=useState<ReportDraft>(initial),[dirty,setDirty]=useState(false);
+ const [fieldMode,setFieldMode]=useState(false);
+ useEffect(()=>{setFieldMode(window.matchMedia('(max-width: 680px)').matches);},[]);
  useEffect(()=>{setDraft(initial);setDirty(false);},[record.revision]);
  const change=(value:ReportDraft)=>{setDraft(value);setDirty(true);};
  const locked=!['draft','changes_requested'].includes(record.status);
@@ -59,11 +66,13 @@ function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:an
  } ]})});
  return <section className="panel stack">
    <div><h2>Inspection report draft</h2><p className="small muted">Capture visible conditions and commentary. Changes remain drafts until submitted and independently reviewed.</p></div>
+   <div className="actions"><button type="button" className="button secondary small" aria-pressed={fieldMode} onClick={()=>setFieldMode(v=>!v)}>{fieldMode?'Use full editor':'Use mobile field mode'}</button></div>
    <Form method="post" className="stack">
      <input type="hidden" name="intent" value="save"/><input type="hidden" name="revision" value={record.revision}/>
      <input type="hidden" name="content" value={JSON.stringify(draft)}/>
      <label>Inspection summary<textarea disabled={locked} rows={4} value={draft.summary} onChange={e=>change({...draft,summary:e.target.value})}/></label>
-     {draft.areas.map((area,ai)=><div className="panel stack-sm" key={area.id}>
+     {fieldMode&&<InspectorFieldMode draft={draft} onChange={change} locked={locked} dirty={dirty}/>}
+     {!fieldMode&&draft.areas.map((area,ai)=><div className="panel stack-sm" key={area.id}>
        <label>Area name<input disabled={locked} value={area.name} onChange={e=>change({...draft,areas:draft.areas.map((a,j)=>ai===j?{...a,name:e.target.value}:a)})}/></label>
        {area.components.map((c,ci)=><fieldset className="stack-sm" key={c.id}>
          <legend><strong>Component {ci+1}</strong></legend>
@@ -81,11 +90,11 @@ function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:an
        </fieldset>)}
        {!locked&&<button className="button secondary small" type="button" onClick={()=>addComponent(ai)}>Add component</button>}
      </div>)}
-     {!locked&&<div className="actions"><button type="button" className="button secondary" onClick={addArea}>Add area</button>
+     {!locked&&<div className="actions">{!fieldMode&&<button type="button" className="button secondary" onClick={addArea}>Add area</button>}
        <button className="primary">Save draft{dirty?' *':''}</button></div>}
    </Form>
    {!locked&&<ReportOfflineControls reportId={record.id} revision={record.revision} draft={draft} onRestore={change}/>}
-   {!locked&&<div className="stack-sm">
+   {!locked&&!fieldMode&&<div className="stack-sm">
      <h3>Attach photographic evidence</h3>
      <p className="small muted">JPEG up to 5 MB. Uploaded evidence remains private and awaits independent review. Save draft changes before uploading photos.</p>
      {draft.areas.map(a=><Form key={a.id} method="post" encType="multipart/form-data" className="form stack-sm">
@@ -95,6 +104,33 @@ function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:an
        <button className="button secondary small">Upload area evidence</button>
      </Form>)}
    </div>}
+ </section>;
+}
+function HistoryPanel({history}:{history:any}){
+ const data=history.comparison;
+ return <section className="panel stack-sm" aria-label="Historical inspection intelligence">
+   <h2>Historical comparison and maintenance patterns</h2>
+   <p className="small muted">Saved report snapshot compared with an earlier issued, independently approved version. Interpret differences manually; new or changed photographs are not visually analysed.</p>
+   {history.choices?.length?<Form method="get" className="form">
+    <label>Compare with historical report<select name="baselineReportId" defaultValue={history.selectedBaselineId}>
+     {history.choices.map((r:any)=><option key={r.id} value={r.id}>{r.reportType} · {new Date(r.createdAt).toLocaleDateString('en-AU')} · {r.id}</option>)}
+    </select></label>
+    <button className="button secondary">Compare selected report</button>
+   </Form>:<p className="small">No earlier issued report is available within this authorised property and tenancy context.</p>}
+   {data&&<div className="stack-sm">
+    <p><strong>{data.deteriorated}</strong> deteriorated · <strong>{data.improved}</strong> improved · <strong>{data.unchanged}</strong> unchanged · {data.notComparable} not comparable · {data.newItems} new · {data.missingItems} missing</p>
+    {data.findings.filter((finding:any)=>finding.status!=='unchanged').slice(0,60).map((finding:any)=><article className="panel stack-sm" key={finding.key}>
+     <p><strong>{finding.area} — {finding.component}</strong> · {finding.status.replaceAll('_',' ')}</p>
+     <p className="small muted">Previous: {finding.baselineCondition?.replaceAll('_',' ')||'not recorded'} · Current: {finding.currentCondition?.replaceAll('_',' ')||'not recorded'}</p>
+     {finding.reasons.map((reason:string,i:number)=><p key={i} className="small">{reason}</p>)}
+     {(finding.maintenanceNow||finding.maintenanceBefore)&&<p className="small">Maintenance recommended: {finding.maintenanceBefore?'previously':'no previous flag'} → {finding.maintenanceNow?'current':'not currently flagged'}</p>}
+    </article>)}
+   </div>}
+   <h3>Recurring maintenance observations</h3>
+   {history.recurringMaintenance?.length?history.recurringMaintenance.map((item:any)=><p key={item.key} className="small">
+    <strong>{item.area} — {item.component}</strong>: flagged in {item.occurrences} earlier issued inspections.
+   </p>):<p className="small muted">No repeated maintenance flags found in accessible issued reports.</p>}
+   <p className="small muted">{history.note} Findings never create maintenance work or determine tenant liability automatically. Review evidence and use the normal authorised maintenance-candidate process.</p>
  </section>;
 }
 export default function ReportDetail(){
@@ -112,6 +148,7 @@ export default function ReportDetail(){
   {action?.ok&&<p role="status" className="notice">{action.message}</p>}
   {report.issued_document_id&&<section className="panel"><h2>Issued PDF</h2><a className="button secondary" href={`/api/w/${d.workspace.kind}/${d.workspace.scopeId}/documents/${report.issued_document_id}/download`}>Download your authorised report</a></section>}
   {payload.draft&&editor&&<Editor record={report} initial={payload.draft.content} staff={d.staff}/>}
+  {staff&&payload.history&&<HistoryPanel history={payload.history}/>}
   {staff&&<section className="panel stack-sm"><h2>Evidence and quality review</h2>
     {(payload.evidence||[]).length?payload.evidence.map((e:any)=><div className="list-row" key={e.id}><div>
       <strong>Photo {e.id}</strong><p className="small muted">{e.status} · {e.area_id}{e.component_id?' / '+e.component_id:''}</p>

@@ -81,11 +81,11 @@ export function checkConfiguration(
   if (
     input.STRIPE_SECRET_KEY &&
     environment === 'staging' &&
-    !/^sk_test_/.test(input.STRIPE_SECRET_KEY)
+    ! /^(?:sk|rk)_test_/.test(input.STRIPE_SECRET_KEY)
   )
     invalid.push({
       name: 'STRIPE_SECRET_KEY',
-      reason: 'Use a Stripe test-mode secret in staging.',
+      reason: 'Use a restricted Stripe sandbox key in staging.',
     });
   if (input.EMAIL_PROVIDER && input.EMAIL_PROVIDER !== 'resend')
     invalid.push({
@@ -102,6 +102,10 @@ export function checkConfiguration(
       name: 'RESTRICTED_WORKFLOWS_ENABLED',
       reason: 'Keep false until the separate restricted-case release review.',
     });
+  if (input.RENT_PAYMENT_PLANNING_ENABLED && input.RENT_PAYMENT_PLANNING_ENABLED !== 'false')
+    invalid.push({name:'RENT_PAYMENT_PLANNING_ENABLED',reason:'Keep false until a separate rent-planning release review.'});
+  if (input.RENT_CONNECT_SANDBOX_ENABLED && input.RENT_CONNECT_SANDBOX_ENABLED !== 'false')
+    invalid.push({name:'RENT_CONNECT_SANDBOX_ENABLED',reason:'Keep false until sandbox Connect release review.'});
   const signing = [
     'DATA_ENCRYPTION_KEY',
     'ENQUIRY_GATEWAY_SECRET',

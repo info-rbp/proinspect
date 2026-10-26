@@ -1,3 +1,4 @@
+import { LegalAcceptance } from '../components/LegalAcceptance';
 import { loadApi } from '../lib/api.server';
 import { useEffect, useState } from 'react';
 import {
@@ -33,6 +34,7 @@ export async function action(args: ActionFunctionArgs) {
     'bookings',
     {
       propertyId: f.get('propertyId'),
+      legalConsent: f.get('legalConsent'),
       serviceId: f.get('serviceId'),
       startsAt: f.get('startsAt'),
       requestKey: f.get('requestKey'),
@@ -350,7 +352,7 @@ export default function Book() {
             Back to properties
           </Link>
         </aside>
-      </Form>
+      <LegalAcceptance purpose="booking"/></Form>
     </>
   );
 }

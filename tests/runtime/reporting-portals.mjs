@@ -8,7 +8,7 @@ import {catalogueSql} from '../../scripts/catalogue-sql.mjs';
 
 mkdirSync('artifacts',{recursive:true});
 await build({entryPoints:['tests/runtime/entry.ts'],outfile:'artifacts/report-portals-worker.mjs',
- bundle:true,format:'esm',platform:'browser',target:'es2022',external:['cloudflare:workers']});
+ bundle:true,format:'esm',platform:'browser',target:'es2022',external: ['cloudflare:workers', 'node:crypto']});
 const key=randomBytes(32).toString('base64');
 const mf=new Miniflare({modules:true,scriptPath:'artifacts/report-portals-worker.mjs',compatibilityDate:'2026-07-01',
  compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'report-portals'},

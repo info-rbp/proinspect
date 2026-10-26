@@ -1,0 +1,5 @@
+import {useLoaderData,Link,type LoaderFunctionArgs} from 'react-router';
+import {loadApi} from '../lib/api.server';
+export async function loader({request,context,params}:LoaderFunctionArgs){return loadApi(request,context,'/api/legal/documents/'+encodeURIComponent(params.documentId??''));}
+export const meta=()=>[{title:'Approved document version | ProInspect'},{name:'robots',content:'noindex,nofollow'}];
+export default function LegalDocument(){const d=useLoaderData<typeof loader>();return <main className="site-container section stack"><Link to="/">ProInspect</Link><h1>{d.title}</h1><p>Version {d.version_label} · effective {d.effective_at} · {d.status}</p>{d.status==='withdrawn'&&<p role="status">Historical version. This text is retained for acceptance evidence and is not the current version.</p>}<p>{d.body.intro}</p>{d.body.sections.map(([title,text]:[string,string],i:number)=><section key={i} className="stack"><h2>{title}</h2><p style={{whiteSpace:'pre-wrap'}}>{text}</p></section>)}<p className="small">Content fingerprint: {d.content_sha256}</p></main>;}

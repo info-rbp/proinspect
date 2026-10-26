@@ -1,4 +1,5 @@
 import { SERVICE_FOCUS } from '../../../../packages/marketing/content';
+import { serviceScopeFor } from '../../../../packages/marketing/service-scopes';
 import { Link, useLoaderData, useOutletContext, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
 import { findService, SERVICE_SEEDS, FAMILIES } from '../../../../packages/service-catalogue/index';
 import { IllustrativeReport, MarketingCta, PropertyArtwork } from '../components/marketing-ui';
@@ -10,6 +11,7 @@ export function loader({ params }: LoaderFunctionArgs) {
   if (!service) throw new Response('Not found', { status: 404 });
   return {
     service,
+    scope: serviceScopeFor(service.id),
     related: SERVICE_SEEDS.filter((s) => s.family === service.family && s.id !== service.id).slice(0, 3),
   };
 }
@@ -18,12 +20,6 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
     ? seo(loaderData.service.name, loaderData.service.summary, '/services/' + loaderData.service.id)
     : [{ title: 'Service not found | ProInspect' }];
 
-const routineIncluded = [
-  ['Visible condition', 'Observe accessible nominated rooms and areas within the agreed scope.'],
-  ['Photographic record', 'Capture relevant visible conditions and matters requiring attention.'],
-  ['Maintenance observations', 'Identify apparent issues for the authorised customer to review.'],
-  ['Structured outcome', 'Provide the recorded observations and relevant next steps.'],
-];
 const routineSteps = [
   ['01', 'Choose the inspection', 'Tell us about the property and your preferred timeframe.'],
   ['02', 'Confirm access and scope', 'Provide the authorised access arrangements and relevant prior information.'],
@@ -33,7 +29,7 @@ const routineSteps = [
 const routineFaq: [string, string][] = [
   ['Is a routine inspection the same as a Property Condition Report?', 'No. A routine inspection records visible condition and matters needing attention during the tenancy. A PCR serves a different incoming-condition documentation purpose.'],
   ['Does the service include repairs?', 'No. The inspection documents observations within scope. Repair work and specialist assessments require separate arrangements.'],
-  ['Will an online request reserve a time?', 'Not automatically. Appointment availability, price, scope and authorised access must be confirmed.'],
+  ['Will an online request reserve a time?', 'Not automatically. One-off requests may require a quotation and confirmation. Eligible subscription customers can select available appointments through their signed-in workspace.'],
   ['What if access or specialist assessment is needed?', 'Provide any known restrictions before attendance. Any additional specialist work requires a separate scope and approval.'],
 ];
 const generalSteps: [string, string, string][] = [
@@ -43,13 +39,13 @@ const generalSteps: [string, string, string][] = [
   ['04', 'Review the outcome', 'The issued observations or service record are available in the authorised property context.'],
 ];
 const generalFaq: [string, string][] = [
-  ['Does a request confirm an appointment?', 'No. Scope, availability, authority, access and any applicable price must be confirmed before attendance is accepted.'],
+  ['Does a request confirm an appointment?', 'Not by itself. A one-off request may require a quotation, while eligible signed-in clients may reserve an included service when an appointment is available.'],
   ['What if the matter requires specialist assessment?', 'Visible observations, operational attendance and specialist assessment are different services. Additional technical work or certification requires a separately agreed scope.'],
   ['How do access and supporting documents work?', 'Provide the authorised access arrangements and relevant context as part of the instruction. Do not submit private entry codes through a public enquiry.'],
 ];
 
 export default function ServicePage() {
-  const { service: s, related } = useLoaderData<typeof loader>();
+  const { service: s, related, scope } = useLoaderData<typeof loader>();
   const { appOrigin } = useOutletContext<{ appOrigin: string }>();
   const routine = s.id === 'routine-inspection';
   const focus = SERVICE_FOCUS[s.id];
@@ -74,7 +70,7 @@ export default function ServicePage() {
                 <a className="button" href={appOrigin + '/book/' + s.id}>Arrange this service <span aria-hidden="true">→</span></a>
                 <Link className="button secondary" to={'/contact?service=' + s.id}>Ask about the scope</Link>
               </div>
-              <p className="mkt-booking-note">Booking and timing are subject to confirmed scope, price, access and availability.</p>
+              <p className="mkt-booking-note">New customers can discuss one-off services without subscribing. Eligible existing clients can sign in to book included services. One-off requests and quotations do not reserve an appointment until confirmed.</p>
             </div>
             <div className="mkt-detail-visual">
               <PropertyArtwork slot="service-hero" kind={s.sectors.includes('commercial') && !s.sectors.includes('residential') ? 'commercial' : s.sectors.includes('strata-building') && !s.sectors.includes('residential') ? 'strata' : 'residential'} />
@@ -90,6 +86,32 @@ export default function ServicePage() {
           <span>Visible-condition observations</span><span>Recorded outcome</span>
         </div>
       </section>
+
+      {scope && (
+        <section className="section mkt-section mkt-stone" aria-labelledby="service-scope-heading">
+          <div className="site-container">
+            <div className="mkt-section-heading">
+              <div><p className="eyebrow">The intended service</p><h2 id="service-scope-heading">Inclusions, exclusions and deliverables.</h2></div>
+              <p>Indicative guidance only. The accepted instruction specifies the actual areas, output, access and any applicable fees.</p>
+            </div>
+            <div className="grid-3">
+              <article className="mkt-related-card">
+                <h3>Typical activities</h3>
+                <ul className="mkt-check-list">{scope.included.map((item) => <li key={item}>{item}</li>)}</ul>
+              </article>
+              <article className="mkt-related-card">
+                <h3>Not included unless separately agreed</h3>
+                <ul className="mkt-check-list">{scope.excluded.map((item) => <li key={item}>{item}</li>)}</ul>
+              </article>
+              <article className="mkt-related-card">
+                <h3>Intended deliverables</h3>
+                <ul className="mkt-check-list">{scope.deliverables.map((item) => <li key={item}>{item}</li>)}</ul>
+              </article>
+            </div>
+            <p className="mkt-section-footnote">No certification, legal determination, specific report format or guaranteed timing is implied by this marketing guidance.</p>
+          </div>
+        </section>
+      )}
 
       {routine ? (
         <>
@@ -112,14 +134,6 @@ export default function ServicePage() {
                 <div className="mkt-aside-divider" />
                 <Link to={'/contact?service=' + s.id}>Not sure about the scope? Ask us <span aria-hidden="true">↗</span></Link>
               </aside>
-            </div>
-          </section>
-          <section className="section mkt-section mkt-stone">
-            <div className="site-container">
-              <div className="mkt-section-heading"><div><p className="eyebrow">What is included</p><h2>A considered look at the property.</h2></div><p>The activities below describe the intended visible-condition focus. The accepted instruction determines the final scope.</p></div>
-              <div className="mkt-inclusions">
-                {routineIncluded.map(([title, body], index) => <div key={title} className="mkt-inclusion-item"><span className="mkt-inclusion-check" aria-hidden="true">✓</span><div><h3>{title}</h3><p>{body}</p></div><span className="mkt-inclusion-index">0{index + 1}</span></div>)}
-              </div>
             </div>
           </section>
           <section className="section mkt-section mkt-report-section">
@@ -174,25 +188,6 @@ export default function ServicePage() {
                 <p>Online requests are not confirmed bookings until accepted.</p>
                 <a className="button" href={appOrigin + '/book/' + s.id}>Arrange this service <span aria-hidden="true">→</span></a>
               </aside>
-            </div>
-          </section>
-          <section className="section mkt-section mkt-stone">
-            <div className="site-container">
-              <div className="mkt-section-heading"><div><p className="eyebrow">Purpose &amp; scope</p><h2>A defined task. A useful outcome.</h2></div><p>These are service guidance points. The final accepted scope controls what is undertaken and recorded.</p></div>
-              <div className="mkt-inclusions">
-                {[
-                  ['What this service focuses on', focus?.[0] ?? s.summary],
-                  ['What you need to provide', focus?.[1] ?? 'Relevant property context, instruction and authorised access.'],
-                  ['The intended output', focus?.[2] ?? 'A documented record of the agreed attendance.'],
-                  ['Service boundaries', 'Specialist assessment, certification, repairs and additional work require a separately confirmed scope.'],
-                ].map(([title, body], i) => (
-                  <div className="mkt-inclusion-item" key={title}>
-                    <span className="mkt-inclusion-check" aria-hidden="true">✓</span>
-                    <div><h3>{title}</h3><p>{body}</p></div>
-                    <span className="mkt-inclusion-index">0{i + 1}</span>
-                  </div>
-                ))}
-              </div>
             </div>
           </section>
           <section className="section mkt-section mkt-report-section">

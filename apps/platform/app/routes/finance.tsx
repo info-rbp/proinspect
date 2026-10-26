@@ -1,3 +1,4 @@
+import {LegalAcceptance} from '../components/LegalAcceptance';
 import { useWorkspace, workspaceApi } from '../lib/workspace';
 import { PageHeading, Badge } from '../../../../packages/ui/components';
 import {
@@ -46,6 +47,8 @@ export default function Finance() {
             <p>Decision pathway: {a.decision_scope.replaceAll('_', ' ')}</p>
             {a.status === 'pending' &&
               (council ? (
+                <>
+                {d.councilGovernanceEnabled&&<OperationForm endpoint={`${api}/approvals/${a.id}/conflict`} label="Record interest declaration"><Select name="status" label="Interest in this proposal" options={choices(['clear','declared','unsure'])}/><TextArea name="reason" label="Private interest details (required unless clear)" required={false}/></OperationForm>}
                 <OperationForm
                   endpoint={`${api}/approvals/${a.id}/response`}
                   label="Record recommendation"
@@ -56,7 +59,7 @@ export default function Finance() {
                     options={choices(['support', 'oppose', 'information'])}
                   />
                   <TextArea name="comment" label="Comments" required={false} />
-                </OperationForm>
+                </OperationForm></>
               ) : canDecide(a) ? (
                 <OperationForm
                   endpoint={`${api}/approvals/${a.id}/decision`}
@@ -111,7 +114,7 @@ export default function Finance() {
                           </a>
                         ) : null
                       }
-                    />
+                    ><LegalAcceptance purpose="payment"/></OperationForm>
                   )}
                 {staffWrite && p.provider === 'manual' && (
                   <OperationForm

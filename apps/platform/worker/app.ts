@@ -8,6 +8,8 @@ import { consumeQueue, dispatchOutbox } from '../../../packages/notifications/se
 import { dispatchNotices } from '../../../packages/notifications/notices';
 import { dispatchIntegrations } from './features/integrations.server';
 import { dispatchLeasingReminders } from './features/leasing.server';
+import { dispatchRentalScans } from './features/rental-scan-dispatch.server';
+import { dispatchRentalHandoffs } from './features/rental-script-dispatch.server';
 import { dispatchRentalRetention } from './features/rental-privacy.server';
 import { dispatchWaResidentialReminders } from './features/wa-reminders.server';
 import { dispatchBondAlerts } from './features/bond-alerts.server';
@@ -55,6 +57,8 @@ export default {
     }
     ctx.waitUntil(dispatchGuestReminders(env).then(() => dispatchLeasingReminders(env)).then(() => dispatchNotices(env)).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchRentalRetention(env));
+    ctx.waitUntil(dispatchRentalScans(env).catch(()=>console.error('rental.scanning_dispatch_failed')));
+    ctx.waitUntil(dispatchRentalHandoffs(env).catch(()=>console.error('rental.handoff_dispatch_failed')));
     ctx.waitUntil(dispatchWaResidentialReminders(env).then(() => dispatchOutbox(env)));
     if (env.WA_BONDS_ENABLED === 'true') ctx.waitUntil(dispatchBondAlerts(env).then(() => dispatchOutbox(env)));
     ctx.waitUntil(dispatchIntegrations(env));

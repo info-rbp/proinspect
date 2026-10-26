@@ -1,3 +1,7 @@
+import {requireReleaseApproval} from './release-governance.server';
+import {resolveGuestPrice} from './service-pricing.server';
+import {legalStatements} from './legal-acceptance.server';
+import {openPaymentCheckout,type PaymentRecord} from './payment-lifecycle.server';
 import { z } from 'zod';
 import type { Env } from '../../../../packages/database/types';
 import { assert, statement, now, uid } from '../../../../packages/database/types';
@@ -9,6 +13,7 @@ import { addressKey } from '../../../../packages/validation/index';
 import { catalogue } from '../services.server';
 import { availability } from '../scheduler';
 import { readJson, guard, clearGuard } from '../../../../packages/operations/core';
+import { billingReady } from './stripe-billing.server';
 
 type Order = {id:string;reference:string;status:string;envelope:string;service_id:string;sector:string;price_basis:'published'|'quote';price_ex_gst_cents:number|null;property_id:string|null;booking_id:string|null;fingerprint:string;quote_expires_at:string|null;verified_at:string|null};
 const SYSTEM='usr_guest_booking_system';
@@ -44,6 +49,7 @@ async function notify(env:Env,order:Order,input:GuestBookingInput,subject:string
 export async function beginGuest(request:Request,env:Env){
  requireOrigin(request,env);
  assert(env.GUEST_BOOKINGS_ENABLED==='true',503,'GUEST_BOOKINGS_UNAVAILABLE','Online one-off bookings are not currently enabled. Contact ProInspect for assistance.');
+ await requireReleaseApproval(env,'guest');
  const input=guestBookingSchema.parse(await readJson(request));
  assert(!input.website,422,'BOT_REJECTED','Invalid request.');
  await limit(env,'ip:'+request.headers.get('CF-Connecting-IP'),12);
@@ -51,20 +57,23 @@ export async function beginGuest(request:Request,env:Env){
  await bot(request,env,input.turnstile);
  const service=(await catalogue(env)).find(s=>s.id===input.serviceId);
  assert(service && service.active===1 && service.sectors.includes(input.sector),422,'SERVICE_UNAVAILABLE','Choose an available service for this property.');
- const published=isGuestDirectBookable(service);
+ const variant=await resolveGuestPrice(env,input,service);
+ const published=Boolean(variant)||isGuestDirectBookable(service);
+ const price=variant?.priceExGstCents??(published?service.price_ex_gst_cents:null),gst=variant?.gstCents??(price!==null?Math.round(price*0.1):null);
  if(input.startsAt)assert(published,422,'QUOTE_REQUIRED','A quote must be accepted before an appointment is booked.');
  const fingerprint=await digest(JSON.stringify({...input,turnstile:undefined}));
  const existing=await statement(env.DB,'SELECT id,fingerprint,reference FROM guest_service_orders WHERE request_key=?',input.requestKey).first<{id:string;fingerprint:string;reference:string}>();
  if(existing){assert(existing.fingerprint===fingerprint,409,'RETRY_CHANGED','This request key has already been used.');return {reference:existing.reference,message:'Check your email for your verification link.'};}
  const id=uid('gst'),reference='PI-G-'+crypto.randomUUID().slice(0,8).toUpperCase(),time=now();
  const token=randomToken();
- const rows=[
- statement(env.DB,"INSERT INTO guest_service_orders(id,reference,request_key,fingerprint,envelope,service_id,sector,status,price_basis,price_ex_gst_cents,created_at,updated_at) VALUES(?,?,?,?,?,?,?,'pending_verification',?,?,?,?)",id,reference,input.requestKey,fingerprint,await seal(env.DATA_ENCRYPTION_KEY,'guest:'+id,input),input.serviceId,input.sector,published?'published':'quote',published?service.price_ex_gst_cents:null,time,time),
+ const legal=await legalStatements(env,{kind:'guest',id},'guest-intake',id,{serviceId:input.serviceId,priceExGstCents:price,gstCents:gst,pricingSnapshot:variant?.snapshot??null},input.legalConsent);
+ const rows=[...legal,
+ statement(env.DB,"INSERT INTO guest_service_orders(id,reference,request_key,fingerprint,envelope,service_id,sector,status,price_basis,price_ex_gst_cents,created_at,updated_at,sale_variant_id,sale_quantity,gst_cents,pricing_snapshot_json) VALUES(?,?,?,?,?,?,?,'pending_verification',?,?,?,?,?,?,?,?)",id,reference,input.requestKey,fingerprint,await seal(env.DATA_ENCRYPTION_KEY,'guest:'+id,input),input.serviceId,input.sector,published?'published':'quote',price,time,time,variant?input.saleVariantId!:null,input.saleQuantity??1,gst,variant?JSON.stringify(variant.snapshot):null),
  statement(env.DB,'INSERT INTO guest_access_links(token_hash,order_id,purpose,expires_at,created_at) VALUES(?,? ,\'verify\',?,?)',await digest(token),id,new Date(Date.now()+900000).toISOString(),time),
  await mailEvent(env,'guest.verify',{to:input.email,subject:'Verify your ProInspect service request',heading:'Verify your email address',body:'Confirm your email to continue your one-off service request. This link expires in 15 minutes. Your appointment is not reserved until you receive a booking confirmation.',href:env.APP_ORIGIN+'/guest/verify?token='+token,sensitive:true,facts:{Reference:reference}})
  ];
  await env.DB.batch(rows);
- return {...safe({id,reference,status:'pending_verification',price_basis:published?'published':'quote',price_ex_gst_cents:published?service.price_ex_gst_cents:null,booking_id:null} as Order),message:'Check your email for your verification link.',...(isLocal(request,env)?{localVerifyToken:token}: {})};
+ return {...safe({id,reference,status:'pending_verification',price_basis:published?'published':'quote',price_ex_gst_cents:price,booking_id:null} as Order),message:'Check your email for your verification link.',...(isLocal(request,env)?{localVerifyToken:token}: {})};
 }
 export async function verifyGuest(request:Request,env:Env){
  requireOrigin(request,env);
@@ -81,6 +90,17 @@ export async function verifyGuest(request:Request,env:Env){
   await notify(env,order,input,'Your ProInspect request is verified','Request received',order.price_basis==='quote'?'We will review the service scope and provide a quote. This is not a confirmed appointment.':'Your email is confirmed. Continue using your private link to request an appointment.',env.APP_ORIGIN+'/guest/manage?token='+manage)
  ]);
  return {reference:order.reference,status:next,...(isLocal(request,env)?{localManageToken:manage}:{}),message:'Email verified. Open the management link sent to your inbox.'};
+}
+export async function guestCheckout(request:Request,env:Env){
+ requireOrigin(request,env);billingReady(env,'guest');await requireReleaseApproval(env,'stripe_guest');
+ const {token,legalConsent}=z.object({token:z.string().regex(/^[a-f0-9]{64}$/),legalConsent:z.unknown().optional()}).parse(await readJson(request));
+ await limit(env,'guest_checkout:'+request.headers.get('CF-Connecting-IP'),15);
+ const order=await lookup(env,token,'manage');
+ assert(order.verified_at&&order.status==='confirmed'&&order.booking_id,409,'BOOKING_REQUIRED','Confirm an appointment before payment.');
+ const payment=await statement(env.DB,"SELECT p.* FROM payments p JOIN work_orders w ON w.id=p.work_order_id WHERE w.booking_id=? AND p.client_id=?",order.booking_id,CLIENT).first<PaymentRecord>();
+ assert(payment,404,'PAYMENT_UNAVAILABLE','No payment is available for this guest booking.');
+ const legal=await legalStatements(env,{kind:'guest',id:order.id},'payment',payment.id,{paymentId:payment.id,totalCents:payment.total_cents,currency:'AUD'},legalConsent);
+ return openPaymentCheckout(env,payment,{success:env.APP_ORIGIN+'/guest/checkout-result?status=returned',cancel:env.APP_ORIGIN+'/guest/checkout-result?status=cancelled'},undefined,legal);
 }
 export async function guestStatus(env:Env,token:string){
  const order=await lookup(env,token,'manage');
@@ -109,7 +129,7 @@ export async function guestAction(request:Request,env:Env){
  }
  assert(order.booking_id||data.action==='confirm',409,'NO_APPOINTMENT','No confirmed appointment is associated with this request.');
  if(data.action==='reschedule')assert(data.startsAt,422,'DATE_REQUIRED','Choose a new appointment.');
- return env.SCHEDULER.get(env.SCHEDULER.idFromName('default')).fetch(new Request('https://scheduler.internal/guest',{method:'POST',body:JSON.stringify({orderId:order.id,action:data.action,startsAt:data.startsAt})}));
+ return env.SCHEDULER.get(env.SCHEDULER.idFromName('default')).fetch(new Request('https://scheduler.internal/guest',{method:'POST',body:JSON.stringify({orderId:order.id,action:data.action,startsAt:data.startsAt,legalConsent:data.legalConsent})}));
 }
 export async function staffGuestOrders(env:Env){
  const rows=await statement(env.DB,"SELECT id,reference,status,service_id,price_basis,price_ex_gst_cents,created_at,envelope FROM guest_service_orders ORDER BY created_at DESC LIMIT 100").all<{id:string;reference:string;status:string;service_id:string;price_basis:string;price_ex_gst_cents:number|null;created_at:string;envelope:string}>();
@@ -155,13 +175,15 @@ export async function guestQuotePreview(env:Env,token:string){
 }
 export async function acceptGuestQuote(request:Request,env:Env){
  requireOrigin(request,env);
- const data=z.object({token:z.string(),priceExGstCents:z.number().int().min(0),accept:z.literal(true)}).parse(await readJson(request));
+ const data=z.object({token:z.string(),priceExGstCents:z.number().int().min(0),accept:z.literal(true),legalConsent:z.unknown().optional()}).parse(await readJson(request));
  const order=await lookup(env,data.token,'quote');
  assert(order.price_ex_gst_cents===data.priceExGstCents,409,'QUOTE_CHANGED','The price has changed. Reload and review the current quotation.');
  assert(order.status==='quote_sent'&&order.quote_expires_at&&order.quote_expires_at>now(),409,'QUOTE_EXPIRED','The quotation is no longer available.');
  const input=await unseal<GuestBookingInput>(env.DATA_ENCRYPTION_KEY,'guest:'+order.id,order.envelope);
  const manage=randomToken(),time=now();
+ const legal=await legalStatements(env,{kind:'guest',id:order.id},'booking',order.id+':quote:'+order.token_hash,{serviceId:order.service_id,priceExGstCents:order.price_ex_gst_cents,quoteExpiresAt:order.quote_expires_at},data.legalConsent);
  await env.DB.batch([
+ ...legal,
  statement(env.DB,'UPDATE guest_access_links SET consumed_at=? WHERE token_hash=? AND consumed_at IS NULL AND expires_at>?',time,order.token_hash,time), guard(env),
  statement(env.DB,"UPDATE guest_service_orders SET status='awaiting_appointment',updated_at=? WHERE id=? AND status='quote_sent' AND price_ex_gst_cents=? AND quote_expires_at>?",time,order.id,data.priceExGstCents,time), guard(env),
  statement(env.DB,"INSERT INTO guest_access_links(token_hash,order_id,purpose,expires_at,created_at) VALUES(?,?,'manage',?,?)",await digest(manage),order.id,new Date(Date.now()+30*86400000).toISOString(),time), clearGuard(env),

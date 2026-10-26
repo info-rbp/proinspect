@@ -1,4 +1,4 @@
-import type { Env } from '../database/types';
+import type { Env } from '../database/types.ts';
 
 /** Retention settings are operational choices, not statutory periods. */
 export type RentalRetentionStage='draft'|'submitted'|'withdrawn';

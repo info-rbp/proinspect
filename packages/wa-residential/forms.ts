@@ -1,3 +1,4 @@
+import {FORM_1AA_FIELDS} from './form1aa.ts';
 /**
  * WA residential tenancy forms registry.
  * This is a workflow/index contract, not an authorised reproduction of a
@@ -38,7 +39,7 @@ export const WA_BOND_2026_RELEASE_URL = 'https://www.consumerprotection.wa.gov.a
 /** Ordinary forms: confidential Form 2 is deliberately NOT in this catalogue. */
 export const WA_RESIDENTIAL_FORMS: readonly WaDefinition[] = [
   F('WA_FORM_1AA','Form 1AA — Residential tenancy agreement','commencement','manager',
-    'Prepare a reviewed copy of the prescribed residential agreement.',[d('startsAt','Agreement commencement'),t('rentFrequency','Rent frequency'),n('rentAmount','Rent amount'),n('bondAmount','Bond amount'),m('specialTerms','Additional terms or issues for review',false)],'external'),
+    'Prepare a reviewed copy of the prescribed residential agreement.',FORM_1AA_FIELDS.map(f=>({...f,required:['startsAt','rentFrequency','rentAmount','bondAmount'].includes(f.key)})),'external'),
   F('WA_FORM_1AC','Form 1AC — Information for tenant','commencement','manager',
     'Provide the prescribed information for a written residential agreement.',[d('issueDate','Proposed issue date')],'none'),
   F('WA_FORM_1AD','Form 1AD — Information for non-written agreement','commencement','manager',

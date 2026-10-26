@@ -14,6 +14,13 @@ import {
 import { catalogue } from '../services.server';
 import { subscriptionBookingCoverage } from '../../../../packages/authorization/subscription-booking';
 export async function expandedWorkspaceData(env: Env, user: Principal, w: Workspace) {
+  if(w.kind==='building-manager') {
+    const {buildingAccess}=await import('../../../../packages/authorization/building');
+    await buildingAccess(env,user,w,w.scopeId);
+    const scope=documentScope(user,w);
+    const documents=(await statement(env.DB,`SELECT d.id,d.title,d.category,d.version,d.status,d.issued_at FROM documents d WHERE ${scope.sql} ORDER BY d.issued_at DESC LIMIT 100`,...scope.values).all()).results;
+    return {user,workspace:w,documents,properties:[],schemes:[],bookings:[],workOrders:[],requests:[],tenancies:[],inspections:[],notifications:[],staff:[],contractors:[],services:[],subscriptionBookingServices:{},professionalPortfolioApproved:false,approvals:[],payments:[],plans:[],documentRequests:[],restrictedEnabled:false};
+  }
   const properties = await propertiesFor(env, user, w),
     schemes = await schemesFor(env, user, w),
     scope = propertyScope(user, w);
@@ -241,6 +248,7 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
     payments,
     plans,
     documentRequests,
+    councilGovernanceEnabled: env.COUNCIL_GOVERNANCE_ENABLED === 'true',
     restrictedEnabled: env.RESTRICTED_WORKFLOWS_ENABLED === 'true',
   };
 }
