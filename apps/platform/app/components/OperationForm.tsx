@@ -116,6 +116,7 @@ const boolFields = new Set([
   'selfManaged',
   'noticeConfirmed',
   'approvalRequired',
+  'consent',
   'acknowledgeExternalProcess',
 ]);
 export function formValues(form: FormData) {
@@ -128,7 +129,7 @@ export function formValues(form: FormData) {
       ['startsAt', 'endsAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'holdUntil', 'receivedAt', 'deliveryAt', 'effectiveAt', 'verifiedAt', 'paidAt', 'responseDueAt', 'decisionAt', 'appealDueAt', 'periodStart', 'periodEnd', 'startedAt', 'endedAt', 'effectiveFrom'].includes(key)
     )
       data[key] = new Date(String(value)).toISOString();
-    else if (key === 'propertyIds')
+    else if (key === 'propertyIds' || key === 'tenantUserIds')
       data[key] = form
         .getAll(key)
         .flatMap((v) => String(v).split(/[\s,]+/))
