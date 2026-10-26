@@ -1,0 +1,66 @@
+name: Assemble sprint recovery hardening
+on:
+  push:
+    branches: [fix/sprint-completion-hardening-20261027]
+    paths: [.github/workflows/assemble-hardening-20261027.yml]
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Materialize exact reviewed source without production credentials
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=82fe6d236885d18e2baac4a7923272c0d7503762
+          FLOW=.github/workflows/assemble-hardening-20261027.yml
+          test "$GITHUB_REF_NAME" = fix/sprint-completion-hardening-20261027
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git diff --name-only "$BASE" HEAD)" = "$FLOW"
+          mkdir -p /tmp/hardening
+          gh api repos/info-rbp/proinspect/git/blobs/2de4fcc06fbcfade63cf554e1521df2b79f2cc2e --jq .content | base64 -d > /tmp/hardening/0
+          gh api repos/info-rbp/proinspect/git/blobs/78445174f1dbb6dcf79144100ce9c536d6924d03 --jq .content | base64 -d > /tmp/hardening/1
+          gh api repos/info-rbp/proinspect/git/blobs/be4012a6ddb885e86a04a71b44920b61e275a6d2 --jq .content | base64 -d > /tmp/hardening/2
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, base64, gzip
+          root=Path('/tmp/hardening')
+          part=(root/'2').read_text()
+          # Correct transport transcription, then require the originally reviewed blob.
+          for before,after in [('FaNXD6O6O/oR1','FaNXD6O/oR1'),('Tr8eGeTBH+71','Tr8eGeTB+71'),('93zapsbm5uFCUNmB','93zapsbm5uNzTzr2CUNmB'),('JPv2b0d77bb8p7','JPv2b0d/bb8p7')]:
+              assert part.count(before)==1, before
+              part=part.replace(before,after)
+          raw=part.encode()
+          assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()=='a2f57013563a0f1c530d5754bef79d71168928fe'
+          payload=(root/'0').read_bytes()+(root/'1').read_bytes()+raw
+          patch=gzip.decompress(base64.b64decode(payload,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='8bc42751f17bc71b757204f6d486b1ee3eec9c396f6ba3f44b70ac03f10bec43'
+          (root/'source.patch').write_bytes(patch)
+          PY
+          git apply --check --unidiff-zero /tmp/hardening/source.patch
+          git apply --unidiff-zero /tmp/hardening/source.patch
+          git add apps packages tests docs
+          git rm "$FLOW"
+          test "$(git write-tree)" = b82e6956cbdc08143829f8d2f0126dd32e7e6d75
+          # The connector removes this unchanged workflow after the source commit.
+          git restore --source=HEAD --staged --worktree "$FLOW"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: retain concurrent offline drafts and reconcile report evidence and invoice state'
+          test "$(git ls-remote origin "refs/heads/$GITHUB_REF_NAME" | cut -f1)" = "$GITHUB_SHA"
+          git push origin "HEAD:refs/heads/$GITHUB_REF_NAME"
+          mkdir -p artifacts
+          git rev-parse HEAD > artifacts/source-sha.txt
+          printf '%s\n' b82e6956cbdc08143829f8d2f0126dd32e7e6d75 > artifacts/reviewed-tree.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sprint-hardening-source
+          path: artifacts/
+          retention-days: 7
