@@ -225,6 +225,29 @@ try {
     )
   ).propertyId;
   const tenant = await makeTenant(owner, base, propertyId, 'tenant@tests.example');
+  await check('Form 1AA production-disabled landlord, tenant and Staff signing and issued-document boundaries',async()=>{
+    const manager=await ok(base+'/wa-forms',owner,{
+      tenancyId:tenant.tenancyId,formCode:'WA_FORM_1AA',
+      answers:{startsAt:futureDate(),rentAmount:600,rentFrequency:'weekly',bondAmount:2400}
+    });
+    const endpoint=(ws)=>ws+'/wa-forms/'+manager.id+'/agreement';
+    const actions=['start','consent','finalise','void'];
+    assert.equal((await api(endpoint(base),{cookie:owner.cookie})).status,200);
+    const status=await ok(endpoint(base),owner);
+    assert.equal(status.exists,false);assert.equal(status.enabled,false);
+    assert.equal((await api(endpoint(staffBase),{cookie:operator.cookie})).status,200);
+    assert.equal((await api(endpoint(base),{cookie:outsider.cookie})).status,403);
+    assert.equal((await api(endpoint(tenant.base),{cookie:tenant.cookie})).status,403);
+    for(const action of actions){
+     const endpointAction=endpoint(base)+'/'+action;
+     const denied=await api(endpointAction,{cookie:owner.cookie,body:{}});
+     assert.equal(denied.status,503,'Private action '+action+' must be release gated');
+     assert.equal(denied.data.code,'WA_ESIGN_DISABLED');
+    }
+    assert.equal((await first('SELECT COUNT(*) AS n FROM wa_agreement_envelopes')).n,0);
+    assert.equal((await first('SELECT COUNT(*) AS n FROM wa_agreement_signers')).n,0);
+    assert.equal((await first("SELECT COUNT(*) AS n FROM outbox_events WHERE kind='wa_agreement.signer_invited'")).n,0);
+  });
   await check('WA residential form catalogue, private draft, review, delivery evidence and commercial denial', async () => {
     const defs = await ok(`${tenant.base}/tenancies/${tenant.tenancyId}/wa-forms`, tenant);
     assert.ok(defs.definitions.some(f => f.code === 'WA_FORM_25'));
