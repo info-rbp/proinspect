@@ -1,0 +1,98 @@
+name: Final sprint pinned production deployment
+on:
+  push:
+    branches: [ops/final-sprint-validation-20261026]
+    paths: [.github/workflows/final-sprint-pinned-production.yml]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: proinspect-production-release
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SOURCE_SHA: 82fe6d236885d18e2baac4a7923272c0d7503762
+      CLOUDFLARE_ACCOUNT_ID: 8ca23ac6d2cc906d4dd13b8da5ea2b25
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 82fe6d236885d18e2baac4a7923272c0d7503762
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require complete verification of exact merged source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD^{tree})" = 8b00244f439ac0853b077072c4d081867fe599e3
+          test "$(git ls-remote https://github.com/info-rbp/proinspect.git refs/heads/main | cut -f1)" = "$SOURCE_SHA"
+          for attempt in $(seq 1 60); do
+            result=$(gh api repos/info-rbp/proinspect/actions/runs/40352421207 --jq '[.head_sha,.status,(.conclusion // "pending")] | @tsv')
+            test "$(printf '%s' "$result" | cut -f1)" = "$SOURCE_SHA"
+            if [ "$(printf '%s' "$result" | cut -f2)" = completed ]; then test "$(printf '%s' "$result" | cut -f3)" = success; exit 0; fi
+            sleep 10
+          done
+          exit 1
+      - name: Install and build without production credentials
+        env:
+          CLOUDFLARE_ENV: connected
+          WORKERS_CI: '1'
+          WORKERS_CI_BRANCH: main
+          WORKERS_CI_COMMIT_SHA: 82fe6d236885d18e2baac4a7923272c0d7503762
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --dir apps/platform build
+          pnpm --dir apps/platform exec wrangler deploy --dry-run
+      - name: Validate live identity and retain nonsecret deployment evidence
+        id: identity
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {mkdirSync,writeFileSync,appendFileSync,readdirSync} from 'node:fs';
+          const root='https://api.cloudflare.com/client/v4/accounts/'+process.env.CLOUDFLARE_ACCOUNT_ID;
+          async function cf(path,method='GET',body){const r=await fetch(root+path,{method,headers:{Authorization:'Bearer '+process.env.CLOUDFLARE_API_TOKEN,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json();assert.ok(r.ok&&j.success,`Cloudflare HTTP ${r.status}`);return j.result;}
+          const s=await cf('/workers/scripts/proinspect-platform/settings'),b=s.bindings||[],vars=Object.fromEntries(b.filter(x=>x.type==='plain_text').map(x=>[x.name,x.text]));
+          assert.equal(vars.APP_ENV,'production');assert.equal(vars.APP_ORIGIN,'https://proinspect.systems');assert.ok(['9e5ea2c05668b7f9d4c47d1245714591aa103831',process.env.SOURCE_SHA].includes(vars.BUILD_SHA));
+          assert.equal(b.find(x=>x.name==='DB')?.id,'dd4f4bc7-cd24-433a-a9ee-d1ffbcc229ea');
+          assert.equal(b.find(x=>x.name==='DOCUMENTS')?.bucket_name,'proinspect-production-documents');assert.equal(b.find(x=>x.name==='RESTRICTED_DOCUMENTS')?.bucket_name,'proinspect-platform-restricted-documents');assert.equal(b.find(x=>x.name==='EVENTS')?.queue_name,'proinspect-platform-events');assert.equal(b.find(x=>x.name==='SCHEDULER')?.namespace_id,'240a25214b9e4e54b1232a4880dd82d7');
+          assert.ok(Object.entries(vars).filter(([k])=>k.endsWith('_ENABLED')&&k!=='GOOGLE_CALENDAR_ENABLED').every(([,v])=>v==='false'));
+          const q=await cf('/d1/database/dd4f4bc7-cd24-433a-a9ee-d1ffbcc229ea/query','POST',{sql:'SELECT name FROM d1_migrations ORDER BY name; PRAGMA foreign_key_check;'});assert.deepEqual(q[0].results.map(x=>x.name),readdirSync('database/migrations').filter(x=>x.endsWith('.sql')).sort());assert.deepEqual(q[1].results,[]);
+          mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/production-deploy-before.json',JSON.stringify({source:vars.BUILD_SHA,origin:vars.APP_ORIGIN,secretNames:b.filter(x=>x.type==='secret_text').map(x=>x.name).sort(),bindings:b.filter(x=>!['secret_text','plain_text'].includes(x.type)),migrations:q[0].results.length,foreignKeyViolations:0},null,2));
+          appendFileSync(process.env.GITHUB_OUTPUT,'already_current='+(vars.BUILD_SHA===process.env.SOURCE_SHA?'true':'false')+'\n');
+          JS
+      - name: Publish exact merged source only when automatic build has not already done so
+        if: steps.identity.outputs.already_current != 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm --dir apps/platform exec wrangler deploy --keep-vars
+      - name: Independently verify published source and retained secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const r=await fetch('https://api.cloudflare.com/client/v4/accounts/'+process.env.CLOUDFLARE_ACCOUNT_ID+'/workers/scripts/proinspect-platform/settings',{headers:{Authorization:'Bearer '+process.env.CLOUDFLARE_API_TOKEN}}),j=await r.json();assert.ok(r.ok&&j.success);const b=j.result.bindings,vars=Object.fromEntries(b.filter(x=>x.type==='plain_text').map(x=>[x.name,x.text])),before=JSON.parse(readFileSync('artifacts/production-deploy-before.json','utf8'));
+          assert.equal(vars.BUILD_SHA,process.env.SOURCE_SHA);assert.equal(vars.APP_ORIGIN,before.origin);assert.equal(vars.APP_ENV,'production');assert.deepEqual(b.filter(x=>x.type==='secret_text').map(x=>x.name).sort(),before.secretNames);
+          for(const old of before.bindings){const current=b.find(x=>x.name===old.name);assert.ok(current);for(const key of ['type','id','bucket_name','queue_name','namespace_id'])if(old[key]!==undefined)assert.equal(current[key],old[key],old.name+' '+key);}
+          assert.ok(Object.entries(vars).filter(([k])=>k.endsWith('_ENABLED')&&k!=='GOOGLE_CALENDAR_ENABLED').every(([,v])=>v==='false'));
+          const health=await fetch('https://proinspect.systems/api/health');assert.equal(health.status,200);assert.equal((await health.json()).source,process.env.SOURCE_SHA);
+          writeFileSync('artifacts/production-deploy-after.json',JSON.stringify({source:vars.BUILD_SHA,origin:vars.APP_ORIGIN,secretsPreserved:true,storageAndSchedulerPreserved:true,newFeaturesActivated:false,verifiedAt:new Date().toISOString()},null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-sprint-production-deployment-evidence
+          path: artifacts/
+          retention-days: 30
