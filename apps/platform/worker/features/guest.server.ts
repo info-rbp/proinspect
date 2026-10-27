@@ -1,4 +1,5 @@
 import {requireReleaseApproval} from './release-governance.server';
+import {PCR_LAUNCH_SERVICE,pcrCustomerPrice,pcrAppointmentPrice} from '../../../../packages/marketing/pcr-campaign';
 import {resolveGuestPrice} from './service-pricing.server';
 import {legalStatements} from './legal-acceptance.server';
 import {openPaymentCheckout,type PaymentRecord} from './payment-lifecycle.server';
@@ -15,10 +16,10 @@ import { availability } from '../scheduler';
 import { readJson, guard, clearGuard } from '../../../../packages/operations/core';
 import { billingReady } from './stripe-billing.server';
 
-type Order = {id:string;reference:string;status:string;envelope:string;service_id:string;sector:string;price_basis:'published'|'quote';price_ex_gst_cents:number|null;property_id:string|null;booking_id:string|null;fingerprint:string;quote_expires_at:string|null;verified_at:string|null};
+type Order = {id:string;reference:string;status:string;envelope:string;service_id:string;sector:string;price_basis:'published'|'quote';price_ex_gst_cents:number|null;gst_cents?:number|null;offer_code?:string|null;property_id:string|null;booking_id:string|null;fingerprint:string;quote_expires_at:string|null;verified_at:string|null};
 const SYSTEM='usr_guest_booking_system';
 const CLIENT='cli_guest_transactions';
-function safe(order:Order){return {reference:order.reference,status:order.status,priceExGstCents:order.price_ex_gst_cents,priceBasis:order.price_basis,serviceId:order.service_id,hasAppointment:Boolean(order.booking_id)};}
+function safe(order:Order){return {reference:order.reference,status:order.status,priceExGstCents:order.price_ex_gst_cents,gstCents:order.gst_cents??null,totalCents:order.price_ex_gst_cents===null?null:order.price_ex_gst_cents+(order.gst_cents??Math.round(order.price_ex_gst_cents/10)),offerCode:order.offer_code??null,priceBasis:order.price_basis,serviceId:order.service_id,hasAppointment:Boolean(order.booking_id)};}
 async function limit(env:Env,part:string,max:number){
  const key=await digest(env.DATA_ENCRYPTION_KEY+':guest:'+part),time=now(),expires=new Date(Date.now()+900000).toISOString();
  const row=await statement(env.DB,"INSERT INTO guest_request_limits(bucket,attempts,expires_at) VALUES(?,1,?) ON CONFLICT(bucket) DO UPDATE SET attempts=CASE WHEN expires_at<? THEN 1 ELSE attempts+1 END,expires_at=CASE WHEN expires_at<? THEN excluded.expires_at ELSE expires_at END RETURNING attempts",key,expires,time,time).first<{attempts:number}>();
@@ -57,23 +58,32 @@ export async function beginGuest(request:Request,env:Env){
  await bot(request,env,input.turnstile);
  const service=(await catalogue(env)).find(s=>s.id===input.serviceId);
  assert(service && service.active===1 && service.sectors.includes(input.sector),422,'SERVICE_UNAVAILABLE','Choose an available service for this property.');
- const variant=await resolveGuestPrice(env,input,service);
- const published=Boolean(variant)||isGuestDirectBookable(service);
- const price=variant?.priceExGstCents??(published?service.price_ex_gst_cents:null),gst=variant?.gstCents??(price!==null?Math.round(price*0.1):null);
+ const offer=input.launchOffer==='pcr100';
+ if (offer) {
+   await requireReleaseApproval(env,'pcr_launch');
+   assert(service.id===PCR_LAUNCH_SERVICE&&input.sector==='residential'&&['House','Apartment','Townhouse','Villa'].includes(input.propertyType),422,'PCR_SCOPE','This promotion is available only for residential property condition reports.');
+   assert(!input.saleVariantId && !input.startsAt,422,'PCR_BOOKING_FLOW','Choose the PCR appointment after email verification.');
+   assert(!input.offsiteKeyCollection || (input.keyCollectionLocation??'').length>=5,422,'KEY_COLLECTION_LOCATION','Enter the location for optional key collection.');
+ }
+ const variant=offer?null:await resolveGuestPrice(env,input,service);
+ const published=offer||Boolean(variant)||isGuestDirectBookable(service);
+ const initial=offer?pcrCustomerPrice('weekday',Boolean(input.offsiteKeyCollection)):null;
+ const price=offer?Math.round(initial!/1.1):(variant?.priceExGstCents??(published?service.price_ex_gst_cents:null));
+ const gst=offer?initial!-price!:(variant?.gstCents??(price!==null?Math.round(price*0.1):null));
  if(input.startsAt)assert(published,422,'QUOTE_REQUIRED','A quote must be accepted before an appointment is booked.');
  const fingerprint=await digest(JSON.stringify({...input,turnstile:undefined}));
  const existing=await statement(env.DB,'SELECT id,fingerprint,reference FROM guest_service_orders WHERE request_key=?',input.requestKey).first<{id:string;fingerprint:string;reference:string}>();
  if(existing){assert(existing.fingerprint===fingerprint,409,'RETRY_CHANGED','This request key has already been used.');return {reference:existing.reference,message:'Check your email for your verification link.'};}
  const id=uid('gst'),reference='PI-G-'+crypto.randomUUID().slice(0,8).toUpperCase(),time=now();
  const token=randomToken();
- const legal=await legalStatements(env,{kind:'guest',id},'guest-intake',id,{serviceId:input.serviceId,priceExGstCents:price,gstCents:gst,pricingSnapshot:variant?.snapshot??null},input.legalConsent);
+ const legal=await legalStatements(env,{kind:'guest',id},'guest-intake',id,{serviceId:input.serviceId,priceExGstCents:price,gstCents:gst,pricingSnapshot:variant?.snapshot??(offer?{offer:'pcr100',appointmentRate:'calculated at selection'}:null)},input.legalConsent);
  const rows=[...legal,
- statement(env.DB,"INSERT INTO guest_service_orders(id,reference,request_key,fingerprint,envelope,service_id,sector,status,price_basis,price_ex_gst_cents,created_at,updated_at,sale_variant_id,sale_quantity,gst_cents,pricing_snapshot_json) VALUES(?,?,?,?,?,?,?,'pending_verification',?,?,?,?,?,?,?,?)",id,reference,input.requestKey,fingerprint,await seal(env.DATA_ENCRYPTION_KEY,'guest:'+id,input),input.serviceId,input.sector,published?'published':'quote',price,time,time,variant?input.saleVariantId!:null,input.saleQuantity??1,gst,variant?JSON.stringify(variant.snapshot):null),
+ statement(env.DB,"INSERT INTO guest_service_orders(id,reference,request_key,fingerprint,envelope,service_id,sector,status,price_basis,price_ex_gst_cents,created_at,updated_at,sale_variant_id,sale_quantity,gst_cents,pricing_snapshot_json,offer_code,purchaser_email_hash) VALUES(?,?,?,?,?,?,?,'pending_verification',?,?,?,?,?,?,?,?,?,?)",id,reference,input.requestKey,fingerprint,await seal(env.DATA_ENCRYPTION_KEY,'guest:'+id,input),input.serviceId,input.sector,published?'published':'quote',price,time,time,variant?input.saleVariantId!:null,input.saleQuantity??1,gst,variant?JSON.stringify(variant.snapshot):offer?JSON.stringify({offer:'pcr100',amountFinalizedAtAppointment:false}):null,offer?'pcr100':null,await digest(env.DATA_ENCRYPTION_KEY+':pcr-customer:'+input.email.trim().toLowerCase())),
  statement(env.DB,'INSERT INTO guest_access_links(token_hash,order_id,purpose,expires_at,created_at) VALUES(?,? ,\'verify\',?,?)',await digest(token),id,new Date(Date.now()+900000).toISOString(),time),
  await mailEvent(env,'guest.verify',{to:input.email,subject:'Verify your ProInspect service request',heading:'Verify your email address',body:'Confirm your email to continue your one-off service request. This link expires in 15 minutes. Your appointment is not reserved until you receive a booking confirmation.',href:env.APP_ORIGIN+'/guest/verify?token='+token,sensitive:true,facts:{Reference:reference}})
  ];
  await env.DB.batch(rows);
- return {...safe({id,reference,status:'pending_verification',price_basis:published?'published':'quote',price_ex_gst_cents:price,booking_id:null} as Order),message:'Check your email for your verification link.',...(isLocal(request,env)?{localVerifyToken:token}: {})};
+ return {...safe({id,reference,status:'pending_verification',price_basis:published?'published':'quote',price_ex_gst_cents:price,gst_cents:gst,offer_code:offer?'pcr100':null,booking_id:null} as Order),message:'Check your email for your verification link.',...(isLocal(request,env)?{localVerifyToken:token}: {})};
 }
 export async function verifyGuest(request:Request,env:Env){
  requireOrigin(request,env);
@@ -96,6 +106,7 @@ export async function guestCheckout(request:Request,env:Env){
  const {token,legalConsent}=z.object({token:z.string().regex(/^[a-f0-9]{64}$/),legalConsent:z.unknown().optional()}).parse(await readJson(request));
  await limit(env,'guest_checkout:'+request.headers.get('CF-Connecting-IP'),15);
  const order=await lookup(env,token,'manage');
+ if(order.offer_code==='pcr100')await requireReleaseApproval(env,'pcr_launch');
  assert(order.verified_at&&order.status==='confirmed'&&order.booking_id,409,'BOOKING_REQUIRED','Confirm an appointment before payment.');
  const payment=await statement(env.DB,"SELECT p.* FROM payments p JOIN work_orders w ON w.id=p.work_order_id WHERE w.booking_id=? AND p.client_id=?",order.booking_id,CLIENT).first<PaymentRecord>();
  assert(payment,404,'PAYMENT_UNAVAILABLE','No payment is available for this guest booking.');
@@ -110,7 +121,14 @@ export async function guestAvailability(env:Env,token:string,date:string){
  const order=await lookup(env,token,'manage');
  assert(order.verified_at,403,'EMAIL_UNVERIFIED','Verify your email first.');
  assert(['verified','awaiting_appointment','confirmed'].includes(order.status),409,'NO_APPOINTMENT','Appointment availability is not open for this request.');
- return availability(env,order.service_id,date);
+ if(order.offer_code==='pcr100')await requireReleaseApproval(env,'pcr_launch');
+ const slots=await availability(env,order.service_id,date,false,order.offer_code==='pcr100');
+ if(order.offer_code==='pcr100'){
+   const input=await unseal<GuestBookingInput>(env.DATA_ENCRYPTION_KEY,'guest:'+order.id,order.envelope);
+   const service=(await catalogue(env)).find(s=>s.id===order.service_id)!;
+   return {...slots,slots:slots.slots.map(s=>({...s,estimatedTotalCents:pcrAppointmentPrice(s.start,service.duration_minutes,Boolean(input.offsiteKeyCollection)).totalCents}))};
+ }
+ return slots;
 }
 export async function guestAction(request:Request,env:Env){
  requireOrigin(request,env);

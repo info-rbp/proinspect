@@ -6,7 +6,7 @@ import { recordId, isoDate, reference, activity, guard, clearGuard } from '../..
 
 export const RELEASE_FEATURES = {
   v4: 'V4_SERVICE_REQUESTS_ENABLED', contractor: 'CONTRACTOR_PAYMENTS_ENABLED', contractor_collection: 'STRIPE_CONNECT_COLLECTION_ENABLED', contractor_transfer: 'STRIPE_CONNECT_TRANSFERS_ENABLED',
-  guest: 'GUEST_BOOKINGS_ENABLED', calendar: 'GOOGLE_CALENDAR_BOOKINGS_ENABLED',
+  guest: 'GUEST_BOOKINGS_ENABLED', pcr_launch: 'PCR_LAUNCH_ENABLED', calendar: 'GOOGLE_CALENDAR_BOOKINGS_ENABLED',
   rental: 'RENTAL_APPLICATIONS_ENABLED', rental_scanner: 'RENTAL_SCANNER_ENABLED',
   rental_script: 'RENTAL_APPS_SCRIPT_ENABLED', open_home: 'OPEN_HOME_REPORTS_ENABLED',
   bonds: 'WA_BONDS_ENABLED', restricted: 'RESTRICTED_WORKFLOWS_ENABLED',
