@@ -1,13 +1,105 @@
-import {useLoaderData,type LoaderFunctionArgs} from 'react-router';
-import {loadApi} from '../lib/api.server';
-import {useWorkspace,workspaceApi} from '../lib/workspace';
-import {PageHeading} from '../../../../packages/ui/components';
-import {OperationForm,Input,TextArea,Select,Panel,choices} from '../components/OperationForm';
-export async function loader({request,context,params}:LoaderFunctionArgs){return loadApi(request,context,workspaceApi(params.kind!,params.scopeId!)+'/commercial-leases');}
-export default function CommercialOperations(){const d=useLoaderData<typeof loader>(),w=useWorkspace().workspace,base=workspaceApi(w.kind,w.scopeId)+'/commercial-leases';return <>
-<PageHeading title="Commercial leases and critical dates" description={d.notice}/>
-<Panel title="Record an approved lease source"><OperationForm endpoint={base+'/create'} label="Create operational lease record"><Select name="propertyId" label="Commercial property" options={d.properties.map((p:any)=>({value:p.id,label:p.address}))}/>{w.kind==='staff'&&<Input name="clientId" label="Commissioning client ID"/>}<Input name="reference" label="Source lease reference"/><Input name="occupierName" label="Occupier / business"/><Input name="startsAt" type="datetime-local" label="Commencement recorded in source"/><Input name="endsAt" type="datetime-local" label="Expiry recorded in source"/><Input name="sourceDocumentId" label="Issued source document ID" required={false}/><TextArea name="details" label="Approved source, review assumptions and operational notes"/></OperationForm></Panel>
-{d.leases.map((l:any)=><Panel key={l.id} title={l.reference+' / '+l.occupier_name} description={l.status}><p>{l.starts_at} to {l.ends_at}</p><p>{l.details.text}</p>{l.status==='active'&&<OperationForm endpoint={base+'/task'} label="Record critical date or obligation" defaults={{leaseId:l.id}}><Select name="kind" label="Type" options={choices(d.kinds)}/><Input name="title" label="Task"/><Input name="dueAt" type="datetime-local" label="Due date from approved source"/><TextArea name="details" label="Obligation and source evidence"/><Input name="reference" label="Source reference"/><Input name="workOrderId" label="Related canonical Work Order ID" required={false}/></OperationForm>}
-{l.tasks.map((t:any)=><section className="panel stack" key={t.id}><h3>{t.title}</h3><p>{t.kind} / {t.status} / due {t.due_at}{t.overdue?' / OVERDUE':''}</p><p>{t.details.text}</p>{!['completed','cancelled'].includes(t.status)&&<OperationForm endpoint={base+'/task-status'} label="Record reviewed status" defaults={{taskId:t.id,version:t.version}}><Select name="status" label="Status" options={choices(w.kind==='staff'?['in_progress','review_required','completed','cancelled']:['in_progress','review_required','cancelled'])}/><Input name="completionDocumentId" label="Issued completion document (required for completion)" required={false}/><Input name="reference" label="Evidence / decision reference"/></OperationForm>}</section>)}
-{l.status==='active'&&<OperationForm endpoint={base+'/end'} label="End operational record" defaults={{leaseId:l.id,version:l.version}}><Input name="reference" label="Confirmed end / handover source"/></OperationForm>}
-</Panel>)}</>;}
+import { CommercialLifecycle } from '../components/CommercialLifecycle';
+import { useLoaderData, type LoaderFunctionArgs } from 'react-router';
+import { loadApi } from '../lib/api.server';
+import { useWorkspace, workspaceApi } from '../lib/workspace';
+import { PageHeading } from '../../../../packages/ui/components';
+import {
+  OperationForm,
+  Input,
+  TextArea,
+  Select,
+  Panel,
+  choices,
+} from '../components/OperationForm';
+export async function loader({ request, context, params }: LoaderFunctionArgs) {
+  return loadApi(
+    request,
+    context,
+    workspaceApi(params.kind!, params.scopeId!) + '/commercial-leases',
+  );
+}
+export default function CommercialOperations() {
+  const d = useLoaderData<typeof loader>(),
+    w = useWorkspace().workspace,
+    base = workspaceApi(w.kind, w.scopeId) + '/commercial-leases';
+  return (
+    <>
+      <PageHeading title="Commercial leases and critical dates" description={d.notice} />
+      <Panel title="Record an approved lease source">
+        <OperationForm endpoint={base + '/create'} label="Create operational lease record">
+          <Select
+            name="propertyId"
+            label="Commercial property"
+            options={d.properties.map((p: any) => ({ value: p.id, label: p.address }))}
+          />
+          {w.kind === 'staff' && <Input name="clientId" label="Commissioning client ID" />}
+          <Input name="reference" label="Source lease reference" />
+          <Input name="occupierName" label="Occupier / business" />
+          <Input name="startsAt" type="datetime-local" label="Commencement recorded in source" />
+          <Input name="endsAt" type="datetime-local" label="Expiry recorded in source" />
+          <Input name="sourceDocumentId" label="Issued source document ID" required={false} />
+          <TextArea
+            name="details"
+            label="Approved source, review assumptions and operational notes"
+          />
+        </OperationForm>
+      </Panel>
+      {d.leases.map((l: any) => (
+        <Panel key={l.id} title={l.reference + ' / ' + l.occupier_name} description={l.status}>
+          <p>
+            {l.starts_at} to {l.ends_at}
+          </p>
+          <p>{l.details.text}</p>
+          {l.status === 'active' && (
+            <OperationForm
+              endpoint={base + '/task'}
+              label="Record critical date or obligation"
+              defaults={{ leaseId: l.id }}
+            >
+              <Select name="kind" label="Type" options={choices(d.kinds)} />
+              <Input name="title" label="Task" />
+              <Input name="dueAt" type="datetime-local" label="Due date from approved source" />
+              <TextArea name="details" label="Obligation and source evidence" />
+              <Input name="reference" label="Source reference" />
+              <Input name="workOrderId" label="Related canonical Work Order ID" required={false} />
+            </OperationForm>
+          )}
+          {l.tasks.map((t: any) => (
+            <section className="panel stack" key={t.id}>
+              <h3>{t.title}</h3>
+              <p>
+                {t.kind} / {t.status} / due {t.due_at}
+                {t.overdue ? ' / OVERDUE' : ''}
+              </p>
+              <p>{t.details.text}</p>
+              {!['completed', 'cancelled'].includes(t.status) && (
+                <OperationForm
+                  endpoint={base + '/task-status'}
+                  label="Record reviewed status"
+                  defaults={{ taskId: t.id, version: t.version }}
+                >
+                  <Select
+                    name="status"
+                    label="Status"
+                    options={choices(['in_progress', 'review_required'])}
+                  />
+                  <Input name="reference" label="Evidence / decision reference" />
+                </OperationForm>
+              )}
+            </section>
+          ))}
+          <CommercialLifecycle lease={l} base={base} staff={w.kind === 'staff'} />
+          {w.kind === 'staff' && l.status === 'active' && (
+            <OperationForm
+              endpoint={base + '/end'}
+              label="End operational record"
+              defaults={{ leaseId: l.id, version: l.version }}
+            >
+              <Input name="reference" label="Confirmed end / handover source" />
+            </OperationForm>
+          )}
+        </Panel>
+      ))}
+    </>
+  );
+}

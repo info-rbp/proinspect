@@ -21,7 +21,7 @@ import {
   guard,
   clearGuard,
 } from '../../../../packages/operations/core';
-import { seal, unseal } from '../../../../packages/auth/crypto';
+import { seal, unseal, digest } from '../../../../packages/auth/crypto';
 import { mailEvent } from '../../../../packages/notifications/server';
 
 async function documentContext(
@@ -168,6 +168,26 @@ export async function issueDocument(
   >();
   assert(doc, 404, 'DOCUMENT_NOT_FOUND', 'Document not found.');
   await documentContext(env, user, w, doc);
+  // This generic endpoint can also be used to distribute generated reports. It
+  // must never bypass exact-PDF independent review or revoked reviewer checks.
+  const rendered = await statement(env.DB, `SELECT m.report_version_id,m.document_sha256,rr.decision,rr.reviewer_id,rr.document_sha256 AS reviewed_sha256,
+      r.status AS report_status,r.approved_version_id,r.inspector_id,r.created_by AS report_author,
+      d.created_by AS renderer,u.active AS reviewer_active,u.verified_at,sp.active AS reviewer_staff_active
+    FROM report_render_manifests m JOIN documents d ON d.id=m.document_id
+    JOIN report_versions v ON v.id=m.report_version_id JOIN inspection_reports r ON r.id=v.report_id
+    LEFT JOIN report_render_reviews rr ON rr.report_version_id=m.report_version_id AND rr.document_id=m.document_id
+    LEFT JOIN users u ON u.id=rr.reviewer_id
+    LEFT JOIN staff_profiles sp ON sp.user_id=rr.reviewer_id
+    WHERE m.document_id=?`,id).first<Record<string,any>>();
+  if (rendered) {
+    assert(rendered.decision==='accepted'&&rendered.document_sha256===doc.sha256&&rendered.reviewed_sha256===doc.sha256&&
+      rendered.approved_version_id===rendered.report_version_id&&['approved','issued'].includes(rendered.report_status)&&
+      rendered.reviewer_active===1&&rendered.reviewer_staff_active===1&&rendered.verified_at&&
+      rendered.inspector_id!==rendered.reviewer_id&&rendered.report_author!==rendered.reviewer_id&&rendered.renderer!==rendered.reviewer_id,
+      409,'RENDER_REVIEW_REQUIRED','A currently authorised, independent reviewer must approve the exact rendered report before any document grant.');
+    const original=await env.DOCUMENTS.get(doc.object_key);
+    assert(original&&await digest(await original.arrayBuffer())===doc.sha256,409,'RENDER_DOCUMENT_CHANGED','The generated PDF differs from its independently reviewed hash.');
+  }
   assert(
     ['review', 'approved', 'issued'].includes(doc.status),
     409,
