@@ -120,8 +120,9 @@ jobs:
             }
             await page.close();
           }}finally{await browser.close();}
-          const sample=await fetch(origin+'/offers/pcr-100/sample.pdf');
+          const sample=await fetch(origin+'/offers/pcr/sample');
           assert.equal(sample.status,404);
+          assert.match(await sample.text(),/No approved sample/);
           writeFileSync('artifacts/pcr-staging-browser.json',JSON.stringify({source:process.env.SOURCE_SHA,checks,sampleDenied:true,authenticatedAcceptance:false,providerAcceptance:false},null,2));
           JS
       - uses: actions/upload-artifact@v4
