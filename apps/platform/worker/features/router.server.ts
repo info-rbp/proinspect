@@ -1,3 +1,4 @@
+import { commercialLedgerExport } from './commercial-lifecycle.server';
 import * as buildingOps from './building-operations.server';
 import * as commercialOps from './commercial-operations.server';
 import * as ownerInvites from './agency-owner-invitations.server';
@@ -84,6 +85,7 @@ export async function featureApi(
   if (method === 'GET') {
     if(tail==='facilities')return ok(await buildingOps.buildingDashboard(env,user,w,url.searchParams.get('buildingId')??undefined));
     if(tail==='facilities/notice-drafts')return ok(await noticeLifecycle.noticeDraftData(env,user,w));
+    if(area==='commercial-leases'&&id==='ledger'&&action)return commercialLedgerExport(env,user,w,action,request);
     if(tail==='commercial-leases')return ok(await commercialOps.commercialData(env,user,w));
     if(tail==='owner-invitations')return ok(await ownerInvites.ownerInvitationList(env,user,w));
     if(tail==='billing')return ok(await billingAccounts.billingDashboard(env,user,w));
