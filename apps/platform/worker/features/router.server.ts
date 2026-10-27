@@ -183,6 +183,8 @@ export async function featureApi(
   if(tail==='billing/portal')return ok(await billingAccounts.billingPortal(env,user,w));
   if(area==='billing'&&id==='invoices'&&action==='export'){staff();return ok(await billingAccounts.exportStatement(env,user,await body()));}
   if(area==='billing'&&id==='invoices'&&action==='finalize'){staff();return ok(await billingAccounts.finalizeStatement(env,user,await body()));}
+  if(area==='billing'&&id==='invoices'&&action==='send'){staff();return ok(await billingAccounts.dispatchApprovedInvoice(env,user,await body()));}
+  if(area==='billing'&&id==='contacts'&&['request','approve','revoke'].includes(action)){staff();return ok(await billingAccounts.billingRecipientCommand(env,user,action as 'request'|'approve'|'revoke',await body()));}
   if(tail==='billing/refunds/request'){staff();return ok(await refunds.refundCommand(env,user,'request',null,await body()));}
   if(area==='billing'&&id==='refunds'&&action&&child){staff();return ok(await refunds.refundCommand(env,user,child,action,await body()));}
   if(area==='billing'&&id==='reconciliation'&&action){staff();return ok(await refunds.resolvePaymentException(env,user,action,await body()));}

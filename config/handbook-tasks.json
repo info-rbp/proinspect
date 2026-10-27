@@ -645,12 +645,25 @@
       ],
       "acceptance": "Multi-property consolidated invoices equal approved billable events and negotiated rates.",
       "retainedEvidence": "Invoice sample packs; line-to-event reconciliation; reviewer approval.",
-      "state": "Not started",
+      "state": "In progress",
       "implementationOwner": null,
       "independentReviewer": null,
       "acceptanceOwner": null,
-      "implementationPaths": [],
-      "verification": [],
+      "implementationPaths": [
+        "apps/platform/worker/features/billing-accounts.server.ts",
+        "database/migrations/0049_invoice_delivery_reviews.sql",
+        "apps/platform/app/routes/billing.tsx"
+      ],
+      "verification": [
+        {
+          "test": "tests/runtime/invoice-delivery.mjs",
+          "note": "Synthetic provider contract; not real Stripe acceptance."
+        },
+        {
+          "test": "tests/finance-delivery-schema.test.py",
+          "note": "SQLite review invariants."
+        }
+      ],
       "externalEvidence": [],
       "acceptanceDecision": null,
       "issueNumber": null
@@ -1149,7 +1162,9 @@
       "implementationOwner": null,
       "independentReviewer": null,
       "acceptanceOwner": null,
-      "implementationPaths": ["apps/platform/app/lib/report-offline.ts"],
+      "implementationPaths": [
+        "apps/platform/app/lib/report-offline.ts"
+      ],
       "verification": [
         {
           "kind": "unit",
@@ -1204,12 +1219,21 @@
       ],
       "acceptance": "Only authorised reviewers issue reports; revisions preserve immutable history and recipient grants.",
       "retainedEvidence": "QC logs; issued version tree; access-control test results.",
-      "state": "Not started",
+      "state": "In progress",
       "implementationOwner": null,
       "independentReviewer": null,
       "acceptanceOwner": null,
-      "implementationPaths": [],
-      "verification": [],
+      "implementationPaths": [
+        "apps/platform/worker/features/report-issue.server.ts",
+        "database/migrations/0048_report_render_independent_review.sql",
+        "apps/platform/app/routes/report-detail.tsx"
+      ],
+      "verification": [
+        {
+          "test": "tests/runtime/reporting.mjs",
+          "note": "D1/R2/HTTP independent render review; not inspector operational acceptance."
+        }
+      ],
       "externalEvidence": [],
       "acceptanceDecision": null,
       "issueNumber": null

@@ -28,13 +28,15 @@ export async function billingDashboard(env:Env,user:Principal,w:Workspace){
  assert(['landlord','commercial','property-manager','strata-manager','staff'].includes(w.kind),403,'BILLING_FORBIDDEN','This workspace does not have billing authority.');
  const staff=w.kind==='staff';if(staff)operationsWrite(user);else await clientAdmin(env,user,w);
  const values=staff?[]:[w.scopeId];const clause=staff?'1=1':'client_id=?';
- const [accounts,subscriptions,invoices,exceptions,refunds]=await Promise.all([
+ const [accounts,subscriptions,invoices,exceptions,refunds,contacts,dispatches]=await Promise.all([
  statement(env.DB,`SELECT client_id,mode,created_at FROM billing_accounts WHERE ${clause}`, ...values).all(),
  statement(env.DB,`SELECT id,client_id,property_id,sector,status,price_id FROM stripe_billing_links WHERE ${clause} ORDER BY updated_at DESC LIMIT 100`,...values).all(),
  statement(env.DB,`SELECT * FROM billing_invoices WHERE ${clause} ORDER BY updated_at DESC LIMIT 100`,...values).all(),
  staff?statement(env.DB,"SELECT id,payment_id,code,created_at FROM payment_reconciliation_items WHERE status='open' ORDER BY created_at LIMIT 100").all():Promise.resolve({results:[]}),
- staff?statement(env.DB,"SELECT r.*,p.description,p.total_cents,p.refunded_cents FROM refund_requests r JOIN payments p ON p.id=r.payment_id ORDER BY requested_at DESC LIMIT 100").all():Promise.resolve({results:[]})]);
- return {accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,portalEnabled:env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true',invoicesEnabled:env.STRIPE_INVOICING_ENABLED==='true',refundsEnabled:env.STRIPE_REFUNDS_ENABLED==='true'};
+ staff?statement(env.DB,"SELECT r.*,p.description,p.total_cents,p.refunded_cents FROM refund_requests r JOIN payments p ON p.id=r.payment_id ORDER BY requested_at DESC LIMIT 100").all():Promise.resolve({results:[]}),
+ staff?statement(env.DB,"SELECT id,client_id,email,status,approved_by FROM billing_invoice_contacts ORDER BY created_at DESC LIMIT 100").all():Promise.resolve({results:[]}),
+ staff?statement(env.DB,"SELECT statement_id,stripe_invoice_id,status,recipient_email FROM billing_invoice_dispatches ORDER BY created_at DESC LIMIT 100").all():Promise.resolve({results:[]})]);
+ return {accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,contacts:contacts.results,dispatches:dispatches.results,portalEnabled:env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true',invoicesEnabled:env.STRIPE_INVOICING_ENABLED==='true',refundsEnabled:env.STRIPE_REFUNDS_ENABLED==='true'};
 }
 export async function billingPortal(env:Env,user:Principal,w:Workspace){
  await clientAdmin(env,user,w);await requireReleaseApproval(env,'billing_portal');assert(env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true',503,'BILLING_PORTAL_DISABLED','Customer billing self-service is not activated.');
@@ -77,6 +79,93 @@ export async function finalizeStatement(env:Env,user:Principal,input:unknown){
  assert(result.customer===e.stripe_customer_id&&result.total===e.total_cents&&result.livemode===false&&['open','paid'].includes(result.status),502,'FINALIZATION_MISMATCH','Finalized invoice requires reconciliation.');
  await env.DB.batch([statement(env.DB,"UPDATE agency_invoice_exports SET status='finalized',approved_by=?,updated_at=? WHERE statement_id=? AND status='draft'",user.id,now(),e.statement_id),guard(env),activity(env,user,'billing.invoice_finalized','invoice',e.stripe_invoice_id,null,null,{reference:d.approvalReference}),clearGuard(env)]);
  return {id:e.stripe_invoice_id,status:result.status,sent:false,paid:false};
+}
+/** An independently approved email address is required before even sandbox delivery. */
+export async function billingRecipientCommand(env:Env,user:Principal,command:'request'|'approve'|'revoke',input:unknown){
+ operationsWrite(user);
+ const time=now();
+ if(command==='request'){
+  const d=z.object({clientId:recordId,email:z.string().trim().toLowerCase().email().max(254),authorityReference:z.string().trim().min(8).max(500)}).parse(input);
+  assert(await statement(env.DB,"SELECT id FROM clients WHERE id=? AND status='active'",d.clientId).first(),404,'BILLING_CLIENT_REQUIRED','Choose an active commissioning client.');
+  const id=uid('bic');
+  await env.DB.batch([
+    statement(env.DB,"INSERT INTO billing_invoice_contacts(id,client_id,email,authority_reference,status,requested_by,created_at) VALUES(?,?,?,?,'pending',?,?)",id,d.clientId,d.email,d.authorityReference,user.id,time),
+    activity(env,user,'billing.recipient_requested','client',d.clientId,null,null,{recipientId:id}),
+  ]);
+  return {id,status:'pending'};
+ }
+ const d=z.object({contactId:recordId,reference:z.string().trim().min(8).max(500)}).parse(input);
+ const prior=await statement(env.DB,'SELECT * FROM billing_invoice_contacts WHERE id=?',d.contactId).first<Record<string,any>>();
+ assert(prior&&prior.status!=='revoked',409,'CONTACT_NOT_PENDING','This billing contact is unavailable.');
+ if(command==='approve'){
+  assert(prior.status==='pending'&&prior.requested_by!==user.id,403,'BILLING_CONTACT_INDEPENDENT_REVIEW','A separate active operations reviewer must approve the billing recipient.');
+  await env.DB.batch([
+    statement(env.DB,"UPDATE billing_invoice_contacts SET status='approved',approved_by=?,approved_at=? WHERE id=? AND status='pending'",user.id,time,d.contactId),guard(env),
+    activity(env,user,'billing.recipient_approved','client',prior.client_id,null,null,{recipientId:d.contactId,reference:d.reference}),clearGuard(env)
+  ]);
+  return {id:d.contactId,status:'approved'};
+ }
+ assert(prior.status==='approved'||prior.status==='pending',409,'BILLING_CONTACT_REVOKED','The recipient is already revoked.');
+ await env.DB.batch([
+  statement(env.DB,"UPDATE billing_invoice_contacts SET status='revoked',revoked_by=?,revoked_at=? WHERE id=? AND status IN('approved','pending')",user.id,time,d.contactId),guard(env),
+  activity(env,user,'billing.recipient_revoked','client',prior.client_id,null,null,{recipientId:d.contactId,reference:d.reference}),clearGuard(env)
+ ]);
+ return {id:d.contactId,status:'revoked'};
+}
+export async function dispatchApprovedInvoice(env:Env,user:Principal,input:unknown){
+ operationsWrite(user);
+ await requireReleaseApproval(env,'invoices');
+ assert(env.STRIPE_INVOICING_ENABLED==='true'&&env.STRIPE_TAX_READY==='true',503,'INVOICING_DISABLED','Approved sandbox invoicing is disabled.');
+ await verifySandboxAccount(env);
+ const d=z.object({statementId:recordId,contactId:recordId,approvalReference:z.string().trim().min(8).max(500)}).parse(input);
+ const invoice=await statement(env.DB,`SELECT e.statement_id,e.client_id,e.requested_by AS prepared_by,e.approved_by AS approved_by,
+ e.stripe_invoice_id,e.status AS export_status,i.stripe_customer_id,i.total_cents,i.status AS invoice_status,
+ c.email,c.status AS recipient_status,c.approved_by AS contact_reviewer
+ FROM agency_invoice_exports e JOIN billing_invoices i ON i.stripe_invoice_id=e.stripe_invoice_id
+ JOIN billing_invoice_contacts c ON c.client_id=e.client_id AND c.id=?
+ WHERE e.statement_id=?`,d.contactId,d.statementId).first<Record<string,any>>();
+ assert(invoice&&invoice.export_status==='finalized'&&['draft','open'].includes(invoice.invoice_status)&&invoice.recipient_status==='approved',409,'INVOICE_DELIVERY_APPROVAL_REQUIRED','Finalised invoice and independently approved billing recipient are required.');
+ assert(invoice.contact_reviewer!==user.id,403,'INVOICE_SENDER_SEPARATION','The billing recipient approver must not dispatch the invoice.');
+ assert(invoice.approved_by!==null,409,'INVOICE_APPROVAL_MISSING','An independent invoice finalisation approval is required.');
+ const existing=await statement(env.DB,'SELECT status,contact_id,recipient_email FROM billing_invoice_dispatches WHERE statement_id=?',d.statementId).first<{status:string,contact_id:string,recipient_email:string}>();
+ if(existing){
+  assert(existing.contact_id===d.contactId&&existing.recipient_email===invoice.email,409,'DISPATCH_RECIPIENT_CHANGED','The original recipient binding cannot change.');
+  if(existing.status==='provider_accepted')return {status:'provider_accepted',sent:false,replayed:true,providerAccepted:true};
+  assert(false,409,'DISPATCH_RECONCILIATION_REQUIRED','A previous send may have reached the provider. Reconcile it independently; do not send twice.');
+ }
+ const from=await stripeRequest(env,'/invoices/'+invoice.stripe_invoice_id);
+ assert(from.livemode===false&&from.customer===invoice.stripe_customer_id&&from.total===invoice.total_cents&&from.status==='open'&&from.collection_method==='send_invoice',409,'INVOICE_PROVIDER_CHANGED','The provider invoice is not the finalised, open, sendable invoice.');
+ const customer=await stripeRequest(env,'/customers/'+invoice.stripe_customer_id);
+ assert(customer.livemode===false&&customer.id===invoice.stripe_customer_id&&typeof customer.email==='string'&&customer.email.toLowerCase()===invoice.email,
+  409,'INVOICE_PROVIDER_RECIPIENT','Provider billing email differs from the independently approved recipient. Correct it under a reviewed process first.');
+ const stamp=now();
+ await env.DB.batch([
+  statement(env.DB,"INSERT INTO billing_invoice_dispatches(statement_id,stripe_invoice_id,contact_id,customer_id,recipient_email,status,requested_by,approval_reference,created_at,updated_at) VALUES(?,?,?,?,?,'preparing',?,?,?,?)",d.statementId,invoice.stripe_invoice_id,d.contactId,invoice.stripe_customer_id,invoice.email,user.id,d.approvalReference,stamp,stamp),
+  statement(env.DB,"INSERT INTO billing_invoice_dispatch_events(id,statement_id,event,actor_id,reference,created_at) VALUES(?,?,'requested',?,?,?)",uid('bde'),d.statementId,user.id,d.approvalReference,stamp),
+  activity(env,user,'billing.invoice_delivery_requested','invoice',invoice.stripe_invoice_id,null,null,{recipientId:d.contactId})
+ ]);
+ // The reservation is durable before calling Stripe. Timeout or a lost response is
+ // intentionally NOT auto-retried: a duplicate email must require manual review.
+ let result:Record<string,any>;
+ try {
+  result=await stripeRequest(env,'/invoices/'+invoice.stripe_invoice_id+'/send',new URLSearchParams(),`proinspect-invoice-send-${d.statementId}`);
+ } catch (error) {
+  // A timed-out HTTP call can already have sent the invoice. The recorded
+  // reservation must survive and be explicitly reconciled, never retried.
+  await env.DB.batch([
+   statement(env.DB,"UPDATE billing_invoice_dispatches SET status='needs_reconciliation',updated_at=? WHERE statement_id=? AND status='preparing'",now(),d.statementId),guard(env),
+   statement(env.DB,"INSERT INTO billing_invoice_dispatch_events(id,statement_id,event,actor_id,reference,created_at) VALUES(?,?,'needs_reconciliation',?,?,?)",uid('bde'),d.statementId,user.id,d.approvalReference,now()),
+   activity(env,user,'billing.invoice_delivery_uncertain','invoice',invoice.stripe_invoice_id,null,null,{statementId:d.statementId}),clearGuard(env)
+  ]);
+  throw error;
+ }
+ assert(result.livemode===false&&result.id===invoice.stripe_invoice_id&&result.customer===invoice.stripe_customer_id&&result.status==='open',502,'INVOICE_DELIVERY_UNCONFIRMED','Provider did not acknowledge the exact invoice dispatch. Reconciliation is required.');
+ await env.DB.batch([
+  statement(env.DB,"UPDATE billing_invoice_dispatches SET status='provider_accepted',provider_accepted_at=?,updated_at=? WHERE statement_id=? AND status='preparing'",now(),now(),d.statementId),guard(env),
+  statement(env.DB,"INSERT INTO billing_invoice_dispatch_events(id,statement_id,event,actor_id,reference,created_at) VALUES(?,?,'provider_accepted',?,?,?)",uid('bde'),d.statementId,user.id,result.id,now()),
+  activity(env,user,'billing.invoice_provider_accepted','invoice',invoice.stripe_invoice_id,null,null,{recipientId:d.contactId}),clearGuard(env)
+ ]);
+ return {status:'provider_accepted',sent:true,providerAccepted:true,inboxDeliveryVerified:false,invoiceId:invoice.stripe_invoice_id};
 }
 export async function invoiceObservation(env:Env,event:ProviderEvent){
  const o=event.data.object;

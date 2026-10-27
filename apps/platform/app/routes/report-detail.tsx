@@ -25,6 +25,8 @@ export async function action({request,context,params}:ActionFunctionArgs){
   else if(intent==='review'){endpoint='review';body={decision:String(f.get('decision')),comment:String(f.get('comment')||''),revision:Number(f.get('revision'))};}
   else if(intent==='reviewEvidence'){endpoint=`evidence/${encodeURIComponent(String(f.get('evidenceId')))}/review`;body={decision:String(f.get('decision'))};}
   else if(intent==='render'){endpoint='render';body={};}
+  else if(intent==='renderReview'){endpoint='render-review';body={decision:String(f.get('decision')),sha256:String(f.get('sha256')),reviewReference:String(f.get('reviewReference'))};}
+  else if(intent==='renderRevise'){endpoint='render-revise';body={revision:Number(f.get('revision')),reason:String(f.get('reason'))};}
   else if(intent==='issue'){endpoint='issue';body={audience:String(f.get('audience')),recipientId:String(f.get('recipientId')),reviewReference:String(f.get('reviewReference'))};}
   else if(intent==='respond'){
     endpoint='response';
@@ -181,7 +183,26 @@ export default function ReportDetail(){
       </div>
     </Form>}
     {manager&&report.status==='approved'&&<Form method="post"><input type="hidden" name="intent" value="render"/><button className="primary">Generate approved PDF</button></Form>}
-    {manager&&['approved','issued'].includes(report.status)&&<Form method="post" className="form stack-sm">
+    {payload.renderReview&&<section className="panel stack-sm" aria-label="Rendered document independent review">
+      <h3>Exact rendered PDF review</h3>
+      <p className="small muted">Document {payload.renderReview.document_id} · SHA-256 {payload.renderReview.document_sha256}</p>
+      <a className="button secondary" href={`/api/w/staff/operations/reports/${report.id}/rendered-pdf`} target="_blank" rel="noreferrer">Open PDF for independent visual review</a>
+      {payload.renderReview.decision&&<p role="status">Recorded immutable decision: {payload.renderReview.decision}</p>}
+      {!payload.renderReview.decision&&staff&&(reviewer||manager)&&
+        payload.renderReview.rendered_by!==d.user.id&&report.created_by!==d.user.id&&report.inspector_id!==d.user.id&&
+        <Form method="post" className="form stack-sm">
+          <input type="hidden" name="intent" value="renderReview"/><input type="hidden" name="sha256" value={payload.renderReview.document_sha256}/>
+          <label>Visual PDF review and evidence reference<input name="reviewReference" required minLength={8} maxLength={500} placeholder="Exact rendered pages and evidence inspected"/></label>
+          <div className="actions"><button className="primary" name="decision" value="accepted">Approve exact PDF</button>
+          <button className="button secondary" name="decision" value="rejected">Reject PDF</button></div>
+        </Form>}
+      {manager&&payload.renderReview.decision==='rejected'&&report.status==='approved'&&<Form method="post" className="form stack-sm">
+        <input type="hidden" name="intent" value="renderRevise"/><input type="hidden" name="revision" value={report.revision}/>
+        <label>Required corrections<input name="reason" minLength={8} maxLength={500} required/></label>
+        <button className="button secondary">Reopen draft and create a new version</button>
+      </Form>}
+    </section>}
+    {manager&&payload.renderReview?.decision==='accepted'&&['approved','issued'].includes(report.status)&&<Form method="post" className="form stack-sm">
       <input type="hidden" name="intent" value="issue"/>
       <label>Recipient audience<select name="audience" defaultValue={defaultAudience}>
        <option value="client">Commissioning client</option>

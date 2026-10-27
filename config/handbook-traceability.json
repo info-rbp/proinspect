@@ -5,121 +5,241 @@
       "id": "F01",
       "package": "Integrated database/API baseline",
       "workstreams": "WS00, WS09",
-      "handbookRequirement": "Integrated, retain migration governance"
+      "handbookRequirement": "Integrated, retain migration governance",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F02",
       "package": "Staging and recovery",
       "workstreams": "WS03, WS09",
-      "handbookRequirement": "Restore and provider acceptance pending"
+      "handbookRequirement": "Restore and provider acceptance pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F03",
       "package": "Guest booking",
       "workstreams": "WS01, WS08",
-      "handbookRequirement": "Business approval and real transaction pending"
+      "handbookRequirement": "Business approval and real transaction pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F04",
       "package": "Stripe billing",
       "workstreams": "WS01, WS02",
-      "handbookRequirement": "Provider acceptance and financial exceptions pending"
+      "handbookRequirement": "Provider acceptance and financial exceptions pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F05",
       "package": "Portal acceptance",
       "workstreams": "WS06",
-      "handbookRequirement": "Nine genuine hosted roles pending"
+      "handbookRequirement": "Nine genuine hosted roles pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F06",
       "package": "Native reporting",
       "workstreams": "WS04",
-      "handbookRequirement": "Original tool parity and high volume pending"
+      "handbookRequirement": "Original tool parity and high volume pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F07",
       "package": "Strata Manager",
       "workstreams": "WS06, WS07",
-      "handbookRequirement": "Multi-scheme operational acceptance pending"
+      "handbookRequirement": "Multi-scheme operational acceptance pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F08",
       "package": "Building Manager",
       "workstreams": "WS06, WS07",
-      "handbookRequirement": "Actual delegated-role acceptance pending"
+      "handbookRequirement": "Actual delegated-role acceptance pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F09",
       "package": "Council and Resident",
       "workstreams": "WS06, WS07",
-      "handbookRequirement": "Recipient and revocation acceptance pending"
+      "handbookRequirement": "Recipient and revocation acceptance pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F10",
       "package": "Agency outsourcing",
       "workstreams": "WS06, WS07",
-      "handbookRequirement": "Handoff / approved rates acceptance pending"
+      "handbookRequirement": "Handoff / approved rates acceptance pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F11",
       "package": "Rental applications",
       "workstreams": "WS03, WS05, WS08",
-      "handbookRequirement": "Scanner, signed handoff and retention pending"
+      "handbookRequirement": "Scanner, signed handoff and retention pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F12",
       "package": "Legal framework",
       "workstreams": "WS01, WS05",
-      "handbookRequirement": "Operative legal approvals pending"
+      "handbookRequirement": "Operative legal approvals pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F13",
       "package": "WA statutory forms",
       "workstreams": "WS03, WS05",
-      "handbookRequirement": "Official bytes/signatures/service pending"
+      "handbookRequirement": "Official bytes/signatures/service pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F14",
       "package": "Bond/rent/restricted cases",
       "workstreams": "WS05",
-      "handbookRequirement": "Noncustodial records implemented; regulated custody not built; legal review pending"
+      "handbookRequirement": "Noncustodial records implemented; regulated custody not built; legal review pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F15",
       "package": "External integrations",
       "workstreams": "WS03",
-      "handbookRequirement": "Real providers pending"
+      "handbookRequirement": "Real providers pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F16",
       "package": "Contractor payments",
       "workstreams": "WS02",
-      "handbookRequirement": "Connect onboarding/reversals/payouts pending"
+      "handbookRequirement": "Connect onboarding/reversals/payouts pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F17",
       "package": "Marketing publication",
       "workstreams": "WS01, WS08",
-      "handbookRequirement": "Approved copy, imagery and manual accessibility pending"
+      "handbookRequirement": "Approved copy, imagery and manual accessibility pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F18",
       "package": "Commercial specialist operations",
       "workstreams": "WS07",
-      "handbookRequirement": "Lease renewal/accounting engineering pending"
+      "handbookRequirement": "Lease renewal/accounting engineering pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F19",
       "package": "Consolidated agency invoicing",
       "workstreams": "WS02, WS07",
-      "handbookRequirement": "Credits/settlement/accounting pending"
+      "handbookRequirement": "Credits/settlement/accounting pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     },
     {
       "id": "F20",
       "package": "Release governance",
       "workstreams": "WS00, WS09",
-      "handbookRequirement": "Restore, monitoring, independent launch and handover pending"
+      "handbookRequirement": "Restore, monitoring, independent launch and handover pending",
+      "state": "Not accepted",
+      "implementationOwner": null,
+      "independentReviewer": null,
+      "acceptanceOwner": null,
+      "acceptanceDecision": null,
+      "evidence": []
     }
   ]
 }

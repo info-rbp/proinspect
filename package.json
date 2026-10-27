@@ -11,9 +11,9 @@
     "dev:marketing": "pnpm --filter @proinspect/marketing dev",
     "build": "pnpm -r build",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/*.test.ts && node --test tests/portal-acceptance-gate.test.mjs && node --test tests/portal-execution.test.mjs && node --test tests/portal-launch-evidence.test.mjs && node --test tests/handbook-register.test.mjs",
-    "test:schema": "python3 tests/schema.test.py && python3 tests/reporting-schema.test.py && python3 tests/release-upgrade.test.py && python3 tests/agency-schema.test.py && python3 tests/connect-sandbox-schema.test.py && python3 tests/contractor-payment-models-schema.test.py && python3 tests/rent-routing-schema.test.py && python3 tests/v4-schema.test.py && python3 tests/final-sprint-schema.test.py && python3 tests/pcr-discount-schema.test.py && python3 tests/commercial-schema.test.py",
-    "test:integration": "node --experimental-strip-types tests/runtime/run.mjs && node --experimental-strip-types tests/runtime/connected.mjs && node --experimental-strip-types tests/runtime/communications.mjs && node --experimental-strip-types tests/runtime/open-home-resend.mjs && node --experimental-strip-types tests/runtime/final-pass.mjs && node --experimental-strip-types tests/runtime/reporting.mjs && node --experimental-strip-types tests/runtime/reporting-portals.mjs && node --experimental-strip-types tests/runtime/v2.mjs && node --experimental-strip-types tests/runtime/stripe.mjs && node --experimental-strip-types tests/runtime/sprint.mjs && node --experimental-strip-types tests/runtime/pcr-campaign.mjs && node --experimental-strip-types tests/runtime/commercial.mjs",
+    "test": "node --experimental-strip-types --test tests/*.test.ts && node --test tests/portal-acceptance-gate.test.mjs && node --test tests/portal-execution.test.mjs && node --test tests/portal-launch-evidence.test.mjs && node --test tests/handbook-register.test.mjs && node --test tests/handbook-release-readiness.test.mjs",
+    "test:schema": "python3 tests/schema.test.py && python3 tests/reporting-schema.test.py && python3 tests/release-upgrade.test.py && python3 tests/agency-schema.test.py && python3 tests/connect-sandbox-schema.test.py && python3 tests/contractor-payment-models-schema.test.py && python3 tests/rent-routing-schema.test.py && python3 tests/v4-schema.test.py && python3 tests/final-sprint-schema.test.py && python3 tests/pcr-discount-schema.test.py && python3 tests/commercial-schema.test.py && python3 tests/finance-delivery-schema.test.py",
+    "test:integration": "node --experimental-strip-types tests/runtime/invoice-delivery.mjs && node --experimental-strip-types tests/runtime/run.mjs && node --experimental-strip-types tests/runtime/connected.mjs && node --experimental-strip-types tests/runtime/communications.mjs && node --experimental-strip-types tests/runtime/open-home-resend.mjs && node --experimental-strip-types tests/runtime/final-pass.mjs && node --experimental-strip-types tests/runtime/reporting.mjs && node --experimental-strip-types tests/runtime/reporting-portals.mjs && node --experimental-strip-types tests/runtime/v2.mjs && node --experimental-strip-types tests/runtime/stripe.mjs && node --experimental-strip-types tests/runtime/sprint.mjs && node --experimental-strip-types tests/runtime/pcr-campaign.mjs && node --experimental-strip-types tests/runtime/commercial.mjs",
     "test:browser": "playwright test",
     "local:init": "node --experimental-strip-types scripts/local-init.mjs",
     "catalogue:sql": "node --experimental-strip-types scripts/catalogue-sql.mjs",
@@ -22,7 +22,8 @@
     "format:check": "prettier --check . --ignore-unknown",
     "config:list": "node scripts/configuration.mjs",
     "config:check": "node scripts/configuration.mjs --check",
-    "handbook:check": "node scripts/handbook-check.mjs"
+    "handbook:check": "node scripts/handbook-check.mjs",
+    "handbook:release": "node scripts/handbook-release-readiness.mjs"
   },
   "dependencies": {
     "react": "19.3.0",

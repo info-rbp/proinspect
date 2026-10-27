@@ -2,7 +2,7 @@ import { type Env,assert,AppError } from '../../../../packages/database/types';
 import type {Principal,Workspace} from '../../../../packages/domain/index';
 import {listReports,reportDetail,createReport,saveReport,assignReviewer,submitReport,reviewReport} from './reports.server';
 import {uploadReportEvidence,reviewReportEvidence,downloadReportEvidence} from './report-evidence.server';
-import {renderApprovedReport,issueApprovedReport,respondToIssuedReport,extractMaintenanceCandidates,resolveReportResponse,createMaintenanceRequest} from './report-issue.server';
+import {renderApprovedReport,downloadRenderedReportForReview,reviewRenderedReport,reopenRejectedRender,issueApprovedReport,respondToIssuedReport,extractMaintenanceCandidates,resolveReportResponse,createMaintenanceRequest} from './report-issue.server';
 import {readJson} from '../../../../packages/operations/core';
 import {reportHistory} from './report-history.server';
 async function payload(request:Request,large=false){
@@ -18,6 +18,7 @@ export async function reportRoutes(request:Request,env:Env,user:Principal,w:Work
  if(method==='GET'){
   if(!id)return ok(await listReports(env,user,w));
   if(id && !action)return ok(await reportDetail(env,user,w,id));
+  if(id && action==='rendered-pdf')return downloadRenderedReportForReview(env,user,w,id);
   if(id && action==='history')return ok(await reportHistory(env,user,w,id,new URL(request.url).searchParams.get('baselineReportId')??undefined));
   if(id&&action==='evidence'&&child&&subaction==='download')return downloadReportEvidence(env,user,w,id,child);
  }
@@ -31,6 +32,8 @@ export async function reportRoutes(request:Request,env:Env,user:Principal,w:Work
  if(action==='evidence'&&!child)return ok(await uploadReportEvidence(env,user,w,id,await request.formData()));
  if(action==='evidence'&&child&&subaction==='review')return ok(await reviewReportEvidence(env,user,w,id,child,await payload(request)));
  if(action==='render')return ok(await renderApprovedReport(env,user,w,id));
+ if(action==='render-review')return ok(await reviewRenderedReport(env,user,w,id,await payload(request)));
+ if(action==='render-revise')return ok(await reopenRejectedRender(env,user,w,id,await payload(request)));
  if(action==='issue')return ok(await issueApprovedReport(env,user,w,id,await payload(request)));
  if(action==='response'&&child&&subaction==='resolve')return ok(await resolveReportResponse(env,user,w,id,child,await payload(request)));
  if(action==='response'&&!child)return ok(await respondToIssuedReport(env,user,w,id,await payload(request)));

@@ -135,6 +135,11 @@ export async function reportDetail(env:Env,user:Principal,w:Workspace,id:string)
  }
  const draft=await statement(env.DB,'SELECT revision,content_json FROM report_drafts WHERE report_id=?',id).first<{revision:number,content_json:string}>();
  const versions=(await statement(env.DB,'SELECT id,sequence,created_at,content_sha256 FROM report_versions WHERE report_id=? ORDER BY sequence DESC',id).all()).results;
+ const renderReview=row.approved_version_id ? await statement(env.DB, `SELECT m.document_id,m.document_sha256,d.created_by AS rendered_by,
+   rv.decision,rv.reviewer_id AS rendered_reviewer,rv.reviewed_at
+   FROM report_render_manifests m JOIN documents d ON d.id=m.document_id
+   LEFT JOIN report_render_reviews rv ON rv.report_version_id=m.report_version_id
+   WHERE m.report_version_id=?`,row.approved_version_id).first():null;
  const evidence=(await statement(env.DB,'SELECT id,area_id,component_id,content_type,sha256,status,uploaded_at FROM report_evidence WHERE report_id=? ORDER BY uploaded_at DESC LIMIT 250',id).all()).results;
  const reviews=(await statement(env.DB,'SELECT reviewer_id,decision,comment,created_at FROM report_review_events WHERE report_id=? ORDER BY created_at DESC LIMIT 60',id).all()).results;
  const privileged=['administrator','operations_manager'].includes(user.staffRole??'')||row.reviewer_id===user.id;
@@ -147,7 +152,7 @@ export async function reportDetail(env:Env,user:Principal,w:Workspace,id:string)
    ?(await statement(env.DB,`SELECT id,area_id,component_id,finding,request_id FROM report_maintenance_candidates
        WHERE report_version_id=? ORDER BY created_at DESC LIMIT 80`,row.approved_version_id).all()).results:[];
  return {report:row,draft:draft?{revision:draft.revision,content:JSON.parse(draft.content_json)}:null,
-   versions,evidence,reviews,responses,maintenanceCandidates};
+   versions,evidence,reviews,renderReview,responses,maintenanceCandidates};
 }
 export async function saveReport(env:Env,user:Principal,w:Workspace,id:string,input:unknown) {
  const row=await accessReport(env,user,w,id,'edit');
