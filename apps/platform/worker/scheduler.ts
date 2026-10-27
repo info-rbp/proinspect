@@ -1,4 +1,5 @@
 import { legalStatements } from './features/legal-acceptance.server';
+import { PCR_LAUNCH_SERVICE } from '../../../packages/marketing/pcr-campaign';
 import { guestSchedulerOperation } from './features/guest-scheduler.server';
 import { changeBooking } from './features/bookings.server';
 import { nextMonthDate, guard, clearGuard, projection } from '../../../packages/operations/core';
@@ -14,7 +15,7 @@ import { audit, catalogue } from './services.server';
 import { includedSubscriptionBooking } from '../../../packages/authorization/subscription-booking';
 import { assertCalendarSlot, calendarSchedulingEnabled, calendarSyncStatement, googleBusy, overlaps } from './features/calendar-scheduling.server';
 
-export function appointmentWindow(service: Service, startsAt: string, clock = Date.now()) {
+export function appointmentWindow(service: Service, startsAt: string, clock = Date.now(), pcrLaunch = false) {
   const starts = new Date(startsAt);
   assert(Number.isFinite(starts.getTime()), 422, 'DATE_INVALID', 'Choose a valid appointment.');
   const ends = new Date(starts.getTime() + service.duration_minutes * 60000);
@@ -27,21 +28,18 @@ export function appointmentWindow(service: Service, startsAt: string, clock = Da
     'OUTSIDE_BOOKING_WINDOW',
     'Choose a date within this service booking window.',
   );
-  assert(
-    localStart.getUTCDay() >= 1 && localStart.getUTCDay() <= 5,
-    422,
-    'OUTSIDE_HOURS',
-    'Appointments are available on weekdays.',
-  );
-  assert(
-    localStart.getUTCHours() >= 8 &&
-      localEnd.getUTCHours() <= 17 &&
+  if (pcrLaunch) {
+    assert(service.id === PCR_LAUNCH_SERVICE, 403, 'PCR_SERVICE_REQUIRED', 'This appointment rule applies only to the PCR campaign.');
+    assert(localStart.getUTCHours() >= 9 && localEnd.getUTCHours() <= 17 &&
       (localEnd.getUTCHours() < 17 || localEnd.getUTCMinutes() === 0) &&
-      localStart.getUTCDate() === localEnd.getUTCDate(),
-    422,
-    'OUTSIDE_HOURS',
-    'Choose an appointment within 8 am to 5 pm AWST.',
-  );
+      localStart.getUTCDate() === localEnd.getUTCDate(), 422, 'OUTSIDE_HOURS',
+      'PCR appointments are available between 9 am and 5 pm Perth time.');
+  } else {
+    assert(localStart.getUTCDay() >= 1 && localStart.getUTCDay() <= 5, 422, 'OUTSIDE_HOURS', 'Appointments are available on weekdays.');
+    assert(localStart.getUTCHours() >= 8 && localEnd.getUTCHours() <= 17 &&
+      (localEnd.getUTCHours() < 17 || localEnd.getUTCMinutes() === 0) &&
+      localStart.getUTCDate() === localEnd.getUTCDate(), 422, 'OUTSIDE_HOURS', 'Choose an appointment within 8 am to 5 pm AWST.');
+  }
   assert(
     starts.getUTCMinutes() % 15 === 0 &&
       starts.getUTCSeconds() === 0 &&
@@ -57,11 +55,12 @@ export function appointmentWindow(service: Service, startsAt: string, clock = Da
     reservedEnd: new Date(ends.getTime() + service.buffer_after * 60000).toISOString(),
   };
 }
-export async function availability(env: Env, serviceId: string, date: string, includedInSubscription = false) {
+export async function availability(env: Env, serviceId: string, date: string, includedInSubscription = false, pcrLaunch = false) {
   assert(/^\d{4}-\d{2}-\d{2}$/.test(date), 422, 'DATE_INVALID', 'Choose a valid date.');
   const service = (await catalogue(env)).find((s) => s.id === serviceId);
   assert(service, 404, 'SERVICE_NOT_FOUND', 'Service not found.');
-  if (!includedInSubscription && (service.booking_mode !== 'instant' || service.price_ex_gst_cents === null))
+  if (pcrLaunch) assert(service.id === PCR_LAUNCH_SERVICE && env.PCR_LAUNCH_ENABLED === 'true', 403, 'PCR_OFFER_UNAVAILABLE', 'The PCR campaign is not active.');
+  if (!includedInSubscription && !pcrLaunch && (service.booking_mode !== 'instant' || service.price_ex_gst_cents === null))
     return {
       slots: [],
       message: 'This service is not currently available for direct booking. Choose an included subscription service or submit a service request.',
@@ -73,10 +72,10 @@ export async function availability(env: Env, serviceId: string, date: string, in
   if (!resource) return { slots: [], message: 'Online scheduling has not been opened yet.' };
   const candidates: { start: string; end: string; label: string }[] = [];
   const candidateReservations = new Map<string, { start: string; end: string }>();
-  for (let minutes = 480; minutes < 1020; minutes += 15) {
+  for (let minutes = pcrLaunch ? 540 : 480; minutes < 1020; minutes += 15) {
     try {
       const start = `${date}T${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:00+08:00`;
-      const window = appointmentWindow(service, start);
+      const window = appointmentWindow(service, start, Date.now(), pcrLaunch);
       const conflict = await statement(
         env.DB,
         `SELECT id FROM bookings WHERE resource_id='default' AND status!='cancelled' AND reserved_start<? AND reserved_end>? UNION ALL SELECT id FROM schedule_blocks WHERE resource_id='default' AND starts_at<? AND ends_at>? LIMIT 1`,
@@ -134,7 +133,8 @@ export class BookingScheduler extends DurableObject<Env> {
   private async reserve(request: Request) {
     try {
       if(new URL(request.url).pathname==='/guest'){
-        return guestSchedulerOperation(this.env,await request.json());
+        // Await inside this boundary so AppError remains a safe HTTP response across the DO call.
+        return await guestSchedulerOperation(this.env,await request.json());
       }
       const {
         userId,

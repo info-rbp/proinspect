@@ -3,13 +3,20 @@
   "name": "proinspect-marketing-local",
   "main": "worker/app.ts",
   "compatibility_date": "2026-07-01",
-  "compatibility_flags": ["nodejs_compat"],
-  "observability": { "enabled": true },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": true
+  },
   "vars": {
     "APP_ENV": "local",
     "APP_ORIGIN": "http://localhost:5174",
     "PLATFORM_ORIGIN": "http://localhost:5173",
     "MARKETING_ORIGIN": "http://localhost:5174",
-    "BUILD_SHA": "development"
+    "BUILD_SHA": "development",
+    "PCR_LAUNCH_ENABLED": "false",
+    "PCR_DISCOUNT_REDEMPTION_ENABLED": "false",
+    "PCR_SAMPLE_PUBLICATION_ENABLED": "false"
   }
 }

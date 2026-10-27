@@ -12,6 +12,9 @@ export const guestBookingSchema = z.object({
   suburb: z.string().trim().min(2).max(80),
   postcode: z.string().regex(/^\d{4}$/),
   propertyType: z.enum(['House','Apartment','Townhouse','Villa','Office','Retail','Warehouse','Industrial','Mixed-use','Other']),
+  launchOffer: z.literal('pcr100').optional(),
+  offsiteKeyCollection: z.boolean().optional(),
+  keyCollectionLocation: z.string().trim().max(180).optional(),
   saleVariantId: id.optional(),
   saleQuantity: z.number().int().min(1).max(500).optional(),
   legalConsent: z.unknown().optional(),
@@ -25,6 +28,9 @@ export type GuestBookingInput = z.infer<typeof guestBookingSchema>;
 export const guestTokenSchema = z.object({token:z.string().regex(/^[a-f0-9]{64}$/)});
 export const guestChangeSchema = guestTokenSchema.extend({
   legalConsent: z.unknown().optional(),
+  applyPcrDiscount: z.boolean().optional(),
+  appointmentTotalCents: z.number().int().positive().max(200000000).optional(),
+  discountTotalCents: z.number().int().positive().max(200000000).optional(),
   action: z.enum(['cancel','reschedule','confirm']),
   startsAt: z.string().datetime({offset:true}).optional(),
 });

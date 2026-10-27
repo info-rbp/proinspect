@@ -3,7 +3,7 @@ import { PUBLIC_LEGAL_APPROVAL, type PublicLegalKey } from '../../../../packages
 /** Public marketing route families for the unified Worker, including unapproved legal drafts. */
 export function isPublicSitePath(pathname: string): boolean {
   if (pathname === '/' || pathname === '/services' || pathname === '/contact' ||
-      pathname === '/resources' || pathname === '/robots.txt' || pathname === '/sitemap.xml')
+      pathname === '/resources' || pathname === '/offers/pcr-100' || pathname === '/offers/pcr/sample' || pathname === '/robots.txt' || pathname === '/sitemap.xml')
     return true;
   if (pathname === '/properties-for-lease' || /^\/properties-for-lease\/(?:residential|commercial)(?:\/[a-z0-9-]+)?$/.test(pathname)) return true;
   if (/^\/(?:services|sectors|how-we-work|resources)\/.+/.test(pathname)) return true;

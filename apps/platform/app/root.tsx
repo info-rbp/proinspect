@@ -19,6 +19,7 @@ import '../../../packages/ui/leasing.css';
 import '../../../packages/ui/rental-application.css';
 import '../../../packages/ui/rental-print.css';
 import '../../../packages/ui/open-home.css';
+import '../../../packages/ui/pcr-offer.css';
 import { isMarketingStylePath } from './lib/public-routes';
 export function loader({ context }: LoaderFunctionArgs) {
   return { nonce: context.get(runtimeContext).nonce };

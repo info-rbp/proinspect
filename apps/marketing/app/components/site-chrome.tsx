@@ -60,6 +60,7 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
             <Link to="/why-proinspect" aria-current={pathname === '/why-proinspect' ? 'page' : undefined}>Why ProInspect</Link>
             <Link to="/properties-for-lease" aria-current={pathname.startsWith('/properties-for-lease') ? 'page' : undefined}>Leasing</Link>
             <Link to="/resources" aria-current={pathname.startsWith('/resources') ? 'page' : undefined}>Resources</Link>
+            <Link to="/offers/pcr-100" aria-current={pathname === '/offers/pcr-100' ? 'page' : undefined}>$100 PCR</Link>
           </nav>
           <div className="mkt-header-actions">
             <a className="mkt-signin" href={appOrigin + '/signin'}>Sign in</a>
@@ -75,6 +76,7 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
               <Link to="/why-proinspect">Why ProInspect</Link>
               <Link to="/properties-for-lease">Leasing</Link>
               <Link to="/resources">Resources</Link>
+              <Link to="/offers/pcr-100">$100 PCR offer</Link>
               <Link to="/contact">Contact</Link>
               <a href={appOrigin + '/signin'}>Sign in</a>
             </nav>
