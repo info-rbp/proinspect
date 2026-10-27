@@ -25,7 +25,7 @@ jobs:
           git rev-parse HEAD > artifacts/toolchain-source-sha.txt
           sha256sum pnpm-lock.yaml > artifacts/toolchain-lock-sha256.txt
           node --version > artifacts/toolchain-node-version.txt
-          tar -czf artifacts/toolchain.tar.gz node_modules apps/marketing/node_modules apps/platform/node_modules
+          tar -czf artifacts/toolchain.tar.gz node_modules
           cp "$(command -v node)" artifacts/node
       - uses: actions/upload-artifact@v4
         with:
