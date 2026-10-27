@@ -76,32 +76,46 @@ jobs:
           }
           writeFileSync('artifacts/final-live-infrastructure.json',JSON.stringify({observedAt:new Date().toISOString(),readOnly:true,observations,hostedHumanAcceptance:false,providerTransactionAcceptance:false},null,2));
           JS
-      - name: Inspect actual production public pages, draft controls and anonymous portal denial
+      - name: Inspect rendered production pages and anonymous portal denial without submitting authentication
         run: |
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
           import {chromium} from '@playwright/test';
           import {writeFileSync} from 'node:fs';
           const source=process.env.SOURCE_SHA,origin='https://proinspect.systems',checks=[];
-          const health=await (await fetch(origin+'/api/health')).json();assert.equal(health.source,source);
+          const savePartial=()=>writeFileSync('artifacts/final-live-browser-progress.json',JSON.stringify({source,checks,complete:false,hostedHumanAcceptance:false,providerTransactionAcceptance:false},null,2));
+          const health=await (await fetch(origin+'/api/health',{signal:AbortSignal.timeout(30000)})).json();assert.equal(health.source,source);
           for(const workspace of ['landlord','property-manager','commercial','strata-manager','tenant','building','strata-council','staff','building-manager']){
-            const path=`/api/w/${workspace}/not-authorized/overview`,r=await fetch(origin+path,{redirect:'manual'});assert.ok([401,403,404].includes(r.status),workspace);checks.push({path,status:r.status,anonymousDenied:true});
+            const path=`/api/w/${workspace}/not-authorized/overview`,r=await fetch(origin+path,{redirect:'manual',signal:AbortSignal.timeout(30000)});assert.ok([401,403,404].includes(r.status),workspace);checks.push({path,status:r.status,anonymousDenied:true});
           }
+          savePartial();
           const browser=await chromium.launch(process.env.PROINSPECT_REVIEW_BROWSER_CHANNEL?{channel:process.env.PROINSPECT_REVIEW_BROWSER_CHANNEL}:{}),browserVersion=browser.version();
           try {for(const width of [320,390,1100,1440]){
             const page=await browser.newPage({viewport:{width,height:950}});
+            page.setDefaultTimeout(15000);
             for(const path of ['/','/services','/guest/book','/offers/pcr-100','/signin']){
-              const r=await page.goto(origin+path,{waitUntil:'networkidle'});assert.equal(r?.status(),200,path);
+              // Turnstile may keep connections open. Verify rendered application controls, not network silence.
+              const r=await page.goto(origin+path,{waitUntil:'domcontentloaded',timeout:30000});assert.equal(r?.status(),200,path);
+              await page.locator('main').first().waitFor({state:'visible'});
+              await page.getByRole('heading',{level:1}).first().waitFor({state:'visible'});
+              if(path==='/signin'){
+                await page.getByLabel('Email address',{exact:true}).waitFor({state:'visible'});
+                await page.getByRole('button',{name:'Email sign-in link',exact:true}).waitFor({state:'visible'});
+                await page.locator('[aria-label="Security verification"]').waitFor({state:'attached'});
+                await page.locator('input[name="turnstile"][type="hidden"]').waitFor({state:'attached'});
+                await page.locator('script[data-proinspect-turnstile]').waitFor({state:'attached'});
+                // Do not read a token, request email, solve CAPTCHA, manufacture a session or claim login acceptance.
+              }
               assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,`${width} ${path}`);
               if(path==='/offers/pcr-100'){
                 assert.match(await page.locator('body').innerText(),/draft|review/i);assert.match(await page.locator('meta[name="robots"]').getAttribute('content'),/noindex/);
                 await page.screenshot({path:`artifacts/final-live-campaign-${width}.png`,fullPage:true});
               }
-              checks.push({width,path,status:r.status(),overflow:false});
+              checks.push({width,path,status:r.status(),overflow:false,renderedControls:true});savePartial();
             }await page.close();
-          }}finally{await browser.close();}
-          const sample=await fetch(origin+'/offers/pcr/sample');assert.equal(sample.status,404);assert.match(await sample.text(),/No approved sample/);
-          writeFileSync('artifacts/final-live-browser.json',JSON.stringify({source,browserVersion,observedAt:new Date().toISOString(),checks,sampleDenied:true,hostedHumanAcceptance:false,providerTransactionAcceptance:false},null,2));
+          }}finally{savePartial();await browser.close();}
+          const sample=await fetch(origin+'/offers/pcr/sample',{signal:AbortSignal.timeout(30000)});assert.equal(sample.status,404);assert.match(await sample.text(),/No approved sample/);
+          writeFileSync('artifacts/final-live-browser.json',JSON.stringify({source,browserVersion,observedAt:new Date().toISOString(),checks,complete:true,sampleDenied:true,authenticationSubmitted:false,hostedHumanAcceptance:false,providerTransactionAcceptance:false},null,2));
           JS
       - uses: actions/upload-artifact@v4
         if: always()
