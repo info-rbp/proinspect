@@ -81,6 +81,11 @@ export async function paymentSessionEvent(env:Env,event:ProviderEvent,raw:string
   }else if(['payment_required','failed'].includes(p.status)&&p.total_cents===s.amount_total){
    next='paid';effects.push(statement(env.DB,"UPDATE payments SET status='paid',provider='stripe',external_reference=?,stripe_payment_intent_id=COALESCE(stripe_payment_intent_id,?),checkout_session_id=?,checkout_url=NULL,version=version+1,updated_at=? WHERE id=? AND status IN('payment_required','failed') AND total_cents=?",pi??s.id,pi,s.id,now(),p.id,s.amount_total),guard(env),statement(env.DB,"INSERT INTO payment_events(id,payment_id,from_status,to_status,reference,created_at) VALUES(?,?,?,'paid',?,?)",uid('pe'),p.id,p.status,event.id,now()),clearGuard(env));
    if(!pi)effects.push(reconciliation(env,event.id,p.id,'payment_intent_link_missing',s.id));
+   // Award the four future routine-inspection benefits only on a verified, paid PCR Checkout event.
+   if(p.work_order_id){
+     const offer=await statement(env.DB,"SELECT g.id,g.purchaser_email_hash FROM guest_service_orders g JOIN bookings b ON b.id=g.booking_id JOIN work_orders w ON w.booking_id=b.id WHERE w.id=? AND g.offer_code='pcr100'",p.work_order_id).first<{id:string;purchaser_email_hash:string|null}>();
+     if(offer?.purchaser_email_hash)effects.push(statement(env.DB,"INSERT INTO pcr_routine_discount_entitlements(id,guest_order_id,purchaser_email_hash,discount_basis_points,uses_remaining,created_at,updated_at) VALUES(?,?,?,2000,4,?,?) ON CONFLICT(guest_order_id) DO NOTHING",uid('pcrd'),offer.id,offer.purchaser_email_hash,now(),now()));
+   }
   }else effects.push(reconciliation(env,event.id,p.id,'unexpected_payment_success',s.id));
  }
  if(attempt){const status=paid?'paid':event.type==='checkout.session.expired'?'expired':event.type==='checkout.session.async_payment_failed'?'failed':'processing';effects.push(statement(env.DB,"UPDATE payment_checkout_attempts SET status=CASE WHEN status='paid' THEN 'paid' ELSE ? END,payment_intent_id=COALESCE(payment_intent_id,?),updated_at=? WHERE id=?",status,pi,now(),attempt.id));}
