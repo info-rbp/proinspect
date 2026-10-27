@@ -27,7 +27,10 @@
     "RENTAL_RETENTION_AUTOPURGE_ENABLED": "false",
     "OPEN_HOME_SHEET_SYNC_ENABLED": "false",
     "OPEN_HOME_REPORTS_ENABLED": "false",
-    "OPEN_HOME_REPORT_EMAIL_PROVIDER": "resend"
+    "OPEN_HOME_REPORT_EMAIL_PROVIDER": "resend",
+    "PCR_LAUNCH_ENABLED": "false",
+    "PCR_DISCOUNT_REDEMPTION_ENABLED": "false",
+    "PCR_SAMPLE_PUBLICATION_ENABLED": "false"
   },
   "d1_databases": [
     {
@@ -128,7 +131,10 @@
         "WA_AGREEMENT_ESIGN_ENABLED": "false",
         "WA_BONDS_ENABLED": "false",
         "RENT_CONNECT_SANDBOX_ENABLED": "false",
-        "PAYMENT_RECONCILIATION_ENABLED": "false"
+        "PAYMENT_RECONCILIATION_ENABLED": "false",
+        "PCR_LAUNCH_ENABLED": "false",
+        "PCR_DISCOUNT_REDEMPTION_ENABLED": "false",
+        "PCR_SAMPLE_PUBLICATION_ENABLED": "false"
       },
       "d1_databases": [
         {
@@ -234,7 +240,10 @@
         "STRIPE_REFUNDS_ENABLED": "false",
         "WA_AGREEMENT_ESIGN_ENABLED": "false",
         "RENT_CONNECT_SANDBOX_ENABLED": "false",
-        "PAYMENT_RECONCILIATION_ENABLED": "false"
+        "PAYMENT_RECONCILIATION_ENABLED": "false",
+        "PCR_LAUNCH_ENABLED": "false",
+        "PCR_DISCOUNT_REDEMPTION_ENABLED": "false",
+        "PCR_SAMPLE_PUBLICATION_ENABLED": "false"
       },
       "d1_databases": [
         {

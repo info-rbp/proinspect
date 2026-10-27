@@ -15,7 +15,7 @@ export type PcrAppointmentPrice = {
 /** Perth is UTC+08:00 year-round. Times must be actual absolute instants. */
 export function pcrAppointmentPrice(startsAt: string, durationMinutes: number, offsiteKeys = false): PcrAppointmentPrice {
   const ms = Date.parse(startsAt);
-  if (!Number.isFinite(ms) || !Number.isFinite(durationMinutes) || durationMinutes <= 0) throw new RangeError('Invalid appointment');
+  if (!/(?:Z|[+-]\d{2}:\d{2})$/.test(startsAt) || !Number.isFinite(ms) || !Number.isSafeInteger(durationMinutes) || durationMinutes <= 0 || durationMinutes > 480) throw new RangeError('Invalid appointment');
   const local = new Date(ms + 8 * 3600000), minutes = local.getUTCHours() * 60 + local.getUTCMinutes();
   if (minutes < 540 || minutes + durationMinutes > 1020) throw new RangeError('PCR hours are 9 am–5 pm Perth time');
   const dayOfWeek = local.getUTCDay();

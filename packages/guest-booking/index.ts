@@ -28,6 +28,9 @@ export type GuestBookingInput = z.infer<typeof guestBookingSchema>;
 export const guestTokenSchema = z.object({token:z.string().regex(/^[a-f0-9]{64}$/)});
 export const guestChangeSchema = guestTokenSchema.extend({
   legalConsent: z.unknown().optional(),
+  applyPcrDiscount: z.boolean().optional(),
+  appointmentTotalCents: z.number().int().positive().max(200000000).optional(),
+  discountTotalCents: z.number().int().positive().max(200000000).optional(),
   action: z.enum(['cancel','reschedule','confirm']),
   startsAt: z.string().datetime({offset:true}).optional(),
 });

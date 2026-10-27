@@ -1,10 +1,10 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
 import {sandboxConnectEnabled,eligibleSelfManagedRoute,directChargePermission,connectAccountStatus} from '../packages/finance/connect-policy.ts';
 test('sandbox only with explicit feature flag and test key',()=>{
- for(const APP_ENV of ['production','local'])assert.equal(sandboxConnectEnabled({APP_ENV,RENT_CONNECT_SANDBOX_ENABLED:'true',STRIPE_SECRET_KEY:'sk_test_mock'}),false);
- assert.equal(sandboxConnectEnabled({APP_ENV:'staging',RENT_CONNECT_SANDBOX_ENABLED:'true',STRIPE_SECRET_KEY:'sk_live_mock'}),false);
- assert.equal(sandboxConnectEnabled({APP_ENV:'staging',RENT_CONNECT_SANDBOX_ENABLED:'false',STRIPE_SECRET_KEY:'sk_test_mock'}),false);
- assert.equal(sandboxConnectEnabled({APP_ENV:'staging',RENT_CONNECT_SANDBOX_ENABLED:'true',STRIPE_SECRET_KEY:'sk_test_mock'}),true);
+ for(const APP_ENV of ['production','local'])assert.equal(sandboxConnectEnabled({STRIPE_ACCOUNT_ID:'acct_1USumhEv62nbUZok',APP_ENV,RENT_CONNECT_SANDBOX_ENABLED:'true',STRIPE_SECRET_KEY:'sk_test_mock'}),false);
+ assert.equal(sandboxConnectEnabled({STRIPE_ACCOUNT_ID:'acct_1USumhEv62nbUZok',APP_ENV:'staging',RENT_CONNECT_SANDBOX_ENABLED:'true',STRIPE_SECRET_KEY:'sk_live_mock'}),false);
+ assert.equal(sandboxConnectEnabled({STRIPE_ACCOUNT_ID:'acct_1USumhEv62nbUZok',APP_ENV:'staging',RENT_CONNECT_SANDBOX_ENABLED:'false',STRIPE_SECRET_KEY:'sk_test_mock'}),false);
+ assert.equal(sandboxConnectEnabled({STRIPE_ACCOUNT_ID:'acct_1USumhEv62nbUZok',APP_ENV:'staging',RENT_CONNECT_SANDBOX_ENABLED:'true',STRIPE_SECRET_KEY:'sk_test_mock'}),true);
 });
 test('landlord-only route and never agency trust',()=>{
  for(const mode of ['agency_managed','self_managed'])for(const kind of ['landlord','property-manager','tenant','staff'])

@@ -4,7 +4,7 @@ import type { Principal,Workspace } from '../../../../packages/domain/index';
 import { digest,seal } from '../../../../packages/auth/crypto';
 import { guard,clearGuard,activity } from '../../../../packages/operations/core';
 import { reportDraftSchema } from '../../../../packages/report-engine/adapter';
-import { renderReportPdf } from '../../../../packages/report-engine/pdf';
+import { renderReportPdf, ReportPdfError } from '../../../../packages/report-engine/pdf';
 import { issueDocument } from './documents.server';
 import { accessReport, manager } from './reports.server';
 import { documentScope } from '../../../../packages/authorization/documents';
@@ -18,6 +18,7 @@ export async function renderApprovedReport(env:Env,user:Principal,w:Workspace,id
  const version=await statement(env.DB,'SELECT id,content_json,content_sha256,layout_sha256,sequence FROM report_versions WHERE id=? AND report_id=?',report.approved_version_id,id).first<{id:string,content_json:string,content_sha256:string,layout_sha256:string,sequence:number}>();
  assert(version,409,'VERSION_MISSING','Approved report version missing.');
  assert(await digest(version.content_json)===version.content_sha256,409,'VERSION_HASH_MISMATCH','Report content integrity verification failed.');
+ assert(await digest(report.layout_snapshot_json)===version.layout_sha256,409,'LAYOUT_HASH_MISMATCH','Report layout integrity verification failed.');
  const content=reportDraftSchema.parse(JSON.parse(version.content_json));
  const wanted=new Set(content.areas.flatMap(area=>[...area.overviewPhotoIds,...area.components.flatMap(c=>c.photoIds)]));
  const evidence=(await statement(env.DB,'SELECT id,object_key,sha256,status,size FROM report_evidence WHERE report_id=?',id)
@@ -35,17 +36,18 @@ export async function renderApprovedReport(env:Env,user:Principal,w:Workspace,id
   assert(await digest(data)===info.sha256,409,'EVIDENCE_HASH_MISMATCH','Original evidence does not match its stored hash.');
   photos.set(photoId,{bytes:new Uint8Array(data),caption:'Inspection evidence '+photoId});
  }
- const pdf=await renderReportPdf({title:'ProInspect '+report.report_type+' report',
+ let pdf:Uint8Array;
+ try{pdf=await renderReportPdf({title:'ProInspect '+report.report_type+' report',
   context:report.property_id?'Property '+report.property_id:'Scheme '+report.scheme_id,
   version:version.id,summary:content.summary,
   areas:content.areas.map(a=>({name:a.name,overviewPhotoIds:a.overviewPhotoIds,
-    components:a.components.map(c=>({name:c.component,condition:c.conditionCategory,cleanliness:c.cleanlinessCategory,commentary:c.commentary,photoIds:c.photoIds}))})),photos});
+    components:a.components.map(c=>({name:c.component,condition:c.conditionCategory,cleanliness:c.cleanlinessCategory,commentary:c.commentary,photoIds:c.photoIds,workingStatus:c.workingStatus,testStatus:c.testStatus,testMethod:c.testMethod,comparisonStatus:c.comparisonStatus,comparisonReviewStatus:c.comparisonReviewStatus,maintenanceRequired:c.maintenanceRequired,defects:c.defects}))})),photos});}catch(error){if(error instanceof ReportPdfError)assert(false,422,error.code,error.message);throw error;}
  assert(pdf.byteLength>20&&pdf.byteLength<20*1024*1024,413,'PDF_RENDER_SIZE','The generated PDF is too large.');
  const pdfHash=await digest(pdf.buffer as ArrayBuffer);
  const documentId=uid('doc'),key=`reports-native/${id}/${version.id}/${documentId}.pdf`,createdAt=now();
  const manifest={reportId:id,reportVersionId:version.id,contentSha256:version.content_sha256,
   layoutSha256:version.layout_sha256,templateId:report.template_id,templateVersion:report.template_version,
-  rendererVersion:'proinspect-native-pdf-1',photoSha256:evidence.filter(e=>wanted.has(e.id)).map(e=>({id:e.id,sha256:e.sha256})),documentSha256:pdfHash};
+  rendererVersion:'proinspect-native-pdf-2',photoSha256:evidence.filter(e=>wanted.has(e.id)).map(e=>({id:e.id,sha256:e.sha256})),documentSha256:pdfHash};
  await env.DOCUMENTS.put(key,pdf,{httpMetadata:{contentType:'application/pdf'},customMetadata:{sha256:pdfHash,reportVersion:version.id}});
  try{
   await env.DB.batch([

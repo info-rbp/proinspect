@@ -25,6 +25,8 @@ export async function refundCommand(env:Env,user:Principal,command:string,id:str
  assert(command==='execute',404,'REFUND_ACTION','Unknown refund action.');await requireReleaseApproval(env,'refunds');await verifySandboxAccount(env);
  assert(['approved','processing','submitted'].includes(r.status)&&r.approved_by!==r.requested_by&&r.approved_by,409,'REFUND_NOT_APPROVED','Independent refund approval is required.');
  if(r.status==='submitted')return {id:r.id,providerId:r.stripe_refund_id,status:'submitted',settled:false,replayed:true};
+ const approver=await statement(env.DB,"SELECT u.id FROM users u JOIN staff_profiles sp ON sp.user_id=u.id WHERE u.id=? AND u.active=1 AND u.verified_at IS NOT NULL AND sp.active=1 AND sp.role IN('administrator','operations_manager')",r.approved_by).first();
+ assert(approver,403,'REFUND_APPROVER_REVOKED','The approving operator no longer has refund authority. Obtain current independent approval before execution.');
  assert(r.stripe_payment_intent_id&&r.payment_status==='paid'&&r.amount_cents<=r.total_cents-r.refunded_cents,409,'REFUND_BALANCE_CHANGED','The refundable balance changed; review the request.');
  const pi=await stripeApi(env,'/payment_intents/'+r.stripe_payment_intent_id);
  assert(pi.id===r.stripe_payment_intent_id&&pi.livemode===false&&pi.currency==='aud'&&pi.amount_received===r.total_cents&&pi.status==='succeeded',409,'REFUND_SOURCE_MISMATCH','The provider payment no longer matches the approved original transaction.');

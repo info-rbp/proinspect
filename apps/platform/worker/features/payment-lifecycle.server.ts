@@ -1,3 +1,4 @@
+import {settlePcrDiscount,suspendPcrBenefits} from './pcr-discounts.server';
 import {assert,statement,now,uid,type Env} from '../../../../packages/database/types';
 import type {Principal} from '../../../../packages/domain/index';
 import {digest} from '../../../../packages/auth/crypto';
@@ -20,6 +21,7 @@ export async function commitProviderEvent(env:Env,event:ProviderEvent,raw:string
  return {received:true,replayed:false};
 }
 export async function openPaymentCheckout(env:Env,p:PaymentRecord,redirects:{success:string;cancel:string},actor?:Principal,legal:D1PreparedStatement[]=[]){
+ if(p.work_order_id){const w=await statement(env.DB,'SELECT status FROM work_orders WHERE id=?',p.work_order_id).first<{status:string}>();assert(w&&w.status!=='cancelled',409,'WORK_CANCELLED','Cancelled work requires financial review, not a new Checkout.');}
  await verifySandboxAccount(env);
  assert(['payment_required','failed'].includes(p.status)&&Number.isSafeInteger(p.total_cents)&&p.total_cents>0&&p.currency==='AUD',409,'PAYMENT_UNAVAILABLE','This payment is not awaiting collection.');
  for(const value of Object.values(redirects))assert(new URL(value).origin===new URL(env.APP_ORIGIN).origin,422,'RETURN_URL','Use the current application origin.');
@@ -80,11 +82,14 @@ export async function paymentSessionEvent(env:Env,event:ProviderEvent,raw:string
    if(p.checkout_session_id!==s.id||(pi&&p.stripe_payment_intent_id&&pi!==p.stripe_payment_intent_id))effects.push(reconciliation(env,event.id,p.id,'duplicate_successful_checkout',s.id));
   }else if(['payment_required','failed'].includes(p.status)&&p.total_cents===s.amount_total){
    next='paid';effects.push(statement(env.DB,"UPDATE payments SET status='paid',provider='stripe',external_reference=?,stripe_payment_intent_id=COALESCE(stripe_payment_intent_id,?),checkout_session_id=?,checkout_url=NULL,version=version+1,updated_at=? WHERE id=? AND status IN('payment_required','failed') AND total_cents=?",pi??s.id,pi,s.id,now(),p.id,s.amount_total),guard(env),statement(env.DB,"INSERT INTO payment_events(id,payment_id,from_status,to_status,reference,created_at) VALUES(?,?,?,'paid',?,?)",uid('pe'),p.id,p.status,event.id,now()),clearGuard(env));
+   effects.push(settlePcrDiscount(env,p.id));
+   const heldDiscount=await statement(env.DB,"SELECT status FROM pcr_discount_reservations WHERE payment_id=? AND status IN('released','exception')",p.id).first();
+   if(heldDiscount)effects.push(reconciliation(env,event.id,p.id,'discount_settlement_requires_review',s.id));
    if(!pi)effects.push(reconciliation(env,event.id,p.id,'payment_intent_link_missing',s.id));
    // Award the four future routine-inspection benefits only on a verified, paid PCR Checkout event.
    if(p.work_order_id){
-     const offer=await statement(env.DB,"SELECT g.id,g.purchaser_email_hash FROM guest_service_orders g JOIN bookings b ON b.id=g.booking_id JOIN work_orders w ON w.booking_id=b.id WHERE w.id=? AND g.offer_code='pcr100'",p.work_order_id).first<{id:string;purchaser_email_hash:string|null}>();
-     if(offer?.purchaser_email_hash)effects.push(statement(env.DB,"INSERT INTO pcr_routine_discount_entitlements(id,guest_order_id,purchaser_email_hash,discount_basis_points,uses_remaining,created_at,updated_at) VALUES(?,?,?,2000,4,?,?) ON CONFLICT(guest_order_id) DO NOTHING",uid('pcrd'),offer.id,offer.purchaser_email_hash,now(),now()));
+     const offer=await statement(env.DB,"SELECT g.id,g.purchaser_email_hash FROM guest_service_orders g JOIN bookings b ON b.id=g.booking_id JOIN work_orders w ON w.booking_id=b.id WHERE w.id=? AND g.offer_code='pcr100' AND g.status='confirmed'",p.work_order_id).first<{id:string;purchaser_email_hash:string|null}>();
+     if(offer?.purchaser_email_hash)effects.push(statement(env.DB,"INSERT INTO pcr_routine_discount_entitlements(id,guest_order_id,purchaser_email_hash,discount_basis_points,uses_remaining,created_at,updated_at,source_payment_id) VALUES(?,?,?,2000,4,?,?,?) ON CONFLICT(guest_order_id) DO NOTHING",uid('pcrd'),offer.id,offer.purchaser_email_hash,now(),now(),p.id));
    }
   }else effects.push(reconciliation(env,event.id,p.id,'unexpected_payment_success',s.id));
  }
@@ -112,6 +117,11 @@ export async function adjustmentEvent(env:Env,event:ProviderEvent,raw:string){
  }else{
   assert(/^dp_/.test(String(o.id))&&Number.isSafeInteger(o.amount)&&o.amount>0&&o.amount<=p.total_cents&&typeof o.status==='string',422,'DISPUTE_INVALID','Invalid dispute observation.');
   effects.push(statement(env.DB,"INSERT INTO payment_disputes(dispute_id,payment_id,payment_intent_id,amount_cents,currency,status,last_event_created,updated_at) VALUES(?,?,?,?,'AUD',?,?,?) ON CONFLICT(dispute_id) DO UPDATE SET status=excluded.status,last_event_created=excluded.last_event_created,updated_at=excluded.updated_at WHERE excluded.last_event_created>=payment_disputes.last_event_created",o.id,p.id,p.stripe_payment_intent_id,o.amount,o.status,created,time),reconciliation(env,event.id,p.id,'dispute_'+o.status,o.id));
+ }
+ if((event.type==='charge.refunded'&&o.amount_refunded>0)||(event.type.startsWith('refund.')&&o.status==='succeeded')||event.type.startsWith('charge.dispute.')){
+  effects.push(...suspendPcrBenefits(env,p.id));
+  const benefit=await statement(env.DB,'SELECT id FROM pcr_discount_reservations WHERE payment_id=?',p.id).first();
+  if(benefit)effects.push(reconciliation(env,event.id,p.id,'discount_financial_adjustment_review',objectId(o.id)));
  }
  return {...await commitProviderEvent(env,event,raw,effects),matched:true};
 }

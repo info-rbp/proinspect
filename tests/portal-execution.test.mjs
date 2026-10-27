@@ -73,3 +73,11 @@ test('local coverage identifies absent failed browser and Worker assertions',()=
 test('isolated coverage cannot accept arbitrary source identities',()=>{
  assert.throws(()=>auditIsolatedCoverage({checks:[]},{checks:[]},{suites:[]},'bad'));
 });
+
+test('council acceptance uses the real workspace kind and a valid denied route',()=>{
+ assert.equal(validateSessionObservation('council',ROLE_ALIASES.council,[{kind:'strata-council'}],200).confirmed,true);
+ assert.equal(validateSessionObservation('council',ROLE_ALIASES.council,[{kind:'council'}],200).confirmed,false);
+ assert.equal(validateSessionObservation('council',ROLE_ALIASES.council,[{kind:'building'}],200).confirmed,false);
+ assert.equal(UNRELATED_API.building,'/api/w/strata-council/scheme_pi_test');
+ assert.equal(UNRELATED_API.staff,'/api/w/strata-council/scheme_pi_test');
+});

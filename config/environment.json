@@ -462,6 +462,42 @@
         "platform"
       ],
       "group": "optional"
+    },
+    "STRIPE_BILLING_PORTAL_CONFIGURATION_ID": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional",
+      "description": "Reviewed sandbox Billing Portal configuration ID; no default configuration or customer activation implied."
+    },
+    "PCR_LAUNCH_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "PCR_DISCOUNT_REDEMPTION_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "PCR_SAMPLE_PUBLICATION_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "PCR_SAMPLE_SHA256": {
+      "targets": [
+        "platform",
+        "marketing"
+      ],
+      "group": "pcr",
+      "optional": true
     }
   },
   "generated": [

@@ -1,3 +1,4 @@
+import {releaseFeatureReady} from '../../../platform/worker/features/release-governance.server';
 import { useState } from 'react';
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { runtimeContext } from '../../../../packages/database/context';
@@ -7,17 +8,15 @@ import { seo } from '../lib/seo';
 
 export async function loader({ context }: LoaderFunctionArgs) {
   const env = context.get(runtimeContext).env as Env;
-  let sampleAvailable = false;
-  try { sampleAvailable = Boolean(await env.DOCUMENTS?.head('marketing/approved-samples/property-condition-report.pdf')); } catch { /* No published sample in this environment. */ }
-  const bookEnabled = env.PCR_LAUNCH_ENABLED === 'true' &&
-    env.GUEST_BOOKINGS_ENABLED === 'true' &&
-    env.STRIPE_GUEST_CHECKOUT_ENABLED === 'true' &&
-    env.STRIPE_TAX_READY === 'true' &&
-    (env.APP_ENV === 'staging' || env.APP_ENV === 'local');
+  const accepted = async (feature:'pcr_launch'|'pcr_discount'|'pcr_sample'|'guest'|'stripe_guest') => {
+    try {return await releaseFeatureReady(env,feature);} catch {return false;}
+  };
+  const sampleAvailable = Boolean(await accepted('pcr_sample') && /^[a-f0-9]{64}$/.test(env.PCR_SAMPLE_SHA256??'') && await env.DOCUMENTS?.head('marketing/approved-samples/property-condition-report.pdf'));
+  const bookEnabled = await accepted('pcr_launch') && await accepted('pcr_discount') && await accepted('guest') && await accepted('stripe_guest') && env.STRIPE_TAX_READY==='true' && ['local','staging'].includes(env.APP_ENV);
   return { sampleAvailable, bookEnabled };
 }
 export const meta = ({ loaderData }: { loaderData?: Awaited<ReturnType<typeof loader>> }) => [
-  ...seo('$100 Property Condition Reports', 'Book a ProInspect Property Condition Report from $100. Weekday and weekend appointments, a structured report within 48 hours and 20% off your next four routine inspections.', '/offers/pcr-100'),
+  ...seo('$100 Property Condition Reports', 'Book a ProInspect Property Condition Report from $100. Weekday and weekend appointments, a structured report within 48 hours and 20% off your next four eligible routine inspections for the same verified purchaser and property, subject to approved offer terms.', '/offers/pcr-100'),
   ...(!loaderData?.bookEnabled ? [{ name: 'robots', content: 'noindex,nofollow' }] : []),
 ];
 const money = (cents: number) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', maximumFractionDigits: 0 }).format(cents / 100);
@@ -45,7 +44,7 @@ export default function PcrOffer() {
             {sampleAvailable ? <a className="button secondary pcr-secondary" href="/offers/pcr/sample" download>Download a sample PCR</a> : <span className="pcr-sample-pending" role="status">Sample PCR download coming soon</span>}
           </div>
           <div className="pcr-hero-foot"><span><b>9 am–5 pm</b> seven days</span><span><b>48-hour</b> report delivery</span><span><b>20% off</b> four routines</span></div>
-          {!bookEnabled && <p className="pcr-preview-note">The launch offer is being prepared. Online payment is not yet activated; enquiries are welcome.</p>}
+          {!bookEnabled && <p className="pcr-preview-note">Draft offer preview: pricing, property eligibility and delivery commitments require approval. Online booking and payment are not activated; enquiries are welcome.</p>}
         </div>
         <aside className="pcr-hero-price" aria-label="PCR launch pricing">
           <div className="pcr-hero-price-top"><span>PROPERTY CONDITION REPORT</span><span>LAUNCH RATE</span></div>
@@ -92,7 +91,7 @@ export default function PcrOffer() {
       <div className="pcr-section-intro"><p className="pcr-eyebrow">A SIMPLE BOOKING PROCESS</p><h2 id="pcr-steps-heading">Four steps from booking to report.</h2></div>
       <div className="pcr-steps">{steps.map(([num,title,description])=><article key={num}><b>{num}</b><h3>{title}</h3><p>{description}</p></article>)}</div>
     </div></section>
-    <section className="pcr-benefit"><div className="site-container pcr-benefit-grid"><div><p className="pcr-eyebrow">MORE VALUE AFTER YOUR PCR</p><h2>20% off your next four routine inspections.</h2><p>Book the launch PCR and receive four separate 20% discounts for future eligible paid routine inspections. Each discount belongs to the verified purchasing customer and is applied once per routine inspection.</p></div><strong className="pcr-benefit-figure">4 <span>× 20% off</span></strong></div></section>
+    <section className="pcr-benefit"><div className="site-container pcr-benefit-grid"><div><p className="pcr-eyebrow">MORE VALUE AFTER YOUR PCR</p><h2>20% off your next four eligible routine inspections for the same verified purchaser and property, subject to approved offer terms.</h2><p>Book the launch PCR and receive four separate 20% discounts for future eligible paid routine inspections. Each discount belongs to the verified purchasing customer and is applied once per routine inspection.</p></div><strong className="pcr-benefit-figure">4 <span>× 20% off</span></strong></div></section>
     <section className="pcr-faq" aria-labelledby="pcr-faq-heading"><div className="site-container pcr-faq-layout">
       <div><p className="pcr-eyebrow">COMMON QUESTIONS</p><h2 id="pcr-faq-heading">Before you book</h2></div>
       <div className="pcr-faq-items">

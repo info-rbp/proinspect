@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import {providerReadiness} from '../../../../packages/operations/provider-readiness';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal } from '../../../../packages/domain/index';
 import { administrator } from '../../../../packages/authorization/server';
@@ -6,7 +7,7 @@ import { recordId, isoDate, reference, activity, guard, clearGuard } from '../..
 
 export const RELEASE_FEATURES = {
   v4: 'V4_SERVICE_REQUESTS_ENABLED', contractor: 'CONTRACTOR_PAYMENTS_ENABLED', contractor_collection: 'STRIPE_CONNECT_COLLECTION_ENABLED', contractor_transfer: 'STRIPE_CONNECT_TRANSFERS_ENABLED',
-  guest: 'GUEST_BOOKINGS_ENABLED', pcr_launch: 'PCR_LAUNCH_ENABLED', calendar: 'GOOGLE_CALENDAR_BOOKINGS_ENABLED',
+  guest: 'GUEST_BOOKINGS_ENABLED', pcr_launch: 'PCR_LAUNCH_ENABLED', pcr_discount: 'PCR_DISCOUNT_REDEMPTION_ENABLED', pcr_sample: 'PCR_SAMPLE_PUBLICATION_ENABLED', calendar: 'GOOGLE_CALENDAR_BOOKINGS_ENABLED',
   rental: 'RENTAL_APPLICATIONS_ENABLED', rental_scanner: 'RENTAL_SCANNER_ENABLED',
   rental_script: 'RENTAL_APPS_SCRIPT_ENABLED', open_home: 'OPEN_HOME_REPORTS_ENABLED',
   bonds: 'WA_BONDS_ENABLED', restricted: 'RESTRICTED_WORKFLOWS_ENABLED',
@@ -31,6 +32,10 @@ async function activeApproval(env: Env, feature: ReleaseFeature) {
     AND a.expires_at>? AND a.reviewed_by!=a.requested_by ORDER BY a.reviewed_at DESC LIMIT 1`,
     feature, env.APP_ENV, env.BUILD_SHA, now()).first<{ id: string }>();
 }
+export async function releaseFeatureReady(env:Env,feature:ReleaseFeature){
+ if(!configured(env,feature))return false;
+ return env.APP_ENV==='local'||Boolean(await activeApproval(env,feature));
+}
 export async function requireReleaseApproval(env: Env, feature: ReleaseFeature) {
   assert(configured(env, feature), 503, 'FEATURE_DISABLED', 'This capability is not activated.');
   // Local synthetic tests are not production acceptance. Hosted staging uses the real gate.
@@ -43,7 +48,7 @@ export async function releaseReadiness(env: Env, user: Principal) {
   const features = await Promise.all((Object.keys(RELEASE_FEATURES) as ReleaseFeature[]).map(async name =>
     ({ name, configured: configured(env, name), approval: env.APP_ENV === 'local' ? null : await activeApproval(env, name) })));
   const records = (await statement(env.DB, 'SELECT * FROM feature_release_approvals ORDER BY requested_at DESC LIMIT 200').all()).results;
-  return { environment: env.APP_ENV, source: env.BUILD_SHA ?? null, features, records,
+  return { environment: env.APP_ENV, source: env.BUILD_SHA ?? null, features, records, providers: providerReadiness(env as unknown as Record<string,unknown>),
     notice: 'This record does not switch flags, validate legal advice or replace the separately protected hosted-acceptance evidence bundle.' };
 }
 export async function releaseCommand(env: Env, user: Principal, command: string, input: unknown) {

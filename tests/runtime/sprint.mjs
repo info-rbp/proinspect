@@ -7,10 +7,13 @@ import {Miniflare} from 'miniflare';
 import {catalogueSql} from '../../scripts/catalogue-sql.mjs';
 mkdirSync('artifacts',{recursive:true});
 await build({entryPoints:['tests/runtime/sprint-entry.ts'],outfile:'artifacts/sprint-worker.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',external:['cloudflare:workers','node:*']});
-const secret='whsec_isolated_sprint_fixture',requests=[],sessions=new Map();let sequence=0;
-const mf=new Miniflare({modules:true,scriptPath:'artifacts/sprint-worker.mjs',compatibilityDate:'2026-07-01',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'sprint-isolated'},r2Buckets:{DOCUMENTS:'sprint-documents',RESTRICTED_DOCUMENTS:'sprint-private'},durableObjects:{SCHEDULER:{className:'BookingScheduler',useSQLite:true}},bindings:{APP_ENV:'local',APP_ORIGIN:'http://localhost',DATA_ENCRYPTION_KEY:randomBytes(32).toString('base64'),EMAIL_PROVIDER:'local',STRIPE_ACCOUNT_ID:'acct_1USumhEv62nbUZok',STRIPE_SECRET_KEY:'rk_test_isolated_fixture',STRIPE_WEBHOOK_SECRET:secret,STRIPE_PAYMENTS_ENABLED:'true',STRIPE_REFUNDS_ENABLED:'true',BUILDING_OPERATIONS_ENABLED:'true',COUNCIL_GOVERNANCE_ENABLED:'true',NOTICE_LIFECYCLE_ENABLED:'true',COMMERCIAL_OPERATIONS_ENABLED:'true',AGENCY_OWNER_INVITATIONS_ENABLED:'true',SERVICE_SALE_VARIANTS_ENABLED:'true',STRIPE_BILLING_ENABLED:'false',STRIPE_GUEST_CHECKOUT_ENABLED:'false',STRIPE_TAX_READY:'false'},outboundService:async request=>{
+const secret='whsec_isolated_sprint_fixture',requests=[],sessions=new Map();let sequence=0,unsafePortal=false;
+const mf=new Miniflare({modules:true,scriptPath:'artifacts/sprint-worker.mjs',compatibilityDate:'2026-07-01',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'sprint-isolated'},r2Buckets:{DOCUMENTS:'sprint-documents',RESTRICTED_DOCUMENTS:'sprint-private'},durableObjects:{SCHEDULER:{className:'BookingScheduler',useSQLite:true}},bindings:{APP_ENV:'local',APP_ORIGIN:'http://localhost',DATA_ENCRYPTION_KEY:randomBytes(32).toString('base64'),EMAIL_PROVIDER:'local',STRIPE_ACCOUNT_ID:'acct_1USumhEv62nbUZok',STRIPE_SECRET_KEY:'rk_test_isolated_fixture',STRIPE_WEBHOOK_SECRET:secret,STRIPE_CUSTOMER_PORTAL_ENABLED:'true',STRIPE_BILLING_PORTAL_CONFIGURATION_ID:'bpc_sprint_fixture',STRIPE_PAYMENTS_ENABLED:'true',STRIPE_REFUNDS_ENABLED:'true',BUILDING_OPERATIONS_ENABLED:'true',COUNCIL_GOVERNANCE_ENABLED:'true',NOTICE_LIFECYCLE_ENABLED:'true',COMMERCIAL_OPERATIONS_ENABLED:'true',AGENCY_OWNER_INVITATIONS_ENABLED:'true',SERVICE_SALE_VARIANTS_ENABLED:'true',STRIPE_BILLING_ENABLED:'false',STRIPE_GUEST_CHECKOUT_ENABLED:'false',STRIPE_TAX_READY:'false'},outboundService:async request=>{
  const u=new URL(request.url);assert.equal(u.origin,'https://api.stripe.com');requests.push({path:u.pathname,method:request.method,idempotency:request.headers.get('Idempotency-Key')});
  if(u.pathname==='/v1/account')return Response.json({id:'acct_1USumhEv62nbUZok'});
+ if(u.pathname==='/v1/billing_portal/configurations/bpc_sprint_fixture'&&request.method==='GET')return Response.json({id:'bpc_sprint_fixture',active:true,livemode:false,default_return_url:'http://localhost/workspaces',metadata:{application:'proinspect',environment:'staging'},login_page:{enabled:false},features:{invoice_history:{enabled:true},payment_method_update:{enabled:true},customer_update:{enabled:false},subscription_cancel:{enabled:unsafePortal},subscription_update:{enabled:false},subscription_pause:{enabled:false}}});
+ if(u.pathname==='/v1/billing_portal/sessions'&&request.method==='POST'){const f=new URLSearchParams(await request.text());assert.equal(f.get('configuration'),'bpc_sprint_fixture');assert.equal(f.get('customer'),'cus_sprint_portal');assert.equal(f.get('return_url'),'http://localhost/w/property-manager/cli_sprint/billing');return Response.json({id:'bps_sprint',url:'https://billing.stripe.com/p/session/synthetic-fixture'});}
+
  if(u.pathname==='/v1/checkout/sessions'&&request.method==='POST'){
   const f=new URLSearchParams(await request.text()),id='cs_test_sprint_'+(++sequence),s={id,url:'https://checkout.stripe.com/c/pay/'+id,mode:'payment',status:'open',livemode:false,payment_status:'unpaid',payment_intent:'pi_sprint_'+sequence,amount_total:Number(f.get('line_items[0][price_data][unit_amount]')),currency:'aud',client_reference_id:f.get('client_reference_id'),metadata:{payment_id:f.get('metadata[payment_id]'),client_id:f.get('metadata[client_id]'),payment_attempt_id:f.get('metadata[payment_attempt_id]')},expires_at:Math.floor(Date.now()/1000)+3600};
   assert.equal(f.has('automatic_tax[enabled]'),false,'Stored approved gross totals must not receive GST twice');assert.equal(f.has('payment_method_types[0]'),false);sessions.set(id,s);return Response.json(s);
@@ -73,8 +76,42 @@ try{
  await check('disputes create a Staff exception without silently refunding or revoking entitlements',async()=>{const before=await first('SELECT count(*) AS n FROM subscriptions');assert.equal((await webhook('charge.dispute.created',{id:'dp_sprint',payment_intent:paidSession.payment_intent,charge:'ch_sprint_source',amount:1000,currency:'aud',status:'needs_response'})).status,200);assert.ok(await first("SELECT id FROM payment_reconciliation_items WHERE payment_id='pay_sprint' AND code='dispute_needs_response'"));assert.equal((await first('SELECT count(*) AS n FROM subscriptions')).n,before.n);});
  await run("INSERT INTO payments(id,client_id,description,amount_ex_gst_cents,gst_cents,total_cents,status,provider,stripe_payment_intent_id,created_at) VALUES('pay_refund','cli_sprint','Refund fixture',10000,1000,11000,'paid','stripe','pi_refund_source',?)",past);let refundRequest;
  await check('refunds require independent approval and cannot overcommit the refundable balance',async()=>{refundRequest=await ok(staff+'/billing/refunds/request',admin,{paymentId:'pay_refund',amountCents:5000,reason:'Synthetic approved refund evidence',requestKey:crypto.randomUUID()});await api(staff+'/billing/refunds/'+refundRequest.id+'/approve',admin,{reference:'SELF-APPROVAL-TEST'},403);await ok(staff+'/billing/refunds/'+refundRequest.id+'/approve',reviewer,{reference:'INDEPENDENT-REFUND-TEST'});const excess=await ok(staff+'/billing/refunds/request',admin,{paymentId:'pay_refund',amountCents:7000,reason:'Excess refund test request',requestKey:crypto.randomUUID()});const r=await api(staff+'/billing/refunds/'+excess.id+'/approve',reviewer,{reference:'OVERCOMMITTED-REFUND'});assert.ok(r.status>=400);});
+ await check('revoked refund approval cannot authorize a provider instruction',async()=>{
+  await run('UPDATE staff_profiles SET active=0 WHERE user_id=?',reviewer.id);
+  try{await api(staff+'/billing/refunds/'+refundRequest.id+'/execute',admin,{reference:'REVOKED-APPROVER-TEST'},403);assert.equal(requests.filter(x=>x.path==='/v1/refunds').length,0);}
+  finally{await run('UPDATE staff_profiles SET active=1 WHERE user_id=?',reviewer.id);}
+ });
  await check('refund submission is idempotent and not falsely marked settled',async()=>{const a=await ok(staff+'/billing/refunds/'+refundRequest.id+'/execute',reviewer,{reference:'PROVIDER-EXECUTION-TEST'});assert.equal(a.settled,false);const b=await ok(staff+'/billing/refunds/'+refundRequest.id+'/execute',reviewer,{reference:'PROVIDER-EXECUTION-TEST'});assert.equal(a.providerId,b.providerId);assert.equal(requests.filter(x=>x.path==='/v1/refunds').length,1);assert.equal((await first("SELECT refunded_cents FROM payments WHERE id='pay_refund'")).refunded_cents,0);});
+ await run("INSERT INTO billing_invoices(stripe_invoice_id,client_id,stripe_customer_id,currency,subtotal_cents,total_cents,remaining_cents,status,reconciliation,created_at,updated_at) VALUES('in_sprint','cli_sprint','cus_sprint','AUD',10000,11000,11000,'open','exception',?,?)",past,past);
+ const invoice={id:'in_sprint',customer:'cus_sprint',currency:'aud',total:11000,amount_paid:0,amount_remaining:11000,status:'open',paid:false};
+ await check('inconsistent invoice totals create a review exception without corrupting financial balances',async()=>{
+  assert.equal((await webhook('invoice.payment_failed',{...invoice,amount_paid:1000},{created:100})).status,200);
+  const i=await first("SELECT * FROM billing_invoices WHERE stripe_invoice_id='in_sprint'");assert.equal(i.paid_cents,0);assert.equal(i.remaining_cents,11000);
+  assert.ok(await first("SELECT id FROM payment_reconciliation_items WHERE code='invoice_balance_requires_review'"));
+ });
+ await check('settled invoice remains matched after older and same-second failed events',async()=>{
+  assert.equal((await webhook('invoice.paid',{...invoice,amount_paid:11000,amount_remaining:0,status:'paid',paid:true},{created:200})).status,200);
+  for(const created of [100,200])assert.equal((await webhook('invoice.payment_failed',invoice,{created})).status,200);
+  const i=await first("SELECT * FROM billing_invoices WHERE stripe_invoice_id='in_sprint'");assert.equal(i.status,'paid');assert.equal(i.reconciliation,'matched');assert.equal(i.paid_cents,11000);assert.equal(i.remaining_cents,0);
+ });
+ await check('newer contradictory invoice snapshots preserve settlement and require Staff reconciliation',async()=>{
+  assert.equal((await webhook('invoice.payment_failed',invoice,{created:300})).status,200);
+  const i=await first("SELECT * FROM billing_invoices WHERE stripe_invoice_id='in_sprint'");assert.equal(i.status,'paid');assert.equal(i.remaining_cents,0);
+  assert.ok(await first("SELECT id FROM payment_reconciliation_items WHERE code='settled_invoice_not_downgraded'"));
+ });
  await check('revoking a professional assignment invalidates existing access',async()=>{await ok(staff+'/facilities/assignments/revoke',reviewer,{assignmentId:assignment.id,reference:'ASSIGNMENT-REVOKED-TEST'});await api(bm+'/facilities',manager,undefined,403);});
+ await run("INSERT INTO billing_accounts(client_id,stripe_customer_id,stripe_account_id,mode,created_by,created_at,updated_at) VALUES('cli_sprint','cus_sprint_portal','acct_1USumhEv62nbUZok','test',?,?,?)",admin.id,past,past);
+ await check('billing portal refuses unrelated users before any provider request',async()=>{
+  const before=requests.length;await api('/api/w/property-manager/cli_sprint/billing/portal',outsider,{},403);assert.equal(requests.length,before);
+ });
+ await check('billing portal rejects changed provider capabilities before opening a session',async()=>{
+  unsafePortal=true;const before=requests.filter(x=>x.path==='/v1/billing_portal/sessions').length;
+  try{await api('/api/w/property-manager/cli_sprint/billing/portal',agency,{},503);assert.equal(requests.filter(x=>x.path==='/v1/billing_portal/sessions').length,before);}finally{unsafePortal=false;}
+ });
+ await check('billing portal pins the reviewed sandbox configuration and the authorised customer',async()=>{
+  const value=await ok('/api/w/property-manager/cli_sprint/billing/portal',agency,{});assert.equal(new URL(value.url).origin,'https://billing.stripe.com');
+  assert.equal(requests.filter(x=>x.path==='/v1/billing_portal/sessions').length,1);
+ });
  await check('full combined schema remains referentially consistent',async()=>{assert.deepEqual((await db.prepare('PRAGMA foreign_key_check').all()).results,[]);});
  writeFileSync('artifacts/final-sprint-runtime.json',JSON.stringify({environment:'isolated-local',provider:'mocked-no-live-calls',passed:checks.length,checks},null,2));
 }finally{await mf.dispose();}

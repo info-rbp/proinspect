@@ -1,6 +1,7 @@
 import {assert,now,statement,uid,type Env} from '../../../../packages/database/types';
 import type {Principal,Workspace} from '../../../../packages/domain/index';
 import {sandboxConnectEnabled,eligibleSelfManagedRoute} from '../../../../packages/finance/connect-policy';
+import {verifySandboxAccount,STRIPE_API_VERSION} from './stripe-client.server';
 import {tenancyAccess} from './tenancies.server';
 
 async function permitted(env:Env,user:Principal,w:Workspace,planId:string){
@@ -17,8 +18,8 @@ async function permitted(env:Env,user:Principal,w:Workspace,planId:string){
 async function stripe(env:Env,path:string,form:URLSearchParams,idempotencyKey:string){
  const result=await fetch('https://api.stripe.com/v1/'+path,{method:'POST',headers:{
   Authorization:'Bearer '+env.STRIPE_SECRET_KEY!,'Content-Type':'application/x-www-form-urlencoded',
-  'Idempotency-Key':idempotencyKey
- },body:form.toString()});
+  'Idempotency-Key':idempotencyKey,'Stripe-Version':STRIPE_API_VERSION
+ },body:form.toString(),signal:AbortSignal.timeout(15000)});
  assert(result.ok,502,'CONNECT_SANDBOX_PROVIDER_FAILED','Sandbox onboarding is temporarily unavailable.');
  return await result.json() as Record<string,unknown>;
 }
@@ -29,6 +30,7 @@ export async function connectSummary(env:Env,user:Principal,w:Workspace,planId:s
 }
 export async function connectOnboard(env:Env,user:Principal,w:Workspace,planId:string){
  await permitted(env,user,w,planId);
+ await verifySandboxAccount(env);
  let row=await statement(env.DB,'SELECT account_id FROM rent_connect_sandbox_accounts WHERE plan_id=?',planId).first<{account_id:string}>();
  if(!row){
   const form=new URLSearchParams({type:'express',country:'AU',

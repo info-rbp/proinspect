@@ -24,7 +24,6 @@ export async function loader({context}:LoaderFunctionArgs) {
     '/why-proinspect',
     '/areas-we-service',
     '/resources',
-    ...(env.PCR_LAUNCH_ENABLED === 'true' ? ['/offers/pcr-100'] : []),
     ...Object.keys(FAMILIES).map((x) => `/services/category/${x}`),
     ...Object.keys(ENGAGEMENTS).map((x) => `/how-we-work/${x}`),
     ...Object.keys(GUIDES).map((x) => `/resources/${x}`),

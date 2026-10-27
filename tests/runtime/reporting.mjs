@@ -64,10 +64,11 @@ try{
  await check('QC blocks missing attendance summary and draft can be saved with optimistic revision',async()=>{
   const u=await ok(base+'/reviewer',ops,{reviewerId:reviewer.id});assert.equal(u.reviewerId,reviewer.id);
   assert.equal((await api(base+'/submit',inspector,{revision:2})).status,409);
-  draft.summary='Attended property and recorded visible findings.';
+  draft.summary='Attended the caf\u00e9 and recorded Jos\u00e9\u2019s visible findings.';
   draft.areas[0].components[0].conditionCategory='intact';
   draft.areas[0].components[0].cleanlinessCategory='clean';
   draft.areas[0].components[0].maintenanceRequired=true;
+  draft.areas[0].components[0].defects=['Visible latch wear'];
   draft.areas[0].components[0].commentary='Visible ageing to entry latch; recommend further contractor review.';
   const saved=await ok(base+'/sync',inspector,{revision:2,content:draft,operationId:'syncreport0001'});
   assert.equal(saved.revision,3);
@@ -108,6 +109,9 @@ try{
   const result=await ok(base+'/render',ops,{});doc=result.documentId;
   assert.equal((await ok(base+'/render',ops,{})).documentId,doc);
   const obj=await first('SELECT object_key,sha256,status FROM documents WHERE id=?',doc);
+  const rendered=await (await mf.getR2Bucket('DOCUMENTS')).get(obj.object_key);
+  const pdfSource=new TextDecoder().decode(await rendered.arrayBuffer());
+  assert.ok(pdfSource.includes('Defect: Visible latch wear'));assert.ok(pdfSource.includes('Maintenance required: Yes'));assert.ok(pdfSource.includes('/Encoding /WinAnsiEncoding'));
   assert.equal(obj.status,'review');
   const bytes=new Uint8Array(await (await (await mf.getR2Bucket('DOCUMENTS')).get(obj.object_key)).arrayBuffer());
   assert.equal(new TextDecoder().decode(bytes.slice(0,8)),'%PDF-1.4');
@@ -143,6 +147,25 @@ try{
   assert.equal((await api(staffBase+'/reports/'+second.id+'/history?baselineReportId=other-tenant',inspector)).status,404);
   assert.equal((await api('/api/w/landlord/'+clientId+'/reports/'+second.id+'/history',owner)).status,404);
   assert.equal((await first('SELECT COUNT(*) AS n FROM requests WHERE title LIKE ?', 'Report follow-up:%')).n,0);
+ });
+ await check('duplicate evidence validates and links the actual target without losing retries',async()=>{
+  const stamp=new Date().toISOString();
+  await run("INSERT INTO work_orders(id,reference,client_id,property_id,title,status,assigned_staff_id,created_at,updated_at) VALUES('work_evidence_retry','WO-EVIDENCE-RETRY',?,'report_property','Evidence retry fixture','assigned',?,?,?)",clientId,inspector.id,stamp,stamp);
+  const report=await ok(staffBase+'/reports/create',inspector,{workOrderId:'work_evidence_retry',reportType:'maintenance'});
+  const endpoint=staffBase+'/reports/'+report.id;
+  const form=(area,component)=>{const f=new FormData();f.set('areaId',area);if(component)f.set('componentId',component);f.set('file',new File([readFileSync('tests/fixtures/report-photo.jpg')],'synthetic.jpg',{type:'image/jpeg'}));return f;};
+  const original=await ok(endpoint+'/evidence',inspector,form('area_general','component_general'));
+  const before=await ok(endpoint,inspector);
+  assert.equal((await api(endpoint+'/evidence',inspector,form('missing_area','component_general'))).status,422);
+  const same=await ok(endpoint+'/evidence',inspector,form('area_general','component_general'));assert.equal(same.id,original.id);
+  assert.equal((await ok(endpoint,inspector)).report.revision,before.report.revision);
+  const linked=await ok(endpoint+'/evidence',inspector,form('area_general',''));assert.equal(linked.linked,true);assert.equal(linked.id,original.id);
+  const after=await ok(endpoint,inspector);assert.deepEqual(after.draft.content.areas[0].overviewPhotoIds,[original.id]);
+  assert.deepEqual(after.draft.content.areas[0].components[0].photoIds,[original.id]);
+  assert.equal(after.report.revision,before.report.revision+1);
+  assert.equal((await first('SELECT count(*) AS n FROM report_evidence WHERE report_id=?',report.id)).n,1);
+  await ok(endpoint+'/evidence/'+original.id+'/review',ops,{decision:'rejected'});
+  assert.equal((await api(endpoint+'/evidence',inspector,form('area_general','component_general'))).status,409);
  });
  await check('reviewed maintenance findings create candidates, not unapproved work orders',async()=>{
   const result=await ok(base+'/maintenance/candidates',ops,{});

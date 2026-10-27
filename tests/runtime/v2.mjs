@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { build } from 'esbuild';
 import { Miniflare } from 'miniflare';
+import { futurePerthWeekday } from '../fixtures/perth-date.ts';
 
 // Real local Worker + D1 + R2 + Durable Object; no production network, email or money.
 mkdirSync('artifacts',{recursive:true});
@@ -42,11 +43,7 @@ async function login(email){
 async function check(name,callback){
  await callback();console.log('PASS V2 '+name);
 }
-function futureDate(){
-  const d=new Date(Date.now()+4*86400000);
-  while([0,6].includes(new Date(d.getTime()+8*3600000).getUTCDay()))d.setUTCDate(d.getUTCDate()+1);
-  return d.toISOString().slice(0,10);
-}
+function futureDate(){ return futurePerthWeekday(); }
 const staffApi='/api/w/staff/operations/v2';
 const year=new Date(Date.now()+360*86400000).toISOString();
 const yesterday=new Date(Date.now()-86400000).toISOString();
