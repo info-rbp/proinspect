@@ -67,9 +67,12 @@ test('mobile inspector captures reviewed evidence without horizontal overflow',a
   await expect(page.getByRole('progressbar',{name:'Inspection assessment progress'})).toBeVisible();
   await page.getByRole('button',{name:'Intact'}).click();
   await page.getByLabel('Observation and context').fill('Synthetic observation for responsive field capture.');
+  const photo=page.getByLabel('Take or select evidence photo');
+  await expect(photo).toBeDisabled();
   await page.getByRole('button',{name:/Save draft/}).click();
   await expect(page.getByText(/Report action completed/)).toBeVisible();
-  const photo=page.getByLabel('Take or select evidence photo');
+  // File selection is programmatic: require the same enabled state a human needs.
+  await expect(photo).toBeEnabled();
   await photo.setInputFiles('tests/fixtures/report-photo.jpg');
   await expect.poll(async()=>{
     const response=await staffCtx.request.get('/api/w/staff/operations/reports/'+report.id);

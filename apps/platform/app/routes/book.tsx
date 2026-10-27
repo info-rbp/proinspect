@@ -180,7 +180,7 @@ export default function Book() {
         <input type="hidden" name="requestKey" value={requestKey} />
         <input type="hidden" name="startsAt" value={slot} />
         <div className="stack">
-          <noscript><p role="status">Enable JavaScript to check appointment availability and book a service.</p></noscript>
+          {!interactive && <p role="status">Preparing the booking form. JavaScript is required to check appointment availability and book a service.</p>}
           <section className="panel form">
             <h2>Property & service</h2>
             <Field label="Property" name="propertyId">

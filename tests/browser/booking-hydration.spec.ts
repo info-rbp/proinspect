@@ -13,20 +13,15 @@ async function login(context:BrowserContext,email:string){
 }
 test('server-rendered booking fields stay disabled until the client can retain input',async({browser})=>{
  const noScripts=await browser.newContext({baseURL:origin,javaScriptEnabled:false});
- const staff=await browser.newContext({baseURL:origin});
  try{
   await login(noScripts,`hydration-${randomUUID()}@proinspect.test`);
-  await login(staff,'review-staff@proinspect.test');
-  const application=await post(noScripts,'/api/organisation-applications',{
-   kind:'property-manager',name:'Hydration agency '+randomUUID().slice(0,8),businessReference:'Synthetic hydration acceptance engagement',
+  const owner=await post(noScripts,'/api/onboarding',{
+   displayName:'Synthetic Hydration Owner',clientName:'Hydration portfolio '+randomUUID().slice(0,8),landlordType:'residential',
   });
-  const approved=await post(staff,`/api/w/staff/operations/organisation-applications/${application.id}/review`,{
-   decision:'approved',reference:'Synthetic independently reviewed engagement',
-  });
-  const base=`/w/property-manager/${approved.clientId}`;
+  const base=`/w/landlord/${owner.clientId}`;
   const property=await post(noScripts,'/api'+base+'/properties',{
    address:randomUUID().slice(0,8)+' Hydration Street',suburb:'Perth',postcode:'6000',
-   ownerName:'Synthetic Owner',authorityReference:'Synthetic property management instruction',
+   propertyType:'House',selfManaged:true,
   });
   const page=await noScripts.newPage();
   await page.goto(base+`/book/routine-inspection?property=${property.propertyId}`);
@@ -35,6 +30,6 @@ test('server-rendered booking fields stay disabled until the client can retain i
    await expect(page.getByLabel(label,{exact:true})).toBeDisabled();
   }
   await expect(page.getByRole('button',{name:'Confirm booking',exact:true})).toBeDisabled();
-  await expect(page.getByText('Enable JavaScript to check appointment availability and book a service.')).toBeVisible();
- }finally{await noScripts.close();await staff.close();}
+  await expect(page.getByText('Preparing the booking form. JavaScript is required to check appointment availability and book a service.')).toBeVisible();
+ }finally{await noScripts.close();}
 });
