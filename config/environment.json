@@ -462,6 +462,13 @@
         "platform"
       ],
       "group": "optional"
+    },
+    "STRIPE_BILLING_PORTAL_CONFIGURATION_ID": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional",
+      "description": "Reviewed sandbox Billing Portal configuration ID; no default configuration or customer activation implied."
     }
   },
   "generated": [

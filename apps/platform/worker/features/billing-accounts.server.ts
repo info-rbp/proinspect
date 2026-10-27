@@ -9,6 +9,7 @@ import {reconciliation} from './payment-lifecycle.server';
 import type { ProviderEvent } from './payment-lifecycle.server';
 import {sandboxConfiguration,stripeApi,verifySandboxAccount,SANDBOX_ACCOUNT} from './stripe-client.server';
 import {requireReleaseApproval} from './release-governance.server';
+import {isBillingPortalConfigurationId,isReviewedSandboxPortal} from '../../../../packages/finance/stripe-sandbox-policy';
 const sandbox=SANDBOX_ACCOUNT;
 export const sandboxFinance=sandboxConfiguration;
 export const stripeRequest=stripeApi;
@@ -36,9 +37,14 @@ export async function billingDashboard(env:Env,user:Principal,w:Workspace){
  return {accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,portalEnabled:env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true',invoicesEnabled:env.STRIPE_INVOICING_ENABLED==='true',refundsEnabled:env.STRIPE_REFUNDS_ENABLED==='true'};
 }
 export async function billingPortal(env:Env,user:Principal,w:Workspace){
- await clientAdmin(env,user,w);await requireReleaseApproval(env,'billing_portal');await verifySandboxAccount(env);assert(env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true',503,'BILLING_PORTAL_DISABLED','Customer billing self-service is not activated.');
+ await clientAdmin(env,user,w);await requireReleaseApproval(env,'billing_portal');assert(env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true',503,'BILLING_PORTAL_DISABLED','Customer billing self-service is not activated.');
+ const configuration=env.STRIPE_BILLING_PORTAL_CONFIGURATION_ID;
+ assert(isBillingPortalConfigurationId(configuration),503,'BILLING_PORTAL_CONFIGURATION_REQUIRED','Select the reviewed sandbox billing portal configuration.');
  const a=await statement(env.DB,"SELECT stripe_customer_id FROM billing_accounts WHERE client_id=? AND mode='test' AND stripe_account_id=?",w.scopeId,sandbox).first<{stripe_customer_id:string}>();assert(a?.stripe_customer_id,409,'BILLING_CUSTOMER_REQUIRED','A verified billing customer must be linked first.');
- const s=await stripeRequest(env,'/billing_portal/sessions',new URLSearchParams({customer:a.stripe_customer_id,return_url:env.APP_ORIGIN+w.href+'/billing'}));
+ await verifySandboxAccount(env);
+ const policy=await stripeRequest(env,'/billing_portal/configurations/'+configuration);
+ assert(isReviewedSandboxPortal(policy,configuration,env.APP_ORIGIN),503,'BILLING_PORTAL_POLICY_UNACCEPTED','The sandbox portal configuration differs from the reviewed invoice and payment-method-only policy.');
+ const s=await stripeRequest(env,'/billing_portal/sessions',new URLSearchParams({customer:a.stripe_customer_id,configuration,return_url:env.APP_ORIGIN+w.href+'/billing'}));
  assert(typeof s.url==='string'&&new URL(s.url).origin==='https://billing.stripe.com',502,'BILLING_PORTAL_INVALID','Invalid billing portal response.');
  await activity(env,user,'billing.portal_opened','client',w.scopeId).run();return {url:s.url};
 }

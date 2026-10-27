@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {providerReadiness} from '../packages/operations/provider-readiness.ts';
 test('readiness inventory reports missing configuration without asserting acceptance',()=>{
- const result=providerReadiness({APP_ENV:'staging'});assert.equal(result.length,8);
+ const result=providerReadiness({APP_ENV:'staging'});assert.equal(result.length,9);
  const stripe=result.find(x=>x.provider==='Stripe sandbox')!;assert.ok(stripe.missing.includes('STRIPE_SECRET_KEY'));assert.equal(stripe.state,'configuration_missing');
  assert.equal(result.find(x=>x.provider.includes('agreement'))?.state,'adapter_not_connected');
 });

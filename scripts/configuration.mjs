@@ -81,12 +81,14 @@ export function checkConfiguration(
   if (
     input.STRIPE_SECRET_KEY &&
     environment === 'staging' &&
-    ! /^(?:sk|rk)_test_/.test(input.STRIPE_SECRET_KEY)
+    (!/^(?:sk|rk)_test_[A-Za-z0-9_]+$/.test(input.STRIPE_SECRET_KEY)||input.STRIPE_SECRET_KEY.length>256)
   )
     invalid.push({
       name: 'STRIPE_SECRET_KEY',
       reason: 'Use a restricted Stripe sandbox key in staging.',
     });
+  if (input.STRIPE_CUSTOMER_PORTAL_ENABLED === 'true' && !/^bpc_[A-Za-z0-9_]{1,124}$/.test(input.STRIPE_BILLING_PORTAL_CONFIGURATION_ID || ''))
+    invalid.push({name:'STRIPE_BILLING_PORTAL_CONFIGURATION_ID',reason:'Enabled billing self-service requires the reviewed sandbox configuration ID.'});
   if (input.EMAIL_PROVIDER && input.EMAIL_PROVIDER !== 'resend')
     invalid.push({
       name: 'EMAIL_PROVIDER',
