@@ -9,6 +9,7 @@ import { activity, recordId, reference, replay, receipt } from '../../../../pack
  * strata trust funds. Every payment has a real work order, a verified quote
  * approval, and an identified contractor. No automatic payouts or escrow.
  */
+import {isSandboxApiKey} from '../../../../packages/finance/stripe-sandbox-policy';
 const MODEL = z.enum(['platform_collect', 'payer_direct']);
 const amount = z.number().int().min(1).max(100_000_000);
 const idempotencyKey = z.string().min(16).max(100);
@@ -25,12 +26,12 @@ type Plan = {
 };
 
 export function collectionsEnabled(env: Env): boolean {
-  return env.APP_ENV !== 'production' && env.STRIPE_ACCOUNT_ID === SANDBOX &&
+  return env.APP_ENV !== 'production' && ['local','staging'].includes(env.APP_ENV) && env.STRIPE_ACCOUNT_ID === SANDBOX &&
     env.CONTRACTOR_PAYMENTS_ENABLED === 'true' &&
     env.STRIPE_CONNECT_MARKETPLACE_APPROVED === 'true' &&
     env.STRIPE_CONNECT_COLLECTION_ENABLED === 'true' &&
     env.STRIPE_TAX_READY === 'true' &&
-    /^(sk|rk)_test_/.test(env.STRIPE_SECRET_KEY ?? '');
+    isSandboxApiKey(env.STRIPE_SECRET_KEY);
 }
 export function transfersEnabled(env: Env): boolean {
   return collectionsEnabled(env) && env.STRIPE_CONNECT_TRANSFERS_ENABLED === 'true';
