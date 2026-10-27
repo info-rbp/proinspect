@@ -39,10 +39,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install browser dependencies without provider or infrastructure credentials
+      - name: Use an available browser or bounded isolated install without credentials
+        timeout-minutes: 5
         run: |
-          pnpm install --frozen-lockfile
-          pnpm exec playwright install --with-deps chromium
+          set -euo pipefail
+          timeout 180 pnpm install --frozen-lockfile
+          if command -v google-chrome >/dev/null 2>&1; then
+            google-chrome --version
+            echo 'PROINSPECT_REVIEW_BROWSER_CHANNEL=chrome' >> "$GITHUB_ENV"
+          else
+            timeout 120 pnpm exec playwright install --only-shell chromium
+          fi
           mkdir -p artifacts
       - name: Observe deployment identity, flags and database integrity without writes
         env:
@@ -80,7 +87,7 @@ jobs:
           for(const workspace of ['landlord','property-manager','commercial','strata-manager','tenant','building','strata-council','staff','building-manager']){
             const path=`/api/w/${workspace}/not-authorized/overview`,r=await fetch(origin+path,{redirect:'manual'});assert.ok([401,403,404].includes(r.status),workspace);checks.push({path,status:r.status,anonymousDenied:true});
           }
-          const browser=await chromium.launch();
+          const browser=await chromium.launch(process.env.PROINSPECT_REVIEW_BROWSER_CHANNEL?{channel:process.env.PROINSPECT_REVIEW_BROWSER_CHANNEL}:{}),browserVersion=browser.version();
           try {for(const width of [320,390,1100,1440]){
             const page=await browser.newPage({viewport:{width,height:950}});
             for(const path of ['/','/services','/guest/book','/offers/pcr-100','/signin']){
@@ -94,7 +101,7 @@ jobs:
             }await page.close();
           }}finally{await browser.close();}
           const sample=await fetch(origin+'/offers/pcr/sample');assert.equal(sample.status,404);assert.match(await sample.text(),/No approved sample/);
-          writeFileSync('artifacts/final-live-browser.json',JSON.stringify({source,observedAt:new Date().toISOString(),checks,sampleDenied:true,hostedHumanAcceptance:false,providerTransactionAcceptance:false},null,2));
+          writeFileSync('artifacts/final-live-browser.json',JSON.stringify({source,browserVersion,observedAt:new Date().toISOString(),checks,sampleDenied:true,hostedHumanAcceptance:false,providerTransactionAcceptance:false},null,2));
           JS
       - uses: actions/upload-artifact@v4
         if: always()
