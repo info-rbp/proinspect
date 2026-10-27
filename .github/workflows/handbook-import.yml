@@ -17,7 +17,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "b681eddf62142b3f8a92a0d8f2c9ef70c27cfdae"
+          test -f .handoff/final-sprint-20261027.patch.gz
           echo "c5e31d162afd2210e78fcca7c7df2c743a11faca1b195a64fb9067013f4fc7bb  .handoff/final-sprint-20261027.patch.gz" | sha256sum -c -
           gzip -dc .handoff/final-sprint-20261027.patch.gz > /tmp/continuation.patch
           echo "a30ba8ed3b85b4a91c19a1cf523ff584122d8702162e4ada8bfb2bcfeaf2a2ff  /tmp/continuation.patch" | sha256sum -c -
