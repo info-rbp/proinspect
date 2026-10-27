@@ -133,7 +133,8 @@ export class BookingScheduler extends DurableObject<Env> {
   private async reserve(request: Request) {
     try {
       if(new URL(request.url).pathname==='/guest'){
-        return guestSchedulerOperation(this.env,await request.json());
+        // Await inside this boundary so AppError remains a safe HTTP response across the DO call.
+        return await guestSchedulerOperation(this.env,await request.json());
       }
       const {
         userId,
