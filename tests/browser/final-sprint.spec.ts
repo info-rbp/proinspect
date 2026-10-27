@@ -8,7 +8,7 @@ test('administrator release, pricing and legal controls render without claiming 
   const r=await p.goto('/w/staff/operations/'+path);expect(r?.status()).toBe(200);await expect(p.getByRole('heading',{level:1})).toContainText(title);
   for(const width of [390,1440]){await p.setViewportSize({width,height:950});expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),path+' overflow').toBe(true);await p.screenshot({path:`artifacts/screenshots/sprint-${path}-${width}.png`,fullPage:true});}
  }
- await p.goto('/w/staff/operations/release-readiness');await expect(p.getByText('valid source-specific approval missing',{exact:false}).first()).toBeVisible();
+ await p.goto('/w/staff/operations/release-readiness');await expect(p.getByText('valid source-specific approval missing',{exact:false}).first()).toBeVisible();await expect(p.getByRole('heading',{name:'Provider configuration and remaining evidence'})).toBeVisible();await expect(p.getByText('The DocuSign adapter creates sandbox drafts only.',{exact:false})).toBeVisible();
  }finally{await c.close();}
 });
 test('operational staff cannot promote themselves through administrator approval APIs',async({browser})=>{

@@ -53,8 +53,9 @@ function componentUpdate(draft:ReportDraft,area:number,component:number,field:st
 }
 function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:any}){
  const [draft,setDraft]=useState<ReportDraft>(initial),[dirty,setDirty]=useState(false);
- const [fieldMode,setFieldMode]=useState(false);
- useEffect(()=>{setFieldMode(window.matchMedia('(max-width: 680px)').matches);},[]);
+ const [fieldMode,setFieldMode]=useState(false),[interactive,setInteractive]=useState(false);
+ const navigation=useNavigation(),busy=!interactive||navigation.state!=='idle';
+ useEffect(()=>{setFieldMode(window.matchMedia('(max-width: 680px)').matches);setInteractive(true);},[]);
  useEffect(()=>{setDraft(initial);setDirty(false);},[record.revision]);
  const change=(value:ReportDraft)=>{setDraft(value);setDirty(true);};
  const locked=!['draft','changes_requested'].includes(record.status);
@@ -66,32 +67,32 @@ function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:an
  } ]})});
  return <section className="panel stack">
    <div><h2>Inspection report draft</h2><p className="small muted">Capture visible conditions and commentary. Changes remain drafts until submitted and independently reviewed.</p></div>
-   <div className="actions"><button type="button" className="button secondary small" aria-pressed={fieldMode} onClick={()=>setFieldMode(v=>!v)}>{fieldMode?'Use full editor':'Use mobile field mode'}</button></div>
-   <Form method="post" className="stack">
+   <div className="actions"><button type="button" className="button secondary small" aria-pressed={fieldMode} disabled={busy} onClick={()=>setFieldMode(v=>!v)}>{fieldMode?'Use full editor':'Use mobile field mode'}</button></div>
+   <Form method="post" className="stack" aria-busy={busy}>
      <input type="hidden" name="intent" value="save"/><input type="hidden" name="revision" value={record.revision}/>
      <input type="hidden" name="content" value={JSON.stringify(draft)}/>
-     <label>Inspection summary<textarea disabled={locked} rows={4} value={draft.summary} onChange={e=>change({...draft,summary:e.target.value})}/></label>
-     {fieldMode&&<InspectorFieldMode draft={draft} onChange={change} locked={locked} dirty={dirty}/>}
+     <label>Inspection summary<textarea disabled={locked||busy} rows={4} value={draft.summary} onChange={e=>change({...draft,summary:e.target.value})}/></label>
+     {fieldMode&&<InspectorFieldMode draft={draft} onChange={change} locked={locked} dirty={dirty} busy={busy}/>}
      {!fieldMode&&draft.areas.map((area,ai)=><div className="panel stack-sm" key={area.id}>
-       <label>Area name<input disabled={locked} value={area.name} onChange={e=>change({...draft,areas:draft.areas.map((a,j)=>ai===j?{...a,name:e.target.value}:a)})}/></label>
+       <label>Area name<input disabled={locked||busy} value={area.name} onChange={e=>change({...draft,areas:draft.areas.map((a,j)=>ai===j?{...a,name:e.target.value}:a)})}/></label>
        {area.components.map((c,ci)=><fieldset className="stack-sm" key={c.id}>
          <legend><strong>Component {ci+1}</strong></legend>
-         <label>Component name<input disabled={locked} value={c.component} onChange={e=>change(componentUpdate(draft,ai,ci,'component',e.target.value))}/></label>
+         <label>Component name<input disabled={locked||busy} value={c.component} onChange={e=>change(componentUpdate(draft,ai,ci,'component',e.target.value))}/></label>
          <div className="grid-2">
            {([['conditionCategory','Condition',COMPONENT_CONDITION_CATEGORIES],['cleanlinessCategory','Cleanliness',COMPONENT_CLEANLINESS_CATEGORIES],['workingStatus','Working status',COMPONENT_WORKING_STATUSES],['testStatus','Test status',COMPONENT_TEST_STATUSES],['comparisonStatus','Comparison',COMPONENT_COMPARISON_STATUSES]] as const).map(([field,label,values])=><label key={field}>{label}
-             <select disabled={locked} value={String(c[field]||'')} onChange={e=>change(componentUpdate(draft,ai,ci,field,e.target.value))}>
+             <select disabled={locked||busy} value={String(c[field]||'')} onChange={e=>change(componentUpdate(draft,ai,ci,field,e.target.value))}>
                {values.map(v=><option value={v} key={v}>{v.replaceAll('_',' ')}</option>)}
              </select>
            </label>)}
          </div>
-         <label>Observations<textarea disabled={locked} value={c.commentary} onChange={e=>change(componentUpdate(draft,ai,ci,'commentary',e.target.value))} rows={3}/></label>
-         <label><input disabled={locked} type="checkbox" checked={c.maintenanceRequired} onChange={e=>change(componentUpdate(draft,ai,ci,'maintenanceRequired',e.target.checked))}/> Maintenance follow-up required</label>
+         <label>Observations<textarea disabled={locked||busy} value={c.commentary} onChange={e=>change(componentUpdate(draft,ai,ci,'commentary',e.target.value))} rows={3}/></label>
+         <label><input disabled={locked||busy} type="checkbox" checked={c.maintenanceRequired} onChange={e=>change(componentUpdate(draft,ai,ci,'maintenanceRequired',e.target.checked))}/> Maintenance follow-up required</label>
          <p className="small muted">{c.photoIds.length} linked evidence image(s). All evidence needs independent acceptance before report submission.</p>
        </fieldset>)}
-       {!locked&&<button className="button secondary small" type="button" onClick={()=>addComponent(ai)}>Add component</button>}
+       {!locked&&<button className="button secondary small" type="button" disabled={busy} onClick={()=>addComponent(ai)}>Add component</button>}
      </div>)}
-     {!locked&&<div className="actions">{!fieldMode&&<button type="button" className="button secondary" onClick={addArea}>Add area</button>}
-       <button className="primary">Save draft{dirty?' *':''}</button></div>}
+     {!locked&&<div className="actions">{!fieldMode&&<button type="button" className="button secondary" disabled={busy} onClick={addArea}>Add area</button>}
+       <button className="primary" disabled={busy}>Save draft{dirty?' *':''}</button></div>}
    </Form>
    {!locked&&<ReportOfflineControls reportId={record.id} revision={record.revision} draft={draft} onRestore={change}/>}
    {!locked&&!fieldMode&&<div className="stack-sm">
@@ -100,8 +101,8 @@ function Editor({record,initial,staff}: {record:any,initial:ReportDraft,staff:an
      {draft.areas.map(a=><Form key={a.id} method="post" encType="multipart/form-data" className="form stack-sm">
        <input type="hidden" name="intent" value="upload"/><input type="hidden" name="areaId" value={a.id}/>
        <label>Link photo to<select name="componentId" defaultValue=""><option value="">Area overview</option>{a.components.map(c=><option value={c.id} key={c.id}>{c.component}</option>)}</select></label>
-       <label>JPEG for {a.name}<input type="file" name="file" accept="image/jpeg" required/></label>
-       <button className="button secondary small">Upload area evidence</button>
+       <label>JPEG for {a.name}<input type="file" name="file" accept="image/jpeg" disabled={busy||dirty} required/></label>
+       <button className="button secondary small" disabled={busy||dirty}>Upload area evidence</button>
      </Form>)}
    </div>}
  </section>;

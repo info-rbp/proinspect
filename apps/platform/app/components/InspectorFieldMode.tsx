@@ -4,7 +4,7 @@ import type {ReportDraft} from '../../../../packages/report-engine/adapter';
 import {COMPONENT_CONDITION_CATEGORIES,COMPONENT_CLEANLINESS_CATEGORIES,COMPONENT_WORKING_STATUSES} from '../../../../packages/report-engine/upstream/reportModel';
 
 type Field = ReportDraft['areas'][number]['components'][number];
-type Props={draft:ReportDraft;onChange:(draft:ReportDraft)=>void;locked:boolean;dirty:boolean};
+type Props={draft:ReportDraft;onChange:(draft:ReportDraft)=>void;locked:boolean;dirty:boolean;busy:boolean};
 const label=(value:string)=>value.replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
 /** Resize and re-encode camera images to a clean JPEG: camera metadata is never retained. */
 export async function prepareInspectionCameraJpeg(file:File):Promise<File>{
@@ -24,8 +24,9 @@ export async function prepareInspectionCameraJpeg(file:File):Promise<File>{
   throw new Error('The image could not be compressed below the evidence limit.');
  }finally{bitmap.close();}
 }
-export function InspectorFieldMode({draft,onChange,locked,dirty}:Props){
+export function InspectorFieldMode({draft,onChange,locked,dirty,busy}:Props){
  const [index,setIndex]=useState(0),[message,setMessage]=useState('');
+ const [preparing,setPreparing]=useState(false);
  const photo=useFetcher<{ok?:boolean;error?:string;code?:string}>();
  const targets=draft.areas.flatMap((area,ai)=>area.components.map((component,ci)=>({area,component,ai,ci})));
  const active=Math.min(index,Math.max(0,targets.length-1));
@@ -43,8 +44,10 @@ export function InspectorFieldMode({draft,onChange,locked,dirty}:Props){
  async function capture(event:ChangeEvent<HTMLInputElement>){
   const selected=event.currentTarget.files?.[0];event.currentTarget.value='';
   if(!selected||!target)return;
+  if(locked||busy||preparing||photo.state!=='idle'){setMessage('Wait for the current report action to finish before selecting another photo.');return;}
   if(dirty){setMessage('Save the current draft first, then capture evidence. This keeps photo links and report versions consistent.');return;}
   if(!navigator.onLine){setMessage('Offline. Use the encrypted offline photo queue below; synchronise before review.');return;}
+  setPreparing(true);
   setMessage('Compressing and uploading the selected photo…');
   try{
    const jpeg=await prepareInspectionCameraJpeg(selected);
@@ -52,7 +55,7 @@ export function InspectorFieldMode({draft,onChange,locked,dirty}:Props){
    form.set('intent','upload');form.set('file',jpeg);form.set('areaId',target.area.id);form.set('componentId',target.component.id);
    photo.submit(form,{method:'post',encType:'multipart/form-data'});
    setMessage('Photo submitted for private evidence review.');
-  }catch(error){setMessage(error instanceof Error?error.message:'Could not prepare the camera photo.');}
+  }catch(error){setMessage(error instanceof Error?error.message:'Could not prepare the camera photo.');}finally{setPreparing(false);}
  }
  if(!target)return <p>No components available. Add an inspection area in the full editor.</p>;
  return <section className="pi-inspector-field stack-sm" aria-label="Mobile field inspection">
@@ -62,11 +65,11 @@ export function InspectorFieldMode({draft,onChange,locked,dirty}:Props){
    </header>
    <progress className="pi-inspector-progress" aria-label="Inspection assessment progress" value={completed} max={Math.max(1,targets.length)}/>
    <label>Jump to component
-    <select value={active} onChange={e=>setIndex(Number(e.target.value))}>
+    <select disabled={busy||preparing} value={active} onChange={e=>setIndex(Number(e.target.value))}>
      {targets.map((t,i)=><option key={t.area.id+'-'+t.component.id} value={i}>{t.area.name} · {t.component.component}</option>)}
     </select>
    </label>
-   <fieldset className="stack-sm" disabled={locked}><legend>Visible condition</legend>
+   <fieldset className="stack-sm" disabled={locked||busy}><legend>Visible condition</legend>
     <div className="pi-inspector-chips">
      {(['intact','minor_wear','repair_required','replacement_recommended','unable_to_confirm'] as const).map(v=>
       <button key={v} type="button" aria-pressed={target.component.conditionCategory===v} className="pi-inspector-chip"
@@ -92,7 +95,7 @@ export function InspectorFieldMode({draft,onChange,locked,dirty}:Props){
    <div className="pi-inspector-camera">
     <label>Take or select evidence photo
      <input type="file" accept="image/jpeg,image/png,image/heic,image/heif" capture="environment"
-      disabled={locked||photo.state!=='idle'} onChange={e=>void capture(e)}/>
+      disabled={locked||busy||dirty||preparing||photo.state!=='idle'} onChange={e=>void capture(e)}/>
     </label>
     <p className="small muted">{target.component.photoIds.length} linked photo(s). Images are compressed to JPEG and remain private until independently accepted.</p>
     {dirty&&<p role="status" className="small">Save draft changes before uploading a photo.</p>}
@@ -101,8 +104,8 @@ export function InspectorFieldMode({draft,onChange,locked,dirty}:Props){
     {message&&<p role="status" className="small">{message}</p>}
    </div>
    <nav className="pi-inspector-nav actions" aria-label="Field inspection navigation">
-    <button type="button" className="button secondary" disabled={active===0} onClick={()=>setIndex(Math.max(0,active-1))}>Previous</button>
-    <button type="button" className="button secondary" disabled={active===targets.length-1} onClick={()=>setIndex(Math.min(targets.length-1,active+1))}>Next component</button>
+    <button type="button" className="button secondary" disabled={busy||preparing||active===0} onClick={()=>setIndex(Math.max(0,active-1))}>Previous</button>
+    <button type="button" className="button secondary" disabled={busy||preparing||active===targets.length-1} onClick={()=>setIndex(Math.min(targets.length-1,active+1))}>Next component</button>
    </nav>
    <p className="small muted">Progress indicates completed condition assessments and observations, not report approval. Every recorded condition remains subject to quality review.</p>
  </section>;

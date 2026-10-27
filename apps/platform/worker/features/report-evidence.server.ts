@@ -13,8 +13,7 @@ export async function uploadReportEvidence(env:Env,user:Principal,w:Workspace,re
  assert(photo.type==='image/jpeg',422,'PHOTO_JPEG_REQUIRED','Upload a JPEG image. Convert other formats before uploading.');
  const bytes=await photo.arrayBuffer(),signature=new Uint8Array(bytes.slice(0,4));
  assert(signature[0]===0xff&&signature[1]===0xd8&&signature[2]===0xff,422,'INVALID_JPEG','The file is not a JPEG image.');
- const sha=await digest(bytes),previous=await statement(env.DB,'SELECT id,status FROM report_evidence WHERE report_id=? AND sha256=?',reportId,sha).first();
- if(previous)return {...previous,replayed:true};
+ const sha=await digest(bytes),previous=await statement(env.DB,'SELECT id,status FROM report_evidence WHERE report_id=? AND sha256=?',reportId,sha).first<{id:string;status:string}>();
  const areaId=String(form.get('areaId')??''),componentId=String(form.get('componentId')??'');
  assert(/^[A-Za-z0-9_-]{1,100}$/.test(areaId),422,'AREA_REQUIRED','Select a report area.');
  assert(!componentId||/^[A-Za-z0-9_-]{1,100}$/.test(componentId),422,'COMPONENT_INVALID','Select an existing component.');
@@ -22,14 +21,27 @@ export async function uploadReportEvidence(env:Env,user:Principal,w:Workspace,re
  assert(draft,409,'REPORT_DRAFT_REQUIRED','Report draft missing.');
  const data=JSON.parse(draft.content_json),area=data.areas.find((a:{id:string})=>a.id===areaId);
  assert(area&&(!componentId||area.components.some((c:{id:string})=>c.id===componentId)),422,'EVIDENCE_CONTEXT','The evidence target must exist in the report draft.');
- const target=componentId?area.components.find((c:{id:string})=>c.id===componentId):area;
  const linked=componentId?'photoIds':'overviewPhotoIds';
  const modified=structuredClone(data) as {areas:typeof data.areas};
  const areaNew=modified.areas.find((a:{id:string})=>a.id===areaId)!;
  const node=componentId?areaNew.components.find((c:{id:string})=>c.id===componentId)!:areaNew;
  if(!Array.isArray(node[linked]))node[linked]=[];
- const id=uid('evid'),key=`report-evidence/${reportId}/${id}.jpg`,at=now();
+ const id=previous?.id??uid('evid'),key=`report-evidence/${reportId}/${id}.jpg`,at=now();
+ if(previous){
+  assert(previous.status!=='rejected',409,'EVIDENCE_REJECTED','Previously rejected evidence must not be silently restored. Upload a replacement for review.');
+  if(node[linked].includes(id))return {...previous,sha256:sha,replayed:true};
+ }
+ assert(node[linked].length<40,422,'EVIDENCE_LIMIT','Each report section supports at most 40 evidence references.');
  node[linked].push(id);
+ if(previous){
+  await env.DB.batch([
+   statement(env.DB,'UPDATE report_drafts SET content_json=?,revision=revision+1,updated_by=?,updated_at=? WHERE report_id=? AND revision=?',JSON.stringify(modified),user.id,at,reportId,draft.revision),guard(env),
+   statement(env.DB,"UPDATE inspection_reports SET revision=revision+1,updated_at=? WHERE id=? AND revision=? AND status IN('draft','changes_requested')",at,reportId,row.revision),guard(env),
+   activity(env,user,'report.evidence_linked','report_evidence',id,row.property_id,row.scheme_id,{reportId,areaId,componentId}),clearGuard(env)
+  ]);
+  return {...previous,sha256:sha,replayed:true,linked:true};
+ }
+
  await env.DOCUMENTS.put(key,bytes,{httpMetadata:{contentType:'image/jpeg'},customMetadata:{sha256:sha}});
  try{
   await env.DB.batch([
