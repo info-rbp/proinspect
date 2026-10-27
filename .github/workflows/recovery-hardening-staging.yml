@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      SOURCE_SHA: adba71195ff89a9039882707cf5c4426e66e6b75
+      SOURCE_SHA: e0ee9c410ad320e2f0bacbf85c4192d4f5de4b9e
       CLOUDFLARE_ACCOUNT_ID: 8ca23ac6d2cc906d4dd13b8da5ea2b25
       CLOUDFLARE_ENV: ''
       WORKERS_CI: '0'
@@ -27,7 +27,7 @@ jobs:
         run: cp ops/final-sprint-staging.mjs /tmp/final-sprint-staging.mjs
       - uses: actions/checkout@v4
         with:
-          ref: adba71195ff89a9039882707cf5c4426e66e6b75
+          ref: e0ee9c410ad320e2f0bacbf85c4192d4f5de4b9e
           fetch-depth: 0
           persist-credentials: false
       - name: Require exact reviewed source and successful CI
@@ -36,10 +36,10 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          test "$(git rev-parse HEAD^{tree})" = 96f6172bdaf6455bff37f56b083d9c69f12bb1bb
+          test "$(git rev-parse HEAD^{tree})" = 33b73fa64bd3bdcad0393153c50d73bda06618c6
           test -z "$(git diff --name-only 82fe6d236885d18e2baac4a7923272c0d7503762 HEAD -- database/migrations)"
           for attempt in $(seq 1 60); do
-            result=$(gh api repos/info-rbp/proinspect/actions/runs/40414847142 --jq '[.head_sha,.status,(.conclusion // "pending")] | @tsv')
+            result=$(gh api repos/info-rbp/proinspect/actions/runs/40432734547 --jq '[.head_sha,.status,(.conclusion // "pending")] | @tsv')
             test "$(printf '%s' "$result" | cut -f1)" = "$SOURCE_SHA"
             if [ "$(printf '%s' "$result" | cut -f2)" = completed ]; then
               test "$(printf '%s' "$result" | cut -f3)" = success
