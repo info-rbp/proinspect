@@ -60,6 +60,9 @@ export default function Book() {
       : d.properties;
   const result = useActionData<any>();
   const busy = useNavigation().state !== 'idle';
+  // Server-rendered controls must not accept input before React can retain it.
+  const [interactive, setInteractive] = useState(false);
+  useEffect(() => { setInteractive(true); }, []);
   const [serviceId, setServiceId] = useState(requestedService || '');
   const [propertyId, setPropertyId] = useState(search.get('property') || properties[0]?.id || '');
   const [date, setDate] = useState('');
@@ -171,12 +174,13 @@ export default function Book() {
         <span>→</span>
         <strong>04 Appointment</strong>
       </div>
-      <Form method="post" className="detail-grid">
+      <Form method="post" className="detail-grid" aria-busy={!interactive}>
         <input type="hidden" name="recurringPlanId" value={search.get('plan') || ''} />
         <input type="hidden" name="planDue" value={search.get('due') || ''} />
         <input type="hidden" name="requestKey" value={requestKey} />
         <input type="hidden" name="startsAt" value={slot} />
         <div className="stack">
+          <noscript><p role="status">Enable JavaScript to check appointment availability and book a service.</p></noscript>
           <section className="panel form">
             <h2>Property & service</h2>
             <Field label="Property" name="propertyId">
@@ -184,6 +188,7 @@ export default function Book() {
                 id="propertyId"
                 name="propertyId"
                 required
+                disabled={!interactive}
                 value={propertyId}
                 onChange={(e) => setPropertyId(e.target.value)}
               >
@@ -199,6 +204,7 @@ export default function Book() {
                 id="serviceId"
                 name="serviceId"
                 required
+                disabled={!interactive}
                 value={serviceId}
                 onChange={(e) => setServiceId(e.target.value)}
               >
@@ -241,6 +247,7 @@ export default function Book() {
               <select
                 id="accessMethod"
                 name="accessMethod"
+                disabled={!interactive}
                 value={method}
                 onChange={(e) => setMethod(e.target.value)}
               >
@@ -259,6 +266,7 @@ export default function Book() {
               <textarea
                 id="instructions"
                 name="instructions"
+                disabled={!interactive}
                 maxLength={3000}
                 placeholder="Where to meet, access details or anything the inspector needs to know."
               />
@@ -284,6 +292,7 @@ export default function Book() {
                 id="date"
                 name="date"
                 type="date"
+                disabled={!interactive}
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 required
@@ -341,7 +350,7 @@ export default function Book() {
           <Feedback value={result} />
           <button
             className="primary"
-            disabled={busy || !slot || !directBooking}
+            disabled={!interactive || busy || !slot || !directBooking}
           >
             {busy ? 'Confirming booking…' : 'Confirm booking'}
           </button>
