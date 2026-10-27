@@ -1,0 +1,86 @@
+name: Sprint isolated D1 restore rehearsal
+on:
+  push:
+    branches: [ops/sprint-recovery-20261027]
+    paths: [.github/workflows/sprint-isolated-restore-rehearsal.yml]
+permissions:
+  contents: read
+concurrency:
+  group: proinspect-isolated-restore-rehearsal
+  cancel-in-progress: false
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: e0ee9c410ad320e2f0bacbf85c4192d4f5de4b9e
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked tooling without provider credentials
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec wrangler --version
+      - name: Restore synthetic data in a newly created database only, then remove it
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 8ca23ac6d2cc906d4dd13b8da5ea2b25
+          WRANGLER_SEND_METRICS: 'false'
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync,readdirSync,mkdirSync} from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          import {createHash} from 'node:crypto';
+          const source='e0ee9c410ad320e2f0bacbf85c4192d4f5de4b9e';
+          assert.equal(execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),source);
+          const account=process.env.CLOUDFLARE_ACCOUNT_ID,name='proinspect-restore-qa-'+process.env.GITHUB_RUN_ID;
+          assert.match(name,/^proinspect-restore-qa-[0-9]+$/);
+          const forbidden=new Set(['dd4f4bc7-cd24-433a-a9ee-d1ffbcc229ea','e66b8ebc-637d-4737-8d47-b0fbec3c082c']);
+          const files=readdirSync('database/migrations').filter(n=>n.endsWith('.sql')).sort();assert.equal(files.length,44);
+          const evidence={source,startedAt:new Date().toISOString(),name,productionTouched:false,stagingTouched:false,customerDataUsed:false,status:'incomplete',cleanup:'not-created',migrations:files.map(n=>({name:n,sha256:createHash('sha256').update(readFileSync('database/migrations/'+n)).digest('hex')}))};
+          mkdirSync('artifacts',{recursive:true});let id;
+          async function api(path,method='GET',body){
+            const r=await fetch('https://api.cloudflare.com/client/v4/accounts/'+account+path,{method,headers:{Authorization:'Bearer '+process.env.CLOUDFLARE_API_TOKEN,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(60000)});
+            const j=await r.json();assert.ok(r.ok&&j.success,`${method} ${path}: HTTP ${r.status}; codes ${(j.errors||[]).map(e=>e.code).join(',')}`);return j.result;
+          }
+          async function query(sql){assert.ok(id&&!forbidden.has(id));const r=await api('/d1/database/'+id+'/query','POST',{sql});assert.ok(r.every(v=>v.success));return r.map(v=>v.results);}
+          try{
+            const created=await api('/d1/database','POST',{name,primary_location_hint:'oc'});id=created.uuid;
+            assert.match(id??'',/^[a-f0-9-]{36}$/);assert.ok(!forbidden.has(id));assert.equal(created.name,name);
+            evidence.database=id;evidence.cleanup='pending';
+            const config={name:'proinspect-isolated-restore',compatibility_date:'2026-10-06',d1_databases:[{binding:'RESTORE_QA',database_id:id,database_name:name,migrations_dir:process.cwd()+'/database/migrations'}]};
+            writeFileSync('/tmp/proinspect-restore.json',JSON.stringify(config));
+            execFileSync('pnpm',['exec','wrangler','d1','migrations','apply','RESTORE_QA','--remote','--config','/tmp/proinspect-restore.json'],{stdio:'inherit',timeout:300000});
+            const before=await query("SELECT name FROM d1_migrations ORDER BY name; PRAGMA foreign_key_check; INSERT INTO users(id,email,display_name,created_at) VALUES('restore_qa','restore-qa@example.invalid','before recovery','2026-10-27T00:00:00.000Z');");
+            assert.deepEqual(before[0].map(x=>x.name),files);assert.deepEqual(before[1],[]);
+            const point=await api('/d1/database/'+id+'/time_travel/bookmark');assert.ok(typeof point.bookmark==='string'&&point.bookmark.length>10);
+            evidence.bookmarkSha256=createHash('sha256').update(point.bookmark).digest('hex');
+            await query("UPDATE users SET display_name='after recovery' WHERE id='restore_qa'; INSERT INTO users(id,email,display_name,created_at) VALUES('restore_after','after-qa@example.invalid','must disappear','2026-10-27T00:00:00.000Z');");
+            const altered=await query('SELECT id,display_name FROM users ORDER BY id');assert.equal(altered[0].length,2);assert.equal(altered[0][1].display_name,'after recovery');
+            const meta=await api('/d1/database/'+id);assert.equal(meta.name,name);assert.ok(!forbidden.has(id));
+            const restoreStart=Date.now();await api('/d1/database/'+id+'/time_travel/restore?bookmark='+encodeURIComponent(point.bookmark),'POST');
+            let restored;
+            for(let attempt=0;attempt<12;attempt++){
+              restored=await query('SELECT id,display_name FROM users ORDER BY id; SELECT name FROM d1_migrations ORDER BY name; PRAGMA foreign_key_check;');
+              if(restored[0].length===1&&restored[0][0].display_name==='before recovery')break;
+              await new Promise(resolve=>setTimeout(resolve,1000));
+            }
+            assert.deepEqual(restored[0],[{id:'restore_qa',display_name:'before recovery'}]);assert.deepEqual(restored[1].map(x=>x.name),files);assert.deepEqual(restored[2],[]);
+            evidence.restoreDurationMs=Date.now()-restoreStart;evidence.restoredMigrations=44;evidence.foreignKeyViolations=0;evidence.syntheticOriginalRecovered=true;evidence.laterInsertRemoved=true;evidence.status='passed';
+          }catch(error){evidence.status='failed';evidence.failure=String(error.message).slice(0,500);process.exitCode=1;}
+          finally{
+            if(id&&!forbidden.has(id))try{const meta=await api('/d1/database/'+id);assert.equal(meta.name,name);await api('/d1/database/'+id,'DELETE');evidence.cleanup='deleted-exact-disposable-database';}catch(error){evidence.cleanup='failed';evidence.cleanupFailure=String(error.message).slice(0,300);process.exitCode=1;}
+            evidence.finishedAt=new Date().toISOString();writeFileSync('artifacts/isolated-d1-restore.json',JSON.stringify(evidence,null,2)+'\n');console.log(JSON.stringify({status:evidence.status,cleanup:evidence.cleanup,restoredMigrations:evidence.restoredMigrations,productionTouched:false,stagingTouched:false}));
+          }
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isolated-d1-restore-evidence
+          path: artifacts/isolated-d1-restore.json
+          retention-days: 30
