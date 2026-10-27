@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      SOURCE_SHA: 908ece4fecadb70b04ec8eeb421a1b39b38187d3
+      SOURCE_SHA: 770d24c67d533d5fa7ada2dd755594da44c561d3
       CLOUDFLARE_ACCOUNT_ID: 8ca23ac6d2cc906d4dd13b8da5ea2b25
       CLOUDFLARE_ENV: ''
       WORKERS_CI: '0'
@@ -36,7 +36,7 @@ jobs:
           PY
       - uses: actions/checkout@v4
         with:
-          ref: 908ece4fecadb70b04ec8eeb421a1b39b38187d3
+          ref: 770d24c67d533d5fa7ada2dd755594da44c561d3
           fetch-depth: 0
           persist-credentials: false
       - name: Require source identity, immutable history and successful full CI
@@ -45,12 +45,12 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          test "$(git rev-parse HEAD^{tree})" = 33c16b59193a9e933e24a27a12758c237028e1ac
+          test "$(git rev-parse HEAD^{tree})" = ef277dcb0df0f90e4ab82672787ba9bb38e97a01
           for f in $(git ls-tree -r --name-only 1fb09ce3d9af4b13e6fd248654a352cb55bdab17 -- database/migrations); do
             test "$(git rev-parse 1fb09ce3d9af4b13e6fd248654a352cb55bdab17:$f)" = "$(git hash-object "$f")"
           done
           for attempt in $(seq 1 60); do
-            result=$(gh api repos/info-rbp/proinspect/actions/runs/40444092020 --jq '[.head_sha,.status,(.conclusion // "pending")] | @tsv')
+            result=$(gh api repos/info-rbp/proinspect/actions/runs/40447492868 --jq '[.head_sha,.status,(.conclusion // "pending")] | @tsv')
             test "$(printf '%s' "$result" | cut -f1)" = "$SOURCE_SHA"
             if [ "$(printf '%s' "$result" | cut -f2)" = completed ]; then
               test "$(printf '%s' "$result" | cut -f3)" = success
@@ -66,6 +66,7 @@ jobs:
       - name: Install and build without provider or deployment credentials
         run: |
           pnpm install --frozen-lockfile
+          pnpm exec wrangler --version
           node /tmp/pcr-staging.mjs prepare
           node --input-type=module <<'JS'
           import {readFileSync,writeFileSync} from 'node:fs';
