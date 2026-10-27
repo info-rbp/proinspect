@@ -1,0 +1,34 @@
+name: Final sprint isolated verification toolchain
+on:
+  push:
+    branches: [feature/final-sprint-handbook-20261027]
+    paths: [.github/workflows/final-sprint-toolchain.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  toolchain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --frozen-lockfile
+      - name: Export reproducible isolated test dependencies without credentials
+        run: |
+          mkdir -p artifacts
+          git rev-parse HEAD > artifacts/toolchain-source-sha.txt
+          sha256sum pnpm-lock.yaml > artifacts/toolchain-lock-sha256.txt
+          node --version > artifacts/toolchain-node-version.txt
+          tar -czf artifacts/toolchain.tar.gz node_modules apps/marketing/node_modules apps/platform/node_modules
+          cp "$(command -v node)" artifacts/node
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-sprint-isolated-toolchain
+          path: artifacts/
+          retention-days: 1
