@@ -1,0 +1,94 @@
+name: PCR completion guarded production schema
+on:
+  push:
+    branches: [ops/sprint-recovery-20261027]
+    paths: [.github/workflows/pcr-completion-production-schema.yml]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: proinspect-production-release
+  cancel-in-progress: false
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SOURCE_SHA: 770d24c67d533d5fa7ada2dd755594da44c561d3
+      CLOUDFLARE_ACCOUNT_ID: 8ca23ac6d2cc906d4dd13b8da5ea2b25
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Preserve reviewed migration helper and require exact baseline changes
+        run: |
+          test "$(git hash-object ops/final-sprint-production.mjs)" = aff332ecbfbbd07627a388a8692fe6ca96361c91
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('ops/final-sprint-production.mjs').read_text()
+          replacements={
+            "baseline='9e5ea2c05668b7f9d4c47d1245714591aa103831'":"baseline='1fb09ce3d9af4b13e6fd248654a352cb55bdab17'",
+            'assert.equal(files.length,44)':'assert.equal(files.length,46)',
+            'files.slice(0,26)':'files.slice(0,44)',
+            '[26,44].includes':'[44,46].includes',
+            'Production schema has 44 migrations':'Production schema has 46 migrations'
+          }
+          for old,new in replacements.items():
+            assert s.count(old)==1,old
+            s=s.replace(old,new)
+          Path('/tmp/pcr-production.mjs').write_text(s)
+          PY
+      - uses: actions/checkout@v4
+        with:
+          ref: 770d24c67d533d5fa7ada2dd755594da44c561d3
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require exact source, successful complete CI and staged release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD^{tree})" = ef277dcb0df0f90e4ab82672787ba9bb38e97a01
+          for pair in '40447492868 770d24c67d533d5fa7ada2dd755594da44c561d3' '40447959228 1e98d20aac3b367f76d79db57b43d6f614c18599'; do
+            set -- $pair
+            ready=false
+            for attempt in $(seq 1 60); do
+              result=$(gh api "repos/info-rbp/proinspect/actions/runs/$1" --jq '[.head_sha,.status,(.conclusion // "pending")] | @tsv')
+              test "$(printf '%s' "$result" | cut -f1)" = "$2"
+              if [ "$(printf '%s' "$result" | cut -f2)" = completed ]; then
+                test "$(printf '%s' "$result" | cut -f3)" = success
+                ready=true
+                break
+              fi
+              sleep 15
+            done
+            test "$ready" = true
+          done
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies without production credentials
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec wrangler --version
+      - name: Check immutable 44-migration history and explicit production target
+        run: node /tmp/pcr-production.mjs prepare
+      - name: Check production identity, accepted staging and retain recovery bookmark
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: node /tmp/pcr-production.mjs before
+      - name: Apply additive 0045 and 0046 without activating campaign or payments
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.final-production-migration.json
+          node /tmp/pcr-production.mjs after
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pcr-completion-production-schema-evidence
+          path: artifacts/
+          retention-days: 30
