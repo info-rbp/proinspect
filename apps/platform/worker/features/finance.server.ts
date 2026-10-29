@@ -3,6 +3,7 @@ import {legalStatements} from './legal-acceptance.server';
 import { openPaymentCheckout, paymentSessionEvent, adjustmentEvent, type PaymentRecord } from './payment-lifecycle.server';
 import { boundedText } from '../../../../packages/http-bodies';
 import {billingEvent} from './stripe-billing.server';
+import { subscriptionRiskEvent } from './stripe-risk.server';
 import {contractorCheckoutEvent} from './contractor-payments.server';
 import { z } from 'zod';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
@@ -588,6 +589,12 @@ export async function stripeWebhook(env: Env, request: Request) {
     return billingEvent(env,event,raw);
   if (['checkout.session.completed','checkout.session.async_payment_succeeded','checkout.session.async_payment_failed','checkout.session.expired'].includes(event.type))
     return paymentSessionEvent(env,event,raw);
+  if (['charge.refunded','charge.dispute.created','charge.dispute.closed','radar.early_fraud_warning.created'].includes(event.type)){
+    const risk=await subscriptionRiskEvent(env,event,raw);
+    if(risk)return risk;
+    if(event.type==='radar.early_fraud_warning.created')
+      return {received:false,requiresReconciliation:true};
+  }
   if (['charge.refunded','refund.created','refund.updated','refund.failed','charge.dispute.created','charge.dispute.updated','charge.dispute.closed'].includes(event.type))
     return adjustmentEvent(env,event,raw);
   return {received:true,ignored:true};

@@ -27,3 +27,34 @@ export async function stripeApi(env:Env,path:string,form?:URLSearchParams,idempo
  assert(response.ok,502,'STRIPE_OPERATION_FAILED','Stripe did not complete this operation. Retry safely; settlement is not assumed.');
  return await response.json() as Record<string,any>;
 }
+
+/** Resolve invoice payments through the 2025-03-31.basil+ Stripe object graph.
+ * A PaymentIntent can pay multiple invoices: paginate, never pick the first.
+ */
+export async function paidInvoiceIdsForPaymentIntent(env:Env,paymentIntentId:string):Promise<string[]>{
+ sandboxConfiguration(env);
+ assert(/^pi_[A-Za-z0-9_]+$/.test(paymentIntentId),422,'PAYMENT_INTENT_INVALID','Invalid provider payment identity.');
+ const result:string[]=[];let cursor:string|null=null;
+ for(let page=0;page<10;page++){
+  const query=new URLSearchParams({status:'paid',limit:'100','payment[type]':'payment_intent',
+   'payment[payment_intent]':paymentIntentId});
+  if(cursor)query.set('starting_after',cursor);
+  const response=await fetch('https://api.stripe.com/v1/invoice_payments?'+query.toString(),{
+   headers:{Authorization:'Bearer '+env.STRIPE_SECRET_KEY,'Stripe-Version':STRIPE_API_VERSION},
+   signal:AbortSignal.timeout(15000)
+  });
+  assert(response.ok,502,'INVOICE_PAYMENT_LOOKUP_FAILED','Unable to verify payment-to-invoice ownership.');
+  const list=await response.json() as {data?:Array<Record<string,any>>;has_more?:boolean};
+  assert(Array.isArray(list.data),502,'INVOICE_PAYMENT_LIST_INVALID','Invalid provider invoice payment response.');
+  for(const item of list.data){
+   const invoiceId=typeof item.invoice==='string'?item.invoice:item.invoice?.id;
+   if(item.status==='paid'&&item.payment?.type==='payment_intent' &&
+      item.payment?.payment_intent===paymentIntentId &&
+      typeof invoiceId==='string'&&/^in_[A-Za-z0-9_]+$/.test(invoiceId))result.push(invoiceId);
+  }
+  if(!list.has_more)return [...new Set(result)];
+  cursor=list.data.at(-1)?.id??null;
+  assert(cursor&&/^inpay_[A-Za-z0-9_]+$/.test(cursor),502,'INVOICE_PAYMENT_PAGINATION','Invalid invoice payment page cursor.');
+ }
+ assert(false,503,'INVOICE_PAYMENT_PAGES_EXCEEDED','Invoice payment resolution requires manual reconciliation.');
+}

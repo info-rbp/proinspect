@@ -66,6 +66,8 @@ export async function paidResidentialCoverage(env: Env, clientId: string, proper
   WHERE b.client_id=? AND b.property_id=? AND b.sector='residential'
    AND b.status='active' AND i.status='paid' AND i.amount_paid_cents>0
    AND i.paid_through>?
+   AND NOT EXISTS(SELECT 1 FROM stripe_subscription_risk_holds h
+     WHERE h.stripe_subscription_id=b.stripe_subscription_id AND h.status='open')
    AND i.stripe_invoice_id=(
     SELECT latest.stripe_invoice_id FROM stripe_subscription_invoice_observations latest
     WHERE latest.stripe_subscription_id=b.stripe_subscription_id
