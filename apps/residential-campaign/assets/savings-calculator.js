@@ -53,6 +53,10 @@ if (form) {
     put('result-retained', money(result.retainedAgencyCents));
     put('result-alternative', money(result.alternativeTotalCents));
     put('result-difference', money(absDiff));
+    put('hero-difference', money(absDiff));
+    put('hero-difference-label', (lower ? 'lower' : 'higher') + ' modelled spending over ' + result.months + ' months');
+    put('result-alternative-label', retained ? 'Agency + ProInspect arrangement' : 'Self-managed + ProInspect arrangement');
+    put('alternative-bar-label', retained ? 'Agency + ProInspect' : 'Self-managed + ProInspect');
     put('result-difference-label', positiveText + ' over ' + result.months + ' months');
     put('result-difference-pct', pct === null ? 'Not applicable with $0 agency costs' :
       Math.abs(pct).toFixed(1) + '% ' + (lower ? 'below' : 'above') + ' modelled agency fees');
@@ -83,7 +87,7 @@ if (form) {
     const headline = node('result-outcome');
     if (headline) headline.classList.toggle('negative', !lower);
     const rows = Object.fromEntries(result.breakdown.map(item => [item.key, item]));
-    for (const row of form.querySelectorAll('[data-agency-fee]')) {
+    for (const row of document.querySelectorAll('[data-agency-fee]')) {
       const fee = rows[row.dataset.agencyFee];
       const freq = row.querySelector('[data-fee-frequency]');
       const cost = row.querySelector('[data-fee-total]');
