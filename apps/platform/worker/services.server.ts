@@ -2,6 +2,7 @@ import { legalStatements } from './features/legal-acceptance.server';
 import { requireReleaseApproval } from './features/release-governance.server';
 import { billingReady,verifySubscriptionTax,RESIDENTIAL } from './features/stripe-billing.server';
 import { verifySandboxAccount } from './features/stripe-client.server';
+import { liveResidentialReady, verifyLiveResidentialAccount, verifyLiveResidentialTax, isLiveResidential } from './features/residential-live-stripe.server';
 import { calendarSchedulingEnabled, calendarSyncStatement } from './features/calendar-scheduling.server';
 import { activity, projection } from '../../../packages/operations/core';
 import type { Env } from '../../../packages/database/types';
@@ -146,12 +147,21 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
     'ACCOUNT_ADMIN_REQUIRED',
     'An account administrator must add the property.',
   );
-  const paidOnboarding=w.kind==='landlord' && env.APP_ENV!=='production' && env.RESIDENTIAL_PAID_ONBOARDING_ENABLED==='true';
+  const live=isLiveResidential(env);
+  const paidOnboarding=w.kind==='landlord' && (live
+    ? env.RESIDENTIAL_LIVE_BILLING_ENABLED==='true'
+    : env.RESIDENTIAL_PAID_ONBOARDING_ENABLED==='true');
   if(paidOnboarding){
-    await requireReleaseApproval(env,'residential_paid');
-    billingReady(env);
-    await verifySandboxAccount(env);
-    await verifySubscriptionTax(env,RESIDENTIAL);
+    await requireReleaseApproval(env,live?'residential_live':'residential_paid');
+    if(live){
+      liveResidentialReady(env);
+      await verifyLiveResidentialAccount(env);
+      await verifyLiveResidentialTax(env);
+    }else{
+      billingReady(env);
+      await verifySandboxAccount(env);
+      await verifySubscriptionTax(env,RESIDENTIAL);
+    }
   }
   const commercial = w.kind === 'commercial';
   const allowedPropertyTypes = commercial
