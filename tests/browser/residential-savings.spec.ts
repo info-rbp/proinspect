@@ -59,7 +59,7 @@ test('keeping a traditional manager increases costs rather than asserting fictit
  await expect(page.locator('#result-alternative')).toHaveText('$17,072');
  await expect(page.locator('#result-difference')).toHaveText('$5,720');
  await expect(page.locator('#result-outcome')).toHaveClass(/negative/);
- await expect(page.locator('#result-status')).toContainText('agency fees still apply');
+ await expect(page.locator('#result-status')).toContainText('its fees still apply');
 });
 
 test('shorter tenancy recalculates agency renewals and mobile layout stays within viewport',async({page})=>{
