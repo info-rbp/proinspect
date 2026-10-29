@@ -1,4 +1,8 @@
 import { legalStatements } from './features/legal-acceptance.server';
+import { requireReleaseApproval } from './features/release-governance.server';
+import { billingReady,verifySubscriptionTax,RESIDENTIAL } from './features/stripe-billing.server';
+import { verifySandboxAccount } from './features/stripe-client.server';
+import { liveResidentialReady, verifyLiveResidentialAccount, verifyLiveResidentialTax, isLiveResidential } from './features/residential-live-stripe.server';
 import { calendarSchedulingEnabled, calendarSyncStatement } from './features/calendar-scheduling.server';
 import { activity, projection } from '../../../packages/operations/core';
 import type { Env } from '../../../packages/database/types';
@@ -143,6 +147,22 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
     'ACCOUNT_ADMIN_REQUIRED',
     'An account administrator must add the property.',
   );
+  const live=isLiveResidential(env);
+  const paidOnboarding=w.kind==='landlord' && (live
+    ? env.RESIDENTIAL_LIVE_BILLING_ENABLED==='true'
+    : env.RESIDENTIAL_PAID_ONBOARDING_ENABLED==='true');
+  if(paidOnboarding){
+    await requireReleaseApproval(env,live?'residential_live':'residential_paid');
+    if(live){
+      liveResidentialReady(env);
+      await verifyLiveResidentialAccount(env);
+      await verifyLiveResidentialTax(env);
+    }else{
+      billingReady(env);
+      await verifySandboxAccount(env);
+      await verifySubscriptionTax(env,RESIDENTIAL);
+    }
+  }
   const commercial = w.kind === 'commercial';
   const allowedPropertyTypes = commercial
     ? ['Office', 'Retail', 'Warehouse', 'Industrial', 'Mixed-use', 'Other']
@@ -163,7 +183,12 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
   if (existing) {
     try {
       await propertyAccess(env, user, w, existing.id);
-      return { propertyId: existing.id };
+      const enrolled = paidOnboarding
+        ? await statement(env.DB,
+            'SELECT 1 AS approved FROM residential_paid_property_enrollments WHERE client_id=? AND property_id=?',
+            w.scopeId, existing.id).first()
+        : null;
+      return { propertyId: existing.id, billingRequired: Boolean(enrolled) };
     } catch {
       assert(
         false,
@@ -215,11 +240,18 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
           propertyId, w.scopeId, user.display_name || user.email, user.email,
         )]
       : []),
+    ...(paidOnboarding
+      ? [statement(env.DB,
+          'INSERT INTO residential_paid_property_enrollments(client_id,property_id,enrolled_at) VALUES(?,?,?)',
+          w.scopeId,propertyId,time)]
+      : []),
     audit(env, user, 'property.created', 'property', propertyId, propertyId, {
       landlordType: commercial ? 'commercial' : 'residential',
     }),
   ]);
-  return { propertyId };
+  return { propertyId,
+    billingRequired: paidOnboarding
+  };
 }
 export async function createRequest(env: Env, user: Principal, w: Workspace, input: unknown) {
   const data = requestSchema.parse(input);

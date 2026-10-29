@@ -134,7 +134,11 @@
         "PAYMENT_RECONCILIATION_ENABLED": "false",
         "PCR_LAUNCH_ENABLED": "false",
         "PCR_DISCOUNT_REDEMPTION_ENABLED": "false",
-        "PCR_SAMPLE_PUBLICATION_ENABLED": "false"
+        "PCR_SAMPLE_PUBLICATION_ENABLED": "false",
+        "RESIDENTIAL_PAID_ONBOARDING_ENABLED": "false",
+        "RESIDENTIAL_LIVE_BILLING_ENABLED": "false",
+        "RESIDENTIAL_PAYMENT_GRACE_HOURS": "72",
+        "STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID": "acct_1USumSEynzcud8MV"
       },
       "d1_databases": [
         {
@@ -243,7 +247,11 @@
         "PAYMENT_RECONCILIATION_ENABLED": "false",
         "PCR_LAUNCH_ENABLED": "false",
         "PCR_DISCOUNT_REDEMPTION_ENABLED": "false",
-        "PCR_SAMPLE_PUBLICATION_ENABLED": "false"
+        "PCR_SAMPLE_PUBLICATION_ENABLED": "false",
+        "RESIDENTIAL_PAID_ONBOARDING_ENABLED": "false",
+        "RESIDENTIAL_LIVE_BILLING_ENABLED": "false",
+        "RESIDENTIAL_PAYMENT_GRACE_HOURS": "72",
+        "STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID": "acct_1USumSEynzcud8MV"
       },
       "d1_databases": [
         {

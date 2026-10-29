@@ -113,6 +113,19 @@
       ],
       "group": "rental-security",
       "format": "signing-key"
+    },
+    "STRIPE_RESIDENTIAL_LIVE_KEY": {
+      "targets": [
+        "platform"
+      ],
+      "group": "residential-live"
+    },
+    "STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "residential-live",
+      "format": "signing-key"
     }
   },
   "variables": {
@@ -498,6 +511,41 @@
       ],
       "group": "pcr",
       "optional": true
+    },
+    "RESIDENTIAL_PAID_ONBOARDING_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "RESIDENTIAL_LIVE_BILLING_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID": {
+      "targets": [
+        "platform"
+      ],
+      "group": "residential-live",
+      "default": "acct_1USumSEynzcud8MV"
+    },
+    "RESIDENTIAL_APPROVED_TAX_CODE": {
+      "targets": [
+        "platform"
+      ],
+      "group": "residential-live",
+      "default": ""
+    },
+    "RESIDENTIAL_PAYMENT_GRACE_HOURS": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "72"
     }
   },
   "generated": [

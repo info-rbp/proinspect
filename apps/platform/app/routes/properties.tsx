@@ -14,6 +14,8 @@ export async function action(args: ActionFunctionArgs) {
   const result = await response.json() as Record<string, any>;
   if (!response.ok) return data({ error: result.message, fields: result.fields }, { status: response.status });
   const serviceId = bookingIntent(f.get('serviceId'));
+  if (result.billingRequired && args.params.kind === 'landlord')
+    return redirect(`/w/${args.params.kind}/${args.params.scopeId}/stripe-subscribe/${encodeURIComponent(result.propertyId)}`);
   if (serviceId) return redirect(`/w/${args.params.kind}/${args.params.scopeId}/book/${serviceId}?property=${encodeURIComponent(result.propertyId)}`);
   return { ok: true, message: 'Property added to your account.' };
 }

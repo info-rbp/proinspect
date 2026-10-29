@@ -1,9 +1,14 @@
+import { paidResidentialCoverage } from '../../packages/authorization/subscription-booking';
 import { handleApi } from '../../apps/platform/worker/api';
 import { dispatchBondAlerts } from '../../apps/platform/worker/features/bond-alerts.server';
 import type { Env } from '../../packages/database/types';
 export { BookingScheduler } from '../../apps/platform/worker/scheduler';
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    if((env.APP_ENV==='local'||env.BUILD_SHA==='isolated-live-test-fixture') && new URL(request.url).pathname==='/__test__/residential-coverage'){
+      const url=new URL(request.url);
+      return paidResidentialCoverage(env,url.searchParams.get('client')??'',url.searchParams.get('property')??'').then(covered=>Response.json({covered}));
+    }
     if(env.APP_ENV==='local' && new URL(request.url).pathname==='/__test__/guest-disabled')
       return handleApi(new Request(new URL('/api/guest/requests',request.url),request),{...env,GUEST_BOOKINGS_ENABLED:'false'},ctx);
     if(env.APP_ENV==='local' && new URL(request.url).pathname==='/__test__/bond-deadlines/dispatch')
