@@ -8,6 +8,7 @@ import {projectInvoiceObservation,type InvoiceSnapshot} from '../../../../packag
 import {reconciliation} from './payment-lifecycle.server';
 import type { ProviderEvent } from './payment-lifecycle.server';
 import {sandboxConfiguration,stripeApi,verifySandboxAccount,SANDBOX_ACCOUNT} from './stripe-client.server';
+import {liveResidentialCredentialsReady,liveResidentialApi,LIVE_RESIDENTIAL_PORTAL_CONFIG,LIVE_RESIDENTIAL_ACCOUNT} from './residential-live-stripe.server';
 import {requireReleaseApproval} from './release-governance.server';
 import {isBillingPortalConfigurationId,isReviewedSandboxPortal} from '../../../../packages/finance/stripe-sandbox-policy';
 const sandbox=SANDBOX_ACCOUNT;
@@ -34,10 +35,27 @@ export async function billingDashboard(env:Env,user:Principal,w:Workspace){
  statement(env.DB,`SELECT * FROM billing_invoices WHERE ${clause} ORDER BY updated_at DESC LIMIT 100`,...values).all(),
  staff?statement(env.DB,"SELECT id,payment_id,code,created_at FROM payment_reconciliation_items WHERE status='open' ORDER BY created_at LIMIT 100").all():Promise.resolve({results:[]}),
  staff?statement(env.DB,"SELECT r.*,p.description,p.total_cents,p.refunded_cents FROM refund_requests r JOIN payments p ON p.id=r.payment_id ORDER BY requested_at DESC LIMIT 100").all():Promise.resolve({results:[]})]);
- return {accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,portalEnabled:env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true',invoicesEnabled:env.STRIPE_INVOICING_ENABLED==='true',refundsEnabled:env.STRIPE_REFUNDS_ENABLED==='true'};
+ return {accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,portalEnabled:env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true'||(env.APP_ENV==='production'&&env.RESIDENTIAL_LIVE_BILLING_ENABLED==='true'),invoicesEnabled:env.STRIPE_INVOICING_ENABLED==='true',refundsEnabled:env.STRIPE_REFUNDS_ENABLED==='true'};
 }
 export async function billingPortal(env:Env,user:Principal,w:Workspace){
- await clientAdmin(env,user,w);await requireReleaseApproval(env,'billing_portal');assert(env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true',503,'BILLING_PORTAL_DISABLED','Customer billing self-service is not activated.');
+ await clientAdmin(env,user,w);
+ if(env.APP_ENV==='production'&&w.kind==='landlord'){
+  liveResidentialCredentialsReady(env);
+  await requireReleaseApproval(env,'residential_live');
+  const a=await statement(env.DB,"SELECT stripe_customer_id FROM billing_accounts WHERE client_id=? AND mode='live' AND stripe_account_id=?",w.scopeId,LIVE_RESIDENTIAL_ACCOUNT).first<{stripe_customer_id:string}>();
+  assert(a?.stripe_customer_id,409,'LIVE_BILLING_CUSTOMER_MISSING','An enrolled Stripe customer is required.');
+  const policy=await liveResidentialApi(env,'/billing_portal/configurations/'+LIVE_RESIDENTIAL_PORTAL_CONFIG);
+  assert(policy.id===LIVE_RESIDENTIAL_PORTAL_CONFIG&&policy.active===true&&policy.livemode===true&&
+   policy.features?.invoice_history?.enabled===true&&policy.features?.payment_method_update?.enabled===true&&
+   policy.features?.subscription_cancel?.enabled===true&&policy.features?.subscription_cancel?.mode==='at_period_end'&&
+   policy.features?.subscription_cancel?.proration_behavior==='none'&&policy.features?.subscription_update?.enabled===false,
+   503,'LIVE_PORTAL_POLICY_MISMATCH','Stripe Customer Portal does not match the approved residential cancellation and billing policy.');
+  const s=await liveResidentialApi(env,'/billing_portal/sessions',new URLSearchParams({customer:a.stripe_customer_id,
+   configuration:LIVE_RESIDENTIAL_PORTAL_CONFIG,return_url:env.APP_ORIGIN+w.href+'/billing'}));
+  assert(typeof s.url==='string'&&new URL(s.url).origin==='https://billing.stripe.com',502,'LIVE_PORTAL_INVALID','Invalid live billing portal URL.');
+  await activity(env,user,'billing.portal_opened','client',w.scopeId).run();return {url:s.url};
+ }
+ await requireReleaseApproval(env,'billing_portal');assert(env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true',503,'BILLING_PORTAL_DISABLED','Customer billing self-service is not activated.');
  const configuration=env.STRIPE_BILLING_PORTAL_CONFIGURATION_ID;
  assert(isBillingPortalConfigurationId(configuration),503,'BILLING_PORTAL_CONFIGURATION_REQUIRED','Select the reviewed sandbox billing portal configuration.');
  const a=await statement(env.DB,"SELECT stripe_customer_id FROM billing_accounts WHERE client_id=? AND mode='test' AND stripe_account_id=?",w.scopeId,sandbox).first<{stripe_customer_id:string}>();assert(a?.stripe_customer_id,409,'BILLING_CUSTOMER_REQUIRED','A verified billing customer must be linked first.');

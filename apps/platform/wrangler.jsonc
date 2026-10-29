@@ -137,7 +137,8 @@
         "PCR_SAMPLE_PUBLICATION_ENABLED": "false",
         "RESIDENTIAL_PAID_ONBOARDING_ENABLED": "false",
         "RESIDENTIAL_LIVE_BILLING_ENABLED": "false",
-        "RESIDENTIAL_PAYMENT_GRACE_HOURS": "72"
+        "RESIDENTIAL_PAYMENT_GRACE_HOURS": "72",
+        "STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID": "acct_1USumSEynzcud8MV"
       },
       "d1_databases": [
         {
@@ -249,7 +250,8 @@
         "PCR_SAMPLE_PUBLICATION_ENABLED": "false",
         "RESIDENTIAL_PAID_ONBOARDING_ENABLED": "false",
         "RESIDENTIAL_LIVE_BILLING_ENABLED": "false",
-        "RESIDENTIAL_PAYMENT_GRACE_HOURS": "72"
+        "RESIDENTIAL_PAYMENT_GRACE_HOURS": "72",
+        "STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID": "acct_1USumSEynzcud8MV"
       },
       "d1_databases": [
         {

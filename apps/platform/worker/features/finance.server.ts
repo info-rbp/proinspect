@@ -4,7 +4,7 @@ import { openPaymentCheckout, paymentSessionEvent, adjustmentEvent, commitProvid
 import { boundedText } from '../../../../packages/http-bodies';
 import {billingEvent} from './stripe-billing.server';
 import { subscriptionRiskEvent } from './stripe-risk.server';
-import { liveResidentialReady } from './residential-live-stripe.server';
+import { liveResidentialCredentialsReady } from './residential-live-stripe.server';
 import {contractorCheckoutEvent} from './contractor-payments.server';
 import { z } from 'zod';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
@@ -546,7 +546,7 @@ export async function verifyHmac(secret: string, payload: string, hex: string) {
 }
 export async function stripeWebhook(env: Env, request: Request) {
   const residentialLive=new URL(request.url).pathname==='/api/webhooks/stripe/residential-live';
-  if(residentialLive)liveResidentialReady(env);
+  if(residentialLive)liveResidentialCredentialsReady(env);
   const webhookSecret=residentialLive?env.STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET:env.STRIPE_WEBHOOK_SECRET;
   assert(webhookSecret,503,'WEBHOOK_UNCONFIGURED','Payment webhook is not configured.');
   const raw = await boundedText(request, 1024 * 1024);

@@ -9,7 +9,7 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
   return {
     property: property.property,
     enabled: env.APP_ENV === 'production'
-      ? env.RESIDENTIAL_LIVE_BILLING_ENABLED === 'true' && env.RESIDENTIAL_APPROVED_TAX_CODE !== undefined &&
+      ? params.kind === 'landlord' && env.RESIDENTIAL_LIVE_BILLING_ENABLED === 'true' && /^txcd_[0-9]{8}$/.test(env.RESIDENTIAL_APPROVED_TAX_CODE ?? '') &&
         env.RESIDENTIAL_APPROVED_TAX_CODE !== 'txcd_10203001'
       : env.APP_ENV === 'staging' && env.STRIPE_BILLING_ENABLED === 'true' && env.STRIPE_TAX_READY === 'true',
     live: env.APP_ENV === 'production',

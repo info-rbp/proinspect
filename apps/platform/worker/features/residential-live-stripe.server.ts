@@ -21,7 +21,7 @@ export function nextFridayPerthAnchor(nowMs: number = Date.now()): number {
 export function isLiveResidential(env: Env): boolean {
  return env.APP_ENV === 'production';
 }
-export function liveResidentialReady(env: Env) {
+export function liveResidentialCredentialsReady(env: Env) {
  assert(isLiveResidential(env) && env.RESIDENTIAL_LIVE_BILLING_ENABLED === 'true', 503,
   'RESIDENTIAL_LIVE_DISABLED', 'Live residential billing awaits independent release approval.');
  assert(env.STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID === LIVE_RESIDENTIAL_ACCOUNT, 503,
@@ -30,12 +30,15 @@ export function liveResidentialReady(env: Env) {
   'RESIDENTIAL_KEY_MISSING', 'Configure a restricted live Stripe key in Cloudflare secrets.');
  assert(/^whsec_[A-Za-z0-9_]{16,}$/.test(env.STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET ?? ''), 503,
   'RESIDENTIAL_WEBHOOK_MISSING', 'Configure the residential live webhook signing secret.');
+}
+export function liveResidentialReady(env: Env) {
+ liveResidentialCredentialsReady(env);
  assert(/^txcd_[0-9]{8}$/.test(env.RESIDENTIAL_APPROVED_TAX_CODE ?? '') &&
   env.RESIDENTIAL_APPROVED_TAX_CODE !== 'txcd_10203001', 503,
   'RESIDENTIAL_TAX_CODE_UNAPPROVED', 'The property-services tax category needs approval; the current code classifies downloadable software.');
 }
 export async function liveResidentialApi(env: Env, path: string, form?: URLSearchParams, idempotencyKey?: string): Promise<Record<string, any>> {
- liveResidentialReady(env);
+ liveResidentialCredentialsReady(env);
  // Fail closed: no live subscription mutation, refund, price, or invoice mutation through this adapter.
  const read = /^\/(?:account|tax\/settings|tax\/registrations|prices\/price_[A-Za-z0-9_]+|products\/prod_[A-Za-z0-9_]+|checkout\/sessions\/cs_(?:live|test)_[A-Za-z0-9_]+|billing_portal\/configurations\/bpc_[A-Za-z0-9_]+|charges\/ch_[A-Za-z0-9_]+)$/.test(path)
   || /^\/invoice_payments\?[A-Za-z0-9_=%&.-]+$/.test(path);
