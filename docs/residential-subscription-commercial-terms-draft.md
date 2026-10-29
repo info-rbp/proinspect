@@ -38,3 +38,6 @@ ProInspect may send receipts, account notices, failed-payment reminders and canc
 6. Signed hosted production acceptance for online identity, property enrollment, Friday invoice processing, cancellation and data recovery.
 
 This draft is not automatically accepted or published to customers; versioned legal acceptance in ProInspect is required for the final approved terms.
+
+## Existing client migration safety
+Historic all-inclusive properties are explicitly grandfathered and cannot be auto-enrolled into a new live paid subscription by opening Checkout. Only properties created through the separately approved paid-onboarding release may start live Checkout. A reviewed, voluntary conversion path for existing property records requires independent commercial, legal, billing and entitlement acceptance before implementation; never suspend historic services merely because a subscriber clicks an incomplete payment session.

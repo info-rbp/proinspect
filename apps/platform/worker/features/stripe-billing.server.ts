@@ -62,6 +62,13 @@ export async function createSubscriptionCheckout(env:Env,user:Principal,w:Worksp
  assert(['landlord','commercial'].includes(w.kind) && (!live || w.kind==='landlord'),403,'SUBSCRIPTION_OWNER_REQUIRED','Only an authorised residential landlord may start the live Friday subscription.');
  await clientAdmin(env,user,w);const property=await propertyAccess(env,user,w,propertyId);
  assert(property.sector===(w.kind==='landlord'?'residential':'commercial'),422,'PROPERTY_SECTOR','Choose a property in this account.');
+ if(live){
+  const enrolled=await statement(env.DB,
+    'SELECT 1 AS approved FROM residential_paid_property_enrollments WHERE client_id=? AND property_id=?',
+    w.scopeId,propertyId).first();
+  assert(enrolled,409,'RESIDENTIAL_PAID_ENROLLMENT_REQUIRED',
+    'Existing all-inclusive properties cannot be converted into paid billing without an approved migration. Add an eligible new residential property or contact ProInspect.');
+ }
  const price=live?LIVE_RESIDENTIAL_PRICE:priceForSector(property.sector);
  const providerApi=live?liveResidentialApi:stripeApi;
  const billingAnchor=live?nextFridayPerthAnchor():undefined;
@@ -74,7 +81,7 @@ export async function createSubscriptionCheckout(env:Env,user:Principal,w:Worksp
  const id=old?.id??uid('sbl');
  const legal=await legalStatements(env,{kind:'user',id:user.id},'subscription',id,{clientId:w.scopeId,propertyId,priceId:price,quantity:1,environment:live?'live':'sandbox',weeklyBillingDay:live?'Friday':undefined},legalConsent);
  const customer=live?await ensureLiveResidentialCustomer(env,user,w.scopeId):await ensureBillingCustomer(env,user,w.scopeId);
- const enrollment=property.sector==='residential'
+ const enrollment=property.sector==='residential' && !live
    ? [statement(env.DB,"INSERT INTO residential_paid_property_enrollments(client_id,property_id,enrolled_at) VALUES(?,?,?) ON CONFLICT(client_id,property_id) DO NOTHING",w.scopeId,propertyId,now())]
    : [];
  if(!old)await env.DB.batch([...legal,...enrollment,statement(env.DB,"INSERT INTO stripe_billing_links(id,client_id,property_id,sector,price_id,stripe_customer_id,status,created_at,updated_at) VALUES(?,?,?,?,?,?,'pending',?,?)",id,w.scopeId,propertyId,property.sector,price,customer,now(),now())]);

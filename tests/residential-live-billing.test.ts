@@ -46,3 +46,10 @@ test('disabling customer acquisition does not disable signed renewal webhooks or
  assert.match(finance,/liveResidentialCredentialsReady\(env\)/);
  assert.doesNotMatch(ledger,/event\.livemode===live && \(!live \|\| env\.RESIDENTIAL_LIVE_BILLING_ENABLED/);
 });
+
+test('live checkout cannot silently migrate historical all-inclusive properties',()=>{
+ const src=readFileSync('apps/platform/worker/features/stripe-billing.server.ts','utf8');
+ assert.match(src,/RESIDENTIAL_PAID_ENROLLMENT_REQUIRED/);
+ assert.match(src,/property\.sector==='residential' && !live/);
+ assert.match(src,/Existing all-inclusive properties/i);
+});
