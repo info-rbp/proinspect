@@ -183,7 +183,12 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
   if (existing) {
     try {
       await propertyAccess(env, user, w, existing.id);
-      return { propertyId: existing.id };
+      const enrolled = paidOnboarding
+        ? await statement(env.DB,
+            'SELECT 1 AS approved FROM residential_paid_property_enrollments WHERE client_id=? AND property_id=?',
+            w.scopeId, existing.id).first()
+        : null;
+      return { propertyId: existing.id, billingRequired: Boolean(enrolled) };
     } catch {
       assert(
         false,

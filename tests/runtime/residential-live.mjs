@@ -87,6 +87,8 @@ try{
   assert.equal((await webhook(event('invoice.payment_failed',renewal))).status,200);
   assert.equal((await webhook(event('customer.subscription.updated',{...base,status:'past_due'}))).status,200);
   assert.equal(await covered(),true);
+  assert.equal((await webhook(event('invoice.payment_action_required',renewal))).status,200);
+  assert.equal(await covered(),true);
   await run("UPDATE stripe_subscription_invoice_observations SET paid_through=? WHERE stripe_invoice_id='in_live_first'",new Date((now-5*86400)*1000).toISOString());
   assert.equal(await covered(),false);
   await run("UPDATE stripe_subscription_invoice_observations SET paid_through=? WHERE stripe_invoice_id='in_live_first'",new Date((now+604800)*1000).toISOString());

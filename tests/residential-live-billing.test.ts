@@ -53,3 +53,16 @@ test('live checkout cannot silently migrate historical all-inclusive properties'
  assert.match(src,/property\.sector==='residential' && !live/);
  assert.match(src,/Existing all-inclusive properties/i);
 });
+
+test('failed renewals have a controlled grace, but voids, uncollectible invoices and fraud holds do not',()=>{
+ const code=readFileSync('packages/authorization/subscription-booking.ts','utf8');
+ const billing=readFileSync('apps/platform/worker/features/stripe-billing.server.ts','utf8');
+ assert.match(code,/failure_event\.event_type IN \('invoice\.payment_failed','invoice\.payment_action_required'\)/);
+ assert.match(billing,/eventType==='invoice\.payment_action_required'/);
+ assert.match(code,/stripe_subscription_risk_holds/);
+});
+test('re-adding a pending enrolled property can resume Checkout without migrating historical properties',()=>{
+ const code=readFileSync('apps/platform/worker/services.server.ts','utf8');
+ assert.match(code,/billingRequired: Boolean\(enrolled\)/);
+ assert.match(code,/residential_paid_property_enrollments/);
+});

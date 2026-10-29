@@ -87,6 +87,8 @@ export async function paidResidentialCoverage(env: Env, clientId: string, proper
   JOIN stripe_subscription_invoice_observations failed
     ON failed.stripe_subscription_id=b.stripe_subscription_id
    AND failed.stripe_customer_id=b.stripe_customer_id AND failed.price_id=b.price_id
+  JOIN stripe_billing_events failure_event ON failure_event.event_id=failed.last_event_id
+   AND failure_event.event_type IN ('invoice.payment_failed','invoice.payment_action_required')
   JOIN stripe_subscription_invoice_observations previous
     ON previous.stripe_subscription_id=b.stripe_subscription_id
    AND previous.stripe_customer_id=b.stripe_customer_id AND previous.price_id=b.price_id

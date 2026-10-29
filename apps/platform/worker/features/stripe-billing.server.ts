@@ -112,7 +112,7 @@ function invoiceSnapshot(o:Record<string,any>,eventType:string,created:number){
  const paid=eventType==='invoice.paid' && o.status==='paid' && o.paid===true &&
    Number.isSafeInteger(o.amount_paid) && o.amount_paid>0 &&
    item && (item.quantity??1)===1 && priceId!=='unverified' && end>0;
- const status=eventType==='invoice.payment_failed'||eventType==='invoice.voided'||
+ const status=eventType==='invoice.payment_failed'||eventType==='invoice.payment_action_required'||eventType==='invoice.voided'||
    eventType==='invoice.marked_uncollectible'?'failed':paid?'paid':eventType==='invoice.finalized'?'pending':'review';
  return {id:o.id,subscriptionId,customerId,priceId,status,amount:paid?o.amount_paid:0,
    invoiceCreated:Number.isSafeInteger(o.created)?o.created:created,paidThrough:through};
