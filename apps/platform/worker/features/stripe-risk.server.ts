@@ -30,6 +30,13 @@ export async function subscriptionRiskEvent(env:Env,event:ProviderEvent,raw:stri
  }
  if(!['charge.refunded','charge.dispute.created','radar.early_fraud_warning.created'].includes(t))return null;
  if(t==='charge.refunded' && !(Number.isSafeInteger(o.amount_refunded)&&o.amount_refunded>0))return null;
+ // Preserve the existing one-off adjustment adapter without fetching Stripe for an
+ // already-mapped one-off PaymentIntent or Charge.
+ const eventPaymentIntent=idOf(o.payment_intent);
+ const oneOff=eventPaymentIntent
+  ? await statement(env.DB,'SELECT id FROM payments WHERE stripe_payment_intent_id=?',eventPaymentIntent).first()
+  : await statement(env.DB,'SELECT id FROM payments WHERE stripe_charge_id=?',chargeId).first();
+ if(oneOff)return null;
  const directInvoice=idOf(o.invoice);
  let paymentIntent=idOf(o.payment_intent),customer=idOf(o.customer);
  if(!directInvoice && !paymentIntent){
