@@ -21,6 +21,7 @@ const mf = new Miniflare({
     DATA_ENCRYPTION_KEY: randomBytes(32).toString('base64'), STRIPE_WEBHOOK_SECRET: secret,
     STRIPE_ACCOUNT_ID: 'acct_1USumhEv62nbUZok', STRIPE_BILLING_ENABLED: 'false',
     STRIPE_GUEST_CHECKOUT_ENABLED: 'false', STRIPE_TAX_READY: 'false',
+    RESIDENTIAL_PAYMENT_GRACE_HOURS: '0', // Legacy immediate-suspension tests; live synthetic suite separately verifies approved grace.
     EMAIL_PROVIDER: 'local',
   },
 });
