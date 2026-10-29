@@ -51,6 +51,29 @@ function covers(
   const ids = includedServiceIds(sub.allowance_json);
   return ids.includes('*') || ids.includes(serviceId);
 }
+/** Paid enrollments are opt-in; historical all-inclusive customers are untouched.
+ * An active Stripe subscription without a settled, current invoice never grants access.
+ */
+export async function paidResidentialCoverage(env: Env, clientId: string, propertyId: string): Promise<boolean> {
+ const enrolled=await statement(env.DB,
+  'SELECT 1 AS enrolled FROM residential_paid_property_enrollments WHERE client_id=? AND property_id=?',
+  clientId,propertyId).first();
+ if(!enrolled)return true;
+ const covered=await statement(env.DB,`
+  SELECT b.id FROM stripe_billing_links b
+  JOIN stripe_subscription_invoice_observations i ON i.stripe_subscription_id=b.stripe_subscription_id
+   AND i.stripe_customer_id=b.stripe_customer_id AND i.price_id=b.price_id
+  WHERE b.client_id=? AND b.property_id=? AND b.sector='residential'
+   AND b.status='active' AND i.status='paid' AND i.amount_paid_cents>0
+   AND i.paid_through>?
+   AND i.stripe_invoice_id=(
+    SELECT latest.stripe_invoice_id FROM stripe_subscription_invoice_observations latest
+    WHERE latest.stripe_subscription_id=b.stripe_subscription_id
+     AND latest.stripe_customer_id=b.stripe_customer_id
+    ORDER BY latest.invoice_created DESC,latest.stripe_invoice_id DESC LIMIT 1
+   ) LIMIT 1`,clientId,propertyId,new Date().toISOString()).first();
+ return Boolean(covered);
+}
 export async function includedSubscriptionBooking(
   env: Env,
   clientId: string,
@@ -59,6 +82,7 @@ export async function includedSubscriptionBooking(
 ): Promise<IncludedBookingSubscription | null> {
   const subscriptions = await activeSubscriptions(env, clientId);
   const found = subscriptions.find((s) => covers(s, propertyId, serviceId));
+  if(found && !(await paidResidentialCoverage(env,clientId,propertyId)))return null;
   return found ? { id: found.id, planCode: found.plan_code } : null;
 }
 export async function subscriptionBookingCoverage(
@@ -68,12 +92,14 @@ export async function subscriptionBookingCoverage(
   services: Service[],
 ): Promise<Record<string, string[]>> {
   const subscriptions = await activeSubscriptions(env, clientId);
+  const coverage=await Promise.all(properties.map(p=>paidResidentialCoverage(env,clientId,p.id)));
   return Object.fromEntries(
-    properties.map((p) => [
+    properties.map((p,index) => [
       p.id,
       services
         .filter(
           (service) =>
+            coverage[index] &&
             service.active === 1 &&
             service.sectors.includes(p.sector) &&
             subscriptions.some((sub) => covers(sub, p.id, service.id)),

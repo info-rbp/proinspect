@@ -215,11 +215,19 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
           propertyId, w.scopeId, user.display_name || user.email, user.email,
         )]
       : []),
+    ...(w.kind === 'landlord' &&
+      env.APP_ENV !== 'production' && env.RESIDENTIAL_PAID_ONBOARDING_ENABLED === 'true'
+      ? [statement(env.DB,
+          'INSERT INTO residential_paid_property_enrollments(client_id,property_id,enrolled_at) VALUES(?,?,?)',
+          w.scopeId,propertyId,time)]
+      : []),
     audit(env, user, 'property.created', 'property', propertyId, propertyId, {
       landlordType: commercial ? 'commercial' : 'residential',
     }),
   ]);
-  return { propertyId };
+  return { propertyId,
+    billingRequired: w.kind === 'landlord' && env.APP_ENV !== 'production' && env.RESIDENTIAL_PAID_ONBOARDING_ENABLED === 'true'
+  };
 }
 export async function createRequest(env: Env, user: Principal, w: Workspace, input: unknown) {
   const data = requestSchema.parse(input);

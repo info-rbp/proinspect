@@ -134,7 +134,8 @@
         "PAYMENT_RECONCILIATION_ENABLED": "false",
         "PCR_LAUNCH_ENABLED": "false",
         "PCR_DISCOUNT_REDEMPTION_ENABLED": "false",
-        "PCR_SAMPLE_PUBLICATION_ENABLED": "false"
+        "PCR_SAMPLE_PUBLICATION_ENABLED": "false",
+        "RESIDENTIAL_PAID_ONBOARDING_ENABLED": "false"
       },
       "d1_databases": [
         {
@@ -243,7 +244,8 @@
         "PAYMENT_RECONCILIATION_ENABLED": "false",
         "PCR_LAUNCH_ENABLED": "false",
         "PCR_DISCOUNT_REDEMPTION_ENABLED": "false",
-        "PCR_SAMPLE_PUBLICATION_ENABLED": "false"
+        "PCR_SAMPLE_PUBLICATION_ENABLED": "false",
+        "RESIDENTIAL_PAID_ONBOARDING_ENABLED": "false"
       },
       "d1_databases": [
         {
