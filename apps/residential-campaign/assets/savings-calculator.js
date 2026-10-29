@@ -44,7 +44,7 @@ if (form) {
     const pct = result.differencePercent;
     const lower = result.differenceCents >= 0;
     const retained = values.arrangement === 'retain';
-    const positiveText = lower ? 'Lower modelled spending' : 'Higher modelled spending';
+    const positiveText = result.differenceCents === 0 ? 'Same modelled spending' : lower ? 'Lower modelled spending' : 'Higher modelled spending';
     put('result-period', result.months + ' months · ' + result.weeks + ' weeks · ' + result.properties +
       (result.properties === 1 ? ' property' : ' properties'));
     put('result-agency', money(result.agencyTotalCents));
@@ -54,12 +54,12 @@ if (form) {
     put('result-alternative', money(result.alternativeTotalCents));
     put('result-difference', money(absDiff));
     put('hero-difference', money(absDiff));
-    put('hero-difference-label', (lower ? 'lower' : 'higher') + ' modelled spending over ' + result.months + ' months');
+    put('hero-difference-label', (result.differenceCents === 0 ? 'equal' : lower ? 'lower' : 'higher') + ' modelled spending over ' + result.months + ' months');
     put('result-alternative-label', retained ? 'Agency + ProInspect arrangement' : 'Self-managed + ProInspect arrangement');
     put('alternative-bar-label', retained ? 'Agency + ProInspect' : 'Self-managed + ProInspect');
     put('result-difference-label', positiveText + ' over ' + result.months + ' months');
     put('result-difference-pct', pct === null ? 'Not applicable with $0 agency costs' :
-      Math.abs(pct).toFixed(1) + '% ' + (lower ? 'below' : 'above') + ' modelled agency fees');
+      Math.abs(pct).toFixed(1) + '% ' + (result.differenceCents === 0 ? 'difference from' : lower ? 'below' : 'above') + ' modelled agency fees');
     put('result-monthly-agency', money(result.agencyMonthlyEquivalentCents) + '/month');
     put('result-monthly-alternative', money(result.alternativeMonthlyEquivalentCents) + '/month');
     put('result-rental', money(result.rentalIncomeTotalCents));

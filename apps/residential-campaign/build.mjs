@@ -7,7 +7,7 @@ const root=dirname(fileURLToPath(import.meta.url));
 const routeFiles={'/':'index.html','/inclusions':'inclusions.html','/getting-started':'getting-started.html','/savings':'savings.html','/sign-up':'sign-up.html'};
 const contents=Object.fromEntries([
  ...Object.entries(routeFiles).map(([route,file])=>[route,readFileSync(join(root,'pages',file),'utf8')]),
- ...['site.css','site.js'].map(file=>['/assets/'+file,readFileSync(join(root,'assets',file),'utf8')]),
+ ...['site.css','site.js','savings-calculator.js','savings-model.mjs'].map(file=>['/assets/'+file,readFileSync(join(root,'assets',file),'utf8')]),
 ]);
 for(const [route,html] of Object.entries(contents)){
  if(route.startsWith('/assets/'))continue;
@@ -24,7 +24,7 @@ export default { async fetch(request) {
  if(path==='/api/health')return Response.json({ok:true,application:'residential-subscription-campaign',environment:'preview'},{headers});
  if(path==='/robots.txt')return new Response('User-agent: *\\nDisallow: /\\n',{headers:{...headers,'Content-Type':'text/plain; charset=utf-8'}});
  if(!Object.prototype.hasOwnProperty.call(content,path))return new Response('Not found',{status:404,headers});
- const type=path.endsWith('.css')?'text/css':path.endsWith('.js')?'text/javascript':'text/html';
+ const type=path.endsWith('.css')?'text/css':(path.endsWith('.js')||path.endsWith('.mjs'))?'text/javascript':'text/html';
  return new Response(request.method==='HEAD'?null:content[path],{headers:{...headers,'Content-Type':type+'; charset=utf-8','Cache-Control':'public, max-age=300'}});
 }};`;
 mkdirSync(join(root,'dist'),{recursive:true});

@@ -16,10 +16,13 @@ test('customer signup stays on the existing verified ProInspect identity system'
  assert.doesNotMatch(html,/<form[^>]*method=["']post/i);
 });
 test('subscription calculator uses $50 ex GST and $55 including GST',()=>{
- const js=read('apps/residential-campaign/assets/site.js');
- assert.match(js,/count\*5000/);assert.match(js,/count\*5500/);
+ const model=read('apps/residential-campaign/assets/savings-model.mjs');
+ assert.match(model,/weeks \* 5500/);
+ assert.match(model,/agencyPerPropertyCents/);
  const html=read('apps/residential-campaign/pages/savings.html');
- assert.match(html,/\$2,860/);assert.match(html,/\$2,600/);
+ assert.match(html,/<script type="module" src="\/assets\/savings-calculator\.js"/);
+ assert.match(html, /\$11,352/);assert.match(html, /\$5,720/);
+ assert.match(html, /\$5,632/);assert.match(html, /retained management/i);
 });
 test('Worker remains isolated, noindexed and contains no Stripe secret configuration',()=>{
  const config=read('apps/residential-campaign/wrangler.jsonc');
@@ -28,7 +31,7 @@ test('Worker remains isolated, noindexed and contains no Stripe secret configura
 
 test('standalone Cloudflare Worker bundles five safe routes and passes syntax checking',()=>{
  const output=execFileSync('node',['apps/residential-campaign/build.mjs'],{encoding:'utf8'});
- assert.match(output,/7 campaign routes\/assets/);
+ assert.match(output,/9 campaign routes\/assets/);
  execFileSync('node',['--check','apps/residential-campaign/dist/worker.mjs']);
  const bundle=read('apps/residential-campaign/dist/worker.mjs');
  assert.match(bundle,/\$50/);
