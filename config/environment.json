@@ -500,9 +500,11 @@
       "optional": true
     },
     "RESIDENTIAL_PAID_ONBOARDING_ENABLED": {
-      "group": "staging",
-      "format": "boolean",
-      "description": "Gates newly registered residential properties behind verified paid subscriptions only after hosted release acceptance."
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
     }
   },
   "generated": [
