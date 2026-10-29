@@ -66,3 +66,11 @@ test('re-adding a pending enrolled property can resume Checkout without migratin
  assert.match(code,/billingRequired: Boolean\(enrolled\)/);
  assert.match(code,/residential_paid_property_enrollments/);
 });
+
+test('an existing live subscriber can still access cancellation after the new-signup release is disabled',()=>{
+ const source=readFileSync('apps/platform/worker/features/billing-accounts.server.ts','utf8');
+ assert.match(source,/w\.kind==='landlord'&&accounts\.results\.some/);
+ assert.match(source,/right to cancel even when new signups are paused/);
+ assert.match(source,/subscription_cancel\?\.mode==='at_period_end'/);
+ assert.match(source,/await clientAdmin\(env,user,w\)/);
+});

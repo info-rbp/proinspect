@@ -35,13 +35,13 @@ export async function billingDashboard(env:Env,user:Principal,w:Workspace){
  statement(env.DB,`SELECT * FROM billing_invoices WHERE ${clause} ORDER BY updated_at DESC LIMIT 100`,...values).all(),
  staff?statement(env.DB,"SELECT id,payment_id,code,created_at FROM payment_reconciliation_items WHERE status='open' ORDER BY created_at LIMIT 100").all():Promise.resolve({results:[]}),
  staff?statement(env.DB,"SELECT r.*,p.description,p.total_cents,p.refunded_cents FROM refund_requests r JOIN payments p ON p.id=r.payment_id ORDER BY requested_at DESC LIMIT 100").all():Promise.resolve({results:[]})]);
- return {accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,portalEnabled:env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true'||(env.APP_ENV==='production'&&env.RESIDENTIAL_LIVE_BILLING_ENABLED==='true'),invoicesEnabled:env.STRIPE_INVOICING_ENABLED==='true',refundsEnabled:env.STRIPE_REFUNDS_ENABLED==='true'};
+ return {accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,portalEnabled:env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true'||(env.APP_ENV==='production'&&w.kind==='landlord'&&accounts.results.some((a:any)=>a.mode==='live')),invoicesEnabled:env.STRIPE_INVOICING_ENABLED==='true',refundsEnabled:env.STRIPE_REFUNDS_ENABLED==='true'};
 }
 export async function billingPortal(env:Env,user:Principal,w:Workspace){
  await clientAdmin(env,user,w);
  if(env.APP_ENV==='production'&&w.kind==='landlord'){
   liveResidentialCredentialsReady(env);
-  await requireReleaseApproval(env,'residential_live');
+  // Existing verified subscribers retain the right to cancel even when new signups are paused.
   const a=await statement(env.DB,"SELECT stripe_customer_id FROM billing_accounts WHERE client_id=? AND mode='live' AND stripe_account_id=?",w.scopeId,LIVE_RESIDENTIAL_ACCOUNT).first<{stripe_customer_id:string}>();
   assert(a?.stripe_customer_id,409,'LIVE_BILLING_CUSTOMER_MISSING','An enrolled Stripe customer is required.');
   const policy=await liveResidentialApi(env,'/billing_portal/configurations/'+LIVE_RESIDENTIAL_PORTAL_CONFIG);
