@@ -13,7 +13,7 @@ await build({entryPoints:['tests/runtime/entry.ts'],outfile:'artifacts/residenti
 const secret='wh'+'sec_'+'synthetic_live_webhook_'+randomBytes(10).toString('hex');
 const account='acct_1USumSEynzcud8MV';
 const mf=new Miniflare({
- modules:true,scriptPath:'artifacts/residential-live-worker.mjs',compatibilityDate:'2026-10-01',
+ modules:true,scriptPath:'artifacts/residential-live-worker.mjs',compatibilityDate:'2026-07-01',
  compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'residential-live-synthetic'},
  r2Buckets:{DOCUMENTS:'residential-live-documents',RESTRICTED_DOCUMENTS:'residential-live-restricted'},
  durableObjects:{SCHEDULER:{className:'BookingScheduler',useSQLite:true}},
