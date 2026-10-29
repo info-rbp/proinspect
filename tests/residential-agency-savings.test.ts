@@ -16,7 +16,7 @@ test('reference 24-month Perth agency model and ProInspect $55 weekly are exact'
  assert.equal(result.differenceCents,563_200);
  assert.ok(Math.abs(result.differencePercent-49.6124)<.01);
  assert.ok(Math.abs(result.agencyEffectiveRentPercent-14.5538)<.01);
- assert.deepEqual(result.breakdown.map(x=>x.perPropertyCents),
+ assert.deepEqual(result.breakdown.map((x: {perPropertyCents:number})=>x.perPropertyCents),
   [772200,165000,44000,22000,66000,27500,22000,16500,0]);
 });
 
@@ -34,7 +34,7 @@ test('fee schedule and commission sensitivity correctly update totals', () => {
  assert.equal(calculateResidentialSavings({commissionPct:10}).agencyTotalCents,1_221_000);
  const renewalIncluded=calculateResidentialSavings({include:{renewal:false}});
  assert.equal(renewalIncluded.agencyTotalCents,1_107_700);
- assert.equal(renewalIncluded.breakdown.find(x=>x.key==='renewal')?.totalCents,0);
+ assert.equal(renewalIncluded.breakdown.find((x: {key:string;totalCents:number})=>x.key==='renewal')?.totalCents,0);
  const freeInspections=calculateResidentialSavings({include:{routine:false}});
  assert.equal(freeInspections.agencyTotalCents,1_069_200);
  const optionalAdmin=calculateResidentialSavings({adminMonthlyEx:10});
