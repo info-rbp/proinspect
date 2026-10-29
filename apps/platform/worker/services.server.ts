@@ -1,4 +1,7 @@
 import { legalStatements } from './features/legal-acceptance.server';
+import { requireReleaseApproval } from './features/release-governance.server';
+import { billingReady,verifySubscriptionTax,RESIDENTIAL } from './features/stripe-billing.server';
+import { verifySandboxAccount } from './features/stripe-client.server';
 import { calendarSchedulingEnabled, calendarSyncStatement } from './features/calendar-scheduling.server';
 import { activity, projection } from '../../../packages/operations/core';
 import type { Env } from '../../../packages/database/types';
@@ -143,6 +146,13 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
     'ACCOUNT_ADMIN_REQUIRED',
     'An account administrator must add the property.',
   );
+  const paidOnboarding=w.kind==='landlord' && env.APP_ENV!=='production' && env.RESIDENTIAL_PAID_ONBOARDING_ENABLED==='true';
+  if(paidOnboarding){
+    await requireReleaseApproval(env,'residential_paid');
+    billingReady(env);
+    await verifySandboxAccount(env);
+    await verifySubscriptionTax(env,RESIDENTIAL);
+  }
   const commercial = w.kind === 'commercial';
   const allowedPropertyTypes = commercial
     ? ['Office', 'Retail', 'Warehouse', 'Industrial', 'Mixed-use', 'Other']
@@ -215,8 +225,7 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
           propertyId, w.scopeId, user.display_name || user.email, user.email,
         )]
       : []),
-    ...(w.kind === 'landlord' &&
-      env.APP_ENV !== 'production' && env.RESIDENTIAL_PAID_ONBOARDING_ENABLED === 'true'
+    ...(paidOnboarding
       ? [statement(env.DB,
           'INSERT INTO residential_paid_property_enrollments(client_id,property_id,enrolled_at) VALUES(?,?,?)',
           w.scopeId,propertyId,time)]
@@ -226,7 +235,7 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
     }),
   ]);
   return { propertyId,
-    billingRequired: w.kind === 'landlord' && env.APP_ENV !== 'production' && env.RESIDENTIAL_PAID_ONBOARDING_ENABLED === 'true'
+    billingRequired: paidOnboarding
   };
 }
 export async function createRequest(env: Env, user: Principal, w: Workspace, input: unknown) {
