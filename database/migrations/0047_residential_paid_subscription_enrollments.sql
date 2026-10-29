@@ -27,5 +27,5 @@ CREATE INDEX stripe_subscription_invoice_subscription ON stripe_subscription_inv
 );
 CREATE TRIGGER stripe_subscription_invoice_identity BEFORE UPDATE ON stripe_subscription_invoice_observations
 WHEN NEW.stripe_subscription_id!=OLD.stripe_subscription_id OR NEW.stripe_customer_id!=OLD.stripe_customer_id
- OR NEW.price_id!=OLD.price_id OR NEW.invoice_created!=OLD.invoice_created
+ OR (OLD.price_id!='unverified' AND NEW.price_id NOT IN(OLD.price_id,'unverified')) OR NEW.invoice_created!=OLD.invoice_created
 BEGIN SELECT RAISE(ABORT,'STRIPE_INVOICE_IDENTITY_IMMUTABLE'); END;

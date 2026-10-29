@@ -66,7 +66,7 @@ export async function createSubscriptionCheckout(env:Env,user:Principal,w:Worksp
    : [];
  if(!old)await env.DB.batch([...legal,...enrollment,statement(env.DB,"INSERT INTO stripe_billing_links(id,client_id,property_id,sector,price_id,stripe_customer_id,status,created_at,updated_at) VALUES(?,?,?,?,?,?,'pending',?,?)",id,w.scopeId,propertyId,property.sector,price,customer,now(),now())]);
  else {assert(old.stripe_customer_id===customer,409,'BILLING_CUSTOMER_CHANGED','Billing customer mapping changed.');
-   if(enrollment.length)await env.DB.batch([...legal,...enrollment]);
+   if(enrollment.length)await env.DB.batch(enrollment);
  }
  const form=checkoutForm({origin:env.APP_ORIGIN,linkId:id,clientId:w.scopeId,priceId:price});form.set('customer',customer);form.set('customer_update[address]','auto');form.set('billing_address_collection','required');
  const session=await stripeApi(env,'/checkout/sessions',form,'proinspect-subscription-'+id);
@@ -134,9 +134,13 @@ export async function billingEvent(env:Env,event:ProviderEvent,raw:string){
     stripe_invoice_id,stripe_subscription_id,stripe_customer_id,price_id,status,currency,amount_paid_cents,invoice_created,paid_through,last_event_created,last_event_id,updated_at
    ) VALUES(?,?,?,?,?,'aud',?,?,?,?,?,?)
    ON CONFLICT(stripe_invoice_id) DO UPDATE SET
+     price_id=CASE WHEN stripe_subscription_invoice_observations.price_id='unverified' THEN excluded.price_id ELSE stripe_subscription_invoice_observations.price_id END,
      status=excluded.status,amount_paid_cents=excluded.amount_paid_cents,paid_through=excluded.paid_through,
      last_event_created=excluded.last_event_created,last_event_id=excluded.last_event_id,updated_at=excluded.updated_at
-   WHERE excluded.last_event_created>stripe_subscription_invoice_observations.last_event_created`,
+   WHERE excluded.last_event_created>stripe_subscription_invoice_observations.last_event_created
+     AND (excluded.price_id=stripe_subscription_invoice_observations.price_id
+      OR excluded.price_id='unverified'
+      OR stripe_subscription_invoice_observations.price_id='unverified')`,
     invoiceData.id,invoiceData.subscriptionId,invoiceData.customerId,invoiceData.priceId,
     invoiceData.status,invoiceData.amount,invoiceData.invoiceCreated,invoiceData.paidThrough,
     created,event.id,time));

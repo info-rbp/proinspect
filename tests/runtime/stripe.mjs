@@ -34,8 +34,10 @@ try {
   for (const sql of statementSql) await db.prepare(sql).run();
   await run("INSERT INTO clients(id,name,client_type,created_at) VALUES('cli_stripe_test','Sandbox account','landlord','2026-10-25')");
   await run("INSERT INTO properties(id,address,suburb,postcode,address_key,sector,created_at) VALUES('prop_stripe_test','1 Test Street','Perth','6000','test-stripe-25','residential','2026-10-25')");
-  await run("INSERT INTO stripe_billing_links(id,client_id,property_id,sector,price_id,session_id,stripe_customer_id,status,created_at,updated_at) VALUES('sbl_stripe_test','cli_stripe_test','prop_stripe_test','residential','price_1UUOxKEv62nbUZoksUBo5igf','cs_test_stripe_sub','cus_stripe_test','pending','2026-10-25','2026-10-25')");
+  await run("INSERT INTO stripe_billing_links(id,client_id,property_id,sector,price_id,session_id,stripe_customer_id,status,created_at,updated_at) VALUES('sbl_stripe_test','cli_stripe_test','prop_stripe_test','residential','price_1UVkM6Ev62nbUZoknG7CA5P5','cs_test_stripe_sub','cus_stripe_test','pending','2026-10-25','2026-10-25')");
   const subscriptionsBefore = (await get('SELECT COUNT(*) n FROM subscriptions')).n;
+  await run("INSERT INTO residential_paid_property_enrollments(client_id,property_id,enrolled_at) VALUES('cli_stripe_test','prop_stripe_test','2026-10-29')");
+  async function coverage(){const r=await mf.dispatchFetch('http://localhost/__test__/residential-coverage?client=cli_stripe_test&property=prop_stripe_test');assert.equal(r.status,200);return (await r.json()).covered;}
   async function webhook(event, overrideSecret) {
     const raw=JSON.stringify(event), ts=Math.floor(Date.now()/1000);
     const sig=createHmac('sha256',overrideSecret??secret).update(ts+'.'+raw).digest('hex');
@@ -46,7 +48,7 @@ try {
   }
   let seq=1;
   const event=(type,object,created=seq++)=>({id:`evt_${type.replaceAll('.','_')}_${created}`,type,livemode:false,created,data:{object}});
-  const s={id:'sub_stripe_test',customer:'cus_stripe_test',metadata:{billing_link_id:'sbl_stripe_test'},items:{data:[{price:{id:'price_1UUOxKEv62nbUZoksUBo5igf'}}]}};
+  const s={id:'sub_stripe_test',customer:'cus_stripe_test',metadata:{billing_link_id:'sbl_stripe_test'},items:{data:[{price:{id:'price_1UVkM6Ev62nbUZoknG7CA5P5'}}]}};
   await check('rejects unsigned and incorrectly signed webhook payloads',async()=>{
     assert.equal((await webhook(event('checkout.session.completed',{id:'cs_test_stripe_sub',mode:'subscription'}),'wrong')).status,400);
   });
@@ -56,6 +58,7 @@ try {
     assert.equal((await get('SELECT status FROM stripe_billing_links WHERE id=?','sbl_stripe_test')).status,'incomplete');
     assert.equal((await get('SELECT COUNT(*) n FROM subscriptions')).n,subscriptionsBefore);
   });
+  await check('payment-gated property cannot use included services before payment',async()=>{assert.equal(await coverage(),false)});
   const active=event('customer.subscription.created',{...s,status:'active'},300);
   await check('lifecycle webhook updates sandbox billing ledger once',async()=>{
     assert.equal((await webhook(active)).status,200);
@@ -73,6 +76,34 @@ try {
     assert.equal(r.status,200,JSON.stringify(r.body));
     assert.equal((await get("SELECT needs_reconciliation FROM stripe_billing_events WHERE event_type='invoice.paid'")).needs_reconciliation,1);
     assert.equal((await get('SELECT COUNT(*) n FROM subscriptions')).n,subscriptionsBefore);
+    assert.equal(await coverage(),false);
+  });
+  const future=Math.floor(Date.now()/1000)+7*86400;
+  const invoiceLine={price:{id:'price_1UVkM6Ev62nbUZoknG7CA5P5'},quantity:1,period:{end:future}};
+  await check('verified paid invoice activates only the enrolled property',async()=>{
+    const paid={id:'in_stripe_paid',subscription:s.id,customer:s.customer,currency:'aud',status:'paid',paid:true,
+      amount_paid:5500,amount_remaining:0,created:501,lines:{data:[invoiceLine]}};
+    const r=await webhook(event('invoice.paid',paid,370));
+    assert.equal(r.status,200,JSON.stringify(r.body));
+    assert.equal(await coverage(),true);
+    assert.equal((await get("SELECT status FROM stripe_subscription_invoice_observations WHERE stripe_invoice_id='in_stripe_paid'")).status,'paid');
+  });
+  await check('failed renewal invoice immediately blocks included booking',async()=>{
+    const failed={id:'in_stripe_renewal',subscription:s.id,customer:s.customer,currency:'aud',status:'open',paid:false,
+      amount_paid:0,amount_remaining:5500,created:502,lines:{data:[invoiceLine]}};
+    const r=await webhook(event('invoice.payment_failed',failed,380));
+    assert.equal(r.status,200,JSON.stringify(r.body));
+    assert.equal(await coverage(),false);
+  });
+  await check('paid renewal restores entitlement and stale failure cannot remove it',async()=>{
+    const paid={id:'in_stripe_renewal',subscription:s.id,customer:s.customer,currency:'aud',status:'paid',paid:true,
+      amount_paid:5500,amount_remaining:0,created:502,lines:{data:[invoiceLine]}};
+    const res=await webhook(event('invoice.paid',paid,390));
+    assert.equal(res.status,200,JSON.stringify(res.body));
+    assert.equal(await coverage(),true);
+    const stale={...paid,status:'open',paid:false,amount_paid:0};
+    assert.equal((await webhook(event('invoice.payment_failed',stale,385))).status,200);
+    assert.equal(await coverage(),true);
   });
   await check('wrong subscription price fails closed',async()=>{
     const bad={...s,items:{data:[{price:{id:'price_unapproved'}}]},status:'active'};
@@ -82,7 +113,8 @@ try {
   await check('cancelled record is retained and separately accounted',async()=>{
     assert.equal((await webhook(event('customer.subscription.deleted',{...s,status:'canceled'},500))).status,200);
     assert.equal((await get('SELECT status FROM stripe_billing_links WHERE id=?','sbl_stripe_test')).status,'canceled');
-    await run("INSERT INTO stripe_billing_links(id,client_id,property_id,sector,price_id,status,created_at,updated_at) VALUES('sbl_new','cli_stripe_test','prop_stripe_test','residential','price_1UUOxKEv62nbUZoksUBo5igf','pending','2026-10-25','2026-10-25')");
+    assert.equal(await coverage(),false);
+    await run("INSERT INTO stripe_billing_links(id,client_id,property_id,sector,price_id,status,created_at,updated_at) VALUES('sbl_new','cli_stripe_test','prop_stripe_test','residential','price_1UVkM6Ev62nbUZoknG7CA5P5','pending','2026-10-25','2026-10-25')");
     assert.equal((await get('SELECT COUNT(*) n FROM stripe_billing_links')).n,2);
   });
   await check('existing one-off payment webhooks remain idempotent',async()=>{
