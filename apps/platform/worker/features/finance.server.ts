@@ -1,6 +1,6 @@
 import {requireReleaseApproval} from './release-governance.server';
 import {legalStatements} from './legal-acceptance.server';
-import { openPaymentCheckout, paymentSessionEvent, adjustmentEvent, type PaymentRecord } from './payment-lifecycle.server';
+import { openPaymentCheckout, paymentSessionEvent, adjustmentEvent, commitProviderEvent, reconciliation, type PaymentRecord } from './payment-lifecycle.server';
 import { boundedText } from '../../../../packages/http-bodies';
 import {billingEvent} from './stripe-billing.server';
 import { subscriptionRiskEvent } from './stripe-risk.server';
@@ -593,7 +593,7 @@ export async function stripeWebhook(env: Env, request: Request) {
     const risk=await subscriptionRiskEvent(env,event,raw);
     if(risk)return risk;
     if(event.type==='radar.early_fraud_warning.created')
-      return {received:false,requiresReconciliation:true};
+      return commitProviderEvent(env,event,raw,[reconciliation(env,event.id,null,'unmatched_subscription_fraud_warning',String(event.data.object.id??''))]);
   }
   if (['charge.refunded','refund.created','refund.updated','refund.failed','charge.dispute.created','charge.dispute.updated','charge.dispute.closed'].includes(event.type))
     return adjustmentEvent(env,event,raw);

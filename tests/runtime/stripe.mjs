@@ -105,6 +105,35 @@ try {
     assert.equal((await webhook(event('invoice.payment_failed',stale,385))).status,200);
     assert.equal(await coverage(),true);
   });
+  await check('signed subscription dispute holds service until a won outcome',async()=>{
+    const disputed={id:'dp_stripe_sub_test',charge:'ch_stripe_sub',invoice:'in_stripe_renewal',
+      customer:'cus_stripe_test',payment_intent:'pi_stripe_sub',status:'needs_response'};
+    const response=await webhook(event('charge.dispute.created',disputed,395));
+    assert.equal(response.status,200,JSON.stringify(response.body));
+    assert.equal(await coverage(),false);
+    assert.equal((await get("SELECT status FROM stripe_subscription_risk_holds WHERE reason='dispute'")).status,'open');
+    const closed=await webhook(event('charge.dispute.closed',{...disputed,status:'won'},396));
+    assert.equal(closed.status,200,JSON.stringify(closed.body));
+    assert.equal(await coverage(),true);
+  });
+  await check('partial refund of settled subscription invoice suspends included access',async()=>{
+    const r=await webhook(event('charge.refunded',{
+      id:'ch_stripe_sub',invoice:'in_stripe_renewal',customer:'cus_stripe_test',
+      payment_intent:'pi_stripe_sub',currency:'aud',amount_refunded:100,refunded:true,
+    },405));
+    assert.equal(r.status,200,JSON.stringify(r.body));
+    assert.equal(await coverage(),false);
+    assert.equal((await get("SELECT status FROM stripe_subscription_risk_holds WHERE reason='refunded'")).status,'open');
+  });
+  await check('fraud warning remains independently held and receipt replay is idempotent',async()=>{
+    const e=event('radar.early_fraud_warning.created',{
+      id:'iss_stripe_warning',charge:'ch_stripe_fraud',invoice:'in_stripe_renewal',
+      customer:'cus_stripe_test',payment_intent:'pi_stripe_sub',
+    },410);
+    assert.equal((await webhook(e)).status,200);
+    assert.equal((await webhook(e)).body.replayed,true);
+    assert.equal((await get("SELECT COUNT(*) n FROM stripe_subscription_risk_holds WHERE reason='fraud_warning'")).n,1);
+  });
   await check('wrong subscription price fails closed',async()=>{
     const bad={...s,items:{data:[{price:{id:'price_unapproved'}}]},status:'active'};
     assert.equal((await webhook(event('customer.subscription.updated',bad,400))).status,409);
