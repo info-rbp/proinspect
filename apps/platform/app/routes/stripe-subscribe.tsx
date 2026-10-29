@@ -39,7 +39,7 @@ export default function StripeSubscribe() {
     <p>{property?.address}</p>
     <p>{weekly ? '$50 + GST ($55 including 10% Australian GST) per residential property per week' : '$250 per property per month excluding applicable GST'}.</p>
     {friday
-      ? <p>All subscription renewals are scheduled for Fridays at 9:00 am Perth time. The first weekly payment is scheduled for the next eligible Friday, at least two hours after registration. No subscription-covered services become available until your first weekly invoice is paid and verified. If a payment fails later, a configurable grace period applies to previously paid customers.</p>
+      ? <p>All subscription renewals are scheduled for Fridays at 9:00 am Perth time. The first weekly payment is scheduled for the next eligible Friday, after registration. No subscription-covered services become available until your first weekly invoice is paid and verified. If a payment fails later, a configurable grace period applies to previously paid customers.</p>
       : <p>Test environment. No live charges occur in this flow.</p>}
     {live ? <p>Cancellation is effective at the end of the paid weekly period. There is no automatic partial-week refund, except where law requires or an approved exception applies. Stripe will retry failed payments automatically according to the approved recovery settings.</p> : null}
     {enabled ? <Form method="post"><LegalAcceptance purpose="subscription"/><button className="button">{live ? 'Continue to Stripe subscription billing' : 'Open Stripe test Checkout'}</button></Form>

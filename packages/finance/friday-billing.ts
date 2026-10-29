@@ -7,6 +7,6 @@ export function nextFridayPerthAnchor(nowMs: number = Date.now()): number {
  const local = new Date(nowMs + 8 * 3600_000);
  const days = (5 - local.getUTCDay() + 7) % 7;
  let anchor = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + days, 1, 0, 0);
- if (anchor <= nowMs + 2 * 3600_000) anchor += 7 * 86400_000;
+ if (anchor <= nowMs) anchor += 7 * 86400_000;
  return Math.floor(anchor / 1000);
 }

@@ -9,10 +9,12 @@ test('weekly renewal anchor is Friday at 9 am Perth time',()=>{
   const local=new Date(value+8*3600_000);
   assert.equal(local.getUTCDay(),5);
   assert.equal(local.getUTCHours(),9);
-  assert.ok(value-t(day)>2*3600_000);
+  assert.ok(value>t(day));
+  assert.ok(value-t(day)<=7*86400_000);
  }
  assert.equal(new Date(nextFridayPerthAnchor(t('2026-10-29T06:00:00Z'))*1000).toISOString(),'2026-10-30T01:00:00.000Z');
- assert.equal(new Date(nextFridayPerthAnchor(t('2026-10-30T00:15:00Z'))*1000).toISOString(),'2026-11-06T01:00:00.000Z');
+ assert.equal(new Date(nextFridayPerthAnchor(t('2026-10-30T00:15:00Z'))*1000).toISOString(),'2026-10-30T01:00:00.000Z');
+ assert.equal(new Date(nextFridayPerthAnchor(t('2026-10-30T01:15:00Z'))*1000).toISOString(),'2026-11-06T01:00:00.000Z');
  assert.throws(()=>nextFridayPerthAnchor(0),RangeError);
 });
 test('Checkout demands weekly $50, automatic GST, a saved payment method and no off-cycle proration',()=>{
