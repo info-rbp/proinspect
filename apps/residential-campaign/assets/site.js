@@ -7,7 +7,7 @@
     const countInput = $('#property-count');
     if (!countInput) return;
     const count = integer(countInput.value);
-    const weeklyEx = count*3000, weeklyInc=count*3300;
+    const weeklyEx = count*5000, weeklyInc=count*5500;
     for (const el of $$('[data-weekly-inc]')) el.textContent = format(weeklyInc);
     for (const el of $$('[data-weekly-ex]')) el.textContent = format(weeklyEx);
     for (const el of $$('[data-annual-inc]')) el.textContent = format(weeklyInc*52);
