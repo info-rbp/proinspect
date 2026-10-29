@@ -1,6 +1,7 @@
 import {assert,statement,now,type Env} from '../../../../packages/database/types';
 import {commitProviderEvent,reconciliation,type ProviderEvent} from './payment-lifecycle.server';
 import {paidInvoiceIdsForPaymentIntent,stripeApi} from './stripe-client.server';
+import {liveResidentialApi,liveInvoiceIdsForPaymentIntent} from './residential-live-stripe.server';
 
 function idOf(value:unknown):string{
  if(typeof value==='string')return value;
@@ -12,7 +13,9 @@ function idOf(value:unknown):string{
  * Existing one-off payment events continue to the legacy payment adapter.
  */
 export async function subscriptionRiskEvent(env:Env,event:ProviderEvent,raw:string){
- assert(env.APP_ENV!=='production' && event.livemode===false,400,'SANDBOX_ONLY','This risk handler is sandbox-only.');
+ const live=env.APP_ENV==='production';
+ assert(event.livemode===live && (!live||env.RESIDENTIAL_LIVE_BILLING_ENABLED==='true'),
+   400,'RISK_ENVIRONMENT','Invalid risk event environment.');
  const o=event.data.object,t=event.type,chargeId=t==='charge.refunded'?idOf(o.id):idOf(o.charge);
  if(!/^ch_[A-Za-z0-9_]+$/.test(chargeId))return null;
  const time=now();
@@ -40,13 +43,13 @@ export async function subscriptionRiskEvent(env:Env,event:ProviderEvent,raw:stri
  const directInvoice=idOf(o.invoice);
  let paymentIntent=idOf(o.payment_intent),customer=idOf(o.customer);
  if(!directInvoice && !paymentIntent){
-  const charge=await stripeApi(env,'/charges/'+chargeId);
+  const charge=await (live?liveResidentialApi:stripeApi)(env,'/charges/'+chargeId);
   paymentIntent=idOf(charge.payment_intent);
   customer=customer||idOf(charge.customer);
  }
  // For 2025-03-31.basil+ a Charge no longer owns an invoice field.
  const invoices=directInvoice?[directInvoice]:paymentIntent?
-    await paidInvoiceIdsForPaymentIntent(env,paymentIntent):[];
+    await (live?liveInvoiceIdsForPaymentIntent:paidInvoiceIdsForPaymentIntent)(env,paymentIntent):[];
  if(!invoices.length)return null;
  const matches=[];
  for(const invoiceId of invoices){

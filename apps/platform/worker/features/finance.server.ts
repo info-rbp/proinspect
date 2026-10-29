@@ -4,6 +4,7 @@ import { openPaymentCheckout, paymentSessionEvent, adjustmentEvent, commitProvid
 import { boundedText } from '../../../../packages/http-bodies';
 import {billingEvent} from './stripe-billing.server';
 import { subscriptionRiskEvent } from './stripe-risk.server';
+import { liveResidentialReady } from './residential-live-stripe.server';
 import {contractorCheckoutEvent} from './contractor-payments.server';
 import { z } from 'zod';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
@@ -544,12 +545,10 @@ export async function verifyHmac(secret: string, payload: string, hex: string) {
   );
 }
 export async function stripeWebhook(env: Env, request: Request) {
-  assert(
-    env.STRIPE_WEBHOOK_SECRET,
-    503,
-    'WEBHOOK_UNCONFIGURED',
-    'Payment webhook is not configured.',
-  );
+  const residentialLive=new URL(request.url).pathname==='/api/webhooks/stripe/residential-live';
+  if(residentialLive)liveResidentialReady(env);
+  const webhookSecret=residentialLive?env.STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET:env.STRIPE_WEBHOOK_SECRET;
+  assert(webhookSecret,503,'WEBHOOK_UNCONFIGURED','Payment webhook is not configured.');
   const raw = await boundedText(request, 1024 * 1024);
   const parts = (request.headers.get('stripe-signature') ?? '').split(',').map(p=>p.trim()),
     timestamps = parts.filter((p) => p.startsWith('t='));
@@ -563,7 +562,7 @@ export async function stripeWebhook(env: Env, request: Request) {
   );
   let verified = false;
   for (const s of parts.filter((p) => p.startsWith('v1=')))
-    if (await verifyHmac(env.STRIPE_WEBHOOK_SECRET, `${t}.${raw}`, s.slice(3))) verified = true;
+    if (await verifyHmac(webhookSecret, `${t}.${raw}`, s.slice(3))) verified = true;
   assert(verified, 400, 'SIGNATURE_INVALID', 'Invalid webhook signature.');
   let decoded:unknown; try { decoded=JSON.parse(raw); } catch { assert(false,400,'EVENT_JSON_INVALID','Invalid signed event JSON.'); }
   const event = z.object({id:z.string().regex(/^evt_[A-Za-z0-9_]+$/),type:z.string().min(1).max(100),created:z.number().int().nonnegative().optional(),livemode:z.boolean(),data:z.object({object:z.record(z.string(),z.any())})}).parse(decoded);
@@ -579,6 +578,21 @@ export async function stripeWebhook(env: Env, request: Request) {
     'LIVE_EVENT_BLOCKED',
     'Live events are blocked in this environment.',
   );
+  if(residentialLive){
+    assert(event.livemode===true&&env.APP_ENV==='production',400,'LIVE_EVENT_REQUIRED','This endpoint accepts only signed live Stripe events.');
+    if(String(event.type).startsWith('checkout.session.')&&event.data?.object?.mode==='subscription')
+      return billingEvent(env,event,raw);
+    if(['customer.subscription.created','customer.subscription.updated','customer.subscription.deleted',
+        'invoice.paid','invoice.payment_failed','invoice.payment_action_required',
+        'invoice.finalized','invoice.finalization_failed','invoice.voided','invoice.marked_uncollectible'].includes(event.type))
+      return billingEvent(env,event,raw);
+    if(['charge.refunded','charge.dispute.created','charge.dispute.closed','radar.early_fraud_warning.created'].includes(event.type)){
+      const risk=await subscriptionRiskEvent(env,event,raw);
+      if(risk)return risk;
+      return commitProviderEvent(env,event,raw,[reconciliation(env,event.id,null,'unmatched_live_residential_risk_event',String(event.data.object.id??''))]);
+    }
+    return commitProviderEvent(env,event,raw,[reconciliation(env,event.id,null,'unexpected_live_residential_event',String(event.data.object.id??''))]);
+  }
   if (String(event.type).startsWith('checkout.session.') && event.data?.object?.metadata?.contractor_plan_id) {
     const result=await contractorCheckoutEvent(env,event);
     if(result)return result;

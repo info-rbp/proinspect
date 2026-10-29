@@ -264,6 +264,8 @@ export async function handleApi(
       return Response.json(await contractorConnectWebhook(env,request,'platform'));
     if (path === '/api/webhooks/stripe/connect-recipients' && method === 'POST')
       return Response.json(await contractorConnectWebhook(env,request,'recipients'));
+    if (path === '/api/webhooks/stripe/residential-live' && method === 'POST')
+      return Response.json(await stripeWebhook(env, request),{headers:{'Cache-Control':'no-store'}});
     if (path === '/api/webhooks/stripe' && method === 'POST')
       return Response.json(await stripeWebhook(env, request));
     if (path === '/api/public/enquiries' && method === 'POST')
