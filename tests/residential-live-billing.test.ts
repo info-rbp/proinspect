@@ -36,3 +36,13 @@ test('live credentials and approved tax category guard every live checkout',()=>
  assert.match(s,/verifyLiveResidentialTax/);
  assert.match(s,/RESIDENTIAL_LIVE_BILLING_ENABLED/);
 });
+
+test('disabling customer acquisition does not disable signed renewal webhooks or risk reconciliation',()=>{
+ const credentials=readFileSync('apps/platform/worker/features/residential-live-stripe.server.ts','utf8');
+ const finance=readFileSync('apps/platform/worker/features/finance.server.ts','utf8');
+ const ledger=readFileSync('apps/platform/worker/features/stripe-billing.server.ts','utf8');
+ assert.match(credentials,/New live residential signups remain disabled/);
+ assert.match(credentials,/export function liveResidentialCredentialsReady/);
+ assert.match(finance,/liveResidentialCredentialsReady\(env\)/);
+ assert.doesNotMatch(ledger,/event\.livemode===live && \(!live \|\| env\.RESIDENTIAL_LIVE_BILLING_ENABLED/);
+});

@@ -112,7 +112,7 @@ function invoiceSnapshot(o:Record<string,any>,eventType:string,created:number){
 }
 export async function billingEvent(env:Env,event:ProviderEvent,raw:string){
  const live=isLiveResidential(env);
- assert(event.livemode===live && (!live || env.RESIDENTIAL_LIVE_BILLING_ENABLED==='true'),400,'BILLING_ENVIRONMENT_MISMATCH','The signed billing event is for a different or inactive environment.');
+ assert(event.livemode===live,400,'BILLING_ENVIRONMENT_MISMATCH','The signed billing event is for a different environment.');
  const o=event.data.object,t=event.type,time=now(),created=Number.isSafeInteger(event.created)?event.created!:0;
  const session=t.startsWith('checkout.session.'),sub=t.startsWith('customer.subscription.'),invoice=t.startsWith('invoice.');
  assert(session||sub||invoice,422,'EVENT_TYPE','Unsupported billing event.');

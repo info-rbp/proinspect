@@ -14,7 +14,7 @@ function idOf(value:unknown):string{
  */
 export async function subscriptionRiskEvent(env:Env,event:ProviderEvent,raw:string){
  const live=env.APP_ENV==='production';
- assert(event.livemode===live && (!live||env.RESIDENTIAL_LIVE_BILLING_ENABLED==='true'),
+ assert(event.livemode===live,
    400,'RISK_ENVIRONMENT','Invalid risk event environment.');
  const o=event.data.object,t=event.type,chargeId=t==='charge.refunded'?idOf(o.id):idOf(o.charge);
  if(!/^ch_[A-Za-z0-9_]+$/.test(chargeId))return null;

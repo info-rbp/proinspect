@@ -14,8 +14,8 @@ export function isLiveResidential(env: Env): boolean {
  return env.APP_ENV === 'production';
 }
 export function liveResidentialCredentialsReady(env: Env) {
- assert(isLiveResidential(env) && env.RESIDENTIAL_LIVE_BILLING_ENABLED === 'true', 503,
-  'RESIDENTIAL_LIVE_DISABLED', 'Live residential billing awaits independent release approval.');
+ assert(isLiveResidential(env), 503,
+  'RESIDENTIAL_ENVIRONMENT_REQUIRED', 'The live Stripe adapter accepts production events only.');
  assert(env.STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID === LIVE_RESIDENTIAL_ACCOUNT, 503,
   'RESIDENTIAL_ACCOUNT_MISMATCH', 'The Stripe account is not the approved live account.');
  assert(/^rk_live_[A-Za-z0-9_]{16,}$/.test(env.STRIPE_RESIDENTIAL_LIVE_KEY ?? ''), 503,
@@ -25,6 +25,7 @@ export function liveResidentialCredentialsReady(env: Env) {
 }
 export function liveResidentialReady(env: Env) {
  liveResidentialCredentialsReady(env);
+ assert(env.RESIDENTIAL_LIVE_BILLING_ENABLED==='true',503,'RESIDENTIAL_LIVE_DISABLED','New live residential signups remain disabled until approved release.');
  assert(/^txcd_[0-9]{8}$/.test(env.RESIDENTIAL_APPROVED_TAX_CODE ?? '') &&
   env.RESIDENTIAL_APPROVED_TAX_CODE !== 'txcd_10203001', 503,
   'RESIDENTIAL_TAX_CODE_UNAPPROVED', 'The property-services tax category needs approval; the current code classifies downloadable software.');
