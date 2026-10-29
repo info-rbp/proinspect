@@ -32,7 +32,7 @@ export default function StripeSubscribe() {
   return <main className="auth-page"><section className="panel stack">
     <h1>Property support subscription — sandbox</h1>
     <p>{property?.address}</p>
-    <p>{weekly ? '$30 per property per week' : '$250 per property per month'} excluding applicable GST.</p>
+    <p>{weekly ? '$50 per property per week' : '$250 per property per month'} excluding applicable GST.</p>
     <p>Test mode only. This flow cannot take live payments or change your existing subscription entitlements.</p>
     {enabled ? <Form method="post"><LegalAcceptance purpose="subscription"/><button className="button">Open Stripe test Checkout</button></Form>
       : <p role="status">Stripe sandbox subscription checkout remains disabled pending Tax, credentials, webhook verification and acceptance.</p>}

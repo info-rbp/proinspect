@@ -18,7 +18,11 @@ export function integrationIdentifier(id:string){return 'proinspect-'+Array.from
 export async function stripeApi(env:Env,path:string,form?:URLSearchParams,idempotencyKey?:string):Promise<Record<string,any>>{
  sandboxConfiguration(env);
  const portalRead=!form&&/^\/billing_portal\/configurations\/bpc_[A-Za-z0-9_]+$/.test(path);
- assert(portalRead||/^\/(?:account|checkout\/sessions|customers|invoices|invoiceitems|refunds|payment_intents|charges|billing_portal\/sessions)(?:\/[A-Za-z0-9_]+)*$/.test(path),500,'PROVIDER_PATH','Unapproved Stripe operation.');
+ const taxOrPriceRead=!form&&(
+   /^\/tax\/(?:settings|registrations)$/.test(path) ||
+   /^\/prices\/price_[A-Za-z0-9_]+$/.test(path) ||
+   /^\/products\/prod_[A-Za-z0-9_]+$/.test(path));
+ assert(portalRead||taxOrPriceRead||/^\/(?:account|checkout\/sessions|customers|invoices|invoiceitems|refunds|payment_intents|charges|billing_portal\/sessions)(?:\/[A-Za-z0-9_]+)*$/.test(path),500,'PROVIDER_PATH','Unapproved Stripe operation.');
  const response=await fetch('https://api.stripe.com/v1'+path,{method:form?'POST':'GET',headers:{Authorization:'Bearer '+env.STRIPE_SECRET_KEY,'Stripe-Version':STRIPE_API_VERSION,...(form?{'Content-Type':'application/x-www-form-urlencoded'}:{}),...(idempotencyKey?{'Idempotency-Key':idempotencyKey}:{})},body:form,signal:AbortSignal.timeout(15000)});
  assert(response.ok,502,'STRIPE_OPERATION_FAILED','Stripe did not complete this operation. Retry safely; settlement is not assumed.');
  return await response.json() as Record<string,any>;
