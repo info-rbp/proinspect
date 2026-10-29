@@ -5,7 +5,7 @@ import type { Env } from '../../packages/database/types';
 export { BookingScheduler } from '../../apps/platform/worker/scheduler';
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext) {
-    if(env.APP_ENV==='local' && new URL(request.url).pathname==='/__test__/residential-coverage'){
+    if((env.APP_ENV==='local'||env.BUILD_SHA==='isolated-live-test-fixture') && new URL(request.url).pathname==='/__test__/residential-coverage'){
       const url=new URL(request.url);
       return paidResidentialCoverage(env,url.searchParams.get('client')??'',url.searchParams.get('property')??'').then(covered=>Response.json({covered}));
     }
