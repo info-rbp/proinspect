@@ -582,7 +582,7 @@ export async function stripeWebhook(env: Env, request: Request) {
     assert(event.livemode===true&&env.APP_ENV==='production',400,'LIVE_EVENT_REQUIRED','This endpoint accepts only signed live Stripe events.');
     if(String(event.type).startsWith('checkout.session.')&&event.data?.object?.mode==='subscription')
       return billingEvent(env,event,raw);
-    if(['customer.subscription.created','customer.subscription.updated','customer.subscription.deleted',
+    if(['customer.subscription.created','customer.subscription.updated','customer.subscription.deleted','customer.subscription.paused','customer.subscription.resumed',
         'invoice.paid','invoice.payment_failed','invoice.payment_action_required',
         'invoice.finalized','invoice.finalization_failed','invoice.voided','invoice.marked_uncollectible'].includes(event.type))
       return billingEvent(env,event,raw);

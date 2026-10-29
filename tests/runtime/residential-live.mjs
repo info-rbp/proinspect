@@ -115,6 +115,13 @@ try{
   assert.equal(r.status,200,JSON.stringify(r.body));
   assert.equal(await covered(),false);
  });
+ await check('subscription pause removes entitlement until explicit resume and paid invoice status',async()=>{
+  assert.equal((await webhook(event('customer.subscription.paused',{...base,status:'paused'}))).status,200);
+  assert.equal(await covered(),false);
+  assert.equal((await webhook(event('customer.subscription.resumed',{...base,status:'active'}))).status,200);
+  // The earlier refund hold remains active, so resumption does NOT override fraud protection.
+  assert.equal(await covered(),false);
+ });
  await check('cancellation revokes service without deleting history',async()=>{
   assert.equal((await webhook(event('customer.subscription.deleted',{...base,status:'canceled'}))).status,200);
   assert.equal((await get("SELECT status FROM stripe_billing_links WHERE id='sbl_live_fixture'")).status,'canceled');
