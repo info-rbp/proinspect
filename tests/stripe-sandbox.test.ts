@@ -27,5 +27,5 @@ test('new residential price remains weekly $50 exclusive of GST with paid enroll
  assert.match(code,/verifySubscriptionTax/);
  assert.match(code,/stripe_subscription_invoice_observations/);
  assert.match(coverage,/paidResidentialCoverage/);
- assert.match(coverage,/last.*invoice_created/);
+ assert.match(coverage,/latest\.invoice_created/);
 });
