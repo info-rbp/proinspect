@@ -77,11 +77,11 @@ if (form) {
     const agencyBar = node('agency-bar');
     const alternativeBar = node('alternative-bar');
     if (agencyBar) {
-      agencyBar.style.width = (result.agencyTotalCents / overallMax * 100).toFixed(2) + '%';
+      agencyBar.value = result.agencyTotalCents / overallMax * 100;
       agencyBar.setAttribute('aria-label', 'Agency fees: ' + money(result.agencyTotalCents));
     }
     if (alternativeBar) {
-      alternativeBar.style.width = (result.alternativeTotalCents / overallMax * 100).toFixed(2) + '%';
+      alternativeBar.value = result.alternativeTotalCents / overallMax * 100;
       alternativeBar.setAttribute('aria-label', 'ProInspect-based arrangement: ' + money(result.alternativeTotalCents));
     }
     const headline = node('result-outcome');

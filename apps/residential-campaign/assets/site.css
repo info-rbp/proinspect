@@ -97,3 +97,12 @@
 @media(max-width:760px){.savings-subhero .subhero-row{display:block}.savings-hero-outcome{margin-top:1.5rem;width:100%}.savings-baseline-grid{grid-template-columns:1fr 1fr}.savings-baseline-grid>div{padding:1rem}.savings-baseline-grid>div:first-child{padding-left:1rem}.savings-baseline-grid>div:last-child{grid-column:1/-1;border-top:1px solid #cfddd2}.scope-compare-header{display:none}.scope-compare-row{grid-template-columns:1fr;gap:.3rem}.scope-compare-row>span:nth-child(2):before{content:"Agency: ";font-weight:800;color:#254d4e}.scope-compare-row>span:nth-child(3):before{content:"ProInspect: ";font-weight:800;color:#254d4e}.savings-method{grid-template-columns:1fr}}
 @media(max-width:520px){.scenario-card,.result-main,.result-footer{padding:1.15rem}.scenario-fields{grid-template-columns:1fr}.tenancy-fieldset{grid-column:auto}.tenancy-options{grid-template-columns:repeat(2,1fr)}.fee-input-row{align-items:flex-start;flex-direction:column;gap:.5rem}.fee-number{grid-template-columns:1fr}.fee-dual{width:100%}.fee-dual .fee-number{flex:1}.fee-dual .fee-number input{width:100%}.fee-input-row>small{margin-left:0}.savings-baseline-grid{grid-template-columns:1fr}.savings-baseline-grid>div{border-right:0;border-bottom:1px solid #d1e0d5}.savings-baseline-grid>div:last-child{grid-column:auto}.savings-bar-heading{flex-wrap:wrap}.savings-subhero .subhero-card{max-width:none}.subscription-price-inline{display:block}.subscription-price-inline>span{text-align:left;display:block;max-width:none;margin-top:.6rem}}
 @media(prefers-reduced-motion:reduce){.savings-bar,.tenancy-options span{transition:none}}
+
+/* CSP-safe native percentage bars, updated through value properties rather than inline style. */
+.savings-bar-progress{-webkit-appearance:none;appearance:none;display:block;width:100%;height:12px;border:0;border-radius:999px;background:#44616a;overflow:hidden}
+.savings-bar-progress::-webkit-progress-bar{background:#44616a;border-radius:999px}
+.savings-bar-progress::-webkit-progress-value{background:#e8be85;border-radius:999px}
+.savings-bar-progress::-moz-progress-bar{background:#e8be85;border-radius:999px}
+.savings-bar-progress.proinspect::-webkit-progress-value{background:#8bd9c2}
+.savings-bar-progress.proinspect::-moz-progress-bar{background:#8bd9c2}
+.breakdown-footnote{padding:0 1.4rem 1rem}

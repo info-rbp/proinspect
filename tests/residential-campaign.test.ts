@@ -23,6 +23,8 @@ test('subscription calculator uses $50 ex GST and $55 including GST',()=>{
  assert.match(html,/<script type="module" src="\/assets\/savings-calculator\.js"/);
  assert.match(html, /\$11,352/);assert.match(html, /\$5,720/);
  assert.match(html, /\$5,632/);assert.match(html, /Agency fees retained/i);
+ assert.match(html,/<progress id="agency-bar"/);
+ assert.doesNotMatch(html,/style="width:/);
 });
 test('Worker remains isolated, noindexed and contains no Stripe secret configuration',()=>{
  const config=read('apps/residential-campaign/wrangler.jsonc');
