@@ -1,5 +1,6 @@
 import { assert, statement, now, type Env } from '../../../../packages/database/types';
 import type { Principal } from '../../../../packages/domain/index';
+import { nextFridayPerthAnchor } from '../../../../packages/finance/friday-billing';
 
 export const LIVE_RESIDENTIAL_ACCOUNT = 'acct_1USumSEynzcud8MV';
 export const LIVE_RESIDENTIAL_PRODUCT = 'prod_VWXmN5UFyCZhrC';
@@ -8,16 +9,7 @@ export const LIVE_RESIDENTIAL_PORTAL_CONFIG = 'bpc_1UVo5XEynzcud8MVDJ4cYZ7p';
 export const LIVE_RESIDENTIAL_WEEKLY_EX_GST_CENTS = 5000;
 export const LIVE_STRIPE_API_VERSION = '2026-09-30.endive';
 
-/** Friday 09:00 Australia/Perth. WA observes UTC+08 year-round.
- * If Checkout is within two hours of the cutoff, use the following Friday.
- */
-export function nextFridayPerthAnchor(nowMs: number = Date.now()): number {
- assert(Number.isSafeInteger(nowMs) && nowMs > 0, 422, 'FRIDAY_CLOCK_INVALID', 'Invalid billing timestamp.');
- const local = new Date(nowMs + 8 * 3600_000), days = (5 - local.getUTCDay() + 7) % 7;
- let anchor = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + days, 1, 0, 0);
- if (anchor <= nowMs + 2 * 3600_000) anchor += 7 * 86400_000;
- return Math.floor(anchor / 1000);
-}
+export { nextFridayPerthAnchor } from '../../../../packages/finance/friday-billing';
 export function isLiveResidential(env: Env): boolean {
  return env.APP_ENV === 'production';
 }
