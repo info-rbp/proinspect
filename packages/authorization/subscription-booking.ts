@@ -74,7 +74,38 @@ export async function paidResidentialCoverage(env: Env, clientId: string, proper
      AND latest.stripe_customer_id=b.stripe_customer_id
     ORDER BY latest.invoice_created DESC,latest.stripe_invoice_id DESC LIMIT 1
    ) LIMIT 1`,clientId,propertyId,new Date().toISOString()).first();
- return Boolean(covered);
+ if(covered)return true;
+ // Grace is only available to a customer with a previously SETTLED recurring invoice.
+ // New customers whose first Friday payment fails receive no free entitlement.
+ // This grace provision must never override cancellation, unpaid status, fraud or refunds.
+ const rawGrace=Number(env.RESIDENTIAL_PAYMENT_GRACE_HOURS ?? '72');
+ const hours=Number.isInteger(rawGrace)&&rawGrace>=0&&rawGrace<=168?rawGrace:0;
+ if(hours===0)return false;
+ const earliestPaidThrough=new Date(Date.now()-hours*3600_000).toISOString();
+ const recovery=await statement(env.DB,`
+  SELECT b.id FROM stripe_billing_links b
+  JOIN stripe_subscription_invoice_observations failed
+    ON failed.stripe_subscription_id=b.stripe_subscription_id
+   AND failed.stripe_customer_id=b.stripe_customer_id AND failed.price_id=b.price_id
+  JOIN stripe_subscription_invoice_observations previous
+    ON previous.stripe_subscription_id=b.stripe_subscription_id
+   AND previous.stripe_customer_id=b.stripe_customer_id AND previous.price_id=b.price_id
+  WHERE b.client_id=? AND b.property_id=? AND b.sector='residential'
+    AND b.status IN('active','past_due')
+    AND failed.status='failed'
+    AND failed.stripe_invoice_id=(
+      SELECT newest.stripe_invoice_id FROM stripe_subscription_invoice_observations newest
+      WHERE newest.stripe_subscription_id=b.stripe_subscription_id
+        AND newest.stripe_customer_id=b.stripe_customer_id
+      ORDER BY newest.invoice_created DESC,newest.stripe_invoice_id DESC LIMIT 1
+    )
+    AND previous.status='paid' AND previous.amount_paid_cents>0
+    AND previous.invoice_created<failed.invoice_created
+    AND previous.paid_through>?
+    AND NOT EXISTS(SELECT 1 FROM stripe_subscription_risk_holds h
+      WHERE h.stripe_subscription_id=b.stripe_subscription_id AND h.status='open')
+  LIMIT 1`,clientId,propertyId,earliestPaidThrough).first();
+ return Boolean(recovery);
 }
 export async function includedSubscriptionBooking(
   env: Env,
