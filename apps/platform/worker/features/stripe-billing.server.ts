@@ -7,6 +7,7 @@ import { requireReleaseApproval } from './release-governance.server';
 import { ensureBillingCustomer, invoiceObservation } from './billing-accounts.server';
 import { commitProviderEvent, reconciliation, type ProviderEvent } from './payment-lifecycle.server';
 import { SANDBOX_ACCOUNT, stripeApi, sandboxConfiguration, verifySandboxAccount, integrationIdentifier } from './stripe-client.server';
+import { LIVE_RESIDENTIAL_PRICE, nextFridayPerthAnchor, isLiveResidential, liveResidentialReady, liveResidentialApi, verifyLiveResidentialAccount, verifyLiveResidentialTax, ensureLiveResidentialCustomer } from './residential-live-stripe.server';
 export const RESIDENTIAL='price_1UVkM6Ev62nbUZoknG7CA5P5';
 export const RESIDENTIAL_WEEKLY_EX_GST_CENTS=5000;
 export const COMMERCIAL='price_1UUOxMEv62nbUZokN7kLvP4B';
@@ -43,24 +44,36 @@ export async function verifySubscriptionTax(env:Env,priceId:string){
  return true;
 }
 export function priceForSector(sector:string){if(sector==='residential')return RESIDENTIAL;if(sector==='commercial')return COMMERCIAL;throw Error('Unsupported subscription sector');}
-export function checkoutForm(params:{origin:string;linkId:string;clientId:string;priceId:string}){
- return new URLSearchParams({mode:'subscription',success_url:params.origin+'/workspaces?billing=returned',cancel_url:params.origin+'/workspaces?billing=cancelled','line_items[0][price]':params.priceId,'line_items[0][quantity]':'1','metadata[billing_link_id]':params.linkId,'subscription_data[metadata][billing_link_id]':params.linkId,'subscription_data[metadata][client_id]':params.clientId,client_reference_id:params.linkId,'automatic_tax[enabled]':'true',integration_identifier:integrationIdentifier(params.linkId)});
+export function checkoutForm(params:{origin:string;linkId:string;clientId:string;priceId:string;fridayAnchor?:number}){
+ const form=new URLSearchParams({mode:'subscription',success_url:params.origin+'/workspaces?billing=awaiting-friday-payment',cancel_url:params.origin+'/workspaces?billing=cancelled','line_items[0][price]':params.priceId,'line_items[0][quantity]':'1','metadata[billing_link_id]':params.linkId,'subscription_data[metadata][billing_link_id]':params.linkId,'subscription_data[metadata][client_id]':params.clientId,client_reference_id:params.linkId,'automatic_tax[enabled]':'true',integration_identifier:integrationIdentifier(params.linkId)});
+ if(params.fridayAnchor){
+  form.set('subscription_data[billing_cycle_anchor]',String(params.fridayAnchor));
+  form.set('subscription_data[proration_behavior]','none');
+  form.set('payment_method_collection','always');
+  form.set('subscription_data[metadata][billing_day]','friday');
+  form.set('subscription_data[metadata][billing_timezone]','Australia/Perth');
+ }
+ return form;
 }
 export async function createSubscriptionCheckout(env:Env,user:Principal,w:Workspace,propertyId:string,legalConsent?:unknown){
- billingReady(env);await requireReleaseApproval(env,'stripe_billing');
- assert(['landlord','commercial'].includes(w.kind),403,'SUBSCRIPTION_OWNER_REQUIRED','Only an authorised landlord may subscribe.');
+ const live=isLiveResidential(env);
+ if(live){liveResidentialReady(env);await requireReleaseApproval(env,'residential_live');}
+ else {billingReady(env);await requireReleaseApproval(env,'stripe_billing');}
+ assert(['landlord','commercial'].includes(w.kind) && (!live || w.kind==='landlord'),403,'SUBSCRIPTION_OWNER_REQUIRED','Only an authorised residential landlord may start the live Friday subscription.');
  await clientAdmin(env,user,w);const property=await propertyAccess(env,user,w,propertyId);
  assert(property.sector===(w.kind==='landlord'?'residential':'commercial'),422,'PROPERTY_SECTOR','Choose a property in this account.');
- const price=priceForSector(property.sector);
+ const price=live?LIVE_RESIDENTIAL_PRICE:priceForSector(property.sector);
+ const providerApi=live?liveResidentialApi:stripeApi;
+ const billingAnchor=live?nextFridayPerthAnchor():undefined;
  let old=await statement(env.DB,"SELECT * FROM stripe_billing_links WHERE client_id=? AND property_id=? AND status NOT IN('canceled','expired') LIMIT 1",w.scopeId,propertyId).first<Record<string,any>>();
  assert(!old||old.status==='pending',409,'SUBSCRIPTION_EXISTS','A subscription for this property already exists.');
- await verifySandboxAccount(env);
- await verifySubscriptionTax(env,price);
+ if(live){await verifyLiveResidentialAccount(env);await verifyLiveResidentialTax(env);}
+ else {await verifySandboxAccount(env);await verifySubscriptionTax(env,price);}
  assert(!old || old.price_id===price,409,'SUBSCRIPTION_PRICE_CHANGED','The pending subscription uses an old price. Contact support to expire that Checkout and restart at the approved rate.');
- if(old?.session_id){const current=await stripeApi(env,'/checkout/sessions/'+old.session_id);assert(current.id===old.session_id&&current.livemode===false&&current.mode==='subscription'&&current.customer===old.stripe_customer_id,409,'SUBSCRIPTION_SESSION_CHANGED','Stored Checkout needs reconciliation.');if(current.status==='open'&&Number(current.expires_at)>Date.now()/1000){assert(typeof current.url==='string'&&new URL(current.url).origin==='https://checkout.stripe.com',502,'CHECKOUT_URL_INVALID','Invalid checkout URL.');return {checkoutUrl:current.url,replayed:true};}if(current.status==='expired'){await statement(env.DB,"UPDATE stripe_billing_links SET status='expired',checkout_url=NULL,updated_at=? WHERE id=? AND status='pending'",now(),old.id).run();old=null;}else return {pending:true,message:'The subscription Checkout is awaiting signed event reconciliation.'};}
+ if(old?.session_id){const current=await providerApi(env,'/checkout/sessions/'+old.session_id);assert(current.id===old.session_id&&current.livemode===live&&current.mode==='subscription'&&current.customer===old.stripe_customer_id,409,'SUBSCRIPTION_SESSION_CHANGED','Stored Checkout needs reconciliation.');if(current.status==='open'&&Number(current.expires_at)>Date.now()/1000){assert(typeof current.url==='string'&&new URL(current.url).origin==='https://checkout.stripe.com',502,'CHECKOUT_URL_INVALID','Invalid checkout URL.');return {checkoutUrl:current.url,replayed:true};}if(current.status==='expired'){await statement(env.DB,"UPDATE stripe_billing_links SET status='expired',checkout_url=NULL,updated_at=? WHERE id=? AND status='pending'",now(),old.id).run();old=null;}else return {pending:true,message:'The subscription Checkout is awaiting signed event reconciliation.'};}
  const id=old?.id??uid('sbl');
- const legal=await legalStatements(env,{kind:'user',id:user.id},'subscription',id,{clientId:w.scopeId,propertyId,priceId:price,quantity:1,environment:'sandbox'},legalConsent);
- const customer=await ensureBillingCustomer(env,user,w.scopeId);
+ const legal=await legalStatements(env,{kind:'user',id:user.id},'subscription',id,{clientId:w.scopeId,propertyId,priceId:price,quantity:1,environment:live?'live':'sandbox',weeklyBillingDay:live?'Friday':undefined},legalConsent);
+ const customer=live?await ensureLiveResidentialCustomer(env,user,w.scopeId):await ensureBillingCustomer(env,user,w.scopeId);
  const enrollment=property.sector==='residential'
    ? [statement(env.DB,"INSERT INTO residential_paid_property_enrollments(client_id,property_id,enrolled_at) VALUES(?,?,?) ON CONFLICT(client_id,property_id) DO NOTHING",w.scopeId,propertyId,now())]
    : [];
@@ -68,11 +81,11 @@ export async function createSubscriptionCheckout(env:Env,user:Principal,w:Worksp
  else {assert(old.stripe_customer_id===customer,409,'BILLING_CUSTOMER_CHANGED','Billing customer mapping changed.');
    if(enrollment.length)await env.DB.batch(enrollment);
  }
- const form=checkoutForm({origin:env.APP_ORIGIN,linkId:id,clientId:w.scopeId,priceId:price});form.set('customer',customer);form.set('customer_update[address]','auto');form.set('billing_address_collection','required');
- const session=await stripeApi(env,'/checkout/sessions',form,'proinspect-subscription-'+id);
- assert(typeof session.id==='string'&&session.id.startsWith('cs_test_')&&session.livemode===false&&session.mode==='subscription'&&session.customer===customer&&typeof session.url==='string'&&new URL(session.url).origin==='https://checkout.stripe.com',502,'STRIPE_RESPONSE_INVALID','Invalid subscription Checkout response.');
+ const form=checkoutForm({origin:env.APP_ORIGIN,linkId:id,clientId:w.scopeId,priceId:price,fridayAnchor:billingAnchor});form.set('customer',customer);form.set('customer_update[address]','auto');form.set('billing_address_collection','required');
+ const session=await providerApi(env,'/checkout/sessions',form,'proinspect-subscription-'+(live?'live':'sandbox')+'-'+id);
+ assert(typeof session.id==='string'&&session.id.startsWith(live?'cs_live_':'cs_test_')&&session.livemode===live&&session.mode==='subscription'&&session.customer===customer&&typeof session.url==='string'&&new URL(session.url).origin==='https://checkout.stripe.com',502,'STRIPE_RESPONSE_INVALID','Invalid subscription Checkout response.');
  await env.DB.batch([statement(env.DB,"UPDATE stripe_billing_links SET session_id=?,checkout_url=?,updated_at=? WHERE id=? AND status IN('pending','incomplete','active') AND (session_id IS NULL OR session_id=?) AND stripe_customer_id=?",session.id,session.url,now(),id,session.id,customer),guard(env),clearGuard(env)]);
- return {checkoutUrl:session.url};
+ return {checkoutUrl:session.url,firstBillingFriday:billingAnchor?new Date(billingAnchor*1000).toISOString():undefined};
 }
 /** Turn a signed invoice into an immutable-identity observation.
  * Invoice events may precede the subscription event that binds the Checkout.
@@ -98,11 +111,12 @@ function invoiceSnapshot(o:Record<string,any>,eventType:string,created:number){
    invoiceCreated:Number.isSafeInteger(o.created)?o.created:created,paidThrough:through};
 }
 export async function billingEvent(env:Env,event:ProviderEvent,raw:string){
- assert(event.livemode===false&&env.APP_ENV!=='production',400,'SANDBOX_ONLY','This billing adapter records sandbox events only.');
+ const live=isLiveResidential(env);
+ assert(event.livemode===live && (!live || env.RESIDENTIAL_LIVE_BILLING_ENABLED==='true'),400,'BILLING_ENVIRONMENT_MISMATCH','The signed billing event is for a different or inactive environment.');
  const o=event.data.object,t=event.type,time=now(),created=Number.isSafeInteger(event.created)?event.created!:0;
  const session=t.startsWith('checkout.session.'),sub=t.startsWith('customer.subscription.'),invoice=t.startsWith('invoice.');
  assert(session||sub||invoice,422,'EVENT_TYPE','Unsupported billing event.');
- if(session)assert(o.mode==='subscription'&&typeof o.id==='string'&&o.id.startsWith('cs_test_'),422,'SESSION_INVALID','Invalid subscription Checkout.');
+ if(session)assert(o.mode==='subscription'&&typeof o.id==='string'&&o.id.startsWith(live?'cs_live_':'cs_test_'),422,'SESSION_INVALID','Invalid subscription Checkout.');
  const invoiceData=invoice?invoiceSnapshot(o,t,created):null;
  const subValue=sub?o.id:session?(typeof o.subscription==='object'?o.subscription?.id:o.subscription):invoiceData?.subscriptionId;
  const subId=typeof subValue==='string'?subValue:'';
