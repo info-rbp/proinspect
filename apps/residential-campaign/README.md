@@ -46,7 +46,7 @@ For the in-chat preview, Cloudflare's classic-script API can package the page so
 The homepage links only to the five provisioned local routes (`/`, `/inclusions`, `/getting-started`, `/savings`, `/sign-up`) and existing category/section anchors. Its local SVG illustrations and pricing estimator are fully client-side: no network calls, PII collection or Stripe interactions. The weekly estimator uses the existing `site.js` and 10% GST. The 24-month agency comparison uses the same example figures as the /savings page, with explicit notice that different responsibilities remain with landlords. The property-record visual is labelled illustrative, not a live customer screenshot.
 
 ### Proposed new routes (not yet implemented)
-The [GitHub page-provisioning backlog](../../issues) tracks priorities and the approvals required.
+The [GitHub page-provisioning backlog](https://github.com/info-rbp/proinspect/issues/70) tracks priorities and the approvals required.
 - **P0 /areas-and-eligibility:** Ground the suburbs/coverage, eligible property types, owners vs agents, access/authority requirements, availability and out-of-area policy. Do not invent serviced postcodes.
 - **P0 /pricing-and-billing:** Explain approved $50 + GST, weekly Friday 9 am Perth billing, first paid invoice/service start, grace/retries, cancellation at end of weekly period, consumer rights, refunds and self-service portal with verified live policy wording.
 - **P0 /subscription-terms:** Approved residential agreement, exact scope, exclusions and external costs, authority and safety/regulatory duties. The existing generic main-site terms are not a substitute for approving the specific product agreement.
