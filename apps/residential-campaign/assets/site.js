@@ -66,6 +66,12 @@
     }
     filter();
   }
+  const more=$('#nav-more');
+  if(more){
+    for(const anchor of more.querySelectorAll('a')) anchor.addEventListener('click',()=>more.open=false);
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&more.open){more.open=false;more.querySelector('summary').focus();}});
+    document.addEventListener('pointerdown',e=>{if(more.open&&!more.contains(e.target))more.open=false;});
+  }
   const mobile=$('#mobile-menu');
   if(mobile){
     mobile.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',()=>mobile.open=false));

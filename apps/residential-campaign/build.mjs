@@ -4,7 +4,20 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 const root=dirname(fileURLToPath(import.meta.url));
-const routeFiles={'/':'index.html','/inclusions':'inclusions.html','/getting-started':'getting-started.html','/savings':'savings.html','/sign-up':'sign-up.html'};
+const routeFiles={
+ '/':'index.html',
+ '/inclusions':'inclusions.html',
+ '/getting-started':'getting-started.html',
+ '/savings':'savings.html',
+ '/sign-up':'sign-up.html',
+ '/areas-and-eligibility':'areas-and-eligibility.html',
+ '/pricing-and-billing':'pricing-and-billing.html',
+ '/subscription-terms':'subscription-terms.html',
+ '/sample-reports':'sample-reports.html',
+ '/faq':'faq.html',
+ '/contact':'contact.html',
+ '/resources':'resources.html',
+};
 const contents=Object.fromEntries([
  ...Object.entries(routeFiles).map(([route,file])=>[route,readFileSync(join(root,'pages',file),'utf8')]),
  ...['site.css','site.js','savings-calculator.js','savings-model.mjs'].map(file=>['/assets/'+file,readFileSync(join(root,'assets',file),'utf8')]),

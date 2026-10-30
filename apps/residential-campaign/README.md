@@ -8,6 +8,13 @@ Dedicated Cloudflare Worker for the ProInspect Residential Property Support Subs
 - `/getting-started` — customer journey
 - `/savings` — transparent two-year traditional agency vs ProInspect cost comparison (including GST), adjustable agency fees, 12/24/36/48-month tenancy, portfolio size, service-scope matrix and self-management costs
 - `/sign-up` — secure account handoff
+- `/areas-and-eligibility` — qualification, property fit, authority and service area checks (no unverified suburb list)
+- `/pricing-and-billing` — weekly price and GST, Friday cycle, planned retry/grace, cancellation and refund principles (pre-activation)
+- `/subscription-terms` — explicitly nonbinding draft product-specific terms overview, pending approved legal agreement
+- `/sample-reports` — illustrative PCR and routine report anatomy; no fictitious or unapproved PDF downloads
+- `/faq` — broader customer questions about services, costs, eligibility and onboarding
+- `/contact` — handoff to the existing ProInspect contact page (no fake form submission)
+- `/resources` — high-level self-managing landlord guides and government reference links
 
 ## Commercial controls
 Price: AUD $50 plus GST per week per property. Customer total if 10% GST applies: AUD $55/week. No invented standalone pricing or savings promises. Four asterisk-marked schedule items have unresolved conditions. The underlying platform's subscription entitlements are automatically provisioned at account creation, and Stripe Billing is sandbox-only; **do not enable live subscription claims/charges** until payment-to-entitlement linkage and legal/business approvals are independently verified.
@@ -15,7 +22,7 @@ Price: AUD $50 plus GST per week per property. Customer total if 10% GST applies
 The preview is noindexed and robots-disallowed. It must remain so until marketing, tax, legal, accessibility, security and hosted-role release approval.
 
 ## Deployment
-The Worker uses five static HTML files and four local assets (shared CSS and navigation JS plus the separately tested, browser-importable savings model/controller). Run `node apps/residential-campaign/build.mjs` to bundle them as `dist/worker.mjs`, then `cd apps/residential-campaign && npx wrangler deploy --dry-run` before a reviewed deployment. A new GitHub Actions deployment workflow is required before production use. Never attach production customer D1, R2 or Stripe secrets.
+The Worker uses twelve static HTML files and four local assets (shared CSS and navigation JS plus the separately tested, browser-importable savings model/controller). Run `node apps/residential-campaign/build.mjs` to bundle them as `dist/worker.mjs`, then `cd apps/residential-campaign && npx wrangler deploy --dry-run` before a reviewed deployment. A new GitHub Actions deployment workflow is required before production use. Never attach production customer D1, R2 or Stripe secrets.
 
 For the in-chat preview, Cloudflare's classic-script API can package the page sources as JS strings and serve the matching paths. A repeatable GitHub Actions deploy pipeline should be configured before public release.
 
@@ -56,3 +63,10 @@ The [GitHub page-provisioning backlog](https://github.com/info-rbp/proinspect/is
 - **P2 /resources:** Approved landlord education library, helpful for later discovery/SEO rather than launch.
 
 Do not create a duplicate /getting-started or /savings route; both are already built. Keep `/privacy` and generic `/terms` linked to the existing main ProInspect domain until counsel approves whether campaign-specific content should be hosted locally. Before public indexing: independent legal and eligibility approval, genuine subscription activation acceptance, verified external URLs, accessibility/security review, canonical and sitemap policy, contact/complaints arrangements and a custom 404. The campaign stays noindexed and isolated from production D1/R2/Stripe bindings.
+
+## Seven information pages and header changes (30 October 2026)
+- Added all seven routes from [issue #70](https://github.com/info-rbp/proinspect/issues/70), with general customer-facing text. The three critical informational pages remain **content drafts** until actual service coverage, billing terms and the final residential agreement are approved. No inaccurate suburb list, invented PDF attachment, untested contact form or live Stripe promise is published.
+- Across all twelve pages, removed the exact top promotional price banner, desktop/mobile `Sign up` navigation item, desktop `Sign in` link, mobile customer sign-in item, and the account CTA from the header. Header now links to the existing four informational pages and a compact `Explore` dropdown containing the seven new pages. On mobile the new pages are exposed in a scrollable menu. Direct signup continues via page CTAs, footer and existing `/sign-up` link.
+- The footer now provides four groups linking to all local pages plus existing main-site privacy, terms, contact and secure portal. General privacy and terms on the main site remain separate from the unapproved product-specific terms.
+- The existing stand-alone Worker has **twelve HTML routes and four local JS/CSS assets (16 routes/assets)**, no customer storage, analytics, remote imagery or billing secrets, with robots disallow and noindex preserved.
+- Required for a production launch: approved genuine sample reports, confirmed coverage and turnaround, legally approved residential agreement/consumer disclosures, failed-payment grace/retry policy, live tax classification, signed webhooks and genuine Checkout/renewal/cancellation acceptance. Creating these informational pages does **not** signify approval of those items.
