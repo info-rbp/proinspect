@@ -114,7 +114,7 @@ test('home price calculator, branded SVG and release disclosures remain accurate
  assert.match(html,/data-weekly-ex/);
  assert.match(html,/data-weekly-inc/);
  assert.match(html,/data-annual-inc/);
- assert.match(script,/weeklyEx=count\*5000/);
+ assert.match(script,/weeklyEx\s*=\s*count\s*\*\s*5000/);
  assert.match(script,/weeklyInc=count\*5500/);
  assert.match(html,/Live recurring Checkout and paid-service activation are not yet enabled/);
  assert.match(html,/not a guaranteed like-for-like saving/);
