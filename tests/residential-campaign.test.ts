@@ -39,3 +39,49 @@ test('standalone Cloudflare Worker bundles five safe routes and passes syntax ch
  assert.match(bundle,/\$50/);
  assert.doesNotMatch(bundle,/STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET/);
 });
+
+// Residential Inclusion page acceptance: retain existing schedule and disclose limits.
+test('inclusions page describes all 48 services in six categories with four conditional items',()=>{
+ const html=read('apps/residential-campaign/pages/inclusions.html');
+ const count=(pattern:RegExp)=>[...html.matchAll(pattern)].length;
+ assert.equal(count(/class="scope-block inc-scope-block"/g),6);
+ assert.equal(count(/data-scope-item data-conditional=/g),48);
+ assert.equal(count(/data-conditional="true"/g),4);
+ assert.equal(count(/class="badgelabel conditional">Included\*/g),4);
+ for(const category of ['inspections','leasing','access','maintenance','forms','other'])
+   assert.match(html,new RegExp('id="'+category+'" data-scope-group'));
+ for(const name of [
+  'Property Condition Report','Routine Inspection (quarterly)','Follow-Up Routine Inspection',
+  'Open Home','Prospective Tenant Reference Checks','Off-Site Key Storage',
+  'Key Safe Installation','Urgent Maintenance / Make Good Works',
+  'Insurance Claims Management and Facilitation','Family Violence Termination (Form 2)',
+  'Joint Application for Disposal of Security Bond','Lodgement of Magistrates Court Forms'
+ ]) assert.ok(html.includes(name),name+' must stay in the advertised schedule');
+});
+test('benefit-led inclusions content and inline graphics remain noindexed and truthful',()=>{
+ const html=read('apps/residential-campaign/pages/inclusions.html');
+ assert.match(html,/\$50 \+ GST/);
+ assert.match(html,/\$55 per week including 10% GST/);
+ assert.match(html,/48 named service items/);
+ assert.match(html,/<svg class="inc-house-svg"/);
+ assert.match(html,/role="img" aria-labelledby="inc-house-title inc-house-desc"/);
+ assert.equal([...html.matchAll(/class="inc-benefit-number"/g)].length,4);
+ assert.equal([...html.matchAll(/class="inc-journey-step"/g)].length,4);
+ assert.ok(html.includes('not automatically transfer the landlord'));
+ assert.ok(html.includes('Contractor invoices, trade materials, repairs'));
+ assert.ok(html.includes('conditions must be confirmed'));
+ assert.ok(html.includes('noindex,nofollow'));
+ assert.ok(html.includes('href="/sign-up"'));
+ assert.doesNotMatch(html,/\$30(?:\b|\.)|\$33(?:\b|\.)/);
+});
+test('service discovery supports live result counts and accessible clear controls',()=>{
+ const html=read('apps/residential-campaign/pages/inclusions.html');
+ const script=read('apps/residential-campaign/assets/site.js');
+ assert.match(html,/id="scope-search" type="search"/);
+ assert.match(html,/id="scope-count">48/);
+ assert.match(html,/role="status" aria-live="polite"/);
+ assert.ok([...html.matchAll(/data-scope-clear/g)].length>=2);
+ assert.match(script,/count\.textContent=String\(matches\)/);
+ assert.match(script,/clear\.addEventListener\('click'/);
+ assert.match(script,/group\.hidden=shown===0/);
+});
