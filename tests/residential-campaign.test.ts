@@ -61,7 +61,7 @@ test('inclusions page describes all 48 services in six categories with four cond
 test('benefit-led inclusions content and inline graphics remain noindexed and truthful',()=>{
  const html=read('apps/residential-campaign/pages/inclusions.html');
  assert.match(html,/\$50 \+ GST/);
- assert.match(html,/\$55 per week including 10% GST/);
+ assert.match(html,/\$55 including 10% GST/);
  assert.match(html,/48 named service items/);
  assert.match(html,/<svg class="inc-house-svg"/);
  assert.match(html,/role="img" aria-labelledby="inc-house-title inc-house-desc"/);
