@@ -28,7 +28,7 @@ test('48 services, benefits and illustrations load with no browser errors',async
  await expect(page.locator('.inc-benefit')).toHaveCount(4);
  await expect(page.locator('.inc-journey-steps li')).toHaveCount(4);
  await expect(page.locator('.inc-house-svg')).toBeVisible();
- await expect(page.getByRole('link',{name:/Explore registration/i}).first()).toBeVisible();
+ await expect(page.getByRole('link',{name:/Explore all 48 services/i})).toBeVisible();
  expect(errors).toEqual([]);
  mkdirSync('artifacts',{recursive:true});
  await page.screenshot({path:'artifacts/residential-inclusions-desktop.png'});
