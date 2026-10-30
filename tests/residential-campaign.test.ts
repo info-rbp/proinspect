@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
-const pageNames=['index','inclusions','getting-started','savings','sign-up'];
+const pageNames=['index','inclusions','getting-started','savings','sign-up','areas-and-eligibility','pricing-and-billing','subscription-terms','sample-reports','faq','contact','resources'];
 const read=(p:string)=>readFileSync(p,'utf8');
-test('all five campaign pages promote the approved $50 + GST weekly price',()=>{
+test('all twelve campaign pages disclose the $50 + GST weekly price',()=>{
  for(const name of pageNames){const html=read('apps/residential-campaign/pages/'+name+'.html');
   assert.match(html,/\$50/);assert.doesNotMatch(html,/\$30(?:\b|\.)/);
   assert.doesNotMatch(html,/\$33(?:\b|\.)/);assert.match(html,/noindex,nofollow/);
@@ -31,9 +31,9 @@ test('Worker remains isolated, noindexed and contains no Stripe secret configura
  assert.match(config,/dist\/worker\.mjs/);assert.doesNotMatch(config,/STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|D1Database/);
 });
 
-test('standalone Cloudflare Worker bundles five safe routes and passes syntax checking',()=>{
+test('standalone Cloudflare Worker bundles twelve safe routes and passes syntax checking',()=>{
  const output=execFileSync('node',['apps/residential-campaign/build.mjs'],{encoding:'utf8'});
- assert.match(output,/9 campaign routes\/assets/);
+ assert.match(output,/16 campaign routes\/assets/);
  execFileSync('node',['--check','apps/residential-campaign/dist/worker.mjs']);
  const bundle=read('apps/residential-campaign/dist/worker.mjs');
  assert.match(bundle,/\$50/);
@@ -122,4 +122,63 @@ test('home price calculator, branded SVG and release disclosures remain accurate
  assert.match(html,/noindex,nofollow/);
  assert.doesNotMatch(html,/<form[^>]*method=["']post/i);
  assert.doesNotMatch(html,/\$30(?:\b|\.)|\$33(?:\b|\.)/);
+});
+
+
+test('top promotional price banner and signup/sign-in header links are removed from every route',()=>{
+ for(const name of pageNames){
+  const html=read('apps/residential-campaign/pages/'+name+'.html');
+  const header=html.match(/<header class="site-header">([\s\S]*?)<\/header>/)?.[1];
+  assert.ok(header,'header must be present on '+name);
+  assert.doesNotMatch(html,/class="notice-strip"/,'no top promotional banner on '+name);
+  assert.doesNotMatch(header!,/href="\/sign-up"/,'no signup nav or header CTA on '+name);
+  assert.doesNotMatch(header!,/proinspect\.systems\/signin/,'no sign-in nav on '+name);
+  assert.doesNotMatch(header!,/>Sign up<\/a>|>Sign in<\/a>|Existing customer sign-in/);
+  assert.match(header!,/class="nav-more"/);
+  assert.match(header!,/id="mobile-menu"/);
+  assert.match(html,/href="\/sign-up"/,'signup remains reachable via content/footer on '+name);
+  assert.match(html,/href="\/contact"/);
+  assert.match(html,/href="\/subscription-terms"/);
+ }
+});
+
+test('all seven new informational routes have copy, local page structure and approved-content caveats',()=>{
+ const expected=[
+  ['areas-and-eligibility','Coverage is confirmed, not assumed.'],
+  ['pricing-and-billing','Live billing is not active yet.'],
+  ['subscription-terms','Draft summary — not a signed or approved agreement.'],
+  ['sample-reports','no approved PDF downloads yet.'],
+  ['faq','Pricing, payments and cancellation'],
+  ['contact','No form is submitted on this page.'],
+  ['resources','Check current Western Australian guidance.'],
+ ] as const;
+ for(const [name,phrase] of expected){
+  const html=read('apps/residential-campaign/pages/'+name+'.html');
+  assert.match(html,/<main id="main" class="info-page/);
+  assert.ok(html.includes(phrase),name+' missing caveat or information heading');
+  assert.equal([...html.matchAll(/<h1/g)].length,1);
+  assert.match(html,/meta name="robots" content="noindex,nofollow"/);
+  assert.match(html,/href="\/inclusions"/);
+  assert.doesNotMatch(html,/<form[^>]*method=["']post/i);
+ }
+ const sample=read('apps/residential-campaign/pages/sample-reports.html');
+ assert.match(sample,/ILLUSTRATIVE STRUCTURE/);
+ assert.doesNotMatch(sample,/<a[^>]*download\b/i);
+ const policy=read('apps/residential-campaign/pages/subscription-terms.html');
+ assert.match(policy,/not the final legally approved subscription contract/);
+ assert.match(policy,/mandatory consumer rights|consumer rights/);
+ const contact=read('apps/residential-campaign/pages/contact.html');
+ assert.match(contact,/https:\/\/proinspect\.systems\/contact/);
+});
+
+test('all new navigation destinations are supported by the Worker build route map',()=>{
+ const build=read('apps/residential-campaign/build.mjs');
+ const newPages=['areas-and-eligibility','pricing-and-billing','subscription-terms','sample-reports','faq','contact','resources'];
+ const html=read('apps/residential-campaign/pages/index.html');
+ const h=html.match(/<header class="site-header">([\s\S]*?)<\/header>/)?.[1]||'';
+ for(const route of newPages){
+  assert.ok(build.includes("'/"+route+"':'"+route+".html'"),route+' absent in bundle');
+  assert.ok(h.includes('href="/'+route+'"'),route+' absent in header menu');
+  assert.ok(html.includes('href="/'+route+'"'),route+' absent from home/footer');
+ }
 });
