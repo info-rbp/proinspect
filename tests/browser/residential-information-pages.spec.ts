@@ -44,7 +44,6 @@ test('More navigation reveals seven routes, supports keyboard close and internal
  await expect(page.locator('#nav-more')).toBeVisible();
  await page.locator('#nav-more summary').click();
  await expect(page.locator('#nav-more')).toHaveAttribute('open','');
- await expect(page.locator('#nav-more-panel-does-not-exist')).toHaveCount(0);
  await expect(page.locator('#nav-more .nav-more-panel a')).toHaveCount(7);
  await page.keyboard.press('Escape');
  await expect(page.locator('#nav-more')).not.toHaveAttribute('open','');
@@ -60,11 +59,12 @@ test('information routes show honest pending items rather than fake content',asy
  await expect(page.locator('.info-note')).toContainText('not a signed or approved agreement');
  await page.goto(origin+'/sample-reports');
  await expect(page.locator('.info-report-card')).toHaveCount(2);
- await expect(page.locator('.info-report-card')).toContainText(['Entry Property Condition Report','Routine Inspection Report'].join(''));
+ await expect(page.locator('.info-report-card').first()).toContainText('Entry Property Condition Report');
+ await expect(page.locator('.info-report-card').last()).toContainText('Routine Inspection Report');
  await expect(page.locator('a[download]')).toHaveCount(0);
  await page.goto(origin+'/contact');
  await expect(page.locator('form')).toHaveCount(0);
- await expect(page.locator('a[href="https://proinspect.systems/contact"]').not.toHaveCount(0);
+ await expect(page.locator('a[href="https://proinspect.systems/contact"]')).not.toHaveCount(0);
  await page.goto(origin+'/faq');
  await page.locator('#faq-billing details').first().locator('summary').click();
  await expect(page.locator('#faq-billing details').first()).toHaveAttribute('open','');
