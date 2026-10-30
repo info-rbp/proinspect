@@ -85,3 +85,41 @@ test('service discovery supports live result counts and accessible clear control
  assert.match(script,/clear\.addEventListener\('click'/);
  assert.match(script,/group\.hidden=shown===0/);
 });
+
+
+test('homepage links all four customer journeys and six valid inclusion category anchors',()=>{
+ const html=read('apps/residential-campaign/pages/index.html');
+ const inclusions=read('apps/residential-campaign/pages/inclusions.html');
+ const savings=read('apps/residential-campaign/pages/savings.html');
+ assert.match(html,/<main id="main" class="res-home">/);
+ assert.match(html,/Keep control of your rental/);
+ assert.equal([...html.matchAll(/class="res-path-card"/g)].length,4);
+ assert.equal([...html.matchAll(/class="res-service-card"/g)].length,6);
+ assert.equal([...html.matchAll(/class="res-stage"/g)].length,4);
+ for(const route of ['inclusions','savings','getting-started','sign-up'])
+   assert.ok(html.includes('href="/'+route+'"'),route);
+ for(const anchor of ['inspections','leasing','access','maintenance','forms']){
+   assert.ok(html.includes('href="/inclusions#'+anchor+'"'));
+   assert.ok(inclusions.includes('id="'+anchor+'" data-scope-group'));
+ }
+ assert.ok(savings.includes('id="responsibilities"'));
+});
+
+test('home price calculator, branded SVG and release disclosures remain accurate',()=>{
+ const html=read('apps/residential-campaign/pages/index.html');
+ const script=read('apps/residential-campaign/assets/site.js');
+ assert.equal([...html.matchAll(/<h1/g)].length,1);
+ assert.match(html,/role="img" aria-labelledby="res-house-title res-house-desc"/);
+ assert.match(html,/id="property-count" value="1" min="1" max="100"/);
+ assert.match(html,/data-weekly-ex/);
+ assert.match(html,/data-weekly-inc/);
+ assert.match(html,/data-annual-inc/);
+ assert.match(script,/weeklyEx\s*=\s*count\s*\*\s*5000/);
+ assert.match(script,/weeklyInc=count\*5500/);
+ assert.match(html,/Live recurring Checkout and paid-service activation are not yet enabled/);
+ assert.match(html,/not a guaranteed like-for-like saving/);
+ assert.match(html,/third-party costs/);
+ assert.match(html,/noindex,nofollow/);
+ assert.doesNotMatch(html,/<form[^>]*method=["']post/i);
+ assert.doesNotMatch(html,/\$30(?:\b|\.)|\$33(?:\b|\.)/);
+});

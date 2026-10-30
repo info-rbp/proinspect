@@ -3,7 +3,7 @@
 Dedicated Cloudflare Worker for the ProInspect Residential Property Support Subscription. This campaign deliberately does **not** collect identity data or payments. It hands off to the existing ProInspect verified email sign-in and Residential Landlord onboarding at `https://proinspect.systems/signin?returnTo=%2Fonboarding`.
 
 ## Pages
-- `/` — home
+- `/` — redesigned conversion homepage: prominent links to all four other pages, six service-category anchors, a branded illustrated house, four-step tenancy lifecycle, sample property-record visual, interactive portfolio pricing ($50 + GST per property/week), transparent agency-fee teaser, registration guide and FAQs.
 - `/inclusions` — expanded 48-service Residential Subscription catalogue with custom inline SVG house and category illustrations, four benefits, a tenancy lifecycle, searchable service cards, price transparency, FAQs and explicit included/conditional-scope boundaries.
 - `/getting-started` — customer journey
 - `/savings` — transparent two-year traditional agency vs ProInspect cost comparison (including GST), adjustable agency fees, 12/24/36/48-month tenancy, portfolio size, service-scope matrix and self-management costs
@@ -41,3 +41,18 @@ For the in-chat preview, Cloudflare's classic-script API can package the page so
 - Adds no external graphics CDN or remote trackers. Inline SVG house and simple icon symbols share ProInspect's existing colour tokens; all information remains in semantic HTML without JavaScript. Search is progressively enhanced by the existing local `site.js`, with live result counts and clear controls.
 - Price remains AUD **$50 plus GST weekly per residential property**; the page illustrates **$55 including 10% GST**. Live billing and access remain governed by independently approved controls; the microsite does not collect credentials, property information or payments.
 - Source control checks in `tests/residential-campaign.test.ts` assert all six categories, 48 items, four asterisked conditions, graphics and noindex. Browser tests in `tests/browser/residential-inclusions.spec.ts` exercise service filtering, the mobile layout and layout overflow. Reconcile copy with legally approved WA form references before public indexing.
+
+## Homepage and route-audit decisions (October 2026)
+The homepage links only to the five provisioned local routes (`/`, `/inclusions`, `/getting-started`, `/savings`, `/sign-up`) and existing category/section anchors. Its local SVG illustrations and pricing estimator are fully client-side: no network calls, PII collection or Stripe interactions. The weekly estimator uses the existing `site.js` and 10% GST. The 24-month agency comparison uses the same example figures as the /savings page, with explicit notice that different responsibilities remain with landlords. The property-record visual is labelled illustrative, not a live customer screenshot.
+
+### Proposed new routes (not yet implemented)
+The [GitHub page-provisioning backlog](https://github.com/info-rbp/proinspect/issues/70) tracks priorities and the approvals required.
+- **P0 /areas-and-eligibility:** Ground the suburbs/coverage, eligible property types, owners vs agents, access/authority requirements, availability and out-of-area policy. Do not invent serviced postcodes.
+- **P0 /pricing-and-billing:** Explain approved $50 + GST, weekly Friday 9 am Perth billing, first paid invoice/service start, grace/retries, cancellation at end of weekly period, consumer rights, refunds and self-service portal with verified live policy wording.
+- **P0 /subscription-terms:** Approved residential agreement, exact scope, exclusions and external costs, authority and safety/regulatory duties. The existing generic main-site terms are not a substitute for approving the specific product agreement.
+- **P1 /sample-reports:** A privacy-cleared sample PCR, routine inspection and report screenshots/PDFs with permission and accessible formats. No invented customer data.
+- **P1 /faq:** Dedicated searchable questions on service area, owners vs agencies, inspection timing, third parties, billing, cancellation, statutory documents and registration; currently represented only across page-level FAQs.
+- **P1 /contact:** Standalone assistance route only if the existing `https://proinspect.systems/contact` handoff is unsuitable. Secure backend, spam/privacy controls and staffing needed before accepting submissions.
+- **P2 /resources:** Approved landlord education library, helpful for later discovery/SEO rather than launch.
+
+Do not create a duplicate /getting-started or /savings route; both are already built. Keep `/privacy` and generic `/terms` linked to the existing main ProInspect domain until counsel approves whether campaign-specific content should be hosted locally. Before public indexing: independent legal and eligibility approval, genuine subscription activation acceptance, verified external URLs, accessibility/security review, canonical and sitemap policy, contact/complaints arrangements and a custom 404. The campaign stays noindexed and isolated from production D1/R2/Stripe bindings.
