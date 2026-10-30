@@ -41,8 +41,30 @@
   if(scopeSearch){
     const empty=$('#scope-empty');
     const groups=$$('[data-scope-group]');
-    const filter=()=>{const query=scopeSearch.value.trim().toLocaleLowerCase('en-AU');let matches=0;for(const group of groups){let shown=0;for(const item of group.querySelectorAll('[data-scope-item]')){const show=item.textContent.toLocaleLowerCase('en-AU').includes(query);item.hidden=!show;if(show){shown++;matches++;}}group.hidden=shown===0;}if(empty)empty.hidden=matches>0;};
+    const count=$('#scope-count');
+    const countLabel=$('#scope-count-label');
+    const filter=()=>{
+      const query=scopeSearch.value.trim().toLocaleLowerCase('en-AU');
+      let matches=0;
+      for(const group of groups){
+        let shown=0;
+        for(const item of group.querySelectorAll('[data-scope-item]')){
+          const show=item.textContent.toLocaleLowerCase('en-AU').includes(query);
+          item.hidden=!show;
+          if(show){shown++;matches++;}
+        }
+        group.hidden=shown===0;
+      }
+      if(empty) empty.hidden=matches>0;
+      if(count) count.textContent=String(matches);
+      if(countLabel) countLabel.textContent=query?(matches===1?'matching service':'matching services'):'services shown';
+    };
     scopeSearch.addEventListener('input',filter);
+    scopeSearch.addEventListener('search',filter);
+    for(const clear of $$('[data-scope-clear]')){
+      clear.addEventListener('click',()=>{scopeSearch.value='';filter();scopeSearch.focus();});
+    }
+    filter();
   }
   const mobile=$('#mobile-menu');
   if(mobile){
