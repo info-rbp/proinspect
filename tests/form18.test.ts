@@ -3,14 +3,16 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { retentionDays,hasRentalRetentionPolicy,retentionDeadline } from '../packages/marketing/rental-retention.ts';
 import { FIELDS, FORM18_STEPS, ANSWER_STEPS, FORM18_VERSION, applicationSettingsSchema,
- cleanSection, stepComplete, allDetailsComplete,initialAnswers } from '../packages/marketing/form18.ts';
+ cleanSection, stepComplete, allDetailsComplete,initialAnswers,tenancyPreferencesComplete,TENANCY_PREFERENCE_KEYS } from '../packages/marketing/form18.ts';
 const example={identity:{fullName:'Example Applicant',email:'example@example.test',mobile:'0412345678',dateOfBirth:'1994-05-12',
- currentAddress:'12 Sample Street Perth 6000',idType:'Passport'},
+ currentAddress:'12 Sample Street Perth 6000',idType:'Passport',totalOccupants:'2',petsProposed:'No'},
  rental:{hasRentalHistory:'No'},employment:{employmentType:'Student'},references:{}};
 test('digital Form 18 follows the uploaded form sections for each applicant',()=>{
  assert.deepEqual(FORM18_STEPS.map(x=>x.id),['identity','rental','employment','references','documents','review']);
  assert.ok(FORM18_VERSION.startsWith('proinspect-rental-application-'));
  assert.ok(FIELDS.identity.some(f=>f.key==='dateOfBirth'));
+ assert.ok(TENANCY_PREFERENCE_KEYS.includes('totalOccupants'));
+ assert.equal(tenancyPreferencesComplete(example),true);
  assert.ok(FIELDS.rental.some(f=>f.key==='reasonLeaving'));
  assert.ok(FIELDS.employment.some(f=>f.key==='netIncome'));
  assert.ok(FIELDS.references.some(f=>f.key==='emergencyAddress'));
@@ -31,6 +33,16 @@ test('personal fields are bounded and date of birth cannot be in future',()=>{
  assert.throws(()=>cleanSection('identity',{...example.identity,mobile:''}));
  assert.throws(()=>cleanSection('identity',{...example.identity,idType:'Unrecognised'}));
  assert.equal(initialAnswers('Example Applicant','example@example.test').identity.email,'example@example.test');
+});
+test('primary tenancy preferences validate occupancy and pets without child identity collection',()=>{
+ assert.equal(tenancyPreferencesComplete({...example,identity:{...example.identity,totalOccupants:''}}),false);
+ assert.equal(tenancyPreferencesComplete({...example,identity:{...example.identity,totalOccupants:'21'}}),false);
+ assert.throws(()=>cleanSection('identity',{...example.identity,totalOccupants:'21'}));
+ assert.throws(()=>cleanSection('identity',{...example.identity,petsProposed:'Yes',petDetails:''}));
+ const pet=cleanSection('identity',{...example.identity,petsProposed:'Yes',petDetails:'One domestic cat'});
+ assert.equal(pet.petDetails,'One domestic cat');
+ assert.equal(tenancyPreferencesComplete({...example,identity:pet}),true);
+ assert.equal(cleanSection('identity',{...pet,petsProposed:'No'}).petDetails,'');
 });
 test('external applications require HTTPS, internal applications require client authority and notices',()=>{
  const external={applicationMode:'external',applicationUrl:'https://agency.example/property-1'};
