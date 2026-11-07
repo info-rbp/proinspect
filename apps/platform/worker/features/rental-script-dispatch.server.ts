@@ -1,5 +1,5 @@
 import { assert,statement,now,type Env } from '../../../../packages/database/types';
-import { checkedHttpsEndpoint,nextRetry } from '../../../../packages/marketing/rental-governance';
+import { checkedHttpsEndpoint,nextRetry,rentalApplicationCc } from '../../../../packages/marketing/rental-governance';
 import { unseal } from '../../../../packages/auth/crypto';
 
 /** HMAC-signed Google Apps Script transport, disabled without explicit opt-in.
@@ -10,7 +10,7 @@ export async function dispatchRentalHandoffs(env:Env){
  const endpoint=checkedHttpsEndpoint(env.RENTAL_APPS_SCRIPT_ENDPOINT,env.RENTAL_APPS_SCRIPT_ALLOWED_HOST);
  const secret=env.RENTAL_APPS_SCRIPT_SECRET;
  assert(endpoint&&secret&&secret.length>=32,503,'HANDOFF_NOT_CONFIGURED','Approved Apps Script integration is missing.');
- const due=(await statement(env.DB,"SELECT h.*,a.status AS application_status,a.privacy_hold_until,s.snapshot_envelope,l.application_recipient_email,l.rental_approval_state FROM rental_application_handoffs h JOIN rental_applications a ON a.id=h.application_id JOIN rental_application_submissions s ON s.id=h.submission_id JOIN leasing_listings l ON l.id=a.listing_id WHERE h.status='awaiting_script' AND (h.next_attempt_at IS NULL OR h.next_attempt_at<=?) AND h.attempt_count<8 ORDER BY h.staged_at LIMIT 5",now())
+ const due=(await statement(env.DB,"SELECT h.*,a.status AS application_status,a.privacy_hold_until,s.snapshot_envelope,l.application_recipient_email,l.instructed_by_client_id,l.rental_approval_state FROM rental_application_handoffs h JOIN rental_applications a ON a.id=h.application_id JOIN rental_application_submissions s ON s.id=h.submission_id JOIN leasing_listings l ON l.id=a.listing_id WHERE h.status='awaiting_script' AND (h.next_attempt_at IS NULL OR h.next_attempt_at<=?) AND h.attempt_count<8 ORDER BY h.staged_at LIMIT 5",now())
   .all<Record<string,any>>()).results;
  for(const h of due){
   const next=h.attempt_count+1;
@@ -26,7 +26,8 @@ export async function dispatchRentalHandoffs(env:Env){
    const pending=await statement(env.DB,"SELECT id FROM rental_application_documents WHERE application_id=? AND review_status='quarantined'",h.application_id).first();
    assert(!pending,409,'DOCUMENTS_UNREVIEWED','Not all documents have been reviewed.');
    const body=JSON.stringify({contractVersion:'proinspect-rental-email-v1',handoffId:h.id,
-    idempotencyKey:h.idempotency_key,recipient:recipient.recipient,reference:snapshot.reference,
+    idempotencyKey:h.idempotency_key,recipient:recipient.recipient,
+    instructingClientId:h.instructed_by_client_id,cc:rentalApplicationCc(h.instructed_by_client_id),reference:snapshot.reference,
     property:snapshot.property,submittedAt:snapshot.submittedAt,applicants:snapshot.applicants,
     notices:snapshot.notice,
     documents:(await statement(env.DB,"SELECT id,filename,category,sha256 FROM rental_application_documents WHERE application_id=? AND review_status='released' AND scan_status='clean'",
