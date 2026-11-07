@@ -29,6 +29,12 @@ export const rentalReferenceCheckInput=z.object({
  if(d.outcome!=='not_applicable'&&d.method==='not_contacted')ctx.addIssue({code:'custom',path:['method'],message:'Specify how contact was attempted.'});
  if(['confirmed','not_confirmed'].includes(d.outcome)&&d.evidenceReference.length<6)ctx.addIssue({code:'custom',path:['evidenceReference'],message:'Record an internal evidence reference for the verification outcome.'});
 });
+/** Explicit per-client CC routing. Never copy other landlords' applications into the ProInspect mailbox. */
+export const LIGHTHOUSE_RENTAL_CLIENT_ID='cli_lighthouse_property_group_pty_ltd';
+export const LIGHTHOUSE_RENTAL_CC='info@proinspect.systems';
+export function rentalApplicationCc(instructingClientId:string):string|null{
+ return instructingClientId===LIGHTHOUSE_RENTAL_CLIENT_ID?LIGHTHOUSE_RENTAL_CC:null;
+}
 export function checkedHttpsEndpoint(value:string|undefined,allowedHost?:string):URL|null{
  if(!value)return null;
  try{
