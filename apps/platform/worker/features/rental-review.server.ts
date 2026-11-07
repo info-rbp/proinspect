@@ -5,6 +5,7 @@ import { mailEvent } from '../../../../packages/notifications/server';
 import { operationsWrite } from '../../../../packages/authorization/server';
 import type { Principal } from '../../../../packages/domain/index';
 import { type Form18Answers } from '../../../../packages/marketing/form18';
+import { rentalReferenceCheckInput } from '../../../../packages/marketing/rental-governance';
 import { stageRentalAppsScriptHandoff } from './rental-handoff.server';
 import { listRentalPrivacyRequests } from './rental-privacy.server';
 
@@ -33,9 +34,16 @@ export async function rentalStaffDetail(env:Env,user:Principal,id:string){
  const applicants=[];
  for(const p of rows){
   const answers=await unseal<Form18Answers>(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+p.id,p.answers_envelope);
-  applicants.push({id:p.id,ordinal:p.ordinal,role:p.role,state:p.state,declaredAt:p.declared_at,answers});
+  const latestDeclaration=await statement(env.DB,"SELECT id,envelope FROM rental_application_events WHERE application_id=? AND actor_applicant_id=? AND kind='applicant_completed' ORDER BY created_at DESC,id DESC LIMIT 1",id,p.id).first<{id:string;envelope:string}>();
+  const declaration=latestDeclaration?await unseal<{declarations?:{referenceConsent?:boolean}}>(env.DATA_ENCRYPTION_KEY,'rental-event:'+latestDeclaration.id,latestDeclaration.envelope):null;
+  applicants.push({id:p.id,ordinal:p.ordinal,role:p.role,state:p.state,declaredAt:p.declared_at,referenceConsent:declaration?.declarations?.referenceConsent===true,answers});
  }
  const documents=(await statement(env.DB,"SELECT id,applicant_id,category,filename,content_type,size_bytes,review_status,scan_status,scanned_at,uploaded_at,reviewed_at FROM rental_application_documents WHERE application_id=? ORDER BY uploaded_at DESC",id).all()).results;
+ const referenceRows=(await statement(env.DB,"SELECT id,applicant_id,target,outcome,method,details_envelope,recorded_by,created_at FROM rental_application_reference_checks WHERE application_id=? ORDER BY created_at DESC,id DESC LIMIT 200",id).all<{id:string;applicant_id:string;target:string;outcome:string;method:string;details_envelope:string;recorded_by:string;created_at:string}>()).results;
+ const referenceChecks=await Promise.all(referenceRows.map(async r=>{
+  const details=await unseal<{note:string;evidenceReference:string}>(env.DATA_ENCRYPTION_KEY,'rental-reference-check:'+r.id,r.details_envelope);
+  return {id:r.id,applicantId:r.applicant_id,target:r.target,outcome:r.outcome,method:r.method,recordedBy:r.recorded_by,createdAt:r.created_at,...details};
+ }));
  const history=(await statement(env.DB,"SELECT id,kind,created_at,actor_applicant_id,actor_staff_id FROM rental_application_events WHERE application_id=? ORDER BY created_at,id LIMIT 250",id).all()).results;
  const latest=await statement(env.DB,'SELECT id,version,snapshot_envelope,created_at FROM rental_application_submissions WHERE application_id=? ORDER BY version DESC LIMIT 1',id).first<{id:string;version:number;snapshot_envelope:string;created_at:string}>();
  const latestSubmission=latest?{version:latest.version,createdAt:latest.created_at,
@@ -48,7 +56,38 @@ export async function rentalStaffDetail(env:Env,user:Principal,id:string){
   uid('aud'),user.id,id,now()).run();
  return {latestSubmission,handoffs,privacyRequests,privacyHoldUntil:app.privacy_hold_until,retainedUntil:app.retained_until,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
   property:app.display_address,title:app.title,leasingRepresentative:app.agent_name,instructingClientId:app.instructed_by_client_id,
-  forwardedAt:app.forwarded_at,noticeVersion:app.consent_version},applicants,documents,notice,history};
+  forwardedAt:app.forwarded_at,noticeVersion:app.consent_version},applicants,documents,referenceChecks,notice,history};
+}
+/** Append-only manual checks; never contacts referees or makes letting decisions automatically. */
+export async function recordRentalReferenceCheck(env:Env,user:Principal,id:string,input:unknown){
+ staff(user);
+ const app=await appRow(env,id);
+ assert(['submitted','ready_for_handoff'].includes(app.status),409,'REFERENCE_REVIEW_CLOSED','Reference checks require an application that has not been forwarded.');
+ assert(!app.privacy_hold_until||app.privacy_hold_until<=now(),409,'PRIVACY_HOLD_ACTIVE','Resolve the active privacy hold before contacting references.');
+ const data=rentalReferenceCheckInput.parse(input);
+ const person=await statement(env.DB,"SELECT id,state,answers_envelope FROM rental_applicants WHERE id=? AND application_id=? AND state='complete'",data.applicantId,id)
+  .first<{id:string;state:string;answers_envelope:string}>();
+ assert(person,409,'APPLICANT_NOT_READY','The applicant has not completed their current declaration.');
+ const latest=await statement(env.DB,"SELECT id,envelope FROM rental_application_events WHERE application_id=? AND actor_applicant_id=? AND kind='applicant_completed' ORDER BY created_at DESC,id DESC LIMIT 1",id,person.id).first<{id:string;envelope:string}>();
+ const declaration=latest?await unseal<{declarations?:{referenceConsent?:boolean}}>(env.DATA_ENCRYPTION_KEY,'rental-event:'+latest.id,latest.envelope):null;
+ assert(declaration?.declarations?.referenceConsent===true,403,'REFERENCE_CONSENT_REQUIRED','The applicant has not authorised ProInspect to contact references.');
+ const answers=await unseal<Form18Answers>(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+person.id,person.answers_envelope);
+ const available:Record<string,boolean>={
+  previous_lessor:answers.rental?.hasRentalHistory==='Yes'&&Boolean(answers.rental?.rentPaidToPhone),
+  employer:['Employed','Self-employed'].includes(answers.employment?.employmentType??'')&&Boolean(answers.employment?.employerPhone),
+  personal_1:Boolean(answers.references?.reference1Name&&answers.references?.reference1Phone),
+  personal_2:Boolean(answers.references?.reference2Name&&answers.references?.reference2Phone),
+ };
+ assert(available[data.target]||data.outcome==='not_applicable',422,'REFERENCE_CONTACT_MISSING','The applicant has not supplied contact details for that reference. Record not applicable or request details.');
+ const checkId=uid('rrc'),stamp=now();
+ await env.DB.batch([
+  statement(env.DB,'INSERT INTO rental_application_reference_checks(id,application_id,applicant_id,target,outcome,method,details_envelope,recorded_by,created_at) VALUES(?,?,?,?,?,?,?,?,?)',
+   checkId,id,person.id,data.target,data.outcome,data.method,
+   await seal(env.DATA_ENCRYPTION_KEY,'rental-reference-check:'+checkId,{note:data.note,evidenceReference:data.evidenceReference}),user.id,stamp),
+  statement(env.DB,"INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?,'rental_reference_check.recorded','rental_application',?,?,?)",
+   uid('aud'),user.id,id,JSON.stringify({target:data.target,outcome:data.outcome}),stamp),
+ ]);
+ return {ok:true,id:checkId};
 }
 export async function updateRentalStatus(env:Env,user:Principal,id:string,input:unknown){
  staff(user);const app=await appRow(env,id);

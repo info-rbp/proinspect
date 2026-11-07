@@ -107,6 +107,7 @@ async function purgeRental(env:Env,appId:string,reason:PurgeReason,actorId:strin
   statement(env.DB,'DELETE FROM rental_handoff_receipts WHERE handoff_id IN(SELECT id FROM rental_application_handoffs WHERE application_id=?)',appId),
   statement(env.DB,'DELETE FROM rental_application_handoffs WHERE application_id=?',appId),
   statement(env.DB,'DELETE FROM rental_application_outcomes WHERE application_id=?',appId),
+  statement(env.DB,'DELETE FROM rental_application_reference_checks WHERE application_id=?',appId),
   statement(env.DB,'DELETE FROM rental_application_privacy_requests WHERE application_id=?',appId),
   statement(env.DB,'DELETE FROM rental_application_submissions WHERE application_id=?',appId),
   statement(env.DB,'DELETE FROM rental_application_events WHERE application_id=?',appId),

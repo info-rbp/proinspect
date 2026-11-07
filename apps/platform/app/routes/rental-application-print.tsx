@@ -1,7 +1,7 @@
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { loadApi } from '../lib/api.server';
 import { useWorkspace } from '../lib/workspace';
-import { ANSWER_STEPS, FIELDS, FORM18_VERSION, type AnswerStep } from '../../../../packages/marketing/form18';
+import { ANSWER_STEPS, FIELDS, FORM18_VERSION, TENANCY_PREFERENCE_KEYS, type AnswerStep } from '../../../../packages/marketing/form18';
 import '../../../../packages/ui/rental-print.css';
 export async function loader({request,context,params}:LoaderFunctionArgs){
  return await loadApi(request,context,'/api/staff/rental-applications/'+params.applicationId) as any;
@@ -29,7 +29,7 @@ export default function RentalApplicationPrint(){
    <p>Declared: {person.declaredAt?new Date(person.declaredAt).toLocaleString('en-AU'):'Not declared'}</p>
    {ANSWER_STEPS.map((step:AnswerStep)=><section key={step}>
      <h3>{step==='identity'?'Applicant personal details':step==='rental'?'Previous rental history':step==='employment'?'Employment and income':'Personal references, next of kin and emergency contact'}</h3>
-     <dl>{FIELDS[step].map(field=><div className="form18-print-row" key={field.key}><dt>{field.label}</dt><dd>{person.answers[step]?.[field.key]||'Not provided'}</dd></div>)}</dl>
+     <dl>{FIELDS[step].filter(field=>person.ordinal===1||!TENANCY_PREFERENCE_KEYS.includes(field.key)).map(field=><div className="form18-print-row" key={field.key}><dt>{field.label}</dt><dd>{person.answers[step]?.[field.key]||'Not provided'}</dd></div>)}</dl>
    </section>)}
  </section>)}
  <section className="form18-print-notice">

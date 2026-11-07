@@ -25,6 +25,28 @@ export default function RentalApplicationDetail(){
     </details>)}
    </article>)}
   </Panel>
+  <Panel title="Reference checks" description="Manual contact log; no automated tenant suitability decisions.">
+   {d.applicants.map((person:any)=><section key={person.id} className="stack">
+    <h3>Applicant {person.ordinal}: {person.answers.identity?.fullName}</h3>
+    <p className="small">Reference contact authorisation: <strong>{person.referenceConsent?'Provided':'Not provided'}</strong>. Contact only on instructions from the leasing representative.</p>
+    {(d.referenceChecks??[]).filter((check:any)=>check.applicantId===person.id).map((check:any)=><div className="record-row" key={check.id}>
+     <div><strong>{check.target.replaceAll('_',' ')} — {check.outcome.replaceAll('_',' ')}</strong>
+      <p className="small">{check.method.replaceAll('_',' ')} · {new Date(check.createdAt).toLocaleString('en-AU')}</p>
+      <p>{check.note}</p>{check.evidenceReference&&<p className="small">Internal evidence reference: {check.evidenceReference}</p>}
+     </div></div>)}
+    {person.referenceConsent&&person.state==='complete'&&['submitted','ready_for_handoff'].includes(a.status)&&<OperationForm endpoint={base+'/reference-checks'} defaults={{applicantId:person.id}} label="Record reference check">
+     <Select name="target" label="Reference to check" options={[
+      ...(person.answers.rental?.hasRentalHistory==='Yes'?[{value:'previous_lessor',label:'Previous landlord or property manager'}]:[]),
+      ...(['Employed','Self-employed'].includes(person.answers.employment?.employmentType)?[{value:'employer',label:'Employer contact'}]:[]),
+      {value:'personal_1',label:'Personal referee 1'},{value:'personal_2',label:'Personal referee 2'}
+     ]}/>
+     <Select name="outcome" label="Recorded outcome" options={choices(['contact_attempted','confirmed','not_confirmed','unable_to_contact','not_applicable'])}/>
+     <Select name="method" label="Contact method" options={choices(['phone','email','other','not_contacted'])}/>
+     <Input name="evidenceReference" label="Internal evidence reference" required={false} help="Required for confirmed/not-confirmed outcomes. Use an internal call or email record ID."/>
+     <TextArea name="note" label="Factual verification notes" help="Record contact and factual responses only. Avoid protected attributes."/>
+    </OperationForm>}
+   </section>)}
+  </Panel>
   <Panel title="Secure supporting documents" description="Uploaded files are quarantined until independently checked. Only approved files may accompany an authorised handoff.">
    {d.documents.length===0?<p>No documents attached.</p>:d.documents.map((doc:any)=><article className="record-row" key={doc.id}><div><strong>{doc.filename}</strong>
     <p className="small">Applicant record: {doc.applicant_id} · {doc.category} · {(doc.size_bytes/1048576).toFixed(2)} MB</p><Badge status={doc.review_status}/> <span className="small">Scanner result: {doc.scan_status}</span>
