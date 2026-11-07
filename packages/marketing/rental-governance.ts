@@ -16,6 +16,19 @@ export const rentalOutcomeInput=z.object({
  note:z.string().trim().min(12).max(1200),
  notifyApplicants:z.literal(true)
 });
+/** Manual reference contact log; never automated tenancy decisions. */
+export const rentalReferenceCheckInput=z.object({
+ applicantId:z.string().trim().min(5).max(100),
+ target:z.enum(['previous_lessor','employer','personal_1','personal_2']),
+ outcome:z.enum(['contact_attempted','confirmed','not_confirmed','unable_to_contact','not_applicable']),
+ method:z.enum(['phone','email','other','not_contacted']),
+ evidenceReference:z.string().trim().max(180).default(''),
+ note:z.string().trim().min(12).max(1200),
+}).superRefine((d,ctx)=>{
+ if(d.outcome==='not_applicable'&&d.method!=='not_contacted')ctx.addIssue({code:'custom',path:['method'],message:'An inapplicable reference is not contacted.'});
+ if(d.outcome!=='not_applicable'&&d.method==='not_contacted')ctx.addIssue({code:'custom',path:['method'],message:'Specify how contact was attempted.'});
+ if(['confirmed','not_confirmed'].includes(d.outcome)&&d.evidenceReference.length<6)ctx.addIssue({code:'custom',path:['evidenceReference'],message:'Record an internal evidence reference for the verification outcome.'});
+});
 export function checkedHttpsEndpoint(value:string|undefined,allowedHost?:string):URL|null{
  if(!value)return null;
  try{
