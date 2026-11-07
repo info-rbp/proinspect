@@ -2,7 +2,8 @@
  * Google Apps Script receiver for ProInspect Rental Application Handoffs.
  * Deploy under a dedicated Workspace sender AFTER legal/privacy approval.
  * Script Properties: PROINSPECT_HANDOFF_SECRET (>=32 chars),
- * PROINSPECT_ALLOWED_RECIPIENTS (comma separated, exact emails).
+ * PROINSPECT_ALLOWED_RECIPIENTS (comma separated, exact emails),
+ * PROINSPECT_ALLOWED_CC (comma separated, exact CC addresses; Lighthouse requires info@proinspect.systems).
  * Runtime API has no reliable custom request headers: signed envelope is in POST body.
  * Sensitive application answers are sent only to verified recipients. Never log payloads.
  */
@@ -25,6 +26,17 @@ function doPost(e) {
     const approved=(PropertiesService.getScriptProperties().getProperty('PROINSPECT_ALLOWED_RECIPIENTS')||'')
       .split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
     if(!approved.includes(recipient)||!recipient.includes('@'))throw Error('RECIPIENT_NOT_ALLOWED');
+    // CC is mandatory only for the explicitly identified Lighthouse landlord.
+    // Signed client identity and independent allowlist prevent arbitrary disclosure.
+    const instructingClient=String(payload.instructingClientId||'');
+    const cc=String(payload.cc||'').trim().toLowerCase();
+    const requiredCc=instructingClient==='cli_lighthouse_property_group_pty_ltd'?'info@proinspect.systems':'';
+    if(cc!==requiredCc)throw Error('CC_MISMATCH');
+    if(cc){
+      const approvedCc=(PropertiesService.getScriptProperties().getProperty('PROINSPECT_ALLOWED_CC')||'')
+        .split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+      if(!approvedCc.includes(cc)||cc===recipient)throw Error('CC_NOT_ALLOWED');
+    }
     const lock=LockService.getScriptLock();
     if(!lock.tryLock(20000))throw Error('BUSY');
     try{
@@ -40,8 +52,10 @@ function doPost(e) {
       const ref='pi-'+Utilities.getUuid();
       props.setProperty(key,'sending:'+ref);
       const msg=renderEmail(payload);
-      MailApp.sendEmail({to:recipient,subject:'ProInspect residential rental application — '+String(payload.reference||''),
-        htmlBody:msg.html,body:msg.text,name:'ProInspect'});
+      const mailOptions={to:recipient,subject:'ProInspect residential rental application — '+String(payload.reference||''),
+        htmlBody:msg.html,body:msg.text,name:'ProInspect'};
+      if(cc)mailOptions.cc=cc;
+      MailApp.sendEmail(mailOptions);
       props.setProperty(key,'accepted:'+ref);
       return reply(acceptedReceipt(secret,payload.idempotencyKey,ref));
     } finally {lock.releaseLock();}
