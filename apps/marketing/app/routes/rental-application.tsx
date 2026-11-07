@@ -7,7 +7,7 @@ import { AppError, type Env } from '../../../../packages/database/types';
 import { rentalPage,saveRentalSection,inviteRentalApplicant,resendRentalInvitation,removeRentalApplicant,finishRentalApplicant,
  submitRental,withdrawRental,uploadRentalDocument,deleteRentalDocument } from '../../../platform/worker/features/rental-applications.server';
 import { requestRentalPrivacy } from '../../../platform/worker/features/rental-privacy.server';
-import { ANSWER_STEPS,FIELDS,FORM18_STEPS,stepComplete,type Form18Field,
+import { ANSWER_STEPS,FIELDS,FORM18_STEPS,TENANCY_PREFERENCE_KEYS,stepComplete,tenancyPreferencesComplete,type Form18Field,
  type Form18Step,type AnswerStep,type Form18Answers } from '../../../../packages/marketing/form18';
 import '../../../../packages/ui/rental-application.css';
 
@@ -71,7 +71,7 @@ export async function action({context,params,request}:ActionFunctionArgs){
     accurate:form.get('accurate')==='yes',
     shareWithRepresentative:form.get('shareWithRepresentative')==='yes',
     notAnAgreement:form.get('notAnAgreement')==='yes',
-    noticeAcknowledged:form.get('noticeAcknowledged')==='yes',legalConsent:form.get('legalConsent')
+    noticeAcknowledged:form.get('noticeAcknowledged')==='yes',referenceConsent:form.get('referenceConsent')==='yes',legalConsent:form.get('legalConsent')
    },Number(form.get('version')));
    return redirect(target('review'));
   }
@@ -96,6 +96,10 @@ export async function action({context,params,request}:ActionFunctionArgs){
     IDENTITY_REQUIRED:'Enter your full name, mobile telephone and current address.',
     RENTAL_HISTORY_INCOMPLETE:'Add your previous rental address and the name of the lessor or property manager.',
     EMPLOYMENT_INCOMPLETE:'Enter your occupation and employer or business name.',
+    TENANCY_PREFERENCES_INCOMPLETE:'The primary applicant must provide the number of occupants and whether pets are proposed.',
+    OCCUPANTS_BELOW_APPLICANTS:'The total intended occupants cannot be fewer than the number of adult applicants.',
+    OCCUPANTS_INVALID:'Enter an intended occupancy number from 1 to 20.',
+    PET_DETAILS_REQUIRED:'Describe the type and number of pets proposed.',
     DATE_OF_BIRTH_INVALID:'Enter a valid date of birth.',
     FIELD_TOO_LONG:'One of your answers is too long.',
     DOCUMENT_DUPLICATE:'You have already uploaded this document.',
@@ -106,27 +110,31 @@ export async function action({context,params,request}:ActionFunctionArgs){
   return fail(safe,error instanceof AppError?error.status:422);
  }
 }
-function Fields({section,answers}: {section:AnswerStep;answers:Record<string,string>}){
+function Fields({section,answers,primary}: {section:AnswerStep;answers:Record<string,string>;primary:boolean}){
  const [rental,setRental]=useState(answers.hasRentalHistory??'');
  const [employment,setEmployment]=useState(answers.employmentType??'');
+ const [pets,setPets]=useState(answers.petsProposed??'');
  return <div className="rental-fields">{FIELDS[section].map((field:Form18Field)=>{
+  if(section==='identity'&&TENANCY_PREFERENCE_KEYS.includes(field.key)&&!primary)return null;
+  if(section==='identity'&&field.key==='petDetails'&&pets!=='Yes')return null;
   if(section==='rental'&&field.key!=='hasRentalHistory'&&rental!=='Yes')return null;
   if(section==='employment'&&['occupation','employer','employerAddress','employedFrom','employedTo','employerContact','employerPhone'].includes(field.key)&&!['Employed','Self-employed'].includes(employment))return null;
   const wide=field.kind==='textarea'||field.key.toLowerCase().includes('address')||field.key==='fullName';
   const value=answers[field.key]??'';
+  const required=Boolean(field.required||(primary&&['totalOccupants','petsProposed'].includes(field.key)));
   return <div className={'rental-field'+(wide?' wide':'')} key={field.key}>
    {field.section&&<h3 className="rental-field-group-title">{field.section}</h3>}
-   <label htmlFor={'form18-'+field.key}>{field.label}{field.required&&<span aria-label="required"> *</span>}</label>
+   <label htmlFor={'form18-'+field.key}>{field.label}{required&&<span aria-label="required"> *</span>}</label>
    {field.kind==='select'?<select id={'form18-'+field.key} name={field.key}
-      defaultValue={value} required={field.required}
-      onChange={field.key==='hasRentalHistory'?e=>setRental(e.target.value):field.key==='employmentType'?e=>setEmployment(e.target.value):undefined}>
+      defaultValue={value} required={required}
+      onChange={field.key==='hasRentalHistory'?e=>setRental(e.target.value):field.key==='employmentType'?e=>setEmployment(e.target.value):field.key==='petsProposed'?e=>setPets(e.target.value):undefined}>
        <option value="">Please select</option>{field.options?.map(o=><option value={o} key={o}>{o}</option>)}
      </select>:
     field.kind==='textarea'?<textarea id={'form18-'+field.key} name={field.key} rows={3} maxLength={700} defaultValue={value}/>:
     <input id={'form18-'+field.key} name={field.key} type={field.kind??'text'}
-     min={field.kind==='number'?'0':undefined} step={field.kind==='number'?'0.01':undefined}
+     min={field.key==='totalOccupants'?'1':field.kind==='number'?'0':undefined} step={field.key==='totalOccupants'?'1':field.kind==='number'?'0.01':undefined}
      max={field.kind==='date'&&field.key==='dateOfBirth'?new Date().toISOString().slice(0,10):undefined}
-     defaultValue={value} maxLength={700} required={field.required} readOnly={field.key==='email'} autoComplete="off"/>}
+     defaultValue={value} maxLength={700} required={required} readOnly={field.key==='email'} autoComplete="off"/>}
    {field.hint&&<small>{field.hint}</small>}
   </div>;
  })}</div>;
@@ -174,7 +182,8 @@ function Documents({docs,editable}: {docs:any[];editable:boolean}){
 }
 function Review({page,editable}:{page:any;editable:boolean}){
  const answers=page.answers as Form18Answers;
- const complete=ANSWER_STEPS.every(s=>stepComplete(answers,s));
+ const occupancyConflicts=page.role==='primary'&&Number(answers.identity?.totalOccupants??0)<page.household.length;
+ const complete=ANSWER_STEPS.every(s=>stepComplete(answers,s))&&(page.role!=='primary'||tenancyPreferencesComplete(answers))&&!occupancyConflicts;
  const pending=page.household.some((p:any)=>p.state!=='complete');
  const submitted=['submitted','ready_for_handoff','forwarded','decision_recorded'].includes(page.status);
  const withdrawn=page.status==='withdrawn';
@@ -183,11 +192,12 @@ function Review({page,editable}:{page:any;editable:boolean}){
   {page.moreInformation&&<div className="rental-notice" role="status"><h3>More information requested</h3><p>{page.moreInformation.instructions}</p><p>Update the relevant section, then review and complete your declaration again.</p></div>}
   <div className="rental-section-note">Review your answers below. Only your own personal details appear here. Your co-applicants' confidential answers are not displayed to you.</div>
   <div className="rental-summary">{ANSWER_STEPS.map(step=><details key={step} open={step==='identity'}>
-    <summary>{FORM18_STEPS.find(x=>x.id===step)?.title} · {stepComplete(answers,step)?'Complete':'Needs attention'}</summary>
-    <dl>{FIELDS[step].filter(f=>Boolean(answers[step]?.[f.key])).map(f=><Entry key={f.key} label={f.label} value={answers[step][f.key]}/>)}</dl>
+    <summary>{FORM18_STEPS.find(x=>x.id===step)?.title} · {stepComplete(answers,step)&&(step!=='identity'||page.role!=='primary'||tenancyPreferencesComplete(answers))?'Complete':'Needs attention'}</summary>
+    <dl>{FIELDS[step].filter(f=>Boolean(answers[step]?.[f.key])&&(page.role==='primary'||!TENANCY_PREFERENCE_KEYS.includes(f.key))).map(f=><Entry key={f.key} label={f.label} value={answers[step][f.key]}/>)}</dl>
     {editable&&<Link to={'?step='+step}>Edit this section →</Link>}
    </details>)}</div>
   {page.role==='primary'&&<Household people={page.household} editable={editable&&page.status==='draft'}/>}
+  {occupancyConflicts&&<p className="notice warning">The stated number of occupants must include all adult applicants.</p>}
   <section className="rental-notice"><h3>Information for applicants</h3>
    <p>This application assists the identified landlord or leasing representative in considering an application to rent residential premises under the Residential Tenancies Act 1987 (WA). Submitting it does not create a tenancy agreement or guarantee an offer.</p>
    <p>Your details are collected for this application and, with your consent, made available to the responsible leasing representative, not to other applicants. Applicants must be considered in accordance with applicable WA equal opportunity and privacy obligations.</p>
@@ -202,6 +212,7 @@ function Review({page,editable}:{page:any;editable:boolean}){
    <h3>Your declaration</h3>{!page.noticeMatches&&page.state==='complete'&&<p className="rental-section-note">The tenancy database notice has changed. Review the current notice and acknowledge it again before the household can submit.</p>}
    <label className="rental-check"><input name="accurate" type="checkbox" value="yes" required/><span>I have reviewed my answers and believe they are accurate.</span></label>
    <label className="rental-check"><input name="shareWithRepresentative" type="checkbox" value="yes" required/><span>I authorise ProInspect to share my application details with {page.property.agentName}, the responsible leasing representative, solely for this application.</span></label>
+   <label className="rental-check"><input name="referenceConsent" type="checkbox" value="yes"/><span>Optional: I authorise ProInspect, acting on the leasing representative’s documented instructions, to contact the rental, employment and personal references I have nominated, solely to check this application. Without this consent ProInspect will not contact my referees.</span></label>
    <label className="rental-check"><input name="notAnAgreement" type="checkbox" value="yes" required/><span>I understand this application is not a tenancy agreement or approval.</span></label>
    <label className="rental-check"><input name="noticeAcknowledged" type="checkbox" value="yes" required/><span>I acknowledge receiving the tenancy database information displayed above and have reviewed the <Link to="/privacy">privacy policy</Link>.</span></label>
    <button className="button rental-full-button" type="submit" disabled={!complete}>Complete my declaration</button>
@@ -258,7 +269,7 @@ export default function RentalApplication(){
      <>{editable?<Form method="post" className="rental-form" key={step}>
         <input type="hidden" name="intent" value="save"/><input type="hidden" name="section" value={step}/><input type="hidden" name="version" value={page.version}/>
         {step==='identity'&&<div className="rental-section-note">Contact email: <strong>{page.answers.identity?.email}</strong>. Your private link is tied to this address. It cannot be changed from the form.</div>}
-        <Fields section={step as AnswerStep} answers={page.answers[step]??{}}/>
+        <Fields section={step as AnswerStep} answers={page.answers[step]??{}} primary={page.role==='primary'}/>
         <div className="rental-actions"><Link to={'?step='+FORM18_STEPS[Math.max(0,index-1)].id}>← Previous step</Link>
          <button className="button" type="submit">Save &amp; continue →</button></div>
        </Form>:<><p className="rental-muted">The application is read-only at this stage.</p><dl className="rental-summary">{FIELDS[step as AnswerStep].filter(f=>page.answers[step]?.[f.key]).map(f=><Entry key={f.key} label={f.label} value={page.answers[step][f.key]}/>)}</dl><Link to="?step=review">View submission status</Link></>}</>}

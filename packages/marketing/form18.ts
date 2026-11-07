@@ -16,6 +16,7 @@ export type Form18Field={
  key:string; label:string; kind?:'text'|'email'|'tel'|'date'|'number'|'textarea'|'select';
  options?:readonly string[]; required?:boolean; hint?:string; section?:string;
 };
+export const TENANCY_PREFERENCE_KEYS:string[]=['preferredStartDate','leaseTermPreference','totalOccupants','petsProposed','petDetails'];
 export const FIELDS:Record<AnswerStep,Form18Field[]>={
  identity:[
   {key:'fullName',label:'Full legal name',required:true},
@@ -26,6 +27,11 @@ export const FIELDS:Record<AnswerStep,Form18Field[]>={
   {key:'workPhone',label:'Work telephone',kind:'tel'},
   {key:'currentAddress',label:'Current residential address',required:true,section:'Where you live now'},
   {key:'idType',label:'Identification type',kind:'select',required:true,options:['Driver licence','Passport','Birth certificate','Other','Not yet available'],hint:'Do not enter an identity document number here. Supporting files are uploaded separately.'},
+  {key:'preferredStartDate',label:'Preferred tenancy start date',kind:'date',section:'Proposed tenancy — primary applicant only',hint:'A preferred start date, subject to agreement.'},
+  {key:'leaseTermPreference',label:'Preferred lease duration',kind:'select',options:['6 months','12 months','24 months','Flexible','Other']},
+  {key:'totalOccupants',label:'Total intended occupants (including children)',kind:'number',hint:'Number only; do not provide children’s personal details.'},
+  {key:'petsProposed',label:'Are pets proposed? (assistance animals excluded)',kind:'select',options:['Yes','No','Not sure'],hint:'Assistance animals are not pets.'},
+  {key:'petDetails',label:'Proposed pets — type and number',kind:'textarea',hint:'Complete this only when pets are proposed.'},
  ],
  rental:[
   {key:'hasRentalHistory',label:'Have you previously rented?',kind:'select',required:true,options:['Yes','No']},
@@ -79,7 +85,7 @@ export const FIELDS:Record<AnswerStep,Form18Field[]>={
 };
 export const ANSWER_STEPS:['identity','rental','employment','references']=['identity','rental','employment','references'];
 /** Schema identity, not an assertion that Form 18 is compulsory or prescribed. */
-export const FORM18_VERSION='proinspect-rental-application-v1';
+export const FORM18_VERSION='proinspect-rental-application-v2';
 export const APPLICATION_MODES=['unavailable','external','proinspect'] as const;
 export type ApplicationMode=(typeof APPLICATION_MODES)[number];
 export const noticeEntry=z.object({
@@ -131,10 +137,20 @@ export function cleanSection(section:AnswerStep,raw:Record<string,unknown>){
  if(section==='identity'){
   if(values.fullName.length<2||values.mobile.length<6||values.currentAddress.length<6)throw Error('IDENTITY_REQUIRED');
   if(values.dateOfBirth>new Date().toISOString().slice(0,10))throw Error('DATE_OF_BIRTH_INVALID');
+  if(values.totalOccupants&&(!/^[1-9]\d?$/.test(values.totalOccupants)||Number(values.totalOccupants)>20))throw Error('OCCUPANTS_INVALID');
+  if(values.petsProposed==='Yes'&&!values.petDetails)throw Error('PET_DETAILS_REQUIRED');
+  if(values.petsProposed!=='Yes')values.petDetails='';
  }
  if(section==='rental'&&values.hasRentalHistory==='Yes'&&(!values.previousAddress||!values.rentPaidTo))throw Error('RENTAL_HISTORY_INCOMPLETE');
  if(section==='employment'&&['Employed','Self-employed'].includes(values.employmentType)&&(!values.occupation||!values.employer))throw Error('EMPLOYMENT_INCOMPLETE');
  return values;
+}
+/** The household's tenancy preferences belong to the primary applicant only. */
+export function tenancyPreferencesComplete(answers:Form18Answers):boolean{
+ const a=answers.identity??{};
+ return /^[1-9]\d?$/.test(a.totalOccupants??'')&&Number(a.totalOccupants)<=20
+  &&['Yes','No','Not sure'].includes(a.petsProposed??'')
+  &&(a.petsProposed!=='Yes'||Boolean(a.petDetails?.trim()));
 }
 export function stepComplete(answers:Form18Answers,step:AnswerStep):boolean{
  try{cleanSection(step,answers[step]??{});return true;}catch{return false;}

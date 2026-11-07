@@ -7,7 +7,7 @@ import { digest, seal, unseal, randomToken } from '../../../../packages/auth/cry
 import { mailEvent } from '../../../../packages/notifications/server';
 import { isLocal } from '../../../../packages/auth/server';
 import {
- ANSWER_STEPS, FORM18_VERSION, cleanSection, allDetailsComplete, initialAnswers,
+ ANSWER_STEPS, FORM18_VERSION, TENANCY_PREFERENCE_KEYS, tenancyPreferencesComplete, cleanSection, allDetailsComplete, initialAnswers,
  startApplicationSchema, inviteApplicantSchema, documentCategorySchema, maskedEmail,
  type AnswerStep, type Form18Answers,
 } from '../../../../packages/marketing/form18';
@@ -127,7 +127,10 @@ export async function saveRentalSection(env:Env,token:string,section:AnswerStep,
  assert(allowedEdit(app.status),409,'APPLICATION_LOCKED','Submitted applications cannot be edited without a new information request.');
  assert(ANSWER_STEPS.includes(section),422,'SECTION_INVALID','Choose a form section.');
  assert(person.version===version,409,'DRAFT_CHANGED','This draft has changed. Reload before saving.');
- if(section==='identity')raw.email=answers.identity?.email??'';
+ if(section==='identity'){
+  raw.email=answers.identity?.email??'';
+  if(person.role!=='primary')for(const key of TENANCY_PREFERENCE_KEYS)delete raw[key];
+ }
  const values=cleanSection(section,raw);
  const updated={...answers,[section]:values};
  const result=await env.DB.batch([
@@ -209,8 +212,9 @@ export async function finishRentalApplicant(env:Env,token:string,consent:unknown
  assert(allowedEdit(app.status),409,'APPLICATION_LOCKED','This application has already been submitted.');
  assert(person.version===version,409,'DRAFT_CHANGED','Reload your information before declaring.');
  assert(allDetailsComplete(answers),422,'APPLICATION_INCOMPLETE','Complete the required application sections before declaring.');
+ assert(person.role!=='primary'||tenancyPreferencesComplete(answers),422,'TENANCY_PREFERENCES_INCOMPLETE','Complete the proposed occupants and pets information before declaring.');
  const d=z.object({accurate:z.literal(true),shareWithRepresentative:z.literal(true),
-  notAnAgreement:z.literal(true),noticeAcknowledged:z.literal(true),legalConsent:z.unknown().optional()}).parse(consent);
+  notAnAgreement:z.literal(true),noticeAcknowledged:z.literal(true),referenceConsent:z.boolean(),legalConsent:z.unknown().optional()}).parse(consent);
  const l=await listing(env,app.listing_id);
  assert(l.tenancy_database_notice_mode!=='unconfigured',503,'TENANCY_NOTICE_REQUIRED','Database notice has not been configured.');
  const noticeDigest=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name]));
@@ -229,8 +233,10 @@ export async function submitRental(env:Env,token:string){
  await enabled(env);
  const {person,app,l,answers}=await tokenAccess(env,token);
  assert(person.role==='primary'&&allowedEdit(app.status),403,'SUBMISSION_NOT_ALLOWED','Only the primary applicant submits the household application.');
+ assert(tenancyPreferencesComplete(answers),422,'TENANCY_PREFERENCES_INCOMPLETE','Complete the proposed occupants and pets information before submission.');
  active(l);
  const rows=(await statement(env.DB,"SELECT id,ordinal,state,declared_at,notice_digest FROM rental_applicants WHERE application_id=? AND state!='removed'",app.id).all<{id:string;ordinal:number;state:string;declared_at:string|null;notice_digest:string|null}>()).results;
+ assert(Number(answers.identity.totalOccupants)>=rows.length,422,'OCCUPANTS_BELOW_APPLICANTS','Total occupants cannot be fewer than the number of adult applicants.');
  assert(rows.length>=1&&rows.every(x=>x.state==='complete'&&Boolean(x.declared_at)),422,'APPLICANTS_INCOMPLETE',
   'Every included applicant must complete their declaration before the application can be submitted.');
  const noticeDigest=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name]));
