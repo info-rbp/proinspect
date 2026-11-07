@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rentalApprovalInput,rentalOutcomeInput,rentalReferenceCheckInput,checkedHttpsEndpoint,nextRetry } from '../packages/marketing/rental-governance.ts';
+import { rentalApprovalInput,rentalOutcomeInput,rentalReferenceCheckInput,rentalApplicationCc,checkedHttpsEndpoint,nextRetry } from '../packages/marketing/rental-governance.ts';
 const read=(p:string)=>readFileSync(p,'utf8');
 test('rental approvals require affirmative checks and a substantial written authority statement',()=>{
  const input={version:3,authorityAttestation:'The signed authority was checked against the instructing landlord and was approved.',authorityDocumentReference:'AUTH-ABC-123',privacyNoticeVersion:'privacy-2026-10',confirmAuthority:true,confirmNotice:true,confirmRecipient:true};
@@ -53,6 +53,20 @@ test('document scanning remains gated and cannot claim a clean scan without call
  const callback=read('apps/platform/worker/features/rental-malware.server.ts');
  assert.match(callback,/verifyScanCallback/);
  assert.match(callback,/crypto\.subtle\.verify/);
+});
+test('Lighthouse receives a separate ProInspect CC without copying other landlord applications',()=>{
+ assert.equal(rentalApplicationCc('cli_lighthouse_property_group_pty_ltd'),'info@proinspect.systems');
+ assert.equal(rentalApplicationCc('cli_other_landlord'),null);
+ assert.equal(rentalApplicationCc(''),null);
+ const dispatch=read('apps/platform/worker/features/rental-script-dispatch.server.ts');
+ assert.match(dispatch,/l\.instructed_by_client_id/);
+ assert.match(dispatch,/cc:rentalApplicationCc\(h.instructed_by_client_id\)/);
+ const appsScript=read('integrations/apps-script/rental-application-handoff.gs');
+ assert.match(appsScript,/PROINSPECT_ALLOWED_CC/);
+ assert.match(appsScript,/CC_MISMATCH/);
+ assert.match(appsScript,/CC_NOT_ALLOWED/);
+ assert.match(appsScript,/if\(cc\)mailOptions.cc=cc/);
+ assert.match(appsScript,/MailApp\.sendEmail\(mailOptions\)/);
 });
 test('Apps Script dispatch requires explicit activation, verified receipt, and no unrestricted R2 URLs',()=>{
  const src=read('apps/platform/worker/features/rental-script-dispatch.server.ts');
