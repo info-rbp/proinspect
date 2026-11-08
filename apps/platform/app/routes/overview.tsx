@@ -5,8 +5,14 @@ import { displayDate } from '../../../../packages/domain/index';
 /** Staff-specific action centre. Counts are derived from the authorised workspace response. */
 function StaffToday({ data }: { data: WorkspaceData }) {
   const base = data.workspace.href;
-  const today = new Date().toISOString().slice(0, 10);
-  const dueBookings = data.bookings.filter(b => ['confirmed', 'scheduled'].includes(b.status) && String(b.starts_at ?? '').slice(0, 10) === today);
+  const localDay = (value: Date) => new Intl.DateTimeFormat('en-AU', {
+    timeZone: 'Australia/Perth', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(value);
+  const today = localDay(new Date());
+  const dueBookings = data.bookings.filter(b =>
+    ['confirmed', 'scheduled'].includes(b.status) &&
+    Number.isFinite(Date.parse(String(b.starts_at ?? ''))) &&
+    localDay(new Date(b.starts_at)) === today);
   const reviewOrders = data.workOrders.filter(o => ['report_pending', 'under_review', 'awaiting_review'].includes(o.status));
   const openOrders = data.workOrders.filter(o => !['completed', 'cancelled', 'closed'].includes(o.status));
   const exceptions = data.payments.filter(p => ['failed', 'payment_required'].includes(p.status)).length
