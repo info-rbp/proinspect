@@ -1,4 +1,4 @@
-import { requireReleaseApproval } from './release-governance.server';
+import { requireReleaseApproval,releaseFeatureReady } from './release-governance.server';
 import { legalStatements } from './legal-acceptance.server';
 import { hasRentalRetentionPolicy,retentionDeadline } from '../../../../packages/marketing/rental-retention';
 import { z } from 'zod';
@@ -56,7 +56,7 @@ export async function rentalStartPage(env:Env,slug:string){
  const row=await statement(env.DB,"SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email FROM leasing_listings WHERE kind='residential' AND slug=? AND status='published' AND application_mode='proinspect' AND rental_approval_state='approved' AND rental_recipient_verified_at IS NOT NULL",slug).first<RentalListing>();
  assert(row,404,'RENTAL_APPLICATION_UNAVAILABLE','Online applications are unavailable for this property.');
  return {listing:{id:row.id,slug:row.slug,title:row.title,address:row.display_address,suburb:row.suburb,agentName:row.agent_name},
-  enabled:rentalEnabled(env),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??''};
+  enabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental'),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??''};
 }
 export async function startRental(env:Env,request:Request,listingId:string,input:unknown,security?:string){
  await enabled(env);

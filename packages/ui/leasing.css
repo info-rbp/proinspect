@@ -17,3 +17,70 @@
 .leasing-session-list span{font-size:.85rem;color:#476669}.leasing-detail-grid .form{display:grid;gap:16px}
 @media(max-width:800px){.leasing-detail-grid{grid-template-columns:1fr}.leasing-filters{grid-template-columns:1fr 1fr}.leasing-filters button{grid-column:span 2}.leasing-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.leasing-gallery img:first-child{grid-column:span 2;grid-row:span 1;height:auto;aspect-ratio:16/9}}
 @media(max-width:520px){.leasing-filters{grid-template-columns:1fr}.leasing-filters button{grid-column:auto}.leasing-gallery{gap:6px}.leasing-gallery img{border-radius:6px}}
+
+
+/* Property listing: strong visual hierarchy, accessible CTAs and a full-width cover photo. */
+.leasing-hero{padding:3rem 0 3.4rem;background:linear-gradient(125deg,#15334a 0%,#086e71 100%);color:#fff}
+.leasing-hero h1{max-width:990px;line-height:1.12;font-size:clamp(2rem,4vw,3.4rem);color:#fff}
+.leasing-hero .eyebrow{color:#b8eee6}
+.leasing-breadcrumb{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:2.1rem;font-size:.82rem}
+.leasing-breadcrumb a,.leasing-breadcrumb span{color:#dcefee}
+.leasing-breadcrumb a:hover{text-decoration:underline;color:#fff}
+.leasing-hero-eyebrow{margin-bottom:.8rem}
+.leasing-hero-meta{display:flex;align-items:baseline;gap:1.5rem;flex-wrap:wrap;margin:1.4rem 0}
+.leasing-hero-price{font-size:clamp(1.4rem,3vw,2rem);font-weight:750;letter-spacing:-.025em}
+.leasing-hero-location{color:#e3f0ee;font-size:.98rem}
+.leasing-hero-facts{display:flex;gap:10px;flex-wrap:wrap;margin:1.5rem 0}
+.leasing-hero-facts>div{display:flex;align-items:baseline;gap:10px;padding:12px 18px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.23);border-radius:12px}
+.leasing-hero-facts strong{font-size:1.4rem;line-height:1;font-weight:750}
+.leasing-hero-facts span{color:#e6f1f0;font-size:.83rem}
+.leasing-hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin:1.6rem 0 1.2rem}
+.leasing-hero .leasing-hero-primary{background:#fff;color:#14344a;font-size:.92rem;min-height:48px}
+.leasing-hero .leasing-hero-primary:hover{background:#e7f5f1}
+.leasing-hero .leasing-hero-secondary{background:transparent;color:#fff;border-color:rgba(255,255,255,.7);min-height:48px}
+.leasing-hero .leasing-hero-secondary:hover{background:rgba(255,255,255,.14)}
+.leasing-hero .leasing-role-note{margin:1.3rem 0 0;background:rgba(0,0,0,.12);border-color:#a3dcd1;color:#e3f0ee;font-size:.8rem;max-width:78ch}
+.leasing-showcase{padding:26px 0 8px;background:var(--canvas)}
+.leasing-showcase-heading{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.leasing-showcase-heading h2{font-size:1.2rem}
+.leasing-showcase-heading span{font-size:.83rem;color:var(--muted)}
+.leasing-showcase .leasing-gallery{margin:16px 0 0}
+.leasing-gallery img{background:#e3eceb;box-shadow:0 4px 24px rgba(20,44,65,.08)}
+.leasing-gallery--single{display:block}
+.leasing-gallery--single img:first-child{display:block;grid-column:auto;grid-row:auto;width:100%;height:auto;max-height:610px;aspect-ratio:16/9;object-fit:cover;border-radius:16px}
+.leasing-photo-caption{font-size:.76rem;margin:10px 0 0}
+.leasing-content-section{padding-top:2.2rem}
+.leasing-content-section .panel{scroll-margin-top:90px}
+.leasing-overview{display:grid;gap:1.1rem}
+.leasing-overview .eyebrow{margin-bottom:-.5rem}
+.leasing-description{max-width:72ch;line-height:1.7}
+.leasing-detail-facts{margin:.3rem 0 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.leasing-detail-facts>div{padding:15px 16px;border:1px solid var(--border);border-radius:12px;background:#f5f9f8}
+.leasing-detail-facts dt{font-size:.78rem;color:var(--muted);margin-bottom:5px}
+.leasing-detail-facts dd{margin:0;font-size:1.18rem;font-weight:750;color:var(--ink)}
+.leasing-application-panel{display:grid;gap:1rem;border:1px solid #b2d3cd;background:#f1f9f6}
+.leasing-application-panel--ready{border-color:#086e71;background:#e5f3ef}
+.leasing-application-panel .eyebrow{margin-bottom:-.35rem}
+.leasing-application-panel h2{font-size:1.5rem}
+.leasing-application-button{justify-self:start;min-height:48px}
+.leasing-application-note{border-top:1px solid #d5e4df;padding-top:14px;margin:0}
+.leasing-enquiry-panel{scroll-margin-top:90px}
+.leasing-card .leasing-card-action{margin-top:auto;align-self:stretch;min-height:44px}
+.leasing-card .leasing-card-facts{font-weight:650;color:var(--ink)}
+@media(max-width:800px){
+ .leasing-hero{padding:2.2rem 0 2.6rem}
+ .leasing-hero-facts>div{flex:1 1 125px;justify-content:center}
+ .leasing-detail-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .leasing-gallery--single img:first-child{aspect-ratio:16/10}
+}
+@media(max-width:520px){
+ .leasing-breadcrumb{margin-bottom:1.4rem}
+ .leasing-hero-actions{display:grid;grid-template-columns:1fr}
+ .leasing-hero-actions .button{width:100%}
+ .leasing-hero-facts>div{justify-content:flex-start;padding:10px 12px}
+ .leasing-hero-meta{gap:.8rem}
+ .leasing-gallery--single img:first-child{aspect-ratio:4/3;border-radius:10px}
+ .leasing-detail-facts{gap:8px}
+ .leasing-detail-facts>div{padding:12px}
+ .leasing-application-button{width:100%}
+}

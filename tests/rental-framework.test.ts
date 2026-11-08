@@ -87,3 +87,14 @@ test('privacy purge handles linked decisions and scanning records before deletin
  assert.match(app,/recoverRentalAccess/);
  assert.match(app,/recover-email:/);
 });
+
+
+test('public application entry requires independently approved deployed release',()=>{
+ const page=read('apps/marketing/app/routes/leasing-property.tsx');
+ const server=read('apps/platform/worker/features/rental-applications.server.ts');
+ assert.match(page,/releaseFeatureReady\(env,'rental'\)/);
+ assert.match(server,/enabled:rentalEnabled\(env\)&&await releaseFeatureReady\(env,'rental'\)/);
+ const release=read('apps/platform/worker/features/release-governance.server.ts');
+ assert.match(release,/a.source_sha=\?/);
+ assert.match(release,/a.reviewed_by!=a.requested_by/);
+});
