@@ -53,8 +53,9 @@ export default function Workspaces() {
           <section className="panel">
             <h2>Self-managing your own property?</h2>
             <p style={{ margin: '12px 0 18px' }}>
-              Create a Residential or Commercial Landlord account to manage property you own
-              and book your included ProInspect services. Managing other owners’ properties
+              Create a Residential or Commercial Landlord account and set up property you own.
+              You can review available services and subscription options separately after setup.
+              Creating an account does not start paid billing. Managing other owners’ properties
               as a professional organisation requires separate review.
             </p>
             <Link to="/onboarding" className="button">

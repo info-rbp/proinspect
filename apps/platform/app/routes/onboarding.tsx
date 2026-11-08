@@ -56,7 +56,9 @@ export default function Onboarding() {
         <h1>Start with the essentials.</h1>
         <p>
           Select Residential or Commercial for property you own and manage yourself.
-          Both accounts include eligible ProInspect services in the all-inclusive subscription.
+          Account creation does not start paid billing. Subscription options and eligibility
+          are handled separately after account and property setup; existing approved entitlements
+          remain unchanged.
         </p>
         <Form method="post" className="form">
           <input type="hidden" name="serviceId" value={serviceId ?? ''} />
