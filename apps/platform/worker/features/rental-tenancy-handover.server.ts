@@ -40,7 +40,7 @@ export async function rentalTenancyHandoverStatus(env:Env,user:Principal,appId:s
  const tenancy=await statement(env.DB,'SELECT status,starts_at,ends_at FROM tenancies WHERE id=?',h.tenancy_id).first<{status:string;starts_at:string;ends_at:string|null}>();
  const verified=await matchingVerifiedMembers(env,h);
  const signed=Boolean(await execution(env,h));
- return {exists:true,id:h.id,tenancyId:h.tenancy_id,status:h.status,tenancyStatus:tenancy?.status??'unknown',startsAt:tenancy?.starts_at,endsAt:tenancy?.ends_at,
+ return {exists:true,configured:true,id:h.id,tenancyId:h.tenancy_id,status:h.status,tenancyStatus:tenancy?.status??'unknown',startsAt:tenancy?.starts_at,endsAt:tenancy?.ends_at,
   invitedCount:h.applicant_count,allParticipantsVerified:verified,executedAgreementRecorded:signed,
   canActivate:h.status==='awaiting_agreement'&&tenancy?.status==='pending'&&verified&&signed,
   note:'Pending tenancy preparation is not a tenancy offer or an executed agreement.'};
