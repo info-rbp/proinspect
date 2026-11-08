@@ -3,6 +3,7 @@ import { Link,useLoaderData,useRevalidator,type LoaderFunctionArgs } from 'react
 import { loadApi } from '../lib/api.server';
 import { useWorkspace } from '../lib/workspace';
 import { PageHeading,Badge } from '../../../../packages/ui/components';
+import { perthLocalToUtc, perthUtcToLocal, type ApplicationReadinessCheck } from '../../../../packages/marketing/leasing-operations';
 
 type Notice={name:string;operatorContact:string;accessInstructions:string};
 type Mode='unavailable'|'external'|'proinspect';
@@ -173,7 +174,109 @@ function ApprovalControls({listing}:{listing:any}){
  <button className="button" type="submit" disabled={busy||!listing.rental_recipient_verified_at}>Record administrator approval</button></form>
  {message&&<p role="status">{message}</p>}</section>;
 }
+
+type LeasingSession={id:string;starts_at:string;ends_at:string;capacity:number|null;booked_count:number;status:string;version:number;instructions:string};
+type ListingDetail={listing:any;sessions:LeasingSession[];photos:{id:string;alt_text:string}[];leads:{id:string;session_id:string|null;kind:string;status:string}[];
+ applicationReadiness:{checks:ApplicationReadinessCheck[];technicalReady:boolean;notice:string}};
+function perthDate(value:string){return new Intl.DateTimeFormat('en-AU',{dateStyle:'medium',timeStyle:'short',timeZone:'Australia/Perth'}).format(new Date(value))+' AWST';}
+function ListingInspectionManagement({listing}:{listing:any}){
+ const [detail,setDetail]=useState<ListingDetail|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ const [registrations,setRegistrations]=useState<{id:string;kind:string;status:string;sessionId:string|null;createdAt:string;contact:{name:string;email:string;phone:string;message?:string}}[]|null>(null);
+ const refresh=async()=>{
+  const response=await fetch('/api/staff/leasing/'+listing.id,{credentials:'same-origin',headers:{Accept:'application/json'}});
+  const payload=await response.json() as ListingDetail&{message?:string};
+  if(!response.ok)throw Error(payload.message||'Unable to load this property.');
+  setDetail(payload);
+ };
+ const start=async()=>{setBusy(true);setMessage('');try{await refresh();}catch(e){setMessage(e instanceof Error?e.message:'Unable to load.');}finally{setBusy(false);}};
+ const loadRegistrations=async()=>{
+  setBusy(true);setMessage('');
+  try{
+   const res=await fetch('/api/staff/leasing/'+listing.id+'/registrations',{credentials:'same-origin',headers:{Accept:'application/json'}});
+   const body=await res.json() as {registrations?:NonNullable<typeof registrations>;message?:string};
+   if(!res.ok)throw Error(body.message||'Unable to load private registrations.');
+   setRegistrations(body.registrations??[]);
+  }catch(e){setMessage(e instanceof Error?e.message:'Unable to load private registrations.');}
+  finally{setBusy(false);}
+ };
+ const mutate=async(path:string,payload:unknown)=>{
+  setBusy(true);setMessage('');
+  try{await send('/api/staff/leasing/'+listing.id+'/'+path,payload);await refresh();setMessage('Inspection record updated.');}
+  catch(e){setMessage(e instanceof Error?e.message:'Unable to update.');}
+  finally{setBusy(false);}
+ };
+ const submit=async(e:FormEvent<HTMLFormElement>)=>{
+  e.preventDefault();const f=new FormData(e.currentTarget);
+  try{
+   const startsAt=perthLocalToUtc(String(f.get('startsAt')||'')),endsAt=perthLocalToUtc(String(f.get('endsAt')||''));
+   await mutate('sessions',{startsAt,endsAt,capacity:f.get('capacity')?Number(f.get('capacity')):null,instructions:String(f.get('instructions')||'')});
+  }catch(err){setMessage(err instanceof Error?err.message:'Invalid inspection time.');}
+ };
+ return <details className="panel">
+  <summary style={{fontWeight:750,cursor:'pointer'}}>Inspection scheduling and rental application readiness</summary>
+  <p className="small">Inspection times are entered and displayed in Perth time (AWST). Rental intake cannot be enabled from this page; independent approvals are required.</p>
+  <button type="button" className="button secondary small" onClick={start} disabled={busy}>{busy?'Loading…':detail?'Refresh property operations':'Load property operations'}</button>
+  {message&&<p role="status">{message}</p>}
+  {detail&&<div className="stack">
+   <section className="panel stack"><h4>Application release checklist</h4>
+    <p className="small">{detail.applicationReadiness.technicalReady?'Recorded technical and approval checks satisfied; independent acceptance still required.':'Application intake remains gated until all required checks are completed.'}</p>
+    <div className="stack">{detail.applicationReadiness.checks.map(check=><div className="record-row" key={check.key}>
+     <div><strong>{check.passed?'✓':'○'} {check.label}</strong>{!check.passed&&<p className="small">{check.nextAction}</p>}</div>
+    </div>)}</div><p className="small">{detail.applicationReadiness.notice}</p>
+   </section>
+   <section className="panel stack"><h4>Open inspection sessions</h4>
+    <p className="small">{detail.sessions.filter(x=>x.status==='scheduled').length} scheduled · {detail.leads.filter(x=>x.kind==='inspection'&&x.status==='active').length} active inspection registrations · {detail.leads.filter(x=>x.kind==='interest'&&x.status==='active').length} interest enquiries.</p>
+    {detail.sessions.length===0?<p>No inspections have been scheduled.</p>:detail.sessions.map(session=><div className="panel stack" key={session.id}>
+     <div className="actions"><strong>{perthDate(session.starts_at)} – {perthDate(session.ends_at)}</strong><Badge status={session.status}/></div>
+     <p className="small">Registered: {session.booked_count}{session.capacity===null?' · No capacity limit':' / '+session.capacity+' places'} · Reference {session.id}</p>
+     {session.instructions&&<p className="small">Instructions: {session.instructions}</p>}
+     {session.status==='scheduled'&&<>
+      <details><summary>Edit inspection time and capacity</summary>
+       <form className="stack" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);
+        try{mutate('session-edit/'+session.id,{version:session.version,startsAt:perthLocalToUtc(String(f.get('startsAt'))),endsAt:perthLocalToUtc(String(f.get('endsAt'))),
+         capacity:f.get('capacity')?Number(f.get('capacity')):null,instructions:String(f.get('instructions')||'')});}
+        catch(err){setMessage(err instanceof Error?err.message:'Invalid inspection time.');}
+       }}>
+        <div className="grid-2"><label className="field">Start — Perth time<input type="datetime-local" name="startsAt" defaultValue={perthUtcToLocal(session.starts_at)} required/></label>
+         <label className="field">End — Perth time<input type="datetime-local" name="endsAt" defaultValue={perthUtcToLocal(session.ends_at)} required/></label></div>
+        <label className="field">Capacity (blank for unlimited)<input name="capacity" type="number" min={Math.max(1,session.booked_count)} max={200} defaultValue={session.capacity??''}/></label>
+        <label className="field">Visitor instructions<input name="instructions" maxLength={600} defaultValue={session.instructions}/></label>
+        <button className="button secondary small" disabled={busy} type="submit">Save inspection changes</button>
+       </form>
+      </details>
+      <div className="actions">
+       <button type="button" className="button secondary small" disabled={busy} onClick={()=>{if(window.confirm('Cancel this inspection and notify registered visitors?'))mutate('session-status/'+session.id,{version:session.version,status:'cancelled'});}}>Cancel inspection</button>
+       {Date.parse(session.starts_at)<=Date.now()&&<button type="button" className="button secondary small" disabled={busy} onClick={()=>{if(window.confirm('Mark this inspection completed?'))mutate('session-status/'+session.id,{version:session.version,status:'completed'});}}>Complete inspection</button>}
+      </div>
+     </>}
+    </div>)}
+    <details><summary style={{fontWeight:700}}>Schedule a new inspection</summary>
+     <form className="stack" onSubmit={submit}>
+      <div className="grid-2"><label className="field">Start — Perth time<input name="startsAt" type="datetime-local" required/></label>
+       <label className="field">End — Perth time<input name="endsAt" type="datetime-local" required/></label></div>
+      <label className="field">Maximum visitors (optional)<input name="capacity" type="number" min={1} max={200}/></label>
+      <label className="field">Visitor instructions<input name="instructions" maxLength={600}/></label>
+      <button className="button" type="submit" disabled={busy}>Publish inspection session</button>
+     </form>
+    </details>
+   </section>
+   <section className="panel stack"><h4>Private enquiry register</h4>
+    <p className="small">Contacts are encrypted. Only authorised operations staff can request the detailed registration register.</p>
+    <div className="actions"><button type="button" className="button secondary small" onClick={loadRegistrations} disabled={busy}>{registrations?'Refresh restricted registrations':'View restricted registrations'}</button>
+     {registrations&&<button type="button" className="button secondary small" onClick={()=>setRegistrations(null)}>Hide contact details</button>}</div>
+    {registrations&&<div className="table-wrap"><table><thead><tr><th>Prospect</th><th>Contact</th><th>Enquiry</th><th>Received</th></tr></thead><tbody>
+     {registrations.map(reg=><tr key={reg.id}><td><strong>{reg.contact.name}</strong><p className="small">{reg.status}</p></td>
+      <td><a href={'mailto:'+reg.contact.email}>{reg.contact.email}</a><p className="small">{reg.contact.phone}</p></td>
+      <td>{reg.kind==='inspection'?'Inspection registration':'General interest'}{reg.contact.message&&<p className="small">{reg.contact.message}</p>}</td>
+      <td>{perthDate(reg.createdAt)}</td></tr>)}
+    </tbody></table>{registrations.length===0&&<p>No enquiries received.</p>}</div>}
+   </section>
+  </div>}
+ </details>;
+}
+
 function ListingOperations({listing}:{listing:any}){
+ const workspace=useWorkspace().workspace;
  const [message,setMessage]=useState(''),[busy,setBusy]=useState(false),revalidator=useRevalidator();
  const publish=async(status:string)=>{setBusy(true);setMessage('');try{await send('/api/staff/leasing/'+listing.id+'/status',{version:listing.version,status});revalidator.revalidate();setMessage('Listing updated.');}catch(e){setMessage(e instanceof Error?e.message:'Action unsuccessful.');}finally{setBusy(false);}};
  const photo=async(e:FormEvent<HTMLFormElement>)=>{e.preventDefault();setBusy(true);setMessage('');try{await send('/api/staff/leasing/'+listing.id+'/photos',new FormData(e.currentTarget),true);setMessage('Photograph uploaded.');revalidator.revalidate();}catch(err){setMessage(err instanceof Error?err.message:'Upload failed.');}finally{setBusy(false);}};
@@ -187,6 +290,8 @@ function ListingOperations({listing}:{listing:any}){
    <label className="field">Accessible image description<input name="altText" required minLength={8} maxLength={240}/></label>
    <button type="submit" className="button secondary" disabled={busy}>Upload photo (6 MB maximum)</button>
   </form></details>
+  {listing.kind==='residential'&&<Link className="button secondary small" to={workspace.href+'/rental-applications?listingId='+encodeURIComponent(listing.id)}>View this property's rental application queue</Link>}
+  <ListingInspectionManagement listing={listing}/>
   <details><summary>Edit application-handling settings</summary><EditApplicationSettings key={listing.version} listing={listing}/></details>
    <ApprovalControls listing={listing}/>
   {message&&<p role="status">{message}</p>}

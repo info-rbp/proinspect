@@ -83,3 +83,55 @@ test('unavailable published property application URLs show a safe enquiry fallba
  assert.match(page,/if\(!page.enabled\)return fail/);
  assert.match(page,/X-Robots-Tag/);
 });
+
+test('Perth inspection time conversion rejects malformed or rollover values',async()=>{
+ const {perthLocalToUtc,perthUtcToLocal,futureInspectionWindow}=await import('../packages/marketing/leasing-operations.ts');
+ assert.equal(perthLocalToUtc('2026-12-12T09:00'),'2026-12-12T01:00:00.000Z');
+ assert.equal(perthUtcToLocal('2026-12-12T01:00:00.000Z'),'2026-12-12T09:00');
+ assert.throws(()=>perthLocalToUtc('2026-02-30T09:00'));
+ assert.throws(()=>perthLocalToUtc('2026-12-12T99:00'));
+ assert.throws(()=>perthLocalToUtc('2026-12-12'));
+ assert.equal(futureInspectionWindow('2026-12-12T01:00:00.000Z','2026-12-12T02:00:00.000Z',Date.parse('2026-12-10T00:00:00Z')),true);
+ assert.equal(futureInspectionWindow('2026-12-12T01:00:00.000Z','2026-12-12T01:00:00.000Z',Date.parse('2026-12-10T00:00:00Z')),false);
+ assert.equal(futureInspectionWindow('2026-12-12T01:00:00.000Z','2026-12-12T02:00:00.000Z',Date.parse('2026-12-13T00:00:00Z')),false);
+});
+test('per-property readiness fails closed on provider release flags and independent approval',async()=>{
+ const {residentialApplicationReadiness}=await import('../packages/marketing/leasing-operations.ts');
+ const base={listingKind:'residential',listingStatus:'published',applicationMode:'proinspect',authorityReference:'AUTH-123',recipientVerifiedAt:'2026-11-01T00:00:00Z',approvalState:'approved',noticeMode:'not_used',noticeCount:0,retentionConfigured:true,
+ scannerConfigured:true,handoffConfigured:true,intakeReleaseApproved:true,scannerReleaseApproved:true,handoffReleaseApproved:true};
+ assert.equal(residentialApplicationReadiness(base).technicalReady,true);
+ for(const field of ['retentionConfigured','scannerConfigured','handoffConfigured','intakeReleaseApproved','scannerReleaseApproved','handoffReleaseApproved'] as const){
+  const result=residentialApplicationReadiness({...base,[field]:false});
+  assert.equal(result.technicalReady,false);
+  assert.equal(result.checks.some(x=>!x.passed),true);
+ }
+ assert.equal(residentialApplicationReadiness({...base,recipientVerifiedAt:null}).technicalReady,false);
+ assert.equal(residentialApplicationReadiness({...base,applicationMode:'external'}).technicalReady,false);
+});
+test('staff leasing supports per-listing inspection scheduling and safe application readiness',()=>{
+ const ui=text('apps/platform/app/routes/leasing-administration.tsx');
+ for(const fragment of ['ListingInspectionManagement','Schedule a new inspection','session-edit/','session-status/','Application release checklist','perthLocalToUtc','View restricted registrations'])assert.ok(ui.includes(fragment),fragment);
+ const backend=text('apps/platform/worker/features/leasing.server.ts');
+ assert.match(backend,/residentialApplicationReadiness/);
+ assert.match(backend,/releaseFeatureReady\(env,'rental_scanner'\)/);
+ assert.match(backend,/releaseFeatureReady\(env,'rental_script'\)/);
+ assert.match(backend,/futureInspectionWindow\(d.startsAt,d.endsAt\)/);
+ assert.match(backend,/SESSION_NOT_STARTED/);
+});
+
+test('staff rental application queue filtering and agency-decision handover preserve role and approval boundaries',()=>{
+ const list=text('apps/platform/app/routes/rental-applications.tsx');
+ const backend=text('apps/platform/worker/features/rental-review.server.ts');
+ const detail=text('apps/platform/app/routes/rental-application-detail.tsx');
+ const leasing=text('apps/platform/app/routes/leasing-administration.tsx');
+ assert.match(list,/searchParams\.get\('listingId'\)/);
+ assert.match(backend,/staff\(user\);/);
+ assert.match(backend,/rental_application_outcomes WHERE application_id/);
+ assert.match(detail,/d\.outcome\.outcome==='successful'/);
+ assert.match(detail,/does not make an offer or automatically create a tenancy/);
+ assert.match(detail,/Open tenancy creation and invitation/);
+ assert.match(leasing,/View this property.s rental application queue/);
+ const tenancy=text('apps/platform/worker/api.ts');
+ assert.match(tenancy,/TENANCY_REVIEW_REQUIRED/);
+ assert.match(tenancy,/MANAGER_REQUIRED/);
+});
