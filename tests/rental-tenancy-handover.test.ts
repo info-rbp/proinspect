@@ -36,7 +36,7 @@ test('activation and void require explicit independent evidence',()=>{
 });
 test('tenant linking is release-gated, idempotent, immutable, and does not activate on agency decision alone',()=>{
  const server=read('apps/platform/worker/features/rental-tenancy-handover.server.ts');
- const migration=read('database/migrations/0049_rental_tenancy_handover.sql');
+ const migration=read('database/migrations/0052_rental_tenancy_handover.sql');
  const routes=read('apps/platform/worker/api.ts');
  const ui=read('apps/platform/app/routes/rental-application-detail.tsx');
  for(const x of ["requireReleaseApproval(env,'rental_handover')","requireReleaseApproval(env,'agreement_signing')","HANDOVER_DECISION_REQUIRED","HANDOVER_DELIVERY_REQUIRED",

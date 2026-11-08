@@ -95,6 +95,8 @@ try{
    await ok(p+'/review',reviewer,{revision:5,decision:'approved',comment:'Reviewed report and evidence.'});
    const rendered=await ok(p+'/render',operator,{});
    assert.ok(rendered.documentId);
+   const approved=await ok(p+'/render-review',reviewer,{decision:'accepted',sha256:rendered.sha256,reviewReference:'Independently examined synthetic rendered PDF'});
+   assert.equal(approved.status,'accepted');
    const issued=await ok(p+'/issue',operator,{audience:recipientKind,recipientId,reviewReference:'Synthetic independent review'});
    return {id,documentId:rendered.documentId,versionId:submitted.versionId,issued};
  }

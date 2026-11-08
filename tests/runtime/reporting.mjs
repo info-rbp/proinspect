@@ -122,6 +122,26 @@ try{
   assert.equal((await api(staffBase+'/work-orders/work_report',ops,{status:'completed',version:inProgress.version})).status,409,
     'Rendering without recipient issuance cannot complete an operational Work Order.');
  });
+ await check('generated PDF requires exact-byte, independent review before any recipient grant',async()=>{
+   const render=await first('SELECT document_sha256 FROM report_render_manifests WHERE document_id=?',doc);
+   const request={audience:'client',recipientId:clientId,reviewReference:'Reviewed attendance delivery'};
+   assert.equal((await api(base+'/issue',ops,request)).status,409);
+   assert.equal((await api(staffBase+'/documents/'+doc+'/issue',ops,request)).status,409,'Generic document issue cannot bypass PDF review.');
+   assert.equal((await api(base+'/render-review',inspector,{decision:'accepted',sha256:render.document_sha256,reviewReference:'Own report'})).status,403);
+   assert.equal((await api(base+'/render-review',ops,{decision:'accepted',sha256:render.document_sha256,reviewReference:'Own render'})).status,403);
+   assert.equal((await api('/api/w/landlord/'+clientId+'/reports/'+reportId+'/rendered-pdf',owner)).status,404);
+   const read=await api(base+'/rendered-pdf',reviewer);
+   assert.equal(read.status,200);assert.equal(new TextDecoder().decode(read.data.slice(0,8)),'%PDF-1.4');
+   assert.equal((await api(base+'/render-review',reviewer,{decision:'accepted',sha256:'0'.repeat(64),reviewReference:'Invalid file hash'})).status,409);
+   const accepted=await ok(base+'/render-review',reviewer,{decision:'accepted',sha256:render.document_sha256,reviewReference:'Visually reviewed all rendered PDF pages'});
+   assert.equal(accepted.status,'accepted');
+   await assert.rejects(run("UPDATE report_render_reviews SET decision='rejected' WHERE report_version_id=?",version),/RENDER_REVIEW_IMMUTABLE/);
+   const replay=await ok(base+'/render-review',reviewer,{decision:'accepted',sha256:render.document_sha256,reviewReference:'Repeated same decision'});
+   assert.equal(replay.replayed,true);
+   await run('UPDATE staff_profiles SET active=0 WHERE user_id=?',reviewer.id);
+   assert.equal((await api(base+'/issue',ops,request)).status,409,'Revoked reviewer invalidates unissued render acceptance.');
+   await run('UPDATE staff_profiles SET active=1 WHERE user_id=?',reviewer.id);
+ });
  await check('issue uses existing explicit grant and only authorised client can download',async()=>{
   const issued=await ok(base+'/issue',ops,{audience:'client',recipientId:clientId,reviewReference:'Reviewed attendance delivery'});
   assert.equal(issued.status,'issued');assert.equal((await ok('/api/w/landlord/'+clientId+'/reports',owner)).reports.length,1);

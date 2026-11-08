@@ -51,7 +51,7 @@ No landlord approvals, official form validation, private provider account setup,
 ## Follow-on implementation — PR #80 (8 November 2026)
 
 ### New controlled application-to-tenancy lifecycle
-Migration 0049_rental_tenancy_handover.sql adds one immutable handover per
+Migration 0052_rental_tenancy_handover.sql adds one immutable handover per
 rental application, tied to the recorded successful decision and final encrypted
 household snapshot. It is distinct from ordinary tenancy creation, which
 historically created an immediately active tenancy.
@@ -77,7 +77,7 @@ historically created an immediately active tenancy.
    existing agreement case must first be voided in its own protected workflow.
 
 The new flag RENTAL_TENANCY_HANDOVER_ENABLED remains false in all checked-in
-environments. Migration 0049 must be applied and rehearsed in isolated
+environments. Migration 0052 must be applied and rehearsed in isolated
 staging D1/R2 before enablement. Independent, source-specific approvals
 are required for rental_handover, rental and agreement_signing. Merge alone
 does not constitute release authorisation.
