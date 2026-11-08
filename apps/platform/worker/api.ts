@@ -203,7 +203,7 @@ async function acceptInvitation(env: Env, user: Principal, token: unknown) {
     : "t.status='active'";
   const invitation = await statement(
     env.DB,
-    `SELECT i.tenancy_id FROM invitations i JOIN tenancies t ON t.id=i.tenancy_id WHERE i.token_hash=? AND i.email=? AND i.expires_at>? AND i.consumed_at IS NULL AND t.status='active' AND (EXISTS(SELECT 1 FROM staff_profiles s WHERE s.user_id=i.created_by AND s.active=1 AND s.role IN('administrator','operations_manager')) OR EXISTS(SELECT 1 FROM property_management_relationships pm JOIN client_memberships m ON m.client_id=pm.manager_client_id WHERE pm.property_id=t.property_id AND pm.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND pm.ends_at IS NULL AND m.user_id=i.created_by AND m.active=1 AND m.role!='viewer'))`,
+    `SELECT i.tenancy_id FROM invitations i JOIN tenancies t ON t.id=i.tenancy_id WHERE i.token_hash=? AND i.email=? AND i.expires_at>? AND i.consumed_at IS NULL AND ${pendingTenancyCondition} AND (EXISTS(SELECT 1 FROM staff_profiles s WHERE s.user_id=i.created_by AND s.active=1 AND s.role IN('administrator','operations_manager')) OR EXISTS(SELECT 1 FROM property_management_relationships pm JOIN client_memberships m ON m.client_id=pm.manager_client_id WHERE pm.property_id=t.property_id AND pm.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND pm.ends_at IS NULL AND m.user_id=i.created_by AND m.active=1 AND m.role!='viewer'))`,
     hash,
     user.email,
     now(),
