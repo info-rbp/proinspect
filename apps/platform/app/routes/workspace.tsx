@@ -23,6 +23,7 @@ export default function WorkspaceLayout() {
   const data = useLoaderData<typeof loader>(),
     { workspace: w, user } = data;
   const [open, setOpen] = useState(false),
+    [toolSearch, setToolSearch] = useState(''),
     pending = useNavigation().state !== 'idle';
   const items: string[][] = [['', 'Overview', '']];
   items.push(['records', 'Browse all records', '']);
@@ -118,9 +119,26 @@ export default function WorkspaceLayout() {
     staff: ['', 'bookings', 'work-orders', 'reports', 'properties', 'finance'],
   };
   const primaryPaths = primaryByKind[w.kind] ?? ['', 'requests', 'documents'];
-  const primary = items.filter(([path]) => primaryPaths.includes(path));
+  const primary = items.filter(([path]) => primaryPaths.includes(path)).map(([path, label, icon]) => [
+    path, w.kind === 'staff' ? ({
+      '': 'Today', bookings: 'Schedule', 'work-orders': 'Work Orders',
+      reports: 'Reports', properties: 'Clients & properties', finance: 'Finance',
+    } as Record<string, string>)[path] ?? label : label, icon,
+  ]);
   const secondary = items.filter(([path]) => !primaryPaths.includes(path));
   const pathname = useLocation().pathname;
+  const toolGroups = [
+    { label: 'Operations', paths: ['records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
+    { label: 'Documents & services', paths: ['documents','reports','document-operations','service-agreements','wa-form-queue','bond-review-queue','services','reporting','confidential','market-packs','enterprise-intelligence','v2-business'] },
+    { label: 'Administration', paths: ['finance','billing','contractor-payments','team','agency-administration','administration','release-readiness','pricing-administration','legal-administration','integrations','enquiries','owner-invitations'] },
+  ];
+  const searchText = toolSearch.trim().toLocaleLowerCase();
+  const groupedTools = toolGroups.map(group => ({
+    label: group.label,
+    links: secondary.filter(([path, label]) => group.paths.includes(path) && (!searchText || label.toLocaleLowerCase().includes(searchText))),
+  })).filter(group => group.links.length > 0);
+  const ungroupedTools = secondary.filter(([path, label]) => !toolGroups.some(group => group.paths.includes(path)) && (!searchText || label.toLocaleLowerCase().includes(searchText)));
+  if (ungroupedTools.length) groupedTools.push({ label: 'Other tools', links: ungroupedTools });
   const moreActive = secondary.some(([path]) =>
     pathname === `${w.href}/${path}` || pathname.startsWith(`${w.href}/${path}/`),
   );
@@ -131,7 +149,7 @@ export default function WorkspaceLayout() {
         <Link className="brand inverse" to="/workspaces">
           ProInspect<span>PROPERTY OPERATIONS</span>
         </Link>
-        <div className="workspace-label">{WORKSPACES[w.kind].name}</div>
+        <div className="workspace-label">{WORKSPACES[w.kind].name} workspace</div>
         <nav className="side-nav">
           {primary.map(([path, label]) => (
             <NavLink end={!path} onClick={() => setOpen(false)} key={path}
@@ -141,12 +159,26 @@ export default function WorkspaceLayout() {
           ))}
           {secondary.length > 0 && (
             <details className="side-nav-more" key={moreActive ? 'active-route' : 'collapsed'} open={moreActive}>
-              <summary>More tools</summary>
-              <div className="side-nav-more-links">
-                {secondary.map(([path, label]) => (
-                  <NavLink end={!path} key={path} onClick={() => setOpen(false)}
-                    to={`${w.href}/${path}`}>{label}</NavLink>
-                ))}
+              <summary aria-label="More tools">More tools <span className="side-nav-count">{secondary.length}</span></summary>
+              <div className="side-nav-more-content">
+                {secondary.length > 8 && (
+                  <label className="side-nav-search-label" htmlFor="portal-tool-search">
+                    Find a tool
+                    <input id="portal-tool-search" type="search" value={toolSearch}
+                      placeholder="Search workspace tools" onChange={event => setToolSearch(event.target.value)} />
+                  </label>
+                )}
+                {groupedTools.length ? groupedTools.map(group => (
+                  <section className="side-nav-group" key={group.label} aria-label={group.label}>
+                    <h2>{group.label}</h2>
+                    <div className="side-nav-more-links">
+                      {group.links.map(([path, label]) => (
+                        <NavLink end={!path} key={path} onClick={() => { setOpen(false); setToolSearch(''); }}
+                          to={`${w.href}/${path}`}>{label}</NavLink>
+                      ))}
+                    </div>
+                  </section>
+                )) : <p className="side-nav-no-results">No matching tools</p>}
               </div>
             </details>
           )}
@@ -154,9 +186,6 @@ export default function WorkspaceLayout() {
         <div className="sidebar-foot">
           <Link to="/account">Account &amp; sign-in security</Link>
           <Link to="/workspaces">Switch workspace →</Link>
-          <p style={{ color: '#b0c3ce', marginTop: 12 }}>
-            Your access follows your relationship to each property.
-          </p>
           {open && (
             <button
               className="button secondary"
@@ -178,7 +207,7 @@ export default function WorkspaceLayout() {
               aria-expanded={open}
               onClick={() => setOpen(!open)}
             >
-              ☰
+              <span aria-hidden="true">☰</span>
             </button>
             <div className="topbar-context">
               {w.name}
@@ -196,6 +225,7 @@ export default function WorkspaceLayout() {
           </div>
         </header>
         <main id="main" className="content">
+          <nav className="portal-breadcrumb" aria-label="Breadcrumb"><Link to="/workspaces">Workspaces</Link><span aria-hidden="true">/</span><span>{WORKSPACES[w.kind].name}</span></nav>
           <Outlet context={data} />
         </main>
       </div>

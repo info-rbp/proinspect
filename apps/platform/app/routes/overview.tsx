@@ -1,26 +1,96 @@
 import { Link } from 'react-router';
-import { useWorkspace } from '../lib/workspace';
+import { useWorkspace, type WorkspaceData, type RecordRow } from '../lib/workspace';
 import { PageHeading, Metric, Badge, EmptyState } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
+/** Staff-specific action centre. Counts are derived from the authorised workspace response. */
+function StaffToday({ data }: { data: WorkspaceData }) {
+  const base = data.workspace.href;
+  const localDay = (value: Date) => new Intl.DateTimeFormat('en-AU', {
+    timeZone: 'Australia/Perth', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(value);
+  const today = localDay(new Date());
+  const dueBookings = data.bookings.filter(b =>
+    ['confirmed', 'scheduled'].includes(b.status) &&
+    Number.isFinite(Date.parse(String(b.starts_at ?? ''))) &&
+    localDay(new Date(b.starts_at)) === today);
+  const reviewOrders = data.workOrders.filter(o => ['report_pending', 'under_review', 'awaiting_review'].includes(o.status));
+  const openOrders = data.workOrders.filter(o => !['completed', 'cancelled', 'closed'].includes(o.status));
+  const exceptions = data.payments.filter(p => ['failed', 'payment_required'].includes(p.status)).length
+    + data.approvals.filter(a => a.status === 'pending').length;
+  const recent: Array<RecordRow & {category: string; path: string}> = [...data.workOrders.map((row): RecordRow & {category: string; path: string} => ({...row, category: 'Work order', path: `${base}/work-orders/${row.id}` })),
+    ...data.bookings.map((row): RecordRow & {category: string; path: string} => ({...row, category: 'Booking', path: `${base}/bookings` }))]
+    .sort((a, b) => String(b.updated_at ?? b.created_at ?? b.starts_at ?? '').localeCompare(String(a.updated_at ?? a.created_at ?? a.starts_at ?? '')))
+    .slice(0, 6);
+  return <>
+    <PageHeading eyebrow="Operations / Today" title="Today's work" description="Priority actions, upcoming bookings and the work that needs a decision.">
+      <Link className="button" to={base+'/bookings'}>View schedule</Link>
+    </PageHeading>
+    <section className="grid-4 portal-summary" aria-label="Staff work summary">
+      <Link className="portal-summary-link" to={base+'/bookings'}><Metric label="Bookings due" value={dueBookings.length} detail="Scheduled for today" /></Link>
+      <Link className="portal-summary-link" to={base+'/reports'}><Metric label="Reports to review" value={reviewOrders.length} detail="Awaiting review" /></Link>
+      <Link className="portal-summary-link" to={base+'/work-orders'}><Metric label="Open work" value={openOrders.length} detail="Active work orders" /></Link>
+      <Link className="portal-summary-link" to={base+'/finance'}><Metric label="Exceptions" value={exceptions} detail="Financial and approval items" /></Link>
+    </section>
+    <div className="detail-grid portal-today-grid">
+      <section className="panel">
+        <div className="panel-header"><h2>Work requiring attention</h2><Link className="small" to={base+'/work-orders'}>View all work</Link></div>
+        {openOrders.length ? <div className="record-list">
+          {openOrders.slice(0, 6).map(o => <div className="record-row" key={o.id}>
+            <div><Link className="record-title" to={base+'/work-orders/'+o.id}>{o.title || o.reference || 'Work order'}</Link>
+              <p>{[o.address, o.reference].filter(Boolean).join(' · ')}</p></div><Badge status={o.status}/></div>)}
+        </div> : <EmptyState title="No active work orders" description="Assigned work will appear here when it requires action." />}
+      </section>
+      <section className="panel">
+        <div className="panel-header"><h2>Today's schedule</h2><Link className="small" to={base+'/bookings'}>Open schedule</Link></div>
+        {dueBookings.length ? <div className="record-list">{dueBookings.slice(0, 6).map(b =>
+          <div className="record-row" key={b.id}><div><div className="record-title">{b.service_name || b.reference || 'Inspection booking'}</div>
+            <p>{[b.address, b.starts_at ? displayDate(b.starts_at) : null].filter(Boolean).join(' · ')}</p></div>
+            <Badge status={b.status}/></div>)}</div>
+          : <EmptyState title="No bookings due today" description="The schedule will show confirmed visits due today." />}
+      </section>
+    </div>
+    <section className="panel portal-recent-activity">
+      <div className="panel-header"><h2>Recent activity</h2><Link className="small" to={base+'/records'}>Browse records</Link></div>
+      {recent.length ? <div className="record-list">{recent.map(r => <div className="record-row" key={r.category+':'+r.id}>
+        <div><Link className="record-title" to={r.path}>{r.title || r.service_name || r.reference || r.category}</Link>
+          <p>{r.category}{r.reference ? ' · '+r.reference : ''}</p></div><Badge status={r.status || 'pending'}/></div>)}</div>
+        : <EmptyState title="No recent activity" description="Bookings and work updates will be listed when records are available." />}
+    </section>
+  </>;
+}
+
 export default function Overview() {
   const d = useWorkspace();
   const w = d.workspace;
-  if(w.kind==='building-manager')return <><PageHeading title={w.name} description="Your building assignment does not grant access to private tenancy records, other buildings or financial decisions."/><section className="panel stack"><h2>Professional building operations</h2><p>Coordinate incidents, daily logs, asset maintenance, site access and resident moves within your delegated authority.</p><Link className="button" to={w.href+'/facilities'}>Open building operations</Link><Link to={w.href+'/documents'}>Authorised building reports</Link></section></>;
+  if (w.kind === 'staff') return <StaffToday data={d} />;
+  if (w.kind === 'building-manager') return <>
+    <PageHeading eyebrow="Building operations" title="Today's building work" description="Manage assigned facilities, resident moves and authorised operational records.">
+      <Link className="button" to={w.href+'/facilities'}>Open operations</Link>
+    </PageHeading>
+    <div className="grid-4 portal-summary">
+      <Metric label="Assigned buildings" value={d.schemes.length} detail="Within your assignment" />
+      <Metric label="Open issues" value={d.requests.filter(r => !['closed','completed'].includes(r.status)).length} detail="Operational follow-up" />
+      <Metric label="Active work" value={d.workOrders.filter(o => !['cancelled','completed'].includes(o.status)).length} detail="Building work orders" />
+      <Metric label="Documents" value={d.documents.length} detail="Authorised records" />
+    </div>
+    <section className="panel"><div className="panel-header"><h2>Building operations</h2><Link to={w.href+'/documents'}>View reports</Link></div>
+      <p>Coordinate incidents, daily logs, asset maintenance, site access and resident moves within your delegated authority.</p></section>
+  </>;
   const active = d.requests.filter((r) => !['closed', 'completed'].includes(r.status));
   const upcoming = d.bookings.filter(
     (b) => b.status === 'confirmed' && b.starts_at > new Date().toISOString(),
   );
-  const openOrders = d.workOrders.filter((o) => !['cancelled', 'completed'].includes(o.status));
+  const openOrders = d.workOrders.filter(o => !['cancelled', 'completed'].includes(o.status));
   if (['strata-manager', 'building', 'council'].includes(w.kind))
     return (
       <>
         <PageHeading
           title={
             w.kind === 'strata-manager'
-              ? 'Your strata portfolio'
+              ? 'Schemes overview'
               : w.kind === 'council'
-                ? 'Understand and decide.'
-                : 'Your building, connected.'
+                ? 'Council overview'
+                : 'Building overview'
           }
           description={
             w.kind === 'strata-manager'
@@ -69,25 +139,25 @@ export default function Overview() {
     <>
       <PageHeading
         eyebrow={
-          w.kind === 'staff'
-            ? 'Operations at a glance'
-            : w.kind === 'tenant'
-              ? 'Your tenancy'
-              : 'Your property overview'
+          w.kind === 'tenant' ? 'Your tenancy'
+            : w.kind === 'property-manager' ? 'Property management'
+            : w.kind === 'commercial' ? 'Commercial operations'
+            : 'Residential property operations'
         }
         title={
-          w.kind === 'staff'
-            ? 'Keep the work moving.'
-            : w.kind === 'property-manager'
-              ? 'Your managed portfolio'
-              : w.kind === 'commercial'
-                ? 'Your commercial portfolio'
-                : `Welcome${d.user.display_name ? ', ' + d.user.display_name.split(' ')[0] : ''}.`
+          w.kind === 'property-manager' ? 'Managed portfolio'
+            : w.kind === 'commercial' ? 'Commercial portfolio'
+            : w.kind === 'tenant' ? 'Tenancy overview'
+            : 'Property overview'
         }
         description={
           w.kind === 'tenant'
-            ? 'Follow requests, see upcoming inspections and access documents issued to your tenancy.'
-            : 'Your properties, upcoming work and latest reports, in one place.'
+            ? 'Review maintenance requests, scheduled inspections and documents issued to your tenancy.'
+            : w.kind === 'property-manager'
+              ? 'Monitor assigned properties, client requests, scheduled work and operational decisions.'
+              : w.kind === 'commercial'
+                ? 'Track your commercial properties, inspections, lease obligations and related work.'
+                : 'Review your residential properties, upcoming inspections, requests and issued reports.'
         }
       >
         {['landlord', 'property-manager', 'commercial'].includes(w.kind) && (
@@ -101,7 +171,7 @@ export default function Overview() {
           <Metric
             label="Properties"
             value={d.properties.length}
-            detail={w.kind === 'staff' ? 'Within your staff scope' : 'Linked to this workspace'}
+            detail="Linked to this workspace"
           />
           <Metric
             label="Upcoming"
@@ -151,38 +221,15 @@ export default function Overview() {
         <div className="detail-grid">
           <section className="panel">
             <div className="panel-header">
-              <h2>{w.kind === 'staff' ? 'Work requiring attention' : 'Your properties'}</h2>
+              <h2>Your properties</h2>
               <Link
                 className="small"
-                to={`${w.href}/${w.kind === 'staff' ? 'work-orders' : 'properties'}`}
+                to={`${w.href}/properties`}
               >
                 {w.kind === 'tenant' ? '' : 'View all →'}
               </Link>
             </div>
-            {w.kind === 'staff' ? (
-              openOrders.length ? (
-                <div className="record-list">
-                  {openOrders.slice(0, 6).map((o) => (
-                    <div className="record-row" key={o.id}>
-                      <div>
-                        <Link className="record-title" to={`${w.href}/work-orders#${o.id}`}>
-                          {o.title}
-                        </Link>
-                        <p>
-                          {o.address} · {o.reference}
-                        </p>
-                      </div>
-                      <Badge status={o.status} />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  title="No work is waiting"
-                  description="New bookings and requests will appear here for your team."
-                />
-              )
-            ) : d.properties.length ? (
+            {d.properties.length ? (
               d.properties.slice(0, 5).map((p) => (
                 <div className="record-row" key={p.id}>
                   <div>

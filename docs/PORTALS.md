@@ -9,9 +9,10 @@ All portals share identity, domain services and UI primitives. Separate workspac
 | Strata manager   | Operate a portfolio of schemes                    | Schemes/buildings/lots, common areas, residents, requests, contractors, inspections, works, notices, approvals, reports                                          |
 | Tenant           | Participate in an authorised tenancy              | Requests/attachments, inspections, issued documents, WA statutory forms, PCR/bond, restricted support, past-tenancy access                                       |
 | Building         | Participate as resident/occupant/owner            | Notices, works, common-property issues, own requests, building documents, access/move requests                                                                   |
+| Building manager | Operate delegated building facilities             | Authorised building operations, notice drafts and delegated reports; no private tenancy or payment approval by implication                                        |
 | Council          | Understand and decide                             | Decision packets, member recommendations, recorded authorised outcomes, works oversight, reports, term-based access                                              |
 | Commercial       | Operate commercial/asset portfolios               | Ownership/management, commercial inspections, make-good, contractor attendance, work verification, documents and reporting                                       |
-| Staff            | Deliver ProInspect services                       | Action centre, clients, properties, schemes, scheduling, work orders, assignments, requests, documents, approvals, payments, communications, audit, integrations |
+| Staff            | Deliver ProInspect services                       | Today, scheduling, work orders, report review, clients/properties, finance, authorised specialist administration |
 
 The marketing application uses service, sector, problem and engagement-model content. It is public and crawlable. Booking and document requests continue into authenticated operational workflows; a marketing enquiry is permitted without a portal account. Selected service intent survives authentication. The application domain is app.proinspect.systems; domain activation and legacy redirects are release operations, not automatic consequences of committing code.
 
@@ -40,13 +41,17 @@ workspace experiences, not new staff roles or subscription prices:
 - An identity may hold one account of each type, with independent property
   and workspace permissions. Legacy residential sign-up API callers default
   to `residential`; existing client records are unchanged.
-- Both active account types automatically receive the all-inclusive
-  subscription through the existing Cloudflare D1 trigger (migration 0006).
-  This does not grant unrelated portfolio, staff, tenancy or scheme access.
+- New residential and commercial owner accounts start as **free accounts**.
+  Creating an identity, account or property does not create a Stripe subscription,
+  a paid inspection allowance or included services. Existing historically
+  approved all-inclusive property grants remain preserved by migration 0053.
+  Optional paid enrollment is a separate, later commercial release requiring
+  approved terms, provider verification and explicit user opt-in.
 - The same service catalogue is filtered by the property's sector. A
   residential PCR cannot be booked against a commercial property, and a
   commercial inspection cannot be booked against a residential property.
-  Both can book eligible included services without a separate visit charge.
+  An eligible included service requires an independently verified entitlement;
+  a free account does not confer a service benefit.
 - A property already recorded elsewhere requires relationship review. A
   self-attestation does not grant an owner automatic access to an existing
   unrelated client property.
@@ -54,3 +59,56 @@ workspace experiences, not new staff roles or subscription prices:
 ## Shared interaction rules
 
 Property/scheme context is always visible. Use business names rather than raw IDs. One primary action per screen. Responsive navigation, labelled fields, keyboard focus, error summaries, accessible progress indicators, usable empty states and plain-language next steps are required. Customer activity excludes internal notes and raw security audit metadata.
+
+## Stage 2 — Professional portal design (nine workspace kinds)
+
+The nine existing workspace kinds — Staff, Landlord, Property Manager, Strata
+Manager, Tenant, Building, Strata Council, Commercial and Building Manager —
+use the same responsive shell, tokens, headings, panels, metrics, forms,
+keyboard focus and status system. They remain **nine access scopes**, not
+nine separate applications or databases.
+
+### Navigation contract
+
+1. Each portal shows only its highest-frequency operational destinations at
+   first level. **Staff** has Today, Schedule, Work Orders, Reports, Clients &
+   properties and Finance. Other roles have their own five-to-seven relevant
+   top-level entries (fewer where the role permits fewer operations).
+2. Other authorised routes remain addressable and are grouped inside
+   **More tools** under Operations, Documents & services, and Administration.
+   A labelled search field appears when the available specialist set is large.
+   The active specialist route opens the disclosure automatically.
+3. Grouping and hiding links **never** create permissions: server checks on
+   workspace kind, relationship, staff role, approved authority and document
+   grants remain the authority. A direct URL is subject to the same checks.
+4. Mobile workspace switching and navigation must remain keyboard-operable,
+   responsive to 320px screens, touch-target accessible and without document
+   horizontal overflow. The account and sign-out controls remain visible.
+5. Workspaces display plain operational titles, actual counts and actionable
+   empty states. A missing dataset is represented as zero or as no records,
+   never as synthetic operational activity.
+
+### Visual contract
+
+- Use subdued navy, off-white surfaces, readable system typography and one
+  restrained teal accent for active navigation and focus. No emojis, decorative
+  KPI icons, gradients or promotional claims inside operational workspaces.
+- Use consistent native-labelled controls, table overflow containment, legible
+  status badges and high-contrast keyboard focus. Keep content responsive.
+- The Staff Today dashboard shows current-date bookings, report review
+  work orders, active work, financial/approval exceptions and recent records,
+  **derived from the authenticated Staff workspace API only**. Data is not
+  independently fetched across client scopes for presentation.
+- Preserve legacy deep links for forms, specialist tools, documents and review
+  panels. A visual redesign does not approve legal drafts, enable restricted
+  facilities or activate Stripe billing.
+
+### Verification
+
+Unit tests assert that nine workspace kinds retain the portal contract and
+specialist navigation remains route-backed. Playwright covers Staff and free
+Landlord navigation and mobile layout; existing integration and browser suites
+continue to enforce authorisation, documents and operational behaviours.
+CI in an isolated runtime is engineering evidence, not independent hosted-role
+acceptance. Before sign-off, verify all nine independently authenticated hosted
+roles at the exact production SHA and visually inspect desktop/mobile layouts.

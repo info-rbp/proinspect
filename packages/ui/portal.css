@@ -68,3 +68,79 @@
 .pi-inspector-field fieldset { min-inline-size: 0; }
 .pi-inspector-header > div { min-width: 0; }
 .pi-inspector-chip { max-width: 100%; overflow-wrap: anywhere; }
+
+/* Stage 2 — shared, functional workspace presentation; public marketing is unchanged. */
+.app-shell { background: #f6f8fa; }
+.app-shell .sidebar { background: #172b3b; padding: 1.25rem .72rem; }
+.app-shell .sidebar .brand { font-size: 1.12rem; letter-spacing: -.025em; }
+.app-shell .sidebar .brand span { font-size: .56rem; letter-spacing: .13em; }
+.app-shell .workspace-label {
+  color: #b8c8d4; letter-spacing: .075em; font-size: .67rem;
+  border-top: 1px solid #354b5b; padding-top: 1rem; margin: 1.35rem .65rem .65rem;
+}
+.app-shell .side-nav a { min-height: 39px; padding: .57rem .73rem; font-size: .82rem; font-weight: 500; }
+.app-shell .side-nav a.active { background: #2b4d5f; box-shadow: inset 3px 0 0 #8bc2c3; }
+.app-shell .side-nav a:focus-visible,
+.app-shell .side-nav-more summary:focus-visible,
+.app-shell .sidebar-foot a:focus-visible { outline: 2px solid #d4e8e8; outline-offset: 2px; }
+.app-shell .side-nav-more { border-top-color: #354b5b; }
+.app-shell .side-nav-more summary { display: flex; align-items: center; justify-content: space-between; min-height: 40px; list-style: none; }
+.app-shell .side-nav-more summary::-webkit-details-marker { display: none; }
+.app-shell .side-nav-more summary::after { content: '⌄'; margin-left: auto; font-size: .9rem; padding-left: .65rem; }
+.app-shell .side-nav-more[open] summary::after { content: '⌃'; }
+.app-shell .side-nav-count { margin-left: .45rem; font-size: .7rem; font-weight: 500; color: #b4c4cf; }
+.app-shell .side-nav-more-content { padding: .15rem .2rem .6rem; }
+.app-shell .side-nav-group { border-top: 1px solid #354b5b; margin-top: .6rem; padding-top: .65rem; }
+.app-shell .side-nav-group h2 { margin: .15rem .6rem .25rem; color: #b7cbd5; font-size: .65rem; text-transform: uppercase; font-weight: 600; letter-spacing: .08em; }
+.app-shell .side-nav-more-links { padding: 0; }
+.app-shell .side-nav-more-links a { font-size: .77rem; min-height: 34px; padding: .47rem .66rem; }
+.app-shell .side-nav-search-label { display: grid; gap: .3rem; color: #bdcbd5; font-size: .73rem; padding: .4rem .3rem; }
+.app-shell .side-nav-search-label input { width: 100%; min-height: 38px; font-size: .8rem; border-radius: 6px; padding: .45rem .55rem; }
+.app-shell .side-nav-no-results { font-size: .78rem; padding: .4rem .6rem; color: #d3dce4; }
+.app-shell .sidebar-foot { border-top: 1px solid #354b5b; margin-top: auto; padding: 1.2rem .7rem .4rem; display: grid; gap: .45rem; }
+.app-shell .sidebar-foot a { font-size: .75rem; }
+.app-shell .topbar { min-height: 68px; height: auto; background: #fff; border-bottom: 1px solid #e2e8ec; padding: .75rem clamp(1rem, 3vw, 2rem); }
+.app-shell .content { max-width: 1500px; margin-inline: auto; padding: 1.65rem clamp(1rem, 3vw, 2rem) 3rem; }
+.app-shell .portal-breadcrumb { display: flex; align-items: center; gap: .6rem; color: #627380; font-size: .75rem; margin-bottom: 1.1rem; }
+.app-shell .portal-breadcrumb a { color: #415f70; }
+.app-shell .page-heading { align-items: center; margin-bottom: 1.35rem; }
+.app-shell .page-heading h1 { font-size: clamp(1.5rem, 2vw, 2rem); line-height: 1.2; letter-spacing: -.025em; }
+.app-shell .page-heading p { max-width: 650px; font-size: .9rem; }
+.app-shell .eyebrow { color: #5f707d; letter-spacing: .045em; }
+.app-shell .panel, .app-shell .metric { border: 1px solid #dce4e9; border-radius: 8px; box-shadow: none; }
+.app-shell .panel { background: #fff; padding: clamp(1rem, 1.5vw, 1.4rem); }
+.app-shell .panel h2 { font-size: 1.04rem; letter-spacing: -.01em; }
+.app-shell .metric { padding: 1rem 1.2rem; min-height: 110px; }
+.app-shell .metric strong { font-size: 1.75rem; letter-spacing: -.035em; }
+.app-shell .metric .overline { font-size: .7rem; letter-spacing: .03em; text-transform: none; }
+.app-shell .metric span { font-size: .77rem; }
+.app-shell .portal-summary-link { display: block; text-decoration: none; color: inherit; min-width: 0; border-radius: 8px; }
+.app-shell .portal-summary-link:hover .metric { border-color: #99b4c2; background: #fafcfd; }
+.app-shell .portal-summary-link:focus-visible { outline: 3px solid #216a82; outline-offset: 3px; }
+.app-shell .portal-recent-activity { margin-top: 1.2rem; }
+.app-shell .record-row { padding: .8rem 0; gap: .8rem; }
+.app-shell .record-title { font-size: .88rem; font-weight: 600; }
+.app-shell .record-row p { font-size: .76rem; }
+.app-shell .badge { border-radius: 5px; font-size: .69rem; }
+.app-shell .empty { text-align: left; padding: 1.3rem .5rem; }
+.app-shell .empty h3 { font-size: .95rem; }
+.app-shell .empty p { max-width: none; margin: .4rem 0 .8rem; font-size: .83rem; }
+.app-shell .empty-icon { display: none; }
+.app-shell .field { font-size: .84rem; }
+.app-shell input:focus-visible, .app-shell select:focus-visible, .app-shell textarea:focus-visible,
+.app-shell button:focus-visible, .app-shell a.button:focus-visible { outline: 2px solid #26758b; outline-offset: 2px; }
+.app-shell .table-wrap { max-width: 100%; overflow-x: auto; }
+.app-shell table { font-size: .84rem; }
+.app-shell th { background: #f5f7f9; color: #374f5e; }
+@media (max-width: 800px) {
+ .app-shell .sidebar.open { width: min(320px, 84vw); right: auto; }
+ .app-shell .topbar { min-height: 64px; }
+ .app-shell .content { padding: 1.2rem 1rem 2.2rem; }
+ .app-shell .page-heading { align-items: flex-start; }
+ .app-shell .portal-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+ .app-shell .portal-summary { grid-template-columns: minmax(0, 1fr); }
+ .app-shell .portal-summary .metric { min-height: 78px; }
+ .app-shell .record-row { flex-wrap: wrap; }
+}
