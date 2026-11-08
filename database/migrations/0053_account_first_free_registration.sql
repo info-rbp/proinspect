@@ -14,7 +14,7 @@ SELECT DISTINCT l.client_id,l.property_id,strftime('%Y-%m-%dT%H:%M:%fZ','now')
 FROM client_property_links l
 JOIN clients c ON c.id=l.client_id AND c.status='active'
 JOIN subscriptions s ON s.client_id=c.id AND s.plan_code='all_inclusive' AND s.status='active'
-WHERE l.role IN ('owner','landlord') AND l.ends_at IS NULL
+WHERE l.ends_at IS NULL
   AND (l.starts_at IS NULL OR l.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now'));
 CREATE TRIGGER legacy_included_property_grants_no_update BEFORE UPDATE ON legacy_included_property_grants
 BEGIN SELECT RAISE(ABORT,'LEGACY_GRANT_IMMUTABLE'); END;
