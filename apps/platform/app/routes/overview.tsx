@@ -17,8 +17,8 @@ function StaffToday({ data }: { data: WorkspaceData }) {
   const openOrders = data.workOrders.filter(o => !['completed', 'cancelled', 'closed'].includes(o.status));
   const exceptions = data.payments.filter(p => ['failed', 'payment_required'].includes(p.status)).length
     + data.approvals.filter(a => a.status === 'pending').length;
-  const recent: Array<RecordRow & {category: string; path: string}> = [...data.workOrders.map(row => ({...row, category: 'Work order', path: `${base}/work-orders/${row.id}` })),
-    ...data.bookings.map(row => ({...row, category: 'Booking', path: `${base}/bookings` }))]
+  const recent: Array<RecordRow & {category: string; path: string}> = [...data.workOrders.map((row): RecordRow & {category: string; path: string} => ({...row, category: 'Work order', path: `${base}/work-orders/${row.id}` })),
+    ...data.bookings.map((row): RecordRow & {category: string; path: string} => ({...row, category: 'Booking', path: `${base}/bookings` }))]
     .sort((a, b) => String(b.updated_at ?? b.created_at ?? b.starts_at ?? '').localeCompare(String(a.updated_at ?? a.created_at ?? a.starts_at ?? '')))
     .slice(0, 6);
   return <>
@@ -80,6 +80,7 @@ export default function Overview() {
   const upcoming = d.bookings.filter(
     (b) => b.status === 'confirmed' && b.starts_at > new Date().toISOString(),
   );
+  const openOrders = d.workOrders.filter(o => !['cancelled', 'completed'].includes(o.status));
   if (['strata-manager', 'building', 'council'].includes(w.kind))
     return (
       <>
