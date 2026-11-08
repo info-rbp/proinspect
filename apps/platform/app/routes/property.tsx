@@ -88,7 +88,7 @@ export default function Property() {
           </div>
           {management?.listings?.length>0&&<div className="stack">
             <h3>Leasing records for this property</h3>
-            {management.listings.map((listing:any)=><div className="record-row" key={listing.id}>
+            {management?.listings?.map((listing:any)=><div className="record-row" key={listing.id}>
               <div><strong>{listing.title}</strong><p className="small">{listing.kind} · {listing.status} · Applications: {listing.application_mode}</p></div>
               <div className="actions">
                 <Link className="button secondary small" to={d.workspace.href+'/leasing?propertyId='+encodeURIComponent(p.id)}>Manage</Link>
@@ -112,7 +112,7 @@ export default function Property() {
             </div>
           </div>
           {management?.tenancies?.length>0&&<div><h3>Linked tenancies</h3>
-            {management.tenancies.map((t:any)=><p key={t.id}>
+            {management?.tenancies?.map((t:any)=><p key={t.id}>
               <Link to={d.workspace.href+'/tenancies/'+encodeURIComponent(t.id)}>{t.id}</Link>
               {' · '+t.status+' · '+t.starts_at}
             </p>)}</div>}
