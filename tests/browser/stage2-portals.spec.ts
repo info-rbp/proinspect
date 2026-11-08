@@ -12,7 +12,7 @@ async function signIn(context: BrowserContext, email: string) {
 test('Staff Today prioritises work and keeps specialist routes searchable', async ({ browser }) => {
   const context = await browser.newContext({ baseURL: origin, viewport: {width: 1280, height: 800} });
   try {
-    await signIn(context, 'review-staff@proinspect.test');
+    await signIn(context, 'stage2-navigation@proinspect.test');
     const page = await context.newPage();
     const result = await page.goto('/w/staff/operations');
     expect(result?.status()).toBe(200);
