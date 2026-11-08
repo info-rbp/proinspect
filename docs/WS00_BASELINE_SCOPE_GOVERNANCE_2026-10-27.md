@@ -1,4 +1,20 @@
-# WS00 — Baseline, scope reconciliation and governance
+# Current WS00 baseline addendum — 8 November 2026
+
+This addendum supersedes **dated source/migration counts** in the original 27 October snapshot below. It does not confer approval or release acceptance.
+
+- Canonical `main` after the reviewed 8 November merges: `3e99a560b59a4199957a3b28dcf41e927fa743bf`. PR #81 integrated commercial lifecycle, independent PDF review and guarded invoice delivery; PR #80 integrated controlled rental-to-tenancy handover.
+- The source now contains **52 additive numbered migrations**. Production `proinspect-platform-data` was read-only queried at this review and its `d1_migrations` ledger contains **0001–0048**, with zero foreign-key violations. **Migrations 0049–0052 have not been applied in production at this checkpoint**; code may be deployed with protected features disabled.
+- `0049_commercial_source_lifecycle.sql`, `0050_report_render_independent_review.sql`, `0051_invoice_delivery_reviews.sql`, `0052_rental_tenancy_handover.sql` are distinct files. The former PR #80 collision was resolved by renumbering to 0052.
+- Production Worker `proinspect-platform` was verified on `9b4aea9a` at the pre-#80 checkpoint. Do not infer a newer deployed SHA from this dated observation; re-check Cloudflare after production build.
+- The repo holds a 110-task `config/handbook-tasks.json` with 20 `config/handbook-traceability.json` packages. Engineering verification is not independent acceptance; task owners/reviewers/sign-offs are not invented.
+- Source branch history and retired PRs must be reconciled by approved capability, not wholesale merged. See `docs/handbook/branch-census-20261108.md` for all historical branches.
+- Business decisions G04 (scope), G07 (named independent governance), actual provider acceptance, all nine genuine hosted role journeys, and isolated D1/R2 recovery remain outstanding gates. Stage 0 reconciliation cannot declare the entire product ready.
+- The **deployment approach requested by the owner** is existing Cloudflare Worker production only and current GitHub `main`, without creating new persistent staging/sandbox environments. That operational preference does not remove migration rehearsal, recovery or independent acceptance obligations; deviations from the original handbook remain explicit.
+
+---
+
+## Original 27 October audit (historical — not current release evidence)
+
 Audit date: 2026-10-27 (Australia/Perth). Status: evidence gathered; independent scope and acceptance approvals outstanding.
 Repository: info-rbp/proinspect. Protected baseline: `b633b75ce2a75b84848c780eba0a82d559755518`.
 This document records **read-only live observations** and historical source claims separately. It is not a production launch approval.
