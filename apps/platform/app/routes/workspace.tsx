@@ -5,6 +5,7 @@ import {
   NavLink,
   Outlet,
   useLoaderData,
+  useLocation,
   useNavigation,
   type LoaderFunctionArgs,
 } from 'react-router';
@@ -104,6 +105,25 @@ export default function WorkspaceLayout() {
   if(['strata-manager','building','council'].includes(w.kind)||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['facilities','Building operations','']);
   if(w.kind==='strata-manager'||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['building-communications','Notice draft reviews','']);
   if(w.kind==='building-manager')items.splice(0,items.length,['','Overview',''],['facilities','Building operations',''],['building-communications','Notice drafts',''],['documents','Authorised building reports','']);
+  // Keep specialist routes and deep links intact while showing a concise first-level menu.
+  const primaryByKind: Record<string, string[]> = {
+    landlord: ['', 'properties', 'bookings', 'requests', 'reports', 'billing'],
+    'property-manager': ['', 'properties', 'portfolio', 'bookings', 'work-orders', 'reports', 'finance'],
+    commercial: ['', 'properties', 'commercial-leases', 'bookings', 'reports', 'finance'],
+    'strata-manager': ['', 'schemes', 'work-orders', 'requests', 'reports', 'finance'],
+    tenant: ['', 'tenancies', 'inspections', 'requests', 'documents'],
+    building: ['', 'schemes', 'requests', 'documents', 'facilities'],
+    council: ['', 'schemes', 'finance', 'reports', 'documents'],
+    'building-manager': ['', 'facilities', 'building-communications', 'documents'],
+    staff: ['', 'bookings', 'work-orders', 'reports', 'properties', 'finance'],
+  };
+  const primaryPaths = primaryByKind[w.kind] ?? ['', 'requests', 'documents'];
+  const primary = items.filter(([path]) => primaryPaths.includes(path));
+  const secondary = items.filter(([path]) => !primaryPaths.includes(path));
+  const pathname = useLocation().pathname;
+  const moreActive = secondary.some(([path]) =>
+    pathname === `${w.href}/${path}` || pathname.startsWith(`${w.href}/${path}/`),
+  );
   return (
     <div className="app-shell">
       {pending && <div className="loading-line" role="progressbar" aria-label="Loading page" />}
@@ -113,25 +133,23 @@ export default function WorkspaceLayout() {
         </Link>
         <div className="workspace-label">{WORKSPACES[w.kind].name}</div>
         <nav className="side-nav">
-          {items.map(([path, label, symbol]) => (
-            <NavLink
-              end={!path}
-              onClick={() => setOpen(false)}
-              key={path}
-              to={`${w.href}${path ? '/' + path : ''}`}
-            >
-              <span className="nav-symbol" aria-hidden="true">
-                {symbol}
-              </span>
+          {primary.map(([path, label]) => (
+            <NavLink end={!path} onClick={() => setOpen(false)} key={path}
+              to={`${w.href}${path ? '/' + path : ''}`}>
               {label}
             </NavLink>
           ))}
-          <NavLink onClick={() => setOpen(false)} to={`${w.href}/notifications`}>
-            <span className="nav-symbol" aria-hidden="true">
-              ○
-            </span>
-            Notifications
-          </NavLink>
+          {secondary.length > 0 && (
+            <details className="side-nav-more" key={moreActive ? 'active-route' : 'collapsed'} open={moreActive}>
+              <summary>More tools</summary>
+              <div className="side-nav-more-links">
+                {secondary.map(([path, label]) => (
+                  <NavLink end={!path} key={path} onClick={() => setOpen(false)}
+                    to={`${w.href}/${path}`}>{label}</NavLink>
+                ))}
+              </div>
+            </details>
+          )}
         </nav>
         <div className="sidebar-foot">
           <Link to="/account">Account &amp; sign-in security</Link>
