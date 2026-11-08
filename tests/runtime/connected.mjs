@@ -941,9 +941,7 @@ try {
       pm = { id: approved.clientId, base: `/api/w/property-manager/${approved.clientId}` };
       assert.equal((await ok('/api/session', agency)).workspaces[0].kind, 'property-manager');
       const subscription = await first('SELECT * FROM subscriptions WHERE client_id=?', pm.id);
-      assert.equal(subscription.plan_code, 'all_inclusive');
-      assert.equal(subscription.status, 'active');
-      assert.deepEqual(JSON.parse(subscription.allowance_json).includedServiceIds, ['*']);
+      assert.equal(subscription, null, 'An approved agency workspace does not automatically create a paid subscription');
     },
   );
   let imported;
@@ -1180,11 +1178,9 @@ try {
 
   const commercialUser = await login('commercial@tests.example'),
     commercial = await organisation(commercialUser, 'commercial', 'Example Commercial', operator);
-  await check('new commercial account receives an all-inclusive plan without new portal roles', async () => {
+  await check('new commercial account starts without any paid plan or new portal roles', async () => {
     const sub = await first('SELECT plan_code,status,allowance_json FROM subscriptions WHERE client_id=?', commercial.id);
-    assert.equal(sub.plan_code, 'all_inclusive');
-    assert.equal(sub.status, 'active');
-    assert.deepEqual(JSON.parse(sub.allowance_json).includedServiceIds, ['*']);
+    assert.equal(sub, null);
     const w = (await ok('/api/session', commercialUser)).workspaces;
     assert.deepEqual(w.map(x => x.kind), ['commercial']);
   });
@@ -1667,6 +1663,17 @@ try {
         serviceId: 'common-property-inspection',
       },
     ];
+    // Preserve the older included-booking regression tests using explicitly
+    // approved synthetic historical property-level coverage; a newly registered
+    // account never receives this plan or grant automatically.
+    for (const scenario of scenarios) {
+      const id='sub_inclusive_'+scenario.client.id;
+      await run(`INSERT INTO subscriptions(id,client_id,property_id,plan_code,status,allowance_json,created_at)
+        VALUES(?,?,NULL,'all_inclusive','active','{"includedServiceIds":["*"]}',?)`,
+        id,scenario.client.id,new Date().toISOString());
+      await run('INSERT INTO legacy_included_property_grants(client_id,property_id,granted_at) VALUES(?,?,?)',
+        scenario.client.id,scenario.propertyId,new Date().toISOString());
+    }
     for (const [index, scenario] of scenarios.entries()) {
       const service = await first(
         'SELECT booking_mode,price_ex_gst_cents FROM services WHERE id=?',
