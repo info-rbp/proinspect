@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { cloneElement, isValidElement, useId, type ReactNode } from 'react';
 import { statusLabel } from '../domain/index';
 export function Badge({ status }: { status: string }) {
@@ -38,4 +39,25 @@ export function Field({ label, name, help, children }: {
 }
 export function Metric({ label, value, detail }: { label: string; value: string | number; detail: string }) {
   return <div className="metric"><div className="overline">{label}</div><strong>{value}</strong><span>{detail}</span></div>;
+}
+
+
+/** Portal-only metric primitive: quiet typography, real count, and a descriptive destination. */
+export function PortalStat({label, value, detail, to}: {
+  label:string; value:number|string; detail:string; to?:string;
+}) {
+  const content = <><span className="pi-stat-label">{label}</span><strong>{value}</strong><span className="pi-stat-detail">{detail}</span></>;
+  return to ? <Link className="pi-stat" to={to} aria-label={label + ': ' + value + '. ' + detail}>{content}</Link> :
+    <div className="pi-stat">{content}</div>;
+}
+export function PortalPanel({title, description, to, action, children}: {
+  title:string; description?:string; to?:string; action?:string; children:ReactNode;
+}) {
+  return <section className="panel pi-portal-panel">
+    <header className="pi-panel-head">
+      <div><h2>{title}</h2>{description && <p className="small">{description}</p>}</div>
+      {to && <Link to={to} className="pi-panel-action">{action ?? 'View all'}</Link>}
+    </header>
+    {children}
+  </section>;
 }
