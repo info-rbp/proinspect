@@ -1,7 +1,7 @@
 import { ENGAGEMENTS, GUIDES } from '../../../../packages/marketing/content';
 import { SERVICE_SEEDS, FAMILIES } from '../../../../packages/service-catalogue/index';
 import { shouldIndexPublicPage } from '../../../platform/app/lib/public-routes';
-import { AUDIENCES } from './audience';
+import { AUDIENCES } from '../../../../packages/marketing/audiences';
 
 /** Sitemap intentionally contains only canonical, indexable public marketing pages.
  * Unapproved legal documents, proposed pricing, leasing records and private pages
