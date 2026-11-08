@@ -98,6 +98,39 @@ export default function Account() {
           </Form>
         </section>
         <section className="panel stack">
+          <h2>Properties and subscriptions</h2>
+          <p>Registration is free. Adding a property does not create a Stripe
+            customer, collect a payment method, or start recurring charges.
+            You can choose an eligible subscription later.</p>
+          <p className="small">Your verified account is separate from subscription
+            payments and from permission to book included services.</p>
+          {d.propertyPlans?.length ? d.propertyPlans.map((plan: any) => (
+            <div className="record-row" key={plan.client_id + ':' + plan.property_id}>
+              <div>
+                <strong>{plan.address}</strong>
+                <p className="small">{plan.sector === 'residential' ? 'Residential' : 'Commercial'} ·
+                  {plan.grandfathered
+                    ? ' Existing approved included services — unchanged'
+                    : plan.subscription_status === 'none'
+                      ? ' Free account — no paid subscription'
+                      : ' Stripe subscription: ' + plan.subscription_status}
+                </p>
+              </div>
+              {!plan.grandfathered && plan.sector === 'residential' &&
+                plan.client_type === 'landlord' &&
+                <Link className="button secondary small"
+                  to={`/w/landlord/${plan.client_id}/stripe-subscribe/${plan.property_id}`}>
+                  {d.billingAvailable ? 'Review subscription' : 'Subscription information'}
+                </Link>}
+            </div>
+          )) : <p className="small">No owned properties have been added to your account.
+            <Link to="/workspaces"> Open your workspace</Link> to add one.</p>}
+          {d.liveBillingConfigurationPending &&
+            <p className="small" role="status">New live subscription Checkout is
+              temporarily unavailable while tax and payment verification is completed.
+              Existing approved inclusions are not affected.</p>}
+        </section>
+        <section className="panel stack">
           <h2>Active sign-ins</h2>
           <p>
             {d.activeSessions} active session(s). The 20 most recent are shown. No session
