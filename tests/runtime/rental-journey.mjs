@@ -93,6 +93,8 @@ try{
   const listing='lst_synthetic_fulham_'+unit;
   await run('INSERT INTO properties(id,address,suburb,state,postcode,address_key,sector,created_at) VALUES(?,?,?,?,?,?,?,?)',
    prop,address,'Cloverdale','WA','6105','synthetic-fulham-unit-'+unit,'residential',stamp);
+  await run('INSERT INTO client_property_links(id,client_id,property_id,role,starts_at) VALUES(?,?,?,?,?)',
+   'lcp_synthetic_fulham_'+unit,'cli_lighthouse_property_group_pty_ltd',prop,'landlord',stamp);
   await run(`INSERT INTO leasing_listings(
    id,property_id,instructed_by_client_id,kind,slug,title,description,
    display_address,suburb,postcode,agent_name,agent_role,created_by,
