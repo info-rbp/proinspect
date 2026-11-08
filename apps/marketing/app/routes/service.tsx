@@ -1,4 +1,5 @@
 import { SERVICE_FOCUS } from '../../../../packages/marketing/content';
+import { SERVICE_EDITORIAL } from '../../../../packages/marketing/service-editorial';
 import { serviceScopeFor } from '../../../../packages/marketing/service-scopes';
 import { Link, useLoaderData, useOutletContext, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
 import { findService, SERVICE_SEEDS, FAMILIES } from '../../../../packages/service-catalogue/index';
@@ -11,13 +12,21 @@ export function loader({ params }: LoaderFunctionArgs) {
   if (!service) throw new Response('Not found', { status: 404 });
   return {
     service,
+    editorial: SERVICE_EDITORIAL[service.id],
     scope: serviceScopeFor(service.id),
     related: SERVICE_SEEDS.filter((s) => s.family === service.family && s.id !== service.id).slice(0, 3),
   };
 }
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
   loaderData
-    ? seo(loaderData.service.name, loaderData.service.summary, '/services/' + loaderData.service.id)
+    ? seo(loaderData.service.name + ' — Western Australia', loaderData.editorial.lead, '/services/' + loaderData.service.id, {
+        type: 'Service',
+        breadcrumbs: [
+          { name: 'Services', path: '/services' },
+          { name: FAMILIES[loaderData.service.family].name, path: '/services/category/' + loaderData.service.family },
+          { name: loaderData.service.name, path: '/services/' + loaderData.service.id },
+        ],
+      })
     : [{ title: 'Service not found | ProInspect' }];
 
 const routineSteps = [
@@ -45,7 +54,7 @@ const generalFaq: [string, string][] = [
 ];
 
 export default function ServicePage() {
-  const { service: s, related, scope } = useLoaderData<typeof loader>();
+  const { service: s, related, scope, editorial } = useLoaderData<typeof loader>();
   const { appOrigin } = useOutletContext<{ appOrigin: string }>();
   const routine = s.id === 'routine-inspection';
   const focus = SERVICE_FOCUS[s.id];
@@ -63,9 +72,7 @@ export default function ServicePage() {
             <div>
               <p className="eyebrow">{FAMILIES[s.family].name}</p>
               <h1>{s.name}</h1>
-              <p className="mkt-hero-lead">{routine
-                ? 'Document your rental property’s visible condition, with clear observations that help you understand what may need attention.'
-                : s.summary}</p>
+              <p className="mkt-hero-lead">{editorial.lead}</p>
               <div className="actions">
                 <a className="button" href={appOrigin + '/book/' + s.id}>Arrange this service <span aria-hidden="true">→</span></a>
                 <Link className="button secondary" to={'/contact?service=' + s.id}>Ask about the scope</Link>
@@ -130,7 +137,7 @@ export default function ServicePage() {
                 <ul><li>Self-managing private landlords</li><li>Professional property management firms</li></ul>
                 <div className="mkt-aside-divider" />
                 <h3>You'll need to provide</h3>
-                <p>Property and access details, nominated areas and any known concerns or relevant previous records.</p>
+                <p>{editorial.preparation}</p>
                 <div className="mkt-aside-divider" />
                 <Link to={'/contact?service=' + s.id}>Not sure about the scope? Ask us <span aria-hidden="true">↗</span></Link>
               </aside>
@@ -163,7 +170,7 @@ export default function ServicePage() {
           <section className="section mkt-section mkt-stone">
             <div className="site-container mkt-faq-grid">
               <div><p className="eyebrow">Common questions</p><h2>Before you arrange a Routine Inspection.</h2><Link className="mkt-text-link" to="/resources/routine-inspection-vs-pcr">Compare inspection types <span aria-hidden="true">↗</span></Link></div>
-              <div className="mkt-faq-list">{routineFaq.map(([q, a]) => <details key={q}><summary>{q}<span aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div>
+              <div className="mkt-faq-list">{[[editorial.question,editorial.answer],...routineFaq].map(([q, a]) => <details key={q}><summary>{q}<span aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div>
             </div>
           </section>
         </>
@@ -174,16 +181,16 @@ export default function ServicePage() {
               <div>
                 <p className="eyebrow">The service explained</p>
                 <h2>What is {s.name}?</h2>
-                <p>{s.summary}</p>
-                <p>The agreed instruction defines the property areas, intended activity, authorised access and requested output. ProInspect records the outcome within that agreed service boundary.</p>
+                <p>{editorial.lead}</p>
+                <p>{editorial.distinction}</p>
                 <Link className="mkt-text-link" to={'/contact?service=' + s.id}>Discuss the scope <span aria-hidden="true">↗</span></Link>
               </div>
               <aside className="mkt-at-glance">
                 <p className="eyebrow">At a glance</p>
-                <h3>{s.name}</h3><p>{FAMILIES[s.family].name}</p>
+                <h3>Who this is for</h3><p>{editorial.audience}</p>
                 <div className="mkt-aside-divider" />
-                <h3>Indicative attendance</h3>
-                <p>{s.duration_minutes} minutes, subject to the agreed instruction, timing and access.</p>
+                <h3>What to prepare</h3>
+                <p>{editorial.preparation}</p>
                 <div className="mkt-aside-divider" />
                 <p>Online requests are not confirmed bookings until accepted.</p>
                 <a className="button" href={appOrigin + '/book/' + s.id}>Arrange this service <span aria-hidden="true">→</span></a>
@@ -221,18 +228,41 @@ export default function ServicePage() {
           </section>
           <section className="section mkt-section">
             <div className="site-container mkt-detail-two-col">
-              <div><p className="eyebrow">Before the visit</p><h2>Prepare the property instruction.</h2><p>Provide the general location, purpose, relevant records and authorised access. Known hazards or restrictions must be identified before an attendance is confirmed.</p></div>
-              <div><p className="eyebrow">After the visit</p><h2>Review and decide what happens next.</h2><p>The authorised customer can review the issued record. Additional repairs, specialist investigations or return visits are separate decisions requiring the appropriate instruction.</p></div>
+              <div><p className="eyebrow">Before the visit</p><h2>Prepare the property instruction.</h2><p>{editorial.preparation}</p></div>
+              <div><p className="eyebrow">What this service does not decide</p><h2>Keep the right responsibilities clear.</h2><p>{editorial.distinction}</p></div>
             </div>
           </section>
           <section className="section mkt-section mkt-stone">
             <div className="site-container mkt-faq-grid">
               <div><p className="eyebrow">Common questions</p><h2>What to know before arranging this service.</h2></div>
-              <MarketingFaq questions={generalFaq} />
+              <MarketingFaq questions={[[editorial.question, editorial.answer], ...generalFaq]} />
             </div>
           </section>
         </>
       )}
+
+      <section className="section mkt-section mkt-stone" aria-labelledby="service-booking-pricing">
+        <div className="site-container mkt-callout-grid">
+          <div>
+            <p className="eyebrow">Booking, fees and availability</p>
+            <h2 id="service-booking-pricing">Know the next step before you commit.</h2>
+            <p>ProInspect reviews the property, agreed service scope, authorised access and location before confirming applicable fees or a visit. The catalogue is not a fixed-price quotation, and an enquiry does not reserve an appointment.</p>
+            <p>We focus on Western Australian property work. Coverage of a particular suburb, appointment time and report delivery requirements must be confirmed for the instruction.</p>
+            <div className="actions">
+              <a className="button" href={appOrigin + '/book/' + s.id}>See booking options <span aria-hidden="true">→</span></a>
+              <Link className="button secondary" to={'/contact?service=' + s.id}>Request scope or pricing</Link>
+            </div>
+          </div>
+          <div className="mkt-callout-panel">
+            <span className="mkt-card-number">WAYS TO ARRANGE THE SERVICE</span>
+            <h3>One-off instruction</h3>
+            <p>You can enquire about or book a single eligible service without committing to an ongoing plan. The applicable price or quote, access and date are confirmed before acceptance.</p>
+            <h3>Existing account or subscription</h3>
+            <p>Sign in to use your authorised property workspace. Included services depend on the account's existing approved entitlements and appointment availability.</p>
+            <p className="mkt-image-disclosure">No new paid subscription is created simply by enquiring or opening an account.</p>
+          </div>
+        </div>
+      </section>
 
       {related.length > 0 && <section className="section mkt-section mkt-related-section"><div className="site-container"><div className="mkt-section-heading"><div><p className="eyebrow">Explore further</p><h2>Related property services.</h2></div><Link className="mkt-text-link" to="/services">All services <span aria-hidden="true">↗</span></Link></div><div className="grid-3">{related.map((r) => <article className="mkt-related-card" key={r.id}><p className="mkt-kicker">{FAMILIES[r.family].name}</p><h3>{r.name}</h3><p>{r.summary}</p><Link className="mkt-text-link" to={'/services/' + r.id}>Explore service <span aria-hidden="true">↗</span></Link></article>)}</div></div></section>}
       <MarketingCta title={routine ? 'Ready to arrange a Routine Inspection?' : 'Ready to discuss your property task?'} description="Share the service and property requirements. Timing, access and any fees are confirmed before an attendance is accepted." appOrigin={appOrigin} serviceId={s.id} />

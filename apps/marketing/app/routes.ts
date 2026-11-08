@@ -2,6 +2,10 @@ import { type RouteConfig, index, route } from '@react-router/dev/routes';
 export default [
   index('routes/home.tsx'),
   route('services', 'routes/services.tsx'),
+  route('service-finder', 'routes/service-finder.tsx'),
+  route('who-we-help', 'routes/who-we-help.tsx'),
+  route('who-we-help/:audience', 'routes/audience.tsx'),
+  route('residential-property-support', 'routes/residential-support.tsx'),
   route('services/category/:family', 'routes/content.tsx', { id: 'service-family' }),
   route('how-we-work/:model', 'routes/content.tsx', { id: 'engagement-model' }),
   route('resources', 'routes/resources.tsx'),

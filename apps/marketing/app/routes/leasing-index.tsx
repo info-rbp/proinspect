@@ -16,8 +16,16 @@ export default function LeasingIndex(){
  const kind=params.get('type')??'',q=(params.get('q')??'').trim().toLowerCase();
  const items=listings.filter((x:any)=>(!kind||x.kind===kind)&&(!q||String(x.suburb+' '+x.display_address+' '+x.title).toLowerCase().includes(q)));
  return <>
- <header className="service-hero"><div className="site-container"><p className="eyebrow">Open for inspections</p><h1>Properties for lease.</h1><p>Explore residential and commercial properties where ProInspect conducts inspections on behalf of the responsible leasing representative.</p><p className="leasing-role-note">{handoffDisclaimer}</p>
+ <header className="service-hero"><div className="site-container"><p className="eyebrow">Open for inspections</p><h1>Properties for lease.</h1><p>Explore residential and commercial properties where ProInspect conducts inspections on behalf of the responsible leasing representative.</p><p className="leasing-role-note">{handoffDisclaimer}</p><p>Inspection registrations and rental applications are different steps. The authorised landlord or agency remains responsible for leasing information, application requirements and decisions.</p>
  <nav className="pill-links" aria-label="Lease categories"><Link to="/properties-for-lease">All properties</Link><Link to="/properties-for-lease/residential">Residential leasing</Link><Link to="/properties-for-lease/commercial">Commercial leasing</Link></nav></div></header>
+ <section className="section mkt-section mkt-stone"><div className="site-container">
+ <div className="mkt-section-heading"><div><p className="eyebrow">How leasing enquiries work</p><h2>See the property. Register for a visit. Apply with the right party.</h2></div>
+ <p>ProInspect supports advertised inspections on behalf of the responsible representative; we are not the leasing agent or landlord.</p></div>
+ <div className="mkt-editorial-grid">
+ <article className="mkt-editorial-panel"><span className="mkt-card-number">01</span><h3>Browse approved listings</h3><p>Choose residential or commercial to see published property details, available images and inspection sessions.</p></article>
+ <article className="mkt-editorial-panel"><span className="mkt-card-number">02</span><h3>Register to attend</h3><p>For an advertised session, provide your details using the property's inspection registration. An expression of interest is not a booking.</p></article>
+ <article className="mkt-editorial-panel"><span className="mkt-card-number">03</span><h3>Follow the application instructions</h3><p>If the responsible representative supplies an application link, that provider handles the application. ProInspect does not assess or approve prospective tenants.</p></article>
+ </div></div></section>
  <section className="section"><div className="site-container">
  <form className="leasing-filters" method="get"><label>Find a suburb or address<input aria-label="Search property location" name="q" placeholder="Suburb, property or postcode" defaultValue={params.get('q')??''}/></label><label>Property type<select name="type" defaultValue={kind}><option value="">All types</option><option value="residential">Residential</option><option value="commercial">Commercial</option></select></label><button className="button">Search properties</button></form>
  <div className="section-heading"><div><p className="eyebrow">Current opportunities</p><h2>{items.length} {items.length===1?'property':'properties'} available</h2></div></div>

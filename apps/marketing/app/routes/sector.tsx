@@ -48,7 +48,7 @@ export function loader({ params }: LoaderFunctionArgs) {
   return { key, ...sectors[key], services: SERVICE_SEEDS.filter((service) => service.sectors.includes(key)) };
 }
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
-  loaderData ? seo(loaderData.name + ' services', loaderData.description, '/sectors/' + loaderData.key) : [];
+  loaderData ? seo(loaderData.name + ' Property Services — Western Australia', loaderData.description, '/sectors/' + loaderData.key, { breadcrumbs: [{ name: 'Who we help', path: '/who-we-help' }, { name: loaderData.name, path: '/sectors/' + loaderData.key }] }) : [];
 
 export default function Sector() {
   const d = useLoaderData<typeof loader>();

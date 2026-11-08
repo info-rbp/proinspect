@@ -1,11 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { SERVICE_SEEDS, FAMILIES } from '../../packages/service-catalogue/index';
 import { ENGAGEMENTS, GUIDES } from '../../packages/marketing/content';
+import { AUDIENCES } from '../../packages/marketing/audiences';
 
 const publicRoutes = [
-  '/', '/services', '/sectors/residential', '/sectors/commercial', '/sectors/strata-building',
+  '/', '/services', '/service-finder', '/who-we-help', '/residential-property-support', '/sectors/residential', '/sectors/commercial', '/sectors/strata-building',
   '/how-it-works', '/client-experience', '/about', '/contact', '/why-proinspect',
   '/areas-we-service', '/resources', '/privacy', '/terms',
+  ...Object.keys(AUDIENCES).map((audience) => '/who-we-help/' + audience),
   ...Object.keys(FAMILIES).map((family) => '/services/category/' + family),
   ...Object.keys(ENGAGEMENTS).map((model) => '/how-we-work/' + model),
   ...Object.keys(GUIDES).map((guide) => '/resources/' + guide),
@@ -32,7 +34,7 @@ test('every public marketing route uses shared navigation, typography, footer an
 
 test('all public page families use the shared responsive layout without horizontal overflow', async ({ page }) => {
   const representatives = [
-    '/', '/services', '/services/category/documents', '/services/category/inspections',
+    '/', '/services', '/service-finder', '/who-we-help', '/who-we-help/private-landlords', '/residential-property-support', '/services/category/documents', '/services/category/inspections',
     '/services/routine-inspection', '/services/commercial-property-inspection',
     '/sectors/commercial', '/sectors/strata-building', '/how-it-works',
     '/how-we-work/inspection-plans', '/resources', '/resources/routine-inspection-vs-pcr',

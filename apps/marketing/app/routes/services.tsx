@@ -6,8 +6,8 @@ import { seo } from '../lib/seo';
 
 export const meta = () =>
   seo(
-    'Property services',
-    'Explore inspections, maintenance attendance, contractor access and property operations support.',
+    'Property Inspections & Attendance Services — WA',
+    'Compare 23 residential, commercial and strata property inspection, contractor access, maintenance attendance and building support services in Western Australia.',
     '/services',
   );
 
@@ -26,7 +26,7 @@ export default function Services() {
         intro="From inspections and property attendance to contractor access and ongoing operational support. Explore the purpose, scope and recorded outcome before you choose."
         crumbs={[{ label: 'Services' }]}
         visual="services"
-        primary={{ label: 'Discuss your needs', to: '/contact' }}
+        primary={{ label: 'Find the right service', to: '/service-finder' }}
       />
       <section className="section mkt-section" id="service-categories">
         <div className="site-container">
@@ -69,7 +69,7 @@ export default function Services() {
           <div>
             <p className="eyebrow">Not sure where to begin?</p>
             <h2>Start with the property problem, not a service name.</h2>
-            <p>Tell us what needs attending, inspecting or documenting. We can help identify a suitable service and clarify when specialist work may be required.</p>
+            <p>Tell us what needs inspecting, attending or documenting, or use the <Link to="/service-finder">guided service finder</Link> to compare relevant options. Technical assessments and other specialist work are separately scoped.</p>
           </div>
           <div className="mkt-callout-panel">
             <span className="mkt-card-number">A USEFUL FIRST INSTRUCTION</span>

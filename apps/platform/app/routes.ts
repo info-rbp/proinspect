@@ -7,6 +7,10 @@ export default [
   layout('routes/public-layout.tsx', [
     index('../../marketing/app/routes/home.tsx'),
     route('services', '../../marketing/app/routes/services.tsx'),
+    route('service-finder', '../../marketing/app/routes/service-finder.tsx'),
+    route('who-we-help', '../../marketing/app/routes/who-we-help.tsx'),
+    route('who-we-help/:audience', '../../marketing/app/routes/audience.tsx'),
+    route('residential-property-support', '../../marketing/app/routes/residential-support.tsx'),
     route('services/category/:family', '../../marketing/app/routes/content.tsx', {
       id: 'public-service-family',
     }),

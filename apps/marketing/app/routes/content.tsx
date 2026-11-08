@@ -39,7 +39,7 @@ export function loader({ params, request }: LoaderFunctionArgs) {
   };
 }
 export const meta: MetaFunction<typeof loader> = ({ loaderData: d }) =>
-  d ? seo(d.title, d.intro, d.path) : [];
+  d ? seo(d.title, d.intro, d.path, { type: d.kind === 'family' ? 'CollectionPage' : 'WebPage', breadcrumbs: d.kind === 'family' ? [{ name: 'Services', path: '/services' }, { name: d.title, path: d.path }] : d.kind === 'guide' ? [{ name: 'Resources', path: '/resources' }, { name: d.title, path: d.path }] : [{ name: 'How we work', path: '/how-it-works' }, { name: d.title, path: d.path }] }) : [];
 
 export default function Content() {
   const d = useLoaderData<typeof loader>();

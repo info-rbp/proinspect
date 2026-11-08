@@ -1,6 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router';
 
+const audiences = [
+  ['private-landlords', 'Private landlords'],
+  ['property-management-agencies', 'Property management agencies'],
+  ['commercial-property-owners', 'Commercial property owners'],
+  ['commercial-asset-managers', 'Commercial asset managers'],
+  ['strata-managers', 'Strata managers'],
+  ['building-operators', 'Building operators'],
+] as const;
+
 const sectors = [
   { path: '/sectors/residential', label: 'Residential', detail: 'Self-managing owners and property managers' },
   { path: '/sectors/commercial', label: 'Commercial', detail: 'Owners, property and asset managers' },
@@ -47,19 +56,17 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
             <details className="mkt-nav-dropdown" ref={audienceMenu}>
               <summary>Who we help</summary>
               <div className="mkt-nav-popover">
-                <p className="mkt-nav-caption">Support for every property setting</p>
-                {sectors.map((sector) => (
-                  <Link key={sector.path} to={sector.path} className="mkt-nav-sector">
-                    <strong>{sector.label}</strong>
-                    <small>{sector.detail}</small>
-                  </Link>
-                ))}
+                <p className="mkt-nav-caption">Who we help</p>
+                <Link to="/who-we-help" className="mkt-nav-sector"><strong>All customer types</strong><small>Choose the support that fits your responsibility</small></Link>
+                {audiences.map(([slug,label]) => <Link className="mkt-nav-sector" key={slug} to={'/who-we-help/'+slug}><strong>{label}</strong></Link>)}
+                <p className="mkt-nav-caption">Explore by sector</p>
+                {sectors.map((sector) => <Link key={sector.path} to={sector.path} className="mkt-nav-sector"><strong>{sector.label}</strong><small>{sector.detail}</small></Link>)}
               </div>
             </details>
             <Link to="/how-it-works" aria-current={pathname.startsWith('/how-') ? 'page' : undefined}>How we work</Link>
-            <Link to="/why-proinspect" aria-current={pathname === '/why-proinspect' ? 'page' : undefined}>Why ProInspect</Link>
             <Link to="/properties-for-lease" aria-current={pathname.startsWith('/properties-for-lease') ? 'page' : undefined}>Leasing</Link>
             <Link to="/resources" aria-current={pathname.startsWith('/resources') ? 'page' : undefined}>Resources</Link>
+            <Link to="/contact" aria-current={pathname === '/contact' ? 'page' : undefined}>Contact</Link>
           </nav>
           <div className="mkt-header-actions">
             <a className="mkt-signin" href={appOrigin + '/signin'}>Sign in</a>
@@ -69,10 +76,12 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
             <summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span>Menu</span></summary>
             <nav aria-label="Mobile site navigation">
               <Link to="/services">Services</Link>
-              <p className="mkt-nav-caption">Who we help</p>
+              <Link to="/service-finder">Find a service</Link>
+              <Link to="/who-we-help">Who we help</Link>
+              {audiences.map(([slug,label]) => <Link key={slug} to={'/who-we-help/'+slug}>{label}</Link>)}
+              <p className="mkt-nav-caption">Browse sectors</p>
               {sectors.map((sector) => <Link key={sector.path} to={sector.path}>{sector.label}</Link>)}
               <Link to="/how-it-works">How we work</Link>
-              <Link to="/why-proinspect">Why ProInspect</Link>
               <Link to="/properties-for-lease">Leasing</Link>
               <Link to="/resources">Resources</Link>
               <Link to="/contact">Contact</Link>
@@ -98,6 +107,8 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
           <div className="mkt-footer-group">
             <h3>Explore</h3>
             <Link to="/services">All services</Link>
+            <Link to="/service-finder">Find a service</Link>
+            <Link to="/residential-property-support">Residential support plan</Link>
             <Link to="/properties-for-lease">Properties for lease</Link>
             <Link to="/services/category/inspections">Inspections</Link>
             <Link to="/services/category/maintenance">Maintenance &amp; works</Link>
@@ -106,6 +117,8 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
           </div>
           <div className="mkt-footer-group">
             <h3>Who we help</h3>
+            <Link to="/who-we-help">All customer types</Link>
+            {audiences.map(([slug,label]) => <Link key={slug} to={'/who-we-help/'+slug}>{label}</Link>)}
             {sectors.map((sector) => <Link key={sector.path} to={sector.path}>{sector.label}</Link>)}
             <Link to="/areas-we-service">Service areas</Link>
           </div>
