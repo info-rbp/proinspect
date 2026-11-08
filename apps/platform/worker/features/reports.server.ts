@@ -160,6 +160,26 @@ export async function reportDetail(env:Env,user:Principal,w:Workspace,id:string)
  return {report:row,draft:draft?{revision:draft.revision,content:JSON.parse(draft.content_json)}:null,
    versions,evidence,reviews,renderReview,responses,maintenanceCandidates};
 }
+/** Read-only preflight of the exact saved draft against the same QC policy used on submit.
+ * This is advisory, not report approval or permission to bypass independent review.
+ */
+export async function preflightReport(env:Env,user:Principal,w:Workspace,id:string,expectedRevision?:string|null){
+ const report=await accessReport(env,user,w,id,'edit');
+ if(expectedRevision!==undefined && expectedRevision!==null){
+  assert(/^[1-9][0-9]{0,14}$/.test(expectedRevision)&&Number(expectedRevision)===report.revision,
+   409,'REPORT_CHANGED','The saved report changed. Reload before reviewing its quality checks.');
+ }
+ const draft=await statement(env.DB,'SELECT revision,content_json FROM report_drafts WHERE report_id=?',id)
+  .first<{revision:number,content_json:string}>();
+ assert(draft&&draft.revision===report.revision,409,'REPORT_CHANGED','The saved draft and report revision differ.');
+ const content=reportDraftSchema.parse(JSON.parse(draft.content_json));
+ const evidence=(await statement(env.DB,'SELECT id,status,object_key FROM report_evidence WHERE report_id=?',id)
+   .all<{id:string,status:string,object_key:string}>()).results;
+ const result=qualityReview(content,reviewContext(report),policy(report),new Map(evidence.map(p=>[p.id,p])));
+ return {reportId:id,revision:report.revision,basis:'saved_draft',status:result.status,score:result.score,
+  blockerCount:result.blockerCount,errorCount:result.errorCount,warningCount:result.warningCount,
+  infoCount:result.infoCount,issues:result.issues};
+}
 export async function saveReport(env:Env,user:Principal,w:Workspace,id:string,input:unknown) {
  const row=await accessReport(env,user,w,id,'edit');
  const d=z.object({revision:z.number().int().positive(),content:reportDraftSchema,operationId:z.string().regex(/^[A-Za-z0-9_-]{8,100}$/).optional()}).parse(input);
