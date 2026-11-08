@@ -13,45 +13,18 @@ class SchemaTests(unittest.TestCase):
         self.db.execute("INSERT INTO schedule_resources VALUES('r','Inspection capacity',1)")
     def booking(self, ident, start, end):
         self.db.execute("INSERT INTO bookings(id,reference,client_id,user_id,property_id,service_id,resource_id,starts_at,ends_at,reserved_start,reserved_end,snapshot_json,request_key,fingerprint,created_at) VALUES(?,?,'c','u','p','s','r',?,?,?,?,'{}',?,'hash','2026-01-01')",(ident,ident,start,end,start,end,ident))
-    def test_active_accounts_receive_all_inclusive_subscription_without_new_roles(self):
-        row = self.db.execute(
-            "SELECT plan_code,status,property_id,allowance_json FROM subscriptions WHERE client_id='c'"
-        ).fetchone()
-        self.assertEqual(row, ('all_inclusive', 'active', None, '{"includedServiceIds":["*"]}'))
-        self.assertEqual(
-            self.db.execute("SELECT COUNT(*) FROM subscriptions WHERE client_id='c'").fetchone()[0],
-            1,
-        )
+    def test_free_registration_never_grants_automatic_all_inclusive_entitlements(self):
+        self.assertIsNone(self.db.execute("SELECT id FROM subscriptions WHERE client_id='c'").fetchone())
         self.db.execute(
             "INSERT INTO clients(id,name,client_type,status,created_at) VALUES('pending','Pending','agency','pending','2026-01-01')"
         )
-        self.assertEqual(
-            self.db.execute("SELECT COUNT(*) FROM subscriptions WHERE client_id='pending'").fetchone()[0],
-            0,
-        )
         self.db.execute("UPDATE clients SET status='active' WHERE id='pending'")
-        self.assertEqual(
-            self.db.execute("SELECT plan_code FROM subscriptions WHERE client_id='pending'").fetchone()[0],
-            'all_inclusive',
-        )
-        self.db.execute(
-            "UPDATE subscriptions SET status='paused' WHERE client_id='pending'"
-        )
+        self.assertIsNone(self.db.execute("SELECT id FROM subscriptions WHERE client_id='pending'").fetchone())
         self.db.execute("UPDATE clients SET status='inactive' WHERE id='pending'")
         self.db.execute("UPDATE clients SET status='active' WHERE id='pending'")
-        self.assertEqual(
-            self.db.execute("SELECT status FROM subscriptions WHERE client_id='pending'").fetchone()[0],
-            'paused',
-        )
-        self.assertEqual(
-            self.db.execute("SELECT COUNT(*) FROM subscriptions WHERE client_id='pending'").fetchone()[0],
-            1,
-        )
-        # A billing entitlement is not a portal membership or an admin role.
-        self.assertEqual(
-            self.db.execute("SELECT COUNT(*) FROM client_entitlements WHERE client_id='pending'").fetchone()[0],
-            0,
-        )
+        self.assertIsNone(self.db.execute("SELECT id FROM subscriptions WHERE client_id='pending'").fetchone())
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM client_entitlements WHERE client_id='pending'").fetchone()[0], 0)
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM billing_accounts WHERE client_id='c'").fetchone()[0], 0)
 
     def test_calendar_sync_jobs_are_versioned_idempotent_and_lease_safe(self):
         booking_id = 'bkg_' + 'a' * 32

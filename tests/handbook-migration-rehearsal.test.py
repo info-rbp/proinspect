@@ -1,4 +1,4 @@
-"""Rehearse deployed 0001-0048 -> additive 0049-0052 in isolated SQLite.
+"""Rehearse deployed 0001-0048 -> additive 0049-0053 in isolated SQLite.
 
 This is source-schema evidence, not a hosted D1/R2 restoration or provider acceptance.
 """
@@ -11,13 +11,14 @@ ROOT=Path(__file__).resolve().parents[1]
 class CommercialReportingFinanceUpgrade(unittest.TestCase):
     def paths(self):
         p=sorted((ROOT/'database/migrations').glob('*.sql'))
-        self.assertEqual(len(p),52,'Expected 48 deployed + 4 additive migrations')
-        self.assertEqual([f.name[:4] for f in p],[f'{i:04d}' for i in range(1,53)])
+        self.assertEqual(len(p),53,'Expected 48 deployed + 5 additive migrations')
+        self.assertEqual([f.name[:4] for f in p],[f'{i:04d}' for i in range(1,54)])
         self.assertEqual([f.name for f in p[48:]],[
             '0049_commercial_source_lifecycle.sql',
             '0050_report_render_independent_review.sql',
             '0051_invoice_delivery_reviews.sql',
-            '0052_rental_tenancy_handover.sql'])
+            '0052_rental_tenancy_handover.sql',
+            '0053_account_first_free_registration.sql'])
         return p
 
     def test_populated_upgrade_preserves_existing_records_and_references(self):

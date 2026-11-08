@@ -55,9 +55,9 @@ class FinalSprintSchema(unittest.TestCase):
   with self.assertRaises(sqlite3.IntegrityError):self.db.execute("UPDATE payment_reconciliation_items SET provider_event_id='other' WHERE id='r'")
   self.assertEqual(self.db.execute("SELECT status FROM payments WHERE id='p'").fetchone()[0],'payment_required')
  def test_entitlements_remain_independent_of_financial_configuration(self):
-  self.assertEqual(self.db.execute("SELECT plan_code,status FROM subscriptions WHERE client_id='c'").fetchone(),('all_inclusive','active'))
+  self.assertIsNone(self.db.execute("SELECT plan_code,status FROM subscriptions WHERE client_id='c'").fetchone(), 'New free accounts must not be granted paid services')
   self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(),[])
- def test_populated_deployed_26_to_52_rehearsal(self):
+ def test_populated_deployed_26_to_53_rehearsal(self):
   db=sqlite3.connect(':memory:');paths=sorted((ROOT/'database/migrations').glob('*.sql'))
   try:
    for p in paths[:26]:db.executescript(p.read_text())
@@ -68,6 +68,6 @@ class FinalSprintSchema(unittest.TestCase):
    before={t:db.execute('SELECT '+','.join(cols[t])+' FROM '+t+' ORDER BY id').fetchall() for t in tables}
    for p in paths[26:]:db.executescript(p.read_text())
    for t in tables:self.assertEqual(before[t],db.execute('SELECT '+','.join(cols[t])+' FROM '+t+' ORDER BY id').fetchall(),t)
-   self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(),[]);self.assertEqual(len(paths),52)
+   self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(),[]);self.assertEqual(len(paths),53)
   finally:db.close()
 if __name__=='__main__':unittest.main()

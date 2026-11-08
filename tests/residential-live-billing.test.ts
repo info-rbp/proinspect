@@ -49,9 +49,9 @@ test('disabling customer acquisition does not disable signed renewal webhooks or
 
 test('live checkout cannot silently migrate historical all-inclusive properties',()=>{
  const src=readFileSync('apps/platform/worker/features/stripe-billing.server.ts','utf8');
- assert.match(src,/RESIDENTIAL_PAID_ENROLLMENT_REQUIRED/);
- assert.match(src,/property\.sector==='residential' && !live/);
- assert.match(src,/Existing all-inclusive properties/i);
+ assert.match(src,/GRANDFATHERED_PROPERTY/);
+ assert.match(src,/property\.sector==='residential'/);
+ assert.match(src,/legacy_included_property_grants/);
 });
 
 test('failed renewals have a controlled grace, but voids, uncollectible invoices and fraud holds do not',()=>{
@@ -63,8 +63,8 @@ test('failed renewals have a controlled grace, but voids, uncollectible invoices
 });
 test('re-adding a pending enrolled property can resume Checkout without migrating historical properties',()=>{
  const code=readFileSync('apps/platform/worker/services.server.ts','utf8');
- assert.match(code,/billingRequired: Boolean\(enrolled\)/);
- assert.match(code,/residential_paid_property_enrollments/);
+ assert.match(code,/billingRequired: false/);
+ assert.doesNotMatch(code,/INSERT INTO residential_paid_property_enrollments/);
 });
 
 test('an existing live subscriber can still access cancellation after the new-signup release is disabled',()=>{

@@ -21,7 +21,7 @@ export const SCENARIOS = Object.freeze([
     'Unrelated workspace and expired/replayed sign-in cannot be accessed.',
     'Sign out every test session; revoke privileged test Staff access after acceptance.',
     ['eight independent portal identities remain isolated across every unrelated workspace and scheme'],
-    ['new Landlord signup auto-includes services, books, and hands work to Staff with report delivery']),
+    ['new Landlord registration is free and can consider a subscription later']),
   scenario('AT-02', ['tenant', 'landlord', 'staff'],
     'Tenant maintenance request reaches the correct Landlord and Staff Work Order exactly once.',
     'Unrelated owner and tenant cannot read request or internal Staff notes.',
@@ -33,7 +33,7 @@ export const SCENARIOS = Object.freeze([
     'Outsider cannot download the PDF; retries do not duplicate bookings or Work Orders.',
     'Cancel test slot where permissible and revoke synthetic report grants.',
     ['all customer portals book their own unpriced subscription services with Staff-visible Work Orders'],
-    ['new Landlord signup auto-includes services, books, and hands work to Staff with report delivery']),
+    ['professional booking creates a job and scoped full record browsing opens it']),
   scenario('AT-04', ['property_manager', 'staff'],
     'Reviewed management authority and team property assignments show the correct scoped portfolio.',
     'An unrelated agency and ended membership cannot read managed properties.',
@@ -81,11 +81,11 @@ export const SCENARIOS = Object.freeze([
     ['signed marketing enquiry persists encrypted contact data without granting an account'],
     ['public enquiry reaches authorised Staff triage and a recorded email reply']),
   scenario('AT-12', ['commercial', 'staff'],
-    'Commercial client books an included service and Staff sees the correctly scoped Work Order.',
+    'New commercial clients register without automatic included services; approved legacy commercial coverage and scoped Work Orders continue to function.',
     'Unrelated residential and agency users cannot read the commercial client or record.',
     'Cancel test booking and resolve synthetic Work Order without a payment.',
     ['commercial property operations remain separate from residential self-management'],
-    ['commercial Landlord signup selects its type and books an included commercial inspection']),
+    ['commercial Landlord signup is free and does not grant included inspection services']),
 ]);
 
 export function evaluateIdentityReadiness(rows) {
