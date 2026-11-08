@@ -110,6 +110,7 @@ try {
   const inspectorUser = await first('SELECT id FROM users WHERE email=?', inspector.email);
   await run("INSERT INTO staff_profiles VALUES(?,'operations_manager',1)", operatorUser.id);
   await run("INSERT INTO staff_profiles VALUES(?,'inspector',1)", inspectorUser.id);
+  const staffBase='/api/w/staff/operations';
   const propertyAdministrator=await login('property-admin@example.test');
   const administratorId=(await first('SELECT id FROM users WHERE email=?',propertyAdministrator.email)).id;
   await run("INSERT INTO staff_profiles VALUES(?,'administrator',1)",administratorId);
