@@ -197,21 +197,30 @@ try {
     access: { method: 'owner', instructions: 'Synthetic PCR booking test', noticeConfirmed: true },
   };
   const inclusiveId = `sub_inclusive_${clientId}`;
-  await check('new Landlord and other customer accounts automatically receive an active all-inclusive plan', async () => {
-    const sub = await first('SELECT * FROM subscriptions WHERE client_id=?', clientId);
-    assert.equal(sub.id, inclusiveId);
-    assert.equal(sub.plan_code, 'all_inclusive');
-    assert.equal(sub.status, 'active');
-    assert.equal(sub.property_id, null);
-    assert.deepEqual(JSON.parse(sub.allowance_json).includedServiceIds, ['*']);
-    const outsiderPlan = await first('SELECT plan_code,status FROM subscriptions WHERE client_id=?', outsiderClient);
-    assert.equal(outsiderPlan.plan_code, 'all_inclusive');
-    assert.equal(outsiderPlan.status, 'active');
+  await check('new registered accounts have no paid plan or included property services', async () => {
+    assert.equal(await first('SELECT id FROM subscriptions WHERE client_id=?', clientId), null);
+    assert.equal(await first('SELECT id FROM subscriptions WHERE client_id=?', outsiderClient), null);
+    assert.equal(await first('SELECT client_id FROM billing_accounts WHERE client_id=?', clientId), null);
+    const free = await api(base,{cookie:owner.cookie});
+    assert.deepEqual(free.data.subscriptionBookingServices[propertyId]??[],[]);
     const denied = await api(
       `/api/w/landlord/${outsiderClient}/availability?service=property-condition-report&date=${date}&property=${propertyId}`,
       { cookie: outsider.cookie },
     );
     assert.equal(denied.status, 404);
+  });
+  // Explicitly seed an isolated historical customer only for the older
+  // subscription/booking lifecycle regression checks below.
+  await run(`INSERT INTO subscriptions(id,client_id,property_id,plan_code,status,allowance_json,created_at)
+    VALUES(?,?,NULL,'all_inclusive','active','{"includedServiceIds":["*"]}',?)`,
+    inclusiveId,clientId,new Date().toISOString());
+  await run("INSERT INTO legacy_included_property_grants(client_id,property_id,granted_at) VALUES(?,?,?)",
+    clientId,propertyId,new Date().toISOString());
+  await check('explicit historic grant retains the original included service policy',async()=>{
+    const sub=await first('SELECT * FROM subscriptions WHERE client_id=?',clientId);
+    assert.equal(sub.id,inclusiveId);
+    assert.equal(sub.status,'active');
+    assert.deepEqual(JSON.parse(sub.allowance_json).includedServiceIds,['*']);
   });
   await run("UPDATE subscriptions SET status='paused' WHERE id=?", inclusiveId);
   await check('paused subscriptions cannot schedule even though account exists', async () => {
@@ -404,7 +413,7 @@ try {
     assert.equal((await api(tenantBase, { cookie: tenant.cookie })).status, 200);
     assert.equal((await api(tenantBase + '/requests', { cookie: tenant.cookie, body: { category: 'maintenance', title: 'New request blocked', details: 'This must not be accepted after the tenancy ended.', priority: 'routine' } })).status, 403);
   });
-  await check('Residential and Commercial Landlord types create independently scoped, all-inclusive accounts', async () => {
+  await check('Residential and Commercial Landlord types create independent free accounts', async () => {
     const wrongType = await api('/api/onboarding', {
       cookie: outsider.cookie,
       body: { displayName: 'No Staff Grant', clientName: 'Unauthorised Staff', landlordType: 'staff' },
@@ -426,9 +435,7 @@ try {
     const state = await first('SELECT client_type FROM clients WHERE id=?', signup.data.clientId);
     assert.equal(state.client_type, 'commercial_landlord');
     const subscription = await first('SELECT status,plan_code,allowance_json FROM subscriptions WHERE client_id=?', signup.data.clientId);
-    assert.equal(subscription.status, 'active');
-    assert.equal(subscription.plan_code, 'all_inclusive');
-    assert.deepEqual(JSON.parse(subscription.allowance_json).includedServiceIds, ['*']);
+    assert.equal(subscription, null, 'Commercial registration is also free without automatic all-inclusive entitlements');
     const ws = (await api('/api/session', { cookie: owner.cookie })).data.workspaces;
     assert.ok(ws.some(w => w.kind === 'landlord' && w.scopeId === clientId));
     assert.ok(ws.some(w => w.kind === 'commercial' && w.scopeId === signup.data.clientId));
@@ -492,6 +499,15 @@ try {
     const service = await first('SELECT booking_mode,price_ex_gst_cents FROM services WHERE id=?', 'commercial-property-inspection');
     assert.equal(service.booking_mode, 'request');
     assert.equal(service.price_ex_gst_cents, null);
+    const freeCommercial = (await api(commBase, { cookie: owner.cookie })).data;
+    assert.deepEqual(freeCommercial.subscriptionBookingServices[added.data.propertyId]??[],[]);
+    // Represent an existing, independently approved legacy commercial customer
+    // for downstream behaviour and tenant separation tests; not signup behavior.
+    await run(`INSERT INTO subscriptions(id,client_id,property_id,plan_code,status,allowance_json,created_at)
+      VALUES(?,?,NULL,'all_inclusive','active','{"includedServiceIds":["*"]}',?)`,
+      'sub_inclusive_'+signup.data.clientId,signup.data.clientId,new Date().toISOString());
+    await run("INSERT INTO legacy_included_property_grants(client_id,property_id,granted_at) VALUES(?,?,?)",
+      signup.data.clientId,added.data.propertyId,new Date().toISOString());
     const covered = (await api(commBase, { cookie: owner.cookie })).data;
     assert.ok(covered.subscriptionBookingServices[added.data.propertyId].includes('commercial-property-inspection'));
     assert.ok(!covered.subscriptionBookingServices[added.data.propertyId].includes('property-condition-report'));
