@@ -196,6 +196,11 @@ async function acceptInvitation(env: Env, user: Principal, token: unknown) {
     'Invitation invalid.',
   );
   const hash = await digest(token);
+  // Pending tenancy invitations are limited to an explicitly released and recorded
+  // rental handover; all other invitations retain the active-tenancy condition.
+  const pendingTenancyCondition=env.RENTAL_TENANCY_HANDOVER_ENABLED==='true'
+    ? "(t.status='active' OR (t.status='pending' AND EXISTS(SELECT 1 FROM rental_tenancy_handovers h WHERE h.tenancy_id=t.id AND h.status='awaiting_agreement')))"
+    : "t.status='active'";
   const invitation = await statement(
     env.DB,
     `SELECT i.tenancy_id FROM invitations i JOIN tenancies t ON t.id=i.tenancy_id WHERE i.token_hash=? AND i.email=? AND i.expires_at>? AND i.consumed_at IS NULL AND t.status='active' AND (EXISTS(SELECT 1 FROM staff_profiles s WHERE s.user_id=i.created_by AND s.active=1 AND s.role IN('administrator','operations_manager')) OR EXISTS(SELECT 1 FROM property_management_relationships pm JOIN client_memberships m ON m.client_id=pm.manager_client_id WHERE pm.property_id=t.property_id AND pm.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND pm.ends_at IS NULL AND m.user_id=i.created_by AND m.active=1 AND m.role!='viewer'))`,
