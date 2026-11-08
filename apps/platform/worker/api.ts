@@ -364,6 +364,10 @@ export async function handleApi(
       if(method!=='GET'&&method!=='HEAD')requireOrigin(request,env);
       if(method==='GET'&&tail.length===0)return Response.json(await listRentalApplications(env,user,url.searchParams.get('listingId')??undefined));
       if(method==='GET'&&tail.length===1)return Response.json(await rentalStaffDetail(env,user,tail[0]));
+      if(method==='GET'&&tail.length===2&&tail[1]==='tenancy-handover')return Response.json(await rentalTenancyHandoverStatus(env,user,tail[0]),{headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'&&tail.length===2&&tail[1]==='tenancy-handover')return Response.json(await prepareRentalTenancyHandover(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===3&&tail[1]==='tenancy-handover'&&tail[2]==='activate')return Response.json(await activateRentalTenancyHandover(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===3&&tail[1]==='tenancy-handover'&&tail[2]==='void')return Response.json(await voidRentalTenancyHandover(env,user,tail[0],await json(request)));
       if(method==='POST'&&tail.length===2&&tail[1]==='reference-checks')return Response.json(await recordRentalReferenceCheck(env,user,tail[0],await json(request)));
       if(method==='POST'&&tail.length===2&&tail[1]==='outcome')return Response.json(await recordRentalOutcome(env,user,tail[0],await json(request)));
       if(method==='POST'&&tail.length===2&&tail[1]==='status')return Response.json(await updateRentalStatus(env,user,tail[0],await json(request)));
