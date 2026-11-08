@@ -33,6 +33,14 @@ function includedServiceIds(allowanceJson: string): string[] {
     return [];
   }
 }
+/** Historic all-inclusive coverage was snapshotted when free registration began.
+ * New properties are never silently covered by the inherited global wildcard. */
+async function legacyGrants(env: Env, clientId: string): Promise<Set<string>> {
+  const rows = await statement(env.DB,
+    'SELECT property_id FROM legacy_included_property_grants WHERE client_id=?',
+    clientId).all<{property_id:string}>();
+  return new Set(rows.results.map(row => row.property_id));
+}
 async function activeSubscriptions(env: Env, clientId: string): Promise<SubscriptionRecord[]> {
   return (
     await statement(
@@ -46,7 +54,9 @@ function covers(
   sub: SubscriptionRecord,
   propertyId: string,
   serviceId: string,
+  legacy: Set<string>,
 ): boolean {
+  if (sub.plan_code === 'all_inclusive' && !legacy.has(propertyId)) return false;
   if (sub.property_id !== null && sub.property_id !== propertyId) return false;
   const ids = includedServiceIds(sub.allowance_json);
   return ids.includes('*') || ids.includes(serviceId);
@@ -115,8 +125,10 @@ export async function includedSubscriptionBooking(
   propertyId: string,
   serviceId: string,
 ): Promise<IncludedBookingSubscription | null> {
-  const subscriptions = await activeSubscriptions(env, clientId);
-  const found = subscriptions.find((s) => covers(s, propertyId, serviceId));
+  const [subscriptions, grants] = await Promise.all([
+    activeSubscriptions(env, clientId), legacyGrants(env, clientId)
+  ]);
+  const found = subscriptions.find((s) => covers(s, propertyId, serviceId, grants));
   if(found && !(await paidResidentialCoverage(env,clientId,propertyId)))return null;
   return found ? { id: found.id, planCode: found.plan_code } : null;
 }
@@ -126,7 +138,9 @@ export async function subscriptionBookingCoverage(
   properties: Property[],
   services: Service[],
 ): Promise<Record<string, string[]>> {
-  const subscriptions = await activeSubscriptions(env, clientId);
+  const [subscriptions, grants] = await Promise.all([
+    activeSubscriptions(env, clientId), legacyGrants(env, clientId)
+  ]);
   const coverage=await Promise.all(properties.map(p=>paidResidentialCoverage(env,clientId,p.id)));
   return Object.fromEntries(
     properties.map((p,index) => [
@@ -137,7 +151,7 @@ export async function subscriptionBookingCoverage(
             coverage[index] &&
             service.active === 1 &&
             service.sectors.includes(p.sector) &&
-            subscriptions.some((sub) => covers(sub, p.id, service.id)),
+            subscriptions.some((sub) => covers(sub, p.id, service.id, grants)),
         )
         .map((service) => service.id),
     ]),
