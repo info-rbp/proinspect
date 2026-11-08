@@ -78,6 +78,7 @@ CREATE TRIGGER rental_handover_activate_guard BEFORE UPDATE OF status
  WHEN NEW.status='activated'
  BEGIN
   SELECT RAISE(ABORT,'HANDOVER_ALREADY_FINALISED') WHERE OLD.status!='awaiting_agreement';
+  SELECT RAISE(ABORT,'HANDOVER_APPLICATION_WITHDRAWN') WHERE NOT EXISTS(SELECT 1 FROM rental_applications WHERE id=NEW.application_id AND status='decision_recorded');
   SELECT RAISE(ABORT,'HANDOVER_MISSING_EXECUTED_FORM_1AA') WHERE NOT EXISTS(
    SELECT 1 FROM wa_agreement_envelopes e
    JOIN wa_residential_form_cases c ON c.id=e.case_id
