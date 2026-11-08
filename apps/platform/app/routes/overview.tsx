@@ -1,10 +1,62 @@
 import { Link } from 'react-router';
-import { useWorkspace } from '../lib/workspace';
+import { useWorkspace, type WorkspaceData } from '../lib/workspace';
 import { PageHeading, Metric, Badge, EmptyState } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
+/** Staff-specific action centre. Counts are derived from the authorised workspace response. */
+function StaffToday({ data }: { data: WorkspaceData }) {
+  const base = data.workspace.href;
+  const today = new Date().toISOString().slice(0, 10);
+  const dueBookings = data.bookings.filter(b => ['confirmed', 'scheduled'].includes(b.status) && String(b.starts_at ?? '').slice(0, 10) === today);
+  const reviewOrders = data.workOrders.filter(o => ['report_pending', 'under_review', 'awaiting_review'].includes(o.status));
+  const openOrders = data.workOrders.filter(o => !['completed', 'cancelled', 'closed'].includes(o.status));
+  const exceptions = data.payments.filter(p => ['failed', 'payment_required'].includes(p.status)).length
+    + data.approvals.filter(a => a.status === 'pending').length;
+  const recent = [...data.workOrders.map(row => ({...row, category: 'Work order', path: `${base}/work-orders/${row.id}` })),
+    ...data.bookings.map(row => ({...row, category: 'Booking', path: `${base}/bookings` }))]
+    .sort((a, b) => String(b.updated_at ?? b.created_at ?? b.starts_at ?? '').localeCompare(String(a.updated_at ?? a.created_at ?? a.starts_at ?? '')))
+    .slice(0, 6);
+  return <>
+    <PageHeading eyebrow="Operations / Today" title="Today's work" description="Priority actions, upcoming bookings and the work that needs a decision.">
+      <Link className="button" to={base+'/bookings'}>View schedule</Link>
+    </PageHeading>
+    <section className="grid-4 portal-summary" aria-label="Staff work summary">
+      <Link className="portal-summary-link" to={base+'/bookings'}><Metric label="Bookings due" value={dueBookings.length} detail="Scheduled for today" /></Link>
+      <Link className="portal-summary-link" to={base+'/reports'}><Metric label="Reports to review" value={reviewOrders.length} detail="Awaiting review" /></Link>
+      <Link className="portal-summary-link" to={base+'/work-orders'}><Metric label="Open work" value={openOrders.length} detail="Active work orders" /></Link>
+      <Link className="portal-summary-link" to={base+'/finance'}><Metric label="Exceptions" value={exceptions} detail="Financial and approval items" /></Link>
+    </section>
+    <div className="detail-grid portal-today-grid">
+      <section className="panel">
+        <div className="panel-header"><h2>Work requiring attention</h2><Link className="small" to={base+'/work-orders'}>View all work</Link></div>
+        {openOrders.length ? <div className="record-list">
+          {openOrders.slice(0, 6).map(o => <div className="record-row" key={o.id}>
+            <div><Link className="record-title" to={base+'/work-orders/'+o.id}>{o.title || o.reference || 'Work order'}</Link>
+              <p>{[o.address, o.reference].filter(Boolean).join(' · ')}</p></div><Badge status={o.status}/></div>)}
+        </div> : <EmptyState title="No active work orders" description="Assigned work will appear here when it requires action." />}
+      </section>
+      <section className="panel">
+        <div className="panel-header"><h2>Today's schedule</h2><Link className="small" to={base+'/bookings'}>Open schedule</Link></div>
+        {dueBookings.length ? <div className="record-list">{dueBookings.slice(0, 6).map(b =>
+          <div className="record-row" key={b.id}><div><div className="record-title">{b.service_name || b.reference || 'Inspection booking'}</div>
+            <p>{[b.address, b.starts_at ? displayDate(b.starts_at) : null].filter(Boolean).join(' · ')}</p></div>
+            <Badge status={b.status}/></div>)}</div>
+          : <EmptyState title="No bookings due today" description="The schedule will show confirmed visits due today." />}
+      </section>
+    </div>
+    <section className="panel portal-recent-activity">
+      <div className="panel-header"><h2>Recent activity</h2><Link className="small" to={base+'/records'}>Browse records</Link></div>
+      {recent.length ? <div className="record-list">{recent.map(r => <div className="record-row" key={r.category+':'+r.id}>
+        <div><Link className="record-title" to={r.path}>{r.title || r.service_name || r.reference || r.category}</Link>
+          <p>{r.category}{r.reference ? ' · '+r.reference : ''}</p></div><Badge status={r.status || 'pending'}/></div>)}</div>
+        : <EmptyState title="No recent activity" description="Bookings and work updates will be listed when records are available." />}
+    </section>
+  </>;
+}
+
 export default function Overview() {
   const d = useWorkspace();
   const w = d.workspace;
+  if (w.kind === 'staff') return <StaffToday data={d} />;
   if(w.kind==='building-manager')return <><PageHeading title={w.name} description="Your building assignment does not grant access to private tenancy records, other buildings or financial decisions."/><section className="panel stack"><h2>Professional building operations</h2><p>Coordinate incidents, daily logs, asset maintenance, site access and resident moves within your delegated authority.</p><Link className="button" to={w.href+'/facilities'}>Open building operations</Link><Link to={w.href+'/documents'}>Authorised building reports</Link></section></>;
   const active = d.requests.filter((r) => !['closed', 'completed'].includes(r.status));
   const upcoming = d.bookings.filter(
