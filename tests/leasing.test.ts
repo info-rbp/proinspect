@@ -110,7 +110,7 @@ test('per-property readiness fails closed on provider release flags and independ
 });
 test('staff leasing supports per-listing inspection scheduling and safe application readiness',()=>{
  const ui=text('apps/platform/app/routes/leasing-administration.tsx');
- for(const fragment of ['ListingInspectionManagement','Schedule a new inspection','session-edit/','session-status/','Application release checklist','perthLocalToUtc','Open authorised registration data'])assert.ok(ui.includes(fragment),fragment);
+ for(const fragment of ['ListingInspectionManagement','Schedule a new inspection','session-edit/','session-status/','Application release checklist','perthLocalToUtc','View restricted registrations'])assert.ok(ui.includes(fragment),fragment);
  const backend=text('apps/platform/worker/features/leasing.server.ts');
  assert.match(backend,/residentialApplicationReadiness/);
  assert.match(backend,/releaseFeatureReady\(env,'rental_scanner'\)/);
