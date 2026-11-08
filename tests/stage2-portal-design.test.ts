@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { WORKSPACES } from '../packages/domain/index';
+import { WORKSPACES } from '../packages/domain/index.ts';
 
 const layout = readFileSync('apps/platform/app/routes/workspace.tsx', 'utf8');
 const overview = readFileSync('apps/platform/app/routes/overview.tsx', 'utf8');
