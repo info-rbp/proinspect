@@ -39,3 +39,16 @@ BEGIN SELECT RAISE(ABORT,'SUBSCRIPTION_REQUIRES_PROVIDER_EVENT'); END;
 
 -- A new paid enrolment is an explicit intent, never generated at property creation.
 CREATE INDEX account_subscription_intent_state ON account_subscription_preferences(subscription_intent,account_state);
+
+-- Paid subscription coverage requires explicitly approved service IDs.
+-- No catalogue-wide wildcard or implied service entitlements are seeded.
+CREATE TABLE residential_paid_service_allowances (
+  service_id TEXT PRIMARY KEY REFERENCES services(id),
+  approval_reference TEXT NOT NULL CHECK(length(trim(approval_reference))>=8),
+  approved_by TEXT NOT NULL REFERENCES users(id),
+  approved_at TEXT NOT NULL
+) STRICT;
+CREATE TRIGGER residential_paid_service_allowances_no_update
+BEFORE UPDATE ON residential_paid_service_allowances BEGIN
+  SELECT RAISE(ABORT,'PAID_SERVICE_ALLOWANCE_IMMUTABLE');
+END;
