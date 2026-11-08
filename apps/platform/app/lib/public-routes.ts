@@ -1,5 +1,5 @@
 import { PUBLIC_LEGAL_APPROVAL, type PublicLegalKey } from '../../../../packages/marketing/legal-drafts.ts';
-import { RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED } from '../../../../packages/marketing/pricing-publication';
+import { RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED } from '../../../../packages/marketing/pricing-publication.ts';
 
 /** Public marketing route families for the unified Worker, including unapproved legal drafts. */
 export function isPublicSitePath(pathname: string): boolean {
