@@ -119,6 +119,23 @@ export async function paidResidentialCoverage(env: Env, clientId: string, proper
   LIMIT 1`,clientId,propertyId,earliestPaidThrough).first();
  return Boolean(recovery);
 }
+/** A paid Stripe invoice is not itself a permission to use every service.
+ * Only service IDs approved in the paid allowance register can be included.
+ * No paid entitlement is issued on Checkout redirect or unpaid first invoice. */
+async function paidResidentialAllowedServices(env: Env, clientId: string, propertyId: string): Promise<Set<string>> {
+  const enrolled=await statement(env.DB,
+    'SELECT 1 FROM residential_paid_property_enrollments WHERE client_id=? AND property_id=?',
+    clientId,propertyId).first();
+  if (!enrolled || !(await paidResidentialCoverage(env,clientId,propertyId))) return new Set();
+  const active=await statement(env.DB,
+    "SELECT 1 FROM stripe_billing_links WHERE client_id=? AND property_id=? AND sector='residential' AND status='active' AND stripe_subscription_id IS NOT NULL LIMIT 1",
+    clientId,propertyId).first();
+  if (!active) return new Set();
+  const rows=await statement(env.DB,
+    "SELECT a.service_id FROM residential_paid_service_allowances a JOIN services s ON s.id=a.service_id WHERE s.active=1"
+  ).all<{service_id:string}>();
+  return new Set(rows.results.map(row=>row.service_id));
+}
 export async function includedSubscriptionBooking(
   env: Env,
   clientId: string,
@@ -130,7 +147,14 @@ export async function includedSubscriptionBooking(
   ]);
   const found = subscriptions.find((s) => covers(s, propertyId, serviceId, grants));
   if(found && !(await paidResidentialCoverage(env,clientId,propertyId)))return null;
-  return found ? { id: found.id, planCode: found.plan_code } : null;
+  if (found) return { id: found.id, planCode: found.plan_code };
+  if (await paidResidentialAllowedServices(env, clientId, propertyId).then(ids=>ids.has(serviceId))) {
+    const link=await statement(env.DB,
+      "SELECT id FROM stripe_billing_links WHERE client_id=? AND property_id=? AND status='active' ORDER BY updated_at DESC LIMIT 1",
+      clientId,propertyId).first<{id:string}>();
+    return link ? { id: link.id, planCode: 'residential_paid' } : null;
+  }
+  return null;
 }
 export async function subscriptionBookingCoverage(
   env: Env,
@@ -141,7 +165,11 @@ export async function subscriptionBookingCoverage(
   const [subscriptions, grants] = await Promise.all([
     activeSubscriptions(env, clientId), legacyGrants(env, clientId)
   ]);
-  const coverage=await Promise.all(properties.map(p=>paidResidentialCoverage(env,clientId,p.id)));
+  const [coverage, paid] = await Promise.all([
+    Promise.all(properties.map(p=>paidResidentialCoverage(env,clientId,p.id))),
+    Promise.all(properties.map(p=>p.sector==='residential'
+      ? paidResidentialAllowedServices(env,clientId,p.id) : Promise.resolve(new Set<string>())))
+  ]);
   return Object.fromEntries(
     properties.map((p,index) => [
       p.id,
@@ -151,7 +179,8 @@ export async function subscriptionBookingCoverage(
             coverage[index] &&
             service.active === 1 &&
             service.sectors.includes(p.sector) &&
-            subscriptions.some((sub) => covers(sub, p.id, service.id, grants)),
+            (subscriptions.some((sub) => covers(sub, p.id, service.id, grants)) ||
+             paid[index].has(service.id)),
         )
         .map((service) => service.id),
     ]),
