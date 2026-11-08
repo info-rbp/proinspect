@@ -7,7 +7,7 @@ import { releaseFeatureReady } from './release-governance.server';
  * Sensitive scanned files are not attached; only approved staff can download them.
  * A mail service acceptance receipt is not inbox delivery confirmation. */
 export async function dispatchRentalHandoffs(env:Env){
- if(env.RENTAL_APPS_SCRIPT_ENABLED!=='true')return;
+ if(env.RENTAL_APPS_SCRIPT_ENABLED!=='true'||!await releaseFeatureReady(env,'rental_script')||!await releaseFeatureReady(env,'rental'))return;
  const endpoint=checkedHttpsEndpoint(env.RENTAL_APPS_SCRIPT_ENDPOINT,env.RENTAL_APPS_SCRIPT_ALLOWED_HOST);
  const secret=env.RENTAL_APPS_SCRIPT_SECRET;
  assert(endpoint&&secret&&secret.length>=32,503,'HANDOFF_NOT_CONFIGURED','Approved Apps Script integration is missing.');
