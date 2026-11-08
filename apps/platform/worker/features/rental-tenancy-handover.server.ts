@@ -34,8 +34,9 @@ async function execution(env:Env,h:Handover){
 }
 export async function rentalTenancyHandoverStatus(env:Env,user:Principal,appId:string){
  staff(user);
+ if(env.RENTAL_TENANCY_HANDOVER_ENABLED!=='true')return {exists:false,configured:false};
  const h=await state(env,appId);
- if(!h)return {exists:false};
+ if(!h)return {exists:false,configured:true};
  const tenancy=await statement(env.DB,'SELECT status,starts_at,ends_at FROM tenancies WHERE id=?',h.tenancy_id).first<{status:string;starts_at:string;ends_at:string|null}>();
  const verified=await matchingVerifiedMembers(env,h);
  const signed=Boolean(await execution(env,h));
