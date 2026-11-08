@@ -15,7 +15,7 @@ class ReleaseUpgrade(unittest.TestCase):
    snapshots={table:db.execute('SELECT * FROM '+table+' ORDER BY id').fetchall() for table in ['users','clients','properties','work_orders']}
    additions=[p for p in sorted(pathlib.Path('database/migrations').glob('*.sql')) if str(p) not in manifest]
    self.assertEqual(len(additions),34)
-   self.assertEqual([p.name[:4] for p in sorted(pathlib.Path('database/migrations').glob('*.sql'))],[str(i).zfill(4) for i in range(1,53)])
+   self.assertEqual([p.name[:4] for p in sorted(pathlib.Path('database/migrations').glob('*.sql'))],[str(i).zfill(4) for i in range(1,54)])
    for path in additions:db.executescript(path.read_text())
    for table,rows in snapshots.items():self.assertEqual(db.execute('SELECT * FROM '+table+' ORDER BY id').fetchall(),rows,table)
    self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(),[])
