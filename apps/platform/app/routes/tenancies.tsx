@@ -1,4 +1,4 @@
-import { Link, Form, useActionData, useNavigation, type ActionFunctionArgs } from 'react-router';
+import { Link, Form, useActionData, useNavigation, useSearchParams, type ActionFunctionArgs } from 'react-router';
 import { useWorkspace } from '../lib/workspace';
 import { submitAction } from '../lib/actions.server';
 import {
@@ -28,6 +28,8 @@ export default function Tenancies() {
   const d = useWorkspace();
   const result = useActionData<any>();
   const busy = useNavigation().state !== 'idle';
+  const [search]=useSearchParams(),propertyId=search.get('propertyId');
+  const records=propertyId?d.tenancies.filter(t=>t.property_id===propertyId):d.tenancies;
   return (
     <>
       <PageHeading
@@ -37,9 +39,10 @@ export default function Tenancies() {
       />
       <div className="stack">
         <Feedback value={result} />
+        {propertyId&&<p><Link to={d.workspace.href+'/properties/'+encodeURIComponent(propertyId)}>Return to selected property</Link> · {records.length} tenancy records</p>}
         <section className="panel">
-          {d.tenancies.length ? (
-            d.tenancies.map((t) => (
+          {records.length ? (
+            records.map((t) => (
               <div key={t.id} className="record-row">
                 <div>
                   <h3>{t.address || d.properties.find((p) => p.id === t.property_id)?.address}</h3>
@@ -78,7 +81,7 @@ export default function Tenancies() {
               </div>
               <Form method="post" className="form">
                 <Field label="Property" name="propertyId">
-                  <select id="propertyId" name="propertyId" required>
+                  <select id="propertyId" name="propertyId" required defaultValue={propertyId??""}>
                     <option value="">Choose property</option>
                     {d.properties.map((p) => (
                       <option key={p.id} value={p.id}>
