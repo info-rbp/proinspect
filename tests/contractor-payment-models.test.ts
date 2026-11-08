@@ -46,3 +46,9 @@ test('canceled work orders and changed contractor assignments block collection',
  assert.match(source,/order\.status!=='cancelled'/);
  assert.match(source,/order\.contractor_id===p\.contractor_id/);
 });
+test('production deployment keeps contractor collection absent and fail-closed under the Free variable limit',()=>{
+ const c=JSON.parse(readFileSync('apps/platform/wrangler.jsonc','utf8'));
+ assert.equal(c.env.connected.vars.CONTRACTOR_PAYMENTS_ENABLED,undefined);
+ assert.match(source,/env\.CONTRACTOR_PAYMENTS_ENABLED === 'true'/);
+ assert.match(source,/env\.APP_ENV !== 'production'/);
+});
