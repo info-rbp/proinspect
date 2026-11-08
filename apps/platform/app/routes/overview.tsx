@@ -57,7 +57,19 @@ export default function Overview() {
   const d = useWorkspace();
   const w = d.workspace;
   if (w.kind === 'staff') return <StaffToday data={d} />;
-  if(w.kind==='building-manager')return <><PageHeading title={w.name} description="Your building assignment does not grant access to private tenancy records, other buildings or financial decisions."/><section className="panel stack"><h2>Professional building operations</h2><p>Coordinate incidents, daily logs, asset maintenance, site access and resident moves within your delegated authority.</p><Link className="button" to={w.href+'/facilities'}>Open building operations</Link><Link to={w.href+'/documents'}>Authorised building reports</Link></section></>;
+  if (w.kind === 'building-manager') return <>
+    <PageHeading eyebrow="Building operations" title="Today's building work" description="Manage assigned facilities, resident moves and authorised operational records.">
+      <Link className="button" to={w.href+'/facilities'}>Open operations</Link>
+    </PageHeading>
+    <div className="grid-4 portal-summary">
+      <Metric label="Assigned buildings" value={d.schemes.length} detail="Within your assignment" />
+      <Metric label="Open issues" value={d.requests.filter(r => !['closed','completed'].includes(r.status)).length} detail="Operational follow-up" />
+      <Metric label="Active work" value={d.workOrders.filter(o => !['cancelled','completed'].includes(o.status)).length} detail="Building work orders" />
+      <Metric label="Documents" value={d.documents.length} detail="Authorised records" />
+    </div>
+    <section className="panel"><div className="panel-header"><h2>Building operations</h2><Link to={w.href+'/documents'}>View reports</Link></div>
+      <p>Coordinate incidents, daily logs, asset maintenance, site access and resident moves within your delegated authority.</p></section>
+  </>;
   const active = d.requests.filter((r) => !['closed', 'completed'].includes(r.status));
   const upcoming = d.bookings.filter(
     (b) => b.status === 'confirmed' && b.starts_at > new Date().toISOString(),
@@ -69,10 +81,10 @@ export default function Overview() {
         <PageHeading
           title={
             w.kind === 'strata-manager'
-              ? 'Your strata portfolio'
+              ? 'Schemes overview'
               : w.kind === 'council'
-                ? 'Understand and decide.'
-                : 'Your building, connected.'
+                ? 'Council overview'
+                : 'Building overview'
           }
           description={
             w.kind === 'strata-manager'
@@ -121,25 +133,25 @@ export default function Overview() {
     <>
       <PageHeading
         eyebrow={
-          w.kind === 'staff'
-            ? 'Operations at a glance'
-            : w.kind === 'tenant'
-              ? 'Your tenancy'
-              : 'Your property overview'
+          w.kind === 'tenant' ? 'Your tenancy'
+            : w.kind === 'property-manager' ? 'Property management'
+            : w.kind === 'commercial' ? 'Commercial operations'
+            : 'Residential property operations'
         }
         title={
-          w.kind === 'staff'
-            ? 'Keep the work moving.'
-            : w.kind === 'property-manager'
-              ? 'Your managed portfolio'
-              : w.kind === 'commercial'
-                ? 'Your commercial portfolio'
-                : `Welcome${d.user.display_name ? ', ' + d.user.display_name.split(' ')[0] : ''}.`
+          w.kind === 'property-manager' ? 'Managed portfolio'
+            : w.kind === 'commercial' ? 'Commercial portfolio'
+            : w.kind === 'tenant' ? 'Tenancy overview'
+            : 'Property overview'
         }
         description={
           w.kind === 'tenant'
-            ? 'Follow requests, see upcoming inspections and access documents issued to your tenancy.'
-            : 'Your properties, upcoming work and latest reports, in one place.'
+            ? 'Review maintenance requests, scheduled inspections and documents issued to your tenancy.'
+            : w.kind === 'property-manager'
+              ? 'Monitor assigned properties, client requests, scheduled work and operational decisions.'
+              : w.kind === 'commercial'
+                ? 'Track your commercial properties, inspections, lease obligations and related work.'
+                : 'Review your residential properties, upcoming inspections, requests and issued reports.'
         }
       >
         {['landlord', 'property-manager', 'commercial'].includes(w.kind) && (
