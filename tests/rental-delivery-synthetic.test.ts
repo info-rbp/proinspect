@@ -91,9 +91,9 @@ test('signed Lighthouse application invokes the real Apps Script email path with
  assert.equal(email.to,'lighthousepropertygroup@mail.com');
  assert.equal(email.cc,'info@proinspect.systems');
  assert.match(email.subject,/RNT-SYNTHETIC-UNIT6/);
- assert.match(email.html,/Unit 6, 273 Fulham Street/);
- assert.match(email.html,/&lt;script&gt;/);
- assert.doesNotMatch(email.html,/name="fixture.pdf"/);
+ assert.match(email.htmlBody,/Unit 6, 273 Fulham Street/);
+ assert.match(email.htmlBody,/&lt;script&gt;/);
+ assert.doesNotMatch(email.htmlBody,/name="fixture.pdf"/);
  assert.match(email.body,/Supporting documents remain restricted/);
  const replay=receiver.submit(payload);
  assert.deepEqual(replay,receipt);
