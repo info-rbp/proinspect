@@ -284,7 +284,7 @@ export async function inspectOfflineRecovery(scope: OfflineScope): Promise<Offli
    request.onsuccess=()=>done(request.result as CipherRecord | undefined);
   }),
   tx<number>('photos','readonly',(store,done)=>{
-   const request=store.count(IDBKeyRange.bound(prefix,prefix+'\\uffff'));
+   const request=store.count(IDBKeyRange.bound(prefix,prefix+String.fromCharCode(0xffff)));
    request.onsuccess=()=>done(request.result);
   })
  ]);
