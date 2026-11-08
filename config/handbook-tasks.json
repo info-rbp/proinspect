@@ -41,7 +41,17 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": 58
+      "issueNumber": 58,
+      "stage0Routing": {
+        "implementationStage": 0,
+        "primarySurface": "Governance / All portals",
+        "sourceEvidencePRs": [
+          "#80",
+          "#81"
+        ],
+        "nextAction": "Read current main and latest CI workflow with exact commit references.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "G02",
@@ -69,7 +79,16 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": 59
+      "issueNumber": 59,
+      "stage0Routing": {
+        "implementationStage": 0,
+        "primarySurface": "Governance / All portals",
+        "sourceEvidencePRs": [
+          "#81"
+        ],
+        "nextAction": "For each F-ID record source modules, API entry points, relevant UI routes and migrations.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "G03",
@@ -97,7 +116,16 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": 60
+      "issueNumber": 60,
+      "stage0Routing": {
+        "implementationStage": 0,
+        "primarySurface": "Governance / All portals",
+        "sourceEvidencePRs": [
+          "#54"
+        ],
+        "nextAction": "Compare pre-integration branches, discussions and approved requirements to current main.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "G04",
@@ -122,7 +150,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": 61
+      "issueNumber": 61,
+      "stage0Routing": {
+        "implementationStage": 0,
+        "primarySurface": "Governance / All portals",
+        "sourceEvidencePRs": [],
+        "nextAction": "Publish a single retained-scope register with functional and non-functional requirements.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "G05",
@@ -150,7 +185,17 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": 62
+      "issueNumber": 62,
+      "stage0Routing": {
+        "implementationStage": 0,
+        "primarySurface": "Governance / All portals",
+        "sourceEvidencePRs": [
+          "#80",
+          "#81"
+        ],
+        "nextAction": "Inventory Worker variables and protected feature switches separately for production and staging.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "G06",
@@ -178,7 +223,16 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": 63
+      "issueNumber": 63,
+      "stage0Routing": {
+        "implementationStage": 0,
+        "primarySurface": "Governance / All portals",
+        "sourceEvidencePRs": [
+          "#54"
+        ],
+        "nextAction": "Create one traceable issue per sprint task ID and relate it to the F01-F20 register.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "G07",
@@ -203,7 +257,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": 64
+      "issueNumber": 64,
+      "stage0Routing": {
+        "implementationStage": 0,
+        "primarySurface": "Governance / All portals",
+        "sourceEvidencePRs": [],
+        "nextAction": "Nominate Product, Engineering, QA, Finance, Legal/Privacy, Security, Operations and independent Release approvers.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "C01",
@@ -228,7 +289,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing / Commercial catalogue",
+        "sourceEvidencePRs": [],
+        "nextAction": "Review all 23 current public services and classify available versus requested-by-quote.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "C02",
@@ -253,7 +321,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing / Commercial catalogue",
+        "sourceEvidencePRs": [],
+        "nextAction": "Trace service IDs to approved sale variants, Stripe products/prices and work-order templates.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "C03",
@@ -278,7 +353,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing / Commercial catalogue",
+        "sourceEvidencePRs": [],
+        "nextAction": "Approve published price versus quotation-required designation.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "C04",
@@ -303,7 +385,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing / Commercial catalogue",
+        "sourceEvidencePRs": [],
+        "nextAction": "Publish eligible suburbs/postcodes, property types, capacity and roster rules.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "C05",
@@ -328,7 +417,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 1,
+        "primarySurface": "Marketing / Commercial catalogue",
+        "sourceEvidencePRs": [],
+        "nextAction": "Compare legacy automatic all-inclusive accounts with proposed paid property subscriptions.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "C06",
@@ -353,7 +449,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 1,
+        "primarySurface": "Marketing / Commercial catalogue",
+        "sourceEvidencePRs": [],
+        "nextAction": "Identify every frequency statement in legal, marketing, code and subscriptions.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "C07",
@@ -378,7 +481,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing / Commercial catalogue",
+        "sourceEvidencePRs": [],
+        "nextAction": "Review proposed AUD 100 weekday, AUD 125 Saturday, AUD 150 Sunday and AUD 10 off-site key collection (unapproved fixture settings).",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "C08",
@@ -403,7 +513,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Marketing / Commercial catalogue",
+        "sourceEvidencePRs": [],
+        "nextAction": "Execute guest/direct/quote and subscription booking flows across residential/commercial sectors.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "C09",
@@ -428,7 +545,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing / Commercial catalogue",
+        "sourceEvidencePRs": [],
+        "nextAction": "Audit every customer-visible price, entitlement and cancellation statement.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B01",
@@ -453,7 +577,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Billing / Finance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Install least-privilege test restricted key and endpoint-specific secret in correct Worker environment.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B02",
@@ -478,7 +609,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Billing / Finance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Approve factual head-office address and registration/classification.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B03",
@@ -503,7 +641,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Billing / Finance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Trace user, client, scheme, property, agreement and canonical BillingAccount relationships.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B04",
@@ -528,7 +673,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Billing / Finance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Run provider-hosted Checkout for guest and authenticated customer under allowed service/price.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B05",
@@ -553,7 +705,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Billing / Finance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Exercise decline, abandonment, expiry and delayed methods where supported.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B06",
@@ -578,7 +737,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 1,
+        "primarySurface": "Landlord / Subscription",
+        "sourceEvidencePRs": [],
+        "nextAction": "Test creation, renewal, invoice failure, recovery, cancellation and changed plan.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B07",
@@ -603,7 +769,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Billing / Finance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Use existing sandbox Billing Portal configuration, avoiding a duplicate.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B08",
@@ -628,7 +801,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Billing / Finance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Initiate supported full/partial/failed refund and dispute scenarios.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B09",
@@ -666,7 +846,16 @@
       ],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Agency / Strata finance",
+        "sourceEvidencePRs": [
+          "#81"
+        ],
+        "nextAction": "Define invoice grouping by legal billing entity and statement period.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B10",
@@ -691,7 +880,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Agency / Strata finance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Define allowable credit note, invoice correction and payment adjustment reasons.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B11",
@@ -716,7 +912,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Finance / Staff",
+        "sourceEvidencePRs": [],
+        "nextAction": "Model gross charges, processing fees, net settlement and timing differences.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B12",
@@ -741,7 +944,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Billing / Finance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Confirm whether ProInspect actually collects onward-transfer funds or merely stores direct-payer evidence.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B13",
@@ -766,7 +976,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Billing / Finance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Test approved charges and transfer creation, pending states and balance availability.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "B14",
@@ -791,7 +1008,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Billing / Finance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Review evidence per enabled payment type rather than asserting broad Stripe readiness.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "I01",
@@ -816,7 +1040,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Provider integrations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Verify authorised sender domain, DKIM/SPF and provider account ownership.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "I02",
@@ -841,7 +1072,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Provider integrations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Confirm service account/key and calendar sharing without exposing key data.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "I03",
@@ -866,7 +1104,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Provider integrations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Implement/verify event creation from confirmed reservations and mapping of provider event IDs.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "I04",
@@ -891,7 +1136,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Provider integrations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Configure scanner credentials and callback security in isolated environment.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "I05",
@@ -916,7 +1168,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Provider integrations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Test signed payloads against actual authorised receiving script.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "I06",
@@ -941,7 +1200,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Provider integrations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Configure provider sandbox and official form/template mapping.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "I07",
@@ -966,7 +1232,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Provider integrations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Prepare paired staging endpoints and shared secret under approved storage.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "I08",
@@ -991,7 +1264,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Provider integrations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Exercise queue at-least-once delivery and D1 outbox leasing/idempotency.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "I09",
@@ -1016,7 +1296,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Open Home / Staff",
+        "sourceEvidencePRs": [],
+        "nextAction": "Trace original scheduled Worker/queue implementation into current main.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "I10",
@@ -1041,7 +1328,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Provider integrations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Simulate expired auth, provider downtime, delayed acknowledgements and malformed signatures.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "R01",
@@ -1066,7 +1360,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Reporting / Inspections",
+        "sourceEvidencePRs": [],
+        "nextAction": "Inventory original Report Creation Tool templates, interactions, media and issued PDF examples.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "R02",
@@ -1091,7 +1392,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Reporting / Inspections",
+        "sourceEvidencePRs": [],
+        "nextAction": "Implement any missing approved area/room, component, rating and note sections.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "R03",
@@ -1116,7 +1424,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Reporting / Inspections",
+        "sourceEvidencePRs": [],
+        "nextAction": "Support required photo capture/upload, sequences, orientation and media metadata.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "R04",
@@ -1141,7 +1456,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Reporting / Inspections",
+        "sourceEvidencePRs": [],
+        "nextAction": "Test page layout at complex tables, long text and multiple images.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "R05",
@@ -1177,7 +1499,16 @@
       ],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Reporting / Inspections",
+        "sourceEvidencePRs": [
+          "#81"
+        ],
+        "nextAction": "Exercise prolonged network absence and batch photograph capture.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "R06",
@@ -1202,7 +1533,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Reporting / Inspections",
+        "sourceEvidencePRs": [],
+        "nextAction": "Test linking original and exit condition reports to same property/tenancy.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "R07",
@@ -1236,7 +1574,16 @@
       ],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Reporting / Inspections",
+        "sourceEvidencePRs": [
+          "#81"
+        ],
+        "nextAction": "Test draft, QC submission, rejected corrections and independent issue.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "R08",
@@ -1261,7 +1608,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Reporting / Inspections",
+        "sourceEvidencePRs": [],
+        "nextAction": "Define realistic photographic report sizes and completion targets.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "R09",
@@ -1286,7 +1640,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Reporting / Inspections",
+        "sourceEvidencePRs": [],
+        "nextAction": "Assign reviewer per report type and compare printed/online PDF to approved reference.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L01",
@@ -1311,7 +1672,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Legal / Tenancy",
+        "sourceEvidencePRs": [],
+        "nextAction": "Review each source text against current services, legal entity and WA operating model.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L02",
@@ -1336,7 +1704,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Legal / Tenancy",
+        "sourceEvidencePRs": [],
+        "nextAction": "Identify conflicting all-inclusive, paid-plan and frequency claims.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L03",
@@ -1361,7 +1736,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Legal / Tenancy",
+        "sourceEvidencePRs": [],
+        "nextAction": "Display applicable terms at onboarding, quotes, booking and sensitive actions.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L04",
@@ -1386,7 +1768,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Legal / Tenancy",
+        "sourceEvidencePRs": [],
+        "nextAction": "Identify government-published sources and approved form variants.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L05",
@@ -1411,7 +1800,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Legal / Tenancy",
+        "sourceEvidencePRs": [],
+        "nextAction": "Measure field coordinates on actual official pages and map form data.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L06",
@@ -1436,7 +1832,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Legal / Tenancy",
+        "sourceEvidencePRs": [],
+        "nextAction": "Specify signing order, identity and legal capacity by form.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L07",
@@ -1461,7 +1864,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Legal / Tenancy",
+        "sourceEvidencePRs": [],
+        "nextAction": "Define notice triggers, prescribed lead times and service channels.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L08",
@@ -1486,7 +1896,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Legal / Tenancy",
+        "sourceEvidencePRs": [],
+        "nextAction": "Review threat scenarios involving family/domestic violence and sensitive supporting evidence.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L09",
@@ -1511,7 +1928,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Legal / Tenancy",
+        "sourceEvidencePRs": [],
+        "nextAction": "Classify personal, financial, applicant, access and confidential data.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L10",
@@ -1536,7 +1960,16 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Leasing / Rental",
+        "sourceEvidencePRs": [
+          "#80"
+        ],
+        "nextAction": "Record responsible leasing party, agency instructions and applicant consent.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L11",
@@ -1561,7 +1994,16 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Leasing / Rental",
+        "sourceEvidencePRs": [
+          "#80"
+        ],
+        "nextAction": "Implement/verify per-listing HTTPS destination validation.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L12",
@@ -1586,7 +2028,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Landlord / Tenant",
+        "sourceEvidencePRs": [],
+        "nextAction": "Map bond references, landlord/tenant contributions, proposed claims and disputes.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L13",
@@ -1611,7 +2060,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Legal / Tenancy",
+        "sourceEvidencePRs": [],
+        "nextAction": "Identify any requirements to receive/hold/disburse rent, trust monies, bonds or levies.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L14",
@@ -1636,7 +2092,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Finance / Property",
+        "sourceEvidencePRs": [],
+        "nextAction": "Only after express approval, design regulated account custody/provider and segregated ledgers.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "L15",
@@ -1661,7 +2124,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Legal / Tenancy",
+        "sourceEvidencePRs": [],
+        "nextAction": "Define landlord/agency/scheme/contractor authority and revocation by action.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U01",
@@ -1686,7 +2156,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Authenticated portal acceptance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Register independent test mailboxes and consent to test data.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U02",
@@ -1711,7 +2188,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Authenticated portal acceptance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Execute full hosted sign-in from controlled inbox without bypassing CAPTCHA.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U03",
@@ -1736,7 +2220,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Residential Landlord",
+        "sourceEvidencePRs": [],
+        "nextAction": "Create residential self-managed account, automatically provision contractually correct entitlement.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U04",
@@ -1761,7 +2252,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Property Manager",
+        "sourceEvidencePRs": [],
+        "nextAction": "Invite owner and delegate correct properties/team roles.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U05",
@@ -1786,7 +2284,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Commercial",
+        "sourceEvidencePRs": [],
+        "nextAction": "Register Commercial Landlord and commercial property.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U06",
@@ -1811,7 +2316,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Strata Manager",
+        "sourceEvidencePRs": [],
+        "nextAction": "Set up two unrelated schemes with separate authorities.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U07",
@@ -1836,7 +2348,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Tenant",
+        "sourceEvidencePRs": [],
+        "nextAction": "Accept actual invitation and review own active tenancy.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U08",
@@ -1861,7 +2380,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Building / Resident",
+        "sourceEvidencePRs": [],
+        "nextAction": "Accept current resident/lot membership.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U09",
@@ -1886,7 +2412,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Strata Council",
+        "sourceEvidencePRs": [],
+        "nextAction": "Verify dated council membership and conflict disclosure.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U10",
@@ -1911,7 +2444,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Staff / Admin",
+        "sourceEvidencePRs": [],
+        "nextAction": "Assign inspectors, operate scheduler, Work Orders, reports and document issue.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U11",
@@ -1936,7 +2476,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Building Manager",
+        "sourceEvidencePRs": [],
+        "nextAction": "Create distinct professional assignment separate from resident role.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U12",
@@ -1961,7 +2508,17 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Authenticated portal acceptance",
+        "sourceEvidencePRs": [
+          "#80",
+          "#81"
+        ],
+        "nextAction": "Create identity with overlapping tenant, resident, council and client roles.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "U13",
@@ -1986,7 +2543,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Authenticated portal acceptance",
+        "sourceEvidencePRs": [],
+        "nextAction": "Compile nine signed acceptance packages with build SHA and environment.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "O01",
@@ -2011,7 +2575,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Strata Manager",
+        "sourceEvidencePRs": [],
+        "nextAction": "Exercise schemes, common-property assets, work and maintenance at distinct account scopes.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "O02",
@@ -2036,7 +2607,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Building Manager",
+        "sourceEvidencePRs": [],
+        "nextAction": "Test assigned-building task lists, resident moves and facilities events.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "O03",
@@ -2061,7 +2639,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Strata Council / Building Resident",
+        "sourceEvidencePRs": [],
+        "nextAction": "Validate notice targeting by building, lot, resident and council membership.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "O04",
@@ -2086,7 +2671,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Property Manager",
+        "sourceEvidencePRs": [],
+        "nextAction": "Issue email-bound owner invitation and validate consent/authority before claim.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "O05",
@@ -2129,7 +2721,16 @@
       ],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Commercial",
+        "sourceEvidencePRs": [
+          "#81"
+        ],
+        "nextAction": "Define source documents, lease versions, premises/parties, option windows and critical dates.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "O06",
@@ -2172,7 +2773,16 @@
       ],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Commercial",
+        "sourceEvidencePRs": [
+          "#81"
+        ],
+        "nextAction": "Approve charge categories, frequency, review method and caps from source documents.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "O07",
@@ -2215,7 +2825,16 @@
       ],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Commercial",
+        "sourceEvidencePRs": [
+          "#81"
+        ],
+        "nextAction": "Link obligations to lease sources, condition reports and critical dates.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "O08",
@@ -2258,7 +2877,16 @@
       ],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Commercial",
+        "sourceEvidencePRs": [
+          "#81"
+        ],
+        "nextAction": "Define exception statuses, escalations and authorised override roles.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "O09",
@@ -2283,7 +2911,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Landlord / Commercial",
+        "sourceEvidencePRs": [],
+        "nextAction": "Compare historical backend aggregation branch against current main/UI.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "O10",
@@ -2308,7 +2943,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "Tenant",
+        "sourceEvidencePRs": [],
+        "nextAction": "Review residential tenancy assumptions against commercial lease relationships.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "O11",
@@ -2333,7 +2975,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 4,
+        "primarySurface": "V4 / Specialist",
+        "sourceEvidencePRs": [],
+        "nextAction": "Audit asset lifecycle, preventative maintenance, credentials, capacity/timesheets, capital works and portfolio intelligence.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "M01",
@@ -2358,7 +3007,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing website",
+        "sourceEvidencePRs": [],
+        "nextAction": "Review homepage, category and sector routes, engagement models and individual service pages.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "M02",
@@ -2383,7 +3039,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing website",
+        "sourceEvidencePRs": [],
+        "nextAction": "Identify asset owner and usage rights for every photograph/sample.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "M03",
@@ -2408,7 +3071,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing website",
+        "sourceEvidencePRs": [],
+        "nextAction": "Replace placeholder legal notices only after written approval.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "M04",
@@ -2433,7 +3103,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing website",
+        "sourceEvidencePRs": [],
+        "nextAction": "Confirm approved promotional prices, add-ons, report commitment and four benefits.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "M05",
@@ -2458,7 +3135,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Leasing marketing",
+        "sourceEvidencePRs": [],
+        "nextAction": "Create approved property listings linked to underlying clients and ownership authority.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "M06",
@@ -2483,7 +3167,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Staff leasing",
+        "sourceEvidencePRs": [],
+        "nextAction": "Check which create/edit/approve/publish/withdraw APIs have complete staff UI.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "M07",
@@ -2508,7 +3199,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Open Home / Staff",
+        "sourceEvidencePRs": [],
+        "nextAction": "Test QR/sign-in, registration deduplication, walk-ins and late-arrival window.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "M08",
@@ -2533,7 +3231,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing website",
+        "sourceEvidencePRs": [],
+        "nextAction": "Test keyboard sequence, focus, menus, labels, errors, motion, contrast and mobile 320px reflow.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "M09",
@@ -2558,7 +3263,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 3,
+        "primarySurface": "Marketing website",
+        "sourceEvidencePRs": [],
+        "nextAction": "Walk every key public CTA through booking, contact, leasing and portal entry points.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X01",
@@ -2583,7 +3295,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Review current Cloudflare D1 inventory and account quota error 7406.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X02",
@@ -2608,7 +3327,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Select appropriate Time Travel/recovery point and snapshot metadata.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X03",
@@ -2633,7 +3359,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Restore sample object versions and encryption/decryption continuity.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X04",
@@ -2658,7 +3391,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Interrupt queue/cron/outbox operations in controlled staging.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X05",
@@ -2683,7 +3423,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Inventory secret names/types and environment distribution, not values.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X06",
@@ -2708,7 +3455,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 5,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Define error taxonomies and correlation IDs for workflow and provider stages.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X07",
@@ -2733,7 +3487,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 6,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Name primary/backup responders and out-of-hours support arrangements.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X08",
@@ -2762,7 +3523,17 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 6,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [
+          "#80",
+          "#81"
+        ],
+        "nextAction": "Require branch protection, CI, independent review and pinned source artifacts.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X09",
@@ -2787,7 +3558,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 6,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Run responsive/device matrix and screen-reader checks.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X10",
@@ -2812,7 +3590,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 6,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Consolidate unresolved implementation, provider, legal, security and operational defects.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X11",
@@ -2837,7 +3622,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 6,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Verify accepted source/environment, business/legal and provider signoffs before switch change.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X12",
@@ -2862,7 +3654,14 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 6,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Inspect public health/source, required user journeys, real provider receipts and D1 consistency.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     },
     {
       "id": "X13",
@@ -2887,7 +3686,31 @@
       "verification": [],
       "externalEvidence": [],
       "acceptanceDecision": null,
-      "issueNumber": null
+      "issueNumber": null,
+      "stage0Routing": {
+        "implementationStage": 6,
+        "primarySurface": "Release / Cloudflare operations",
+        "sourceEvidencePRs": [],
+        "nextAction": "Publish architecture, environment map, support procedures and vendor ownership.",
+        "evidenceRequiredBeforeAccepted": true
+      }
     }
-  ]
+  ],
+  "stage0Snapshot": {
+    "date": "2026-11-08",
+    "canonicalRepository": "info-rbp/proinspect",
+    "sourceCommit": "3e99a560b59a4199957a3b28dcf41e927fa743bf",
+    "worker": "proinspect-platform",
+    "productionD1": "proinspect-platform-data",
+    "sourceMigrationCount": 52,
+    "appliedProductionMigrationCountObserved": 48,
+    "unappliedMigrations": [
+      "0049_commercial_source_lifecycle.sql",
+      "0050_report_render_independent_review.sql",
+      "0051_invoice_delivery_reviews.sql",
+      "0052_rental_tenancy_handover.sql"
+    ],
+    "operatingScope": "Production-first with feature gates; original human acceptance/recovery requirements remain pending",
+    "implementationStateRule": "Do not infer accepted from code merge, CI, or database schema."
+  }
 }
