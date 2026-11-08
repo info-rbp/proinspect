@@ -268,6 +268,28 @@ export async function restoreOfflineDraft(
   if (!validDraft(draft)) throw new Error('The encrypted draft has an unsupported format.');
   return draft;
 }
+/** Private recovery inventory. Count encrypted entries only; never decrypt or expose
+ * captions, filenames, area names, report content or another workspace's keys.
+ */
+export interface OfflineRecoveryStatus {
+ hasDraft: boolean;
+ draftSavedAt: string | null;
+ pendingPhotoCount: number;
+}
+export async function inspectOfflineRecovery(scope: OfflineScope): Promise<OfflineRecoveryStatus> {
+ const id=keyFor(scope),prefix=id+'::';
+ const [draft,pendingPhotoCount]=await Promise.all([
+  tx<CipherRecord | undefined>('drafts','readonly',(store,done)=>{
+   const request=store.get(id);
+   request.onsuccess=()=>done(request.result as CipherRecord | undefined);
+  }),
+  tx<number>('photos','readonly',(store,done)=>{
+   const request=store.count(IDBKeyRange.bound(prefix,prefix+'\\uffff'));
+   request.onsuccess=()=>done(request.result);
+  })
+ ]);
+ return {hasDraft:!!draft,draftSavedAt:draft?.savedAt??null,pendingPhotoCount};
+}
 export async function removeOfflineDraft(scope: OfflineScope) {
   await tx<void>('drafts', 'readwrite', (store) => {
     store.delete(keyFor(scope));
