@@ -14,6 +14,7 @@ import { publicOpenHomeSessions,staffOpenHomeCheckIns } from './features/open-ho
 import { staffOpenHomeReportDetails,saveOpenHomeReportSettings,readOpenHomeReport,exportOpenHomeReportCsv } from './features/open-home-reports.server';
 import { listRentalApplications,rentalStaffDetail,updateRentalStatus,recordRentalReferenceCheck,reviewRentalDocument,rentalDocumentDownload } from './features/rental-review.server';
 import { recordRentalOutcome } from './features/rental-outcomes.server';
+import { rentalTenancyHandoverStatus,prepareRentalTenancyHandover,activateRentalTenancyHandover,voidRentalTenancyHandover } from './features/rental-tenancy-handover.server';
 import { verifyRecipient } from './features/rental-governance.server';
 import { acceptRentalScan } from './features/rental-malware.server';
 import { setRentalPrivacyHold,resolveRentalPrivacyRequest,eraseRentalForRequest } from './features/rental-privacy.server';
