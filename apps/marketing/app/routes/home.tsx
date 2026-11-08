@@ -5,8 +5,8 @@ import { seo } from '../lib/seo';
 
 export const meta = () =>
   seo(
-    'Property inspections & operational support',
-    'On-the-ground inspections, property attendance and contractor support for residential, commercial and strata properties across our Western Australian service areas.',
+    'Property Inspections & On-Site Support — Western Australia',
+    'Residential, commercial and strata property inspections, condition reports, contractor access and building attendance in Western Australia. Explore the service and enquire.',
     '/',
   );
 
@@ -75,17 +75,17 @@ export default function Home() {
         <div className="site-container mkt-home-hero-grid">
           <div className="mkt-hero-copy">
             <p className="eyebrow">Property inspections &amp; operational support</p>
-            <h1>Real property work.<br /><span>Clearly documented.</span><br />Connected over time.</h1>
+            <h1>Property inspections.<br /><span>Clear records.</span><br />Practical support.</h1>
             <p className="mkt-hero-lead">
-              Inspections, property attendance and contractor support for residential, commercial
-              and strata properties. Practical on-site work, clear records and useful next steps.
+              Arrange an inspection, condition report or authorised site visit for a residential,
+              commercial or strata property in Western Australia. Know what the visit covers and what you will receive.
             </p>
             <div className="actions mkt-hero-actions">
               <Link className="button" to="/services">Explore services <span aria-hidden="true">→</span></Link>
               <a className="button secondary" href={appOrigin + '/signin'}>Create account / Sign in</a>
             </div>
             <div className="mkt-hero-context">One property or a portfolio. One-off services or eligible subscription bookings, subject to confirmed scope and availability.</div>
-            <p className="mkt-section-footnote">Need a one-off service? <Link to="/contact">Request it without an account</Link>. Creating an account does not automatically begin paid subscription billing.</p>
+            <p className="mkt-section-footnote">Not sure what to book? <Link to="/service-finder">Use the service finder</Link>. Need a one-off service? <Link to="/contact">Request it without an account</Link>. Creating an account does not automatically begin paid subscription billing.</p>
           </div>
           <div className="mkt-hero-visual">
             <PropertyArtwork kind="residential" className="mkt-hero-property" slot="home-hero" />
@@ -112,7 +112,7 @@ export default function Home() {
         <div className="site-container">
           <div className="mkt-section-heading">
             <div><p className="eyebrow">Find the right support</p><h2>What can we help you with?</h2></div>
-            <Link className="mkt-text-link" to="/services">View all services <span aria-hidden="true">↗</span></Link>
+            <Link className="mkt-text-link" to="/service-finder">Find the right service <span aria-hidden="true">→</span></Link>
           </div>
           <div className="mkt-service-families">
             {Object.entries(FAMILIES).map(([id, family], index) => (
@@ -147,6 +147,23 @@ export default function Home() {
                 </div>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section mkt-section">
+        <div className="site-container">
+          <div className="mkt-section-heading">
+            <div><p className="eyebrow">Who you are matters</p><h2>Property support for your role.</h2></div>
+            <Link className="mkt-text-link" to="/who-we-help">Explore who we help <span aria-hidden="true">→</span></Link>
+          </div>
+          <div className="mkt-audience-links" aria-label="Explore property support by audience">
+            <Link to="/who-we-help/private-landlords">Private landlords</Link>
+            <Link to="/who-we-help/property-management-agencies">Property agencies</Link>
+            <Link to="/who-we-help/commercial-property-owners">Commercial owners</Link>
+            <Link to="/who-we-help/commercial-asset-managers">Asset managers</Link>
+            <Link to="/who-we-help/strata-managers">Strata managers</Link>
+            <Link to="/who-we-help/building-operators">Building operators</Link>
           </div>
         </div>
       </section>
