@@ -182,7 +182,7 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   const handoffConfigured=env.RENTAL_APPS_SCRIPT_ENABLED==='true'&&secureProvider(env.RENTAL_APPS_SCRIPT_ENDPOINT,env.RENTAL_APPS_SCRIPT_ALLOWED_HOST)&&
    Boolean(env.RENTAL_APPS_SCRIPT_SECRET&&env.RENTAL_APPS_SCRIPT_SECRET.length>=32);
   const applicationReadiness=residentialApplicationReadiness({
-   listingStatus:listing.status,applicationMode:String((details as Record<string,any>).application_mode??''),
+   listingKind:listing.kind,listingStatus:listing.status,applicationMode:String((details as Record<string,any>).application_mode??''),
    authorityReference:(details as Record<string,any>).application_authority_reference,
    recipientVerifiedAt:(details as Record<string,any>).rental_recipient_verified_at,
    approvalState:(details as Record<string,any>).rental_approval_state,
