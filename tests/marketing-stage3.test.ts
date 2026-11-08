@@ -33,9 +33,9 @@ test('structured SEO graph uses only available facts, one canonical and named se
     type:'Service',
     breadcrumbs:[{name:'Services',path:'/services'},{name:'Routine Inspection',path:'/services/routine-inspection'}],
   });
-  const canonical=descriptors.filter(d=>d.tagName==='link' && d.rel==='canonical');
+  const canonical=descriptors.filter(d=>'tagName' in d && d.tagName==='link' && 'rel' in d && d.rel==='canonical');
   assert.equal(canonical.length,1);
-  assert.equal(canonical[0].href,'https://proinspect.systems/services/routine-inspection');
+  assert.equal('href' in canonical[0] ? canonical[0].href : undefined,'https://proinspect.systems/services/routine-inspection');
   const script=descriptors.find(d=>'script:ld+json' in d);
   assert.ok(script && 'script:ld+json' in script);
   const graph=(script['script:ld+json'] as {'@graph':Array<Record<string,unknown>>})['@graph'];
@@ -44,7 +44,7 @@ test('structured SEO graph uses only available facts, one canonical and named se
   assert.ok(crumbs);
   assert.equal((crumbs.itemListElement as unknown[]).length,3);
   assert.doesNotMatch(JSON.stringify(graph),/"(ratingValue|reviewCount|price|openingHours|postalCode)"/);
-  assert.ok(descriptors.some(d=>d.property==='og:locale'&&d.content==='en_AU'));
+  assert.ok(descriptors.some(d=>'property' in d&&d.property==='og:locale'&&'content' in d&&d.content==='en_AU'));
 });
 
 test('price proposals and unapproved statutory/public records stay noindex and out of sitemap',()=>{
