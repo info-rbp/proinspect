@@ -40,9 +40,11 @@ workspace experiences, not new staff roles or subscription prices:
 - An identity may hold one account of each type, with independent property
   and workspace permissions. Legacy residential sign-up API callers default
   to `residential`; existing client records are unchanged.
-- Both active account types automatically receive the all-inclusive
-  subscription through the existing Cloudflare D1 trigger (migration 0006).
-  This does not grant unrelated portfolio, staff, tenancy or scheme access.
+- Both active account types begin with a free account. Stage 1A migration 0053 removed
+  automatic all-inclusive creation; account status, subscription intent and service
+  entitlement are separate. Grandfathered included-property grants remain limited
+  to historic approved relationships and are not inherited by newly added property.
+  Account creation must never initiate a Stripe charge.
 - The same service catalogue is filtered by the property's sector. A
   residential PCR cannot be booked against a commercial property, and a
   commercial inspection cannot be booked against a residential property.
@@ -54,3 +56,7 @@ workspace experiences, not new staff roles or subscription prices:
 ## Shared interaction rules
 
 Property/scheme context is always visible. Use business names rather than raw IDs. One primary action per screen. Responsive navigation, labelled fields, keyboard focus, error summaries, accessible progress indicators, usable empty states and plain-language next steps are required. Customer activity excludes internal notes and raw security audit metadata.
+
+## Stage 2 portal navigation and design
+
+Every workspace uses the common compact ProInspect shell and its permission-filtered, task-first navigation. Specialist tools remain under **More tools**, with nested groups; role-specific overview cards use only authorised scoped records. Building Manager is the ninth workspace and has only assigned-site tools, notice drafts and authorised reports. The Staff overview uses Today / Schedule / Work Orders / Reports / Clients & Properties / Finance. See [Stage 2 portal design](STAGE2_PORTAL_DESIGN.md) for the full nine-workspace visual acceptance matrix.

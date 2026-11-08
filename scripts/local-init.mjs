@@ -27,6 +27,11 @@ if (!existsSync(marketingVars))
 else if (!readFileSync(marketingVars, 'utf8').includes('ENQUIRY_GATEWAY_SECRET='))
   appendFileSync(marketingVars, `ENQUIRY_GATEWAY_SECRET="${gateway}"\n`);
 const testFixtures = process.argv.includes('--test-fixtures');
+// Local browser acceptance needs the site-only building workflow to render all nine
+// approved portal kinds. This is a non-committed local .dev.vars override only;
+// production Wrangler flags, hosted release approvals and customer data are unchanged.
+if (testFixtures && !/^BUILDING_OPERATIONS_ENABLED=/m.test(readFileSync(variables, 'utf8')))
+  appendFileSync(variables, 'BUILDING_OPERATIONS_ENABLED="true"\n', { mode: 0o600 });
 let sql =
   catalogueSql() +
   "\nINSERT INTO schedule_resources(id,name,active) VALUES('default','ProInspect inspection capacity',1) ON CONFLICT(id) DO NOTHING;\n";
@@ -44,6 +49,8 @@ if (testFixtures)
   sql += "INSERT INTO users(id,email,display_name,created_at,verified_at) VALUES('usr_test_release_admin','release-admin@proinspect.test','Synthetic Release Administrator','2026-01-01','2026-01-01') ON CONFLICT(id) DO NOTHING;\nINSERT INTO staff_profiles(user_id,role,active) VALUES('usr_test_release_admin','administrator',1) ON CONFLICT(user_id) DO NOTHING;\n";
 if (testFixtures)
   sql += "INSERT INTO users(id,email,display_name,created_at,verified_at) VALUES('usr_test_sprint_ops','sprint-ops@proinspect.test','Synthetic Sprint Operations','2026-01-01','2026-01-01') ON CONFLICT(id) DO NOTHING;\nINSERT INTO staff_profiles(user_id,role,active) VALUES('usr_test_sprint_ops','operations_manager',1) ON CONFLICT(user_id) DO NOTHING;\n";
+if (testFixtures)
+  sql += "INSERT INTO users(id,email,display_name,created_at,verified_at) VALUES('usr_test_stage2_ops','stage2-ops@proinspect.test','Stage 2 Operations','2026-01-01','2026-01-01') ON CONFLICT(id) DO NOTHING;\nINSERT INTO staff_profiles(user_id,role,active) VALUES('usr_test_stage2_ops','operations_manager',1) ON CONFLICT(user_id) DO NOTHING;\nINSERT INTO users(id,email,display_name,created_at,verified_at) VALUES('usr_test_stage2_reviewer','stage2-review@proinspect.test','Stage 2 Independent Reviewer','2026-01-01','2026-01-01') ON CONFLICT(id) DO NOTHING;\nINSERT INTO staff_profiles(user_id,role,active) VALUES('usr_test_stage2_reviewer','operations_manager',1) ON CONFLICT(user_id) DO NOTHING;\n";
 writeFileSync('artifacts/local-seed.sql', sql);
 execFileSync('pnpm', ['exec', 'wrangler', 'd1', 'migrations', 'apply', 'DB', '--local'], {
   cwd: app,
