@@ -241,6 +241,29 @@ export default function ServicePage() {
         </>
       )}
 
+      <section className="section mkt-section mkt-stone" aria-labelledby="service-booking-pricing">
+        <div className="site-container mkt-callout-grid">
+          <div>
+            <p className="eyebrow">Booking, fees and availability</p>
+            <h2 id="service-booking-pricing">Know the next step before you commit.</h2>
+            <p>ProInspect reviews the property, agreed service scope, authorised access and location before confirming applicable fees or a visit. The catalogue is not a fixed-price quotation, and an enquiry does not reserve an appointment.</p>
+            <p>We focus on Western Australian property work. Coverage of a particular suburb, appointment time and report delivery requirements must be confirmed for the instruction.</p>
+            <div className="actions">
+              <a className="button" href={appOrigin + '/book/' + s.id}>See booking options <span aria-hidden="true">→</span></a>
+              <Link className="button secondary" to={'/contact?service=' + s.id}>Request scope or pricing</Link>
+            </div>
+          </div>
+          <div className="mkt-callout-panel">
+            <span className="mkt-card-number">WAYS TO ARRANGE THE SERVICE</span>
+            <h3>One-off instruction</h3>
+            <p>You can enquire about or book a single eligible service without committing to an ongoing plan. The applicable price or quote, access and date are confirmed before acceptance.</p>
+            <h3>Existing account or subscription</h3>
+            <p>Sign in to use your authorised property workspace. Included services depend on the account's existing approved entitlements and appointment availability.</p>
+            <p className="mkt-image-disclosure">No new paid subscription is created simply by enquiring or opening an account.</p>
+          </div>
+        </div>
+      </section>
+
       {related.length > 0 && <section className="section mkt-section mkt-related-section"><div className="site-container"><div className="mkt-section-heading"><div><p className="eyebrow">Explore further</p><h2>Related property services.</h2></div><Link className="mkt-text-link" to="/services">All services <span aria-hidden="true">↗</span></Link></div><div className="grid-3">{related.map((r) => <article className="mkt-related-card" key={r.id}><p className="mkt-kicker">{FAMILIES[r.family].name}</p><h3>{r.name}</h3><p>{r.summary}</p><Link className="mkt-text-link" to={'/services/' + r.id}>Explore service <span aria-hidden="true">↗</span></Link></article>)}</div></div></section>}
       <MarketingCta title={routine ? 'Ready to arrange a Routine Inspection?' : 'Ready to discuss your property task?'} description="Share the service and property requirements. Timing, access and any fees are confirmed before an attendance is accepted." appOrigin={appOrigin} serviceId={s.id} />
     </>
