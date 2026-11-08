@@ -50,11 +50,12 @@ export async function rentalStaffDetail(env:Env,user:Principal,id:string){
   record:await unseal<Record<string,any>>(env.DATA_ENCRYPTION_KEY,'rental-submission:'+latest.id,latest.snapshot_envelope)}:null;
  const handoffs=(await statement(env.DB,"SELECT id,status,format_version,staged_at,delivered_at FROM rental_application_handoffs WHERE application_id=? ORDER BY staged_at DESC",id).all()).results;
  const privacyRequests=user.staffRole==='administrator'?await listRentalPrivacyRequests(env,user,id):[];
+ const outcome=app.status==='decision_recorded'?await statement(env.DB,'SELECT outcome,authority_reference,recorded_at FROM rental_application_outcomes WHERE application_id=?',id).first<{outcome:string;authority_reference:string;recorded_at:string}>():null;
  const notice=app.notice_envelope?await unseal<Record<string,unknown>>(env.DATA_ENCRYPTION_KEY,'rental-notice:'+id,app.notice_envelope):
   {mode:app.tenancy_database_notice_mode,entries:JSON.parse(app.tenancy_database_notice_json)};
  await statement(env.DB,"INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?, 'rental_application.viewed','rental_application',?,'{}',?)",
   uid('aud'),user.id,id,now()).run();
- return {latestSubmission,handoffs,privacyRequests,privacyHoldUntil:app.privacy_hold_until,retainedUntil:app.retained_until,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
+ return {latestSubmission,handoffs,privacyRequests,outcome,privacyHoldUntil:app.privacy_hold_until,retainedUntil:app.retained_until,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
   property:app.display_address,title:app.title,leasingRepresentative:app.agent_name,instructingClientId:app.instructed_by_client_id,
   forwardedAt:app.forwarded_at,noticeVersion:app.consent_version},applicants,documents,referenceChecks,notice,history};
 }
