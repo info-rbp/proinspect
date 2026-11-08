@@ -21,7 +21,7 @@ export async function dispatchRentalHandoffs(env:Env){
    assert(h.application_status==='ready_for_handoff'&&h.rental_approval_state==='approved',409,'HANDOFF_BLOCKED','Application not authorised.');
    assert(!h.privacy_hold_until||h.privacy_hold_until<=now(),409,'HANDOFF_HOLD','Active privacy hold.');
    const recipient=await unseal<{recipient:string}>(env.DATA_ENCRYPTION_KEY,'rental-handoff:'+h.id,h.recipient_envelope);
-   assert(recipient.recipient===h.application_recipient_email,409,'HANDOFF_RECIPIENT_CHANGED','Application recipient changed.');
+   assert(recipient.recipient===String(h.application_recipient_email??'').trim().toLowerCase(),409,'HANDOFF_RECIPIENT_CHANGED','Application recipient changed.');
    const snapshot=await unseal<Record<string,any>>(env.DATA_ENCRYPTION_KEY,'rental-submission:'+h.submission_id,h.snapshot_envelope);
    const pending=await statement(env.DB,"SELECT id FROM rental_application_documents WHERE application_id=? AND review_status='quarantined'",h.application_id).first();
    assert(!pending,409,'DOCUMENTS_UNREVIEWED','Not all documents have been reviewed.');
