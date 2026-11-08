@@ -1,9 +1,11 @@
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { useWorkspace } from '../lib/workspace';
 import { PageHeading, Badge, EmptyState } from '../../../../packages/ui/components';
 import { displayDate, money } from '../../../../packages/domain/index';
 export default function Bookings() {
   const d = useWorkspace();
+  const [search]=useSearchParams(),propertyId=search.get('propertyId');
+  const records=propertyId?d.bookings.filter(b=>b.property_id===propertyId):d.bookings;
   return (
     <>
       <PageHeading
@@ -19,7 +21,8 @@ export default function Bookings() {
           </Link>
         )}
       </PageHeading>
-      {d.bookings.length ? (
+      {propertyId&&<p><Link to={d.workspace.href+'/properties/'+encodeURIComponent(propertyId)}>Return to selected property</Link> · {records.length} bookings</p>}
+      {records.length ? (
         <div className="table-wrap">
           <table>
             <thead>
@@ -32,7 +35,7 @@ export default function Bookings() {
               </tr>
             </thead>
             <tbody>
-              {d.bookings.map((b) => (
+              {records.map((b) => (
                 <tr key={b.id}>
                   <td>
                     <strong>{b.service_name}</strong>
