@@ -63,11 +63,11 @@ export async function createSubscriptionCheckout(env:Env,user:Principal,w:Worksp
  await clientAdmin(env,user,w);const property=await propertyAccess(env,user,w,propertyId);
  assert(property.sector===(w.kind==='landlord'?'residential':'commercial'),422,'PROPERTY_SECTOR','Choose a property in this account.');
  if(live){
-  const enrolled=await statement(env.DB,
-    'SELECT 1 AS approved FROM residential_paid_property_enrollments WHERE client_id=? AND property_id=?',
+  const legacy=await statement(env.DB,
+    'SELECT 1 FROM legacy_included_property_grants WHERE client_id=? AND property_id=?',
     w.scopeId,propertyId).first();
-  assert(enrolled,409,'RESIDENTIAL_PAID_ENROLLMENT_REQUIRED',
-    'Existing all-inclusive properties cannot be converted into paid billing without an approved migration. Add an eligible new residential property or contact ProInspect.');
+  assert(!legacy,409,'GRANDFATHERED_PROPERTY',
+    'This property retains existing approved inclusions; visiting a payment page cannot alter them.');
  }
  const price=live?LIVE_RESIDENTIAL_PRICE:priceForSector(property.sector);
  const providerApi=live?liveResidentialApi:stripeApi;
@@ -81,12 +81,18 @@ export async function createSubscriptionCheckout(env:Env,user:Principal,w:Worksp
  const id=old?.id??uid('sbl');
  const legal=await legalStatements(env,{kind:'user',id:user.id},'subscription',id,{clientId:w.scopeId,propertyId,priceId:price,quantity:1,environment:live?'live':'sandbox',weeklyBillingDay:live?'Friday':undefined},legalConsent);
  const customer=live?await ensureLiveResidentialCustomer(env,user,w.scopeId):await ensureBillingCustomer(env,user,w.scopeId);
- const enrollment=property.sector==='residential' && !live
+ // Paid enrollment follows explicit customer Checkout consent, never registration.
+ const enrollment=property.sector==='residential'
    ? [statement(env.DB,"INSERT INTO residential_paid_property_enrollments(client_id,property_id,enrolled_at) VALUES(?,?,?) ON CONFLICT(client_id,property_id) DO NOTHING",w.scopeId,propertyId,now())]
    : [];
- if(!old)await env.DB.batch([...legal,...enrollment,statement(env.DB,"INSERT INTO stripe_billing_links(id,client_id,property_id,sector,price_id,stripe_customer_id,status,created_at,updated_at) VALUES(?,?,?,?,?,?,'pending',?,?)",id,w.scopeId,propertyId,property.sector,price,customer,now(),now())]);
+ const intent=live?[statement(env.DB,`INSERT INTO account_subscription_preferences(client_id,account_state,subscription_intent,updated_at)
+   VALUES(?,'active','checkout_requested',?)
+   ON CONFLICT(client_id) DO UPDATE SET subscription_intent='checkout_requested',updated_at=excluded.updated_at
+   WHERE account_subscription_preferences.subscription_intent IN ('none','checkout_requested','canceled')`,
+   w.scopeId,now())]:[];
+ if(!old)await env.DB.batch([...legal,...enrollment,...intent,statement(env.DB,"INSERT INTO stripe_billing_links(id,client_id,property_id,sector,price_id,stripe_customer_id,status,created_at,updated_at) VALUES(?,?,?,?,?,?,'pending',?,?)",id,w.scopeId,propertyId,property.sector,price,customer,now(),now())]);
  else {assert(old.stripe_customer_id===customer,409,'BILLING_CUSTOMER_CHANGED','Billing customer mapping changed.');
-   if(enrollment.length)await env.DB.batch(enrollment);
+   if(enrollment.length||intent.length)await env.DB.batch([...enrollment,...intent]);
  }
  const form=checkoutForm({origin:env.APP_ORIGIN,linkId:id,clientId:w.scopeId,priceId:price,fridayAnchor:billingAnchor});form.set('customer',customer);form.set('customer_update[address]','auto');form.set('billing_address_collection','required');
  const session=await providerApi(env,'/checkout/sessions',form,'proinspect-subscription-'+(live?'live':'sandbox')+'-'+id);
