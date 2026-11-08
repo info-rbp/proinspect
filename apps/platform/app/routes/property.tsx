@@ -18,7 +18,7 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
     if(response.ok)management=await response.json() as Record<string,any>;
     else if(response.status!==403)throw response;
   }
-  return { ...d, management, stripeSubscriptionsEnabled: env.APP_ENV === 'staging' && env.STRIPE_BILLING_ENABLED === 'true' && env.STRIPE_TAX_READY === 'true' };
+  return { ...d, management, stripeSubscriptionsEnabled: params.kind === 'landlord' || (env.APP_ENV === 'staging' && env.STRIPE_BILLING_ENABLED === 'true' && env.STRIPE_TAX_READY === 'true') };
 }
 export async function action({request,context,params}:ActionFunctionArgs){
   if(params.kind!=='staff')return data({error:'Staff administration only.'},{status:403});
@@ -149,7 +149,7 @@ export default function Property() {
             </p>):<p>No recorded canonical property edits yet.</p>}
           </details>
         </section>}
-        {stripeSubscriptionsEnabled && ['landlord', 'commercial'].includes(d.workspace.kind) && ['owner', 'admin'].includes(d.workspace.role) && (p.sector === 'residential' || p.sector === 'commercial') && <Link className="button secondary" to={`${d.workspace.href}/stripe-subscribe/${p.id}`}>Start subscription — Stripe sandbox</Link>}
+        {stripeSubscriptionsEnabled && ['landlord', 'commercial'].includes(d.workspace.kind) && ['owner', 'admin'].includes(d.workspace.role) && (p.sector === 'residential' || p.sector === 'commercial') && <Link className="button secondary" to={`${d.workspace.href}/stripe-subscribe/${p.id}`}>Subscription options (optional)</Link>}
         <Link to={`${d.workspace.href}/records/documents?property=${p.id}`}>
           Browse the full document history
         </Link>
