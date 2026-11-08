@@ -26,8 +26,8 @@ export default function LeasingIndex(){
  <div className="leasing-image"><img src={`/api/public/leasing/photos/${x.id}/cover`} alt={`Exterior or marketing photograph for ${x.title}`} loading="lazy"/></div>
  <p className="eyebrow">{x.kind==='commercial'?'Commercial':'Residential'} · {x.suburb}</p><h3>{x.title}</h3><p>{x.display_address}</p>
  <p className="leasing-price">{displayPrice(x.price_cents,x.price_period)}</p>
- <p className="small">{x.kind==='residential'?[x.bedrooms!=null?`${x.bedrooms} beds`:'',x.bathrooms!=null?`${x.bathrooms} baths`:'',x.parking!=null?`${x.parking} parking`:''].filter(Boolean).join(' · '):x.area_sqm!=null?`${x.area_sqm.toLocaleString()} m²`:'Commercial property'}</p>
+ <p className="small leasing-card-facts">{x.kind==='residential'?[x.bedrooms!=null?`${x.bedrooms} ${x.bedrooms===1?'bed':'beds'}`:'',x.bathrooms!=null?`${x.bathrooms} ${x.bathrooms===1?'bath':'baths'}`:'',x.parking!=null?`${x.parking} ${x.parking===1?'car bay':'car bays'}`:''].filter(Boolean).join(' · '):x.area_sqm!=null?`${x.area_sqm.toLocaleString()} m²`:'Commercial property'}</p>
  <p className="small">Inspection conducted by ProInspect on behalf of {x.agent_name}.</p>
- <Link to={propertyUrl(x.kind,x.slug)}>View property & inspections →</Link></article>)}</div>}
+ <Link className="button secondary leasing-card-action" to={propertyUrl(x.kind,x.slug)}>View property and inspections</Link></article>)}</div>}
  </div></section></>;
 }

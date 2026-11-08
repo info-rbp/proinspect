@@ -29,3 +29,22 @@ export const leasingEventKinds=['registration.received','interest.received','reg
 export function safeApplicationUrl(input:string|null|undefined):string|null {if(!input)return null;try {const u=new URL(input);return u.protocol==='https:'&& !u.username&&!u.password?u.href:null;}catch{return null;}}
 export function propertyUrl(kind:string,slug:string){return '/properties-for-lease/'+kind+'/'+slug;}
 export function displayPrice(cents:number|null,period:string){return cents===null||period==='on_application'?'Price on application':new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD',maximumFractionDigits:0}).format(cents/100)+' / '+(period==='year'?'year':'week');}
+
+/**
+ * A public listing must never link to ProInspect applicant intake unless the
+ * listing-specific approvals and the deployed, independently approved release
+ * are both ready. The fallback is an enquiry, never an unusable application URL.
+ */
+export type ListingApplicationAction =
+ | {type:'proinspect';href:string}
+ | {type:'external';href:string}
+ | {type:'interest';href:'#leasing-enquiry'};
+export function listingApplicationAction(input:{
+ kind:string;slug:string;applicationMode:string;applicationUrl?:string|null;rentalReady:boolean;
+}):ListingApplicationAction{
+ if(input.kind==='residential'&&input.applicationMode==='proinspect'&&input.rentalReady)
+  return {type:'proinspect',href:propertyUrl('residential',input.slug)+'/apply'};
+ const external=safeApplicationUrl(input.applicationUrl);
+ if(input.applicationMode==='external'&&external)return {type:'external',href:external};
+ return {type:'interest',href:'#leasing-enquiry'};
+}

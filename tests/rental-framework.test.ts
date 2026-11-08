@@ -14,6 +14,10 @@ test('rental outcomes are only externally communicated, documented yes/no decisi
  assert.equal(rentalOutcomeInput.safeParse(outcome).success,true);
  assert.equal(rentalOutcomeInput.safeParse({...outcome,outcome:'recommended'}).success,false);
 });
+test('signed rental handoff normalises case on approved recipient comparison',()=>{
+ const source=read('apps/platform/worker/features/rental-script-dispatch.server.ts');
+ assert.ok(source.includes("String(h.application_recipient_email??'').trim().toLowerCase()"));
+});
 test('reference checks are consent-gated and require evidence',()=>{
  const record={applicantId:'rap-example-01',target:'personal_1',outcome:'confirmed',method:'phone',evidenceReference:'CALL-2026-123',note:'Reference contacted and confirmed dates of tenancy.'};
  assert.equal(rentalReferenceCheckInput.safeParse(record).success,true);
@@ -86,4 +90,15 @@ test('privacy purge handles linked decisions and scanning records before deletin
  const app=read('apps/platform/worker/features/rental-applications.server.ts');
  assert.match(app,/recoverRentalAccess/);
  assert.match(app,/recover-email:/);
+});
+
+
+test('public application entry requires independently approved deployed release',()=>{
+ const page=read('apps/marketing/app/routes/leasing-property.tsx');
+ const server=read('apps/platform/worker/features/rental-applications.server.ts');
+ assert.match(page,/releaseFeatureReady\(env,'rental'\)/);
+ assert.match(server,/enabled:rentalEnabled\(env\)&&await releaseFeatureReady\(env,'rental'\)/);
+ const release=read('apps/platform/worker/features/release-governance.server.ts');
+ assert.match(release,/a.source_sha=\?/);
+ assert.match(release,/a.reviewed_by!=a.requested_by/);
 });
