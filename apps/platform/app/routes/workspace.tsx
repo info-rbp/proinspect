@@ -66,13 +66,13 @@ export default function WorkspaceLayout() {
         <nav className="side-nav" aria-label={WORKSPACES[w.kind].name + ' sections'}>
           {menu.primary.map(navLink)}
           {menu.groups.length > 0 && (
-            <details className="side-nav-more" key={moreActive ? 'more-active' : 'more-closed'} defaultOpen={moreActive}>
+            <details className="side-nav-more" key={moreActive ? 'more-active' : 'more-closed'} open={moreActive}>
               <summary>More tools</summary>
               <div className="side-nav-more-links">
                 {menu.groups.map(group => {
                   const groupActive = group.links.some(l => activeLink(l.path));
                   return (
-                    <details className="pi-nav-group" key={group.id + (groupActive ? '-active' : '-idle')} defaultOpen={groupActive}>
+                    <details className="pi-nav-group" key={group.id + (groupActive ? '-active' : '-idle')} open={groupActive}>
                       <summary>{group.label}</summary>
                       <div className="pi-nav-group-links">{group.links.map(navLink)}</div>
                     </details>
