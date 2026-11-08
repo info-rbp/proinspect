@@ -181,6 +181,7 @@ type ListingDetail={listing:any;sessions:LeasingSession[];photos:{id:string;alt_
 function perthDate(value:string){return new Intl.DateTimeFormat('en-AU',{dateStyle:'medium',timeStyle:'short',timeZone:'Australia/Perth'}).format(new Date(value))+' AWST';}
 function ListingInspectionManagement({listing}:{listing:any}){
  const [detail,setDetail]=useState<ListingDetail|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ const [registrations,setRegistrations]=useState<{id:string;kind:string;status:string;sessionId:string|null;createdAt:string;contact:{name:string;email:string;phone:string;message?:string}}[]|null>(null);
  const refresh=async()=>{
   const response=await fetch('/api/staff/leasing/'+listing.id,{credentials:'same-origin',headers:{Accept:'application/json'}});
   const payload=await response.json() as ListingDetail&{message?:string};
@@ -188,6 +189,16 @@ function ListingInspectionManagement({listing}:{listing:any}){
   setDetail(payload);
  };
  const start=async()=>{setBusy(true);setMessage('');try{await refresh();}catch(e){setMessage(e instanceof Error?e.message:'Unable to load.');}finally{setBusy(false);}};
+ const loadRegistrations=async()=>{
+  setBusy(true);setMessage('');
+  try{
+   const res=await fetch('/api/staff/leasing/'+listing.id+'/registrations',{credentials:'same-origin',headers:{Accept:'application/json'}});
+   const body=await res.json() as {registrations?:NonNullable<typeof registrations>;message?:string};
+   if(!res.ok)throw Error(body.message||'Unable to load private registrations.');
+   setRegistrations(body.registrations??[]);
+  }catch(e){setMessage(e instanceof Error?e.message:'Unable to load private registrations.');}
+  finally{setBusy(false);}
+ };
  const mutate=async(path:string,payload:unknown)=>{
   setBusy(true);setMessage('');
   try{await send('/api/staff/leasing/'+listing.id+'/'+path,payload);await refresh();setMessage('Inspection record updated.');}
@@ -251,7 +262,14 @@ function ListingInspectionManagement({listing}:{listing:any}){
    </section>
    <section className="panel stack"><h4>Private enquiry register</h4>
     <p className="small">Contacts are encrypted. Only authorised operations staff can request the detailed registration register.</p>
-    <a className="button secondary small" href={'/api/staff/leasing/'+listing.id+'/registrations'} target="_blank" rel="noreferrer">Open authorised registration data (JSON)</a>
+    <div className="actions"><button type="button" className="button secondary small" onClick={loadRegistrations} disabled={busy}>{registrations?'Refresh restricted registrations':'View restricted registrations'}</button>
+     {registrations&&<button type="button" className="button secondary small" onClick={()=>setRegistrations(null)}>Hide contact details</button>}</div>
+    {registrations&&<div className="table-wrap"><table><thead><tr><th>Prospect</th><th>Contact</th><th>Enquiry</th><th>Received</th></tr></thead><tbody>
+     {registrations.map(reg=><tr key={reg.id}><td><strong>{reg.contact.name}</strong><p className="small">{reg.status}</p></td>
+      <td><a href={'mailto:'+reg.contact.email}>{reg.contact.email}</a><p className="small">{reg.contact.phone}</p></td>
+      <td>{reg.kind==='inspection'?'Inspection registration':'General interest'}{reg.contact.message&&<p className="small">{reg.contact.message}</p>}</td>
+      <td>{perthDate(reg.createdAt)}</td></tr>)}
+    </tbody></table>{registrations.length===0&&<p>No enquiries received.</p>}</div>}
    </section>
   </div>}
  </details>;
