@@ -21,7 +21,7 @@ export function futureInspectionWindow(startsAt:string,endsAt:string,clock=Date.
  return Number.isFinite(start)&&Number.isFinite(end)&&start>clock&&end>start;
 }
 export type ApplicationReadinessInput={
- listingStatus:string;applicationMode:string;authorityReference?:string|null;
+ listingKind:string;listingStatus:string;applicationMode:string;authorityReference?:string|null;
  recipientVerifiedAt?:string|null;approvalState?:string|null;
  noticeMode?:string|null;noticeCount:number;retentionConfigured:boolean;
  scannerConfigured:boolean;handoffConfigured:boolean;intakeReleaseApproved:boolean;
