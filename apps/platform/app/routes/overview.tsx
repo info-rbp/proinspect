@@ -149,7 +149,7 @@ export default function Overview() {
   const schemeKind=['strata-manager','building','council'].includes(w.kind);
   const buildingManager=w.kind==='building-manager';
   const propertyDestination=buildingManager?'facilities':schemeKind?'schemes':w.kind==='tenant'?'tenancies':'properties';
-  const entityRows=buildingManager?[]:schemeKind?d.schemes:w.kind==='tenant'?d.tenancies:d.properties;
+  const entityRows:Array<{id:string;name?:string;address?:string;suburb?:string;state?:string;scheme_number?:string}>=buildingManager?[]:schemeKind?d.schemes:w.kind==='tenant'?d.tenancies:d.properties;
   const entityTitle=buildingManager?'Assigned buildings':schemeKind?'Schemes and buildings':w.kind==='tenant'?'My tenancy':'Your properties';
   const actions= w.kind==='council' ? pendingApprovals : activeRequests;
   const actionDestination=w.kind==='council'?'finance':'requests';
