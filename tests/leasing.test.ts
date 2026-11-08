@@ -118,3 +118,20 @@ test('staff leasing supports per-listing inspection scheduling and safe applicat
  assert.match(backend,/futureInspectionWindow\(d.startsAt,d.endsAt\)/);
  assert.match(backend,/SESSION_NOT_STARTED/);
 });
+
+test('staff rental application queue filtering and agency-decision handover preserve role and approval boundaries',()=>{
+ const list=text('apps/platform/app/routes/rental-applications.tsx');
+ const backend=text('apps/platform/worker/features/rental-review.server.ts');
+ const detail=text('apps/platform/app/routes/rental-application-detail.tsx');
+ const leasing=text('apps/platform/app/routes/leasing-administration.tsx');
+ assert.match(list,/searchParams\.get\('listingId'\)/);
+ assert.match(backend,/staff\(user\);/);
+ assert.match(backend,/rental_application_outcomes WHERE application_id/);
+ assert.match(detail,/d\.outcome\.outcome==='successful'/);
+ assert.match(detail,/does not make an offer or automatically create a tenancy/);
+ assert.match(detail,/Open tenancy creation and invitation/);
+ assert.match(leasing,/View this property.s rental application queue/);
+ const tenancy=text('apps/platform/worker/api.ts');
+ assert.match(tenancy,/TENANCY_REVIEW_REQUIRED/);
+ assert.match(tenancy,/MANAGER_REQUIRED/);
+});
