@@ -1,6 +1,7 @@
 import { assert,statement,now,type Env } from '../../../../packages/database/types';
 import { checkedHttpsEndpoint,nextRetry,rentalApplicationCc } from '../../../../packages/marketing/rental-governance';
 import { unseal } from '../../../../packages/auth/crypto';
+import { releaseFeatureReady } from './release-governance.server';
 
 /** HMAC-signed Google Apps Script transport, disabled without explicit opt-in.
  * Sensitive scanned files are not attached; only approved staff can download them.
