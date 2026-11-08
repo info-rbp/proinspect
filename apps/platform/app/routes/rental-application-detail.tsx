@@ -73,6 +73,16 @@ export default function RentalApplicationDetail(){
    {d.handoffs?.length>0?d.handoffs.map((h:any)=><div className="record-row" key={h.id}><div><strong>Submission handoff: {h.status.replaceAll('_',' ')}</strong><p className="small">Staged {new Date(h.staged_at).toLocaleString('en-AU')} · {h.format_version}</p></div></div>):<p className="small">No handoff staged. Review uploaded documents and move the application to ready for handoff when appropriate.</p>}
    <p className="small">No personal data or files are sent to the agency until a separately approved script, secure delivery method, acknowledgement and consent controls exist.</p>
   </Panel>
+  {a.status==='decision_recorded'&&d.outcome&&<Panel title="Agency decision and tenancy handover">
+   <p><strong>Recorded agency decision: {d.outcome.outcome==='successful'?'Successful':'Unsuccessful'}</strong></p>
+   <p className="small">Source reference: {d.outcome.authority_reference} · Recorded {new Intl.DateTimeFormat('en-AU',{dateStyle:'medium',timeZone:'Australia/Perth'}).format(new Date(d.outcome.recorded_at))}</p>
+   {d.outcome.outcome==='successful'?<>
+    <p>The authorised leasing representative must confirm the offer and proposed tenancy terms. ProInspect records the instruction but does not make an offer or automatically create a tenancy.</p>
+    <p className="small">Next steps: verify the actual tenant identities and email addresses, create the correct property tenancy, obtain the current approved WA Form 1AA, arrange signing by all parties, verify bond and initial rent arrangements, and issue the entry condition report and tenancy documents.</p>
+    <Link className="button secondary small" to={w.href+'/tenancies'}>Open tenancy creation and invitation</Link>
+    <p className="small">The tenancy and agreement-signing workflows have separate authority checks and release gates. Never copy identity, income documents or applicant private access links into an ordinary tenancy invitation.</p>
+   </>:<p>No tenancy should be created from this unsuccessful application. Continue to honour the applicant's privacy and retention rights.</p>}
+  </Panel>}
   {a.status==='forwarded'&&<Panel title="Record agency decision"><p>Only record a decision communicated by the responsible landlord or agency.</p>
    <OperationForm endpoint={base+'/outcome'} label="Record verified outcome" defaults={{version:a.version,notifyApplicants:true}}>
     <Select name="outcome" label="Decision" options={choices(['successful','unsuccessful'])}/><Input name="authorityReference" label="Decision reference"/><TextArea name="note" label="Source and details of instruction"/>
