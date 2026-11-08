@@ -61,6 +61,11 @@ export async function createSubscriptionCheckout(env:Env,user:Principal,w:Worksp
   liveResidentialReady(env);
   assert(env.LEGAL_ACCEPTANCE_ENABLED==='true',503,'SUBSCRIPTION_TERMS_UNAPPROVED',
     'Subscription Checkout requires approved, effective terms and explicit consent.');
+  const allowed=await statement(env.DB,
+    'SELECT COUNT(*) AS n FROM residential_paid_service_allowances'
+  ).first<{n:number}>();
+  assert((allowed?.n??0)>0,503,'SUBSCRIPTION_ALLOWANCES_UNAPPROVED',
+    'Included residential subscription services need independent approval before customers are charged.');
   await requireReleaseApproval(env,'residential_live');
  }
  else {billingReady(env);await requireReleaseApproval(env,'stripe_billing');}
