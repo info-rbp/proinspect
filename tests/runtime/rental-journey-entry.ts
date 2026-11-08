@@ -6,6 +6,8 @@ import { publicListing } from '../../apps/platform/worker/features/leasing.serve
 import { rentalStartPage, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental } from '../../apps/platform/worker/features/rental-applications.server';
 import { updateRentalStatus } from '../../apps/platform/worker/features/rental-review.server';
 import { dispatchRentalHandoffs } from '../../apps/platform/worker/features/rental-script-dispatch.server';
+import { recordRentalOutcome } from '../../apps/platform/worker/features/rental-outcomes.server';
+import { rentalTenancyHandoverStatus,prepareRentalTenancyHandover,activateRentalTenancyHandover,voidRentalTenancyHandover } from '../../apps/platform/worker/features/rental-tenancy-handover.server';
 import type { Env } from '../../packages/database/types';
 import type { Principal } from '../../packages/domain/index';
 
@@ -51,6 +53,34 @@ export default {
    if(path==='/__test/dispatch'&&request.method==='POST'){
     await dispatchRentalHandoffs(env);
     return Response.json({dispatched:true});
+   }
+   const staff={id:'usr_rental_synthetic_staff',staffRole:'operations_manager'} as Principal;
+   if(path==='/__test/agency-outcome'&&request.method==='POST'){
+    const d=await request.json() as {applicationId:string;version:number};
+    return Response.json(await recordRentalOutcome(env,staff,d.applicationId,{
+     version:d.version,outcome:'successful',authorityReference:'SYNTHETIC-WRITTEN-AGENCY-DECISION',
+     note:'Synthetic positive decision recorded for a closed-loop tenant invitation test only.',notifyApplicants:true}));
+   }
+   if(path==='/__test/handover-prepare'&&request.method==='POST'){
+    const d=await request.json() as {applicationId:string;applicationVersion:number;requestKey:string};
+    return Response.json(await prepareRentalTenancyHandover(env,staff,d.applicationId,{
+     requestKey:d.requestKey,applicationVersion:d.applicationVersion,startsOn:'2027-01-10',endsOn:'2027-02-10',
+     writtenOfferReference:'SYNTHETIC-SEPARATE-OFFER-AUTHORITY',
+     confirmWrittenOffer:true,confirmRecipientAuthority:true,confirmPrivateInvitations:true}));
+   }
+   if(path==='/__test/handover-status'&&request.method==='POST'){
+    const d=await request.json() as {applicationId:string};
+    return Response.json(await rentalTenancyHandoverStatus(env,staff,d.applicationId));
+   }
+   if(path==='/__test/handover-activate'&&request.method==='POST'){
+    const d=await request.json() as {applicationId:string};
+    return Response.json(await activateRentalTenancyHandover(env,staff,d.applicationId,{
+     activationReference:'SYNTHETIC-COMMENCEMENT-REVIEW',
+     confirmExecutedAgreement:true,confirmVerifiedParticipants:true,confirmCommencementRecords:true}));
+   }
+   if(path==='/__test/handover-void'&&request.method==='POST'){
+    const d=await request.json() as {applicationId:string};
+    return Response.json(await voidRentalTenancyHandover(env,staff,d.applicationId,{reasonReference:'SYNTHETIC-VOID-REVIEW',confirmVoid:true}));
    }
    return new Response('Unknown synthetic test endpoint',{status:404});
   }catch(error){
