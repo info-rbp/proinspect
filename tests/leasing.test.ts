@@ -97,7 +97,7 @@ test('Perth inspection time conversion rejects malformed or rollover values',asy
 });
 test('per-property readiness fails closed on provider release flags and independent approval',async()=>{
  const {residentialApplicationReadiness}=await import('../packages/marketing/leasing-operations.ts');
- const base={listingStatus:'published',applicationMode:'proinspect',authorityReference:'AUTH-123',recipientVerifiedAt:'2026-11-01T00:00:00Z',approvalState:'approved',noticeMode:'not_used',noticeCount:0,retentionConfigured:true,
+ const base={listingKind:'residential',listingStatus:'published',applicationMode:'proinspect',authorityReference:'AUTH-123',recipientVerifiedAt:'2026-11-01T00:00:00Z',approvalState:'approved',noticeMode:'not_used',noticeCount:0,retentionConfigured:true,
  scannerConfigured:true,handoffConfigured:true,intakeReleaseApproved:true,scannerReleaseApproved:true,handoffReleaseApproved:true};
  assert.equal(residentialApplicationReadiness(base).technicalReady,true);
  for(const field of ['retentionConfigured','scannerConfigured','handoffConfigured','intakeReleaseApproved','scannerReleaseApproved','handoffReleaseApproved'] as const){
