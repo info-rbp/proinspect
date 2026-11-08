@@ -70,3 +70,16 @@ test('public listing CTAs enforce the exact applicant release gate and avoid unu
  const server=text('apps/platform/worker/features/rental-applications.server.ts');
  assert.match(server,/enabled:rentalEnabled\(env\)&&await releaseFeatureReady\(env,'rental'\)/);
 });
+
+test('unavailable published property application URLs show a safe enquiry fallback instead of a 500',()=>{
+ const page=text('apps/marketing/app/routes/rental-start.tsx');
+ assert.match(page,/publicListing\(env,'residential',slug\)/);
+ assert.match(page,/if\(!published\)throw new Response\('Property not found'/);
+ assert.match(page,/l\.application_mode!=='proinspect'/);
+ assert.match(page,/return data\(unavailable,\{headers\}\)/);
+ assert.match(page,/unavailable\?<div role="status"/);
+ assert.match(page,/Online applications not yet available/);
+ assert.match(page,/\#leasing-enquiry/);
+ assert.match(page,/if\(!page.enabled\)return fail/);
+ assert.match(page,/X-Robots-Tag/);
+});
