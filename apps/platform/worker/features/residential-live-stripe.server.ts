@@ -64,8 +64,7 @@ export async function verifyLiveResidentialTax(env: Env) {
   'LIVE_TAX_SETTINGS_PENDING', 'Live Australian Stripe Tax configuration must be active.');
  assert(Array.isArray(regs.data) && regs.data.some((r: any) => r.country === 'AU' && r.status === 'active'), 503,
   'LIVE_GST_REGISTRATION_REQUIRED', 'Stripe must have an active Australian GST registration.');
- const exclusive = price.tax_behavior === 'exclusive' ||
-  (price.tax_behavior === 'unspecified' && settings.defaults?.tax_behavior === 'exclusive');
+ const exclusive = price.tax_behavior === 'exclusive';
  assert(price.livemode === true && price.active === true && price.product === LIVE_RESIDENTIAL_PRODUCT &&
   price.id === LIVE_RESIDENTIAL_PRICE && price.unit_amount === LIVE_RESIDENTIAL_WEEKLY_EX_GST_CENTS &&
   price.currency === 'aud' && price.recurring?.interval === 'week' && price.recurring?.interval_count === 1 &&
