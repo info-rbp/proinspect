@@ -14,6 +14,7 @@ import { publicOpenHomeSessions,staffOpenHomeCheckIns } from './features/open-ho
 import { staffOpenHomeReportDetails,saveOpenHomeReportSettings,readOpenHomeReport,exportOpenHomeReportCsv } from './features/open-home-reports.server';
 import { listRentalApplications,rentalStaffDetail,updateRentalStatus,recordRentalReferenceCheck,reviewRentalDocument,rentalDocumentDownload } from './features/rental-review.server';
 import { recordRentalOutcome } from './features/rental-outcomes.server';
+import { rentalTenancyHandoverStatus,prepareRentalTenancyHandover,activateRentalTenancyHandover,voidRentalTenancyHandover } from './features/rental-tenancy-handover.server';
 import { verifyRecipient } from './features/rental-governance.server';
 import { acceptRentalScan } from './features/rental-malware.server';
 import { setRentalPrivacyHold,resolveRentalPrivacyRequest,eraseRentalForRequest } from './features/rental-privacy.server';
@@ -195,9 +196,14 @@ async function acceptInvitation(env: Env, user: Principal, token: unknown) {
     'Invitation invalid.',
   );
   const hash = await digest(token);
+  // Pending tenancy invitations are limited to an explicitly released and recorded
+  // rental handover; all other invitations retain the active-tenancy condition.
+  const pendingTenancyCondition=env.RENTAL_TENANCY_HANDOVER_ENABLED==='true'
+    ? "(t.status='active' OR (t.status='pending' AND EXISTS(SELECT 1 FROM rental_tenancy_handovers h JOIN rental_applications a ON a.id=h.application_id AND a.status='decision_recorded' WHERE h.tenancy_id=t.id AND h.status='awaiting_agreement')))"
+    : "t.status='active'";
   const invitation = await statement(
     env.DB,
-    `SELECT i.tenancy_id FROM invitations i JOIN tenancies t ON t.id=i.tenancy_id WHERE i.token_hash=? AND i.email=? AND i.expires_at>? AND i.consumed_at IS NULL AND t.status='active' AND (EXISTS(SELECT 1 FROM staff_profiles s WHERE s.user_id=i.created_by AND s.active=1 AND s.role IN('administrator','operations_manager')) OR EXISTS(SELECT 1 FROM property_management_relationships pm JOIN client_memberships m ON m.client_id=pm.manager_client_id WHERE pm.property_id=t.property_id AND pm.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND pm.ends_at IS NULL AND m.user_id=i.created_by AND m.active=1 AND m.role!='viewer'))`,
+    `SELECT i.tenancy_id FROM invitations i JOIN tenancies t ON t.id=i.tenancy_id WHERE i.token_hash=? AND i.email=? AND i.expires_at>? AND i.consumed_at IS NULL AND ${pendingTenancyCondition} AND (EXISTS(SELECT 1 FROM staff_profiles s WHERE s.user_id=i.created_by AND s.active=1 AND s.role IN('administrator','operations_manager')) OR EXISTS(SELECT 1 FROM property_management_relationships pm JOIN client_memberships m ON m.client_id=pm.manager_client_id WHERE pm.property_id=t.property_id AND pm.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND pm.ends_at IS NULL AND m.user_id=i.created_by AND m.active=1 AND m.role!='viewer'))`,
     hash,
     user.email,
     now(),
@@ -363,6 +369,10 @@ export async function handleApi(
       if(method!=='GET'&&method!=='HEAD')requireOrigin(request,env);
       if(method==='GET'&&tail.length===0)return Response.json(await listRentalApplications(env,user,url.searchParams.get('listingId')??undefined));
       if(method==='GET'&&tail.length===1)return Response.json(await rentalStaffDetail(env,user,tail[0]));
+      if(method==='GET'&&tail.length===2&&tail[1]==='tenancy-handover')return Response.json(await rentalTenancyHandoverStatus(env,user,tail[0]),{headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'&&tail.length===2&&tail[1]==='tenancy-handover')return Response.json(await prepareRentalTenancyHandover(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===3&&tail[1]==='tenancy-handover'&&tail[2]==='activate')return Response.json(await activateRentalTenancyHandover(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===3&&tail[1]==='tenancy-handover'&&tail[2]==='void')return Response.json(await voidRentalTenancyHandover(env,user,tail[0],await json(request)));
       if(method==='POST'&&tail.length===2&&tail[1]==='reference-checks')return Response.json(await recordRentalReferenceCheck(env,user,tail[0],await json(request)));
       if(method==='POST'&&tail.length===2&&tail[1]==='outcome')return Response.json(await recordRentalOutcome(env,user,tail[0],await json(request)));
       if(method==='POST'&&tail.length===2&&tail[1]==='status')return Response.json(await updateRentalStatus(env,user,tail[0],await json(request)));

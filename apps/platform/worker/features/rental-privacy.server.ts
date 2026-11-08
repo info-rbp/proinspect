@@ -84,6 +84,14 @@ async function purgeRental(env:Env,appId:string,reason:PurgeReason,actorId:strin
   assert(app.retained_until&&app.retained_until<=now(),409,'RETENTION_NOT_DUE','Retention period has not elapsed.');
  const pending=await statement(env.DB,"SELECT id FROM rental_application_handoffs WHERE application_id=? AND status='awaiting_script'",appId).first();
  assert(!pending,409,'PENDING_AGENCY_HANDOFF','Cancel the outstanding handoff before purging.');
+ // An executed tenancy has an independent legal record. Never erase the
+ // application/outcome beneath its immutable source link without a reviewed
+ // cross-system retention decision. Check the schema safely before migration 0049.
+ const handoverTable=await statement(env.DB,"SELECT name FROM sqlite_master WHERE type='table' AND name='rental_tenancy_handovers'").first();
+ if(handoverTable){
+  const linked=await statement(env.DB,'SELECT id FROM rental_tenancy_handovers WHERE application_id=?',appId).first();
+  assert(!linked,409,'HANDOVER_RETENTION_REVIEW','This application is linked to a tenancy handover. A separate statutory retention and privacy review is required before erasure.');
+ }
  // Close editing BEFORE reading the document manifest: uploads that started
  // before this operation are also rejected by the database trigger.
  if(app.status==='draft'){
@@ -131,7 +139,9 @@ export async function eraseRentalForRequest(env:Env,user:Principal,appId:string,
  * and operational backups/R2 deletion procedures have been approved. */
 export async function dispatchRentalRetention(env:Env){
  if(env.RENTAL_RETENTION_AUTOPURGE_ENABLED!=='true'||!hasRentalRetentionPolicy(env))return;
- const rows=(await statement(env.DB,"SELECT id FROM rental_applications WHERE retained_until IS NOT NULL AND retained_until<=? AND (privacy_hold_until IS NULL OR privacy_hold_until<=?) AND status IN('draft','withdrawn','decision_recorded') ORDER BY retained_until LIMIT 10",
+ const handoverTable=await statement(env.DB,"SELECT name FROM sqlite_master WHERE type='table' AND name='rental_tenancy_handovers'").first();
+ const linkedFilter=handoverTable?" AND NOT EXISTS(SELECT 1 FROM rental_tenancy_handovers h WHERE h.application_id=rental_applications.id)":"";
+ const rows=(await statement(env.DB,"SELECT id FROM rental_applications WHERE retained_until IS NOT NULL AND retained_until<=? AND (privacy_hold_until IS NULL OR privacy_hold_until<=?) AND status IN('draft','withdrawn','decision_recorded')"+linkedFilter+" ORDER BY retained_until LIMIT 10",
  now(),now()).all<{id:string}>()).results;
  for(const row of rows){
   try{await purgeRental(env,row.id,'retention_expired',null);}

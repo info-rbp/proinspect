@@ -69,9 +69,9 @@ export default function RentalApplicationDetail(){
    <h3>Tenancy database notice — Application details Attachment A</h3>
    {d.notice.mode==='configured'?d.notice.entries.map((n:any,i:number)=><div key={i}><strong>{n.name}</strong><p>Operator contact: {n.operatorContact}</p><p>How to request information: {n.accessInstructions}</p></div>):<p>The responsible representative declared that no tenancy database is used for this application.</p>}
   </Panel>
-  <Panel title="Agency email handoff — Google Apps Script"><p>The complete application is intended to be delivered by a Google Apps Script email workflow designed in a later stage. This branch only stages the recipient-bound record.</p>
+  <Panel title="Agency email handoff — Google Apps Script"><p>The signed, recipient-bound Google Apps Script handoff adapter is implemented but requires independent activation and provider acceptance. A staged record is not evidence that an email was delivered.</p>
    {d.handoffs?.length>0?d.handoffs.map((h:any)=><div className="record-row" key={h.id}><div><strong>Submission handoff: {h.status.replaceAll('_',' ')}</strong><p className="small">Staged {new Date(h.staged_at).toLocaleString('en-AU')} · {h.format_version}</p></div></div>):<p className="small">No handoff staged. Review uploaded documents and move the application to ready for handoff when appropriate.</p>}
-   <p className="small">No personal data or files are sent to the agency until a separately approved script, secure delivery method, acknowledgement and consent controls exist.</p>
+   <p className="small">Applicant documents are never attached or made public. A delivery receipt establishes provider acceptance, not successful delivery to an inbox.</p>
   </Panel>
   {a.status==='decision_recorded'&&d.outcome&&<Panel title="Agency decision and tenancy handover">
    <p><strong>Recorded agency decision: {d.outcome.outcome==='successful'?'Successful':'Unsuccessful'}</strong></p>
@@ -82,6 +82,36 @@ export default function RentalApplicationDetail(){
     <Link className="button secondary small" to={w.href+'/tenancies'}>Open tenancy creation and invitation</Link>
     <p className="small">The tenancy and agreement-signing workflows have separate authority checks and release gates. Never copy identity, income documents or applicant private access links into an ordinary tenancy invitation.</p>
    </>:<p>No tenancy should be created from this unsuccessful application. Continue to honour the applicant's privacy and retention rights.</p>}
+  </Panel>}
+  {a.status==='decision_recorded'&&d.outcome?.outcome==='successful'&&<Panel title="Tenancy commencement — controlled handover">
+   <p>Only an authorised lessor or manager may instruct commencement. This workflow does not offer a tenancy, sign a statutory form, or activate a lease on an application decision alone.</p>
+   {!d.tenancyHandover?.configured?<p role="status">Tenancy handover remains disabled until the database migration, recipient/privacy approvals and independently reviewed release have been completed.</p>:
+    !d.tenancyHandover.exists?<OperationForm endpoint={base+'/tenancy-handover'} defaults={{applicationVersion:a.version}} label="Prepare pending tenancy and send individual invitations">
+     <Input name="startsOn" label="Approved tenancy commencement — Perth date" type="date"/>
+     <Input name="endsOn" label="Fixed term end date (leave blank for periodic)" type="date" required={false}/>
+     <Input name="writtenOfferReference" label="Separate written lessor instruction reference" help="A successful application is not itself an offer or authority to create a tenancy."/>
+     <label><input type="checkbox" name="confirmWrittenOffer" value="true" required/> I have verified the lessor’s separate written tenancy-commencement instruction and agreed dates.</label>
+     <label><input type="checkbox" name="confirmRecipientAuthority" value="true" required/> I have confirmed the currently authorised manager or landlord for this property.</label>
+     <label><input type="checkbox" name="confirmPrivateInvitations" value="true" required/> I am authorised to invite all adult applicants to their own verified accounts without sharing private application documents.</label>
+    </OperationForm>:<div className="stack">
+     <p><strong>Handover: {d.tenancyHandover.status.replaceAll('_',' ')}</strong> · Tenancy: {d.tenancyHandover.tenancyStatus} · {d.tenancyHandover.invitedCount} invited adults</p>
+     <p className="small">All invited adults verified: {d.tenancyHandover.allParticipantsVerified?'Yes':'Not yet'} · Executed official Form 1AA recorded: {d.tenancyHandover.executedAgreementRecorded?'Yes':'No'}</p>
+     <Link className="button secondary small" to={w.href+'/tenancies/'+d.tenancyHandover.tenancyId+'/wa-forms'}>Prepare and review statutory tenancy forms</Link>
+     {d.tenancyHandover.status==='awaiting_agreement'&&<>
+      <p className="small">The tenancy remains pending. Applicants must accept separate verified invitations; the authoritative Form 1AA must be issued, executed by all parties, reviewed and stored before activation.</p>
+      {d.tenancyHandover.canActivate&&<OperationForm endpoint={base+'/tenancy-handover/activate'} label="Activate after executed Form 1AA verification">
+       <Input name="activationReference" label="Independent executed agreement and commencement review reference"/>
+       <label><input type="checkbox" name="confirmExecutedAgreement" value="true" required/> I verified the official completed and fully signed Form 1AA PDF and evidence.</label>
+       <label><input type="checkbox" name="confirmVerifiedParticipants" value="true" required/> I confirmed every tenant’s independently verified identity and access.</label>
+       <label><input type="checkbox" name="confirmCommencementRecords" value="true" required/> I checked lawful commencement, information sheet, bond and condition report arrangements.</label>
+      </OperationForm>}
+      {!d.tenancyHandover.executedAgreementRecorded&&<OperationForm endpoint={base+'/tenancy-handover/void'} label="Void unexecuted handover">
+       <Input name="reasonReference" label="Written authority to void and evidence reference"/>
+       <label><input type="checkbox" name="confirmVoid" value="true" required/> I understand this revokes pending invitations and ends the pending record; it does not revoke an executed tenancy.</label>
+      </OperationForm>}
+     </>}
+     {d.tenancyHandover.status==='activated'&&<p role="status">The original application has been linked to an active tenancy following verified execution. Use the tenancy workspace for all subsequent operations.</p>}
+    </div>}
   </Panel>}
   {a.status==='forwarded'&&<Panel title="Record agency decision"><p>Only record a decision communicated by the responsible landlord or agency.</p>
    <OperationForm endpoint={base+'/outcome'} label="Record verified outcome" defaults={{version:a.version,notifyApplicants:true}}>
@@ -108,6 +138,6 @@ export default function RentalApplicationDetail(){
    <Select name="status" label="Next state" options={choices(next[a.status])}/>
    <TextArea name="note" label="Processing or handoff reference"/>
   </OperationForm>
-   <p className="small">Moving to ready for handoff stages an immutable application summary for the future Google Apps Script email integration. No email is currently sent to the landlord or agency. A delivered status is not possible until an authenticated script receipt is implemented.</p></Panel>}
+   <p className="small">Moving to ready for handoff stages an immutable application summary. Sending requires the independently released, signed Apps Script transport and a valid provider acceptance receipt; do not assume an email was delivered to an inbox.</p></Panel>}
  </aside></div></>;
 }

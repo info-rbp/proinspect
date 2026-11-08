@@ -47,3 +47,69 @@ Do not enable `RENTAL_APPLICATIONS_ENABLED`, `RENTAL_SCANNER_ENABLED`, `RENTAL_A
 - `docs/WA_FORM_1AA_PROVIDER_AND_PDF_ACCEPTANCE.md`
 
 No landlord approvals, official form validation, private provider account setup, legal opinions or real delivery receipts are inferred from code changes.
+
+## Follow-on implementation — PR #80 (8 November 2026)
+
+### New controlled application-to-tenancy lifecycle
+Migration 0052_rental_tenancy_handover.sql adds one immutable handover per
+rental application, tied to the recorded successful decision and final encrypted
+household snapshot. It is distinct from ordinary tenancy creation, which
+historically created an immediately active tenancy.
+
+1. Lessor instruction: An authorised operations user records a separate
+   tenancy commencement authority reference and agreed Perth dates. The system
+   verifies current property management, the recorded decision, application
+   delivery acknowledgement, privacy holds and independent feature release.
+2. Pending tenancy: One atomic, idempotent D1 transaction creates a
+   pending tenancy, sealed terms, one invitation per adult from the immutable
+   submitted household and private email invitations. Addresses must match
+   the applicant email hashes. Income and identity evidence are not
+   copied into tenant-facing records.
+3. Verified identities and agreement: Each adult accepts their own invitation
+   after email verification. The existing WA Form 1AA centre requires an
+   independently approved statutory template, every named signer, a genuinely
+   completed signed PDF, independent review and document grants. Captured
+   intent alone is not execution.
+4. Activation: Staff may activate only after all original adults are verified,
+   the independently reviewed Form 1AA is executed and the dates match the
+   separately instructed terms. The transition is source-locked and audited.
+5. Void: Pending invitations can be revoked before execution. A separate
+   existing agreement case must first be voided in its own protected workflow.
+
+The new flag RENTAL_TENANCY_HANDOVER_ENABLED remains false in all checked-in
+environments. Migration 0052 must be applied and rehearsed in isolated
+staging D1/R2 before enablement. Independent, source-specific approvals
+are required for rental_handover, rental and agreement_signing. Merge alone
+does not constitute release authorisation.
+
+### Additional P0 protections
+- Private-scanner and applicant-email dispatchers now require both the
+  independently approved provider release and the main rental release,
+  rather than merely a true configuration variable.
+- Applicant erasure is blocked where a pending, void or active handover
+  would leave an orphaned tenancy or statutory record. Such requests require
+  a separate records-retention and privacy review.
+- Pending invitations are enabled only for a released handover; normal
+  invitations remain active-tenancy-only. Ordinary tenant maintenance
+  continues to require active tenancy membership.
+
+### External acceptance still required
+- Lighthouse (or the actual lessor/agency) written processing authority,
+  verified recipient inbox and approved collection notices.
+- Procured private malware scanner, privacy terms, authenticated R2 access,
+  signed clean/unsafe callback evidence and independent security acceptance.
+- Deployed and authorised application-mail provider, exact recipient/CC
+  allowlists, signed receipts, delivery observations and privacy review.
+- Business-approved retention windows and backup, legal hold, disclosure,
+  erasure and downstream recipient-copy policy.
+- Current official WA Form 1AA bytes, source hash, page-perfect PDF
+  placements, independent review and required tenant information sheet.
+  Official source: https://www.consumerprotection.wa.gov.au/publications/rent-agreement-form-1aa
+- Actual multi-party signing acceptance through an approved provider or
+  legally accepted external signing method and verified final official PDF.
+- Isolated migration and recovery rehearsal, hosted user journeys,
+  independent release acceptance and operational sign-off.
+
+All of these conditions are prerequisites to live rental intake and
+tenancy commencement. The code implementation does not imply that the
+business has supplied these approvals or that provider tests have passed.

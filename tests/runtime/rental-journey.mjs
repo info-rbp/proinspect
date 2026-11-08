@@ -8,7 +8,7 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {mkdirSync,writeFileSync} from 'node:fs';
-import {createHmac,randomBytes} from 'node:crypto';
+import {createHmac,randomBytes,randomUUID} from 'node:crypto';
 import {build} from 'esbuild';
 import {Miniflare} from 'miniflare';
 import {unseal} from '../../packages/auth/crypto.ts';
@@ -31,7 +31,8 @@ const mf=new Miniflare({
  bindings:{
   APP_ENV:'local',APP_ORIGIN:'http://localhost',
   DATA_ENCRYPTION_KEY:key,EMAIL_PROVIDER:'local',
-  RENTAL_APPLICATIONS_ENABLED:'true',
+  RENTAL_APPLICATIONS_ENABLED:'true',RENTAL_TENANCY_HANDOVER_ENABLED:'true',
+  WA_AGREEMENT_ESIGN_ENABLED:'true',
   RENTAL_RETENTION_DRAFT_DAYS:'30',RENTAL_RETENTION_SUBMITTED_DAYS:'180',
   RENTAL_RETENTION_WITHDRAWN_DAYS:'30',
   RENTAL_APPS_SCRIPT_ENABLED:'true',
@@ -95,6 +96,8 @@ try{
    prop,address,'Cloverdale','WA','6105','synthetic-fulham-unit-'+unit,'residential',stamp);
   await run('INSERT INTO client_property_links(id,client_id,property_id,role,starts_at) VALUES(?,?,?,?,?)',
    'lcp_synthetic_fulham_'+unit,'cli_lighthouse_property_group_pty_ltd',prop,'landlord',stamp);
+  await run('INSERT INTO property_management_relationships(id,property_id,manager_client_id,mode,starts_at) VALUES(?,?,?,?,?)',
+   'pm_synthetic_fulham_'+unit,prop,'cli_lighthouse_property_group_pty_ltd','self_managed',stamp);
   await run(`INSERT INTO leasing_listings(
    id,property_id,instructed_by_client_id,kind,slug,title,description,
    display_address,suburb,postcode,agent_name,agent_role,created_by,
@@ -182,6 +185,50 @@ try{
    const count=captured.length;
    await call('/__test/dispatch',{});
    assert.equal(captured.length,count);
+  });
+  await check('Unit '+unit+': agency acceptance prepares pending, idempotent, identity-bound tenancy only',async()=>{
+   const v=await first('SELECT version FROM rental_applications WHERE id=?',applicationId);
+   const recorded=await call('/__test/agency-outcome',{applicationId,version:v.version});
+   assert.equal(recorded.recorded,true);
+   const next=await first('SELECT status,version FROM rental_applications WHERE id=?',applicationId);
+   assert.equal(next.status,'decision_recorded');
+   const requestKey=randomUUID();
+   const handover=await call('/__test/handover-prepare',{applicationId,applicationVersion:next.version,requestKey});
+   assert.equal(handover.status,'awaiting_agreement');
+   assert.equal(handover.invitationsQueued,1);
+   const same=await call('/__test/handover-prepare',{applicationId,applicationVersion:next.version,requestKey});
+   assert.equal(same.replayed,true);
+   assert.equal(same.tenancyId,handover.tenancyId);
+   const pending=await first('SELECT status,reference FROM tenancies WHERE id=?',handover.tenancyId);
+   assert.equal(pending.status,'pending');
+   const counts=await first('SELECT COUNT(*) AS count FROM rental_tenancy_handover_people WHERE handover_id=?',handover.id);
+   assert.equal(counts.count,1);
+   const state=await call('/__test/handover-status',{applicationId});
+   assert.equal(state.canActivate,false);
+   assert.equal(state.allParticipantsVerified,false);
+   const invitation=await first("SELECT id,envelope FROM outbox_events WHERE kind='rental.tenancy.pending_invitation' ORDER BY created_at DESC,id DESC LIMIT 1");
+   const message=await unseal(key,'outbox:'+invitation.id,invitation.envelope);
+   assert.equal(message.to,email);
+   assert.equal(message.body.includes('not a tenancy offer'),true);
+   assert.equal((await first('SELECT COUNT(*) AS count FROM tenancies WHERE property_id=?',
+    'prop_synthetic_fulham_'+unit)).count,1);
+  });
+  await check('Unit '+unit+': unsigned tenancy cannot activate and can be safely voided',async()=>{
+   const response=await mf.dispatchFetch('http://localhost/__test/handover-activate',{
+    method:'POST',headers:{Origin:'http://localhost','Content-Type':'application/json'},
+    body:JSON.stringify({applicationId})
+   });
+   assert.equal(response.status,409);
+   const rejected=await response.json();
+   assert.equal(rejected.code,'HANDOVER_PARTICIPANTS_UNVERIFIED');
+   const voided=await call('/__test/handover-void',{applicationId});
+   assert.equal(voided.status,'void');
+   const ended=await first('SELECT status FROM tenancies WHERE id=?',voided.tenancyId);
+   assert.equal(ended.status,'ended');
+   const status=await call('/__test/handover-status',{applicationId});
+   assert.equal(status.status,'void');
+   const invitations=await first('SELECT COUNT(*) AS count FROM invitations WHERE tenancy_id=? AND expires_at<=?',voided.tenancyId,new Date().toISOString());
+   assert.equal(invitations.count,1);
   });
  }
  report.status='PASS';

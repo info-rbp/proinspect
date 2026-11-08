@@ -8,6 +8,7 @@ import { type Form18Answers } from '../../../../packages/marketing/form18';
 import { rentalReferenceCheckInput } from '../../../../packages/marketing/rental-governance';
 import { stageRentalAppsScriptHandoff } from './rental-handoff.server';
 import { listRentalPrivacyRequests } from './rental-privacy.server';
+import { rentalTenancyHandoverStatus } from './rental-tenancy-handover.server';
 
 function staff(user:Principal){
  operationsWrite(user);
@@ -55,7 +56,7 @@ export async function rentalStaffDetail(env:Env,user:Principal,id:string){
   {mode:app.tenancy_database_notice_mode,entries:JSON.parse(app.tenancy_database_notice_json)};
  await statement(env.DB,"INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?, 'rental_application.viewed','rental_application',?,'{}',?)",
   uid('aud'),user.id,id,now()).run();
- return {latestSubmission,handoffs,privacyRequests,outcome,privacyHoldUntil:app.privacy_hold_until,retainedUntil:app.retained_until,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
+ return {tenancyHandover:await rentalTenancyHandoverStatus(env,user,id),latestSubmission,handoffs,privacyRequests,outcome,privacyHoldUntil:app.privacy_hold_until,retainedUntil:app.retained_until,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
   property:app.display_address,title:app.title,leasingRepresentative:app.agent_name,instructingClientId:app.instructed_by_client_id,
   forwardedAt:app.forwarded_at,noticeVersion:app.consent_version},applicants,documents,referenceChecks,notice,history};
 }

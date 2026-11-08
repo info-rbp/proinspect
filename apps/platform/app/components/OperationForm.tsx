@@ -126,6 +126,8 @@ const boolFields = new Set([
   'noAutomaticService',
   'officialFormChecked','publicVisible','revoke',
   'providerEvidenceVerified','authorityVerified','recoveryOwnerConfirmed',
+  'confirmWrittenOffer','confirmRecipientAuthority','confirmPrivateInvitations',
+  'confirmExecutedAgreement','confirmVerifiedParticipants','confirmCommencementRecords','confirmVoid',
   'scopeAndServiceAreaConfirmed','taxTreatmentConfirmed','paymentTermsConfirmed',
   'finalTextConfirmed','operatorIdentityVerified','commercialConflictsResolved',
 ]);

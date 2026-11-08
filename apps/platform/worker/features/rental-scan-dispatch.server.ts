@@ -1,13 +1,14 @@
 import { assert,statement,now,type Env } from '../../../../packages/database/types';
 import { checkedHttpsEndpoint,nextRetry } from '../../../../packages/marketing/rental-governance';
 import { digest } from '../../../../packages/auth/crypto';
+import { releaseFeatureReady } from './release-governance.server';
 
 /** Private scanner adapter. A remote scanner must return a signed callback through
  * /api/internal/rental-document-scan; HTTP 200 alone never clears quarantine.
  * Disable until a provider with approved privacy terms and authenticated HTTPS
  * transport is provisioned. Do not emit document content into logs. */
 export async function dispatchRentalScans(env:Env){
- if(env.RENTAL_SCANNER_ENABLED!=='true')return;
+ if(env.RENTAL_SCANNER_ENABLED!=='true'||!await releaseFeatureReady(env,'rental_scanner')||!await releaseFeatureReady(env,'rental'))return;
  const endpoint=checkedHttpsEndpoint(env.RENTAL_SCANNER_ENDPOINT,env.RENTAL_SCANNER_ALLOWED_HOST);
  const secret=env.RENTAL_SCANNER_OUTBOUND_SECRET;
  assert(endpoint&&secret&&secret.length>=32,503,'SCAN_TRANSPORT_UNAVAILABLE','Private scanner is not configured.');
