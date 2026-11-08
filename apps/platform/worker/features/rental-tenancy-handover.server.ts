@@ -115,6 +115,8 @@ export async function prepareRentalTenancyHandover(env:Env,user:Principal,appId:
 
 export async function activateRentalTenancyHandover(env:Env,user:Principal,appId:string,input:unknown){
  staff(user);
+ enabled(env);
+ await requireReleaseApproval(env,'rental_handover');
  await requireReleaseApproval(env,'agreement_signing');
  const d=tenancyActivationInput.parse(input),h=await state(env,appId);
  assert(h&&h.status==='awaiting_agreement',409,'HANDOVER_NOT_PENDING','Only a pending handover may be activated.');
