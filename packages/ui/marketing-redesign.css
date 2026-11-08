@@ -444,3 +444,61 @@
   .site .mkt-site-header { gap: .8rem; }
   .site .mkt-header-actions { margin-left: auto; }
 }
+
+/* Stage 3: compact role discovery and an accessible service finder. */
+.site .mkt-audience-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+  margin-top: 1.25rem;
+}
+.site .mkt-audience-links a {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #c5d4d0;
+  background: #fff;
+  border-radius: .5rem;
+  padding: .7rem 1rem;
+  color: #173b42;
+  font-weight: 600;
+  text-decoration: none;
+  line-height: 1.4;
+}
+.site .mkt-audience-links a:hover,
+.site .mkt-audience-links a:focus-visible {
+  background: #e9efec;
+  border-color: #476a65;
+  text-decoration: underline;
+}
+.site .mkt-finder-label {
+  display: block;
+  font-size: .95rem;
+  font-weight: 650;
+  margin: 1rem 0 .5rem;
+  color: #173b42;
+}
+.site .mkt-finder-select {
+  display: block;
+  width: min(100%, 38rem);
+  min-height: 3rem;
+  border: 1px solid #718b88;
+  border-radius: .4rem;
+  background: #fff;
+  color: #17323a;
+  font: inherit;
+  padding: .6rem .8rem;
+  margin-bottom: 1.75rem;
+}
+.site .mkt-finder-select:focus-visible {
+  outline: 3px solid #0e6a65;
+  outline-offset: 3px;
+}
+.site .mkt-nav-popover {
+  max-height: min(76vh, 36rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@media (max-width: 600px) {
+  .site .mkt-audience-links a { flex: 1 1 100%; }
+  .site .mkt-finder-select { width: 100%; }
+}
