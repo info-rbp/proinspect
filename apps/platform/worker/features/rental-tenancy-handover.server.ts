@@ -47,6 +47,8 @@ export async function rentalTenancyHandoverStatus(env:Env,user:Principal,appId:s
 }
 export async function prepareRentalTenancyHandover(env:Env,user:Principal,appId:string,input:unknown){
  staff(user);
+ enabled(env);
+ await requireReleaseApproval(env,'rental_handover');
  await requireReleaseApproval(env,'rental');
  assert(env.DATA_ENCRYPTION_KEY,503,'HANDOVER_ENCRYPTION_UNAVAILABLE','Private tenant preparation is unavailable.');
  const d=tenancyHandoverInput.parse(input);
