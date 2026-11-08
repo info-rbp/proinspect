@@ -70,7 +70,7 @@ test('both marketing route trees expose the same conversion and audience pages',
   }
   const ui=read('apps/marketing/app/components/site-chrome.tsx');
   for(const slug of ['private-landlords','property-management-agencies','commercial-property-owners','commercial-asset-managers','strata-managers','building-operators'])
-    assert.match(read('apps/marketing/app/routes/audience.tsx'),new RegExp("'"+slug+"':"));
+    assert.match(read('packages/marketing/audiences.ts'),new RegExp("'"+slug+"':"));
   assert.match(ui,/who-we-help/);
   assert.match(ui,/Leasing/);
 });
