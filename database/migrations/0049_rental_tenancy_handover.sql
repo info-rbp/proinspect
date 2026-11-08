@@ -11,7 +11,7 @@ CREATE TABLE rental_tenancy_handovers (
  tenancy_id TEXT NOT NULL UNIQUE REFERENCES tenancies(id),
  request_key TEXT NOT NULL UNIQUE,
  status TEXT NOT NULL DEFAULT 'awaiting_agreement'
-  CHECK(status IN('awaiting_agreement','activated')),
+  CHECK(status IN('awaiting_agreement','activated','void')),
  authority_reference TEXT NOT NULL CHECK(length(trim(authority_reference))>=8),
  terms_envelope TEXT NOT NULL,
  applicant_count INTEGER NOT NULL CHECK(applicant_count BETWEEN 1 AND 10),
@@ -20,7 +20,11 @@ CREATE TABLE rental_tenancy_handovers (
  activated_by TEXT REFERENCES users(id),
  activated_at TEXT,
  activation_reference TEXT,
- CHECK((status='activated')=(activated_at IS NOT NULL))
+ voided_by TEXT REFERENCES users(id),
+ voided_at TEXT,
+ void_reference TEXT,
+ CHECK((status='activated')=(activated_at IS NOT NULL)),
+ CHECK((status='void')=(voided_at IS NOT NULL))
 ) STRICT;
 CREATE INDEX rental_handover_tenancy_status ON rental_tenancy_handovers(tenancy_id,status);
 
@@ -82,6 +86,17 @@ CREATE TRIGGER rental_handover_activate_guard BEFORE UPDATE OF status
      AND e.status='executed' AND e.executed_document_id IS NOT NULL
      AND c.form_code='WA_FORM_1AA' AND c.tenancy_id=NEW.tenancy_id
   );
+ END;
+CREATE TRIGGER rental_handover_void_guard BEFORE UPDATE OF status
+ ON rental_tenancy_handovers
+ WHEN NEW.status='void'
+ BEGIN
+  SELECT RAISE(ABORT,'HANDOVER_ALREADY_FINALISED') WHERE OLD.status!='awaiting_agreement';
+  SELECT RAISE(ABORT,'HANDOVER_TENANCY_STILL_PENDING') WHERE EXISTS(
+    SELECT 1 FROM tenancies WHERE id=NEW.tenancy_id AND status!='ended');
+  SELECT RAISE(ABORT,'HANDOVER_EXECUTED_AGREEMENT') WHERE EXISTS(
+    SELECT 1 FROM wa_agreement_envelopes
+    WHERE tenancy_id=NEW.tenancy_id AND status='executed');
  END;
 CREATE TRIGGER rental_handover_people_immutable BEFORE UPDATE ON rental_tenancy_handover_people
  BEGIN SELECT RAISE(ABORT,'HANDOVER_PARTICIPANTS_IMMUTABLE'); END;
