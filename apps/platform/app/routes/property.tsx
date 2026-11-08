@@ -83,7 +83,7 @@ export default function Property() {
             <Link className="button secondary" to={d.workspace.href+'/tenancies?propertyId='+encodeURIComponent(p.id)}>Tenancies & forms</Link>
             <Link className="button secondary" to={d.workspace.href+'/bookings?propertyId='+encodeURIComponent(p.id)}>Bookings</Link>
             <Link className="button secondary" to={d.workspace.href+'/work-orders?propertyId='+encodeURIComponent(p.id)}>Work orders</Link>
-            <Link className="button secondary" to={d.workspace.href+'/administration'}>Verified client & management authority</Link>
+            <Link className="button secondary" to={d.workspace.href+'/administration?propertyId='+encodeURIComponent(p.id)}>Verified client & management authority</Link>
             <Link className="button secondary" to={d.workspace.href+'/reports'}>Inspection reports</Link>
           </div>
           {management?.listings?.length>0&&<div className="stack">
