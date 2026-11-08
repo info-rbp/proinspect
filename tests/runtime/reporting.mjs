@@ -61,8 +61,26 @@ try{
   assert.equal((await api('/api/w/landlord/'+clientId+'/reports/'+reportId+'/save',owner,{revision:1,content:{}})).status,404);
  });
  let draft=(await ok(base,inspector)).draft.content;
+ await check('preflight is read-only, revision-bound and inaccessible across workspaces',async()=>{
+  const before=await first('SELECT revision,status FROM inspection_reports WHERE id=?',reportId);
+  const result=await ok(base+'/preflight?revision=1',inspector);
+  assert.equal(result.reportId,reportId);
+  assert.equal(result.revision,1);
+  assert.equal(result.basis,'saved_draft');
+  assert.equal(result.status,'blocked');
+  assert.ok(result.issues.some(issue=>issue.code==='ATTENDANCE_SUMMARY_REQUIRED'));
+  assert.deepEqual(await first('SELECT revision,status FROM inspection_reports WHERE id=?',reportId),before);
+  assert.equal((await api(base+'/preflight?revision=2',inspector)).status,409);
+  assert.equal((await api(base+'/preflight?revision=garbage',inspector)).status,409);
+  assert.equal((await api(base+'/preflight',reviewer)).status,404);
+  assert.equal((await api('/api/w/landlord/'+clientId+'/reports/'+reportId+'/preflight',owner)).status,404);
+  assert.equal((await api(base+'/preflight',null)).status,401);
+ });
  await check('QC blocks missing attendance summary and draft can be saved with optimistic revision',async()=>{
   const u=await ok(base+'/reviewer',ops,{reviewerId:reviewer.id});assert.equal(u.reviewerId,reviewer.id);
+  const checked=await ok(base+'/preflight?revision=2',inspector);
+  assert.equal(checked.revision,2);
+  assert.ok(checked.issues.some(issue=>issue.code==='ATTENDANCE_SUMMARY_REQUIRED'), 'reviewer assignment must not invalidate saved-draft preflight');
   assert.equal((await api(base+'/submit',inspector,{revision:2})).status,409);
   draft.summary='Attended the caf\u00e9 and recorded Jos\u00e9\u2019s visible findings.';
   draft.areas[0].components[0].conditionCategory='intact';

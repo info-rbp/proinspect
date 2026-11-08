@@ -1,6 +1,6 @@
 import { type Env,assert,AppError } from '../../../../packages/database/types';
 import type {Principal,Workspace} from '../../../../packages/domain/index';
-import {listReports,reportDetail,createReport,saveReport,assignReviewer,submitReport,reviewReport} from './reports.server';
+import {listReports,reportDetail,preflightReport,createReport,saveReport,assignReviewer,submitReport,reviewReport} from './reports.server';
 import {uploadReportEvidence,reviewReportEvidence,downloadReportEvidence} from './report-evidence.server';
 import {renderApprovedReport,downloadRenderedReportForReview,reviewRenderedReport,reopenRejectedRender,issueApprovedReport,respondToIssuedReport,extractMaintenanceCandidates,resolveReportResponse,createMaintenanceRequest} from './report-issue.server';
 import {readJson} from '../../../../packages/operations/core';
@@ -18,6 +18,7 @@ export async function reportRoutes(request:Request,env:Env,user:Principal,w:Work
  if(method==='GET'){
   if(!id)return ok(await listReports(env,user,w));
   if(id && !action)return ok(await reportDetail(env,user,w,id));
+  if(id && action==='preflight' && !child) return ok(await preflightReport(env,user,w,id,new URL(request.url).searchParams.get('revision')));
   if(id && action==='rendered-pdf')return downloadRenderedReportForReview(env,user,w,id);
   if(id && action==='history')return ok(await reportHistory(env,user,w,id,new URL(request.url).searchParams.get('baselineReportId')??undefined));
   if(id&&action==='evidence'&&child&&subaction==='download')return downloadReportEvidence(env,user,w,id,child);
