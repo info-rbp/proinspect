@@ -14,6 +14,10 @@ test('rental outcomes are only externally communicated, documented yes/no decisi
  assert.equal(rentalOutcomeInput.safeParse(outcome).success,true);
  assert.equal(rentalOutcomeInput.safeParse({...outcome,outcome:'recommended'}).success,false);
 });
+test('signed rental handoff normalises case on approved recipient comparison',()=>{
+ const source=read('apps/platform/worker/features/rental-script-dispatch.server.ts');
+ assert.ok(source.includes("String(h.application_recipient_email??'').trim().toLowerCase()"));
+});
 test('reference checks are consent-gated and require evidence',()=>{
  const record={applicantId:'rap-example-01',target:'personal_1',outcome:'confirmed',method:'phone',evidenceReference:'CALL-2026-123',note:'Reference contacted and confirmed dates of tenancy.'};
  assert.equal(rentalReferenceCheckInput.safeParse(record).success,true);
