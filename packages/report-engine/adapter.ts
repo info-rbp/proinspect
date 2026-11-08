@@ -3,6 +3,7 @@ import { COMPONENT_CLEANLINESS_CATEGORIES, COMPONENT_CONDITION_CATEGORIES, COMPO
 import { evaluateReportQuality, type ReportQcResult } from './upstream/reportOperations.ts';
 import { inspectionPolicy } from './upstream/inspectionPolicy.ts';
 import type { ServiceReportContract } from './policy.ts';
+import { pdfLiteral, ReportPdfError } from './pdf.ts';
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
 const component = z.object({
@@ -63,6 +64,29 @@ export function qualityReview(draft:ReportDraft,ctx:ReportReviewContext,policy:S
  for(const photoId of referenced){
    const photo=evidence.get(photoId);
    if(!photo || photo.status!=='accepted')issues.push({id:'EVIDENCE_NOT_ACCEPTED:'+photoId,code:'EVIDENCE_NOT_ACCEPTED',category:'evidence',severity:'blocker',message:'This photo is missing or has not passed the evidence review.'});
+ }
+ // Native PDFs use WinAnsi: do not silently remove Unicode observations.
+ const checkPdfField=(value:string,field:string,areaId?:string,componentId?:string)=>{
+  try{
+   for(const line of value.replace(/\r\n?/g,'\n').replace(/[\u2028\u2029]/g,'\n').replace(/\t/g,' ').split('\n'))
+    pdfLiteral(line);
+  }catch(e){
+   if(!(e instanceof ReportPdfError)||e.code!=='PDF_TEXT_UNSUPPORTED')throw e;
+   issues.push({id:'PDF_TEXT_UNSUPPORTED:'+field,code:'PDF_TEXT_UNSUPPORTED',severity:'blocker',
+    category:'commentary',field,areaId,componentId,
+    message:'Saved text contains characters the native PDF cannot reproduce faithfully. Preserve the original wording and use an independently reviewed Unicode-capable report route before issue.'});
+  }
+ };
+ checkPdfField(draft.summary,'summary');
+ for(const area of draft.areas){
+  checkPdfField(area.name,'area:'+area.id+':name',area.id);
+  for(const c of area.components){
+   const prefix='area:'+area.id+':component:'+c.id+':';
+   checkPdfField(c.component,prefix+'name',area.id,c.id);
+   checkPdfField(c.commentary,prefix+'commentary',area.id,c.id);
+   if(c.testMethod)checkPdfField(c.testMethod,prefix+'testMethod',area.id,c.id);
+   for(let i=0;i<c.defects.length;i++)checkPdfField(c.defects[i],prefix+'defect:'+i,area.id,c.id);
+  }
  }
  const blockerCount=issues.filter(i=>i.severity==='blocker').length, errorCount=issues.filter(i=>i.severity==='error').length,warningCount=issues.filter(i=>i.severity==='warning').length,infoCount=issues.filter(i=>i.severity==='info').length;
  return {...result,issues,blockerCount,errorCount,warningCount,infoCount,status:blockerCount||errorCount?'blocked':warningCount?'warnings':'pass',score:Math.max(0,100-blockerCount*18-errorCount*8-warningCount*2)};
