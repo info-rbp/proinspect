@@ -35,7 +35,7 @@ export function seo(title: string, description: string, path: string, options: S
       description,
       serviceType: title,
       provider: business,
-      areaServed: { '@type': 'AdministrativeArea', name: 'Western Australia' },
+      // Publish geographic service areas only after operations confirms exact coverage.
       url,
     });
   }
