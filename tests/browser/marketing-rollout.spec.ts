@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { SERVICE_SEEDS, FAMILIES } from '../../packages/service-catalogue/index';
 import { ENGAGEMENTS, GUIDES } from '../../packages/marketing/content';
-import { AUDIENCES } from '../../apps/marketing/app/routes/audience';
+import { AUDIENCES } from '../../packages/marketing/audiences';
 
 const publicRoutes = [
   '/', '/services', '/service-finder', '/who-we-help', '/residential-property-support', '/sectors/residential', '/sectors/commercial', '/sectors/strata-building',
