@@ -160,7 +160,7 @@ export async function voidRentalTenancyHandover(env:Env,user:Principal,appId:str
  enabled(env);
  const d=tenancyVoidInput.parse(input),h=await state(env,appId);
  assert(h&&h.status==='awaiting_agreement',409,'HANDOVER_NOT_PENDING','Only an unexecuted pending handover can be voided.');
- const agreement=await statement(env.DB,'SELECT id FROM wa_agreement_envelopes WHERE tenancy_id=? AND status!='void'',h.tenancy_id).first();
+ const agreement=await statement(env.DB,"SELECT id FROM wa_agreement_envelopes WHERE tenancy_id=? AND status!='void'",h.tenancy_id).first();
  assert(!agreement,409,'HANDOVER_AGREEMENT_EXISTS','Void the associated Form 1AA signing case through its own controlled workflow first.');
  const stamp=now();
  await env.DB.batch([
