@@ -25,10 +25,34 @@ export async function accountData(request: Request, env: Env, user: Principal) {
     user.id,
     now(),
   ).first<{ total: number }>();
+  // Account registration, Stripe billing and booking entitlements are
+  // independent. Older Worker versions remain readable during migrations.
+  const ready = await statement(env.DB,
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_included_property_grants'").first();
+  const propertyPlans = ready ? (await statement(env.DB,`
+    SELECT c.id AS client_id,c.client_type,p.id AS property_id,p.address,p.sector,
+      CASE WHEN g.property_id IS NOT NULL THEN 'grandfathered'
+           WHEN bl.id IS NOT NULL THEN bl.status ELSE 'none' END AS subscription_status,
+      CASE WHEN g.property_id IS NOT NULL THEN 1 ELSE 0 END AS grandfathered,
+      CASE WHEN bl.stripe_subscription_id IS NOT NULL THEN 1 ELSE 0 END AS stripe_subscription_recorded
+    FROM client_memberships m
+    JOIN clients c ON c.id=m.client_id AND c.status='active'
+    JOIN client_property_links l ON l.client_id=c.id AND l.ends_at IS NULL
+    JOIN properties p ON p.id=l.property_id
+    LEFT JOIN legacy_included_property_grants g
+      ON g.client_id=c.id AND g.property_id=p.id
+    LEFT JOIN stripe_billing_links bl
+      ON bl.client_id=c.id AND bl.property_id=p.id AND bl.status NOT IN ('canceled','expired')
+    WHERE m.user_id=? AND m.active=1 AND m.role IN ('owner','admin')
+    ORDER BY p.address LIMIT 100`,user.id).all()).results : [];
   return {
     user: { id: user.id, email: user.email, display_name: user.display_name },
     sessions,
     activeSessions: count?.total ?? 0,
+    accountStatus: 'verified',
+    propertyPlans,
+    billingAvailable: env.APP_ENV === 'production' && env.RESIDENTIAL_LIVE_BILLING_ENABLED === 'true',
+    liveBillingConfigurationPending: env.APP_ENV === 'production' && env.RESIDENTIAL_LIVE_BILLING_ENABLED !== 'true',
     preferences: preferences ?? { report_email: 1, version: 0 },
   };
 }
