@@ -64,6 +64,17 @@ test('mobile inspector captures reviewed evidence without horizontal overflow',a
   const page=await staffCtx.newPage();
   await page.goto('/w/staff/operations/reports/'+report.id);
   await expect(page.getByRole('region',{name:'Mobile field inspection'})).toBeVisible();
+  const preflight=page.getByRole('region',{name:'Saved report quality checks'});
+  await preflight.getByRole('button',{name:'Check saved report quality'}).click();
+  await expect(preflight.getByText(/Revision 1: blocked/)).toBeVisible();
+  const recovery=page.getByRole('button',{name:'Check encrypted recovery queue'});
+  await recovery.click();
+  await expect(page.getByText(/no encrypted draft and 0 queued encrypted photo/)).toBeVisible();
+  await page.getByLabel('Device passphrase (minimum 12 characters)').fill('synthetic password for offline browser test');
+  await page.getByRole('button',{name:'Save encrypted copy'}).click();
+  await expect(page.getByText(/one encrypted draft and 0 queued encrypted photo/)).toBeVisible();
+  await page.getByRole('button',{name:'Remove local copies'}).click();
+  await expect(page.getByText(/no encrypted draft and 0 queued encrypted photo/)).toBeVisible();
   await expect(page.getByRole('progressbar',{name:'Inspection assessment progress'})).toBeVisible();
   await page.getByRole('button',{name:'Intact'}).click();
   await page.getByLabel('Observation and context').fill('Synthetic observation for responsive field capture.');
