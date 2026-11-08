@@ -55,8 +55,8 @@ test('Stage 2: nine genuine isolated workspace roles share a responsive accessib
   const people:Awaited<ReturnType<typeof actor>>[]=[];
   const add=async(email:string)=>{const a=await actor(browser,email);people.push(a);return a;};
   try{
-    const staff=await add('staff@proinspect.test');
-    const reviewer=await add('review-staff@proinspect.test');
+    const staff=await add('stage2-ops@proinspect.test');
+    const reviewer=await add('stage2-review@proinspect.test');
     const landlord=await add('stage2-landlord-'+stamp()+'@proinspect.test');
     const commercial=await add('stage2-commercial-'+stamp()+'@proinspect.test');
     const agency=await add('stage2-agency-'+stamp()+'@proinspect.test');
@@ -77,14 +77,15 @@ test('Stage 2: nine genuine isolated workspace roles share a responsive accessib
     await post(tenant.context,'/api/invitations/accept',{token:new URL(inv.localInvitationUrl).searchParams.get('token')});
 
     const strataBase='/api/w/strata-manager/'+strataClient.clientId;
-    const scheme=await post(strata.context,strataBase+'/schemes',{name:'Stage2 Apartments '+stamp(),schemeNumber:'STAGE2-'+stamp(),address:'39 Stage2 '+stamp()+' Road',suburb:'Perth',postcode:'6000',authorityReference:'Stage2 approved management instruction',validUntil:future()});
+    const authorityEnds=future();
+    const scheme=await post(strata.context,strataBase+'/schemes',{name:'Stage2 Apartments '+stamp(),schemeNumber:'STAGE2-'+stamp(),address:'39 Stage2 '+stamp()+' Road',suburb:'Perth',postcode:'6000',authorityReference:'Stage2 approved management instruction',validUntil:authorityEnds});
     for(const [person,role] of [[resident,'resident'],[council,'council_member']] as const){
       const member=await post(strata.context,strataBase+'/team/invite',{email:person.email,role,schemeId:scheme.id,...(role==='council_member'?{endsAt:future()}:{})});
       await post(person.context,'/api/invitations/accept',{token:new URL(member.localInvitationUrl).searchParams.get('token')});
     }
     const assignment=await post(staff.context,'/api/w/staff/operations/facilities/assignments/request',{
       buildingId:scheme.buildingId,userId:buildingManager.session.user.id,clientId:strataClient.clientId,
-      startsAt:new Date(Date.now()-86400000).toISOString(),endsAt:future(),authorityReference:'Stage2 independent building appointment'
+      startsAt:new Date().toISOString(),endsAt:authorityEnds,authorityReference:'Stage2 independent building appointment'
     });
     await post(reviewer.context,'/api/w/staff/operations/facilities/assignments/approve',{
       assignmentId:assignment.id,reference:'Stage2 independent review accepted'
