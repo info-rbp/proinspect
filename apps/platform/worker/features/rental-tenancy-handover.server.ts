@@ -126,6 +126,8 @@ export async function activateRentalTenancyHandover(env:Env,user:Principal,appId
  const app=await statement(env.DB,'SELECT privacy_hold_until FROM rental_applications WHERE id=?',appId)
  .first<{privacy_hold_until:string|null}>();
  assert(app&&(!app.privacy_hold_until||app.privacy_hold_until<=now()),409,'HANDOVER_PRIVACY_HOLD','Resolve any active privacy/legal hold.');
+ const erasure=await statement(env.DB,"SELECT id FROM rental_application_privacy_requests WHERE application_id=? AND kind='erasure' AND status IN('requested','in_review')",appId).first();
+ assert(!erasure,409,'HANDOVER_ERASURE_REVIEW','An unresolved erasure request blocks activation.');
  assert(await matchingVerifiedMembers(env,h),409,'HANDOVER_PARTICIPANTS_UNVERIFIED',
  'Every original adult applicant must independently verify their tenant invitation.');
  const e=await execution(env,h);
