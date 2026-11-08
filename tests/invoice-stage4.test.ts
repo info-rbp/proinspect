@@ -30,7 +30,7 @@ test('CSV invoice previews escape spreadsheet formulas and retain exact AUD cent
  const csv=invoiceObservationsCsv([sample(),{...sample(),
   stripe_invoice_id:'=HYPERLINK("https://example.test","bad")',
   client_id:'@dynamic',remaining_cents:3500,reconciliation:'exception'}]);
- assert.match(csv,/Invoice ID,Client ID,Currency/);
+ assert.match(csv,/"Invoice ID","Client ID","Currency"/);
  assert.match(csv,/"'=HYPERLINK\(""https:\/\/example.test"",""bad""\)"/);
  assert.match(csv,/"'@dynamic"/);
  assert.match(csv,/11000,0,11000/);
