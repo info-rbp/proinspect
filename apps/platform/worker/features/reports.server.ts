@@ -171,7 +171,7 @@ export async function preflightReport(env:Env,user:Principal,w:Workspace,id:stri
  }
  const draft=await statement(env.DB,'SELECT revision,content_json FROM report_drafts WHERE report_id=?',id)
   .first<{revision:number,content_json:string}>();
- assert(draft&&draft.revision===report.revision,409,'REPORT_CHANGED','The saved draft and report revision differ.');
+ assert(draft,409,'DRAFT_MISSING','This report has no saved draft.');
  const content=reportDraftSchema.parse(JSON.parse(draft.content_json));
  const evidence=(await statement(env.DB,'SELECT id,status,object_key FROM report_evidence WHERE report_id=?',id)
    .all<{id:string,status:string,object_key:string}>()).results;
