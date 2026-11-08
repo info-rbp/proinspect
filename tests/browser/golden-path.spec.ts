@@ -52,7 +52,10 @@ test('new Landlord registration is free and can consider a subscription later', 
   await expect(page).toHaveURL(/\/book\/routine-inspection\?property=/);
   await expect(page.getByLabel('Service', { exact: true })).toHaveValue('routine-inspection');
   await expect(page.getByText('Included in your active ProInspect subscription.', { exact: false })).toHaveCount(0);
-  await expect(page.getByText('This service requires a scope or price confirmation.', { exact: false })).toBeVisible();
+  // Routine inspections can also be purchased as priced one-off services.
+  // A free account must not be represented as having subscription coverage.
+  await expect(page.getByText('Service price', { exact: true })).toBeVisible();
+  await expect(page.getByText('Included — no additional charge', { exact: false })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Confirm booking' })).toBeDisabled();
   await page.goto('/account');
   await expect(page.getByRole('heading',{name:'Properties and subscriptions'})).toBeVisible();
