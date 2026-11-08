@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('premium public homepage shows key sections and destinations without impacting authentication', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Real property work.');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Property inspections.');
   await expect(page.getByRole('heading', { name: 'What can we help you with?' })).toBeVisible();
   await expect(page.getByRole('link', { name: /Explore inspections/i })).toHaveCount(0);
   await expect(page.locator('.mkt-family-card')).toHaveCount(6);
