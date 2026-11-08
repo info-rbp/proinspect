@@ -43,6 +43,8 @@ export default function Requests() {
   const w = d.workspace;
   const result = useActionData<any>();
   const [search] = useSearchParams();
+  const selectedPropertyId=search.get('propertyId')||search.get('property');
+  const scopedRequests=selectedPropertyId?d.requests.filter(r=>r.property_id===selectedPropertyId):d.requests;
   const busy = useNavigation().state !== 'idle';
   const allowed =
     (['landlord', 'property-manager', 'commercial'].includes(w.kind) && w.role !== 'viewer') ||
@@ -59,12 +61,13 @@ export default function Requests() {
       />
       <div className="stack">
         <Feedback value={result} />
+        {selectedPropertyId&&<p><Link to={d.workspace.href+'/properties/'+encodeURIComponent(selectedPropertyId)}>Return to selected property</Link> · {scopedRequests.length} requests</p>}
         <section className="panel">
           <div className="panel-header">
             <h2>{w.kind === 'staff' ? 'Incoming requests' : 'Request history'}</h2>
           </div>
-          {d.requests.length ? (
-            d.requests.map((r) => (
+          {scopedRequests.length ? (
+            scopedRequests.map((r) => (
               <article className="record-row" id={r.id} key={r.id}>
                 <div style={{ flex: 1 }}>
                   <div className="actions">
