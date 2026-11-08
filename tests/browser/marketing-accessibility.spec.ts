@@ -4,6 +4,9 @@ import { mkdirSync } from 'node:fs';
 const reviewRoutes = [
   ['home', '/'],
   ['services', '/services'],
+  ['finder', '/service-finder'],
+  ['private-landlords', '/who-we-help/private-landlords'],
+  ['residential-plan', '/residential-property-support'],
   ['inspection', '/services/routine-inspection'],
   ['residential', '/sectors/residential'],
   ['resources', '/resources'],
@@ -33,7 +36,7 @@ test('public marketing keyboard access preserves skip-link, responsive navigatio
 test('public marketing reflows at narrow and wide desktop viewports', async ({ page }) => {
   for (const width of [320, 390, 768, 1100, 1440]) {
     await page.setViewportSize({ width, height: 900 });
-    for (const path of ['/', '/services', '/services/routine-inspection', '/contact']) {
+    for (const path of ['/', '/services', '/service-finder', '/who-we-help', '/services/routine-inspection', '/contact']) {
       await page.goto(path);
       const metrics = await page.evaluate(() => ({
         scroll: document.documentElement.scrollWidth,
