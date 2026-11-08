@@ -121,6 +121,10 @@ export async function onboard(env: Env, user: Principal, input: unknown) {
       workspaceKind,
       now(),
     ),
+    // A verified account starts without Stripe customer, plan or payment obligation.
+    statement(env.DB,`INSERT INTO account_subscription_preferences(client_id,account_state,subscription_intent,updated_at)
+      VALUES(?,'verified','none',?) ON CONFLICT(client_id) DO NOTHING`,
+      clientId,now()),
     statement(env.DB, 'UPDATE users SET display_name=? WHERE id=?', data.displayName, user.id),
     audit(env, user, 'client.onboarded', 'client', clientId, null, {
       landlordType: data.landlordType,
@@ -217,6 +221,7 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
           propertyId, w.scopeId, user.display_name || user.email, user.email,
         )]
       : []),
+    statement(env.DB,"UPDATE account_subscription_preferences SET account_state='active',updated_at=? WHERE client_id=? AND account_state='verified'",time,w.scopeId),
     audit(env, user, 'property.created', 'property', propertyId, propertyId, {
       landlordType: commercial ? 'commercial' : 'residential',
     }),
