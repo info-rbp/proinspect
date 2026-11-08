@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import {
   Form,
+  useSearchParams,
+  Link,
   useActionData,
   useNavigation,
   data,
@@ -96,7 +98,8 @@ function AccessInstructions({ path }: { path: string }) {
 export default function WorkOrders() {
   const d = useWorkspace();
   const detail = useLoaderData<typeof loader>();
-  const orders = detail.order ? [detail.order] : d.workOrders;
+  const [search]=useSearchParams(),propertyId=search.get('propertyId');
+  const orders = detail.order ? [detail.order] : propertyId?d.workOrders.filter(o=>o.property_id===propertyId):d.workOrders;
   const result = useActionData<any>();
   const busy = useNavigation().state !== 'idle';
   const writable = d.workspace.kind === 'staff' && d.user.staffRole !== 'read_only';
@@ -109,6 +112,7 @@ export default function WorkOrders() {
       />
       <div className="stack">
         <Feedback value={result} />
+        {propertyId&&<p><Link to={d.workspace.href+'/properties/'+encodeURIComponent(propertyId)}>Return to selected property</Link> · {orders.length} work orders</p>}
         {orders.length ? (
           orders.map((o) => (
             <article key={o.id} id={o.id} className="panel">
