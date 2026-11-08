@@ -3,8 +3,7 @@ import { MarketingPageHero } from '../components/page-patterns';
 import { MarketingCta } from '../components/marketing-ui';
 import { seo } from '../lib/seo';
 
-/** Unapproved commercial proposal, not a live rate card or payment offer. */
-export const RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED = false;
+import { RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED } from '../../../../packages/marketing/pricing-publication';
 export const meta=()=>seo(
   'Residential Property Support — Account & Plan Options',
   'Learn how a ProInspect residential property account works, how one-off services differ from ongoing support and how optional weekly subscriptions are proposed.',
