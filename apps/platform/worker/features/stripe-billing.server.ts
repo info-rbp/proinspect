@@ -57,7 +57,12 @@ export function checkoutForm(params:{origin:string;linkId:string;clientId:string
 }
 export async function createSubscriptionCheckout(env:Env,user:Principal,w:Workspace,propertyId:string,legalConsent?:unknown){
  const live=isLiveResidential(env);
- if(live){liveResidentialReady(env);await requireReleaseApproval(env,'residential_live');}
+ if(live){
+  liveResidentialReady(env);
+  assert(env.LEGAL_ACCEPTANCE_ENABLED==='true',503,'SUBSCRIPTION_TERMS_UNAPPROVED',
+    'Subscription Checkout requires approved, effective terms and explicit consent.');
+  await requireReleaseApproval(env,'residential_live');
+ }
  else {billingReady(env);await requireReleaseApproval(env,'stripe_billing');}
  assert(['landlord','commercial'].includes(w.kind) && (!live || w.kind==='landlord'),403,'SUBSCRIPTION_OWNER_REQUIRED','Only an authorised residential landlord may start the live Friday subscription.');
  await clientAdmin(env,user,w);const property=await propertyAccess(env,user,w,propertyId);
