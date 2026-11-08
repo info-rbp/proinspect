@@ -1,14 +1,53 @@
+import {useState} from 'react';
 import {useLoaderData,type LoaderFunctionArgs} from 'react-router';
 import {loadApi} from '../lib/api.server';
 import {useWorkspace,workspaceApi} from '../lib/workspace';
 import {PageHeading,Badge} from '../../../../packages/ui/components';
 import {OperationForm,Input,Panel,Select,options} from '../components/OperationForm';
+import {inspectInvoiceObservation,invoiceObservationsCsv,type InvoiceReviewRow} from '../../../../packages/finance/invoice-review';
 export async function loader({request,context,params}:LoaderFunctionArgs){return loadApi(request,context,`/api/w/${params.kind}/${params.scopeId}/billing`);}
 const money=(n:number)=>new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD'}).format(n/100);
-export default function Billing(){const d=useLoaderData<typeof loader>(),w=useWorkspace().workspace,api=workspaceApi(w.kind,w.scopeId),staff=w.kind==='staff';return <>
+export default function Billing(){
+ const d=useLoaderData<typeof loader>(),w=useWorkspace().workspace,api=workspaceApi(w.kind,w.scopeId),staff=w.kind==='staff';
+ const [onlyExceptions,setOnlyExceptions]=useState(true),[csvError,setCsvError]=useState('');
+ const observed=(d.invoices||[]) as InvoiceReviewRow[];
+ const reviewed=observed.map(invoice=>({invoice,findings:inspectInvoiceObservation(invoice).flags}));
+ const flagged=reviewed.filter(row=>row.findings.length>0);
+ const visible=onlyExceptions?flagged:reviewed;
+ function exportVisibleCsv(){
+  setCsvError('');
+  try{
+   // The existing authenticated dashboard is a 100-row preview. Do not label
+   // this as a complete ledger, bank statement, or financial reconciliation.
+   const csv=invoiceObservationsCsv(visible.map(row=>row.invoice));
+   const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+   const link=document.createElement('a');
+   link.href=url;link.download='proinspect-invoice-observations-'+new Date().toISOString().slice(0,10)+'.csv';
+   document.body.appendChild(link);link.click();link.remove();
+   window.setTimeout(()=>URL.revokeObjectURL(url),1200);
+  }catch{setCsvError('Unable to generate the invoice preview. No financial records were changed.');}
+ }
+ return <>
 <PageHeading title="Billing and reconciliation" description="Service revenue, invoices and financial exceptions. These records do not authorise rent, bond or trust-money collection. Sandbox adapters never move live funds."/>
 {!staff&&<Panel title="Secure billing self-service"><OperationForm endpoint={api+'/billing/portal'} label="Open billing portal" result={r=>r.url?<a className="button" href={r.url} rel="noreferrer">Continue to Stripe billing</a>:null}/></Panel>}
 <Panel title="Property subscriptions">{d.subscriptions.map((s:any)=><p key={s.id}>{s.property_id} / {s.sector}: <Badge status={s.status}/></p>)}<p>Subscription financial status and included service entitlements are separate records.</p></Panel>
+<Panel title="Invoice observations and exceptions">
+ <p>Review the invoice records visible to your authorised workspace. {observed.length} invoice observation(s) returned; {flagged.length} require attention based on provider status, matching or arithmetic. This dashboard is capped at 100 recent records, so neither this view nor its export is a full bank or payout reconciliation.</p>
+ <div className="actions">
+  <button type="button" className="button secondary small" aria-pressed={onlyExceptions} onClick={()=>setOnlyExceptions(true)}>Needs review</button>
+  <button type="button" className="button secondary small" aria-pressed={!onlyExceptions} onClick={()=>setOnlyExceptions(false)}>All visible invoices</button>
+  <button type="button" className="button secondary small" onClick={exportVisibleCsv}>Download visible invoice CSV</button>
+ </div>
+ <p className="small muted">The download contains private client and invoice identifiers. Store it securely; it is a spreadsheet-safe observation preview, not a receipt or tax invoice.</p>
+ {csvError&&<p role="alert">{csvError}</p>}
+ {visible.length===0?<p>No invoice observations match this filter.</p>:visible.map(({invoice,findings})=>
+  <div className="record-row" key={invoice.stripe_invoice_id}>
+   <div><strong>{invoice.stripe_invoice_id}</strong>
+    <p>{money(invoice.total_cents)} total · {money(invoice.paid_cents)} paid · {money(invoice.remaining_cents)} remaining</p>
+    <p className="small">{findings.length?findings.join('; '):'No review flags in the visible provider snapshot.'}</p>
+   </div><Badge status={invoice.status}/>
+  </div>)}
+</Panel>
 <Panel title="Invoices">{d.invoices.map((i:any)=><div className="record-row" key={i.stripe_invoice_id}><div><strong>{i.stripe_invoice_id}</strong><p>{money(i.total_cents)} total / {money(i.paid_cents)} paid / {money(i.remaining_cents)} remaining</p><small>{i.reconciliation}</small></div><Badge status={i.status}/></div>)}{!d.invoices.length&&<p>No invoices recorded for this workspace.</p>}</Panel>
 {staff&&<><Panel title="Payment exceptions">{d.exceptions.map((e:any)=><div key={e.id} className="stack"><p>{e.code} / {e.payment_id??'Unmatched provider object'}</p><OperationForm endpoint={`${api}/billing/reconciliation/${e.id}`} label="Record verified resolution"><Input name="reference" label="Investigation and resolution evidence (at least 8 characters)"/></OperationForm></div>)}</Panel>
 <Panel title="Request a refund"><OperationForm endpoint={api+'/billing/refunds/request'} label="Request independent review"><Input name="paymentId" label="Settled payment ID"/><Input name="amountCents" type="number" label="Refund amount (AUD cents)"/><Input name="reason" label="Authorised refund reason and supporting reference"/></OperationForm></Panel>
