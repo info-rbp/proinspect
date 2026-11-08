@@ -8,6 +8,10 @@ import { mailEvent } from '../../../../packages/notifications/server';
 import type { Principal } from '../../../../packages/domain/index';
 import { operationsWrite } from '../../../../packages/authorization/server';
 import { isLocal } from '../../../../packages/auth/server';
+import { residentialApplicationReadiness, futureInspectionWindow } from '../../../../packages/marketing/leasing-operations';
+import { hasRentalRetentionPolicy } from '../../../../packages/marketing/rental-retention';
+import { checkedHttpsEndpoint } from '../../../../packages/marketing/rental-governance';
+import { releaseFeatureReady } from './release-governance.server';
 
 const cols='id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,agent_name,agent_role,application_url,application_mode,rental_approval_state,rental_recipient_verified_at,published_at';
 export async function publicListings(env:Env,kind?:string){
@@ -170,7 +174,26 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   const photos=(await statement(env.DB,'SELECT id,alt_text,sort_order,content_type,size FROM leasing_photos WHERE listing_id=? ORDER BY sort_order',listingId).all()).results;
   const leads=(await statement(env.DB,"SELECT id,session_id,kind,status,created_at FROM leasing_leads WHERE listing_id=? ORDER BY created_at DESC LIMIT 100",listingId).all()).results;
   const details=await statement(env.DB,'SELECT * FROM leasing_listings WHERE id=?',listingId).first();
-  return {listing:details,sessions,photos,leads};
+  const notices=JSON.parse(String((details as Record<string,any>).tenancy_database_notice_json??'[]')) as unknown;
+  const mode=String((details as Record<string,any>).tenancy_database_notice_mode??'');
+  const secureProvider=(endpoint:string|undefined,host:string|undefined)=>Boolean(checkedHttpsEndpoint(endpoint,host));
+  const scannerConfigured=env.RENTAL_SCANNER_ENABLED==='true'&&secureProvider(env.RENTAL_SCANNER_ENDPOINT,env.RENTAL_SCANNER_ALLOWED_HOST)&&
+   Boolean(env.RENTAL_SCANNER_OUTBOUND_SECRET&&env.RENTAL_SCANNER_OUTBOUND_SECRET.length>=32&&env.RENTAL_SCANNER_WEBHOOK_SECRET&&env.RENTAL_SCANNER_WEBHOOK_SECRET.length>=32);
+  const handoffConfigured=env.RENTAL_APPS_SCRIPT_ENABLED==='true'&&secureProvider(env.RENTAL_APPS_SCRIPT_ENDPOINT,env.RENTAL_APPS_SCRIPT_ALLOWED_HOST)&&
+   Boolean(env.RENTAL_APPS_SCRIPT_SECRET&&env.RENTAL_APPS_SCRIPT_SECRET.length>=32);
+  const applicationReadiness=residentialApplicationReadiness({
+   listingStatus:listing.status,applicationMode:String((details as Record<string,any>).application_mode??''),
+   authorityReference:(details as Record<string,any>).application_authority_reference,
+   recipientVerifiedAt:(details as Record<string,any>).rental_recipient_verified_at,
+   approvalState:(details as Record<string,any>).rental_approval_state,
+   noticeMode:mode,noticeCount:Array.isArray(notices)?notices.length:0,
+   retentionConfigured:hasRentalRetentionPolicy(env),
+   scannerConfigured,handoffConfigured,
+   scannerReleaseApproved:await releaseFeatureReady(env,'rental_scanner'),
+   handoffReleaseApproved:await releaseFeatureReady(env,'rental_script'),
+   intakeReleaseApproved:await releaseFeatureReady(env,'rental')
+  });
+  return {listing:details,sessions,photos,leads,applicationReadiness};
  }
  if(method==='POST'&&section==='recipient-challenge')return issueRecipientChallenge(env,user,listingId,body);
  if(method==='POST'&&section==='rental-approve')return approveRentalListing(env,user,listingId,body);
@@ -209,7 +232,7 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
  }
  if(method==='POST'&&section==='sessions'){
   const d=sessionInput.parse({...body as Record<string,unknown>,listingId});
-  assert(new Date(d.endsAt)>new Date(d.startsAt),422,'SESSION_TIME','End time must be later.');
+  assert(futureInspectionWindow(d.startsAt,d.endsAt),422,'SESSION_TIME','Inspection must start in the future and finish after it starts.');
   const id=uid('lsn'),t=now();
   await statement(env.DB,"INSERT INTO leasing_sessions(id,listing_id,starts_at,ends_at,capacity,instructions,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
   id,listingId,d.startsAt,d.endsAt,d.capacity??null,d.instructions,t,t).run();
@@ -218,7 +241,7 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
 
  if(method==='POST'&&section==='session-edit'&&other){
    const d=z.object({version:z.number().int().positive(),startsAt:z.string().datetime({offset:true}),endsAt:z.string().datetime({offset:true}),capacity:z.number().int().min(1).max(200).nullable().optional(),instructions:z.string().max(600).default('')}).parse(body);
-   assert(new Date(d.endsAt)>new Date(d.startsAt),422,'SESSION_TIME','End time must be after start.');
+   assert(futureInspectionWindow(d.startsAt,d.endsAt),422,'SESSION_TIME','Inspection must start in the future and finish after it starts.');
    const original=await statement(env.DB,'SELECT starts_at,ends_at FROM leasing_sessions WHERE id=? AND listing_id=?',other,listingId).first<{starts_at:string;ends_at:string}>();
    assert(original,404,'SESSION_NOT_FOUND','Inspection session not found.');
    const up=await statement(env.DB,"UPDATE leasing_sessions SET starts_at=?,ends_at=?,capacity=?,instructions=?,updated_at=?,version=version+1 WHERE id=? AND listing_id=? AND version=? AND status='scheduled'",
@@ -238,9 +261,11 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
  }
  if(method==='POST'&&section==='session-status'&&other){
   const d=z.object({status:z.enum(['scheduled','cancelled','completed']),version:z.number().int().positive()}).parse(body);
-  const found=await statement(env.DB,'SELECT id,status,starts_at FROM leasing_sessions WHERE id=? AND listing_id=?',other,listingId).first<{id:string;status:string;starts_at:string}>();
+  const found=await statement(env.DB,'SELECT id,status,starts_at,ends_at FROM leasing_sessions WHERE id=? AND listing_id=?',other,listingId).first<{id:string;status:string;starts_at:string;ends_at:string}>();
   assert(found,404,'SESSION_NOT_FOUND','Session not found.');
-  const result=await statement(env.DB,'UPDATE leasing_sessions SET status=?,version=version+1,updated_at=? WHERE id=? AND version=?',d.status,now(),other,d.version).run();
+  assert(found.status==='scheduled'&&d.status!=='scheduled',409,'SESSION_STATE','Only scheduled sessions can be completed or cancelled.');
+  assert(d.status!=='completed'||Date.parse(found.starts_at)<=Date.now(),409,'SESSION_NOT_STARTED','An inspection cannot be completed before it starts.');
+  const result=await statement(env.DB,"UPDATE leasing_sessions SET status=?,version=version+1,updated_at=? WHERE id=? AND listing_id=? AND version=? AND status='scheduled'",d.status,now(),other,listingId,d.version).run();
   assert(result.meta.changes===1,409,'STALE_SESSION','Reload session before editing.');
   if(d.status==='cancelled'){
    const recipients=(await statement(env.DB,"SELECT id FROM leasing_leads WHERE session_id=? AND status='active'",other).all<{id:string}>()).results;
