@@ -136,6 +136,49 @@ function HistoryPanel({history}:{history:any}){
    <p className="small muted">{history.note} Findings never create maintenance work or determine tenant liability automatically. Review evidence and use the normal authorised maintenance-candidate process.</p>
  </section>;
 }
+type ReportPreflightResult = {
+ reportId:string;revision:number;status:'pass'|'warnings'|'blocked';score:number;basis:'saved_draft';
+ blockerCount:number;errorCount:number;warningCount:number;infoCount:number;
+ issues:Array<{id:string;severity:string;code:string;message:string;areaId?:string;componentId?:string}>;
+};
+function SavedReportPreflight({reportId,revision,workspaceKind,scopeId}:{
+ reportId:string;revision:number;workspaceKind:string;scopeId:string;
+}){
+ const [result,setResult]=useState<ReportPreflightResult|null>(null);
+ const [error,setError]=useState(''),[checking,setChecking]=useState(false);
+ async function check(){
+  setChecking(true);setError('');setResult(null);
+  try{
+   const url='/api/w/'+encodeURIComponent(workspaceKind)+'/'+encodeURIComponent(scopeId)+
+    '/reports/'+encodeURIComponent(reportId)+'/preflight?revision='+encodeURIComponent(String(revision));
+   const response=await fetch(url,{credentials:'same-origin',redirect:'error',headers:{Accept:'application/json'}});
+   const value=await response.json() as ReportPreflightResult & {message?:string};
+   if(!response.ok)throw new Error(response.status===409?
+    'The saved report changed. Reload this page before running quality checks.':
+    value.message||'Report quality checks are unavailable.');
+   if(value.reportId!==reportId||value.revision!==revision||value.basis!=='saved_draft')
+    throw new Error('The quality check returned a different report revision. Reload this page.');
+   setResult(value);
+  }catch(e){setError(e instanceof Error?e.message:'Report quality checks failed.');}
+  finally{setChecking(false);}
+ }
+ return <section className="panel stack-sm" aria-label="Saved report quality checks">
+  <h3>Check the saved report before submission</h3>
+  <p className="small muted">Checks the last saved report version and independently reviewed evidence against the server's submission rules. Save any editor changes first. This is not reviewer approval.</p>
+  <div className="actions"><button type="button" className="button secondary small" disabled={checking} onClick={check}>
+    {checking?'Checking…':'Check saved report quality'}</button></div>
+  {error&&<p role="alert">{error}</p>}
+  {result&&<div role="status" className="stack-sm">
+    <p><strong>Revision {result.revision}: {result.status.replaceAll('_',' ')}</strong>
+      {' — '+result.blockerCount+' blocking, '+result.errorCount+' errors, '+result.warningCount+' warnings.'}</p>
+    {result.issues.length>0?<ol className="stack-sm">
+      {result.issues.map(issue=><li key={issue.id}>
+        <strong>{issue.severity.replaceAll('_',' ')}</strong> — {issue.message}
+        {issue.areaId&&<small>{' Area '+issue.areaId}{issue.componentId?' / Component '+issue.componentId:''}</small>}
+      </li>)}</ol>:<p>No issues were found in the saved report. Independent review remains mandatory.</p>}
+  </div>}
+ </section>;
+}
 export default function ReportDetail(){
  const d=useWorkspace(),payload=useLoaderData<typeof loader>() as any,report=payload.report,action=useActionData<any>(),nav=useNavigation();
  const staff=d.workspace.kind==='staff',manager=staff&&['administrator','operations_manager'].includes(d.user.staffRole||'');
@@ -171,6 +214,8 @@ export default function ReportDetail(){
         {d.staff.filter(s=>s.id!==report.inspector_id&&s.id!==report.created_by).map(s=><option value={s.id} key={s.id}>{s.display_name||s.email}</option>)}
       </select></label><button className="button secondary">Assign reviewer</button>
     </Form>}
+    {editor&&['draft','changes_requested'].includes(report.status)&&<SavedReportPreflight key={report.revision}
+      reportId={report.id} revision={report.revision} workspaceKind={d.workspace.kind} scopeId={d.workspace.scopeId}/>}
     {editor&&['draft','changes_requested'].includes(report.status)&&<Form method="post">
       <input type="hidden" name="intent" value="submit"/><input type="hidden" name="revision" value={report.revision}/>
       <button className="primary" disabled={nav.state!=='idle'}>Submit for QC and independent review</button>
