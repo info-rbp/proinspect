@@ -91,3 +91,8 @@ test('photo acknowledgement must match the exact uploaded bytes before erasure',
     false,
   );
 });
+
+test('offline recovery inventory rejects cross-scope identities before reading local device storage',async()=>{
+ const {inspectOfflineRecovery}=await import('../apps/platform/app/lib/report-offline.ts');
+ await assert.rejects(inspectOfflineRecovery({userId:'../external',kind:'staff',scopeId:'operations',reportId:'r1'}),/Invalid offline workspace/);
+});
