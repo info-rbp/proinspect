@@ -208,10 +208,33 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   return {ok:true,applicationMode:d.applicationMode};
  }
  if(method==='POST'&&section==='edit'){
-  const d=listingInput.extend({version:z.number().int().positive()}).parse(body);
-  const result=await statement(env.DB,`UPDATE leasing_listings SET property_id=?,instructed_by_client_id=?,owner_client_id=?,kind=?,slug=?,title=?,description=?,display_address=?,suburb=?,postcode=?,price_cents=?,price_period=?,bedrooms=?,bathrooms=?,parking=?,area_sqm=?,available_from=?,agent_name=?,agent_role=?,application_url=?,updated_at=?,version=version+1 WHERE id=? AND version=?`,
-   d.propertyId,d.instructedByClientId,d.ownerClientId??null,d.kind,d.slug,d.title,d.description,d.displayAddress,d.suburb,d.postcode,d.priceCents??null,d.pricePeriod,d.bedrooms??null,d.bathrooms??null,d.parking??null,d.areaSqm??null,d.availableFrom??null,d.agentName,d.agentRole,safeApplicationUrl(d.applicationUrl),now(),listingId,d.version).run();
-  assert(result.meta.changes===1,409,'STALE_LISTING','Reload listing before editing.');
+  const d=listingInput.extend({description:z.string().trim().min(5).max(8000),version:z.number().int().positive(),sourceReference:z.string().trim().min(8).max(300)}).parse(body);
+  const current=listing as Record<string,unknown>;
+  // Public copy can be reviewed, but staff editing must never silently transfer
+  // the listing to another landlord, property, sector or application recipient.
+  assert(d.propertyId===current.property_id&&d.instructedByClientId===current.instructed_by_client_id
+    &&(d.ownerClientId??null)===(current.owner_client_id??null)&&d.kind===current.kind
+    &&d.slug===current.slug,409,'LISTING_AUTHORITY_LOCKED',
+    'Property, client, sector and public slug cannot be reassigned in a listing edit. Use verified authority review.');
+  const changed={
+    title:d.title,description:d.description,displayAddress:d.displayAddress,suburb:d.suburb,postcode:d.postcode,
+    priceCents:d.priceCents??null,pricePeriod:d.pricePeriod,bedrooms:d.bedrooms??null,
+    bathrooms:d.bathrooms??null,parking:d.parking??null,areaSqm:d.areaSqm??null,
+    availableFrom:d.availableFrom??null,agentName:d.agentName,agentRole:d.agentRole
+  };
+  const changes=await env.DB.batch([
+    statement(env.DB,"UPDATE leasing_listings SET title=?,description=?,display_address=?,suburb=?,postcode=?,price_cents=?,price_period=?,bedrooms=?,bathrooms=?,parking=?,area_sqm=?,available_from=?,agent_name=?,agent_role=?,updated_at=?,version=version+1 WHERE id=? AND version=? AND property_id=? AND instructed_by_client_id=?",
+      d.title,d.description,d.displayAddress,d.suburb,d.postcode,d.priceCents??null,d.pricePeriod,
+      d.bedrooms??null,d.bathrooms??null,d.parking??null,d.areaSqm??null,d.availableFrom??null,
+      d.agentName,d.agentRole,now(),listingId,d.version,d.propertyId,d.instructedByClientId),
+    statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+    statement(env.DB,'DELETE FROM mutation_guards'),
+    statement(env.DB,'INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,property_id,metadata_json,created_at) VALUES(?,?,?,?,?,?,?,?)',
+      uid('aud'),user.id,'leasing.listing_details_updated','leasing_listing',listingId,d.propertyId,
+      JSON.stringify({sourceReference:d.sourceReference,beforeVersion:d.version,changed,
+        note:'Application method, recipient, authority and ownership unchanged'}),now())
+  ]);
+  assert(changes[0]?.meta?.changes===1,409,'STALE_LISTING','Reload listing before editing.');
   return {ok:true};
  }
  if(method==='POST'&&section==='photo-remove'&&other){
