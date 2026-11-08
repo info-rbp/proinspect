@@ -4,7 +4,9 @@ import { useWorkspace } from '../lib/workspace';
 import { PageHeading, Badge } from '../../../../packages/ui/components';
 
 export async function loader({request,context}:LoaderFunctionArgs){
- return await loadApi(request,context,'/api/staff/rental-applications') as any;
+ const listingId=new URL(request.url).searchParams.get('listingId');
+ const filter=listingId&&/^[a-zA-Z0-9_-]{3,100}$/.test(listingId)?'?listingId='+encodeURIComponent(listingId):'';
+ return await loadApi(request,context,'/api/staff/rental-applications'+filter) as any;
 }
 export default function RentalApplicationsQueue(){
  const d=useLoaderData<typeof loader>(),w=useWorkspace().workspace;
