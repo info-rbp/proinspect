@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { useWorkspace, type WorkspaceData } from '../lib/workspace';
+import { useWorkspace, type WorkspaceData, type RecordRow } from '../lib/workspace';
 import { PageHeading, Metric, Badge, EmptyState } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
 /** Staff-specific action centre. Counts are derived from the authorised workspace response. */
@@ -17,7 +17,7 @@ function StaffToday({ data }: { data: WorkspaceData }) {
   const openOrders = data.workOrders.filter(o => !['completed', 'cancelled', 'closed'].includes(o.status));
   const exceptions = data.payments.filter(p => ['failed', 'payment_required'].includes(p.status)).length
     + data.approvals.filter(a => a.status === 'pending').length;
-  const recent = [...data.workOrders.map(row => ({...row, category: 'Work order', path: `${base}/work-orders/${row.id}` })),
+  const recent: Array<RecordRow & {category: string; path: string}> = [...data.workOrders.map(row => ({...row, category: 'Work order', path: `${base}/work-orders/${row.id}` })),
     ...data.bookings.map(row => ({...row, category: 'Booking', path: `${base}/bookings` }))]
     .sort((a, b) => String(b.updated_at ?? b.created_at ?? b.starts_at ?? '').localeCompare(String(a.updated_at ?? a.created_at ?? a.starts_at ?? '')))
     .slice(0, 6);
@@ -80,7 +80,6 @@ export default function Overview() {
   const upcoming = d.bookings.filter(
     (b) => b.status === 'confirmed' && b.starts_at > new Date().toISOString(),
   );
-  const openOrders = d.workOrders.filter((o) => !['cancelled', 'completed'].includes(o.status));
   if (['strata-manager', 'building', 'council'].includes(w.kind))
     return (
       <>
@@ -171,7 +170,7 @@ export default function Overview() {
           <Metric
             label="Properties"
             value={d.properties.length}
-            detail={w.kind === 'staff' ? 'Within your staff scope' : 'Linked to this workspace'}
+            detail="Linked to this workspace"
           />
           <Metric
             label="Upcoming"
@@ -221,38 +220,15 @@ export default function Overview() {
         <div className="detail-grid">
           <section className="panel">
             <div className="panel-header">
-              <h2>{w.kind === 'staff' ? 'Work requiring attention' : 'Your properties'}</h2>
+              <h2>Your properties</h2>
               <Link
                 className="small"
-                to={`${w.href}/${w.kind === 'staff' ? 'work-orders' : 'properties'}`}
+                to={`${w.href}/properties`}
               >
                 {w.kind === 'tenant' ? '' : 'View all →'}
               </Link>
             </div>
-            {w.kind === 'staff' ? (
-              openOrders.length ? (
-                <div className="record-list">
-                  {openOrders.slice(0, 6).map((o) => (
-                    <div className="record-row" key={o.id}>
-                      <div>
-                        <Link className="record-title" to={`${w.href}/work-orders#${o.id}`}>
-                          {o.title}
-                        </Link>
-                        <p>
-                          {o.address} · {o.reference}
-                        </p>
-                      </div>
-                      <Badge status={o.status} />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  title="No work is waiting"
-                  description="New bookings and requests will appear here for your team."
-                />
-              )
-            ) : d.properties.length ? (
+            {d.properties.length ? (
               d.properties.slice(0, 5).map((p) => (
                 <div className="record-row" key={p.id}>
                   <div>
