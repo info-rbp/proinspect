@@ -1,5 +1,5 @@
 import { Link, useOutletContext } from 'react-router';
-import { AUDIENCES } from './audience';
+import { AUDIENCES } from '../../../../packages/marketing/audiences';
 import { MarketingPageHero, MarketingSectionTitle } from '../components/page-patterns';
 import { MarketingCta } from '../components/marketing-ui';
 import { seo } from '../lib/seo';
