@@ -199,7 +199,7 @@ async function acceptInvitation(env: Env, user: Principal, token: unknown) {
   // Pending tenancy invitations are limited to an explicitly released and recorded
   // rental handover; all other invitations retain the active-tenancy condition.
   const pendingTenancyCondition=env.RENTAL_TENANCY_HANDOVER_ENABLED==='true'
-    ? "(t.status='active' OR (t.status='pending' AND EXISTS(SELECT 1 FROM rental_tenancy_handovers h WHERE h.tenancy_id=t.id AND h.status='awaiting_agreement')))"
+    ? "(t.status='active' OR (t.status='pending' AND EXISTS(SELECT 1 FROM rental_tenancy_handovers h JOIN rental_applications a ON a.id=h.application_id AND a.status='decision_recorded' WHERE h.tenancy_id=t.id AND h.status='awaiting_agreement')))"
     : "t.status='active'";
   const invitation = await statement(
     env.DB,
