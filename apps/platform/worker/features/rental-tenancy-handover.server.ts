@@ -155,6 +155,7 @@ export async function activateRentalTenancyHandover(env:Env,user:Principal,appId
 }
 export async function voidRentalTenancyHandover(env:Env,user:Principal,appId:string,input:unknown){
  staff(user);
+ enabled(env);
  const d=tenancyVoidInput.parse(input),h=await state(env,appId);
  assert(h&&h.status==='awaiting_agreement',409,'HANDOVER_NOT_PENDING','Only an unexecuted pending handover can be voided.');
  const agreement=await statement(env.DB,'SELECT id FROM wa_agreement_envelopes WHERE tenancy_id=?',h.tenancy_id).first();
