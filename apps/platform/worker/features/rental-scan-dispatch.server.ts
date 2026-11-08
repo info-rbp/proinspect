@@ -1,6 +1,7 @@
 import { assert,statement,now,type Env } from '../../../../packages/database/types';
 import { checkedHttpsEndpoint,nextRetry } from '../../../../packages/marketing/rental-governance';
 import { digest } from '../../../../packages/auth/crypto';
+import { releaseFeatureReady } from './release-governance.server';
 
 /** Private scanner adapter. A remote scanner must return a signed callback through
  * /api/internal/rental-document-scan; HTTP 200 alone never clears quarantine.
