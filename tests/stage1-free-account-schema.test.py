@@ -31,7 +31,7 @@ class AccountFirstSchema(unittest.TestCase):
 
             db.execute("INSERT INTO clients(id,name,client_type,created_at) VALUES('fresh','Free customer','landlord','2026-11-08')")
             self.assertIsNone(db.execute("SELECT id FROM subscriptions WHERE client_id='fresh'").fetchone())
-            self.assertIsNone(db.execute("SELECT id FROM billing_accounts WHERE client_id='fresh'").fetchone())
+            self.assertIsNone(db.execute("SELECT client_id FROM billing_accounts WHERE client_id='fresh'").fetchone())
             db.execute("INSERT INTO properties(id,address,suburb,postcode,address_key,sector,created_at) VALUES('p_new','2 Test Road','Perth','6000','2-test-road','residential','2026-11-08')")
             db.execute("INSERT INTO client_property_links(id,client_id,property_id,role,starts_at) VALUES('l_new','legacy','p_new','owner','2026-11-08')")
             self.assertIsNone(db.execute("SELECT 1 FROM legacy_included_property_grants WHERE property_id='p_new'").fetchone())
