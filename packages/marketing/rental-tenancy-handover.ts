@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { perthLocalToUtc } from './leasing-operations';
+import { perthLocalToUtc } from './leasing-operations.ts';
 
 const dateOnly=z.string().regex(/^\d{4}-\d{2}-\d{2}$/,'Use a valid Perth calendar date.');
 const ref=z.string().trim().min(8).max(180);
