@@ -82,10 +82,10 @@ export default function Home() {
             </p>
             <div className="actions mkt-hero-actions">
               <Link className="button" to="/services">Explore services <span aria-hidden="true">→</span></Link>
-              <Link className="button secondary" to="/contact">Discuss your needs</Link>
+              <a className="button secondary" href={appOrigin + '/signin'}>Create account / Sign in</a>
             </div>
             <div className="mkt-hero-context">One property or a portfolio. One-off services or eligible subscription bookings, subject to confirmed scope and availability.</div>
-            <p className="mkt-section-footnote">New to ProInspect? <Link to="/contact">Request a one-off service</Link>. Already a customer? <a href={appOrigin + '/signin'}>Sign in to your property portal</a>.</p>
+            <p className="mkt-section-footnote">Need a one-off service? <Link to="/contact">Request it without an account</Link>. Creating an account does not automatically begin paid subscription billing.</p>
           </div>
           <div className="mkt-hero-visual">
             <PropertyArtwork kind="residential" className="mkt-hero-property" slot="home-hero" />
