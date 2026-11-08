@@ -49,7 +49,7 @@ const mf=new Miniflare({
   assert.equal(envelope.signature,'sha256='+actual);
   const payload=JSON.parse(envelope.data);
   assert.equal(payload.contractVersion,'proinspect-rental-email-v1');
-  assert.equal(payload.recipient,'Lighthousepropertygroup@mail.com');
+  assert.equal(payload.recipient,'lighthousepropertygroup@mail.com');
   assert.equal(payload.instructingClientId,'cli_lighthouse_property_group_pty_ltd');
   assert.equal(payload.cc,'info@proinspect.systems');
   assert.equal(payload.applicants.length,1);
