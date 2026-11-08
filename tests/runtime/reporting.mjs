@@ -78,6 +78,9 @@ try{
  });
  await check('QC blocks missing attendance summary and draft can be saved with optimistic revision',async()=>{
   const u=await ok(base+'/reviewer',ops,{reviewerId:reviewer.id});assert.equal(u.reviewerId,reviewer.id);
+  const checked=await ok(base+'/preflight?revision=2',inspector);
+  assert.equal(checked.revision,2);
+  assert.ok(checked.issues.some(issue=>issue.code==='ATTENDANCE_SUMMARY_REQUIRED'), 'reviewer assignment must not invalidate saved-draft preflight');
   assert.equal((await api(base+'/submit',inspector,{revision:2})).status,409);
   draft.summary='Attended the caf\u00e9 and recorded Jos\u00e9\u2019s visible findings.';
   draft.areas[0].components[0].conditionCategory='intact';
