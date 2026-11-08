@@ -19,6 +19,10 @@ test('Staff reporting register is accessible and mobile-safe within the unified 
   await expect(p.getByRole('heading',{name:'Inspection reporting'})).toBeVisible();
   await expect(p.getByRole('heading',{name:'Start a Work Order report'})).toBeVisible();
   await expect(p.getByRole('heading',{name:'Reporting register'})).toBeVisible();
+  const parity=p.getByRole('region',{name:'Report template parity'});
+  await expect(parity.getByRole('heading',{name:'Retained report template coverage'})).toBeVisible();
+  await parity.getByText('Inspect all retained template mappings').click();
+  await expect(parity.locator('tbody tr')).toHaveCount(25);
   expect(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
   mkdirSync('artifacts/screenshots',{recursive:true});
   await p.screenshot({path:'artifacts/screenshots/report-register-staff-mobile.png',fullPage:true});
