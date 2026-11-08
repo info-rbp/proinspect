@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Form,
   Link,
@@ -11,191 +11,101 @@ import {
 } from 'react-router';
 import { loadApi } from '../lib/api.server';
 import type { WorkspaceData } from '../lib/workspace';
+import { isPortalRoute, portalLocation, portalNavigation } from '../lib/portal-navigation';
 import { WORKSPACES } from '../../../../packages/domain/index';
+
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
-  return (await loadApi(
-    request,
-    context,
-    `/api/w/${params.kind}/${params.scopeId}`,
-  )) as unknown as WorkspaceData;
+  return (await loadApi(request, context, '/api/w/' + params.kind + '/' + params.scopeId)) as WorkspaceData;
 }
 export default function WorkspaceLayout() {
-  const data = useLoaderData<typeof loader>(),
-    { workspace: w, user } = data;
-  const [open, setOpen] = useState(false),
-    pending = useNavigation().state !== 'idle';
-  const items: string[][] = [['', 'Overview', '']];
-  items.push(['records', 'Browse all records', '']);
-  const customer = ['landlord', 'property-manager', 'commercial', 'strata-manager'].includes(
-      w.kind,
-    ),
-    management = ['landlord', 'property-manager', 'commercial'].includes(w.kind),
-    staff = w.kind === 'staff';
-  if (management || staff)
-    items.push(['properties', management ? 'My properties' : 'Properties', '']);
-  if (w.kind === 'property-manager') items.push(['outsourcing','Outsourced ProInspect services','']);
-  if (management)
-    items.push([
-      'portfolio',
-      w.kind === 'landlord' ? 'Inspection plans' : 'Portfolio operations',
-      '',
-    ]);
-  if (
-    ['strata-manager', 'building', 'council'].includes(w.kind) ||
-    (staff && user.staffRole !== 'inspector')
-  )
-    items.push(['schemes', w.kind === 'building' ? 'My building' : 'Schemes & buildings', '']);
-  if (customer || staff)
-    items.push(
-      ['bookings', 'Bookings', ''],
-      ['booking-changes', 'Booking changes', ''],
-      ['work-orders', 'Work orders', ''],
-    );
-  if (management || w.kind === 'tenant' || (staff && user.staffRole !== 'inspector'))
-    items.push(['tenancies', w.kind === 'tenant' ? 'My tenancy & forms' : 'Tenancies & forms', '']);
-  if (w.kind !== 'council')
-    items.push([
-      'requests',
-      w.kind === 'tenant' || w.kind === 'building' ? 'My requests' : 'Requests',
-      '',
-    ]);
-  if (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''))
-    items.push(['wa-form-queue', 'WA residential forms', ''], ['bond-review-queue', 'WA bond operations', '']);
-  if (w.kind === 'tenant') items.push(['inspections', 'Inspections', '']);
-  items.push(['reports', w.kind === 'staff' ? 'Report creation & review' : 'Issued inspection reports', '']);
-  items.push(['documents', 'Documents & reports', '']);
-  if (customer || (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? '')))
-    items.push(['document-operations', 'Document preparation', '']);
-  if (customer) items.push(['service-agreements', 'Service agreements', '']);
-  if (staff && ['administrator','operations_manager'].includes(user.staffRole??'')) {
-    items.push(['release-readiness','Release acceptance','']);
-    items.push(['pricing-administration','Service price approvals','']);
-    items.push(['legal-administration','Legal versions & acceptance','']);
-    items.push(['agency-administration','Agency contracts & statements','']);
-    items.push(['v2-business','Business services & agreements','']);
-    items.push(['maintenance-delivery','Maintenance delivery','']);
-    items.push(['asset-compliance','Assets & compliance','']);
-    items.push(['market-packs','Specialist market packs','']);
-    items.push(['enterprise-intelligence','Capital & portfolio intelligence','']);
-  }
-  if (customer || w.kind === 'council' || (staff && user.staffRole !== 'inspector'))
-    items.push([
-      'finance',
-      w.kind === 'council' ? 'Council decisions' : 'Approvals & payments',
-      '',
-    ]);
-  if((customer&&['owner','admin'].includes(w.role))||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['billing','Billing & reconciliation','']);
-  if ((management && ['owner','admin'].includes(w.role)) ||
-    (staff && ['administrator','operations_manager'].includes(user.staffRole ?? '')))
-    items.push(['contractor-payments','Contractor payments','']);
-  if (customer || w.kind === 'council' || (staff && user.staffRole !== 'inspector'))
-    items.push(['reporting', 'Operational reporting', '']);
-  if (customer && ['owner', 'admin'].includes(w.role)) items.push(['team', 'Team & access', '']);
-  if (staff && user.staffRole !== 'inspector')
-    items.push(
-      ['administration', 'Operations administration', ''],
-      ['services', 'Service catalogue', ''],
-    );
-  if (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''))
-    items.push(['enquiries', 'Marketing enquiries', ''], ['leasing', 'Property leasing', ''], ['open-home-checkins', 'Open home attendance', ''], ['rental-applications', 'Rental applications', ''], ['guest-orders', 'One-off booking requests', ''], ['v4-service-requests','V4 service requests',''], ['integrations', 'Integrations', '']);
-  if (data.restrictedEnabled && (w.kind === 'tenant' || staff))
-    items.push(['confidential', 'Confidential assistance', '']);
-  if((w.kind==='property-manager'&&['owner','admin'].includes(w.role))||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['owner-invitations','Owner visibility invitations','']);
-  if(['commercial','property-manager'].includes(w.kind)||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['commercial-leases','Lease obligations & dates','']);
-  if(['strata-manager','building','council'].includes(w.kind)||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['facilities','Building operations','']);
-  if(w.kind==='strata-manager'||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['building-communications','Notice draft reviews','']);
-  if(w.kind==='building-manager')items.splice(0,items.length,['','Overview',''],['facilities','Building operations',''],['building-communications','Notice drafts',''],['documents','Authorised building reports','']);
-  // Keep specialist routes and deep links intact while showing a concise first-level menu.
-  const primaryByKind: Record<string, string[]> = {
-    landlord: ['', 'properties', 'bookings', 'requests', 'reports', 'billing'],
-    'property-manager': ['', 'properties', 'portfolio', 'bookings', 'work-orders', 'reports', 'finance'],
-    commercial: ['', 'properties', 'commercial-leases', 'bookings', 'reports', 'finance'],
-    'strata-manager': ['', 'schemes', 'work-orders', 'requests', 'reports', 'finance'],
-    tenant: ['', 'tenancies', 'inspections', 'requests', 'documents'],
-    building: ['', 'schemes', 'requests', 'documents', 'facilities'],
-    council: ['', 'schemes', 'finance', 'reports', 'documents'],
-    'building-manager': ['', 'facilities', 'building-communications', 'documents'],
-    staff: ['', 'bookings', 'work-orders', 'reports', 'properties', 'finance'],
-  };
-  const primaryPaths = primaryByKind[w.kind] ?? ['', 'requests', 'documents'];
-  const primary = items.filter(([path]) => primaryPaths.includes(path));
-  const secondary = items.filter(([path]) => !primaryPaths.includes(path));
-  const pathname = useLocation().pathname;
-  const moreActive = secondary.some(([path]) =>
-    pathname === `${w.href}/${path}` || pathname.startsWith(`${w.href}/${path}/`),
+  const data = useLoaderData<typeof loader>();
+  const { workspace: w, user } = data;
+  const { pathname } = useLocation();
+  const pending = useNavigation().state !== 'idle';
+  const [open, setOpen] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const menu = portalNavigation(w.kind, w.role, user.staffRole, data.restrictedEnabled);
+  const section = portalLocation(menu, pathname, w.href);
+  const activeLink = (path: string) => isPortalRoute(pathname, w.href, path);
+  const moreActive = menu.groups.some(g => g.links.some(l => activeLink(l.path)));
+
+  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', escape);
+    return () => document.removeEventListener('keydown', escape);
+  }, [open]);
+  const navLink = ({path,label}: {path:string;label:string}) => (
+    <NavLink
+      key={path}
+      end={!path}
+      onClick={() => setOpen(false)}
+      aria-label={label}
+      to={w.href + (path ? '/' + path : '')}
+    >{label}</NavLink>
   );
   return (
-    <div className="app-shell">
+    <div className="app-shell pi-portal" data-portal-kind={w.kind}>
       {pending && <div className="loading-line" role="progressbar" aria-label="Loading page" />}
-      <aside className={`sidebar ${open ? 'open' : ''}`} aria-label="Workspace navigation">
-        <Link className="brand inverse" to="/workspaces">
-          ProInspect<span>PROPERTY OPERATIONS</span>
-        </Link>
-        <div className="workspace-label">{WORKSPACES[w.kind].name}</div>
-        <nav className="side-nav">
-          {primary.map(([path, label]) => (
-            <NavLink end={!path} onClick={() => setOpen(false)} key={path}
-              to={`${w.href}${path ? '/' + path : ''}`}>
-              {label}
-            </NavLink>
-          ))}
-          {secondary.length > 0 && (
-            <details className="side-nav-more" key={moreActive ? 'active-route' : 'collapsed'} open={moreActive}>
+      {open && <button type="button" className="pi-sidebar-scrim" aria-label="Close navigation" onClick={() => {setOpen(false);toggleRef.current?.focus();}} />}
+      <aside id="portal-sidebar" className={'sidebar' + (open ? ' open' : '')} aria-label="Workspace navigation">
+        <div className="pi-sidebar-head">
+          <Link className="brand inverse" onClick={() => setOpen(false)} to="/workspaces">ProInspect<span>PROPERTY OPERATIONS</span></Link>
+          <button ref={closeRef} type="button" className="pi-nav-close" aria-label="Close menu" onClick={() => {setOpen(false);toggleRef.current?.focus();}}>Close menu</button>
+        </div>
+        <div className="workspace-label">{WORKSPACES[w.kind].name} workspace</div>
+        <nav className="side-nav" aria-label={WORKSPACES[w.kind].name + ' sections'}>
+          {menu.primary.map(navLink)}
+          {menu.groups.length > 0 && (
+            <details className="side-nav-more" key={moreActive ? 'more-active' : 'more-closed'} defaultOpen={moreActive}>
               <summary>More tools</summary>
               <div className="side-nav-more-links">
-                {secondary.map(([path, label]) => (
-                  <NavLink end={!path} key={path} onClick={() => setOpen(false)}
-                    to={`${w.href}/${path}`}>{label}</NavLink>
-                ))}
+                {menu.groups.map(group => {
+                  const groupActive = group.links.some(l => activeLink(l.path));
+                  return (
+                    <details className="pi-nav-group" key={group.id + (groupActive ? '-active' : '-idle')} defaultOpen={groupActive}>
+                      <summary>{group.label}</summary>
+                      <div className="pi-nav-group-links">{group.links.map(navLink)}</div>
+                    </details>
+                  );
+                })}
               </div>
             </details>
           )}
         </nav>
         <div className="sidebar-foot">
-          <Link to="/account">Account &amp; sign-in security</Link>
-          <Link to="/workspaces">Switch workspace →</Link>
-          <p style={{ color: '#b0c3ce', marginTop: 12 }}>
-            Your access follows your relationship to each property.
-          </p>
-          {open && (
-            <button
-              className="button secondary"
-              onClick={() => setOpen(false)}
-              style={{ marginTop: 20 }}
-            >
-              Close menu
-            </button>
-          )}
+          <Link onClick={() => setOpen(false)} to="/account">Account &amp; security</Link>
+          <Link onClick={() => setOpen(false)} to="/workspaces">Switch workspace</Link>
         </div>
       </aside>
       <div className="app-main">
         <header className="topbar">
           <div className="actions">
-            <button
-              className="mobile-toggle"
-              type="button"
-              aria-label="Open navigation"
-              aria-expanded={open}
-              onClick={() => setOpen(!open)}
-            >
-              ☰
-            </button>
-            <div className="topbar-context">
-              {w.name}
-              <span>{WORKSPACES[w.kind].name}</span>
-            </div>
+            <button ref={toggleRef} className="mobile-toggle" type="button"
+              aria-label="Open navigation" aria-expanded={open} aria-controls="portal-sidebar"
+              onClick={() => setOpen(v => !v)}><span aria-hidden="true">☰</span></button>
+            <div className="topbar-context">{w.name}<span>{WORKSPACES[w.kind].name}</span></div>
           </div>
           <div className="topbar-user">
-            <span className="avatar" aria-hidden="true">
-              {(user.display_name || user.email).slice(0, 1).toUpperCase()}
-            </span>
+            <span className="avatar" aria-hidden="true">{(user.display_name || user.email).slice(0,1).toUpperCase()}</span>
             <span className="user-name">{user.display_name || user.email}</span>
-            <Form action="/signout" method="post">
-              <button className="button secondary small">Sign out</button>
-            </Form>
+            <Form action="/signout" method="post"><button type="submit" className="button secondary small">Sign out</button></Form>
           </div>
         </header>
-        <main id="main" className="content">
+        <main id="main" className="content" tabIndex={-1}>
+          <nav className="pi-breadcrumb" aria-label="Breadcrumb">
+            <Link to={w.href}>{w.kind === 'staff' ? 'Operations' : WORKSPACES[w.kind].name}</Link>
+            <span aria-hidden="true">/</span><span aria-current="page">{section}</span>
+          </nav>
           <Outlet context={data} />
         </main>
       </div>
