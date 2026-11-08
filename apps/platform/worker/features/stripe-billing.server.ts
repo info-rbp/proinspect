@@ -184,6 +184,15 @@ export async function billingEvent(env:Env,event:ProviderEvent,raw:string){
  }
  if(link&&sub&&created>link.last_subscription_event_created)
   steps.push(statement(env.DB,"UPDATE stripe_billing_links SET stripe_subscription_id=?,status=?,last_subscription_event_created=?,updated_at=? WHERE id=? AND last_subscription_event_created<? AND status NOT IN('canceled','expired')",subId,status==='incomplete_expired'?'expired':status,created,time,link.id,created));
+ // Subscription intent follows only signed, matched provider lifecycle events.
+ // This is a UI state, not paid-service entitlement; only invoice observations
+ // and risk holds can grant coverage.
+ if(live&&link&&sub&&created>link.last_subscription_event_created){
+   const intent=status==='canceled'?'canceled':'subscribed';
+   steps.push(statement(env.DB,
+     "UPDATE account_subscription_preferences SET subscription_intent=?,updated_at=? WHERE client_id=? AND subscription_intent IN ('checkout_requested','subscribed','canceled')",
+     intent,time,link.client_id));
+ }
  // Read-only entitlement gate combines active subscription state with latest signed paid invoice.
  // Historical business-approved subscriptions remain unchanged.
  return {...await commitProviderEvent(env,event,raw,steps),matched,needsReconciliation};
