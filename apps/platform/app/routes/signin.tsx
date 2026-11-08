@@ -58,10 +58,10 @@ export default function SignIn() {
           </p>
         </section>
         <section className="panel auth-panel">
-          <h2>Sign in or get started</h2>
+          <h2>Sign in or create an account</h2>
           <p>
-            We will email you a one-time sign-in link. Your workspace access is based on your
-            approved relationships.
+            Enter your email to sign in or register. We will send a secure one-time link.
+            Creating an account does not require payment or start a paid subscription.
           </p>
           <Form method="post" className="form">
             <input type="hidden" name="returnTo" value={settings.returnTo} />
@@ -88,8 +88,9 @@ export default function SignIn() {
             )}
           </Form>
           <p className="auth-foot">
-            New landlord? Choose Residential or Commercial when setting up your account
-            after verifying your email. Tenant access requires an invitation.
+            New property owner? After verifying your email, choose Residential or Commercial,
+            add your property and decide later whether to take out an eligible paid subscription.
+            Tenant access requires an invitation.
           </p>
         </section>
       </div>
