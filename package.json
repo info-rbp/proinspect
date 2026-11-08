@@ -22,7 +22,7 @@
     "format:check": "prettier --check . --ignore-unknown",
     "config:list": "node scripts/configuration.mjs",
     "config:check": "node scripts/configuration.mjs --check",
-    "handbook:check": "node scripts/handbook-check.mjs",
+    "handbook:check": "node scripts/handbook-check.mjs && node scripts/stage0-check.mjs",
     "handbook:release": "node scripts/handbook-release-readiness.mjs"
   },
   "dependencies": {
