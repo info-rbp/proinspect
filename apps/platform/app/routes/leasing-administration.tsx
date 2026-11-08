@@ -276,6 +276,7 @@ function ListingInspectionManagement({listing}:{listing:any}){
 }
 
 function ListingOperations({listing}:{listing:any}){
+ const workspace=useWorkspace().workspace;
  const [message,setMessage]=useState(''),[busy,setBusy]=useState(false),revalidator=useRevalidator();
  const publish=async(status:string)=>{setBusy(true);setMessage('');try{await send('/api/staff/leasing/'+listing.id+'/status',{version:listing.version,status});revalidator.revalidate();setMessage('Listing updated.');}catch(e){setMessage(e instanceof Error?e.message:'Action unsuccessful.');}finally{setBusy(false);}};
  const photo=async(e:FormEvent<HTMLFormElement>)=>{e.preventDefault();setBusy(true);setMessage('');try{await send('/api/staff/leasing/'+listing.id+'/photos',new FormData(e.currentTarget),true);setMessage('Photograph uploaded.');revalidator.revalidate();}catch(err){setMessage(err instanceof Error?err.message:'Upload failed.');}finally{setBusy(false);}};
@@ -289,6 +290,7 @@ function ListingOperations({listing}:{listing:any}){
    <label className="field">Accessible image description<input name="altText" required minLength={8} maxLength={240}/></label>
    <button type="submit" className="button secondary" disabled={busy}>Upload photo (6 MB maximum)</button>
   </form></details>
+  {listing.kind==='residential'&&<Link className="button secondary small" to={workspace.href+'/rental-applications?listingId='+encodeURIComponent(listing.id)}>View this property's rental application queue</Link>}
   <ListingInspectionManagement listing={listing}/>
   <details><summary>Edit application-handling settings</summary><EditApplicationSettings key={listing.version} listing={listing}/></details>
    <ApprovalControls listing={listing}/>
