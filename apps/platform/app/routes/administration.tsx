@@ -8,6 +8,7 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
     q = new URL(request.url).searchParams.get('q');
   return {
     admin: await loadApi(request, context, base + '/admin'),
+    selectedPropertyId: (()=>{const id=new URL(request.url).searchParams.get('propertyId');return id&&/^[a-zA-Z0-9_-]{3,100}$/.test(id)?id:null;})(),
     search:
       q && q.length >= 2
         ? await loadApi(request, context, base + '/search?q=' + encodeURIComponent(q))
@@ -15,11 +16,12 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
   } as any;
 }
 export default function Administration() {
-  const { admin: a, search } = useLoaderData<typeof loader>(),
+  const { admin: a, search, selectedPropertyId } = useLoaderData<typeof loader>(),
     d = useWorkspace(),
     w = d.workspace,
     api = workspaceApi(w.kind, w.scopeId),
     writable = ['administrator', 'operations_manager'].includes(d.user.staffRole ?? '');
+  const selectedProperty=d.properties.find(p=>p.id===selectedPropertyId);
   return (
     <>
       <PageHeading
@@ -27,6 +29,9 @@ export default function Administration() {
         description="Review organisations and management authority, assign staff access, and inspect the operational audit. Confidential-case content is excluded."
       />
       <div className="stack">
+        {selectedProperty&&<p className="panel">Managing verified authority for <strong>{selectedProperty.address}</strong>.
+          {' '}<Link to={w.href+'/properties/'+encodeURIComponent(selectedProperty.id)}>Return to property</Link>
+        </p>}
         <Panel title="Find an operational record">
           <Form method="get" className="actions">
             <label htmlFor="global-q">Property, client, scheme or work reference</label>
@@ -110,6 +115,7 @@ export default function Administration() {
                   label="Property"
                   optional
                   options={options(d.properties, 'address')}
+                value={selectedProperty?.id}
                 />
                 <Select name="schemeId" label="Scheme" optional options={options(d.schemes)} />
                 <Input name="amountCents" label="Spending limit (AUD cents)" type="number" />
@@ -126,6 +132,7 @@ export default function Administration() {
                     name="propertyId"
                     label="Property"
                     options={options(d.properties, 'address')}
+                  value={selectedProperty?.id}
                   />
                   <Input name="reference" label="Ownership evidence reference" />
                 </OperationForm>
@@ -141,6 +148,7 @@ export default function Administration() {
                     name="propertyId"
                     label="Property"
                     options={options(d.properties, 'address')}
+                  value={selectedProperty?.id}
                   />
                   <Select
                     name="clientId"
