@@ -88,6 +88,8 @@ export function OperationForm({
 }
 const numberFields = new Set([
   'version', 'dueDays',
+  'sourceAmountCents', 'reviewBasisPoints', 'indexNumerator', 'indexDenominator',
+  'floorCents', 'capCents', 'quotedCents',
   'amountCents',
   'generalCents',
   'petCents',
@@ -134,7 +136,7 @@ export function formValues(form: FormData) {
     if (numberFields.has(key)) data[key] = Number(value);
     else if (boolFields.has(key)) data[key] = value === 'true' || value === 'on';
     else if (
-      ['startsAt', 'endsAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'holdUntil', 'receivedAt', 'deliveryAt', 'effectiveAt', 'verifiedAt', 'paidAt', 'responseDueAt', 'decisionAt', 'appealDueAt', 'periodStart', 'periodEnd', 'startedAt', 'endedAt', 'effectiveFrom'].includes(key)
+      ['startsAt', 'endsAt', 'optionOpensAt', 'optionClosesAt', 'newDueAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'holdUntil', 'receivedAt', 'deliveryAt', 'effectiveAt', 'verifiedAt', 'paidAt', 'responseDueAt', 'decisionAt', 'appealDueAt', 'periodStart', 'periodEnd', 'startedAt', 'endedAt', 'effectiveFrom'].includes(key)
     )
       data[key] = new Date(String(value)).toISOString();
     else if (key === 'propertyTypes' || key === 'propertyIds' || key === 'tenantUserIds')
