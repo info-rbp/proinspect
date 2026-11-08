@@ -1,19 +1,18 @@
-import { publicListings } from '../../../platform/worker/features/leasing.server';
-import { runtimeContext } from '../../../../packages/database/context';
-import type { Env } from '../../../../packages/database/types';
-import type { LoaderFunctionArgs } from 'react-router';
 import { ENGAGEMENTS, GUIDES } from '../../../../packages/marketing/content';
 import { SERVICE_SEEDS, FAMILIES } from '../../../../packages/service-catalogue/index';
-export async function loader({context}:LoaderFunctionArgs) {
-  const env=context.get(runtimeContext).env as Env;
-  const publicLeaseListings=env.DB?await publicListings(env):[];
+import { shouldIndexPublicPage } from '../../../platform/app/lib/public-routes';
+import { AUDIENCES } from './audience';
 
+/** Sitemap intentionally contains only canonical, indexable public marketing pages.
+ * Unapproved legal documents, proposed pricing, leasing records and private pages
+ * are excluded even when their route can be visited directly.
+ */
+export function loader() {
   const paths = [
     '/',
     '/services',
-    '/properties-for-lease',
-    '/properties-for-lease/residential',
-    '/properties-for-lease/commercial',
+    '/service-finder',
+    '/who-we-help',
     '/sectors/residential',
     '/sectors/commercial',
     '/sectors/strata-building',
@@ -24,14 +23,24 @@ export async function loader({context}:LoaderFunctionArgs) {
     '/why-proinspect',
     '/areas-we-service',
     '/resources',
-    ...Object.keys(FAMILIES).map((x) => `/services/category/${x}`),
-    ...Object.keys(ENGAGEMENTS).map((x) => `/how-we-work/${x}`),
-    ...Object.keys(GUIDES).map((x) => `/resources/${x}`),
-    ...SERVICE_SEEDS.map((s) => `/services/${s.id}`),
-    ...publicLeaseListings.map((p:any) => `/properties-for-lease/${p.kind}/${p.slug}`),
+    '/residential-property-support',
+    ...Object.keys(AUDIENCES).map(a => '/who-we-help/' + a),
+    ...Object.keys(FAMILIES).map(f => '/services/category/' + f),
+    ...Object.keys(ENGAGEMENTS).map(e => '/how-we-work/' + e),
+    ...Object.keys(GUIDES).map(g => '/resources/' + g),
+    ...SERVICE_SEEDS.map(s => '/services/' + s.id),
   ];
+  const indexable = [...new Set(paths)].filter(path =>
+    shouldIndexPublicPage(path, 'https://proinspect.systems', 'production'));
+  const items = indexable.map(path =>
+    '<url><loc>https://proinspect.systems' + path + '</loc></url>').join('');
   return new Response(
-    `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map((path) => `<url><loc>https://proinspect.systems${path}</loc></url>`).join('')}</urlset>`,
-    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } },
+    '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
+    items + '</urlset>',
+    { headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600',
+    } },
   );
 }
