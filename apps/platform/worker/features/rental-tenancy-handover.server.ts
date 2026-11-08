@@ -108,3 +108,64 @@ export async function prepareRentalTenancyHandover(env:Env,user:Principal,appId:
  await env.DB.batch(rows);
  return {id:hid,tenancyId:tid,status:'awaiting_agreement',invitationsQueued:emails.length,replayed:false,legallyExecuted:false};
 }
+
+export async function activateRentalTenancyHandover(env:Env,user:Principal,appId:string,input:unknown){
+ staff(user);
+ await requireReleaseApproval(env,'agreement_signing');
+ const d=tenancyActivationInput.parse(input),h=await state(env,appId);
+ assert(h&&h.status==='awaiting_agreement',409,'HANDOVER_NOT_PENDING','Only a pending handover may be activated.');
+ const t=await statement(env.DB,'SELECT status,starts_at,ends_at FROM tenancies WHERE id=?',h.tenancy_id)
+ .first<{status:string;starts_at:string;ends_at:string|null}>();
+ assert(t?.status==='pending',409,'HANDOVER_TENANCY_NOT_PENDING','An unexecuted tenancy must remain pending.');
+ const app=await statement(env.DB,'SELECT privacy_hold_until FROM rental_applications WHERE id=?',appId)
+ .first<{privacy_hold_until:string|null}>();
+ assert(app&&(!app.privacy_hold_until||app.privacy_hold_until<=now()),409,'HANDOVER_PRIVACY_HOLD','Resolve any active privacy/legal hold.');
+ assert(await matchingVerifiedMembers(env,h),409,'HANDOVER_PARTICIPANTS_UNVERIFIED',
+ 'Every original adult applicant must independently verify their tenant invitation.');
+ const e=await execution(env,h);
+ assert(e&&e.executed_sha!==e.source_sha256&&await env.DOCUMENTS.head(e.object_key),409,'HANDOVER_EXECUTION_REQUIRED',
+ 'A distinct, independently verified executed official Form 1AA PDF must be issued.');
+ const terms=await unseal<{startsOn:string;endsOn:string|null}>(env.DATA_ENCRYPTION_KEY,
+  'rental-tenancy-handover:'+h.id,h.terms_envelope);
+ const form=await unseal<{answers:Record<string,unknown>}>(env.DATA_ENCRYPTION_KEY,
+  'wa-form:'+e.case_id,e.data_envelope);
+ assert(agreementMatchesPreparedTerms(form.answers,terms.startsOn,terms.endsOn),409,
+ 'HANDOVER_AGREEMENT_TERMS_MISMATCH','The executed Form 1AA dates differ from the instructed tenancy terms.');
+ assert(validateForm1AA(form.answers,h.applicant_count).length===0,409,
+ 'HANDOVER_AGREEMENT_FIELDS','The current Form 1AA has incomplete mandatory agreement fields.');
+ const stamp=now();
+ await env.DB.batch([
+  statement(env.DB,"UPDATE tenancies SET status='active' WHERE id=? AND status='pending'",h.tenancy_id),
+  statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+  statement(env.DB,"UPDATE rental_tenancy_handovers SET status='activated',activated_by=?,activated_at=?,activation_reference=? WHERE id=? AND status='awaiting_agreement'",
+   user.id,stamp,d.activationReference,h.id),
+  statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+  statement(env.DB,'DELETE FROM mutation_guards'),
+  statement(env.DB,'INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?,?,?,?,?,?)',
+   uid('aud'),user.id,'rental.handover.activated','rental_tenancy_handover',h.id,
+   JSON.stringify({tenancyId:h.tenancy_id,agreementCaseId:e.case_id,executedDocumentId:e.executed_document_id}),stamp)
+ ]);
+ return {id:h.id,tenancyId:h.tenancy_id,status:'activated',agreementCaseId:e.case_id};
+}
+export async function voidRentalTenancyHandover(env:Env,user:Principal,appId:string,input:unknown){
+ staff(user);
+ const d=tenancyVoidInput.parse(input),h=await state(env,appId);
+ assert(h&&h.status==='awaiting_agreement',409,'HANDOVER_NOT_PENDING','Only an unexecuted pending handover can be voided.');
+ const agreement=await statement(env.DB,'SELECT id FROM wa_agreement_envelopes WHERE tenancy_id=?',h.tenancy_id).first();
+ assert(!agreement,409,'HANDOVER_AGREEMENT_EXISTS','Void the associated Form 1AA signing case through its own controlled workflow first.');
+ const stamp=now();
+ await env.DB.batch([
+  statement(env.DB,'UPDATE invitations SET expires_at=? WHERE tenancy_id=? AND consumed_at IS NULL',stamp,h.tenancy_id),
+  statement(env.DB,'UPDATE tenancy_memberships SET ends_at=? WHERE tenancy_id=? AND ends_at IS NULL',stamp,h.tenancy_id),
+  statement(env.DB,"UPDATE tenancies SET status='ended' WHERE id=? AND status='pending'",h.tenancy_id),
+  statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+  statement(env.DB,"UPDATE rental_tenancy_handovers SET status='void',voided_at=?,voided_by=?,void_reference=? WHERE id=? AND status='awaiting_agreement'",
+   stamp,user.id,d.reasonReference,h.id),
+  statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+  statement(env.DB,'DELETE FROM mutation_guards'),
+  statement(env.DB,'INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?,?,?,?,?,?)',
+   uid('aud'),user.id,'rental.handover.voided','rental_tenancy_handover',h.id,
+   JSON.stringify({tenancyId:h.tenancy_id,reference:d.reasonReference}),stamp),
+ ]);
+ return {id:h.id,status:'void',tenancyId:h.tenancy_id};
+}
