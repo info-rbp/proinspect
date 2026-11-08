@@ -105,7 +105,7 @@ export function portalNavigation(kind:string, role:string, staffRole:string|unde
     push('building-communications','Notice drafts');push('documents','Authorised reports');
   }
   const primaryPaths=new Set(PRIMARY[kind]??['','requests','documents']);
-  const primary=items.filter(x=>primaryPaths.has(x.path));
+  const primary=Array.from(primaryPaths).flatMap(path=>items.filter(x=>x.path===path));
   const other=items.filter(x=>!primaryPaths.has(x.path));
   const seen=new Set<string>();
   const groups=GROUPS.map(g=>({
