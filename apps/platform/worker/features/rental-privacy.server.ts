@@ -139,7 +139,9 @@ export async function eraseRentalForRequest(env:Env,user:Principal,appId:string,
  * and operational backups/R2 deletion procedures have been approved. */
 export async function dispatchRentalRetention(env:Env){
  if(env.RENTAL_RETENTION_AUTOPURGE_ENABLED!=='true'||!hasRentalRetentionPolicy(env))return;
- const rows=(await statement(env.DB,"SELECT id FROM rental_applications WHERE retained_until IS NOT NULL AND retained_until<=? AND (privacy_hold_until IS NULL OR privacy_hold_until<=?) AND status IN('draft','withdrawn','decision_recorded') ORDER BY retained_until LIMIT 10",
+ const handoverTable=await statement(env.DB,"SELECT name FROM sqlite_master WHERE type='table' AND name='rental_tenancy_handovers'").first();
+ const linkedFilter=handoverTable?" AND NOT EXISTS(SELECT 1 FROM rental_tenancy_handovers h WHERE h.application_id=rental_applications.id)":"";
+ const rows=(await statement(env.DB,"SELECT id FROM rental_applications WHERE retained_until IS NOT NULL AND retained_until<=? AND (privacy_hold_until IS NULL OR privacy_hold_until<=?) AND status IN('draft','withdrawn','decision_recorded')"+linkedFilter+" ORDER BY retained_until LIMIT 10",
  now(),now()).all<{id:string}>()).results;
  for(const row of rows){
   try{await purgeRental(env,row.id,'retention_expired',null);}
