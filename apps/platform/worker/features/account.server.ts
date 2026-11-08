@@ -31,12 +31,15 @@ export async function accountData(request: Request, env: Env, user: Principal) {
     "SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_included_property_grants'").first();
   const propertyPlans = ready ? (await statement(env.DB,`
     SELECT c.id AS client_id,c.client_type,p.id AS property_id,p.address,p.sector,
+      COALESCE(pref.account_state,'verified') AS account_status,
+      COALESCE(pref.subscription_intent,'none') AS subscription_intent,
       CASE WHEN g.property_id IS NOT NULL THEN 'grandfathered'
            WHEN bl.id IS NOT NULL THEN bl.status ELSE 'none' END AS subscription_status,
       CASE WHEN g.property_id IS NOT NULL THEN 1 ELSE 0 END AS grandfathered,
       CASE WHEN bl.stripe_subscription_id IS NOT NULL THEN 1 ELSE 0 END AS stripe_subscription_recorded
     FROM client_memberships m
     JOIN clients c ON c.id=m.client_id AND c.status='active'
+    LEFT JOIN account_subscription_preferences pref ON pref.client_id=c.id
     JOIN client_property_links l ON l.client_id=c.id AND l.ends_at IS NULL
     JOIN properties p ON p.id=l.property_id
     LEFT JOIN legacy_included_property_grants g
