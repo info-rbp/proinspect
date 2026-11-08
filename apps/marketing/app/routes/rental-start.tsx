@@ -1,6 +1,7 @@
 import { Form, Link, useLoaderData, useActionData, type LoaderFunctionArgs, type ActionFunctionArgs, data } from 'react-router';
 import { runtimeContext } from '../../../../packages/database/context';
-import type { Env } from '../../../../packages/database/types';
+import { AppError, type Env } from '../../../../packages/database/types';
+import { publicListing } from '../../../platform/worker/features/leasing.server';
 import { rentalStartPage, startRental } from '../../../platform/worker/features/rental-applications.server';
 import { Turnstile } from '../../../../packages/ui/Turnstile';
 import { seo } from '../lib/seo';
@@ -10,7 +11,23 @@ export const meta=()=>seo('Residential rental application | ProInspect','Complet
 export async function loader({context,params}:LoaderFunctionArgs){
  const env=context.get(runtimeContext).env as Env;
  if(params.kind!=='residential')throw new Response('Residential applications only',{status:404});
- return data(await rentalStartPage(env,params.slug??''),{headers:{'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'}});
+ const slug=params.slug??'';
+ const published=await publicListing(env,'residential',slug);
+ if(!published)throw new Response('Property not found',{status:404});
+ // Public listing data only. Never reveal an unpublished listing through an application URL.
+ const l=published.listing;
+ const unavailable={listing:{id:l.id,slug:l.slug,title:l.title,address:l.display_address,suburb:l.suburb,agentName:l.agent_name},
+  enabled:false,siteKey:'',unavailable:true};
+ const headers={'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'};
+ if(l.application_mode!=='proinspect'||l.rental_approval_state!=='approved'||!l.rental_recipient_verified_at)
+  return data(unavailable,{headers});
+ try{
+  const page=await rentalStartPage(env,slug);
+  return data({...page,unavailable:!page.enabled},{headers});
+ }catch(error){
+  if(error instanceof AppError&&error.code==='RENTAL_APPLICATION_UNAVAILABLE')return data(unavailable,{headers});
+  throw error;
+ }
 }
 export async function action({request,context,params}:ActionFunctionArgs){
  const env=context.get(runtimeContext).env as Env;
@@ -21,7 +38,12 @@ export async function action({request,context,params}:ActionFunctionArgs){
  const f=new URLSearchParams(body);
  if(f.get('website'))return fail('Submission not accepted.');
  try{
+  const published=await publicListing(env,'residential',params.slug??'');
+  if(!published||published.listing.application_mode!=='proinspect'||
+   published.listing.rental_approval_state!=='approved'||!published.listing.rental_recipient_verified_at)
+   return fail('Online applications are not currently available for this property.',409);
   const page=await rentalStartPage(env,params.slug??'');
+  if(!page.enabled)return fail('Online applications are not currently available for this property.',409);
   const result=await startRental(env,request,page.listing.id,{
    email:f.get('email'),name:f.get('name'),consent:f.get('consent')==='yes'
   },f.get('turnstile')||undefined);
@@ -32,13 +54,17 @@ export async function action({request,context,params}:ActionFunctionArgs){
  }
 }
 export default function RentalStart(){
- const {listing,enabled,siteKey}=useLoaderData<typeof loader>();
+ const {listing,enabled,siteKey,unavailable}=useLoaderData<typeof loader>();
  const result=useActionData<typeof action>() as {success?:boolean;error?:string}|undefined;
  return <div className="rental-shell"><div className="site-container">
   <nav className="rental-breadcrumb" aria-label="Breadcrumb"><Link to="/properties-for-lease/residential">Residential properties</Link><span aria-hidden="true"> / </span><Link to={'/properties-for-lease/residential/'+listing.slug}>Property details</Link></nav>
-  <div className="rental-intro"><p className="eyebrow">Private residential application</p><h1>Apply for {listing.title}</h1><p>Complete your application in your own time. Each adult applicant can complete their section privately, and supporting documents can be added securely.</p></div>
+  <div className="rental-intro"><p className="eyebrow">Private residential application</p><h1>{unavailable?'Applications are not yet open':'Apply for '+listing.title}</h1><p>{unavailable?'Online rental applications for '+listing.title+' are not currently available. You can still view the property and register your interest.':'Complete your application in your own time. Each adult applicant can complete their section privately, and supporting documents can be added securely.'}</p></div>
   <div className="rental-start-grid"><section className="rental-paper">
-    {result?.success?<div role="status" className="rental-success"><h2>Check your email</h2><p>We have sent a private application link to the address you entered, if delivery is available. Open it to start or resume your application.</p><p>Do not forward the link: it allows access to your own answers and documents.</p></div>:<>
+    {unavailable?<div role="status" className="notice warning rental-unavailable">
+      <h2>Online applications not yet available</h2>
+      <p>This property is not currently accepting ProInspect-hosted rental applications. You can register your interest on the public property listing while the landlord's application arrangements are finalised.</p>
+      <Link className="button" to={'/properties-for-lease/residential/'+listing.slug+'#leasing-enquiry'}>Register your interest</Link>
+     </div>:result?.success?<div role="status" className="rental-success"><h2>Check your email</h2><p>We have sent a private application link to the address you entered, if delivery is available. Open it to start or resume your application.</p><p>Do not forward the link: it allows access to your own answers and documents.</p></div>:<>
       <h2>Start or resume an application</h2><p className="rental-muted">An email link allows you to save progress. No ProInspect portal account is required.</p>
       <Form method="post" reloadDocument className="rental-form">
        <div className="rental-field"><label htmlFor="rental-name">Your full name <span aria-hidden="true">*</span></label><input id="rental-name" name="name" autoComplete="name" maxLength={120} minLength={2} required/></div>
