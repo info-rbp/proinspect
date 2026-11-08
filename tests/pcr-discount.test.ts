@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync,existsSync} from 'node:fs';
 import {pcrRoutineDiscount} from '../packages/finance/pcr-discount.ts';
 import {pcrAppointmentPrice} from '../packages/marketing/pcr-campaign.ts';
 test('20 percent is applied once to approved cents and tax remains coherent',()=>{
@@ -9,4 +9,4 @@ test('appointments require absolute time and integral bounded duration',()=>{for
 test('offer, redemption and sample publication are independently default-off',()=>{
  for(const path of ['apps/platform/wrangler.jsonc','apps/marketing/wrangler.jsonc']){const cfg=JSON.parse(readFileSync(path,'utf8'));for(const e of [cfg,...Object.values(cfg.env??{})] as any[])for(const name of ['PCR_LAUNCH_ENABLED','PCR_DISCOUNT_REDEMPTION_ENABLED','PCR_SAMPLE_PUBLICATION_ENABLED'])if(e.vars)assert.equal(e.vars[name],'false');}
 });
-test('sample publication checks explicit approval and exact SHA256 before public bytes',()=>{const s=readFileSync('apps/marketing/app/routes/pcr-sample.ts','utf8');assert.match(s,/releaseFeatureReady\(env,'pcr_sample'\)/);assert.match(s,/hash!==env.PCR_SAMPLE_SHA256/);assert.match(s,/'Cache-Control':'no-store'/);});
+test('removed PCR promotional and sample routes cannot publish any public bytes',()=>{for(const name of ['apps/marketing/app/routes/pcr-offer.tsx','apps/marketing/app/routes/pcr-sample.ts','packages/ui/pcr-offer.css'])assert.equal(existsSync(name),false);for(const name of ['apps/platform/app/routes.ts','apps/marketing/app/routes.ts']){const routes=readFileSync(name,'utf8');assert.doesNotMatch(routes,/offers\/pcr-100|offers\/pcr\/sample/);}});
