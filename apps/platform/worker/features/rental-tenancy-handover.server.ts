@@ -4,6 +4,7 @@ import { operationsWrite } from '../../../../packages/authorization/server';
 import { digest, randomToken, seal, unseal } from '../../../../packages/auth/crypto';
 import { mailEvent } from '../../../../packages/notifications/server';
 import { requireReleaseApproval } from './release-governance.server';
+function enabled(env:Env){assert(env.RENTAL_TENANCY_HANDOVER_ENABLED==='true',503,'HANDOVER_DISABLED','Tenancy handover has not passed hosted release acceptance.');}
 import { agreementMatchesPreparedTerms, preparedTenancyDates, tenancyActivationInput, tenancyHandoverInput, tenancyVoidInput } from '../../../../packages/marketing/rental-tenancy-handover';
 import { validateForm1AA } from '../../../../packages/wa-residential/form1aa';
 
