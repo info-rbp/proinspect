@@ -53,8 +53,9 @@ function ModeFields({kind,mode,setMode,noticeMode,setNoticeMode,notices,setNotic
  </>}
  </div>;
 }
-function CreateListing({clients,properties}: {clients:any[];properties:any[]}){
- const revalidator=useRevalidator(),[kind,setKind]=useState('residential');
+function CreateListing({clients,properties,selectedPropertyId}:{clients:any[];properties:any[];selectedPropertyId:string|null}){
+ const initialSector=properties.find((p:any)=>p.id===selectedPropertyId)?.sector==='commercial'?'commercial':'residential';
+ const revalidator=useRevalidator(),[kind,setKind]=useState(initialSector);
  const [mode,setMode]=useState<Mode>('unavailable'),[noticeMode,setNoticeMode]=useState('unconfigured');
  const [notices,setNotices]=useState<Notice[]>([]),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
  const submit=async(e:FormEvent<HTMLFormElement>)=>{
@@ -85,7 +86,7 @@ function CreateListing({clients,properties}: {clients:any[];properties:any[]}){
  <form className="stack" onSubmit={submit}>
   <div className="grid-2">
    <label className="field">Residential or commercial<select value={kind} onChange={e=>{setKind(e.target.value);setMode('unavailable');}}><option value="residential">Residential</option><option value="commercial">Commercial</option></select></label>
-   <label className="field">Existing ProInspect property<select name="propertyId" required><option value="">Select property</option>{properties.filter(p=>p.sector===kind).map(p=><option value={p.id} key={p.id}>{p.address} — {p.suburb}</option>)}</select></label>
+   <label className="field">Existing ProInspect property<select name="propertyId" required defaultValue={selectedPropertyId??''}><option value="">Select property</option>{properties.filter(p=>p.sector===kind).map(p=><option value={p.id} key={p.id}>{p.address} — {p.suburb}</option>)}</select></label>
    <label className="field">Instructing client / agency<select name="instructedByClientId" required><option value="">Select client</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
    <label className="field">Property owner (if recorded)<select name="ownerClientId"><option value="">Not separately recorded</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
    <label className="field">Public slug<input name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="12-example-street-perth"/></label>
@@ -275,6 +276,60 @@ function ListingInspectionManagement({listing}:{listing:any}){
  </details>;
 }
 
+function EditListingFacts({listing}:{listing:any}){
+ const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),revalidator=useRevalidator();
+ const save=async(e:FormEvent<HTMLFormElement>)=>{
+  e.preventDefault();setBusy(true);setMessage('');
+  const f=new FormData(e.currentTarget),get=(key:string)=>String(f.get(key)??'').trim();
+  const number=(key:string)=>get(key)===''?null:Number(get(key));
+  try{
+   await send('/api/staff/leasing/'+listing.id+'/edit',{
+    version:listing.version,propertyId:listing.property_id,instructedByClientId:listing.instructed_by_client_id,
+    ownerClientId:listing.owner_client_id??null,kind:listing.kind,slug:listing.slug,
+    title:get('title'),description:get('description'),displayAddress:get('displayAddress'),
+    suburb:get('suburb'),postcode:get('postcode'),priceCents:get('priceAud')?Math.round(Number(get('priceAud'))*100):null,
+    pricePeriod:get('pricePeriod'),bedrooms:number('bedrooms'),bathrooms:number('bathrooms'),parking:number('parking'),
+    areaSqm:number('areaSqm'),availableFrom:get('availableFrom')||null,
+    agentName:get('agentName'),agentRole:get('agentRole'),
+    applicationUrl:listing.application_url??null,sourceReference:get('sourceReference')
+   });
+   setMessage('Listing details saved and audited. Existing application authority remains unchanged.');
+   revalidator.revalidate();
+  }catch(error){setMessage(error instanceof Error?error.message:'Unable to update listing.');}
+  finally{setBusy(false);}
+ };
+ return <details className="panel">
+  <summary style={{fontWeight:700,cursor:'pointer'}}>Edit property advertisement details</summary>
+  <p className="small">Update property facts and approved public copy. Changes are audited. Linked property,
+   landlord/agency, application recipient and public slug cannot be reassigned here.</p>
+  <form className="stack" onSubmit={save}>
+   <div className="grid-2">
+    <label className="field">Listing title<input name="title" defaultValue={listing.title} minLength={10} maxLength={160} required/></label>
+    <label className="field">Public address<input name="displayAddress" defaultValue={listing.display_address} minLength={5} maxLength={240} required/></label>
+    <label className="field">Suburb<input name="suburb" defaultValue={listing.suburb} required minLength={2}/></label>
+    <label className="field">Postcode<input name="postcode" defaultValue={listing.postcode} pattern="[0-9]{4}" required/></label>
+    <label className="field">Rental/lease price AUD<input type="number" step="0.01" min="0" name="priceAud" defaultValue={listing.price_cents==null?'':(Number(listing.price_cents)/100).toFixed(2)}/></label>
+    <label className="field">Price interval<select name="pricePeriod" defaultValue={listing.price_period}>
+      <option value="week">Per week</option><option value="year">Per year</option><option value="on_application">On application</option>
+    </select></label>
+    {listing.kind==='residential'?<>
+     <label className="field">Bedrooms<input type="number" min="0" max="30" name="bedrooms" defaultValue={listing.bedrooms??''}/></label>
+     <label className="field">Bathrooms<input type="number" min="0" max="30" name="bathrooms" defaultValue={listing.bathrooms??''}/></label>
+     <label className="field">Car bays<input type="number" min="0" max="100" name="parking" defaultValue={listing.parking??''}/></label>
+    </>:<label className="field">Floor area (m²)<input type="number" min="0" name="areaSqm" defaultValue={listing.area_sqm??''}/></label>}
+    <label className="field">Availability date<input type="date" name="availableFrom" defaultValue={listing.available_from??''}/></label>
+    <label className="field">Leasing representative<input name="agentName" minLength={2} maxLength={180} defaultValue={listing.agent_name} required/></label>
+    <label className="field">Representative role<select name="agentRole" defaultValue={listing.agent_role}>
+      <option value="landlord">Landlord</option><option value="leasing_agent">Leasing agent</option><option value="property_manager">Property manager</option>
+    </select></label>
+   </div>
+   <label className="field">Approved property description<textarea name="description" defaultValue={listing.description} minLength={5} maxLength={8000} rows={4} required/></label>
+   <label className="field">Copy approval / evidence reference<input name="sourceReference" required minLength={8} maxLength={300}/></label>
+   <button className="button" type="submit" disabled={busy}>{busy?'Saving…':'Save reviewed listing details'}</button>
+   {message&&<p role="status">{message}</p>}
+  </form>
+ </details>;
+}
 function ListingOperations({listing}:{listing:any}){
  const workspace=useWorkspace().workspace;
  const [message,setMessage]=useState(''),[busy,setBusy]=useState(false),revalidator=useRevalidator();
@@ -285,6 +340,7 @@ function ListingOperations({listing}:{listing:any}){
   <div className="actions">{listing.status!=='published'&&<button className="button small" type="button" onClick={()=>publish('published')} disabled={busy}>Publish approved listing</button>}
    {listing.status==='published'&&<button className="button secondary small" type="button" onClick={()=>publish('withdrawn')} disabled={busy}>Withdraw listing</button>}
    {listing.status==='published'&&<button className="button secondary small" type="button" onClick={()=>publish('leased')} disabled={busy}>Mark leased</button>}</div>
+  <EditListingFacts listing={listing}/>
   <details><summary>Upload approved listing photograph</summary><form onSubmit={photo} className="stack">
    <label className="field">Image file<input name="file" type="file" required accept="image/jpeg,image/png,image/webp"/></label>
    <label className="field">Accessible image description<input name="altText" required minLength={8} maxLength={240}/></label>
@@ -302,18 +358,24 @@ export async function loader({request,context,params}:LoaderFunctionArgs){
   loadApi(request,context,'/api/staff/leasing'),
   loadApi(request,context,'/api/w/'+params.kind+'/'+params.scopeId+'/admin')
  ]);
- return {listings:leasing.listings,clients:[...new Map(admin.clients.map((c:any)=>[c.id,{id:c.id,name:c.name}])).values()]};
+ const selected=new URL(request.url).searchParams.get('propertyId');
+ return {listings:leasing.listings,selectedPropertyId:selected&&/^[a-zA-Z0-9_-]{3,100}$/.test(selected)?selected:null,
+  clients:[...new Map(admin.clients.map((c:any)=>[c.id,{id:c.id,name:c.name}])).values()]};
 }
 export default function StaffLeasing(){
- const {listings,clients}=useLoaderData<typeof loader>() as any;
+ const {listings,clients,selectedPropertyId}=useLoaderData<typeof loader>() as any;
+ const selectedListings=selectedPropertyId?listings.filter((l:any)=>l.property_id===selectedPropertyId):listings;
  const data=useWorkspace();
  return <><PageHeading title="Property leasing administration" eyebrow="ProInspect operations"
   description="Create and publish approved leasing advertisements, identify the instructing client and choose whether applications use the agency's portal or the authorised ProInspect residential application process."/>
  <div className="actions"><Link className="button secondary" to={data.workspace.href+'/rental-applications'}>View submitted rental applications</Link><Link className="button secondary" to={data.workspace.href+'/open-home-checkins'}>Open home check-ins & next-day reports</Link></div>
- <div className="stack"><CreateListing clients={clients} properties={data.properties}/>
+ {selectedPropertyId&&<div className="actions"><p>Showing leasing records for the selected property.</p>
+  <Link className="button secondary" to={data.workspace.href+'/properties/'+encodeURIComponent(selectedPropertyId)}>Return to property</Link>
+  <Link className="button secondary" to={data.workspace.href+'/leasing'}>All leasing records</Link></div>}
+ <div className="stack"><CreateListing clients={clients} properties={data.properties} selectedPropertyId={selectedPropertyId}/>
   <section className="panel stack"><h2>Leasing property records</h2>
-   {listings.length===0?<p>No properties have been added to the public leasing directory.</p>:
-   listings.map((listing:any)=><details key={listing.id} className="panel"><summary style={{cursor:'pointer',fontWeight:750}}>{listing.title} — {listing.status} / {listing.kind}</summary><ListingOperations listing={listing}/></details>)}
+   {selectedListings.length===0?<p>No leasing advertisements are recorded for this property. Create a draft from the existing property above after verified client authority is recorded.</p>:
+   selectedListings.map((listing:any)=><details key={listing.id} className="panel"><summary style={{cursor:'pointer',fontWeight:750}}>{listing.title} — {listing.status} / {listing.kind}</summary><ListingOperations listing={listing}/></details>)}
   </section>
  </div></>;
 }

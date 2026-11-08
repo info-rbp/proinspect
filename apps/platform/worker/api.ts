@@ -68,6 +68,7 @@ import { launchPropertyReportTool, ingestPropertyReportTool } from './features/p
 import { booksServices, managesProperty } from '../../../packages/authorization/server';
 import { readOnlyCalendarDiagnostic } from './features/google-calendar.server';
 import { calendarSyncSummary, retryCalendarSync } from './features/calendar-scheduling.server';
+import {staffPropertyCreate,staffPropertyOverview,staffPropertyUpdate} from './features/staff-property-management.server';
 
 async function json(request: Request) {
   const text = await boundedText(request);
@@ -564,6 +565,21 @@ export async function handleApi(
       return Response.json(
         await availability(env, serviceId, url.searchParams.get('date') ?? '', included),
       );
+    }
+    // Canonical Staff property administration remains separate from
+    // owner onboarding and never manufactures a client relationship.
+    if (w.kind==='staff' && tail==='properties/staff-create' && method==='POST') {
+      requireOrigin(request,env);
+      return Response.json(await staffPropertyCreate(env,user,w,await json(request)),{status:201});
+    }
+    const staffPropertyManage=tail.match(/^properties\/([a-zA-Z0-9_-]+)\/manage$/);
+    if(w.kind==='staff' && staffPropertyManage){
+      if(method==='GET') return Response.json(
+        await staffPropertyOverview(env,user,w,staffPropertyManage[1]),{headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'){
+        requireOrigin(request,env);
+        return Response.json(await staffPropertyUpdate(env,user,w,staffPropertyManage[1],await json(request)));
+      }
     }
     if (method === 'POST' && tail === 'properties') {
       const input = await json(request);

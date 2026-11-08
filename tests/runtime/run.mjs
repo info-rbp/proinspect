@@ -110,6 +110,48 @@ try {
   const inspectorUser = await first('SELECT id FROM users WHERE email=?', inspector.email);
   await run("INSERT INTO staff_profiles VALUES(?,'operations_manager',1)", operatorUser.id);
   await run("INSERT INTO staff_profiles VALUES(?,'inspector',1)", inspectorUser.id);
+  const staffBase='/api/w/staff/operations';
+  const propertyAdministrator=await login('property-admin@example.test');
+  const administratorId=(await first('SELECT id FROM users WHERE email=?',propertyAdministrator.email)).id;
+  await run("INSERT INTO staff_profiles VALUES(?,'administrator',1)",administratorId);
+  const canonicalProperty={address:'Unit 99, 1 Test Street',suburb:'Perth',postcode:'6000',
+    sector:'residential',propertyType:'Unit',sourceReference:'SYNTHETIC-property-intake-reference'};
+  let canonicalPropertyId;
+  await check('Staff canonical property writes enforce administrator, uniqueness and reviewed scope',async()=>{
+    assert.equal((await api(staffBase+'/properties/staff-create',{body:canonicalProperty})).status,401);
+    assert.equal((await api(staffBase+'/properties/staff-create',{cookie:owner.cookie,body:canonicalProperty})).status,403);
+    assert.equal((await api(staffBase+'/properties/staff-create',{cookie:operator.cookie,body:canonicalProperty})).status,403);
+    assert.equal((await api(staffBase+'/properties/staff-create',{cookie:propertyAdministrator.cookie,
+      body:{...canonicalProperty,propertyType:'Office'}})).status,422);
+    const created=await api(staffBase+'/properties/staff-create',{cookie:propertyAdministrator.cookie,body:canonicalProperty});
+    assert.equal(created.status,201,JSON.stringify(created.data));
+    canonicalPropertyId=created.data.propertyId;
+    assert.equal((await api(staffBase+'/properties/staff-create',{cookie:propertyAdministrator.cookie,
+      body:{...canonicalProperty,address:'Unit 99, 1 Test St'}})).status,409);
+    const row=await first('SELECT address_key,property_type FROM properties WHERE id=?',canonicalPropertyId);
+    assert.equal(row.property_type,'Unit');
+    assert.equal((await first('SELECT COUNT(*) AS n FROM client_property_links WHERE property_id=?',canonicalPropertyId)).n,0,
+      'staff creation must not fabricate a landlord authority');
+    const detail=await api(staffBase+'/properties/'+canonicalPropertyId+'/manage',{cookie:propertyAdministrator.cookie});
+    assert.equal(detail.status,200,JSON.stringify(detail.data));
+    assert.equal(detail.data.canEdit,true);
+    assert.equal(detail.data.clientLinks.length,0);
+    assert.ok(detail.data.history.some(e=>e.action==='property.staff_created'));
+    assert.equal((await api(staffBase+'/properties/'+canonicalPropertyId+'/manage',{cookie:inspector.cookie})).status,403);
+  });
+  await check('Staff property corrections are audited, locked to original fields and require sector-valid type',async()=>{
+    const path=staffBase+'/properties/'+canonicalPropertyId+'/manage';
+    const payload={address:canonicalProperty.address,suburb:'Perth',postcode:'6000',
+      propertyType:'Apartment',sourceReference:'SYNTHETIC-reviewed-property-correction',
+      original:{address:canonicalProperty.address,suburb:'Perth',postcode:'6000',propertyType:'Unit'}};
+    assert.equal((await api(path,{cookie:propertyAdministrator.cookie,body:{...payload,propertyType:'Office'}})).status,422);
+    assert.equal((await api(path,{cookie:operator.cookie,body:payload})).status,403);
+    const update=await api(path,{cookie:propertyAdministrator.cookie,body:payload});
+    assert.equal(update.status,200,JSON.stringify(update.data));
+    assert.equal((await api(path,{cookie:propertyAdministrator.cookie,body:payload})).status,409);
+    assert.equal((await first('SELECT property_type FROM properties WHERE id=?',canonicalPropertyId)).property_type,'Apartment');
+    assert.equal((await first("SELECT COUNT(*) AS n FROM audit_events WHERE property_id=? AND action='property.staff_updated'",canonicalPropertyId)).n,1);
+  });
 
   await check('Google Calendar read-only diagnostics require authenticated operations staff', async () => {
     assert.equal((await api('/api/staff/calendar-diagnostic')).status, 401);
