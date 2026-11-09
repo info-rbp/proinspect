@@ -1,0 +1,45 @@
+name: Stage 6 redacted acceptance evidence bundle
+on:
+  push:
+    branches: ['acceptance/evidence-*']
+    paths:
+      - 'artifacts/stage6/**'
+      - '.github/workflows/stage6-evidence-bundle.yml'
+permissions:
+  contents: read
+jobs:
+  bundle:
+    if: github.repository == 'info-rbp/proinspect'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reject unredacted, oversized or symlinked evidence
+        run: |
+          node --input-type=module -e '
+            import {existsSync,readdirSync,lstatSync,readFileSync} from "node:fs";
+            import {join} from "node:path";
+            const root="artifacts/stage6";
+            if(!existsSync(join(root,"market-launch-evidence.json")))
+              throw Error("NO GO: missing market-launch-evidence.json");
+            const secrets=/(?:-----BEGIN (?:RSA )?PRIVATE KEY-----|(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{8,}|whsec_[A-Za-z0-9]{8,}|[?&](?:token|code|session|password)=|(?:cookie|authorization|set-cookie)\s*:)/i;
+            function walk(dir){for(const name of readdirSync(dir)){
+              const p=join(dir,name),info=lstatSync(p);
+              if(info.isSymbolicLink())throw Error("NO GO: linked evidence is forbidden");
+              if(info.isDirectory()){walk(p);continue}
+              if(!info.isFile()||info.size>4*1024*1024||!name.endsWith(".json"))
+                throw Error("NO GO: invalid evidence file");
+              const body=readFileSync(p,"utf8");
+              if(secrets.test(body))throw Error("NO GO: sensitive token shape in evidence");
+              JSON.parse(body);
+            }}walk(root);
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: proinspect-stage6-evidence
+          path: artifacts/stage6/
+          retention-days: 30
+          if-no-files-found: error
