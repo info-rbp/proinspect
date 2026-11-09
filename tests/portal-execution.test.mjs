@@ -36,6 +36,8 @@ test('session belongs to expected alias AND scoped workspace',()=>{
  assert.equal(validateSessionObservation('property_manager',ROLE_ALIASES.property_manager,[{kind:'property-manager'}],200).confirmed,true);
  assert.equal(validateSessionObservation('strata_manager',ROLE_ALIASES.strata_manager,[{kind:'strata-manager'}],200).confirmed,true);
  assert.equal(validateSessionObservation('property_manager',ROLE_ALIASES.property_manager,[{kind:'strata-manager'}],200).confirmed,false);
+ assert.equal(validateSessionObservation('building_manager',ROLE_ALIASES.building_manager,[{kind:'building-manager'}],200).confirmed,true);
+ assert.equal(validateSessionObservation('building_manager',ROLE_ALIASES.building_manager,[{kind:'building'}],200).confirmed,false);
 });
 test('auth runner requires genuine in-browser sign-in, independent denied scope and logout',()=>{
  const sample={role:'tenant',sourceSha:sha,session:{user:{email:ROLE_ALIASES.tenant},workspaces:[{kind:'tenant'}],status:200},
