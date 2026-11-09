@@ -6,6 +6,22 @@ export async function loader({request,context}:LoaderFunctionArgs){return loadAp
 export default function ReleaseReadiness(){const d=useLoaderData<typeof loader>();return <>
 <PageHeading title="Release acceptance" description="Flags are configuration, not evidence. Approval requires a different administrator, the exact deployed source, bounded validity and independently checked acceptance evidence. This screen never changes a flag."/>
 <Panel title="Current deployment"><p>{d.environment} / <code>{d.source??'Source not identified'}</code></p>{d.features.map((f:any)=><p key={f.name}>{f.name}: configured {f.configured?'ON':'OFF'}; valid source-specific approval {f.approval?'recorded':'missing'}.</p>)}<p>{d.notice}</p></Panel>
+<Panel title="Stage 6 — Market launch decision">
+ <p><strong>Current decision: {d.launch?.decision??'NO_GO'}</strong></p>
+ <p>Deployment is not the same as public release acceptance. Each control below identifies what has been checked and what still requires independently reviewed evidence. No feature is enabled from this screen.</p>
+ <p className="small muted">Technical preflight checks: {d.launch?.technicalPreflightPassed??0} of 8. Source: <code>{d.launch?.source??'Not established'}</code>.</p>
+ <div className="stack-sm">
+  {(d.launch?.gates??[]).map((gate:any)=><article className="record-row" key={gate.gate}>
+   <div>
+    <h3>{gate.label}</h3>
+    <p>{gate.detail}</p>
+    <p className="small"><strong>Evidence still required:</strong> {gate.nextEvidence}</p>
+   </div>
+   <span className="badge">{gate.status.replaceAll('_',' ')}</span>
+  </article>)}
+ </div>
+ <p className="small muted">{d.launch?.note??'Independent review is not established.'}</p>
+</Panel>
 <Panel title="Stage 5 — operational delivery signals">
  <p>Read-only counts from the connected application's database. No contact details, document contents, provider credentials, or Stripe identities are included. Zero exceptions does not certify provider delivery or restore capability.</p>
  <p className="small muted">{d.operations?.generatedAt??'No verified aggregate snapshot'} · {d.operations?.basis??'Unknown source'} · {d.operations?.source??'Unidentified build'}</p>
