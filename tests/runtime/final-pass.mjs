@@ -119,6 +119,13 @@ try {
     assert.equal((await api('/api/staff/release-readiness',staff)).status,403);
     const result=await ok('/api/staff/release-readiness',stage5Admin);
     assert.equal(result.operations.basis,'read_only_aggregates');
+    assert.equal(result.launch.decision,'NO_GO');
+    assert.equal(result.launch.gates.length,8);
+    assert.equal(result.launch.gates.find(x=>x.gate==='nine_portals').status,'requires_external_evidence');
+    assert.equal(result.launch.gates.find(x=>x.gate==='database').status,'blocked',
+      'Schema deployed by local fixtures has no independent Wrangler migration ledger');
+    assert.ok(!JSON.stringify(result.launch).includes('stage5-admin@example.test'));
+
     assert.equal(result.operations.signals.length,7);
     assert.ok(result.operations.signals.every(x=>Number.isInteger(x.count)||x.count===null));
     assert.ok(result.operations.signals.every(x=>!Object.keys(x).includes('payload')));
