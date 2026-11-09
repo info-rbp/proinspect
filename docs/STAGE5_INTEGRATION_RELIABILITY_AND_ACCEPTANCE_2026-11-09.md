@@ -26,6 +26,8 @@
 **Durable Object:** `BookingScheduler`.  
 **Existing hosting:** Cloudflare Workers Builds on `main`, no new persistent staging environment.
 
+**Additional read-only Cloudflare checks (9 November 2026):** `proinspect-platform-data` reports **275 tables**, D1 `version=production`, and a readable Time Travel bookmark (existence only). Both ordinary and restricted R2 buckets report the managed `r2.dev` domain **disabled**. Event Queue and DLQ metrics endpoints are reachable. A D1 bookmark **does not** show R2 objects, Queue replay, schema integrity, or actual restore success. No production customer records or secrets were read during these checks.
+
 **Security finding:** Prior to this change Cloudflare's observed Worker setting was `observability.redact_query_string=false` and `traces.enabled=false`. The repository now requests query redaction and sampled tracing. After automatic deployment, independently read back **actual** settings and compare the build SHA. Do not claim changed production state from repository configuration alone.
 
 ## Admin operational health counters
