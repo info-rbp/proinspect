@@ -9,7 +9,7 @@ import { pathToFileURL } from 'node:url';
 
 export const ROLES = Object.freeze([
   'landlord', 'property_manager', 'commercial', 'strata_manager',
-  'tenant', 'building', 'council', 'staff',
+  'tenant', 'building', 'building_manager', 'council', 'staff',
 ]);
 export const CASES = Object.freeze(Array.from({ length: 12 }, (_, i) =>
   `AT-${String(i + 1).padStart(2, '0')}`));

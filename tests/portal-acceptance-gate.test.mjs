@@ -30,7 +30,7 @@ test('complete structured evidence is accepted after independent validation', ()
   assert.equal(r.counts.criteriaPassed, 12); assert.equal(r.counts.casesPassed, 12);
 });
 test('any missing portal identity blocks acceptance', () => {const e = fixture(); delete e.identities.staff; assert.equal(assess(e, sha).acceptedForProduction, false)});
-test('duplicate identities cannot count as eight independent roles', () => {const e = fixture(); e.identities.council.identityRef = e.identities.tenant.identityRef; assert.equal(assess(e, sha).counts.identitiesPassed, 0)});
+test('duplicate identities cannot count as nine independent roles', () => {const e = fixture(); e.identities.council.identityRef = e.identities.tenant.identityRef; assert.equal(assess(e, sha).counts.identitiesPassed, 0)});
 test('local-only authentication cannot replace genuine email redemption', () => {const e = fixture(); e.identities.staff.emailLinkRedeemed = false; assert.equal(assess(e, sha).acceptedForProduction, false)});
 test('a missing hosted scenario blocks every dependent criterion', () => {const e = fixture(); delete e.cases['AT-09']; const result=assess(e, sha); assert.equal(result.acceptedForProduction, false); assert.equal(result.criteria.private_documents.status, 'blocked')});
 test('a scenario without a negative access check cannot pass', () => {const e=fixture();e.cases['AT-08'].negativeAccessChecked=false;assert.equal(assess(e,sha).cases['AT-08'],'blocked')});

@@ -5,6 +5,8 @@ export const ROLE_ALIASES = Object.freeze({
   landlord: 'landlord-testing@proinspect.systems',
   property_manager: 'property-manager-testing@proinspect.systems',
   commercial: 'commercial-testing@proinspect.systems',
+  // Ninth workspace: proposed test alias, not yet provisioned or owner-approved.
+  building_manager: 'building-manager-testing@proinspect.systems',
   strata_manager: 'strata-manager-testing@proinspect.systems',
   tenant: 'tenant-testing@proinspect.systems',
   building: 'building-resident-testing@proinspect.systems',
@@ -12,7 +14,7 @@ export const ROLE_ALIASES = Object.freeze({
   staff: 'staff-testing@proinspect.systems',
 });
 
-const ROLE_WORKSPACE_KIND = Object.freeze({property_manager:'property-manager',strata_manager:'strata-manager',council:'strata-council'});
+const ROLE_WORKSPACE_KIND = Object.freeze({property_manager:'property-manager',strata_manager:'strata-manager',building_manager:'building-manager',council:'strata-council'});
 const scenario = (id, actors, success, denial, cleanup, isolated, browser = []) =>
   Object.freeze({ id, actors, success, denial, cleanup, isolated, browser });
 export const SCENARIOS = Object.freeze([
@@ -45,7 +47,7 @@ export const SCENARIOS = Object.freeze([
     'An agency user cannot impersonate the owner or bypass approval.',
     'Close/reverse only the synthetic approval; never post a real charge.',
     ['agency approval escalation reaches only the verified owner and returns the decision to the work order']),
-  scenario('AT-06', ['building', 'strata_manager', 'staff'],
+  scenario('AT-06', ['building', 'strata_manager', 'building_manager', 'staff'],
     'Resident raises a common-property request that reaches the correct Strata Manager and Staff.',
     'Other schemes, private-lot tenancy data and another resident’s request remain inaccessible.',
     'Close the synthetic issue; preserve audit evidence.',
@@ -68,7 +70,7 @@ export const SCENARIOS = Object.freeze([
     'Revoke temporary document grants and remove synthetic documents under retention policy.',
     ['document revisions preserve old files and reject unrelated client recipients'],
     ['tenant evidence, reviewed PCR and cost approval connect to the self-managing landlord']),
-  scenario('AT-10', ['strata_manager', 'building', 'council'],
+  scenario('AT-10', ['strata_manager', 'building', 'building_manager', 'council'],
     'Targeted building and council notices deliver only to eligible recipients.',
     'Revoked/withdrawn recipients and unrelated audience cannot read or receive the notice.',
     'Withdraw synthetic notices and verify pending notifications are suppressed.',

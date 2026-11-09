@@ -5,8 +5,8 @@ import { SCENARIOS, ROLE_ALIASES, evaluateIdentityReadiness, requireProductionOr
 import { identityObservation, UNRELATED_API } from '../scripts/portal-testing/hosted-auth-exercise.mjs';
 import { auditIsolatedCoverage } from '../scripts/portal-testing/isolated-scenario-coverage.mjs';
 const sha = 'a'.repeat(40);
-test('exactly eight distinct legitimate roles and twelve fully specified cases',()=>{
- assert.equal(new Set(Object.values(ROLE_ALIASES)).size,8);
+test('exactly nine distinct legitimate roles and twelve fully specified cases',()=>{
+ assert.equal(new Set(Object.values(ROLE_ALIASES)).size,9);
  assert.deepEqual(SCENARIOS.map(x=>x.id),Array.from({length:12},(_,i)=>`AT-${String(i+1).padStart(2,'0')}`));
  for(const entry of SCENARIOS){
   assert.ok(entry.actors.length>0&&entry.actors.every(r=>r in ROLE_ALIASES));
@@ -18,8 +18,8 @@ test('exactly eight distinct legitimate roles and twelve fully specified cases',
 test('no email verification and no active sessions remain blocked',()=>{
  const rows=Object.keys(ROLE_ALIASES).map((role,i)=>({role,active:1,verified:i===0?1:0,live_sessions:0}));
  const result=evaluateIdentityReadiness(rows);
- assert.equal(result.registered,8);assert.equal(result.verified,1);assert.equal(result.activeSessionsByRole,0);
- assert.equal(result.blockers.length,7);assert.equal(result.observedOnly,true);
+ assert.equal(result.registered,9);assert.equal(result.verified,1);assert.equal(result.activeSessionsByRole,0);
+ assert.equal(result.blockers.length,8);assert.equal(result.observedOnly,true);
  assert.equal(result.authenticatedAcceptance,'not_executed');
 });
 test('duplicate, missing and inactive role records cannot be counted as ready',()=>{
@@ -36,6 +36,8 @@ test('session belongs to expected alias AND scoped workspace',()=>{
  assert.equal(validateSessionObservation('property_manager',ROLE_ALIASES.property_manager,[{kind:'property-manager'}],200).confirmed,true);
  assert.equal(validateSessionObservation('strata_manager',ROLE_ALIASES.strata_manager,[{kind:'strata-manager'}],200).confirmed,true);
  assert.equal(validateSessionObservation('property_manager',ROLE_ALIASES.property_manager,[{kind:'strata-manager'}],200).confirmed,false);
+ assert.equal(validateSessionObservation('building_manager',ROLE_ALIASES.building_manager,[{kind:'building-manager'}],200).confirmed,true);
+ assert.equal(validateSessionObservation('building_manager',ROLE_ALIASES.building_manager,[{kind:'building'}],200).confirmed,false);
 });
 test('auth runner requires genuine in-browser sign-in, independent denied scope and logout',()=>{
  const sample={role:'tenant',sourceSha:sha,session:{user:{email:ROLE_ALIASES.tenant},workspaces:[{kind:'tenant'}],status:200},

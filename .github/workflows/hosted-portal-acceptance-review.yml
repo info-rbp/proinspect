@@ -1,4 +1,4 @@
-name: Eight-portal hosted production acceptance (independent review)
+name: Nine-portal hosted production acceptance (independent review)
 on:
   workflow_dispatch:
     inputs:
@@ -66,6 +66,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: proinspect-portal-launch-decision
-          path: artifacts/eight-portal-launch-decision.json
+          path: artifacts/nine-portal-launch-decision.json
           retention-days: 30
           if-no-files-found: warn

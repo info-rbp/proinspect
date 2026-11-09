@@ -60,6 +60,10 @@ workspace experiences, not new staff roles or subscription prices:
 
 Property/scheme context is always visible. Use business names rather than raw IDs. One primary action per screen. Responsive navigation, labelled fields, keyboard focus, error summaries, accessible progress indicators, usable empty states and plain-language next steps are required. Customer activity excludes internal notes and raw security audit metadata.
 
+## Stage 6 — authenticated market launch requirement
+
+Although nine workspace kinds exist in the application, prior independent hosted acceptance scripts covered only eight identities. Stage 6 adds **Building Manager** as a ninth required, separately signed-in professional role. This role must demonstrate its own approved building assignment and denial of unrelated resident/tenant scopes; it cannot reuse the Building resident login or automatically receive permissions. Hosted acceptance must be independently reviewed against the exact deployed Worker SHA. Isolated CI and marketing pages alone never establish this acceptance.
+
 ## Stage 2 — Professional portal design (nine workspace kinds)
 
 The nine existing workspace kinds — Staff, Landlord, Property Manager, Strata
