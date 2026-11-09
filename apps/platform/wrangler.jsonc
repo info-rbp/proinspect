@@ -9,9 +9,15 @@
   ],
   "observability": {
     "enabled": true,
+    "redact_query_string": true,
     "logs": {
       "enabled": true,
-      "invocation_logs": false
+      "invocation_logs": false,
+      "head_sampling_rate": 0.1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
     }
   },
   "vars": {
@@ -106,7 +112,7 @@
         "PLATFORM_ORIGIN": "https://proinspect.systems",
         "GUEST_BOOKINGS_ENABLED": "false",
         "RENTAL_APPLICATIONS_ENABLED": "false",
-    "RENTAL_TENANCY_HANDOVER_ENABLED": "false",
+        "RENTAL_TENANCY_HANDOVER_ENABLED": "false",
         "RENTAL_RETENTION_AUTOPURGE_ENABLED": "false",
         "OPEN_HOME_SHEET_SYNC_ENABLED": "false",
         "OPEN_HOME_REPORTS_ENABLED": "false",
@@ -199,6 +205,19 @@
           "*/2 * * * *",
           "0 1 * * *"
         ]
+      },
+      "observability": {
+        "enabled": true,
+        "redact_query_string": true,
+        "logs": {
+          "enabled": true,
+          "invocation_logs": false,
+          "head_sampling_rate": 0.1
+        },
+        "traces": {
+          "enabled": true,
+          "head_sampling_rate": 0.01
+        }
       }
     },
     "staging": {
@@ -223,7 +242,7 @@
         "GOOGLE_CALENDAR_BOOKINGS_ENABLED": "false",
         "GUEST_BOOKINGS_ENABLED": "false",
         "RENTAL_APPLICATIONS_ENABLED": "false",
-    "RENTAL_TENANCY_HANDOVER_ENABLED": "false",
+        "RENTAL_TENANCY_HANDOVER_ENABLED": "false",
         "RENTAL_RETENTION_AUTOPURGE_ENABLED": "false",
         "OPEN_HOME_SHEET_SYNC_ENABLED": "false",
         "OPEN_HOME_REPORTS_ENABLED": "false",
