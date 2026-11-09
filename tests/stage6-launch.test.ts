@@ -3,8 +3,6 @@ import assert from 'node:assert/strict';
 import {readdirSync} from 'node:fs';
 import {assessStage6Launch,EXPECTED_SCHEMA,STAGE6_GATES,type Stage6Inputs} from '../packages/operations/stage6-launch.ts';
 import {WORKSPACES} from '../packages/domain/index.ts';
-import {ROLES} from '../scripts/portal-testing/acceptance-gate.mjs';
-import {ROLE_ALIASES,SCENARIOS} from '../scripts/portal-testing/acceptance-manifest.mjs';
 
 function fixture():Stage6Inputs{
  return {
@@ -23,11 +21,8 @@ test('Stage 6 baseline matches exactly 53 numbered migrations, 23 services and a
  assert.equal(all.at(-1),EXPECTED_SCHEMA.latest);
  assert.equal(EXPECTED_SCHEMA.catalogueServices,23);
  assert.equal(Object.keys(WORKSPACES).length,9);
- assert.equal(ROLES.length,9);
- assert.deepEqual([...new Set(ROLES)].sort(),Object.keys(ROLE_ALIASES).sort());
- assert.ok(ROLES.includes('building_manager'));
- const a=SCENARIOS.find(x=>x.id==='AT-06');
- assert.ok(a?.actors.includes('building_manager'));
+ assert.ok(Object.hasOwn(WORKSPACES,'building-manager'));
+ // The nine-role hosted acceptance script is independently checked by portal-execution.test.mjs.
 });
 test('passing source, bindings and migration count never implies market launch accepted',()=>{
  const outcome=assessStage6Launch(fixture());
