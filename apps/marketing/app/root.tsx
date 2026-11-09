@@ -14,6 +14,7 @@ import { runtimeContext } from '../../../packages/database/context';
 import '../../../packages/ui/styles.css';
 import '../../../packages/ui/marketing-nav.css';
 import '../../../packages/ui/marketing-redesign.css';
+import '../../../packages/ui/marketing-home-focus.css';
 import '../../../packages/ui/leasing.css';
 import '../../../packages/ui/rental-application.css';
 import '../../../packages/ui/rental-print.css';

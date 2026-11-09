@@ -62,10 +62,10 @@ test('marketing contact form preserves scoped service request and signed submiss
 
 test('category and engagement navigation use canonical URLs rather than obsolete filters', async ({ page }) => {
   await page.goto('/');
-  const category = page.locator('.mkt-family-card').first();
+  const category = page.locator('.pi-service-card').first().getByRole('link');
   await expect(category).toHaveAttribute('href', '/services/category/inspections');
-  const model = page.locator('.mkt-engagement-card').first().getByRole('link');
-  await expect(model).toHaveAttribute('href', '/how-we-work/pay-as-you-go');
+  await expect(page.locator('.pi-arrangements article')).toHaveCount(2);
+  await expect(page.getByRole('link', { name: 'See the full process' })).toHaveAttribute('href', '/how-it-works');
   await category.click();
   await expect(page).toHaveURL(/\/services\/category\/inspections$/);
   await expect(page.locator('.mkt-catalogue-card').first()).toBeVisible();

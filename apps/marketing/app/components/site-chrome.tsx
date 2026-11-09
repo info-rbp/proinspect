@@ -1,15 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router';
 
-const audiences = [
-  ['private-landlords', 'Private landlords'],
-  ['property-management-agencies', 'Property management agencies'],
-  ['commercial-property-owners', 'Commercial property owners'],
-  ['commercial-asset-managers', 'Commercial asset managers'],
-  ['strata-managers', 'Strata managers'],
-  ['building-operators', 'Building operators'],
-] as const;
-
 const sectors = [
   { path: '/sectors/residential', label: 'Residential', detail: 'Self-managing owners and property managers' },
   { path: '/sectors/commercial', label: 'Commercial', detail: 'Owners, property and asset managers' },
@@ -56,16 +47,13 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
             <details className="mkt-nav-dropdown" ref={audienceMenu}>
               <summary>Who we help</summary>
               <div className="mkt-nav-popover">
-                <p className="mkt-nav-caption">Who we help</p>
-                <Link to="/who-we-help" className="mkt-nav-sector"><strong>All customer types</strong><small>Choose the support that fits your responsibility</small></Link>
-                {audiences.map(([slug,label]) => <Link className="mkt-nav-sector" key={slug} to={'/who-we-help/'+slug}><strong>{label}</strong></Link>)}
-                <p className="mkt-nav-caption">Explore by sector</p>
+                <p className="mkt-nav-caption">By property type</p>
                 {sectors.map((sector) => <Link key={sector.path} to={sector.path} className="mkt-nav-sector"><strong>{sector.label}</strong><small>{sector.detail}</small></Link>)}
+                <Link to="/who-we-help" className="mkt-nav-sector"><strong>All customer types</strong><small>Find support for your role</small></Link>
               </div>
             </details>
-            <Link to="/how-it-works" aria-current={pathname.startsWith('/how-') ? 'page' : undefined}>How we work</Link>
+            <Link to="/how-it-works" aria-current={pathname.startsWith('/how-') ? 'page' : undefined}>How it works</Link>
             <Link to="/properties-for-lease" aria-current={pathname.startsWith('/properties-for-lease') ? 'page' : undefined}>Leasing</Link>
-            <Link to="/resources" aria-current={pathname.startsWith('/resources') ? 'page' : undefined}>Resources</Link>
             <Link to="/contact" aria-current={pathname === '/contact' ? 'page' : undefined}>Contact</Link>
           </nav>
           <div className="mkt-header-actions">
@@ -78,10 +66,8 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
               <Link to="/services">Services</Link>
               <Link to="/service-finder">Find a service</Link>
               <Link to="/who-we-help">Who we help</Link>
-              {audiences.map(([slug,label]) => <Link key={slug} to={'/who-we-help/'+slug}>{label}</Link>)}
-              <p className="mkt-nav-caption">Browse sectors</p>
               {sectors.map((sector) => <Link key={sector.path} to={sector.path}>{sector.label}</Link>)}
-              <Link to="/how-it-works">How we work</Link>
+              <Link to="/how-it-works">How it works</Link>
               <Link to="/properties-for-lease">Leasing</Link>
               <Link to="/resources">Resources</Link>
               <Link to="/contact">Contact</Link>
@@ -101,31 +87,29 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
         <div className="mkt-footer-top">
           <div className="mkt-footer-intro">
             <Link className="brand inverse" to="/">ProInspect<span>PROPERTY SERVICES</span></Link>
-            <p>On-the-ground property inspections, attendance and operational support. Documented work with a connected property record.</p>
+            <p>Practical on-site property services. Documented outcomes and connected records for residential, commercial and strata properties.</p>
             <Link className="mkt-footer-contact" to="/contact">Talk to ProInspect <span aria-hidden="true">↗</span></Link>
           </div>
           <div className="mkt-footer-group">
-            <h3>Explore</h3>
+            <h3>Services</h3>
             <Link to="/services">All services</Link>
             <Link to="/service-finder">Find a service</Link>
-            <Link to="/residential-property-support">Residential support plan</Link>
-            <Link to="/properties-for-lease">Properties for lease</Link>
-            <Link to="/services/category/inspections">Inspections</Link>
+            <Link to="/services/category/inspections">Inspections &amp; reports</Link>
             <Link to="/services/category/maintenance">Maintenance &amp; works</Link>
-            <Link to="/how-it-works">How we work</Link>
-            <Link to="/client-experience">The client experience</Link>
+            <Link to="/services/category/access">Contractor access</Link>
           </div>
           <div className="mkt-footer-group">
             <h3>Who we help</h3>
-            <Link to="/who-we-help">All customer types</Link>
-            {audiences.map(([slug,label]) => <Link key={slug} to={'/who-we-help/'+slug}>{label}</Link>)}
             {sectors.map((sector) => <Link key={sector.path} to={sector.path}>{sector.label}</Link>)}
-            <Link to="/areas-we-service">Service areas</Link>
+            <Link to="/who-we-help">All customer types</Link>
+            <Link to="/residential-property-support">Residential support options</Link>
           </div>
           <div className="mkt-footer-group">
             <h3>ProInspect</h3>
-            <Link to="/why-proinspect">Why ProInspect</Link>
-            <Link to="/resources">Guides &amp; resources</Link>
+            <Link to="/how-it-works">How it works</Link>
+            <Link to="/client-experience">Client experience</Link>
+            <Link to="/properties-for-lease">Properties for lease</Link>
+            <Link to="/resources">Resources</Link>
             <Link to="/about">About</Link>
             <Link to="/contact">Contact</Link>
             <a href={appOrigin + '/signin'}>Sign in</a>
