@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {providerReadiness} from '../../../../packages/operations/provider-readiness';
+import {operationalHealth} from './operational-health.server';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal } from '../../../../packages/domain/index';
 import { administrator } from '../../../../packages/authorization/server';
@@ -49,6 +50,7 @@ export async function releaseReadiness(env: Env, user: Principal) {
     ({ name, configured: configured(env, name), approval: env.APP_ENV === 'local' ? null : await activeApproval(env, name) })));
   const records = (await statement(env.DB, 'SELECT * FROM feature_release_approvals ORDER BY requested_at DESC LIMIT 200').all()).results;
   return { environment: env.APP_ENV, source: env.BUILD_SHA ?? null, features, records, providers: providerReadiness(env as unknown as Record<string,unknown>),
+    operations: await operationalHealth(env),
     notice: 'This record does not switch flags, validate legal advice or replace the separately protected hosted-acceptance evidence bundle.' };
 }
 export async function releaseCommand(env: Env, user: Principal, command: string, input: unknown) {
