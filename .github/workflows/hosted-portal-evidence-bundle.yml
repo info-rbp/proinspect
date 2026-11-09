@@ -1,4 +1,4 @@
-name: Eight-portal hosted evidence bundle (redacted only)
+name: Nine-portal hosted evidence bundle (redacted only)
 on:
   push:
     branches: ['acceptance/evidence-*']
