@@ -111,6 +111,22 @@ try {
     person = await login('review-person@example.test'),
     other = await login('review-other@example.test');
   await run("INSERT INTO staff_profiles VALUES(?,'operations_manager',1)", staff.id);
+  const stage5Admin=await login('stage5-admin@example.test');
+  await run("INSERT INTO staff_profiles VALUES(?,'administrator',1)",stage5Admin.id);
+  await check('Stage 5 operational health requires an authenticated administrator and returns only aggregate evidence',async()=>{
+    assert.equal((await api('/api/staff/release-readiness',null)).status,401);
+    assert.equal((await api('/api/staff/release-readiness',person)).status,403);
+    assert.equal((await api('/api/staff/release-readiness',staff)).status,403);
+    const result=await ok('/api/staff/release-readiness',stage5Admin);
+    assert.equal(result.operations.basis,'read_only_aggregates');
+    assert.equal(result.operations.signals.length,7);
+    assert.ok(result.operations.signals.every(x=>Number.isInteger(x.count)||x.count===null));
+    assert.ok(result.operations.signals.every(x=>!Object.keys(x).includes('payload')));
+    const wire=JSON.stringify(result.operations);
+    assert.ok(!wire.includes('stage5-admin@example.test'));
+    assert.ok(!wire.includes('synthetic'));
+    assert.ok(!wire.includes('token_hash'));
+  });
   const client = await ok(
       '/api/onboarding',
       person,
