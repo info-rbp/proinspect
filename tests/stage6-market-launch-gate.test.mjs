@@ -58,7 +58,7 @@ test('rejects secret-shaped evidence even when someone recomputes its digest',()
  const ref=b.reviews.operational_readiness.evidenceRef;
  const p=join(cwd,ref);
  const data=JSON.parse(readFileSync(p,'utf8'));
- data.credentials='whsec_fake_really_bad_example';
+ data.credentials='whsec_aaaaaaaaaaaaaaaaaaaaaaaa';
  const s=JSON.stringify(data);writeFileSync(p,s);
  b.reviews.operational_readiness.evidenceDigest=createHash('sha256').update(s).digest('hex');
  assert.throws(()=>verifyStage6Bundle(b,sha,{cwd,protectedReview:true}),/sensitive/);
