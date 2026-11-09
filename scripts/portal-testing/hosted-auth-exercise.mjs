@@ -13,6 +13,7 @@ const denial = {
   strata_manager:'/api/w/landlord/cli_pi_test_landlord',
   tenant:'/api/w/landlord/cli_pi_test_landlord',
   building:'/api/w/strata-council/scheme_pi_test',
+  building_manager:'/api/w/tenant/tnc_pi_test_landlord',
   council:'/api/w/building/scheme_pi_test',
   staff:'/api/w/strata-council/scheme_pi_test',
 };
