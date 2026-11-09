@@ -1,293 +1,98 @@
 import { Link, useOutletContext } from 'react-router';
-import { FAMILIES, SERVICE_SEEDS } from '../../../../packages/service-catalogue/index';
 import { IllustrativeReport, MarketingCta, PropertyArtwork } from '../components/marketing-ui';
 import { seo } from '../lib/seo';
 
-export const meta = () =>
-  seo(
-    'Property Inspections & On-Site Support — Western Australia',
-    'Residential, commercial and strata property inspections, condition reports, contractor access and building attendance in Western Australia. Explore the service and enquire.',
-    '/',
-  );
+export const meta = () => seo(
+  'Property Inspections & On-Site Support — Western Australia',
+  'Practical property inspections, condition reports, contractor access and property attendance in WA. On-site work, documented outcomes and connected records.',
+  '/',
+);
 
-const sectorCards = [
-  {
-    id: 'residential',
-    label: 'Residential',
-    heading: 'Support for rental properties.',
-    description: 'Inspections and practical attendance for self-managing landlords and professional property management firms.',
-    artwork: 'residential' as const,
-  },
-  {
-    id: 'commercial',
-    label: 'Commercial',
-    heading: 'On-site clarity for commercial assets.',
-    description: 'Condition records, make-good, contractor access and operational attendance for commercial property.',
-    artwork: 'commercial' as const,
-  },
-  {
-    id: 'strata-building',
-    label: 'Strata & buildings',
-    heading: 'A clearer view of shared spaces.',
-    description: 'Common-property inspections, building attendance and support for authorised strata and building managers.',
-    artwork: 'strata' as const,
-  },
-];
-
-const featuredIds = [
-  'routine-inspection',
-  'property-condition-report',
-  'completed-works-inspection',
-  'contractor-access-attendance',
-  'common-property-inspection',
-  'maintenance-attendance',
-];
-const featured = featuredIds
-  .map((id) => SERVICE_SEEDS.find((service) => service.id === id))
-  .filter((service): service is (typeof SERVICE_SEEDS)[number] => Boolean(service));
-
-const engagementCards = [
-  ['pay-as-you-go', 'One-off services', 'A defined inspection or on-site attendance when you need it.'],
-  ['inspection-plans', 'Inspection planning', 'Coordinate recurring property inspections with each visit confirmed.'],
-  ['standard-support', 'Ongoing support', 'Discuss a clearly scoped operational workload and reporting arrangement.'],
-  ['outsourced-operations', 'Outsourced operations', 'Practical on-the-ground support while your team retains its management decisions.'],
-];
-
-const processSteps = [
-  ['01', 'Choose your service', 'Browse an inspection or property attendance service, or describe a custom requirement.'],
-  ['02', 'Arrange the work', 'Existing eligible subscribers can book an included service; one-off customers follow the available request or quotation process.'],
-  ['03', 'We attend the property', 'Once an appointment is confirmed, ProInspect carries out the agreed work subject to authorised, safe access.'],
-  ['04', 'Receive the outcome', 'Issued observations and documents connect to the authorised property record.'],
-];
-
-const questions = [
-  ['Do I need an ongoing arrangement?', 'No. You can request an individual service. Repeated or portfolio-wide support can be discussed separately.'],
-  ['Can ProInspect attend any property?', 'Coverage, safe access, service suitability and appointment availability are confirmed before an attendance is accepted.'],
-  ['What happens if further work is identified?', 'The findings can be documented for your review. Specialist assessments, repairs and additional attendance require the appropriate separate instruction.'],
-  ['Can I choose a service without signing in?', 'Yes. You can explore all services and submit a one-off enquiry without an account. Online guest bookings are introduced only when enabled; existing clients use their secure portal to book included services.'],
-];
+const services = [
+  ['Inspections & reports','Understand the condition of your property through routine, incoming, outgoing and commercial inspections.','Routine inspections · Condition reports · Exit inspections','/services/category/inspections'],
+  ['Maintenance & follow-up','Have reported problems, repairs or completed work checked and documented.','Maintenance visits · Completed works · Reinspections','/services/category/maintenance'],
+  ['Access & contractor support','Arrange authorised contractor access, key handovers and agreed supervision attendance.','Contractor access · Key handovers · Supervision','/services/category/access'],
+  ['Building & property operations','Get help with practical on-site tasks across buildings, managed properties and portfolios.','Building attendance · Meetings · Handovers','/services/category/attendance'],
+] as const;
+const sectors = [
+  ['Residential','For rental property owners and agencies','Condition reports, tenancy inspections and practical follow-up for self-managing landlords and professional managers.','/sectors/residential'],
+  ['Commercial','For commercial owners and asset managers','Condition inspections, make-good observations, handovers and defined property attendance.','/sectors/commercial'],
+  ['Strata & buildings','For strata and building teams','Common-property inspections, contractor coordination and documented building attendance.','/sectors/strata-building'],
+] as const;
+const steps = [
+  ['Tell us what needs doing','Choose a service or describe the property task. We confirm the scope, safe access and availability.'],
+  ['We attend the property','A ProInspect representative undertakes the agreed inspection or on-site task at the confirmed appointment.'],
+  ['Review the outcome','Receive the appropriate report or attendance record and identify matters that may need your next decision.'],
+] as const;
 
 export default function Home() {
   const { appOrigin } = useOutletContext<{ appOrigin: string }>();
-  return (
-    <>
-      <section className="mkt-home-hero">
-        <div className="site-container mkt-home-hero-grid">
-          <div className="mkt-hero-copy">
-            <p className="eyebrow">Property inspections &amp; operational support</p>
-            <h1>Property inspections.<br /><span>Clear records.</span><br />Practical support.</h1>
-            <p className="mkt-hero-lead">
-              Arrange an inspection, condition report or authorised site visit for a residential,
-              commercial or strata property in Western Australia. Know what the visit covers and what you will receive.
-            </p>
-            <div className="actions mkt-hero-actions">
-              <Link className="button" to="/services">Explore services <span aria-hidden="true">→</span></Link>
-              <a className="button secondary" href={appOrigin + '/signin'}>Create account / Sign in</a>
-            </div>
-            <div className="mkt-hero-context">One property or a portfolio. One-off services or eligible subscription bookings, subject to confirmed scope and availability.</div>
-            <p className="mkt-section-footnote">Not sure what to book? <Link to="/service-finder">Use the service finder</Link>. Need a one-off service? <Link to="/contact">Request it without an account</Link>. Creating an account does not automatically begin paid subscription billing.</p>
+  return <div className="pi-home">
+    <section className="mkt-home-hero pi-hero" aria-labelledby="pi-title">
+      <div className="site-container pi-hero-grid">
+        <div className="pi-hero-copy">
+          <p className="eyebrow">On-site property services · Western Australia</p>
+          <h1 id="pi-title">Property work, taken care of — <span>on site and on record.</span></h1>
+          <p className="pi-lead">ProInspect handles agreed inspections, condition reports, contractor access and practical property attendance. You receive documented outcomes and connected property records to help you stay informed and decide what happens next.</p>
+          <div className="actions pi-actions">
+            <a className="button" href={appOrigin+'/book'} data-pi-conversion="home-arrange">Arrange a service <span aria-hidden="true">→</span></a>
+            <Link className="button secondary" to="/services" data-pi-conversion="home-explore">Explore services</Link>
           </div>
-          <div className="mkt-hero-visual">
-            <PropertyArtwork kind="residential" className="mkt-hero-property" slot="home-hero" />
-            <div className="mkt-hero-overlay">
-              <p className="mkt-kicker">The ProInspect approach</p>
-              <div><span>01</span><strong>On-site work</strong></div>
-              <div><span>02</span><strong>Documented outcome</strong></div>
-              <div><span>03</span><strong>Connected property context</strong></div>
-            </div>
-          </div>
+          <p className="pi-small">One-off services are available by request. Existing eligible clients can <a href={appOrigin+'/signin'}>sign in to book</a> through their portal.</p>
         </div>
-      </section>
-
-      <div className="mkt-assurance-strip">
-        <div className="site-container mkt-assurance-items">
-          <span>Western Australian property focus</span>
-          <span>Residential · Commercial · Strata</span>
-          <span>Agreed scope and authorised access</span>
-          <span>Clear observations and service records</span>
+        <div className="pi-hero-picture">
+          <PropertyArtwork kind="residential" slot="home-hero" />
+          <p>On-site work <span>·</span> Documented outcomes <span>·</span> Connected records</p>
         </div>
       </div>
-
-      <section className="section mkt-section" id="find-service">
-        <div className="site-container">
-          <div className="mkt-section-heading">
-            <div><p className="eyebrow">Find the right support</p><h2>What can we help you with?</h2></div>
-            <Link className="mkt-text-link" to="/service-finder">Find the right service <span aria-hidden="true">→</span></Link>
-          </div>
-          <div className="mkt-service-families">
-            {Object.entries(FAMILIES).map(([id, family], index) => (
-              <Link className="mkt-family-card" to={'/services/category/' + id} key={id}>
-                <span className="mkt-card-number">{String(index + 1).padStart(2, '0')}</span>
-                <span className="mkt-family-glyph" aria-hidden="true">{['◇', '⌂', '⊕', '↗', '▤', '◎'][index]}</span>
-                <strong>{family.name}</strong>
-                <span className="mkt-card-description">{family.description}</span>
-                <span className="mkt-card-arrow" aria-hidden="true">↗</span>
-              </Link>
-            ))}
-          </div>
-          <p className="mkt-section-footnote">Not sure which service fits? <Link to="/contact">Describe the property task</Link> and we can help clarify an appropriate scope.</p>
+    </section>
+    <section className="mkt-section pi-section" id="find-service" aria-labelledby="pi-services">
+      <div className="site-container">
+        <header className="pi-section-head"><div><p className="eyebrow">What we do</p><h2 id="pi-services">What do you need taken care of?</h2></div><p>Start with the outcome you need, not an unfamiliar service name.</p></header>
+        <div className="pi-service-grid">
+          {services.map(([title,description,examples,to],i) => <article className="pi-service-card" key={to}>
+            <span className="pi-number">{String(i+1).padStart(2,'0')}</span><h3>{title}</h3><p>{description}</p><p className="pi-examples">{examples}</p>
+            <Link to={to} data-pi-conversion={'service-'+(i+1)}>Explore these services <span aria-hidden="true">→</span></Link>
+          </article>)}
         </div>
-      </section>
-
-      <section className="section mkt-section mkt-stone">
-        <div className="site-container">
-          <div className="mkt-section-heading">
-            <div><p className="eyebrow">Who we help</p><h2>Different properties. The right support.</h2></div>
-            <p>Services shaped around the needs of the people responsible for each property.</p>
-          </div>
-          <div className="mkt-sector-grid">
-            {sectorCards.map((sector) => (
-              <Link className="mkt-sector-card" key={sector.id} to={'/sectors/' + sector.id}>
-                <PropertyArtwork kind={sector.artwork} slot={sector.artwork === 'strata' ? 'sector-strata' : sector.artwork === 'commercial' ? 'sector-commercial' : 'sector-residential'} />
-                <div className="mkt-sector-content">
-                  <span className="mkt-sector-label">{sector.label}</span>
-                  <h3>{sector.heading}</h3>
-                  <p>{sector.description}</p>
-                  <span className="mkt-card-action">Explore {sector.label.toLowerCase()} <span aria-hidden="true">↗</span></span>
-                </div>
-              </Link>
-            ))}
-          </div>
+        <p className="pi-discovery">Not sure what to book? <Link to="/service-finder" data-pi-conversion="home-finder">Find the right service <span aria-hidden="true">→</span></Link></p>
+      </div>
+    </section>
+    <section className="mkt-section pi-section pi-tint" aria-labelledby="pi-sectors">
+      <div className="site-container">
+        <header className="pi-section-head"><div><p className="eyebrow">Who we support</p><h2 id="pi-sectors">The right support for your property.</h2></div><p>Residential, commercial and strata property needs call for different on-site work.</p></header>
+        <div className="pi-sector-grid">{sectors.map(([label,title,description,to])=><article className="pi-sector-card" key={to}>
+          <p className="pi-overline">{label}</p><h3>{title}</h3><p>{description}</p><Link to={to} data-pi-conversion={'sector-'+label}>Explore {label.toLowerCase()} <span aria-hidden="true">→</span></Link>
+        </article>)}</div>
+      </div>
+    </section>
+    <section className="mkt-section pi-section" aria-labelledby="pi-process">
+      <div className="site-container">
+        <header className="pi-section-head"><div><p className="eyebrow">How it works</p><h2 id="pi-process">From a property task to a useful outcome.</h2></div><Link to="/how-it-works">See the full process <span aria-hidden="true">→</span></Link></header>
+        <ol className="pi-steps">{steps.map(([title,description],i)=><li key={title}><span className="pi-number">{String(i+1).padStart(2,'0')}</span><h3>{title}</h3><p>{description}</p></li>)}</ol>
+        <p className="pi-small">A one-off service can be requested without an account. Eligible existing clients book through their authorised portal. Requests are subject to scope, availability and appointment confirmation.</p>
+      </div>
+    </section>
+    <section className="mkt-section pi-section pi-record" aria-labelledby="pi-outcome">
+      <div className="site-container pi-record-grid">
+        <div><p className="eyebrow">More than the visit</p><h2 id="pi-outcome">See what was done. Know what needs attention.</h2>
+          <p>Inspection findings, relevant photographs and attendance information stay connected with the property. When a report is issued, authorised customers can review it in their workspace.</p>
+          <ul><li>Clear dated observations within the agreed scope</li><li>Relevant images or supporting notes where applicable</li><li>Follow-up matters identified for your review</li></ul>
+          <Link to="/client-experience" data-pi-conversion="home-client-experience">Explore the client experience <span aria-hidden="true">→</span></Link>
         </div>
-      </section>
-
-      <section className="section mkt-section">
-        <div className="site-container">
-          <div className="mkt-section-heading">
-            <div><p className="eyebrow">Who you are matters</p><h2>Property support for your role.</h2></div>
-            <Link className="mkt-text-link" to="/who-we-help">Explore who we help <span aria-hidden="true">→</span></Link>
-          </div>
-          <div className="mkt-audience-links" aria-label="Explore property support by audience">
-            <Link to="/who-we-help/private-landlords">Private landlords</Link>
-            <Link to="/who-we-help/property-management-agencies">Property agencies</Link>
-            <Link to="/who-we-help/commercial-property-owners">Commercial owners</Link>
-            <Link to="/who-we-help/commercial-asset-managers">Asset managers</Link>
-            <Link to="/who-we-help/strata-managers">Strata managers</Link>
-            <Link to="/who-we-help/building-operators">Building operators</Link>
-          </div>
+        <div className="pi-report-panel"><IllustrativeReport compact/><p>Illustrative report layout, not an actual issued report. Deliverables depend on the agreed service.</p></div>
+      </div>
+    </section>
+    <section className="mkt-section pi-section" aria-labelledby="pi-ways">
+      <div className="site-container">
+        <header className="pi-section-head"><div><p className="eyebrow">Ways to work with us</p><h2 id="pi-ways">One visit, or ongoing property support.</h2></div><p>Choose the arrangement that suits the work. A one-off enquiry does not require a subscription.</p></header>
+        <div className="pi-arrangements">
+          <article><p className="pi-overline">For a specific task</p><h3>One-off inspections & attendance</h3><p>Request a defined inspection, condition report or authorised visit. We confirm the scope, any applicable price and the appointment.</p><a href={appOrigin+'/book'} data-pi-conversion="home-one-off">Arrange a one-off service <span aria-hidden="true">→</span></a></article>
+          <article><p className="pi-overline">For a broader workload</p><h3>Planned & outsourced support</h3><p>Discuss recurring inspections, several properties or an ongoing operational need. Agree the workload and commercial terms separately.</p><Link to="/contact" data-pi-conversion="home-ongoing">Discuss ongoing support <span aria-hidden="true">→</span></Link></article>
         </div>
-      </section>
-
-      <section className="section mkt-section">
-        <div className="site-container">
-          <div className="mkt-section-heading">
-            <div><p className="eyebrow">Start here</p><h2>Services for the work that needs doing.</h2></div>
-            <p>Choose a specific service to understand the purpose, attendance and documented output.</p>
-          </div>
-          <div className="mkt-featured-grid">
-            {featured.map((service, index) => (
-              <article className="mkt-featured-card" key={service.id}>
-                <div className={'mkt-featured-graphic mkt-graphic-' + (index % 3)}>
-                  <span>{String(index + 1).padStart(2, '0')}</span>
-                  <span className="mkt-featured-graphic-line" aria-hidden="true" />
-                </div>
-                <div className="mkt-featured-content">
-                  <p className="mkt-kicker">{FAMILIES[service.family].name}</p>
-                  <h3>{service.name}</h3>
-                  <p>{service.summary}</p>
-                  <Link className="mkt-text-link" to={'/services/' + service.id}>View service details <span aria-hidden="true">↗</span></Link>
-                </div>
-              </article>
-            ))}
-          </div>
-          <div className="mkt-section-outro"><Link className="button secondary" to="/services">Browse the full service catalogue <span aria-hidden="true">→</span></Link></div>
-        </div>
-      </section>
-
-      <section className="section mkt-section mkt-process-section">
-        <div className="site-container">
-          <div className="mkt-section-heading">
-            <div><p className="eyebrow">How ProInspect works</p><h2>From instruction to a documented outcome.</h2></div>
-            <Link className="mkt-text-link" to="/how-it-works">Our process <span aria-hidden="true">↗</span></Link>
-          </div>
-          <ol className="mkt-steps">
-            {processSteps.map(([number, title, detail]) => (
-              <li key={number}>
-                <span className="mkt-step-number">{number}</span>
-                <h3>{title}</h3>
-                <p>{detail}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="section mkt-section mkt-proof-section">
-        <div className="site-container mkt-proof-grid">
-          <div className="mkt-proof-copy">
-            <p className="eyebrow">Inside the outcome</p>
-            <h2>Not just another appointment. A useful record.</h2>
-            <p>
-              The work at a property is only part of the story. An issued inspection report or
-              service record helps the authorised customer see what was observed and what may need
-              attention next.
-            </p>
-            <ul className="mkt-check-list">
-              <li>Documented observations within the agreed service scope</li>
-              <li>Relevant photographs or supporting information where applicable</li>
-              <li>Clearly identified matters requiring review or follow-up</li>
-              <li>An issued result linked to the relevant property account</li>
-            </ul>
-            <Link className="button secondary" to="/client-experience">Explore the client experience <span aria-hidden="true">→</span></Link>
-          </div>
-          <div className="mkt-report-display">
-            <IllustrativeReport />
-            <p className="mkt-image-disclosure">Illustrative report design. Final report formats and inclusions depend on the service scope.</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="section mkt-section">
-        <div className="site-container">
-          <div className="mkt-section-heading">
-            <div><p className="eyebrow">Ways to work with us</p><h2>One visit. Or a broader working arrangement.</h2></div>
-            <p>Choose a defined service or discuss recurring support suited to your responsibilities and workload.</p>
-          </div>
-          <div className="mkt-engagement-grid">
-            {engagementCards.map(([slug, title, description], index) => (
-              <article className="mkt-engagement-card" key={slug}>
-                <span className="mkt-card-number">0{index + 1}</span>
-                <h3>{title}</h3>
-                <p>{description}</p>
-                <Link className="mkt-text-link" to={'/how-we-work/' + slug}>How it works <span aria-hidden="true">↗</span></Link>
-              </article>
-            ))}
-          </div>
-          <p className="mkt-section-footnote">Every engagement is subject to confirmed service scope, availability and commercial terms.</p>
-        </div>
-      </section>
-
-      <section className="section mkt-section mkt-stone">
-        <div className="site-container mkt-difference-grid">
-          <div><p className="eyebrow">Why ProInspect</p><h2>Work on the ground. Clarity in the details.</h2></div>
-          <div className="mkt-difference-items">
-            <div><span>01</span><div><h3>Practical presence</h3><p>Defined inspections and authorised attendance for the task that needs physical attention.</p></div></div>
-            <div><span>02</span><div><h3>Useful documentation</h3><p>Observations, records and relevant next steps—not vague assurances that everything is fine.</p></div></div>
-            <div><span>03</span><div><h3>Connected context</h3><p>Issued work and property information stay organised for authorised customers.</p></div></div>
-            <Link className="mkt-text-link" to="/why-proinspect">Explore the ProInspect approach <span aria-hidden="true">↗</span></Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="section mkt-section mkt-faq-section">
-        <div className="site-container mkt-faq-grid">
-          <div><p className="eyebrow">Good to know</p><h2>Questions before you begin.</h2><p>Some details depend on the property, instruction and service.</p></div>
-          <div className="mkt-faq-list">
-            {questions.map(([question, answer]) => (
-              <details key={question}>
-                <summary>{question}<span aria-hidden="true">+</span></summary>
-                <p>{answer}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <MarketingCta
-        title="What does your property need next?"
-        description="Explore the right service or tell us about the property task, issue or ongoing support you have in mind."
-        appOrigin={appOrigin}
-      />
-    </>
-  );
+        <p className="pi-small">Want a property workspace? <a href={appOrigin+'/signin'}>Create a free account or sign in</a>. Registration does not activate paid subscription billing.</p>
+      </div>
+    </section>
+    <MarketingCta title="Have a property task to arrange?" description="Choose a service or tell us what needs doing. We will confirm the practical next step." appOrigin={appOrigin}/>
+  </div>;
 }
