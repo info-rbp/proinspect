@@ -6,12 +6,12 @@ test('a visitor can browse marketing and enter the booking/sign-in workflow on o
   const homepage = await request.get('/');
   expect(homepage.status()).toBe(200);
   const html = await homepage.text();
-  expect(html).toContain('Property inspections.');
-  expect(html).toContain('Clear records.');
+  expect(html).toContain('Property work, taken care of');
+  expect(html).toContain('on site and on record.');
   expect(html).toContain('ProInspect');
   await page.goto('/');
   await expect(page.locator('body')).toHaveClass(/site/);
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Property inspections.');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Property work, taken care of');
   await page.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link', { name: 'Services' }).click();
   await expect(page).toHaveURL(`${origin}/services`);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('The right service');
