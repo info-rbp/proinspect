@@ -20,6 +20,14 @@ export function providerReadiness(env:Record<string,unknown>):ProviderReadiness[
  const portal=check('Stripe billing portal',['STRIPE_BILLING_PORTAL_CONFIGURATION_ID'],'A pinned sandbox configuration must be fetched and checked before every portal session. Only invoice history and payment-method updates are allowed; configuration is not provider acceptance.');
  if(present('STRIPE_BILLING_PORTAL_CONFIGURATION_ID')&&!isBillingPortalConfigurationId(env.STRIPE_BILLING_PORTAL_CONFIGURATION_ID)){portal.invalid.push('STRIPE_BILLING_PORTAL_CONFIGURATION_ID');portal.state='configuration_missing';}
  if(env.APP_ENV==='production')portal.state='sandbox_only';
+ const live=check('Stripe live residential',
+  ['STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID','STRIPE_RESIDENTIAL_LIVE_KEY','STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET','RESIDENTIAL_APPROVED_TAX_CODE'],
+  'Requires verified live account, registered Australian GST, approved property-services tax code and exclusive AUD weekly price, correct signed webhook events, refund/dispute replay and independent release approval. Configured credentials are not proof of these checks.');
+ if(present('STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID')&&env.STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID!=='acct_1USumSEynzcud8MV')live.invalid.push('STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID');
+ if(present('STRIPE_RESIDENTIAL_LIVE_KEY')&&!/^rk_live_[A-Za-z0-9_]{16,}$/.test(String(env.STRIPE_RESIDENTIAL_LIVE_KEY)))live.invalid.push('STRIPE_RESIDENTIAL_LIVE_KEY');
+ if(present('STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET')&&!/^whsec_[A-Za-z0-9_]{16,}$/.test(String(env.STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET)))live.invalid.push('STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET');
+ if(present('RESIDENTIAL_APPROVED_TAX_CODE')&&(!/^txcd_[0-9]{8}$/.test(String(env.RESIDENTIAL_APPROVED_TAX_CODE))||env.RESIDENTIAL_APPROVED_TAX_CODE==='txcd_10203001'))live.invalid.push('RESIDENTIAL_APPROVED_TAX_CODE');
+ if(live.invalid.length)live.state='configuration_missing';
  const email=check('Transactional email',['RESEND_API_KEY','EMAIL_FROM'],'Verify real recipient delivery, bounces, retries and private-link handling; provider acceptance is not inbox delivery.');
  if(env.EMAIL_PROVIDER!=='resend'){email.invalid.push('EMAIL_PROVIDER');email.state='configuration_missing';}
  const scanner=check('Rental document scanner',['RENTAL_SCANNER_ENDPOINT','RENTAL_SCANNER_ALLOWED_HOST','RENTAL_SCANNER_OUTBOUND_SECRET','RENTAL_SCANNER_WEBHOOK_SECRET'],'Test signed verdicts and ensure unavailable or rejected scanning never releases a quarantined file.');
@@ -27,7 +35,7 @@ export function providerReadiness(env:Record<string,unknown>):ProviderReadiness[
  for(const [item,prefix] of [[scanner,'RENTAL_SCANNER'],[handoff,'RENTAL_APPS_SCRIPT']] as const){
   if(present(prefix+'_ENDPOINT'))try{const u=new URL(String(env[prefix+'_ENDPOINT']));if(u.protocol!=='https:'||u.username||u.password||u.hostname!==env[prefix+'_ALLOWED_HOST'])throw Error();}catch{item.invalid.push(prefix+'_ENDPOINT');item.state='configuration_missing';}
  }
- return [stripe,portal,email,
+ return [stripe,portal,live,email,
   check('Turnstile',['TURNSTILE_SITE_KEY','TURNSTILE_SECRET_KEY'],'A configured widget still needs real action/hostname validation and replay rejection; no bypass or synthetic hosted sessions.'),
   check('Google Calendar',['GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL','GOOGLE_CALENDAR_PRIVATE_KEY','GOOGLE_CALENDAR_ID','GOOGLE_CALENDAR_TIMEZONE'],'Read-only connectivity does not prove event write, reschedule, cancellation or conflict acceptance.'),
   scanner,handoff,
