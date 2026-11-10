@@ -3,6 +3,39 @@ import { FAMILIES } from '../../../../packages/service-catalogue/index';
 import { MarketingCta } from '../components/marketing-ui';
 import { MarketingPageHero, MarketingSectionTitle } from '../components/page-patterns';
 import { seo } from '../lib/seo';
+import accessImage from './images/service-access.jpg';
+import attendanceImage from './images/service-attendance.jpg';
+import documentsImage from './images/service-documents.jpg';
+import inspectionsImage from './images/service-inspections.jpg';
+import maintenanceImage from './images/service-maintenance.jpg';
+import operationsImage from './images/service-operations.jpg';
+
+const familyImages: Record<string, { src: string; alt: string }> = {
+  inspections: {
+    src: inspectionsImage,
+    alt: 'Residential interior ready for a property inspection',
+  },
+  attendance: {
+    src: attendanceImage,
+    alt: 'Property professional attending a residential property',
+  },
+  maintenance: {
+    src: maintenanceImage,
+    alt: 'Maintenance tools ready for property repair work',
+  },
+  access: {
+    src: accessImage,
+    alt: 'Property key provided for authorised access',
+  },
+  documents: {
+    src: documentsImage,
+    alt: 'Property documents being reviewed and completed',
+  },
+  operations: {
+    src: operationsImage,
+    alt: 'Properties supported through ongoing operations',
+  },
+};
 
 export const meta = () =>
   seo(
@@ -32,22 +65,35 @@ export default function Services() {
           <MarketingSectionTitle
             eyebrow="Explore by service type"
             title="Find the work you need done."
-            description="Six service families bring inspections, attendance and operations together without mixing different service scopes."
           />
           <div className="mkt-service-families">
-            {Object.entries(FAMILIES).map(([id, entry], i) => (
-              <Link key={id} className="mkt-family-card" to={'/services/category/' + id}>
-                <span className="mkt-card-number">{String(i + 1).padStart(2, '0')}</span>
-                <span className="mkt-family-glyph" aria-hidden="true">
-                  {['◇', '⌂', '⊕', '↗', '▤', '◎'][i]}
-                </span>
-                <strong>{entry.name}</strong>
-                <span className="mkt-card-description">{entry.description}</span>
-                <span className="mkt-card-arrow" aria-hidden="true">
-                  ↗
-                </span>
-              </Link>
-            ))}
+            {Object.entries(FAMILIES).map(([id, entry], i) => {
+              const image = familyImages[id];
+              return (
+                <Link key={id} className="mkt-family-card" to={'/services/category/' + id}>
+                  <span className="mkt-card-number">{String(i + 1).padStart(2, '0')}</span>
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    loading="lazy"
+                    decoding="async"
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      aspectRatio: '16 / 9',
+                      objectFit: 'cover',
+                      borderRadius: 6,
+                      margin: '14px 0 18px',
+                    }}
+                  />
+                  <strong>{entry.name}</strong>
+                  <span className="mkt-card-description">{entry.description}</span>
+                  <span className="mkt-card-arrow" aria-hidden="true">
+                    ↗
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
