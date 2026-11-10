@@ -1,3 +1,5 @@
+import relationshipImage from './images/relationship.jpg';
+
 export function HomeArrangementsSection({ appOrigin }: { appOrigin: string }) {
   return (
     <section className="mkt-section pi-section" aria-labelledby="pi-ways">
@@ -7,13 +9,23 @@ export function HomeArrangementsSection({ appOrigin }: { appOrigin: string }) {
             <p className="eyebrow">Working with us</p>
             <h2 id="pi-ways">Property support built on trust and continuity.</h2>
           </div>
-          <p>
-            We invest in understanding your properties, priorities and preferred way of working, so
-            every interaction becomes simpler and more useful.
-          </p>
         </header>
         <div className="pi-arrangements" style={{ gridTemplateColumns: '1fr' }}>
           <article>
+            <img
+              src={relationshipImage}
+              alt="Property professionals building a partnership over a home and keys"
+              loading="lazy"
+              decoding="async"
+              style={{
+                display: 'block',
+                width: '100%',
+                aspectRatio: '16 / 7',
+                objectFit: 'cover',
+                borderRadius: 4,
+                marginBottom: 8,
+              }}
+            />
             <p className="pi-overline">A relationship that grows with you</p>
             <h3>A consistent partner for your property work</h3>
             <p>
