@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { PropertyArtwork } from '../marketing-ui';
+import homeHeroImage from './images/home-hero.jpg';
 
 export function HomeHero({ appOrigin }: { appOrigin: string }) {
   return (
@@ -26,7 +26,14 @@ export function HomeHero({ appOrigin }: { appOrigin: string }) {
           </div>
         </div>
         <div className="pi-hero-picture">
-          <PropertyArtwork kind="residential" slot="home-hero" />
+          <div className="mkt-property-art mkt-approved-property-media">
+            <img
+              src={homeHeroImage}
+              alt="Modern Australian residential home with a white picket fence"
+              decoding="async"
+              fetchPriority="high"
+            />
+          </div>
           <p>
             On-site work <span>·</span> Documented outcomes <span>·</span> Connected records
           </p>
