@@ -12,31 +12,51 @@ export function HomeArrangementsSection({ appOrigin }: { appOrigin: string }) {
         </header>
         <div className="pi-arrangements" style={{ gridTemplateColumns: '1fr' }}>
           <article>
-            <img
-              src={relationshipImage}
-              alt="Property professionals building a partnership over a home and keys"
-              loading="lazy"
-              decoding="async"
+            <div
               style={{
-                display: 'block',
+                display: 'grid',
                 width: '100%',
-                aspectRatio: '16 / 7',
-                objectFit: 'cover',
-                borderRadius: 4,
-                marginBottom: 8,
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+                gap: 'clamp(1.5rem, 4vw, 3rem)',
+                alignItems: 'stretch',
               }}
-            />
-            <p className="pi-overline">A relationship that grows with you</p>
-            <h3>A consistent partner for your property work</h3>
-            <p>
-              You might begin with a single inspection, report or site visit. From there, we build
-              context around your property and the outcomes that matter to you—creating clearer
-              communication, dependable follow-through and support that feels familiar as your needs
-              evolve.
-            </p>
-            <a href={appOrigin + '/contact'} data-pi-conversion="home-relationship">
-              Start a conversation with ProInspect <span aria-hidden="true">→</span>
-            </a>
+            >
+              <div style={{ minHeight: 300, overflow: 'hidden', borderRadius: 4 }}>
+                <img
+                  src={relationshipImage}
+                  alt="Well-maintained residential property supported by ProInspect"
+                  loading="lazy"
+                  decoding="async"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  justifyContent: 'center',
+                  gap: 12,
+                }}
+              >
+                <p className="pi-overline">A relationship that grows with you</p>
+                <h3>A consistent partner for your property work</h3>
+                <p>
+                  You might begin with a single inspection, report or site visit. From there, we
+                  build context around your property and the outcomes that matter to you—creating
+                  clearer communication, dependable follow-through and support that feels familiar
+                  as your needs evolve.
+                </p>
+                <a href={appOrigin + '/contact'} data-pi-conversion="home-relationship">
+                  Start a conversation with ProInspect <span aria-hidden="true">→</span>
+                </a>
+              </div>
+            </div>
           </article>
         </div>
       </div>
