@@ -1,7 +1,7 @@
 import { Link, useOutletContext, useSearchParams } from 'react-router';
-import { FAMILIES, SERVICE_SEEDS } from '../../../../packages/service-catalogue/index';
+import { FAMILIES } from '../../../../packages/service-catalogue/index';
 import { MarketingCta } from '../components/marketing-ui';
-import { MarketingPageHero, MarketingServiceGrid, MarketingSectionTitle } from '../components/page-patterns';
+import { MarketingPageHero, MarketingSectionTitle } from '../components/page-patterns';
 import { seo } from '../lib/seo';
 
 export const meta = () =>
@@ -17,7 +17,6 @@ export default function Services() {
   const requestedFamily = search.get('family');
   // Support existing inbound ?family= links, while linking visitors to the canonical category pages.
   const family = requestedFamily && FAMILIES[requestedFamily] ? requestedFamily : null;
-  const list = family ? SERVICE_SEEDS.filter((service) => service.family === family) : SERVICE_SEEDS;
   return (
     <>
       <MarketingPageHero
@@ -39,29 +38,17 @@ export default function Services() {
             {Object.entries(FAMILIES).map(([id, entry], i) => (
               <Link key={id} className="mkt-family-card" to={'/services/category/' + id}>
                 <span className="mkt-card-number">{String(i + 1).padStart(2, '0')}</span>
-                <span className="mkt-family-glyph" aria-hidden="true">{['◇', '⌂', '⊕', '↗', '▤', '◎'][i]}</span>
+                <span className="mkt-family-glyph" aria-hidden="true">
+                  {['◇', '⌂', '⊕', '↗', '▤', '◎'][i]}
+                </span>
                 <strong>{entry.name}</strong>
                 <span className="mkt-card-description">{entry.description}</span>
-                <span className="mkt-card-arrow" aria-hidden="true">↗</span>
+                <span className="mkt-card-arrow" aria-hidden="true">
+                  ↗
+                </span>
               </Link>
             ))}
           </div>
-        </div>
-      </section>
-      <section className="section mkt-section mkt-stone" id="browse-services">
-        <div className="site-container">
-          <MarketingSectionTitle
-            eyebrow="Service details"
-            title={family ? FAMILIES[family].name : 'Browse the complete service catalogue.'}
-            description="Every service has its own purpose and intended output. We confirm the accepted scope, access, timing and commercial terms before attendance."
-          />
-          <nav className="mkt-category-pills" aria-label="Service categories">
-            <Link to="/services" aria-current={!family ? 'page' : undefined}>All services</Link>
-            {Object.entries(FAMILIES).map(([id, entry]) => (
-              <Link key={id} to={'/services/category/' + id}>{entry.name}</Link>
-            ))}
-          </nav>
-          <MarketingServiceGrid services={list} />
         </div>
       </section>
       <section className="section mkt-section">
@@ -69,16 +56,30 @@ export default function Services() {
           <div>
             <p className="eyebrow">Not sure where to begin?</p>
             <h2>Start with the property problem, not a service name.</h2>
-            <p>Tell us what needs inspecting, attending or documenting, or use the <Link to="/service-finder">guided service finder</Link> to compare relevant options. Technical assessments and other specialist work are separately scoped.</p>
+            <p>
+              Tell us what needs inspecting, attending or documenting, or use the{' '}
+              <Link to="/service-finder">guided service finder</Link> to compare relevant options.
+              Technical assessments and other specialist work are separately scoped.
+            </p>
           </div>
           <div className="mkt-callout-panel">
             <span className="mkt-card-number">A USEFUL FIRST INSTRUCTION</span>
-            <p>Include the general property location, the outcome you want and any known access or safety restrictions. Avoid sending private access codes or sensitive tenancy records in a public enquiry.</p>
-            <Link className="button secondary" to="/contact">Describe your property requirement <span aria-hidden="true">→</span></Link>
+            <p>
+              Include the general property location, the outcome you want and any known access or
+              safety restrictions. Avoid sending private access codes or sensitive tenancy records
+              in a public enquiry.
+            </p>
+            <Link className="button secondary" to="/contact">
+              Describe your property requirement <span aria-hidden="true">→</span>
+            </Link>
           </div>
         </div>
       </section>
-      <MarketingCta title="Ready to arrange property work?" description="Choose the relevant service or discuss a tailored, recurring requirement. Every attendance is subject to confirmed scope and availability." appOrigin={appOrigin} />
+      <MarketingCta
+        title="Ready to arrange property work?"
+        description="Choose the relevant service or discuss a tailored, recurring requirement. Every attendance is subject to confirmed scope and availability."
+        appOrigin={appOrigin}
+      />
     </>
   );
 }
