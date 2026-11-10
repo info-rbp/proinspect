@@ -97,6 +97,40 @@ export default function Services() {
           </div>
         </div>
       </section>
+      <section
+        className="section mkt-section mkt-stone"
+        id="browse-services"
+        aria-labelledby="account-cta-title"
+      >
+        <div className="site-container mkt-callout-grid">
+          <div>
+            <p className="eyebrow">Your property workspace</p>
+            <h2 id="account-cta-title">Keep every property task connected in one account.</h2>
+            <p>
+              Create your secure ProInspect account to arrange services, follow property work and
+              access issued reports without searching across emails and separate records.
+            </p>
+          </div>
+          <div className="mkt-callout-panel">
+            <span className="mkt-card-number">FREE ACCOUNT</span>
+            <h3>Get started with your email address.</h3>
+            <p>
+              We will send you a secure one-time link. If you are new to ProInspect, your account is
+              created as part of the sign-in process.
+            </p>
+            <a
+              className="button"
+              href={appOrigin + '/signin'}
+              data-pi-conversion="services-create-account"
+            >
+              Create your account <span aria-hidden="true">→</span>
+            </a>
+            <p className="small">
+              Creating an account does not activate paid subscription billing.
+            </p>
+          </div>
+        </div>
+      </section>
       <section className="section mkt-section">
         <div className="site-container mkt-callout-grid">
           <div>
