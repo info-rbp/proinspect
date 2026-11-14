@@ -1,9 +1,10 @@
 import { Link, redirect, type LoaderFunctionArgs } from 'react-router';
-import { callApi } from '../lib/api.server';
+import { principal } from '../../../../packages/auth/server';
+import { platformEnv } from '../../../../packages/database/context';
 export const meta = () => [{ title:'Client Portal | ProInspect' },{ name:'robots', content:'noindex,nofollow' }];
 export async function loader({request,context}:LoaderFunctionArgs) {
-  const session=await callApi(request,context,'/api/session');
-  if(session.ok) throw redirect('/workspaces');
+  const user=await principal(request,platformEnv(context));
+  if(user) throw redirect('/workspaces');
   return null;
 }
 export default function ClientEntry() {

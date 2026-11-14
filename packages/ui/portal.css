@@ -144,3 +144,12 @@
  .app-shell .portal-summary .metric { min-height: 78px; }
  .app-shell .record-row { flex-wrap: wrap; }
 }
+
+/* PR-01 Client Portal: account-scoped service navigation and dashboard. */
+.client-service-tabs {display:flex; flex-wrap:wrap; gap:.45rem; border-bottom:1px solid #dbe4df; padding:.5rem 0 1rem; margin-bottom:1.2rem;}
+.client-service-tab {display:inline-flex; align-items:center; gap:.35rem; padding:.55rem .7rem; border:1px solid #d6dfda; border-radius:.4rem; text-decoration:none; font-size:.85rem; min-height:40px;}
+.client-service-tab.is-unavailable {opacity:.6; cursor:not-allowed;}
+.client-service-tab small {font-size:.7rem;}
+.client-dashboard-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:1rem;}
+.client-dashboard-grid .panel {min-width:0;}
+@media(max-width:720px){.client-service-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}.client-service-tab{justify-content:center;text-align:center;}}

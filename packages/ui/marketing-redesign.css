@@ -502,3 +502,9 @@
   .site .mkt-audience-links a { flex: 1 1 100%; }
   .site .mkt-finder-select { width: 100%; }
 }
+
+/* PR-01 high-level sector links; preserve complete keyboard/mobile navigation. */
+.site .mkt-site-header {height:auto;min-height:78px;flex-wrap:wrap;gap:.8rem;padding-block:14px;}
+.site .mkt-site-links {flex-wrap:wrap;gap:.4rem .9rem;align-content:center;}
+.site .mkt-header-actions {margin-left:auto;}
+@media(max-width:1440px){.site .mkt-site-links{display:none!important;}.site .marketing-menu{display:block;}}
