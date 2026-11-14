@@ -12,7 +12,7 @@ export const SECTOR_OVERVIEWS = {
 } as const;
 type SectorKey=keyof typeof SECTOR_OVERVIEWS;
 export function loader({request}:LoaderFunctionArgs) {
- const key=new URL(request.url).pathname.slice(1) as SectorKey;
+ const key=new URL(request.url).pathname.replace(/\.data$/,'').slice(1) as SectorKey;
  const page=SECTOR_OVERVIEWS[key];if(!page)throw new Response('Not found',{status:404});
  return {key,...page};
 }

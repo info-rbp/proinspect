@@ -25,7 +25,7 @@ A source inventory and ownership map must be reviewed before any physical module
 - Run pnpm check, pnpm test:integration, pnpm test:browser and Wrangler dry-run using isolated resources.
 - Verify nine role memberships, wrong-account denial, revoked membership, viewer mutation denial, future sector disabled, booking contention and idempotency, legal/privacy and financial regressions.
 - Confirm 0054 forward migration in isolated D1, old-version compatibility and rollback by code revert (no destructive migration).
-- Require protected main, independent review, exact SHA CI acceptance, controlled Cloudflare deployment approval and hosted role acceptance before production activation.
+- Require protected main, owner-selected PR review policy, exact SHA CI acceptance, controlled Cloudflare deployment approval and hosted role acceptance before production activation. The owner waived independent PR review and authorised existing staging D1 on 14 November 2026; see PR01-RELEASE.md. This is not independent approval or production activation acceptance.
 
 ## Existing routes
 Marketing service catalogue and sector deep links remain reachable but no longer dominate navigation. Public site provides no direct checkout CTA; previous guest booking paths remain for backwards compatibility. Client Portal is the preferred authenticated path.
