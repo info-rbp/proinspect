@@ -12,9 +12,12 @@ export function resolveClientAreas(w:Workspace,properties:Property[],schemes:unk
  if(w.kind==='landlord'||(w.kind==='property-manager'&&sectorNames.has('residential')))defaults.add('residential');
  if(w.kind==='commercial'||(w.kind==='property-manager'&&sectorNames.has('commercial')))defaults.add('commercial');
  if(w.kind==='strata-manager')defaults.add('strata');
- if(w.kind==='property-manager'||w.kind==='landlord'||w.kind==='commercial')defaults.add('leasing');
- defaults.add('maintenance');
- return CLIENT_AREAS.filter(area=>selected.has(area)||defaults.has(area)).map(area=>{
+ // Only legacy accounts with no recorded preferences receive the earlier default service shortcuts.
+ if(!interests.length){
+  if(w.kind==='property-manager'||w.kind==='landlord'||w.kind==='commercial')defaults.add('leasing');
+  defaults.add('maintenance');
+ }
+ return CLIENT_AREAS.filter(area=>selected.has(area)||defaults.has(area)).map((area):ClientAreaLink=>{
   const label=({'residential':'Residential','commercial':'Commercial','strata':'Strata','co-living':'Co-Living','construction':'Construction','leasing':'Leasing','maintenance':'Maintenance'} as Record<ClientArea,string>)[area];
   if(area==='co-living'||area==='construction')return {area,label,status:'planned',href:null,description:'In development; not bookable'};
   if(area==='leasing') {
