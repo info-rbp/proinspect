@@ -1,4 +1,5 @@
 import { documentScope } from '../../../../packages/authorization/documents';
+import { interestsForWorkspace } from './client-service-interests.server';
 import { noticeMemberPredicate } from '../../../../packages/notifications/notice-access';
 import { statement, now, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
@@ -222,6 +223,7 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
     env,
     w.kind === 'staff' && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''),
   );
+  const serviceInterests = await interestsForWorkspace(env,user,w);
   const subscriptionBookingServices =
     booksServices(w)
       ? await subscriptionBookingCoverage(env, w.scopeId, properties, services)
@@ -243,6 +245,7 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
     staff,
     services,
     subscriptionBookingServices,
+    serviceInterests,
     professionalPortfolioApproved,
     approvals,
     payments,

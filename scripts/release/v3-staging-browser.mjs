@@ -6,10 +6,11 @@
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
-import {chromium} from '@playwright/test';
+import {chromium,expect} from '@playwright/test';
 
 const ORIGIN='https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev';
-if(process.env.GITHUB_REF!=='refs/heads/version-3-enhancements')
+const pr01Preview=process.env.PR01_STAGING_PREVIEW==='1'&&process.env.GITHUB_REPOSITORY==='info-rbp/proinspect'&&((process.env.GITHUB_EVENT_NAME==='pull_request'&&process.env.GITHUB_HEAD_REF==='feat/pr01-account-driven-client-portal')||(process.env.GITHUB_EVENT_NAME==='workflow_dispatch'&&process.env.GITHUB_REF==='refs/heads/feat/pr01-account-driven-client-portal'));
+if(process.env.GITHUB_REF!=='refs/heads/version-3-enhancements'&&!pr01Preview)
  throw new Error('Refusing browser UAT outside V3 integration branch.');
 const sha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const report={
@@ -28,11 +29,11 @@ try{
   const home=await page.goto(ORIGIN+'/',{waitUntil:'networkidle',timeout:25000});
   assert.equal(home.status(),200);
   assert.equal(page.url(),ORIGIN+'/');
-  await page.locator('nav[aria-label="Primary navigation"] a[href="/services"]').click();
-  await page.waitForURL('**/services',{timeout:12000});
-  assert.equal(new URL(page.url()).pathname,'/services');
-  assert((await page.locator('h1').first().innerText()).trim().length>12,'Services page must have a meaningful heading');
-  assert(await page.locator('main a[href^="/services/"]').count()>0,'Services page must retain service navigation');
+  await page.locator('nav[aria-label="Primary navigation"] a[href="/residential"]').click();
+  await page.waitForURL('**/residential',{timeout:12000});
+  assert.equal(new URL(page.url()).pathname,'/residential');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Residential');
+  await expect(page.locator('main a[href="/client"]').first()).toBeVisible();
  });
  await check('service category route and marketing link hydration',async()=>{
   const s=await page.goto(ORIGIN+'/services/category/inspections',{waitUntil:'networkidle',timeout:25000});
@@ -55,8 +56,10 @@ try{
   const menu=page.locator('details.marketing-menu');
   await menu.locator('summary').click();
   assert.equal(await menu.getAttribute('open'),'');
-  await menu.locator('a[href="/services"]').first().click();
-  await page.waitForURL('**/services',{timeout:12000});
+  await menu.locator('a[href="/residential"]').first().click();
+  await page.waitForURL('**/residential',{timeout:12000});
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Residential');
+  await expect(menu).not.toHaveAttribute('open','');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+2));
  });
  await page.screenshot({path:'artifacts/v3-hosted-mobile.png',fullPage:false});

@@ -1,0 +1,3334 @@
+{
+  "baselineCommit": "49791b082e5cd48e98911121904b1a0dfe4af009",
+  "productionDatabase": "proinspect-platform-data",
+  "capturedDate": "2026-11-14",
+  "counts": {
+    "platformRouteModules": 95,
+    "backendFeatureModules": 81,
+    "marketingRouteModules": 23,
+    "productionD1Tables": 275
+  },
+  "warning": "Proposed logical ownership based on filenames/table names only. Review each entry against actual imports and SQL before physical extraction; this is not a verified mutation owner.",
+  "sources": [
+    {
+      "path": "apps/platform/app/routes/account.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/administration.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/agency-administration.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/agency-managed.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/agency-outsourcing.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/auth-complete.tsx",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/billing.tsx",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/bond-review-queue.tsx",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/book.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/booking-changes.tsx",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/booking-intent.tsx",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/bookings.tsx",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/building-communications.tsx",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/combined-properties.tsx",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/commercial-operations.tsx",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/confidential-case.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/confidential.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/contractor-payments.tsx",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/document-operations.tsx",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/document-request.tsx",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/documents.tsx",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/enquiries.tsx",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/enquiry.tsx",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/facilities.tsx",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/finance.tsx",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/guest-book.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/guest-checkout-result.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/guest-manage.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/guest-orders.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/guest-quote.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/guest-verify.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/home.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/inspections.tsx",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/integrations.tsx",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/invitation.tsx",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/leasing-administration.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/legal-administration.tsx",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/legal-document.tsx",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/notifications.tsx",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/onboarding.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/open-home-checkins.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/open-home-report.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/organisation.tsx",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/overview.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/owner-decisions.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/owner-invitation.tsx",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/owner-invitations.tsx",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/portfolio.tsx",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/pricing-administration.tsx",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/properties.tsx",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/property.tsx",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/public-contact.tsx",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/public-layout.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/records.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/release-readiness.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/rent-routing.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/rental-application-detail.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/rental-application-print.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/rental-applications.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/report-detail.tsx",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/reporting.tsx",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/reports.tsx",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/request-detail.tsx",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/requests.tsx",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/scheme.tsx",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/schemes.tsx",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/services.tsx",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/signin.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/signout.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/stripe-subscribe.tsx",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/subscriber-intent.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/team.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/tenancies.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/tenancy-bonds.tsx",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/tenancy-detail.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v2-agreements.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v2-business.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v2-estates.tsx",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v2-intelligence.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v2-maintenance.tsx",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v2-sectors.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v4-request-manage.tsx",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v4-request-quote.tsx",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v4-request-verify.tsx",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v4-request.tsx",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v4-service-requests.tsx",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/v4-services.tsx",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/wa-form-case.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/wa-form-queue.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/wa-form-templates.tsx",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/wa-residential-forms.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/work-order-detail.tsx",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/work-orders.tsx",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/workspace.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/app/routes/workspaces.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/account.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/admin.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/agency-outsourcing.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/agency-owner-invitations.server.ts",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/billing-accounts.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/bond-alerts.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/bond-completion.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/bonds.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/bookings.server.ts",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/building-operations.server.ts",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/calendar-google.server.ts",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/calendar-scheduling.server.ts",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/commercial-lifecycle.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/commercial-operations.server.ts",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/commercial-scope.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/contractor-payments.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/documents.server.ts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/enquiries.server.ts",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/finance.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/forms.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/google-calendar.server.ts",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/guest-reminders.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/guest-report.server.ts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/guest-scheduler.server.ts",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/guest.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/integrations.server.ts",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/leasing.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/legal-acceptance.server.ts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/notice-lifecycle.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/open-home-reports.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/open-home-sheet.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/open-home.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/operational-health.server.ts",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/owner-portfolio.server.ts",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/payment-lifecycle.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/pcr-discounts.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/portfolio.server.ts",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/property-report-bridge.server.ts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/records.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/refunds.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/release-governance.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rent-connect.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rent-planning.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rental-applications.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rental-governance.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rental-handoff.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rental-malware.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rental-outcomes.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rental-privacy.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rental-review.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rental-scan-dispatch.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rental-script-dispatch.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/rental-tenancy-handover.server.ts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/report-evidence.server.ts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/report-history.server.ts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/report-issue.server.ts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/report-router.server.ts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/reports.server.ts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/residential-live-stripe.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/router.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/service-pricing.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/staff-property-management.server.ts",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/stage6-launch.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/strata.server.ts",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/stripe-billing.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/stripe-client.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/stripe-risk.server.ts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/tenancies.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/v2-business.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/v2-estates.server.ts",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/v2-intelligence.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/v2-maintenance.server.ts",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/v2-sectors.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/v4-service-requests.server.ts",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/wa-agreement-signing.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/wa-issuance.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/wa-lifecycle.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/wa-reminders.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/wa-residential.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/wa-review-gates.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/platform/worker/features/workspace-data.server.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/audience.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/contact.tsx",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/content.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/home.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/information.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/leasing-cancel.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/leasing-index.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/leasing-property.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/leasing-sector.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/open-home-check-in.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/rental-application.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/rental-recipient-verify.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/rental-recover.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/rental-start.tsx",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/residential-support.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/resources.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/robots.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/sector.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/service-finder.tsx",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/service.tsx",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/services.tsx",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/sitemap.ts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "path": "apps/marketing/app/routes/who-we-help.tsx",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "physicalMove": "later",
+      "classification": "proposed-logical-owner"
+    }
+  ],
+  "tables": [
+    {
+      "name": "account_subscription_preferences",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "action_receipts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "agency_billable_work",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "agency_commercial_agreements",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "agency_contract_rates",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "agency_invoice_exports",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "agency_monthly_statements",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "agency_owner_grants",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "agency_owner_invitations",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "agency_owner_report_shares",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "agency_statement_lines",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "approvals",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "audit_events",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "auth_rate_limits",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "billing_accounts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "billing_invoice_contacts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "billing_invoice_dispatch_events",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "billing_invoice_dispatches",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "billing_invoices",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "billing_reconciliations",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_alert_dispatches",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_allocations",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_cases",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_claims",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_contributions",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_deadlines",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_events",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_evidence",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_exception_cases",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_external_verifications",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_notices",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_parties",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_payout_reconciliations",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_preparations",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_receipts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bond_transactions",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bonds",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "booking_access_secrets",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "booking_calendar_sync",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bookings",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "building_access_devices",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "building_asset_links",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "building_manager_assignments",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "building_move_requests",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "building_notice_drafts",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "building_notices",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "building_operational_events",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "building_operational_items",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "building_plan_requests",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "building_report_grants",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "bulk_booking_runs",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "client_entitlements",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "client_memberships",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "client_property_links",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "clients",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "commercial_charge_rules",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "commercial_exception_assignments",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "commercial_lease_charges",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "commercial_lease_events",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "commercial_lease_exceptions",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "commercial_lease_register",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "commercial_lease_revisions",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "commercial_lease_tasks",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "commercial_obligation_reviews",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "commercial_task_successors",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "common_property_areas",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "communications",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "contractor_connect_recipients",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "contractor_connect_webhook_receipts",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "contractor_payment_events",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "contractor_payment_plans",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "contractors",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "council_conflict_declarations",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "council_response_history",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "council_responses",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "d1_migrations",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "document_grants",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "document_requests",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "documents",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "enquiry_events",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "feature_release_approvals",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "guest_access_links",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "guest_reminder_deliveries",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "guest_request_limits",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "guest_service_orders",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "inspection_reports",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "integration_deliveries",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "invitations",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "leads",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "leasing_checkins",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "leasing_email_events",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "leasing_leads",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "leasing_listings",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "leasing_photos",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "leasing_sessions",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "legacy_included_property_grants",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "legal_acceptance_receipts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "legal_document_versions",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "login_tokens",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "management_authorities",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "marketing_enquiries",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "mutation_guards",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "notice_deliveries",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "notice_dispatch_jobs",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "notice_revision_history",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "notice_supersessions",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "notifications",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "open_home_inspection_reports",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "open_home_report_settings",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "open_home_sheet_events",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "open_home_sheet_nonces",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "organisation_applications",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "outbox_events",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "payment_checkout_attempts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "payment_disputes",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "payment_events",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "payment_reconciliation_items",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "payment_refund_observations",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "payments",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "pcr_discount_reservations",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "pcr_responses",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "pcr_routine_discount_entitlements",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "pcr_routine_discount_redemptions",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "plan_occurrences",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "portal_invitations",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "portfolio_assignments",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "portfolio_imports",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "portfolio_owners",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "properties",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "property_management_relationships",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "property_report_bridge_handoffs",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "recurring_plans",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "refund_requests",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rent_connect_sandbox_accounts",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rent_external_money_records",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rent_external_verifications",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rent_route_plans",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_applicants",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_application_documents",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_application_events",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_application_handoffs",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_application_outcomes",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_application_privacy_requests",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_application_purge_permits",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_application_purge_receipts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_application_reference_checks",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_application_submissions",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_applications",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_document_scan_jobs",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_document_scan_receipts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_handoff_receipts",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_listing_approvals",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_listing_recipient_challenges",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_tenancy_handover_people",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "rental_tenancy_handovers",
+      "owner": "leasing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_drafts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_evidence",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_handoffs",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_layouts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_maintenance_candidates",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_render_manifests",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_render_reviews",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_responses",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_review_events",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_sync_receipts",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_templates",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "report_versions",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "request_attachments",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "request_comments",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "requests",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "residential_paid_property_enrollments",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "residential_paid_service_allowances",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "restricted_audit",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "restricted_case_grants",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "restricted_evidence",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "restricted_form2_preparations",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "restricted_form2_reviews",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "restricted_form_cases",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "restricted_reviewers",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "schedule_blocks",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "schedule_resources",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "scheme_authority_profiles",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "scheme_buildings",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "scheme_client_links",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "scheme_memberships",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "service_sale_variants",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "services",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "sessions",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "settings",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "staff_profiles",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "statutory_case_events",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "statutory_forms",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "strata_lots",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "strata_schemes",
+      "owner": "strata-building",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "stripe_billing_events",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "stripe_billing_links",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "stripe_subscription_invoice_observations",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "stripe_subscription_risk_holds",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "subscriptions",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "tenancies",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "tenancy_memberships",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "tenant_inspections",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "user_preferences",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "users",
+      "owner": "identity-access",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_asset_conditions",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_asset_details",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_asset_markets",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_asset_risks",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_asset_warranties",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_assets",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_capacity_blocks",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_capacity_resources",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_capital_commitments",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_capital_forecasts",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_capital_milestones",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_capital_programmes",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_capital_projects",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_compliance_actions",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_compliance_evidence",
+      "owner": "reporting-documents",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_compliance_obligations",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_contractor_credentials",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_engagements",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_enterprise_alerts",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_enterprise_portfolio_members",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_enterprise_portfolios",
+      "owner": "property-portfolio",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_external_costs",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_maintenance_tasks",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_market_service_rules",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_markets",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_plan_entitlements",
+      "owner": "identity-access",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_plan_services",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_plan_versions",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_preventive_occurrences",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_preventive_plans",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_quote_snapshots",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_rate_cards",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_report_snapshots",
+      "owner": "reporting-documents",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_resource_allocations",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_resource_skills",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_roster_windows",
+      "owner": "bookings-scheduling",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_saved_report_definitions",
+      "owner": "reporting-documents",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_sector_module_clearances",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_sector_modules",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_sector_packs",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_sector_records",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_sector_release_checks",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_sector_rollouts",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_service_revisions",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_services",
+      "owner": "service-catalogue",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_staff_cost_rates",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_subscription_periods",
+      "owner": "finance-billing",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_task_assignments",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_task_credential_requirements",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_task_entitlement_links",
+      "owner": "identity-access",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_task_evidence",
+      "owner": "reporting-documents",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_time_entries",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v2_usage_ledger",
+      "owner": "shared-core",
+      "reviewRequired": true,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v4_request_events",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v4_request_links",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "v4_service_requests",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_agreement_envelopes",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_agreement_events",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_agreement_signers",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_residential_form_cases",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_residential_form_decisions",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_residential_form_delivery",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_residential_form_events",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_residential_form_external_events",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_residential_form_reminders",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_residential_form_responses",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_residential_form_signatures",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_residential_form_templates",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "wa_residential_form_verifications",
+      "owner": "reporting-documents",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "webhook_receipts",
+      "owner": "communications-integrations",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    },
+    {
+      "name": "work_orders",
+      "owner": "work-orders-maintenance",
+      "reviewRequired": false,
+      "migration": "existing-production",
+      "classification": "proposed-logical-owner"
+    }
+  ]
+}

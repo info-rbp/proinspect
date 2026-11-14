@@ -11,12 +11,14 @@ export const signInSchema = z.object({
   turnstile: z.string().max(2048).optional(),
 });
 export const landlordTypes = ['residential', 'commercial'] as const;
+export const accountServiceAreaSchema=z.enum(['residential','commercial','strata','co-living','construction','leasing','maintenance']);
 export const onboardingSchema = z.object({
   legalConsent: z.unknown().optional(),
   displayName: z.string().trim().min(2).max(100),
   clientName: z.string().trim().min(2).max(160),
   // Legacy API clients are residential unless they explicitly select commercial.
   landlordType: z.enum(landlordTypes).default('residential'),
+  serviceInterests: z.array(accountServiceAreaSchema).max(7).default([]),
 });
 export const propertySchema = z.object({
   address: z.string().trim().min(5).max(180),

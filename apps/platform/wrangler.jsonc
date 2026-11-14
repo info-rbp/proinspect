@@ -277,6 +277,7 @@
         {
           "binding": "DB",
           "database_name": "proinspect-v3-staging-data",
+          "database_id": "e66b8ebc-637d-4737-8d47-b0fbec3c082c",
           "migrations_dir": "../../database/migrations"
         }
       ],

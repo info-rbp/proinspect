@@ -1,28 +1,21 @@
 import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router';
-
-const sectors = [
-  { path: '/sectors/residential', label: 'Residential', detail: 'Self-managing owners and property managers' },
-  { path: '/sectors/commercial', label: 'Commercial', detail: 'Owners, property and asset managers' },
-  { path: '/sectors/strata-building', label: 'Strata & buildings', detail: 'Strata managers and building operators' },
-];
+import { PUBLIC_NAVIGATION } from '../../../../packages/marketing/public-navigation';
 
 export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
   const { pathname } = useLocation();
   const mobileMenu = useRef<HTMLDetailsElement>(null);
-  const audienceMenu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     if (mobileMenu.current) mobileMenu.current.open = false;
-    if (audienceMenu.current) audienceMenu.current.open = false;
   }, [pathname]);
   useEffect(() => {
     function closeOutside(event: PointerEvent) {
-      for (const menu of [mobileMenu.current, audienceMenu.current])
+      for (const menu of [mobileMenu.current])
         if (menu?.open && !menu.contains(event.target as Node)) menu.open = false;
     }
     function closeEscape(event: KeyboardEvent) {
       if (event.key !== 'Escape') return;
-      for (const menu of [mobileMenu.current, audienceMenu.current]) {
+      for (const menu of [mobileMenu.current]) {
         if (!menu?.open) continue;
         menu.open = false;
         menu.querySelector('summary')?.focus();
@@ -43,35 +36,17 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
             ProInspect<span>PROPERTY SERVICES</span>
           </Link>
           <nav className="site-links mkt-site-links" aria-label="Primary navigation">
-            <Link to="/services" aria-current={pathname.startsWith('/services') ? 'page' : undefined}>Services</Link>
-            <details className="mkt-nav-dropdown" ref={audienceMenu}>
-              <summary>Who we help</summary>
-              <div className="mkt-nav-popover">
-                <p className="mkt-nav-caption">By property type</p>
-                {sectors.map((sector) => <Link key={sector.path} to={sector.path} className="mkt-nav-sector"><strong>{sector.label}</strong><small>{sector.detail}</small></Link>)}
-                <Link to="/who-we-help" className="mkt-nav-sector"><strong>All customer types</strong><small>Find support for your role</small></Link>
-              </div>
-            </details>
-            <Link to="/how-it-works" aria-current={pathname.startsWith('/how-') ? 'page' : undefined}>How it works</Link>
-            <Link to="/properties-for-lease" aria-current={pathname.startsWith('/properties-for-lease') ? 'page' : undefined}>Leasing</Link>
-            <Link to="/contact" aria-current={pathname === '/contact' ? 'page' : undefined}>Contact</Link>
+            {PUBLIC_NAVIGATION.filter(item => !['/client','/contact'].includes(item.href)).map(item =>
+              <Link key={item.href} to={item.href} aria-current={pathname === item.href ? 'page' : undefined}>{item.label}</Link>)}
           </nav>
           <div className="mkt-header-actions">
-            <a className="mkt-signin" href={appOrigin + '/signin'}>Sign in</a>
-            <a className="button mkt-header-book" href={appOrigin + '/book'}>Book a service <span aria-hidden="true">→</span></a>
+            <Link className="button mkt-header-book" to="/client">Sign Up / Sign In</Link>
+            <Link className="mkt-signin" to="/contact">Contact Us</Link>
           </div>
           <details className="marketing-menu" ref={mobileMenu}>
             <summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span>Menu</span></summary>
             <nav aria-label="Mobile site navigation">
-              <Link to="/services">Services</Link>
-              <Link to="/service-finder">Find a service</Link>
-              <Link to="/who-we-help">Who we help</Link>
-              {sectors.map((sector) => <Link key={sector.path} to={sector.path}>{sector.label}</Link>)}
-              <Link to="/how-it-works">How it works</Link>
-              <Link to="/properties-for-lease">Leasing</Link>
-              <Link to="/resources">Resources</Link>
-              <Link to="/contact">Contact</Link>
-              <a href={appOrigin + '/signin'}>Sign in</a>
+              {PUBLIC_NAVIGATION.map(item => <Link key={item.href} to={item.href}>{item.label}</Link>)}
             </nav>
           </details>
         </header>
@@ -100,7 +75,7 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
           </div>
           <div className="mkt-footer-group">
             <h3>Who we help</h3>
-            {sectors.map((sector) => <Link key={sector.path} to={sector.path}>{sector.label}</Link>)}
+            {PUBLIC_NAVIGATION.filter(item => ['residential','commercial','strata','co-living','construction'].includes(item.href.slice(1))).map(item => <Link key={item.href} to={item.href}>{item.label}</Link>)}
             <Link to="/who-we-help">All customer types</Link>
             <Link to="/residential-property-support">Residential support options</Link>
           </div>
@@ -112,7 +87,7 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
             <Link to="/resources">Resources</Link>
             <Link to="/about">About</Link>
             <Link to="/contact">Contact</Link>
-            <a href={appOrigin + '/signin'}>Sign in</a>
+            <a href={appOrigin + '/client'}>Sign in</a>
           </div>
         </div>
         <div className="mkt-footer-bottom">

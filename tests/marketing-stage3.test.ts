@@ -72,7 +72,8 @@ test('both marketing route trees expose the same conversion and audience pages',
   for(const slug of ['private-landlords','property-management-agencies','commercial-property-owners','commercial-asset-managers','strata-managers','building-operators'])
     assert.match(read('packages/marketing/audiences.ts'),new RegExp("'"+slug+"':"));
   assert.match(ui,/who-we-help/);
-  assert.match(ui,/Leasing/);
+  assert.match(ui,/PUBLIC_NAVIGATION/);
+  assert.match(read('packages/marketing/public-navigation.ts'),/Leasing/);
 });
 
 test('stage 3 editorial approval and media provenance remain explicit release conditions',()=>{

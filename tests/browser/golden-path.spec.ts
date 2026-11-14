@@ -26,7 +26,7 @@ test('marketing is server rendered and responsive', async ({ page, request }) =>
   expect(html).toContain('rel="canonical"');
   expect(html).not.toContain('<title>Service not found');
   await page.goto('http://127.0.0.1:5173');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Property work, taken care of');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('From Inspections to Reporting');
   mkdirSync('artifacts/screenshots', { recursive: true });
   await page.screenshot({ path: 'artifacts/screenshots/marketing-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
@@ -39,7 +39,7 @@ test('new Landlord registration is free and can consider a subscription later', 
   await page.getByRole('link', { name: 'Set up account', exact: true }).click();
   await page.getByLabel('Your name', { exact: true }).fill('Jordan Example');
   await page.getByLabel('Account name', { exact: true }).fill('Example Self Managed');
-  await page.getByRole('checkbox').check();
+  await page.getByRole('checkbox', { name: /I own and self-manage/ }).check();
   await page.getByRole('button', { name: 'Create Landlord account' }).click();
   await expect(page).toHaveURL(/\/properties\?service=routine-inspection$/);
   const base = new URL(page.url()).pathname.replace(/\/properties$/, '');
@@ -74,7 +74,7 @@ test('commercial Landlord signup is free and does not grant included inspection 
   await page.getByLabel('Landlord type', { exact: true }).selectOption('commercial');
   await page.getByLabel('Your name', { exact: true }).fill('Commercial Test Owner');
   await page.getByLabel('Account name', { exact: true }).fill('Synthetic Commercial Ownership');
-  await page.getByRole('checkbox').check();
+  await page.getByRole('checkbox', { name: /I own and self-manage/ }).check();
   await page.getByRole('button', { name: 'Create Landlord account' }).click();
   await expect(page).toHaveURL(/\/w\/commercial\/cli_[a-z0-9]+\/properties\?service=commercial-property-inspection$/);
   const base = new URL(page.url()).pathname.replace(/\/properties$/, '');

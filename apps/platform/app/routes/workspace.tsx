@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ClientServiceTabs } from '../components/ClientServiceTabs';
 import {
   Form,
   Link,
@@ -226,6 +227,7 @@ export default function WorkspaceLayout() {
         </header>
         <main id="main" className="content">
           <nav className="portal-breadcrumb" aria-label="Breadcrumb"><Link to="/workspaces">Workspaces</Link><span aria-hidden="true">/</span><span>{WORKSPACES[w.kind].name}</span></nav>
+          <ClientServiceTabs data={data} />
           <Outlet context={data} />
         </main>
       </div>

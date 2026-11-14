@@ -10,7 +10,8 @@ ROOT=Path(__file__).resolve().parents[1]
 
 class CommercialReportingFinanceUpgrade(unittest.TestCase):
     def paths(self):
-        p=sorted((ROOT/'database/migrations').glob('*.sql'))
+        p=sorted((ROOT/'database/migrations').glob('*.sql'))[:53]
+        # Preserve this historical 0049-0053 rehearsal even with future additive migrations.
         self.assertEqual(len(p),53,'Expected 48 deployed + 5 additive migrations')
         self.assertEqual([f.name[:4] for f in p],[f'{i:04d}' for i in range(1,54)])
         self.assertEqual([f.name for f in p[48:]],[

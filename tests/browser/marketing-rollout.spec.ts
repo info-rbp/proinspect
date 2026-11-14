@@ -64,7 +64,8 @@ test('category and engagement navigation use canonical URLs rather than obsolete
   await page.goto('/');
   const category = page.locator('.pi-service-card').first().getByRole('link');
   await expect(category).toHaveAttribute('href', '/services/category/inspections');
-  await expect(page.locator('.pi-arrangements article')).toHaveCount(2);
+  await expect(page.locator('.pi-arrangements article')).toHaveCount(1);
+  await expect(page.locator('.pi-arrangements').getByRole('link', { name: 'Start a conversation with ProInspect' })).toHaveAttribute('href', '/contact');
   await expect(page.getByRole('link', { name: 'See the full process' })).toHaveAttribute('href', '/how-it-works');
   await category.click();
   await expect(page).toHaveURL(/\/services\/category\/inspections$/);

@@ -2,6 +2,13 @@ import { type RouteConfig, index, route } from '@react-router/dev/routes';
 export default [
   index('routes/home.tsx'),
   route('services', 'routes/services.tsx'),
+  route('residential', 'routes/service-overview.tsx', { id: 'sector-overview-residential' }),
+  route('commercial', 'routes/service-overview.tsx', { id: 'sector-overview-commercial' }),
+  route('strata', 'routes/service-overview.tsx', { id: 'sector-overview-strata' }),
+  route('co-living', 'routes/service-overview.tsx', { id: 'sector-overview-co-living' }),
+  route('construction', 'routes/service-overview.tsx', { id: 'sector-overview-construction' }),
+  route('leasing', 'routes/service-overview.tsx', { id: 'sector-overview-leasing' }),
+  route('maintenance', 'routes/service-overview.tsx', { id: 'sector-overview-maintenance' }),
   route('service-finder', 'routes/service-finder.tsx'),
   route('who-we-help', 'routes/who-we-help.tsx'),
   route('who-we-help/:audience', 'routes/audience.tsx'),
