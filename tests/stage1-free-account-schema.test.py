@@ -4,7 +4,7 @@ import sqlite3
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-PATHS = sorted((ROOT / 'database/migrations').glob('*.sql'))
+PATHS = sorted((ROOT / 'database/migrations').glob('*.sql'))[:53]  # Historic 0053 onboarding baseline; 0054 rehearsed separately
 
 class AccountFirstSchema(unittest.TestCase):
     def test_legacy_property_snapshot_and_future_free_registration(self):
