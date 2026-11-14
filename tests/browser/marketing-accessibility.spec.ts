@@ -27,9 +27,9 @@ test('public marketing keyboard access preserves skip-link, responsive navigatio
   await page.keyboard.press('Enter');
   await expect(menu).toHaveAttribute('open', '');
   const links = page.getByRole('navigation', { name: 'Mobile site navigation' });
-  await expect(links.getByRole('link', { name: 'Services', exact: true })).toBeVisible();
-  await links.getByRole('link', { name: 'Resources' }).click();
-  await expect(page).toHaveURL(/\/resources$/);
+  await expect(links.getByRole('link', { name: 'Residential', exact: true })).toBeVisible();
+  await links.getByRole('link', { name: 'Residential' }).click();
+  await expect(page).toHaveURL(/\/residential$/);
   await expect(menu).not.toHaveAttribute('open', '');
 });
 
