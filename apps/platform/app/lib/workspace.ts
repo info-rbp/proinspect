@@ -20,6 +20,7 @@ export interface WorkspaceData {
   contractors: RecordRow[];
   services: Service[];
   subscriptionBookingServices: Record<string, string[]>;
+  serviceInterests?: { ready:boolean; areas:string[] };
   professionalPortfolioApproved: boolean;
   schemes: RecordRow[];
   approvals: RecordRow[];

@@ -97,6 +97,8 @@ export default [
     route('properties', 'routes/properties.tsx'),
     route('properties/:propertyId', 'routes/property.tsx'),
     route('book/:serviceId?', 'routes/book.tsx'),
+    route('service-area/:area', 'routes/client-sector.tsx'),
+    route('account-services', 'routes/account-services.tsx'),
     route('booking-changes', 'routes/booking-changes.tsx'),
     route('owner-invitations','routes/owner-invitations.tsx'),
     route('commercial-leases','routes/commercial-operations.tsx'),
