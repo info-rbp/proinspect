@@ -36,6 +36,8 @@ jobs:
         run: |
           pnpm --dir apps/marketing exec wrangler deploy --dry-run
           pnpm --dir apps/platform exec wrangler deploy --dry-run
+      - name: Rehearse 0054 in a clean local Cloudflare D1 database
+        run: pnpm test:pr01-d1
       - name: Prepare isolated browser test data
         run: |
           pnpm local:init --test-fixtures
