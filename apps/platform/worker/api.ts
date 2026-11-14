@@ -19,6 +19,7 @@ import { verifyRecipient } from './features/rental-governance.server';
 import { acceptRentalScan } from './features/rental-malware.server';
 import { setRentalPrivacyHold,resolveRentalPrivacyRequest,eraseRentalForRequest } from './features/rental-privacy.server';
 import { accountData, updateAccount, revokeSessions } from './features/account.server';
+import { clientServiceInterests, setClientServiceInterest } from './features/client-service-interests.server';
 import { receiveEnquiry } from './features/enquiries.server';
 import { ZodError, z } from 'zod';
 import type { Env } from '../../../packages/database/types';
@@ -453,6 +454,9 @@ export async function handleApi(
       operationsWrite(user);
       return Response.json(await guest.staffGuestAction(env, guestStaffMatch[1], guestStaffMatch[2], await json(request), user.id));
     }
+    const servicePrefs=path.match(/^\/api\/client-accounts\/([a-zA-Z0-9_-]+)\/service-interests$/);
+    if(servicePrefs && method==='GET') return Response.json(await clientServiceInterests(env,user,servicePrefs[1]));
+    if(servicePrefs && method==='POST') { requireOrigin(request,env); return Response.json(await setClientServiceInterest(env,user,servicePrefs[1],await json(request))); }
     if (path === '/api/account' && method === 'GET')
       return Response.json(await accountData(request, env, user));
     if (path === '/api/account' && method === 'POST')

@@ -17,7 +17,9 @@ export const onboardingSchema = z.object({
   clientName: z.string().trim().min(2).max(160),
   // Legacy API clients are residential unless they explicitly select commercial.
   landlordType: z.enum(landlordTypes).default('residential'),
+  serviceInterests: z.array(accountServiceAreaSchema).max(7).default([]),
 });
+export const accountServiceAreaSchema=z.enum(['residential','commercial','strata','co-living','construction','leasing','maintenance']);
 export const propertySchema = z.object({
   address: z.string().trim().min(5).max(180),
   suburb: z.string().trim().min(2).max(80),
