@@ -1,7 +1,7 @@
 import type { Principal, Workspace, Property, Service } from '../domain/index';
-import type { ServiceArea } from '../domain/client-navigation';
+import type { ClientArea } from '../domain/client-navigation';
 export interface SessionContract { user: Principal; workspaces: Workspace[] }
-export interface ClientServiceInterestsContract { ready: boolean; areas: ServiceArea[] }
+export interface ClientServiceInterestsContract { ready: boolean; areas: ClientArea[] }
 export interface ClientWorkspaceContract {
  user: Principal;
  workspace: Workspace;
