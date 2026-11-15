@@ -2,16 +2,22 @@ import { digest } from '../../../../packages/auth/crypto';
 import { statement, type Env } from '../../../../packages/database/types';
 import { MANAGED_RENTAL_POLICY,MANAGED_RENTAL_POLICY_VERSION,MANAGED_RENTAL_RETENTION } from '../../../../packages/marketing/managed-rental-policy';
 import { MANAGED_RENTAL_POLICY as LEGACY_POLICY,MANAGED_RENTAL_POLICY_VERSION as LEGACY_VERSION } from '../../../../packages/marketing/managed-rental-policy-v1';
+import {TEMPORARY_RENTAL_POLICY,TEMPORARY_RENTAL_POLICY_VERSION} from '../../../../packages/marketing/temporary-rental-policy';
 import {publicScanKey,scanKeyId,SCANNER_BASE_IMAGE_DIGEST} from '../../../../packages/marketing/private-scan';
 
-export type ManagedIntakeRelease={id:string;policy_version:string;policy_sha256:string;created_at:string;intake_mode:'details_only'|'scanned_documents';scanner_public_jwk?:string;scanner_key_id?:string;scanner_worker_name?:string;scanner_source_sha?:string;scanner_image_digest?:string};
+export type ManagedIntakeRelease={id:string;policy_version:string;policy_sha256:string;created_at:string;intake_mode:'details_only'|'scanned_documents'|'temporary_documents';scanner_public_jwk?:string;scanner_key_id?:string;scanner_worker_name?:string;scanner_source_sha?:string;scanner_image_digest?:string};
 type ManagedEnv=Env&{managedIntakeRelease?:ManagedIntakeRelease};
-export const isManagedApplication=(version:string)=>version.includes('|managed-details:')||version.includes('|managed-documents:');
+export const isManagedApplication=(version:string)=>version.includes('|managed-details:')||version.includes('|managed-documents:')||version.includes('|managed-temporary:');
+export const isTemporaryManagedApplication=(version:string)=>version.includes('|managed-temporary:'+TEMPORARY_RENTAL_POLICY_VERSION);
 export const isScannedManagedApplication=(version:string)=>version.includes('|managed-documents:'+MANAGED_RENTAL_POLICY_VERSION);
 export async function managedIntakeRelease(env:Env):Promise<ManagedIntakeRelease|null>{
  const cached=(env as ManagedEnv).managedIntakeRelease;if(cached)return cached;
  if(!env.BUILD_SHA||!['staging','production'].includes(env.APP_ENV))return null;
- const tables=(await statement(env.DB,"SELECT name FROM sqlite_schema WHERE type='table' AND name IN('managed_rental_intake_releases','managed_rental_document_releases')").all<{name:string}>()).results.map(r=>r.name);
+ const tables=(await statement(env.DB,"SELECT name FROM sqlite_schema WHERE type='table' AND name IN('managed_rental_intake_releases','managed_rental_document_releases','managed_rental_temporary_releases')").all<{name:string}>()).results.map(r=>r.name);
+ if(tables.includes('managed_rental_temporary_releases')){
+  const row=await statement(env.DB,"SELECT id,policy_version,policy_sha256,created_at,intake_mode FROM managed_rental_temporary_releases WHERE environment=? AND source_sha=? AND enabled=1 AND intake_mode='temporary_documents' AND length(authorized_by)>3 AND length(authorization_reference)>=12",env.APP_ENV,env.BUILD_SHA).first<ManagedIntakeRelease&{policy_sha256:string}>();
+  if(row?.policy_version===TEMPORARY_RENTAL_POLICY_VERSION&&row.policy_sha256===await digest(JSON.stringify(TEMPORARY_RENTAL_POLICY)))return row;
+ }
  if(tables.includes('managed_rental_document_releases')&&env.PRIVATE_DOCUMENT_SCANNER){
   const row=await statement(env.DB,"SELECT * FROM managed_rental_document_releases WHERE environment=? AND source_sha=? AND enabled=1 AND intake_mode='scanned_documents' AND length(authorized_by)>3 AND length(authorization_reference)>=12",env.APP_ENV,env.BUILD_SHA).first<ManagedIntakeRelease>();
   if(row&&row.scanner_image_digest===SCANNER_BASE_IMAGE_DIGEST&&row.policy_version===MANAGED_RENTAL_POLICY_VERSION&&row.policy_sha256===await digest(JSON.stringify(MANAGED_RENTAL_POLICY))&&row.scanner_worker_name==='proinspect-private-document-scanner'+(env.APP_ENV==='staging'?'-staging':'')){
@@ -44,7 +50,7 @@ export async function managedApplicationListing(env:Env,listingId:string){
 export async function managedDetailsOnlyListing(env:Env,listingId:string){return (await managedIntakeRelease(env))?.intake_mode==='details_only'&&await managedApplicationListing(env,listingId);}
 export async function managedPrivacyDocument(env:Env){
  const release=await managedIntakeRelease(env);if(!release)return null;
- const policy=release.intake_mode==='details_only'?LEGACY_POLICY:MANAGED_RENTAL_POLICY;
+ const policy=release.intake_mode==='details_only'?LEGACY_POLICY:release.intake_mode==='temporary_documents'?TEMPORARY_RENTAL_POLICY:MANAGED_RENTAL_POLICY;
  return {id:release.id,document_key:'privacy' as const,version_label:release.policy_version,title:policy.title,
   body:{intro:policy.intro,sections:policy.sections},content_sha256:release.policy_sha256,status:'approved',effective_at:release.created_at};
 }

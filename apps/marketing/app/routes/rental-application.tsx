@@ -82,7 +82,7 @@ export async function action({context,params,request}:ActionFunctionArgs){
     accurate:form.get('accurate')==='yes',
     shareWithRepresentative:form.get('shareWithRepresentative')==='yes',
     notAnAgreement:form.get('notAnAgreement')==='yes',
-    noticeAcknowledged:form.get('noticeAcknowledged')==='yes',referenceConsent:form.get('referenceConsent')==='yes',legalConsent:form.get('legalConsent')
+    noticeAcknowledged:form.get('noticeAcknowledged')==='yes',temporaryEvidenceConsent:form.get('temporaryEvidenceConsent')==='yes',referenceConsent:form.get('referenceConsent')==='yes',legalConsent:form.get('legalConsent')
    },Number(form.get('version')));
    return redirect(target('review'));
   }
@@ -204,6 +204,16 @@ function Household({people,editable}:{
    </Form></div>}
  </section>;
 }
+function TemporaryDocuments({docs,editable}:{docs:any[];editable:boolean}){
+ return <><div className="rental-section-note">Upload only requested supporting evidence. Your files are encrypted and held privately for ProInspect review. Automatic malware scanning is not available in this interim process. Staff must record an antivirus check before approved evidence can be shared through an expiring private link with the verified landlord, with ProInspect copied. Unsent files expire after 14 days; sent files expire seven days after successful sending. Redact identity and account numbers and unrelated sensitive information.</div>
+ {editable&&<Form method="post" encType="multipart/form-data" className="rental-form"><input name="intent" type="hidden" value="upload"/>
+  <div className="rental-drop-zone"><div className="rental-field"><label htmlFor="temporary-file">Add supporting document</label><input id="temporary-file" type="file" name="file" required accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"/><small>PDF, JPEG, PNG or WebP · 5 MB per file · 10 files per adult · 50 MB per household.</small></div>
+   <div className="rental-field"><label htmlFor="temporary-category">Document category</label><select id="temporary-category" name="category" required><option value="income">Income or employment</option><option value="rental_history">Rental history</option><option value="identity">Requested identification evidence</option><option value="other">Other requested evidence</option></select></div><button className="button secondary" type="submit">Upload privately</button></div>
+ </Form>}
+ <h3>Your supporting documents ({docs.length})</h3><p>You can submit your application while staff review the evidence. Uploading does not automatically send a file to the landlord.</p>
+ <ul className="rental-document-list">{docs.map(doc=><li key={doc.id}><div><strong>{doc.filename}</strong><small>{!doc.stored_at?'Upload not finished':doc.state==='quarantined'?'Awaiting manual antivirus review':doc.state==='approved'?'Manual security review recorded':doc.state==='rejected'?'Not approved for sharing':'Removal in progress'} · {(doc.size_bytes/1048576).toFixed(2)} MB</small></div>{editable&&<Form method="post"><input name="intent" type="hidden" value="delete-document"/><input name="documentId" type="hidden" value={doc.id}/><button className="rental-inline-button">Remove file</button></Form>}</li>)}</ul>
+ <Link className="button" to="?step=review">Review my application →</Link></>;
+}
 function Documents({docs,editable,uploadsEnabled=true}: {docs:any[];editable:boolean;uploadsEnabled?:boolean}){
  if(!uploadsEnabled)return <div className="rental-section-note"><h3>No documents are needed to submit this application</h3><p>Complete the application details and continue to your declaration. Identity-document and other file uploads are currently disabled. ProInspect will explain any necessary evidence request and its secure handling arrangements separately. Do not email identity documents.</p><Link className="button secondary" to="?step=review">Continue to review and declare</Link></div>;
  return <><div className="rental-section-note">Documents are stored privately. Files are checked by our private malware scanner before submission and are never shared through public pages or ordinary email attachments. Upload only requested evidence. Redact account numbers, identity numbers and unrelated sensitive details. Staff review takes place after you submit.</div>
@@ -259,6 +269,7 @@ function Review({page,editable}:{page:any;editable:boolean}){
    <h3>Your declaration</h3>{!page.noticeMatches&&page.state==='complete'&&<p className="rental-section-note">The tenancy database notice has changed. Review the current notice and acknowledge it again before the household can submit.</p>}
    <label className="rental-check"><input name="accurate" type="checkbox" value="yes" required/><span>I have reviewed my answers and believe they are accurate.</span></label>
    <label className="rental-check"><input name="shareWithRepresentative" type="checkbox" value="yes" required/><span>I authorise ProInspect to share my application details with {page.property.agentName}, the responsible leasing representative, solely for this application.</span></label>
+   {page.temporaryUploads&&<label className="rental-check"><input name="temporaryEvidenceConsent" type="checkbox" value="yes" required/><span>I authorise ProInspect to share this application and approved supporting evidence with the property’s verified landlord or authorised representative for the tenancy application, with ProInspect copied. I understand that private document links expire seven days after successful sending and a recipient may retain a downloaded copy under their privacy obligations.</span></label>}
    <label className="rental-check"><input name="referenceConsent" type="checkbox" value="yes"/><span>Optional: I authorise ProInspect, acting on the leasing representative’s documented instructions, to contact the rental, employment and personal references I have nominated, solely to check this application. Without this consent ProInspect will not contact my referees.</span></label>
    <label className="rental-check"><input name="notAnAgreement" type="checkbox" value="yes" required/><span>I understand this application is not a tenancy agreement or approval.</span></label>
    <label className="rental-check"><input name="noticeAcknowledged" type="checkbox" value="yes" required/><span>I acknowledge receiving the tenancy database information displayed above and have reviewed the <Link to="/privacy">privacy policy</Link>.</span></label>
@@ -313,7 +324,7 @@ export default function RentalApplication(){
     <div className="rental-card-heading"><div><p className="rental-progress-label">{page.role==='primary'?'Primary applicant':'Applicant '+page.ordinal}</p><h2>{stepDef.title}</h2><p>{stepDef.help}</p></div></div>
     {result?.error&&<p role="alert" className="notice warning">{result.error}</p>}
     {step==='review'?<Review page={page} editable={editable}/>:
-     step==='documents'?<Documents docs={page.documents} editable={editable} uploadsEnabled={page.uploadsEnabled}/>:
+     step==='documents'?page.temporaryUploads?<TemporaryDocuments docs={page.temporaryDocuments??[]} editable={editable}/>:<Documents docs={page.documents} editable={editable} uploadsEnabled={page.uploadsEnabled}/>:
      <>{editable?<Form method="post" className="rental-form" key={step}>
         <input type="hidden" name="intent" value="save"/><input type="hidden" name="section" value={step}/><input type="hidden" name="version" value={page.version}/>
         {step==='identity'&&<div className="rental-section-note">Contact email: <strong>{page.answers.identity?.email}</strong>. Your private link is tied to this address. It cannot be changed from the form.</div>}

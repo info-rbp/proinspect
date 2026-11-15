@@ -1,3 +1,4 @@
+import {purgeTemporaryApplication} from './rental-temporary-documents.server';
 import {withManagedIntakePolicy,managedIntakeRelease,isManagedApplication} from './managed-rental-intake.server';
 import { z } from 'zod';
 import { assert, now, statement, uid, type Env } from '../../../../packages/database/types';
@@ -107,6 +108,7 @@ async function purgeRental(env:Env,appId:string,reason:PurgeReason,actorId:strin
  // If private object removal fails, D1 is intentionally left intact so the
  // scheduled purge can retry rather than leaving an untracked R2 object.
  for(const doc of docs)await env.RESTRICTED_DOCUMENTS.delete(doc.object_key);
+ await purgeTemporaryApplication(env,appId);
  const receipt=uid('rpur'),t=now();
  const hashedReference=await digest(env.DATA_ENCRYPTION_KEY+':rental-purge:'+app.reference);
  await env.DB.batch([
@@ -144,7 +146,7 @@ export async function dispatchRentalRetention(env:Env){
  if(env.RENTAL_RETENTION_AUTOPURGE_ENABLED!=='true'||!hasRentalRetentionPolicy(env))return;
  const handoverTable=await statement(env.DB,"SELECT name FROM sqlite_master WHERE type='table' AND name='rental_tenancy_handovers'").first();
  const linkedFilter=handoverTable?" AND NOT EXISTS(SELECT 1 FROM rental_tenancy_handovers h WHERE h.application_id=rental_applications.id)":"";
- const managedStates=await managedIntakeRelease(env)?" OR (status IN('submitted','under_review','information_requested') AND (INSTR(consent_version,'|managed-details:')>0 OR INSTR(consent_version,'|managed-documents:')>0))":'';
+ const managedStates=await managedIntakeRelease(env)?" OR (status IN('submitted','under_review','information_requested') AND (INSTR(consent_version,'|managed-details:')>0 OR INSTR(consent_version,'|managed-documents:')>0 OR INSTR(consent_version,'|managed-temporary:')>0))":'';
  const rows=(await statement(env.DB,"SELECT id FROM rental_applications WHERE retained_until IS NOT NULL AND retained_until<=? AND (privacy_hold_until IS NULL OR privacy_hold_until<=?) AND (status IN('draft','withdrawn','decision_recorded')"+managedStates+")"+linkedFilter+" ORDER BY retained_until LIMIT 10",
  now(),now()).all<{id:string}>()).results;
  for(const row of rows){

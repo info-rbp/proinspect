@@ -111,6 +111,7 @@ const numberFields = new Set([
   'revision','windowDays',
 ]);
 const boolFields = new Set([
+  'confirmManagedDevice','confirmAntivirusResult','confirmAuthority','confirmRecipients','confirmSecurityReview',
   'active',
   'assigned',
   'residentVisible',
@@ -138,7 +139,7 @@ export function formValues(form: FormData) {
     if (numberFields.has(key)) data[key] = Number(value);
     else if (boolFields.has(key)) data[key] = value === 'true' || value === 'on';
     else if (
-      ['startsAt', 'endsAt', 'optionOpensAt', 'optionClosesAt', 'newDueAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'holdUntil', 'receivedAt', 'deliveryAt', 'effectiveAt', 'verifiedAt', 'paidAt', 'responseDueAt', 'decisionAt', 'appealDueAt', 'periodStart', 'periodEnd', 'startedAt', 'endedAt', 'effectiveFrom'].includes(key)
+      ['definitionsAt','scannedAt','startsAt', 'endsAt', 'optionOpensAt', 'optionClosesAt', 'newDueAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'holdUntil', 'receivedAt', 'deliveryAt', 'effectiveAt', 'verifiedAt', 'paidAt', 'responseDueAt', 'decisionAt', 'appealDueAt', 'periodStart', 'periodEnd', 'startedAt', 'endedAt', 'effectiveFrom'].includes(key)
     )
       data[key] = new Date(String(value)).toISOString();
     else if (key === 'propertyTypes' || key === 'propertyIds' || key === 'tenantUserIds')

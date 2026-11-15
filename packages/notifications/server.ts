@@ -1,9 +1,12 @@
+import {rentalPackageMailAllowed,rentalPackageSentStatements} from './rental-package';
 import type { Env } from '../database/types';
 import { statement, now, uid } from '../database/types';
 import { seal, unseal } from '../auth/crypto';
 import { noticeRecipient } from './notice-access';
 export interface MailJob {
   to: string;
+  cc?: string[];
+  rentalPackage?: {id:string};
   subject: string;
   heading: string;
   body: string;
@@ -78,6 +81,12 @@ export async function deliverEvent(env: Env, eventId: string) {
       `outbox:${row.id}`,
       row.envelope,
     );
+    if (payload.rentalPackage) {
+      if(row.kind!=='rental.temporary.package'||!await rentalPackageMailAllowed(env,payload.rentalPackage.id,row.id,payload.to,payload.cc??[])){
+        await statement(env.DB,"UPDATE outbox_events SET status='failed',error_code='RENTAL_PACKAGE_SUPPRESSED',lease_token=NULL,lease_until=NULL WHERE id=? AND lease_token=?",row.id,lease).run();return;
+      }
+      if(env.APP_ENV!=='production')throw new Error('STAGING_RENTAL_PACKAGE_BLOCKED');
+    } else if(payload.cc?.length)throw new Error('EMAIL_CC_NOT_AUTHORISED');
     if (row.kind === 'report.issued' && !payload.sensitive) {
       const pref = await statement(
         env.DB,
@@ -192,6 +201,7 @@ export async function deliverEvent(env: Env, eventId: string) {
       body: JSON.stringify({
         from: env.EMAIL_FROM,
         to: [to],
+        ...(payload.rentalPackage?{cc:payload.cc}:{}),
         subject: env.APP_ENV === 'staging' ? `[STAGING] ${payload.subject}` : payload.subject,
         html: renderMail(payload),
         text: `${payload.heading}\n\n${payload.body}\n${Object.entries(payload.facts ?? {})
@@ -200,6 +210,18 @@ export async function deliverEvent(env: Env, eventId: string) {
       }),
       signal: AbortSignal.timeout(15000),
     });
+    if(payload.rentalPackage){
+      if(!response.ok)throw new Error(`EMAIL_HTTP_${response.status}`);
+      const accepted=await response.json() as {id?:unknown};
+      if(typeof accepted.id!=='string'||accepted.id.length<5)throw new Error('EMAIL_PROVIDER_RECEIPT_MISSING');
+      const sentAt=now();
+      await env.DB.batch([
+        statement(env.DB,"UPDATE outbox_events SET status='sent',sent_at=?,lease_token=NULL,lease_until=NULL,error_code=NULL WHERE id=? AND lease_token=?",sentAt,row.id,lease),
+        statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+        ...rentalPackageSentStatements(env,payload.rentalPackage.id,accepted.id,sentAt),
+        statement(env.DB,'DELETE FROM mutation_guards'),
+      ]);return;
+    }
     if (!response.ok) throw new Error(`EMAIL_HTTP_${response.status}`);
     await statement(
       env.DB,

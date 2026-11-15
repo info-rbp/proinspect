@@ -122,8 +122,9 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   const columns=tags?"COALESCE(m.provider,'unconfirmed') AS management_provider,COALESCE(m.version,0) AS management_version,m.authority_reference AS management_reference":"'unconfirmed' AS management_provider,0 AS management_version,NULL AS management_reference";
   const join=tags?' LEFT JOIN property_application_management m ON m.property_id=l.property_id':'';
   const listings=(await statement(env.DB,"SELECT l.*,c.name AS instructing_client,p.address AS property_address,"+columns+" FROM leasing_listings l JOIN clients c ON c.id=l.instructed_by_client_id JOIN properties p ON p.id=l.property_id"+join+" ORDER BY l.updated_at DESC LIMIT 150").all()).results;
-  const managedRelease=env.RENTAL_APPLICATIONS_ENABLED==='true'&&Boolean(await managedIntakeRelease(env));
-  return {listings:listings.map((l:Record<string,any>)=>({...l,details_only_intake:managedRelease&&l.management_provider==='proinspect'&&l.kind==='residential'&&l.status==='published'&&l.application_mode==='proinspect'&&!l.application_url}))};
+  const intakeRelease=await managedIntakeRelease(env);
+  const managedRelease=env.RENTAL_APPLICATIONS_ENABLED==='true'&&Boolean(intakeRelease);
+  return {listings:listings.map((l:Record<string,any>)=>({...l,temporary_document_intake:managedRelease&&intakeRelease?.intake_mode==='temporary_documents'&&l.management_provider==='proinspect',details_only_intake:managedRelease&&l.management_provider==='proinspect'&&l.kind==='residential'&&l.status==='published'&&l.application_mode==='proinspect'&&!l.application_url}))};
  }
  if(method==='POST'&&parts.length===2&&parts[1]==='photos'){
   const form=await request.formData();

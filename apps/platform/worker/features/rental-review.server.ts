@@ -1,3 +1,4 @@
+import {temporaryDocumentList} from './rental-temporary-documents.server';
 import {isManagedApplication,isScannedManagedApplication} from './managed-rental-intake.server';
 import { z } from 'zod';
 import { statement, assert, uid, now, type Env } from '../../../../packages/database/types';
@@ -57,7 +58,7 @@ export async function rentalStaffDetail(env:Env,user:Principal,id:string){
   {mode:app.tenancy_database_notice_mode,entries:JSON.parse(app.tenancy_database_notice_json)};
  await statement(env.DB,"INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?, 'rental_application.viewed','rental_application',?,'{}',?)",
   uid('aud'),user.id,id,now()).run();
- return {managedIntake:isManagedApplication(String(app.consent_version)),scannedDocuments:isScannedManagedApplication(String(app.consent_version)),detailsOnly:String(app.consent_version).includes('|managed-details:'),tenancyHandover:await rentalTenancyHandoverStatus(env,user,id),latestSubmission,handoffs,privacyRequests,outcome,privacyHoldUntil:app.privacy_hold_until,retainedUntil:app.retained_until,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
+ return {temporaryDocuments:await temporaryDocumentList(env,id),temporaryUploads:String(app.consent_version).includes('|managed-temporary:'),temporaryPackages:await statement(env.DB,"SELECT name FROM sqlite_schema WHERE name='rental_temporary_packages'").first()?(await statement(env.DB,"SELECT p.id,p.sent_at,p.expires_at,p.revoked_at,o.status,o.error_code FROM rental_temporary_packages p JOIN outbox_events o ON o.id=p.outbox_id WHERE p.application_id=? ORDER BY p.created_at DESC",id).all()).results:[],managedIntake:isManagedApplication(String(app.consent_version)),scannedDocuments:isScannedManagedApplication(String(app.consent_version)),detailsOnly:String(app.consent_version).includes('|managed-details:'),tenancyHandover:await rentalTenancyHandoverStatus(env,user,id),latestSubmission,handoffs,privacyRequests,outcome,privacyHoldUntil:app.privacy_hold_until,retainedUntil:app.retained_until,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
   property:app.display_address,title:app.title,leasingRepresentative:app.agent_name,instructingClientId:app.instructed_by_client_id,
   forwardedAt:app.forwarded_at,noticeVersion:app.consent_version},applicants,documents,referenceChecks,notice,history};
 }
