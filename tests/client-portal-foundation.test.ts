@@ -24,9 +24,11 @@ test('different verified account types have different navigation',()=>{
  const strata=resolveClientAreas(w('strata-manager'),[],[{id:'scheme_1'}],[],[svc(['strata-building'])]);
  assert.ok(strata.some(x=>x.area==='strata'&&x.status==='available'));
 });
-test('requests never make unfinished sectors bookable',()=>{
+test('co-living uses the Residential property workspace without exposing unfinished sectors',()=>{
  const list=resolveClientAreas(w('landlord'),[prop('residential')],[],['co-living','construction','commercial'],[svc(['residential'])]);
- for(const name of ['co-living','construction']) assert.deepEqual(list.find(x=>x.area===name)?.status,'planned');
+ assert.equal(list.find(x=>x.area==='co-living')?.status,'available');
+ assert.equal(list.find(x=>x.area==='co-living')?.href,'/w/landlord/client_a/properties');
+ assert.equal(list.find(x=>x.area==='construction')?.status,'planned');
  assert.equal(list.find(x=>x.area==='commercial')?.href,null);
 });
 test('resident and staff workspaces have no customer service tabs',()=>{
