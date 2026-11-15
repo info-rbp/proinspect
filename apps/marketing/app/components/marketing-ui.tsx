@@ -143,8 +143,8 @@ export function MarketingCta({
           <p>{description}</p>
         </div>
         <div className="actions">
-          <a className="button mkt-button-light" href={appOrigin + '/book' + (serviceId ? '/' + serviceId : '')}>
-            {serviceId ? 'Arrange this service' : 'Book a service'} <span aria-hidden="true">→</span>
+          <a className="button mkt-button-light" href={appOrigin + '/client'}>
+            Access the Client Portal <span aria-hidden="true">→</span>
           </a>
           <Link className="button mkt-button-outline-light" to={serviceId ? '/contact?service=' + serviceId : '/contact'}>
             Discuss your needs

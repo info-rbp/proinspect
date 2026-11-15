@@ -40,7 +40,7 @@ test('public marketing pages are indexable only on the canonical domain, private
     assert.equal(shouldIndexPublicPage(draft, 'https://proinspect.systems', 'production'), false);
   }
   for (const privatePath of ['/signin', '/auth/complete', '/account', '/onboarding',
-    '/book/routine-inspection', '/w/landlord/abc', '/workspaces', '/api/session']) {
+    '/book/routine-inspection', '/w/landlord/abc', '/workspaces', '/client', '/api/session']) {
     assert.equal(isPublicSitePath(privatePath), false, privatePath);
     assert.equal(shouldIndexPublicPage(privatePath, 'https://proinspect.systems', 'production'), false);
   }
@@ -61,8 +61,9 @@ test('the deployed Worker has one origin for marketing, booking, sign-in and con
   assert.match(publicLayout, /appOrigin: ''/);
   assert.match(publicLayout, /<MarketingHeader appOrigin=\{appOrigin\}/);
   const chrome = source('apps/marketing/app/components/site-chrome.tsx');
-  assert.match(chrome, /appOrigin \+ '\/book'/);
-  assert.match(chrome, /appOrigin \+ '\/signin'/);
+  assert.match(chrome, /PUBLIC_NAVIGATION/);
+  assert.match(chrome, /to="\/client"/);
+  assert.match(chrome, /to="\/contact"/);
 });
 
 test('the original contact form uses a signed in-process receiver instead of a second Worker', () => {

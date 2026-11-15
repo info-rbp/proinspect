@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { ClientDashboard } from '../components/ClientDashboard';
 import { useWorkspace, type WorkspaceData, type RecordRow } from '../lib/workspace';
 import { PageHeading, Metric, Badge, EmptyState } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
@@ -63,6 +64,7 @@ export default function Overview() {
   const d = useWorkspace();
   const w = d.workspace;
   if (w.kind === 'staff') return <StaffToday data={d} />;
+  if (['landlord','property-manager','commercial','strata-manager'].includes(w.kind)) return <ClientDashboard data={d} />;
   if (w.kind === 'building-manager') return <>
     <PageHeading eyebrow="Building operations" title="Today's building work" description="Manage assigned facilities, resident moves and authorised operational records.">
       <Link className="button" to={w.href+'/facilities'}>Open operations</Link>

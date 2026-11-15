@@ -2,7 +2,8 @@
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 const ORIGIN='https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev';
-if(process.env.GITHUB_REF!=='refs/heads/version-3-enhancements')
+const pr01Preview=process.env.PR01_STAGING_PREVIEW==='1'&&process.env.GITHUB_REPOSITORY==='info-rbp/proinspect'&&((process.env.GITHUB_EVENT_NAME==='pull_request'&&process.env.GITHUB_HEAD_REF==='feat/pr01-account-driven-client-portal')||(process.env.GITHUB_EVENT_NAME==='workflow_dispatch'&&process.env.GITHUB_REF==='refs/heads/feat/pr01-account-driven-client-portal'));
+if(process.env.GITHUB_REF!=='refs/heads/version-3-enhancements'&&!pr01Preview)
  throw new Error('Staging smoke must run on version-3-enhancements.');
 const source=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const results=[];
@@ -35,6 +36,8 @@ try{
  if(sourceCheck&&sourceCheck!==source)throw new Error('Hosted Worker source not exact workflow commit.');
  await inspect('/',200,true);
  await inspect('/services',200,true);
+ for(const sector of ['residential','commercial','strata','co-living','construction','leasing','maintenance'])
+  await inspect('/'+sector,200,true);
  await inspect('/properties-for-lease',200,true);
  await inspect('/open-home/check-in',200,true);
  await inspect('/api/public/open-home/sessions',200);

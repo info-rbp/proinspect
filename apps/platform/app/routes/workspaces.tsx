@@ -20,9 +20,9 @@ export default function Workspaces() {
       <section className="stack">
         <div>
           <p className="eyebrow">{data.user.display_name || data.user.email}</p>
-          <h1>Choose your workspace.</h1>
+          <h1>Your Client Portal accounts.</h1>
           <p style={{ marginTop: 12 }}>
-            One sign-in. Separate access for each property relationship.
+            Choose an account to access its relevant services, management tools and billing. Each property relationship retains separate permissions.
           </p>
         </div>
         <div className="actions">

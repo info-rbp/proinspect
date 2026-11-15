@@ -31,6 +31,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       displayName: form.get('displayName'),
       clientName: form.get('clientName'),
       landlordType,
+      serviceInterests: form.getAll('serviceInterests'),
       legalConsent: form.get('legalConsent'),
     },
   });
@@ -85,6 +86,15 @@ export default function Onboarding() {
             <input type="checkbox" name="selfManaged" value="yes" required />
             <span>I own and self-manage the properties added to this account.</span>
           </label>
+          <fieldset className="panel stack">
+            <legend>Which additional ProInspect services interest you?</legend>
+            <p className="small">Select any relevant areas. This does not grant access, approve a service or start paid billing.</p>
+            {[
+              ['residential','Residential'],['commercial','Commercial'],['strata','Strata'],
+              ['co-living','Co-Living (in development)'],['construction','Construction (in development)'],
+              ['leasing','Leasing'],['maintenance','Maintenance'],
+            ].map(([value,label])=><label className="checkbox" key={value}><input type="checkbox" name="serviceInterests" value={value}/><span>{label}</span></label>)}
+          </fieldset>
           <LegalAcceptance purpose="onboarding"/>
           <p className="small">
             Managing properties for other owners as a professional organisation requires

@@ -50,7 +50,7 @@ test('marketing category, engagement and guide routes render with mobile navigat
   await expect(
     page
       .getByRole('navigation', { name: 'Mobile site navigation' })
-      .getByRole('link', { name: 'Contact', exact: true }),
+      .getByRole('link', { name: 'Contact Us', exact: true }),
   ).toBeVisible();
   await page.locator('.marketing-menu summary').click();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(

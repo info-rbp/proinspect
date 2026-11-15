@@ -175,6 +175,79 @@ try {
   const clientId = onboarded.data.clientId;
   const base = `/api/w/landlord/${clientId}`;
   const outsiderClient = (await api('/api/onboarding', { cookie: outsider.cookie, body: { displayName: 'Other Landlord', clientName: 'Other Account' } })).data.clientId;
+  const serviceInterestsPath = '/api/client-accounts/' + clientId + '/service-interests';
+  await check('service interests require account authority and never grant services or billing', async () => {
+    const financialCounts = 'SELECT (SELECT COUNT(*) FROM subscriptions) AS subscriptions, (SELECT COUNT(*) FROM billing_accounts) AS billing, (SELECT COUNT(*) FROM client_entitlements) AS entitlements, (SELECT COUNT(*) FROM bookings) AS bookings';
+    const before = await first(financialCounts);
+    assert.equal((await api(serviceInterestsPath)).status, 401);
+    assert.equal((await api(serviceInterestsPath, { body: { area: 'maintenance', requested: true } })).status, 401);
+    for (const account of [outsider, operator]) {
+      assert.equal((await api(serviceInterestsPath, { cookie: account.cookie })).status, 403);
+      assert.equal((await api(serviceInterestsPath, {
+        cookie: account.cookie, body: { area: 'maintenance', requested: true },
+      })).status, 403);
+    }
+    for (const area of ['maintenance', 'co-living', 'construction']) {
+      const response = await api(serviceInterestsPath, {
+        cookie: owner.cookie, body: { area, requested: true },
+      });
+      assert.equal(response.status, 200, JSON.stringify(response.data));
+      assert.equal(response.data.ready, true);
+      assert.ok(response.data.areas.includes(area));
+    }
+    assert.equal((await api(serviceInterestsPath, {
+      cookie: owner.cookie, body: { area: 'maintenance', requested: true },
+    })).status, 200);
+    assert.equal((await first("SELECT COUNT(*) AS count FROM client_service_interests WHERE client_id=? AND service_area IN ('maintenance','co-living','construction')", clientId)).count, 3);
+    const otherPreferences = await api('/api/client-accounts/' + outsiderClient + '/service-interests', {
+      cookie: outsider.cookie,
+    });
+    assert.equal(otherPreferences.status, 200);
+    assert.deepEqual(otherPreferences.data.areas, ['residential']);
+    assert.equal((await api(serviceInterestsPath, {
+      cookie: owner.cookie, body: { area: 'unknown', requested: true },
+    })).status, 422);
+    assert.equal((await api(serviceInterestsPath, {
+      cookie: owner.cookie, body: { area: 'maintenance', requested: true, role: 'admin' },
+    })).status, 422);
+    assert.equal((await api(serviceInterestsPath, {
+      cookie: owner.cookie, body: { area: 'maintenance', requested: false },
+      headers: { Origin: 'https://evil.example' },
+    })).status, 403);
+    assert.deepEqual(await first(financialCounts), before);
+    for (const area of ['maintenance', 'co-living', 'construction']) {
+      assert.equal((await api(serviceInterestsPath, {
+        cookie: owner.cookie, body: { area, requested: false },
+      })).status, 200);
+    }
+  });
+  await check('service interest writes reject viewers, ordinary members and revoked memberships', async () => {
+    await run("INSERT INTO client_memberships(id,client_id,user_id,role,active,created_at) VALUES('pr01_membership_regression',?,?,'member',1,?)",
+      clientId, operatorUser.id, new Date().toISOString());
+    try {
+      for (const role of ['member', 'viewer']) {
+        await run("UPDATE client_memberships SET role=? WHERE id='pr01_membership_regression'", role);
+        assert.equal((await api(serviceInterestsPath, { cookie: operator.cookie })).status, 200);
+        assert.equal((await api(serviceInterestsPath, {
+          cookie: operator.cookie, body: { area: 'commercial', requested: true },
+        })).status, 403);
+      }
+      await run("UPDATE client_memberships SET role='admin' WHERE id='pr01_membership_regression'");
+      assert.equal((await api(serviceInterestsPath, {
+        cookie: operator.cookie, body: { area: 'commercial', requested: true },
+      })).status, 200);
+      await run("UPDATE client_memberships SET active=0 WHERE id='pr01_membership_regression'");
+      assert.equal((await api(serviceInterestsPath, { cookie: operator.cookie })).status, 403);
+      assert.equal((await api(serviceInterestsPath, {
+        cookie: operator.cookie, body: { area: 'commercial', requested: false },
+      })).status, 403);
+      assert.equal((await api(serviceInterestsPath, {
+        cookie: owner.cookie, body: { area: 'commercial', requested: false },
+      })).status, 200);
+    } finally {
+      await run("DELETE FROM client_memberships WHERE id='pr01_membership_regression'");
+    }
+  });
   await check('onboarding cannot provision staff authority', async () => {
     assert.equal((await first('SELECT count(*) AS n FROM staff_profiles WHERE user_id=?', ownerUser.id)).n, 0);
     assert.equal((await api('/api/w/staff/operations', { cookie: owner.cookie })).status, 403);

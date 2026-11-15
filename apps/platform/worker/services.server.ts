@@ -1,4 +1,5 @@
 import { legalStatements } from './features/legal-acceptance.server';
+import { serviceInterestTableReady } from './features/client-service-interests.server';
 import { calendarSchedulingEnabled, calendarSyncStatement } from './features/calendar-scheduling.server';
 import { activity, projection } from '../../../packages/operations/core';
 import type { Env } from '../../../packages/database/types';
@@ -92,6 +93,8 @@ export async function onboard(env: Env, user: Principal, input: unknown) {
   const clientId = `cli_${(await digest(`${salt}:${user.id}`)).slice(0, 32)}`;
   const membershipId = `mem_${clientId.slice(4)}`;
   const legal = await legalStatements(env,{kind:'user',id:user.id},'onboarding',clientId,{clientId,clientName:data.clientName,landlordType:data.landlordType},data.legalConsent);
+  const interests=[...new Set([residential?'residential':'commercial',...data.serviceInterests])];
+  assert(await serviceInterestTableReady(env),503,'ONBOARDING_MIGRATION_PENDING','Account preferences are not configured.');
   await env.DB.batch([
     ...legal,
     statement(
@@ -121,6 +124,8 @@ export async function onboard(env: Env, user: Principal, input: unknown) {
       workspaceKind,
       now(),
     ),
+    // Requested sectors are preferences, never entitlement, property authority or billing instructions.
+    ...interests.map(area=>statement(env.DB,'INSERT INTO client_service_interests(client_id,service_area,requested_by,requested_at,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(client_id,service_area) DO NOTHING',clientId,area,user.id,now(),now())),
     // A verified account starts without Stripe customer, plan or payment obligation.
     statement(env.DB,`INSERT INTO account_subscription_preferences(client_id,account_state,subscription_intent,updated_at)
       VALUES(?,'verified','none',?) ON CONFLICT(client_id) DO NOTHING`,

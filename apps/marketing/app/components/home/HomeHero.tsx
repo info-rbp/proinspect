@@ -17,8 +17,8 @@ export function HomeHero({ appOrigin }: { appOrigin: string }) {
             operations.
           </p>
           <div className="actions pi-actions">
-            <a className="button" href={appOrigin + '/book'} data-pi-conversion="home-arrange">
-              Book Online <span aria-hidden="true">→</span>
+            <a className="button" href={appOrigin + '/client'} data-pi-conversion="home-arrange">
+              Sign Up / Sign In <span aria-hidden="true">→</span>
             </a>
             <Link className="button secondary" to="/how-it-works" data-pi-conversion="home-explore">
               How It Works
@@ -34,6 +34,7 @@ export function HomeHero({ appOrigin }: { appOrigin: string }) {
               fetchPriority="high"
             />
           </div>
+          <p className="mkt-art-illustration-note">Illustrative property image — not a ProInspect customer property.</p>
           <p>
             On-site work <span>·</span> Documented outcomes <span>·</span> Connected records
           </p>

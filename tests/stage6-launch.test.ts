@@ -15,10 +15,12 @@ function fixture():Stage6Inputs{
   operations:[{code:'mail_failed',state:'clear',count:0}],
  };
 }
-test('Stage 6 baseline matches exactly 53 numbered migrations, 23 services and all nine distinct workspace identities',()=>{
+test('Stage 6 deployed baseline remains 53; migration 0054 is proposed but unapplied',()=>{
  const all=readdirSync('database/migrations').filter(x=>/^\d{4}_.+\.sql$/.test(x)).sort();
- assert.equal(all.length,EXPECTED_SCHEMA.count);
- assert.equal(all.at(-1),EXPECTED_SCHEMA.latest);
+ assert.equal(EXPECTED_SCHEMA.count,53);
+ assert.equal(all.length,EXPECTED_SCHEMA.count+1);
+ assert.equal(all.at(-2),EXPECTED_SCHEMA.latest);
+ assert.equal(all.at(-1),'0054_client_service_interests.sql');
  assert.equal(EXPECTED_SCHEMA.catalogueServices,23);
  assert.equal(Object.keys(WORKSPACES).length,9);
  assert.ok(Object.hasOwn(WORKSPACES,'building-manager'));

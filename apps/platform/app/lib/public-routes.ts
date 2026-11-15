@@ -4,7 +4,7 @@ import { RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED } from '../../../../packages/ma
 /** Public marketing route families for the unified Worker, including unapproved legal drafts. */
 export function isPublicSitePath(pathname: string): boolean {
   if (pathname === '/' || pathname === '/services' || pathname === '/contact' ||
-      pathname === '/resources' || pathname === '/service-finder' || pathname === '/who-we-help' || pathname === '/residential-property-support' || pathname === '/robots.txt' || pathname === '/sitemap.xml')
+      pathname === '/resources' || new Set(['/residential','/commercial','/strata','/co-living','/construction','/leasing','/maintenance']).has(pathname) || pathname === '/service-finder' || pathname === '/who-we-help' || pathname === '/residential-property-support' || pathname === '/robots.txt' || pathname === '/sitemap.xml')
     return true;
   if (pathname === '/properties-for-lease' || /^\/properties-for-lease\/(?:residential|commercial)(?:\/[a-z0-9-]+)?$/.test(pathname)) return true;
   if (/^\/(?:services|sectors|how-we-work|resources|who-we-help)\/.+/.test(pathname)) return true;
