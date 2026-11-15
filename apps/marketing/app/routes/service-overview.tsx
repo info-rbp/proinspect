@@ -38,7 +38,7 @@ export default function ServiceOverview() {
         intro={page.summary}
         image={page.key === 'student-living' ? 'co-living' : page.key}
         primary={{ label: 'Discuss your requirements', to: '/contact' }}
-        secondary={{ label: 'Discuss your property', to: '/contact' }}
+        secondary={{ label: 'Browse individual services', to: '/services' }}
       />
       <section className="mkt-section pi-editorial-section">
         <div className="site-container pi-introduction">
