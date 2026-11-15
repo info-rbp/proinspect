@@ -46,7 +46,7 @@ class CoLivingSchema(unittest.TestCase):
     def test_request_space_foreign_keys_and_historical_data_survive_additive_migration(self):
         self.db.execute("INSERT INTO co_living_sites VALUES('p','bed','u','2026-11-01')")
         self.db.execute("INSERT INTO co_living_spaces(id,property_id,label,space_type,created_by,created_at) VALUES('bed1','p','Bed 1','bed','u','2026-11-01')")
-        self.db.execute("INSERT INTO requests(id,reference,property_id,created_by,source,category,title,details,priority,co_living_space_id,created_at,updated_at) VALUES('req','REQ-01','p','u','tenant','maintenance','Sink leak','Water leaking under sink','routine','bed1','2026-11-01','2026-11-01')")
+        self.db.execute("INSERT INTO requests(id,reference,property_id,created_by,source,category,title,details,priority,co_living_space_id,status,created_at,updated_at) VALUES('req','REQ-01','p','u','tenant','maintenance','Sink leak','Water leaking under sink','routine','bed1','submitted','2026-11-01','2026-11-01')")
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute("UPDATE requests SET co_living_space_id='missing' WHERE id='req'")
         self.assertEqual(self.db.execute("SELECT co_living_space_id FROM requests WHERE id='req'").fetchone(),('bed1',))
