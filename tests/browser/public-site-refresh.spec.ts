@@ -29,8 +29,8 @@ test('logo returns home and all service overviews have working images, FAQs and 
     await page.goto('/' + slug);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(content.headline);
     await expect(
-      page.locator('.pi-editorial-copy').getByRole('link', { name: 'Sign Up/Sign In to access' }),
-    ).toHaveAttribute('href', '/client');
+      page.locator('.pi-editorial-copy').getByRole('link', { name: 'Discuss your requirements' }),
+    ).toHaveAttribute('href', '/contact');
     const image = page.locator('.pi-editorial-hero-image img');
     await expect(image).toBeVisible();
     await expect
@@ -57,6 +57,7 @@ test('new pages reflow at narrow sizes and include canonical metadata and tenant
     '/commercial',
     '/strata',
     '/co-living',
+    '/student-living',
     '/construction',
     '/maintenance',
     '/leasing',
