@@ -102,6 +102,7 @@ export default [
     route('bond-review-queue', 'routes/bond-review-queue.tsx'),
     route('wa-form-templates', 'routes/wa-form-templates.tsx'),
     route('properties', 'routes/properties.tsx'),
+    route('co-living', 'routes/co-living-directory.tsx'),
     route('properties/:propertyId', 'routes/property.tsx'),
     route('properties/:propertyId/co-living', 'routes/co-living.tsx'),
     route('book/:serviceId?', 'routes/book.tsx'),
