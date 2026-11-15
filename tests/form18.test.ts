@@ -6,7 +6,7 @@ import { FIELDS, FORM18_STEPS, ANSWER_STEPS, FORM18_VERSION, applicationSettings
  cleanSection, stepComplete, allDetailsComplete,initialAnswers,tenancyPreferencesComplete,TENANCY_PREFERENCE_KEYS } from '../packages/marketing/form18.ts';
 const example={identity:{fullName:'Example Applicant',email:'example@example.test',mobile:'0412345678',dateOfBirth:'1994-05-12',
  currentAddress:'12 Sample Street Perth 6000',idType:'Passport',totalOccupants:'2',petsProposed:'No'},
- rental:{hasRentalHistory:'No'},employment:{employmentType:'Student'},references:{}};
+ rental:{hasRentalHistory:'No',noHistoryReason:'First tenancy, previously living with family.'},employment:{employmentType:'Student'},references:{}};
 test('digital Form 18 follows the uploaded form sections for each applicant',()=>{
  assert.deepEqual(FORM18_STEPS.map(x=>x.id),['identity','rental','employment','references','documents','review']);
  assert.ok(FORM18_VERSION.startsWith('proinspect-rental-application-'));

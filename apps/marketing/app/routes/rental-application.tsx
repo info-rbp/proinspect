@@ -5,7 +5,8 @@ import { Form, Link, redirect, data, useLoaderData, useActionData, useSearchPara
 import { runtimeContext } from '../../../../packages/database/context';
 import { AppError, type Env } from '../../../../packages/database/types';
 import { rentalPage,saveRentalSection,inviteRentalApplicant,resendRentalInvitation,removeRentalApplicant,finishRentalApplicant,
- submitRental,withdrawRental,uploadRentalDocument,deleteRentalDocument } from '../../../platform/worker/features/rental-applications.server';
+ submitRental,withdrawRental,uploadRentalDocument,deleteRentalDocument,changeRentalEmail } from '../../../platform/worker/features/rental-applications.server';
+import { REPEATER_FIELDS, repeaterSummary } from '../../../../packages/marketing/rental-repeaters';
 import { requestRentalPrivacy } from '../../../platform/worker/features/rental-privacy.server';
 import { ANSWER_STEPS,FIELDS,FORM18_STEPS,TENANCY_PREFERENCE_KEYS,stepComplete,tenancyPreferencesComplete,type Form18Field,
  type Form18Step,type AnswerStep,type Form18Answers } from '../../../../packages/marketing/form18';
@@ -42,17 +43,23 @@ export async function action({context,params,request}:ActionFunctionArgs){
    if(!ANSWER_STEPS.includes(section))return fail('Unknown application section.');
    const values:Record<string,unknown>={};
    for(const field of FIELDS[section])values[field.key]=String(form.get(field.key)??'');
+   if(section==='rental')values.additionalHistory=String(form.get('additionalHistory')??'[]');
+   if(section==='references')values.additionalReferences=String(form.get('additionalReferences')??'[]');
    await saveRentalSection(env,token,section,values,Number(form.get('version')));
    const index=FORM18_STEPS.findIndex(x=>x.id===section);
    return redirect(target(FORM18_STEPS[Math.min(index+1,FORM18_STEPS.length-1)].id));
   }
   if(intent==='invite'){
-   await inviteRentalApplicant(env,token,{name:form.get('inviteName'),email:form.get('inviteEmail')});
+   await inviteRentalApplicant(env,token,{name:form.get('inviteName'),email:form.get('inviteEmail'),adultConfirmed:form.get('adultConfirmed')==='yes'});
    return redirect(target('review'));
   }
   if(intent==='resend'){
    await resendRentalInvitation(env,token,Number(form.get('ordinal')));
    return redirect(target('review'));
+  }
+  if(intent==='change-email'){
+   await changeRentalEmail(env,token,{email:String(form.get('newEmail')??''),version:Number(form.get('version'))});
+   return redirect('/rental-application/recover?emailChanged=1');
   }
   if(intent==='remove'){
    await removeRentalApplicant(env,token,Number(form.get('ordinal')));
@@ -102,6 +109,11 @@ export async function action({context,params,request}:ActionFunctionArgs){
     PET_DETAILS_REQUIRED:'Describe the type and number of pets proposed.',
     DATE_OF_BIRTH_INVALID:'Enter a valid date of birth.',
     FIELD_TOO_LONG:'One of your answers is too long.',
+    HOUSEHOLD_COUNTS_INVALID:'Adult and child counts must add up to the total occupants.',
+    NO_HISTORY_REASON_REQUIRED:'Add a short explanation or describe alternative evidence for your first tenancy.',
+    REPEATER_INVALID:'Check the additional history or reference details, dates and contact methods.',
+    RENTAL_DATES_INVALID:'The rental end date must be on or after the start date.',
+    INCOME_PERIOD_REQUIRED:'Select the period for the income amount.',
     DOCUMENT_DUPLICATE:'You have already uploaded this document.',
     DOCUMENT_LIMIT:'You can upload up to ten documents.',
     DOCUMENT_INVALID:'The selected file does not match a supported format.',
@@ -117,8 +129,10 @@ function Fields({section,answers,primary}: {section:AnswerStep;answers:Record<st
  return <div className="rental-fields">{FIELDS[section].map((field:Form18Field)=>{
   if(section==='identity'&&TENANCY_PREFERENCE_KEYS.includes(field.key)&&!primary)return null;
   if(section==='identity'&&field.key==='petDetails'&&pets!=='Yes')return null;
-  if(section==='rental'&&field.key!=='hasRentalHistory'&&rental!=='Yes')return null;
+  if(section==='rental'&&field.key==='noHistoryReason'&&rental!=='No')return null;
+  if(section==='rental'&&!['hasRentalHistory','noHistoryReason'].includes(field.key)&&rental!=='Yes')return null;
   if(section==='employment'&&['occupation','employer','employerAddress','employedFrom','employedTo','employerContact','employerPhone'].includes(field.key)&&!['Employed','Self-employed'].includes(employment))return null;
+  if(section==='employment'&&field.key==='selfEmploymentEvidence'&&employment!=='Self-employed')return null;
   const wide=field.kind==='textarea'||field.key.toLowerCase().includes('address')||field.key==='fullName';
   const value=answers[field.key]??'';
   const required=Boolean(field.required||(primary&&['totalOccupants','petsProposed'].includes(field.key)));
@@ -137,7 +151,30 @@ function Fields({section,answers,primary}: {section:AnswerStep;answers:Record<st
      defaultValue={value} maxLength={700} required={required} readOnly={field.key==='email'} autoComplete="off"/>}
    {field.hint&&<small>{field.hint}</small>}
   </div>;
- })}</div>;
+ })}
+ {section==='rental'&&rental==='Yes'&&<Repeater name="additionalHistory" encoded={answers.additionalHistory}/>}
+ {section==='references'&&<><p className="rental-muted">Personal referees, next of kin and emergency contacts are optional where not necessary. Tell nominated contacts why you have supplied their details. Listing a person is not permission to contact them; the separate declaration controls reference checks.</p><Repeater name="additionalReferences" encoded={answers.additionalReferences}/></>}
+ </div>;
+}
+function Repeater({name,encoded}:{name:keyof typeof REPEATER_FIELDS;encoded?:string}){
+ const [rows,setRows]=useState<Array<Record<string,string>>>(()=>{try{return JSON.parse(encoded||'[]');}catch{return [];}});
+ const history=name==='additionalHistory',limit=history?10:8;
+ return <div className="rental-field wide">
+  <h3>{history?'Additional rental history':'Additional personal referees'}</h3>
+  <input name={name} type="hidden" value={JSON.stringify(rows)}/>
+  {rows.map((row,index)=><fieldset key={index}><legend>{history?'Rental arrangement':'Referee'} {index+1}</legend>
+   <div className="rental-fields">{REPEATER_FIELDS[name].map(key=><label key={key}>{key.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase())}
+    {key==='rentPeriod'?<select value={row[key]||'Unknown'} onChange={e=>setRows(rows.map((r,i)=>i===index?{...r,[key]:e.target.value}:r))}>{['Unknown','Week','Fortnight','Month'].map(p=><option key={p}>{p}</option>)}</select>:
+     <input type={['from','to'].includes(key)?'date':key==='email'?'email':'text'} maxLength={500} value={row[key]||''} onChange={e=>setRows(rows.map((r,i)=>i===index?{...r,[key]:e.target.value}:r))}/>}</label>)}</div>
+   <button className="rental-inline-button" type="button" onClick={()=>setRows(rows.filter((_,i)=>i!==index))}>Remove {history?'history':'referee'} {index+1}</button>
+  </fieldset>)}
+  {rows.length<limit&&<button className="button secondary" type="button" onClick={()=>setRows([...rows,Object.fromEntries(REPEATER_FIELDS[name].map(k=>[k,k==='rentPeriod'?'Unknown':'']))])}>Add another {history?'rental history':'personal referee'}</button>}
+ </div>;
+}
+function RepeaterReview({answers,section}:{answers:Record<string,string>;section:AnswerStep}){
+ const key=section==='rental'?'additionalHistory':section==='references'?'additionalReferences':null;
+ if(!key)return null;
+ return <dl>{repeaterSummary(key,answers[key]).map(([label,value])=><Entry key={label} label={label} value={value}/>)}</dl>;
 }
 function Household({people,editable}:{
  people:{ordinal:number;name:string;maskedEmail:string;state:string}[];editable:boolean
@@ -157,6 +194,7 @@ function Household({people,editable}:{
    <Form method="post" className="rental-form"><input name="intent" type="hidden" value="invite"/>
     <div className="rental-fields"><div className="rental-field"><label htmlFor="invite-name">Applicant's name</label><input id="invite-name" name="inviteName" required minLength={2} maxLength={120}/></div>
     <div className="rental-field"><label htmlFor="invite-email">Applicant's email</label><input id="invite-email" name="inviteEmail" type="email" required maxLength={254}/></div></div>
+    <label className="rental-check"><input type="checkbox" name="adultConfirmed" value="yes" required/><span>I confirm this invitation is for an adult applicant. Children are recorded only in the household occupancy count.</span></label>
     <button className="button secondary" type="submit">Send private invitation</button>
    </Form></div>}
  </section>;
@@ -194,6 +232,7 @@ function Review({page,editable}:{page:any;editable:boolean}){
   <div className="rental-summary">{ANSWER_STEPS.map(step=><details key={step} open={step==='identity'}>
     <summary>{FORM18_STEPS.find(x=>x.id===step)?.title} · {stepComplete(answers,step)&&(step!=='identity'||page.role!=='primary'||tenancyPreferencesComplete(answers))?'Complete':'Needs attention'}</summary>
     <dl>{FIELDS[step].filter(f=>Boolean(answers[step]?.[f.key])&&(page.role==='primary'||!TENANCY_PREFERENCE_KEYS.includes(f.key))).map(f=><Entry key={f.key} label={f.label} value={answers[step][f.key]}/>)}</dl>
+    <RepeaterReview section={step} answers={answers[step]??{}}/>
     {editable&&<Link to={'?step='+step}>Edit this section →</Link>}
    </details>)}</div>
   {page.role==='primary'&&<Household people={page.household} editable={editable&&page.status==='draft'}/>}
@@ -202,6 +241,7 @@ function Review({page,editable}:{page:any;editable:boolean}){
    <p>This application assists the identified landlord or leasing representative in considering an application to rent residential premises under the Residential Tenancies Act 1987 (WA). Submitting it does not create a tenancy agreement or guarantee an offer.</p>
    <p>Your details are collected for this application and, with your consent, made available to the responsible leasing representative, not to other applicants. Applicants must be considered in accordance with applicable WA equal opportunity and privacy obligations.</p>
    <h3>Tenancy database information — tenancy database notice</h3>
+   <p>Collection notice version: {page.notice.version||'Pending approval'}. Recipient: {page.property.agentName}. Information is used to administer this application. Request access or corrections through the private recovery and privacy-request process below. No credit-check permission is inferred.</p>
    {page.notice.mode==='configured'?<div className="rental-notice-list">{page.notice.entries.map((n:any,i:number)=><article key={i}><strong>{n.name}</strong><p>Operator: {n.operatorContact}</p><p>How to obtain information: {n.accessInstructions}</p></article>)}</div>:
     <p>The leasing representative has confirmed that tenancy databases are not used for this application. If that changes, an appropriate written notice must be provided.</p>}
    <p className="rental-legal">This is an electronic residential application, not a signed lease. Do not lodge identification documents by ordinary email. Authorised staff review uploaded files through restricted document storage.</p>
@@ -220,11 +260,12 @@ function Review({page,editable}:{page:any;editable:boolean}){
   </Form>}
   {page.role==='primary'&&page.state==='complete'&&page.noticeMatches&&editable&&<div className="rental-form"><h3>Submit household application</h3>
    <p className="rental-muted">Every included applicant must complete their own declaration before final submission.</p>
-   <Form method="post"><input type="hidden" name="intent" value="submit"/><button type="submit" className="button rental-full-button" disabled={pending}>{pending?'Waiting for additional applicants':'Submit application securely →'}</button></Form>
+   <Form method="post"><input type="hidden" name="intent" value="submit"/><button type="submit" className="button rental-full-button" disabled={pending||page.documents.some((d:any)=>d.scan_status!=='clean'||d.review_status!=='released')}>{pending?'Waiting for additional applicants':'Submit application securely →'}</button></Form>
   </div>}
   {page.role!=='primary'&&page.state==='complete'&&editable&&<p className="rental-success">Your section is complete. The primary applicant will submit the household application when everyone is ready.</p>}
   {submitted&&<div role="status" className="rental-success"><h2>Application received</h2><p>Reference: <strong>{page.reference}</strong></p><p>Your application was submitted for administrative handling by ProInspect. The landlord or authorised leasing representative makes the tenancy decision. This is not an offer of tenancy.</p></div>}
   <section className="rental-notice"><h3>Privacy, access and corrections</h3>
+   {editable&&<Form method="post" className="rental-form"><input name="intent" type="hidden" value="change-email"/><input name="version" type="hidden" value={page.version}/><label>Correct your private email address<input name="newEmail" type="email" required maxLength={254}/></label><p>Your old links will stop working. Open the new email link to continue and declare again.</p><button className="button secondary">Send a new private link</button></Form>}
    <p>You can request access to your personal information, ask for a correction or request erasure. A privacy request is reviewed before any retained record is removed; legal or operational obligations may affect what can be deleted.</p>
    <p>If this link expires, you can request fresh private access from <Link to="/rental-application/recover">Application access recovery</Link> using your reference and verified email address.</p>
     {page.privacyRequests?.length>0&&<ul className="rental-document-list">{page.privacyRequests.map((r:any,i:number)=><li key={i}><strong>{r.kind.replaceAll('_',' ')} request</strong><span className="rental-state">{r.status.replaceAll('_',' ')}</span></li>)}</ul>}
@@ -236,7 +277,7 @@ function Review({page,editable}:{page:any;editable:boolean}){
     <button type="submit" className="button secondary">Send privacy request</button>
    </Form>
   </section>
-  {page.role==='primary'&&editable&&<div className="rental-actions"><Link to="?step=documents">← Supporting documents</Link></div>}{page.role==='primary'&&!['withdrawn','decision_recorded'].includes(page.status)&&<div className="rental-actions"><Form method="post"><input name="intent" value="withdraw" type="hidden"/><button type="submit" className="rental-inline-button">Withdraw this application</button></Form></div>}
+  {page.role==='primary'&&editable&&<div className="rental-actions"><Link to="?step=documents">← Supporting documents</Link></div>}{!['withdrawn','decision_recorded'].includes(page.status)&&<div className="rental-actions"><Form method="post"><input name="intent" value="withdraw" type="hidden"/><button type="submit" className="rental-inline-button">{page.role==='primary'?'Withdraw this application':'Withdraw my participation and stop household processing'}</button></Form></div>}
  </>;
 }
 function Entry({label,value}:{label:string;value:string}){return <><dt>{label}</dt><dd>{value}</dd></>;}
