@@ -66,3 +66,7 @@ END;
 -- Existing tenancy/occupancy links cannot be reassigned by changing identifiers.
 CREATE TRIGGER co_living_occupancy_immutable BEFORE UPDATE OF tenancy_id,space_id ON co_living_occupancies
 BEGIN SELECT RAISE(ABORT,'CO_LIVING_OCCUPANCY_IMMUTABLE'); END;
+
+-- Maintenance and operational requests may reference an assigned private space or shared area.
+ALTER TABLE requests ADD COLUMN co_living_space_id TEXT REFERENCES co_living_spaces(id);
+CREATE INDEX requests_co_living_space ON requests(co_living_space_id,status);
