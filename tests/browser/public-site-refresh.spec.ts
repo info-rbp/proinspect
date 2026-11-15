@@ -71,9 +71,26 @@ test('new pages reflow at narrow sizes and include canonical metadata and tenant
     for (const path of paths) {
       await page.goto(path);
       await expect(page.locator('main h1')).toHaveCount(1);
+      const overflow = await page.evaluate(() => {
+        const viewport = window.innerWidth;
+        const offenders = Array.from(document.querySelectorAll('main *'))
+          .map((element) => ({
+            tag: element.tagName.toLowerCase(),
+            className: String(element.className).slice(0, 80),
+            right: Math.round(element.getBoundingClientRect().right),
+            text: (element.textContent || '').trim().slice(0, 65),
+          }))
+          .filter((item) => item.right > viewport + 2)
+          .slice(0, 8);
+        return {
+          fits: document.documentElement.scrollWidth <= viewport + 2,
+          scrollWidth: document.documentElement.scrollWidth,
+          offenders,
+        };
+      });
       expect(
-        await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2),
-        width + 'px ' + path,
+        overflow.fits,
+        width + 'px ' + path + ' ' + JSON.stringify(overflow),
       ).toBe(true);
       await expect(page.locator('main .mkt-art-illustration-note')).toHaveCount(0);
     }
