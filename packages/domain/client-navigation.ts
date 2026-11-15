@@ -23,7 +23,7 @@ export function resolveClientAreas(w:Workspace,properties:Property[],schemes:unk
   if(area==='co-living'){
     const residential=['landlord','property-manager'].includes(w.kind) && properties.some(p=>p.sector==='residential');
     return {area,label,status:residential?'available':'setup_required',
-      href:residential?base+'/properties':null,
+      href:residential?base+'/co-living':null,
       description:residential?'Configure private rooms or beds and shared areas from an authorised property':'Add an authorised residential property first'};
   }
   if(area==='leasing') {
