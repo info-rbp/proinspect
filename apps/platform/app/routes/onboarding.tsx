@@ -71,7 +71,7 @@ export default function Onboarding() {
           </Field>
           <p className="small">
             Residential includes houses and apartments. Commercial includes offices, shops,
-            warehouses and other commercial premises. Each uses its appropriate portal.
+            warehouses and other commercial premises. Both have a single ProInspect sign-in and open the Residential or Commercial portal as appropriate. Co-living rooms and shared areas are configured within an authorised Residential property.
           </p>
           <Field label="Your name" name="displayName">
             <input id="displayName" name="displayName" required minLength={2} maxLength={100}
@@ -91,7 +91,7 @@ export default function Onboarding() {
             <p className="small">Select any relevant areas. This does not grant access, approve a service or start paid billing.</p>
             {[
               ['residential','Residential'],['commercial','Commercial'],['strata','Strata'],
-              ['co-living','Co-Living (in development)'],['construction','Construction (in development)'],
+              ['co-living','Co-Living (Residential property setup)'],['construction','Construction (in development)'],
               ['leasing','Leasing'],['maintenance','Maintenance'],
             ].map(([value,label])=><label className="checkbox" key={value}><input type="checkbox" name="serviceInterests" value={value}/><span>{label}</span></label>)}
           </fieldset>
