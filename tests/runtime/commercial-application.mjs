@@ -169,6 +169,7 @@ try {
     stamp,
   );
   await check('listing-specific authority and independent review are required', async () => {
+    await run("INSERT INTO property_application_management(property_id,provider,authority_reference,updated_by,updated_at) VALUES('prop_cm_synthetic','proinspect','SYNTHETIC-MANAGEMENT-AUTHORITY','usr_cm_a',?)",stamp);
     const draftInput = {
         listingId: 'lst_cm_synthetic',
         managedByProInspect: true,

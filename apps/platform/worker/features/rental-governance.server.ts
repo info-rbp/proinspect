@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { propertyManagementTag,managedDetailsOnlyListing } from './managed-rental-intake.server';
 import { assert, now, statement, uid, type Env } from '../../../../packages/database/types';
 import { digest, seal, unseal, randomToken } from '../../../../packages/auth/crypto';
 import { mailEvent } from '../../../../packages/notifications/server';
@@ -95,6 +96,11 @@ export function listingApproved(row:{rental_approval_state?:string;rental_recipi
 }
 /** Management authority is explicitly attested; ownership or an inspection booking cannot imply it. */
 export async function managedRentalListingApproved(env:Env,listingId:string){
+ const listing=await statement(env.DB,'SELECT property_id FROM leasing_listings WHERE id=?',listingId).first<{property_id:string}>();
+ if(!listing)return false;
+ const tag=await propertyManagementTag(env,listing.property_id);
+ if(!tag||tag.provider!=='proinspect')return false;
+ if(await managedDetailsOnlyListing(env,listingId))return true;
  const row=await statement(env.DB,"SELECT a.id,a.authority_attestation_envelope,l.property_id,l.instructed_by_client_id FROM rental_listing_approvals a JOIN leasing_listings l ON l.id=a.listing_id AND l.rental_approval_version=a.approval_version WHERE l.id=? AND l.rental_approval_state='approved' AND l.application_mode='proinspect' AND l.application_url IS NULL",listingId)
   .first<{id:string;authority_attestation_envelope:string;property_id:string;instructed_by_client_id:string}>();
  if(!row)return false;

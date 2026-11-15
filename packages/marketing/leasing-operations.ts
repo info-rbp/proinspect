@@ -24,7 +24,7 @@ export type ApplicationReadinessInput={
  listingKind:string;listingStatus:string;applicationMode:string;authorityReference?:string|null;
  recipientVerifiedAt?:string|null;approvalState?:string|null;
  noticeMode?:string|null;noticeCount:number;retentionConfigured:boolean;
- managedPropertyApproved?:boolean;scannerConfigured:boolean;handoffConfigured:boolean;intakeReleaseApproved:boolean;
+ detailsOnly?:boolean;managedPropertyApproved?:boolean;scannerConfigured:boolean;handoffConfigured:boolean;intakeReleaseApproved:boolean;
  scannerReleaseApproved:boolean;handoffReleaseApproved:boolean;
 };
 export type ApplicationReadinessCheck={key:string;label:string;passed:boolean;nextAction:string};
@@ -34,15 +34,15 @@ export function residentialApplicationReadiness(input:ApplicationReadinessInput)
   {key:'mode',label:'ProInspect-hosted application selected',passed:input.applicationMode==='proinspect',nextAction:'Record the authorised application method; an agency link takes precedence.'},
   {key:'managed',label:'Direct ProInspect management confirmed',passed:input.managedPropertyApproved===true,nextAction:'Record explicit direct-management confirmation with the property authority approval.'},
   {key:'authority',label:'Written application-processing instruction referenced',passed:Boolean(input.authorityReference?.trim()),nextAction:'Obtain the responsible party\'s written authority and record its reference.'},
-  {key:'recipient',label:'Recipient inbox verified',passed:Boolean(input.recipientVerifiedAt),nextAction:'Send the recipient a single-use verification challenge.'},
-  {key:'approval',label:'Property-specific administrator approval',passed:input.approvalState==='approved',nextAction:'Complete the documented authority, privacy and notice review.'},
+  {key:'recipient',label:input.detailsOnly?'Restricted ProInspect staff queue':'Recipient inbox verified',passed:Boolean(input.detailsOnly||input.recipientVerifiedAt),nextAction:'Send the recipient a single-use verification challenge.'},
+  {key:'approval',label:'Property-specific application authority',passed:input.approvalState==='approved'||input.detailsOnly===true&&input.approvalState==='owner_authorized',nextAction:'Complete the documented authority, privacy and notice review.'},
   {key:'notice',label:'Tenancy database notice arrangement reviewed',passed:input.noticeMode==='not_used'||(input.noticeMode==='configured'&&input.noticeCount>0),nextAction:'Confirm whether databases are used and record applicable written notice details.'},
   {key:'retention',label:'Approved retention windows configured',passed:input.retentionConfigured,nextAction:'Set all three reviewed draft, submitted and withdrawn retention periods.'},
-  {key:'scanner',label:'Private malware scanning transport configured',passed:input.scannerConfigured,nextAction:'Provide an approved private scanning endpoint, allowlisted host and separate callback/outbound secrets.'},
-  {key:'scannerRelease',label:'Malware scanner release independently approved',passed:input.scannerReleaseApproved,nextAction:'Record provider testing and independent build-specific scanner release approval.'},
-  {key:'handoff',label:'Secure agency application handoff configured',passed:input.handoffConfigured,nextAction:'Deploy the approved Apps Script receiver with recipient allowlists and signed acknowledgements.'},
-  {key:'handoffRelease',label:'Handoff release independently approved',passed:input.handoffReleaseApproved,nextAction:'Verify synthetic recipient/CC delivery and independent build-specific approval.'},
-  {key:'intakeRelease',label:'Rental application intake independently released',passed:input.intakeReleaseApproved,nextAction:'Pass hosted acceptance and obtain build-specific independent release approval.'}
+  {key:'scanner',label:input.detailsOnly?'Document uploads disabled':'Private malware scanning transport configured',passed:Boolean(input.detailsOnly||input.scannerConfigured),nextAction:'Provide an approved private scanning endpoint, allowlisted host and separate callback/outbound secrets.'},
+  {key:'scannerRelease',label:input.detailsOnly?'No files sent to an external scanner':'Malware scanner release independently approved',passed:Boolean(input.detailsOnly||input.scannerReleaseApproved),nextAction:'Record provider testing and independent build-specific scanner release approval.'},
+  {key:'handoff',label:input.detailsOnly?'Application reviewed in the private staff queue':'Secure agency application handoff configured',passed:Boolean(input.detailsOnly||input.handoffConfigured),nextAction:'Deploy the approved Apps Script receiver with recipient allowlists and signed acknowledgements.'},
+  {key:'handoffRelease',label:input.detailsOnly?'External application forwarding disabled':'Handoff release independently approved',passed:Boolean(input.detailsOnly||input.handoffReleaseApproved),nextAction:'Verify synthetic recipient/CC delivery and independent build-specific approval.'},
+  {key:'intakeRelease',label:'Source-specific rental intake release recorded',passed:input.intakeReleaseApproved,nextAction:'Pass hosted acceptance and obtain build-specific independent release approval.'}
  ];
  return {checks,technicalReady:checks.every(x=>x.passed),
   notice:'These are configuration and recorded-approval indicators only. They are not proof of lawful authority, actual inbox delivery, or independently observed end-to-end acceptance.'};

@@ -1,4 +1,5 @@
 import { issueRecipientChallenge,approveRentalListing,managedRentalListingApproved } from './rental-governance.server';
+import { withManagedIntakePolicy,managedIntakeRelease,managedDetailsOnlyListing,propertyManagementTag } from './managed-rental-intake.server';
 import { applicationSettingsSchema } from '../../../../packages/marketing/form18';
 import { z } from 'zod';
 import { statement, assert, now, uid, type Env } from '../../../../packages/database/types';
@@ -114,10 +115,15 @@ export async function cancelLead(env:Env,request:Request,token:string,clientKey:
 }
 function staff(user:Principal){operationsWrite(user);assert(user.staffRole==='administrator'||user.staffRole==='operations_manager',403,'STAFF_REQUIRED','Operations staff only.');}
 export async function staffLeasing(env:Env,user:Principal,request:Request,path:string){
+ env=await withManagedIntakePolicy(env);
  staff(user);const method=request.method,parts=path.split('/').filter(Boolean);
  if(method==='GET'&&parts.length===0){
-  const listings=(await statement(env.DB,"SELECT l.*,c.name AS instructing_client,p.address AS property_address FROM leasing_listings l JOIN clients c ON c.id=l.instructed_by_client_id JOIN properties p ON p.id=l.property_id ORDER BY l.updated_at DESC LIMIT 150").all()).results;
-  return {listings};
+  const tags=await statement(env.DB,"SELECT name FROM sqlite_schema WHERE type='table' AND name='property_application_management'").first();
+  const columns=tags?"COALESCE(m.provider,'unconfirmed') AS management_provider,COALESCE(m.version,0) AS management_version,m.authority_reference AS management_reference":"'unconfirmed' AS management_provider,0 AS management_version,NULL AS management_reference";
+  const join=tags?' LEFT JOIN property_application_management m ON m.property_id=l.property_id':'';
+  const listings=(await statement(env.DB,"SELECT l.*,c.name AS instructing_client,p.address AS property_address,"+columns+" FROM leasing_listings l JOIN clients c ON c.id=l.instructed_by_client_id JOIN properties p ON p.id=l.property_id"+join+" ORDER BY l.updated_at DESC LIMIT 150").all()).results;
+  const managedRelease=env.RENTAL_APPLICATIONS_ENABLED==='true'&&Boolean(await managedIntakeRelease(env));
+  return {listings:listings.map((l:Record<string,any>)=>({...l,details_only_intake:managedRelease&&l.management_provider==='proinspect'&&l.kind==='residential'&&l.status==='published'&&l.application_mode==='proinspect'&&!l.application_url}))};
  }
  if(method==='POST'&&parts.length===2&&parts[1]==='photos'){
   const form=await request.formData();
@@ -169,6 +175,20 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
  const [listingId,section,other]=parts;
  const listing=await statement(env.DB,'SELECT id,status,version,kind,property_id,instructed_by_client_id,owner_client_id,slug FROM leasing_listings WHERE id=?',listingId).first<{id:string;status:string;version:number;kind:string;property_id:string;instructed_by_client_id:string;owner_client_id:string|null;slug:string}>();
  assert(listing,404,'LISTING_NOT_FOUND','Listing not found.');
+ if(method==='POST'&&section==='management'){
+  const d=z.object({provider:z.enum(['proinspect','external','unconfirmed']),reference:z.string().trim().min(8).max(300),version:z.number().int().min(0)}).parse(body);
+  const current=await propertyManagementTag(env,listing.property_id);
+  assert((current?.version??0)===d.version,409,'STALE_MANAGEMENT_TAG','Reload the property management tag.');
+  const t=now();
+  await env.DB.batch([
+   statement(env.DB,'INSERT INTO property_application_management(property_id,provider,authority_reference,version,updated_by,updated_at) VALUES(?,?,?,1,?,?) ON CONFLICT(property_id) DO UPDATE SET provider=excluded.provider,authority_reference=excluded.authority_reference,version=version+1,updated_by=excluded.updated_by,updated_at=excluded.updated_at WHERE version=? RETURNING version',listing.property_id,d.provider,d.reference,user.id,t,d.version),
+   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+   statement(env.DB,'UPDATE leasing_listings SET version=version+1,updated_at=? WHERE property_id=?',t,listing.property_id),
+   statement(env.DB,'INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,property_id,metadata_json,created_at) VALUES(?,?,?,?,?,?,?,?)',uid('aud'),user.id,'leasing.management_tag_changed','property',listing.property_id,listing.property_id,JSON.stringify({provider:d.provider,reference:d.reference,beforeVersion:d.version}),t),
+   statement(env.DB,'DELETE FROM mutation_guards')
+  ]);
+  return {ok:true,provider:d.provider};
+ }
  if(method==='GET'&&parts.length===1){
   const sessions=(await statement(env.DB,'SELECT * FROM leasing_sessions WHERE listing_id=? ORDER BY starts_at DESC LIMIT 100',listingId).all()).results;
   const photos=(await statement(env.DB,'SELECT id,alt_text,sort_order,content_type,size FROM leasing_photos WHERE listing_id=? ORDER BY sort_order',listingId).all()).results;
@@ -181,11 +201,12 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
    Boolean(env.RENTAL_SCANNER_OUTBOUND_SECRET&&env.RENTAL_SCANNER_OUTBOUND_SECRET.length>=32&&env.RENTAL_SCANNER_WEBHOOK_SECRET&&env.RENTAL_SCANNER_WEBHOOK_SECRET.length>=32);
   const handoffConfigured=env.RENTAL_APPS_SCRIPT_ENABLED==='true'&&secureProvider(env.RENTAL_APPS_SCRIPT_ENDPOINT,env.RENTAL_APPS_SCRIPT_ALLOWED_HOST)&&
    Boolean(env.RENTAL_APPS_SCRIPT_SECRET&&env.RENTAL_APPS_SCRIPT_SECRET.length>=32);
+  const detailsOnly=await managedDetailsOnlyListing(env,listingId);
   const applicationReadiness=residentialApplicationReadiness({
    listingKind:listing.kind,listingStatus:listing.status,applicationMode:String((details as Record<string,any>).application_mode??''),
    authorityReference:(details as Record<string,any>).application_authority_reference,
    recipientVerifiedAt:(details as Record<string,any>).rental_recipient_verified_at,
-   approvalState:(details as Record<string,any>).rental_approval_state,
+   approvalState:detailsOnly?'owner_authorized':(details as Record<string,any>).rental_approval_state,detailsOnly,
    noticeMode:mode,noticeCount:Array.isArray(notices)?notices.length:0,
    retentionConfigured:hasRentalRetentionPolicy(env),managedPropertyApproved:await managedRentalListingApproved(env,listingId),
    scannerConfigured,handoffConfigured,
@@ -193,7 +214,7 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
    handoffReleaseApproved:await releaseFeatureReady(env,'rental_script'),
    intakeReleaseApproved:await releaseFeatureReady(env,'rental')
   });
-  return {listing:details,sessions,photos,leads,applicationReadiness};
+  return {listing:details,sessions,photos,leads,applicationReadiness,detailsOnly};
  }
  if(method==='POST'&&section==='recipient-challenge')return issueRecipientChallenge(env,user,listingId,body);
  if(method==='POST'&&section==='rental-approve')return approveRentalListing(env,user,listingId,body);

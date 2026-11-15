@@ -100,6 +100,7 @@ try{
    prop,address,'Cloverdale','WA','6105','synthetic-fulham-unit-'+unit,'residential',stamp);
   await run('INSERT INTO client_property_links(id,client_id,property_id,role,starts_at) VALUES(?,?,?,?,?)',
    'lcp_synthetic_fulham_'+unit,'cli_lighthouse_property_group_pty_ltd',prop,'landlord',stamp);
+  await run("INSERT INTO property_application_management(property_id,provider,authority_reference,updated_by,updated_at) VALUES(?,'proinspect','SYNTHETIC-MANAGEMENT-INSTRUCTION','usr_rental_synthetic_admin',?)",prop,stamp);
   await run('INSERT INTO property_management_relationships(id,property_id,manager_client_id,mode,starts_at) VALUES(?,?,?,?,?)',
    'pm_synthetic_fulham_'+unit,prop,'cli_lighthouse_property_group_pty_ltd','self_managed',stamp);
   await run(`INSERT INTO leasing_listings(

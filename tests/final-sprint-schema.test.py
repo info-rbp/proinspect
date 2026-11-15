@@ -68,6 +68,6 @@ class FinalSprintSchema(unittest.TestCase):
    before={t:db.execute('SELECT '+','.join(cols[t])+' FROM '+t+' ORDER BY id').fetchall() for t in tables}
    for p in paths[26:]:db.executescript(p.read_text())
    for t in tables:self.assertEqual(before[t],db.execute('SELECT '+','.join(cols[t])+' FROM '+t+' ORDER BY id').fetchall(),t)
-   self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(),[]);self.assertEqual(len(paths),55)  # Historical baseline remains separate from additive 0054 and 0055.
+   self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(),[]);self.assertEqual(len(paths),56)  # Historical baseline remains separate from additive application migrations.
   finally:db.close()
 if __name__=='__main__':unittest.main()

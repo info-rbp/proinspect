@@ -5,7 +5,10 @@
 import { publicListing,publicListings,staffLeasing } from '../../apps/platform/worker/features/leasing.server';
 import { publicOpenHomeSessions } from '../../apps/platform/worker/features/open-home.server';
 import { issueRecipientChallenge,verifyRecipient,approveRentalListing } from '../../apps/platform/worker/features/rental-governance.server';
-import { rentalStartPage, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental,changeRentalEmail,inviteRentalApplicant,withdrawRental } from '../../apps/platform/worker/features/rental-applications.server';
+import { rentalStartPage, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental,changeRentalEmail,inviteRentalApplicant,withdrawRental,uploadRentalDocument } from '../../apps/platform/worker/features/rental-applications.server';
+import {dispatchRentalRetention} from '../../apps/platform/worker/features/rental-privacy.server';
+import {releaseFeatureReady} from '../../apps/platform/worker/features/release-governance.server';
+import {managedPrivacyDocument} from '../../apps/platform/worker/features/managed-rental-intake.server';
 import { updateRentalStatus } from '../../apps/platform/worker/features/rental-review.server';
 import { dispatchRentalHandoffs } from '../../apps/platform/worker/features/rental-script-dispatch.server';
 import { recordRentalOutcome } from '../../apps/platform/worker/features/rental-outcomes.server';
@@ -16,10 +19,20 @@ import type { Principal } from '../../packages/domain/index';
 export default {
  async fetch(request:Request,env:Env){
   const url=new URL(request.url);
-  if(env.APP_ENV!=='local')return new Response('Not available',{status:404});
+  if(env.APP_ENV!=='local'&&(env as Env&{ISOLATED_MANAGED_INTAKE?:string}).ISOLATED_MANAGED_INTAKE!=='true')return new Response('Not available',{status:404});
   const path=url.pathname;
   try{
    const administrator={id:'usr_rental_synthetic_admin',staffRole:'administrator'} as Principal;
+   if(path==='/__test/management-tag'&&request.method==='POST'){
+    const d=await request.json() as {listingId:string;input:unknown};
+    return Response.json(await staffLeasing(env,administrator,new Request(request.url,{method:'POST',body:JSON.stringify(d.input)}),d.listingId+'/management'));
+   }
+   if(path==='/__test/upload-blocked'&&request.method==='POST'){
+    const d=await request.json() as {token:string};
+    return Response.json(await uploadRentalDocument(env,d.token,new FormData()));
+   }
+   if(path==='/__test/retention'&&request.method==='POST'){await dispatchRentalRetention(env);return Response.json({completed:true});}
+   if(path==='/__test/release-state')return Response.json({rental:await releaseFeatureReady(env,'rental'),scanner:await releaseFeatureReady(env,'rental_scanner'),handoff:await releaseFeatureReady(env,'rental_script'),commercial:await releaseFeatureReady(env,'commercial_applications'),privacy:await managedPrivacyDocument(env)});
    if(path==='/__test/application-settings'&&request.method==='POST'){
     const d=await request.json() as {listingId:string;input:unknown};
     const settingsRequest=new Request(request.url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d.input)});
@@ -46,8 +59,8 @@ export default {
     return Response.json(await rentalStartPage(env,url.searchParams.get('slug')??''));
    }
    if(path==='/__test/start'&&request.method==='POST'){
-    const d=await request.json() as {listingId:string;name:string;email:string;consent:boolean};
-    return Response.json(await startRental(env,request,d.listingId,{name:d.name,email:d.email,consent:d.consent}));
+    const d=await request.json() as {listingId:string;name:string;email:string;consent:boolean;turnstile?:string};
+    return Response.json(await startRental(env,request,d.listingId,{name:d.name,email:d.email,consent:d.consent},d.turnstile));
    }
    if(path==='/__test/page'&&request.method==='POST'){
     const d=await request.json() as {token:string};

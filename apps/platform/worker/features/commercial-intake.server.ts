@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { propertyManagementTag } from './managed-rental-intake.server';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal } from '../../../../packages/domain/index';
 import { digest, randomToken, seal, unseal } from '../../../../packages/auth/crypto';
@@ -233,6 +234,7 @@ export async function commercialFlow(env: Env, id: string, available = true) {
   assert(row, 404, 'COMMERCIAL_APPLICATION_UNAVAILABLE', 'Commercial application unavailable.');
   if (available) {
     await commercialGate(env);
+    assert((await propertyManagementTag(env,row.property_id))?.provider==='proinspect',404,'COMMERCIAL_MANAGEMENT_REQUIRED','Native applications require the ProInspect-managed property tag.');
     assert(
       row.kind === 'commercial' &&
         row.listing_status === 'published' &&

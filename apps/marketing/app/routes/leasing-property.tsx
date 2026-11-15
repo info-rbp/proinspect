@@ -99,7 +99,7 @@ export default function LeasingProperty(){
  {p.kind==='residential'&&<section id="leasing-application" className={`panel leasing-application-panel${canApply?' leasing-application-panel--ready':''}`}>
    <p className="eyebrow">Rental applications</p>
    <h2>{canApply?'Ready to apply?':applicationCta.type==='external'?'Apply through the leasing representative':'Online applications not yet open'}</h2>
-   {canApply?<><p>Complete your secure ProInspect rental application. Save your progress, invite additional adult applicants and provide supporting documents privately.</p>
+   {canApply?<><p>Complete your secure ProInspect rental application. Save your progress, invite additional adult applicants and submit for private ProInspect review.</p>
     <Link className="button leasing-application-button" to={applicationCta.href}>Start or resume application</Link></>:
     applicationCta.type==='external'?<><p>Applications are managed through the leasing representative's approved provider.</p>
      <a className="button leasing-application-button" href={applicationCta.href} target="_blank" rel="noopener noreferrer">Continue to approved application provider</a></>:

@@ -161,6 +161,7 @@ function ApprovalControls({listing}:{listing:any}){
   catch(error){setMessage(error instanceof Error?error.message:'Approval action failed.');}finally{setBusy(false);}
  };
  if(listing.kind!=='residential'||listing.application_mode!=='proinspect')return null;
+ if(listing.details_only_intake)return <section className="panel stack"><h4>ProInspect-managed application intake is active</h4><p>Applications are collected for the restricted staff review queue under the recorded owner-authorised release and published privacy policy. Document uploads and external application forwarding are disabled for this intake mode.</p></section>;
  return <section className="panel stack"><h4>Residential application approval</h4>
  <p className="small">Approval: {listing.rental_approval_state??'pending'} · Recipient verified: {listing.rental_recipient_verified_at?'Yes':'No'}</p>
  <button className="button secondary" type="button" disabled={busy} onClick={()=>submit('recipient-challenge',{})}>Send recipient verification email</button>
@@ -218,12 +219,12 @@ function ListingInspectionManagement({listing}:{listing:any}){
  };
  return <details className="panel">
   <summary style={{fontWeight:750,cursor:'pointer'}}>Inspection scheduling and rental application readiness</summary>
-  <p className="small">Inspection times are entered and displayed in Perth time (AWST). Rental intake cannot be enabled from this page; independent approvals are required.</p>
+  <p className="small">Inspection times are entered and displayed in Perth time (AWST). Use the management tag and the recorded application release to determine the permitted intake method.</p>
   <button type="button" className="button secondary small" onClick={start} disabled={busy}>{busy?'Loading…':detail?'Refresh property operations':'Load property operations'}</button>
   {message&&<p role="status">{message}</p>}
   {detail&&<div className="stack">
    <section className="panel stack"><h4>Application release checklist</h4>
-    <p className="small">{detail.applicationReadiness.technicalReady?'Recorded technical and approval checks satisfied; independent acceptance still required.':'Application intake remains gated until all required checks are completed.'}</p>
+    <p className="small">{detail.applicationReadiness.technicalReady?'The configured intake checks are satisfied.':'Complete the listed checks for the selected intake method.'}</p>
     <div className="stack">{detail.applicationReadiness.checks.map(check=><div className="record-row" key={check.key}>
      <div><strong>{check.passed?'✓':'○'} {check.label}</strong>{!check.passed&&<p className="small">{check.nextAction}</p>}</div>
     </div>)}</div><p className="small">{detail.applicationReadiness.notice}</p>
@@ -343,6 +344,7 @@ function ListingOperations({listing}:{listing:any}){
   <div className="actions">{listing.status!=='published'&&<button className="button small" type="button" onClick={()=>publish('published')} disabled={busy}>Publish approved listing</button>}
    {listing.status==='published'&&<button className="button secondary small" type="button" onClick={()=>publish('withdrawn')} disabled={busy}>Withdraw listing</button>}
    {listing.status==='published'&&<button className="button secondary small" type="button" onClick={()=>publish('leased')} disabled={busy}>Mark leased</button>}</div>
+  <ManagementTag key={listing.management_version??0} listing={listing}/>
   <EditListingFacts listing={listing}/>
   <details><summary>Upload approved listing photograph</summary><form onSubmit={photo} className="stack">
    <label className="field">Image file<input name="file" type="file" required accept="image/jpeg,image/png,image/webp"/></label>
@@ -355,6 +357,22 @@ function ListingOperations({listing}:{listing:any}){
    <ApprovalControls listing={listing}/>
   {message&&<p role="status">{message}</p>}
  </div>;
+}
+function ManagementTag({listing}:{listing:any}){
+ const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),revalidator=useRevalidator();
+ const label=listing.management_provider==='proinspect'?'ProInspect-managed':listing.management_provider==='external'?'Managed by another party':'Management not confirmed';
+ return <section className="panel stack"><h4>Property management tag — {label}</h4>
+  <p className="small">This classification applies to every listing for this property. Changing it away from ProInspect-managed immediately closes native intake. Save an approved application link for externally managed properties.</p>
+  <form className="stack" onSubmit={async e=>{e.preventDefault();setBusy(true);const f=new FormData(e.currentTarget);
+   try{await send('/api/staff/leasing/'+listing.id+'/management',{provider:f.get('provider'),reference:f.get('reference'),version:listing.management_version??0});setMessage('Management tag saved.');revalidator.revalidate();}
+   catch(error){setMessage(error instanceof Error?error.message:'Tag could not be saved.');}finally{setBusy(false);}}}>
+   <label className="field">Managed by<select name="provider" defaultValue={listing.management_provider??'unconfirmed'}>
+    <option value="unconfirmed">Not confirmed — native applications closed</option><option value="proinspect">ProInspect — directly managed</option><option value="external">Another party — external application link</option>
+   </select></label>
+   <label className="field">Management instruction or owner confirmation reference<input name="reference" minLength={8} maxLength={300} required defaultValue={listing.management_reference??''}/></label>
+   <button className="button secondary" disabled={busy} type="submit">{busy?'Saving…':'Save management tag'}</button>
+   {message&&<p role="status">{message}</p>}
+  </form></section>;
 }
 export async function loader({request,context,params}:LoaderFunctionArgs){
  const [leasing,admin]=await Promise.all([
