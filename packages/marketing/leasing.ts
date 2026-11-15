@@ -42,9 +42,9 @@ export type ListingApplicationAction =
 export function listingApplicationAction(input:{
  kind:string;slug:string;applicationMode:string;applicationUrl?:string|null;rentalReady:boolean;
 }):ListingApplicationAction{
+ const external=safeApplicationUrl(input.applicationUrl);
+ if(external)return {type:'external',href:external};
  if(input.kind==='residential'&&input.applicationMode==='proinspect'&&input.rentalReady)
   return {type:'proinspect',href:propertyUrl('residential',input.slug)+'/apply'};
- const external=safeApplicationUrl(input.applicationUrl);
- if(input.applicationMode==='external'&&external)return {type:'external',href:external};
  return {type:'interest',href:'#leasing-enquiry'};
 }

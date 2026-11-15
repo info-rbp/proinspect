@@ -1,3 +1,4 @@
+import { repeaterSummary } from '../../../../packages/marketing/rental-repeaters';
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { loadApi } from '../lib/api.server';
 import { useWorkspace } from '../lib/workspace';
@@ -30,6 +31,7 @@ export default function RentalApplicationPrint(){
    {ANSWER_STEPS.map((step:AnswerStep)=><section key={step}>
      <h3>{step==='identity'?'Applicant personal details':step==='rental'?'Previous rental history':step==='employment'?'Employment and income':'Personal references, next of kin and emergency contact'}</h3>
      <dl>{FIELDS[step].filter(field=>person.ordinal===1||!TENANCY_PREFERENCE_KEYS.includes(field.key)).map(field=><div className="form18-print-row" key={field.key}><dt>{field.label}</dt><dd>{person.answers[step]?.[field.key]||'Not provided'}</dd></div>)}</dl>
+     <dl>{(['additionalHistory','additionalReferences'] as const).flatMap(key=>repeaterSummary(key,person.answers[step]?.[key])).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
    </section>)}
  </section>)}
  <section className="form18-print-notice">

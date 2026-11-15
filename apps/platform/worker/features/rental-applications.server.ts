@@ -1,6 +1,6 @@
 import { requireReleaseApproval,releaseFeatureReady } from './release-governance.server';
-import { legalStatements } from './legal-acceptance.server';
-import { hasRentalRetentionPolicy,retentionDeadline } from '../../../../packages/marketing/rental-retention';
+import { legalStatements,currentLegalDocument } from './legal-acceptance.server';
+import { hasRentalRetentionPolicy,retentionDeadline,retentionDays } from '../../../../packages/marketing/rental-retention';
 import { z } from 'zod';
 import { now, uid, assert, statement, type Env } from '../../../../packages/database/types';
 import { digest, seal, unseal, randomToken } from '../../../../packages/auth/crypto';
@@ -14,7 +14,7 @@ import {
 
 type RentalRow={id:string;listing_id:string;reference:string;status:string;version:number;submitted_at:string|null;notice_envelope:string|null;review_request_envelope:string|null;started_at:string};
 type ApplicantRow={id:string;application_id:string;role:string;ordinal:number;state:string;email_hash:string;answers_envelope:string;version:number;access_expires_at:string;declared_at:string|null;notice_digest:string|null};
-type RentalListing={id:string;slug:string;title:string;display_address:string;suburb:string;postcode:string;agent_name:string;agent_role:string;application_mode:string;tenancy_database_notice_mode:string;tenancy_database_notice_json:string;application_recipient_email:string|null;status:string;kind:string;rental_approval_state:string;rental_recipient_verified_at:string|null};
+type RentalListing={id:string;slug:string;title:string;display_address:string;suburb:string;postcode:string;agent_name:string;agent_role:string;application_mode:string;tenancy_database_notice_mode:string;tenancy_database_notice_json:string;application_recipient_email:string|null;status:string;kind:string;rental_approval_state:string;rental_recipient_verified_at:string|null;rental_approved_notice_version:string|null};
 export const rentalEnabled=(env:Env)=>env.RENTAL_APPLICATIONS_ENABLED==='true'&&Boolean(env.DATA_ENCRYPTION_KEY&&env.RESTRICTED_DOCUMENTS&&hasRentalRetentionPolicy(env));
 const expiry=()=>new Date(Date.now()+30*86400000).toISOString();
 const mailLink=(env:Env,token:string)=>env.APP_ORIGIN+'/rental-application/'+token;
@@ -42,7 +42,7 @@ async function turnstile(env:Env,request:Request,token?:string){
   403,'RENTAL_SECURITY_CHECK','Security verification has expired. Please try again.');
 }
 async function listing(env:Env,id:string){
- const r=await statement(env.DB,'SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email,rental_approval_state,rental_recipient_verified_at FROM leasing_listings WHERE id=?',id).first<RentalListing>();
+ const r=await statement(env.DB,'SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email,rental_approval_state,rental_recipient_verified_at,rental_approved_notice_version FROM leasing_listings WHERE id=?',id).first<RentalListing>();
  assert(r,404,'PROPERTY_NOT_AVAILABLE','Property not available.');
  return r;
 }
@@ -51,17 +51,33 @@ function active(r:RentalListing){
  'RENTAL_APPLICATION_UNAVAILABLE','This property does not accept ProInspect applications.');
 }
 async function enabled(env:Env){assert(rentalEnabled(env),503,'RENTAL_NOT_ENABLED','New application processing is temporarily unavailable.');await requireReleaseApproval(env,'rental');}
+async function collectionNotice(env:Env,l:RentalListing){
+ const policy=await currentLegalDocument(env,'privacy');
+ const approved=Boolean(l.rental_approved_notice_version&&policy?.version_label===l.rental_approved_notice_version);
+ return {approved:env.APP_ENV==='local'||approved,version:l.rental_approved_notice_version,
+  recipient:l.agent_name,purpose:'Administer this residential rental application and share it only with the authorised leasing representative. Reference contact requires separate permission; no credit-check consent is inferred.',
+  privacyContact:'info@proinspect.systems',policyUrl:'/privacy',
+  retention:{draft:retentionDays(env,'draft'),submitted:retentionDays(env,'submitted'),withdrawn:retentionDays(env,'withdrawn')},
+  providers:'Provider and overseas-processing disclosures are those in the identified approved privacy policy. Use private access recovery to request access, correction or withdrawal.'};
+}
+async function editableAccess(env:Env,token:string){
+ const value=await tokenAccess(env,token);active(value.l);
+ assert((await collectionNotice(env,value.l)).approved,503,'COLLECTION_NOTICE_REQUIRED','The approved collection notice requires review.');
+ return value;
+}
 function existingAccess(env:Env){assert(Boolean(env.DATA_ENCRYPTION_KEY&&env.RESTRICTED_DOCUMENTS),503,'APPLICATION_ACCESS_UNAVAILABLE','Private application records are temporarily unavailable.');}
 export async function rentalStartPage(env:Env,slug:string){
- const row=await statement(env.DB,"SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email FROM leasing_listings WHERE kind='residential' AND slug=? AND status='published' AND application_mode='proinspect' AND rental_approval_state='approved' AND rental_recipient_verified_at IS NOT NULL",slug).first<RentalListing>();
+ const row=await statement(env.DB,"SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email,rental_approved_notice_version FROM leasing_listings WHERE kind='residential' AND slug=? AND status='published' AND application_mode='proinspect' AND rental_approval_state='approved' AND rental_recipient_verified_at IS NOT NULL",slug).first<RentalListing>();
  assert(row,404,'RENTAL_APPLICATION_UNAVAILABLE','Online applications are unavailable for this property.');
- return {listing:{id:row.id,slug:row.slug,title:row.title,address:row.display_address,suburb:row.suburb,agentName:row.agent_name},
-  enabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental'),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??''};
+ const notice=await collectionNotice(env,row);
+ return {listing:{id:row.id,slug:row.slug,title:row.title,address:row.display_address,suburb:row.suburb,agentName:row.agent_name},collectionNotice:notice,
+  enabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&notice.approved,siteKey:env.MARKETING_TURNSTILE_SITE_KEY??''};
 }
 export async function startRental(env:Env,request:Request,listingId:string,input:unknown,security?:string){
  await enabled(env);
  const d=startApplicationSchema.parse(input);
  const l=await listing(env,listingId);active(l);
+ assert((await collectionNotice(env,l)).approved,503,'COLLECTION_NOTICE_REQUIRED','The approved collection notice requires review.');
  const ip=await digest(env.DATA_ENCRYPTION_KEY+':applicant:'+String(request.headers.get('CF-Connecting-IP')??'unknown'));
  await limit(env,'origin:'+ip,5);await limit(env,'email:'+d.email,4);
  await turnstile(env,request,security);
@@ -99,8 +115,8 @@ export async function tokenAccess(env:Env,token:string){
 }
 export async function rentalPage(env:Env,token:string){
  const {person,app,l,answers}=await tokenAccess(env,token);
- const documents=(await statement(env.DB,'SELECT id,category,filename,size_bytes,review_status,uploaded_at FROM rental_application_documents WHERE applicant_id=? ORDER BY uploaded_at DESC',person.id).all()).results;
- const expectedNotice=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name]));
+ const documents=(await statement(env.DB,'SELECT id,category,filename,size_bytes,review_status,scan_status,uploaded_at FROM rental_application_documents WHERE applicant_id=? ORDER BY uploaded_at DESC',person.id).all()).results;
+ const expectedNotice=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name,l.rental_approved_notice_version]));
  const noticeMatches=person.notice_digest===expectedNotice;
  const household:{ordinal:number;state:string;maskedEmail:string;name:string}[]=[];
  if(person.role==='primary'){
@@ -118,12 +134,12 @@ export async function rentalPage(env:Env,token:string){
  return {reference:app.reference,status:app.status,intakeEnabled:rentalEnabled(env),version:person.version,role:person.role,ordinal:person.ordinal,
   state:person.state,noticeMatches,declaredAt:person.declared_at,submittedAt:app.submitted_at,
   property:{title:l.title,address:l.display_address,suburb:l.suburb,agentName:l.agent_name},
-  notice:{mode:configuredNotice?.mode??l.tenancy_database_notice_mode,entries:notice},moreInformation,privacyRequests,answers,documents,household};
+  notice:{mode:configuredNotice?.mode??l.tenancy_database_notice_mode,entries:notice,version:l.rental_approved_notice_version},moreInformation,privacyRequests,answers,documents,household};
 }
 const allowedEdit=(status:string)=>['draft','information_requested'].includes(status);
 export async function saveRentalSection(env:Env,token:string,section:AnswerStep,raw:Record<string,unknown>,version:number){
  await enabled(env);
- const {person,app,answers}=await tokenAccess(env,token);
+ const {person,app,answers}=await editableAccess(env,token);
  assert(allowedEdit(app.status),409,'APPLICATION_LOCKED','Submitted applications cannot be edited without a new information request.');
  assert(ANSWER_STEPS.includes(section),422,'SECTION_INVALID','Choose a form section.');
  assert(person.version===version,409,'DRAFT_CHANGED','This draft has changed. Reload before saving.');
@@ -145,7 +161,7 @@ export async function saveRentalSection(env:Env,token:string,section:AnswerStep,
 }
 export async function inviteRentalApplicant(env:Env,token:string,input:unknown){
  await enabled(env);
- const {person,app}=await tokenAccess(env,token);
+ const {person,app}=await editableAccess(env,token);
  assert(person.role==='primary'&&allowedEdit(app.status),403,'INVITE_NOT_ALLOWED','Only the primary applicant can invite others before submission.');
  const d=inviteApplicantSchema.parse(input),hash=await emailHash(env,d.email);
  const registered=(await statement(env.DB,"SELECT id,ordinal FROM rental_applicants WHERE application_id=? AND state!='removed' ORDER BY ordinal",app.id).all()).results;
@@ -166,7 +182,7 @@ export async function inviteRentalApplicant(env:Env,token:string,input:unknown){
 }
 export async function resendRentalInvitation(env:Env,token:string,ordinal:number){
  await enabled(env);
- const {person,app}=await tokenAccess(env,token);
+ const {person,app}=await editableAccess(env,token);
  assert(person.role==='primary'&&app.status==='draft'&&ordinal>1,403,
   'RESEND_NOT_ALLOWED','Only the primary applicant may resend an invitation before submission.');
  const match=await statement(env.DB,"SELECT id,answers_envelope,state FROM rental_applicants WHERE application_id=? AND ordinal=? AND state!='removed'",
@@ -189,9 +205,30 @@ export async function resendRentalInvitation(env:Env,token:string,ordinal:number
  ]);
  return {resent:true};
 }
+/** Only the holder can correct their address; old access is revoked before a new private link is sent. */
+export async function changeRentalEmail(env:Env,token:string,input:unknown){
+ await enabled(env);
+ const {person,app,answers}=await editableAccess(env,token);
+ assert(allowedEdit(app.status),409,'APPLICATION_LOCKED','Request an authorised correction after submission.');
+ const d=z.object({email:z.email().max(254).transform(s=>s.trim().toLowerCase()),version:z.number().int().positive()}).parse(input);
+ const hash=await emailHash(env,d.email);
+ assert(hash!==person.email_hash,422,'EMAIL_UNCHANGED','Enter the corrected email address.');
+ assert(!await statement(env.DB,"SELECT id FROM rental_applicants WHERE application_id=? AND email_hash=?",app.id,hash).first(),409,'ALREADY_INVITED','That address is already included.');
+ await limit(env,'email-correction:'+person.id,3);
+ const secret=randomToken(),updated={...answers,identity:{...answers.identity,email:d.email}};
+ await env.DB.batch([
+  statement(env.DB,"UPDATE rental_applicants SET email_hash=?,access_token_hash=?,access_expires_at=?,answers_envelope=?,version=version+1,state='in_progress',declared_at=NULL,notice_digest=NULL,updated_at=? WHERE id=? AND version=? AND EXISTS(SELECT 1 FROM rental_applications a WHERE a.id=rental_applicants.application_id AND a.status IN('draft','information_requested'))",
+   hash,await digest(secret),expiry(),await seal(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+person.id,updated),now(),person.id,d.version),
+  statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+  await event(env,app.id,'section_saved',{section:'identity',emailChanged:true,previousAccessRevoked:true},person.id),
+  await mailEvent(env,'rental.application.email_corrected',{to:d.email,subject:'Your corrected rental application access',heading:'Verify your corrected address',body:'Open your new private link to continue your application. All previous application links for your address have been revoked.',href:mailLink(env,secret),sensitive:true}),
+  statement(env.DB,'DELETE FROM mutation_guards'),
+ ]);
+ return {sent:true};
+}
 export async function removeRentalApplicant(env:Env,token:string,ordinal:number){
  await enabled(env);
- const {person,app}=await tokenAccess(env,token);
+ const {person,app}=await editableAccess(env,token);
  assert(person.role==='primary'&&app.status==='draft'&&ordinal>1,403,'REMOVE_NOT_ALLOWED','Only invited applicants may be removed before submission.');
  const match=await statement(env.DB,"SELECT id FROM rental_applicants WHERE application_id=? AND ordinal=? AND state!='removed'",app.id,ordinal).first<{id:string}>();
  assert(match,404,'APPLICANT_NOT_FOUND','Applicant not found.');
@@ -208,7 +245,7 @@ export async function removeRentalApplicant(env:Env,token:string,ordinal:number)
 }
 export async function finishRentalApplicant(env:Env,token:string,consent:unknown,version:number){
  await enabled(env);
- const {person,app,answers}=await tokenAccess(env,token);
+ const {person,app,answers}=await editableAccess(env,token);
  assert(allowedEdit(app.status),409,'APPLICATION_LOCKED','This application has already been submitted.');
  assert(person.version===version,409,'DRAFT_CHANGED','Reload your information before declaring.');
  assert(allDetailsComplete(answers),422,'APPLICATION_INCOMPLETE','Complete the required application sections before declaring.');
@@ -217,7 +254,7 @@ export async function finishRentalApplicant(env:Env,token:string,consent:unknown
   notAnAgreement:z.literal(true),noticeAcknowledged:z.literal(true),referenceConsent:z.boolean(),legalConsent:z.unknown().optional()}).parse(consent);
  const l=await listing(env,app.listing_id);
  assert(l.tenancy_database_notice_mode!=='unconfigured',503,'TENANCY_NOTICE_REQUIRED','Database notice has not been configured.');
- const noticeDigest=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name]));
+ const noticeDigest=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name,l.rental_approved_notice_version]));
  const t=now();
  const legal=await legalStatements(env,{kind:'rental',id:person.id},'rental',person.id+':'+version,{applicationId:app.id,applicantId:person.id,version,noticeDigest},d.legalConsent);
  await env.DB.batch([
@@ -232,18 +269,25 @@ export async function finishRentalApplicant(env:Env,token:string,consent:unknown
 export async function submitRental(env:Env,token:string){
  await enabled(env);
  const {person,app,l,answers}=await tokenAccess(env,token);
+ if(person.role==='primary'&&app.status==='submitted'){
+  const receipt=await statement(env.DB,'SELECT id FROM rental_application_submissions WHERE application_id=? LIMIT 1',app.id).first();
+  assert(receipt,409,'SUBMISSION_RECEIPT_MISSING','Submission requires staff review.');
+  return {submitted:true,reference:app.reference,replayed:true};
+ }
  assert(person.role==='primary'&&allowedEdit(app.status),403,'SUBMISSION_NOT_ALLOWED','Only the primary applicant submits the household application.');
  assert(tenancyPreferencesComplete(answers),422,'TENANCY_PREFERENCES_INCOMPLETE','Complete the proposed occupants and pets information before submission.');
  active(l);
+ assert((await collectionNotice(env,l)).approved,503,'COLLECTION_NOTICE_REQUIRED','The approved collection notice requires review.');
  const rows=(await statement(env.DB,"SELECT id,ordinal,state,declared_at,notice_digest FROM rental_applicants WHERE application_id=? AND state!='removed'",app.id).all<{id:string;ordinal:number;state:string;declared_at:string|null;notice_digest:string|null}>()).results;
  assert(Number(answers.identity.totalOccupants)>=rows.length,422,'OCCUPANTS_BELOW_APPLICANTS','Total occupants cannot be fewer than the number of adult applicants.');
+ if(answers.identity.adultOccupants)assert(Number(answers.identity.adultOccupants)===rows.length,422,'ADULT_APPLICANTS_INCOMPLETE','Every intended adult must complete their own private application.');
  assert(rows.length>=1&&rows.every(x=>x.state==='complete'&&Boolean(x.declared_at)),422,'APPLICANTS_INCOMPLETE',
   'Every included applicant must complete their declaration before the application can be submitted.');
- const noticeDigest=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name]));
+ const noticeDigest=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name,l.rental_approved_notice_version]));
  assert(rows.every(x=>x.notice_digest===noticeDigest),409,'NOTICE_CHANGED','The tenancy database notice has changed. Every applicant must review and declare again.');
  assert(l.application_recipient_email&&l.tenancy_database_notice_mode!=='unconfigured',503,'APPLICATION_SETTINGS_REQUIRED','The application arrangements require review.');
  const notice={mode:l.tenancy_database_notice_mode,entries:JSON.parse(l.tenancy_database_notice_json),
-  representative:l.agent_name,property:l.display_address,formVersion:FORM18_VERSION};
+  representative:l.agent_name,property:l.display_address,formVersion:FORM18_VERSION,privacyNoticeVersion:l.rental_approved_notice_version,collection:await collectionNotice(env,l)};
  const stamp=now();
  const completePeople=await Promise.all(rows.map(async row=>{
   const record=await statement(env.DB,'SELECT answers_envelope FROM rental_applicants WHERE id=?',row.id).first<{answers_envelope:string}>();
@@ -251,7 +295,8 @@ export async function submitRental(env:Env,token:string){
   return {ordinal:row.ordinal,declaredAt:row.declared_at,
    answers:await unseal<Form18Answers>(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+row.id,record.answers_envelope)};
  }));
- const fileManifest=(await statement(env.DB,'SELECT applicant_id,category,filename,size_bytes,sha256,review_status FROM rental_application_documents WHERE application_id=? ORDER BY uploaded_at',app.id).all()).results;
+ const fileManifest=(await statement(env.DB,'SELECT applicant_id,category,filename,size_bytes,sha256,review_status,scan_status FROM rental_application_documents WHERE application_id=? ORDER BY uploaded_at',app.id).all()).results;
+ assert(fileManifest.every(file=>file.scan_status==='clean'&&file.review_status==='released'),409,'DOCUMENTS_NOT_READY','Supporting files must pass security scanning and authorised review before submission. Remove unwanted files or wait for review.');
  const prior=await statement(env.DB,'SELECT COALESCE(MAX(version),0) AS n FROM rental_application_submissions WHERE application_id=?',app.id).first<{n:number}>();
  const snapshotVersion=(prior?.n??0)+1;
  assert(snapshotVersion<=30,422,'SUBMISSION_LIMIT','Submission history requires staff review.');
@@ -260,7 +305,7 @@ export async function submitRental(env:Env,token:string){
   applicants:completePeople,notice,documents:fileManifest};
  const submissionId=uid('ras');
  await env.DB.batch([
-  statement(env.DB,"UPDATE rental_applications SET status='submitted',notice_envelope=?,submitted_at=COALESCE(submitted_at,?),retained_until=?,updated_at=?,version=version+1 WHERE id=? AND status IN('draft','information_requested') AND version=?",
+  statement(env.DB,"UPDATE rental_applications SET status='submitted',notice_envelope=?,submitted_at=COALESCE(submitted_at,?),retained_until=?,updated_at=?,version=version+1 WHERE id=? AND status IN('draft','information_requested') AND version=? AND NOT EXISTS(SELECT 1 FROM rental_applicants p WHERE p.application_id=rental_applications.id AND p.state NOT IN('complete','removed'))",
    await seal(env.DATA_ENCRYPTION_KEY,'rental-notice:'+app.id,notice),stamp,retentionDeadline(env,'submitted'),stamp,app.id,app.version),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   statement(env.DB,'INSERT INTO rental_application_submissions(id,application_id,submitted_by_applicant_id,version,form_version,snapshot_envelope,created_at) VALUES(?,?,?,?,?,?,?)',
@@ -301,7 +346,7 @@ function validMagic(type:string,bytes:Uint8Array){
 }
 export async function uploadRentalDocument(env:Env,token:string,form:FormData){
  await enabled(env);
- const {person,app}=await tokenAccess(env,token);
+ const {person,app}=await editableAccess(env,token);
  assert(allowedEdit(app.status),409,'UPLOAD_CLOSED','Documents cannot be changed after submission.');
  const file=form.get('file'),category=documentCategorySchema.parse(form.get('category'));
  assert(file instanceof File&&file.size>=1&&file.size<=8388608,413,'DOCUMENT_SIZE','Choose a file up to 8 MB.');
@@ -327,7 +372,7 @@ export async function uploadRentalDocument(env:Env,token:string,form:FormData){
 }
 export async function deleteRentalDocument(env:Env,token:string,docId:string){
  await enabled(env);
- const {person,app}=await tokenAccess(env,token);
+ const {person,app}=await editableAccess(env,token);
  assert(allowedEdit(app.status),409,'APPLICATION_LOCKED','Documents cannot be changed after submission.');
  const row=await statement(env.DB,'SELECT id,object_key FROM rental_application_documents WHERE id=? AND applicant_id=? AND application_id=?',
  docId,person.id,app.id).first<{id:string;object_key:string}>();

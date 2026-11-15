@@ -126,7 +126,7 @@ try{
  });
  for(const unit of [6,16]){
   const listingId='lst_synthetic_fulham_'+unit;
-  const email='fictional-unit-'+unit+'@example.invalid';
+  let email='fictional-unit-'+unit+'@example.invalid';
   let token,applicationId;
   await check('Unit '+unit+': secure application start creates only private outbox invitation',async()=>{
    const response=await call('/__test/start',{listingId,name:'Fictional Tenant Unit '+unit,email,consent:true});
@@ -140,14 +140,25 @@ try{
    assert.equal(app.status,'draft');
    applicationId=app.id;
   });
+  if(unit===6)await check('Corrected applicant email revokes previous private access',async()=>{
+   const page=await call('/__test/page',{token});
+   const oldToken=token; email=email.replace('fictional','corrected');
+   await call('/__test/change-email',{token,email,version:page.version});
+   const old=await mf.dispatchFetch('http://localhost/__test/page',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:oldToken})});
+   assert.equal(old.status,404);
+   const row=await first("SELECT id,envelope FROM outbox_events WHERE kind='rental.application.email_corrected' ORDER BY created_at DESC,id DESC LIMIT 1");
+   const message=await unseal(key,'outbox:'+row.id,row.envelope); assert.equal(message.to,email);
+   token=new URL(message.href).pathname.split('/').pop();
+   assert.equal((await call('/__test/page',{token})).answers.identity.email,email);
+  });
   await check('Unit '+unit+': applicant saves four Form 18 sections and submits after consent',async()=>{
    const answers={
     identity:{fullName:'Fictional Tenant Unit '+unit,dateOfBirth:'1990-01-01',mobile:'0400000000',
      email,currentAddress:'1 Fictional Avenue, Perth WA 6000',idType:'Passport',
-     totalOccupants:'1',petsProposed:'No'},
-    rental:{hasRentalHistory:'No'},
+     totalOccupants:'1',adultOccupants:'1',minorOccupants:'0',petsProposed:'No'},
+    rental:{hasRentalHistory:'No',noHistoryReason:'First tenancy with alternative evidence available.'},
     employment:{employmentType:'Student'},
-    references:{},
+    references:{additionalReferences:JSON.stringify([{name:'Synthetic Referee',relationship:'Colleague',phone:'0400000001',email:''}])},
    };
    for(const [section,raw] of Object.entries(answers)){
     const page=await call('/__test/page',{token});
@@ -155,12 +166,25 @@ try{
    }
    const page=await call('/__test/page',{token});
    await call('/__test/complete',{token,version:page.version});
+   if(unit===6){
+    const person=await first('SELECT id FROM rental_applicants WHERE application_id=?',applicationId);
+    await run("INSERT INTO rental_application_documents(id,application_id,applicant_id,object_key,category,filename,content_type,size_bytes,sha256,uploaded_at) VALUES(?,?,?,?,?,?,?,?,?,?)",'rad_pending_synthetic',applicationId,person.id,'synthetic/quarantine','income','synthetic.pdf','application/pdf',1,'0'.repeat(64),new Date().toISOString());
+    const blocked=await mf.dispatchFetch('http://localhost/__test/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
+    assert.equal(blocked.status,409,'Pending documents must not enter a sealed submission');
+    await run("DELETE FROM rental_application_documents WHERE id='rad_pending_synthetic'");
+   }
    const submitted=await call('/__test/submit',{token});
    assert.equal(submitted.submitted,true);
    assert.match(submitted.reference,/^RNT-/);
+   const replay=await call('/__test/submit',{token});
+   assert.equal(replay.replayed,true);
+   assert.equal(replay.reference,submitted.reference);
    const app=await first('SELECT status,submitted_at FROM rental_applications WHERE id=?',applicationId);
    assert.equal(app.status,'submitted');
    assert.ok(app.submitted_at);
+   const snapshotRow=await first('SELECT id,snapshot_envelope FROM rental_application_submissions WHERE application_id=?',applicationId);
+   const snapshot=await unseal(key,'rental-submission:'+snapshotRow.id,snapshotRow.snapshot_envelope);
+   assert.equal(JSON.parse(snapshot.applicants[0].answers.references.additionalReferences)[0].name,'Synthetic Referee');
    assert.equal((await first('SELECT COUNT(*) AS n FROM rental_application_submissions WHERE application_id=?',applicationId)).n,1);
    const msg=await first("SELECT id,envelope FROM outbox_events WHERE kind='rental.application.received' ORDER BY created_at DESC,id DESC LIMIT 1");
    const letter=await unseal(key,'outbox:'+msg.id,msg.envelope);
