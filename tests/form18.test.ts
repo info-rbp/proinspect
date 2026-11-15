@@ -48,9 +48,11 @@ test('external applications require HTTPS, internal applications require client 
  const external={applicationMode:'external',applicationUrl:'https://agency.example/property-1'};
  assert.equal(applicationSettingsSchema.safeParse(external).success,true);
  assert.equal(applicationSettingsSchema.safeParse({...external,applicationUrl:'http://agency.example'}).success,false);
- const internal={applicationMode:'proinspect',applicationAuthorityReference:'SIGNED-123',applicationRecipientEmail:'agent@example.test',
+ const internal={applicationMode:'proinspect',managedByProInspect:true,applicationAuthorityReference:'SIGNED-123',applicationRecipientEmail:'agent@example.test',
   tenancyDatabaseNoticeMode:'not_used',tenancyDatabaseNotices:[]};
  assert.equal(applicationSettingsSchema.safeParse(internal).success,true);
+ assert.equal(applicationSettingsSchema.safeParse({...internal,managedByProInspect:false}).success,false);
+ assert.equal(applicationSettingsSchema.safeParse({...internal,managedByProInspect:undefined}).success,false);
  assert.equal(applicationSettingsSchema.safeParse({...internal,applicationAuthorityReference:''}).success,false);
  assert.equal(applicationSettingsSchema.safeParse({...internal,tenancyDatabaseNoticeMode:'unconfigured'}).success,false);
  assert.equal(applicationSettingsSchema.safeParse({...internal,tenancyDatabaseNoticeMode:'configured'}).success,false);

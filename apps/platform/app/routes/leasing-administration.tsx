@@ -34,12 +34,13 @@ function ModeFields({kind,mode,setMode,noticeMode,setNoticeMode,notices,setNotic
  <label className="field">Application method
   <select name="applicationMode" value={mode} onChange={e=>setMode(e.target.value as Mode)}>
    <option value="unavailable">Applications not currently available</option>
-   <option value="external">Agency/landlord application portal</option>
-   {kind==='residential'&&<option value="proinspect">ProInspect online rental application</option>}
+   <option value="external">External application link — managed by another party</option>
+   {kind==='residential'&&<option value="proinspect">ProInspect-managed property — secure application</option>}
   </select>
  </label>
  {mode==='external'&&<label className="field">Approved application URL<input type="url" name="applicationUrl" required placeholder="https://agency.example/apply/property" maxLength={1000}/></label>}
  {mode==='proinspect'&&<>
+  <label className="check"><input type="checkbox" name="managedByProInspect" required/>ProInspect directly manages this property and has authority to administer its applications.</label>
   <p className="notice warning">Activate only after verifying a written application-processing instruction. ProInspect facilitates the application; the landlord or licensed leasing representative decides the outcome.</p>
   <label className="field">Written authority reference<input name="applicationAuthorityReference" required minLength={5} maxLength={200}/></label>
   <label className="field">Authorised landlord/agency recipient email<input type="email" name="applicationRecipientEmail" required maxLength={254}/></label>
@@ -70,7 +71,7 @@ function CreateListing({clients,properties,selectedPropertyId}:{clients:any[];pr
     priceCents:input('priceAud')?Math.round(Number(input('priceAud'))*100):null,pricePeriod:input('pricePeriod'),
     bedrooms:num('bedrooms'),bathrooms:num('bathrooms'),parking:num('parking'),areaSqm:num('areaSqm'),
     availableFrom:input('availableFrom')||null,agentName:input('agentName'),
-    agentRole:input('agentRole'),applicationMode:mode,
+    agentRole:input('agentRole'),applicationMode:mode,managedByProInspect:mode==='proinspect'&&f.get('managedByProInspect')==='on',
     ...(mode==='external'?{applicationUrl:input('applicationUrl')}:{}),
     applicationAuthorityReference:mode==='proinspect'?input('applicationAuthorityReference'):'',
     applicationRecipientEmail:mode==='proinspect'?input('applicationRecipientEmail'):'',
@@ -102,7 +103,7 @@ function CreateListing({clients,properties,selectedPropertyId}:{clients:any[];pr
     <label className="field">Parking<input type="number" min={0} name="parking"/></label>
    </>:<label className="field">Internal floor area (m²)<input type="number" min={0} name="areaSqm"/></label>}
    <label className="field">Available from<input type="date" name="availableFrom"/></label>
-   <label className="field">Responsible leasing representative<input name="agentName" required/></label>
+   <label className="field">Responsible leasing representative (private staff record)<input name="agentName" required/></label>
    <label className="field">Leasing representative role<select name="agentRole"><option value="leasing_agent">Leasing agent</option><option value="property_manager">Property manager</option><option value="landlord">Landlord</option></select></label>
   </div>
   <label className="field">Approved property description<textarea rows={5} name="description" minLength={50} maxLength={8000} required/></label>
@@ -122,7 +123,7 @@ function EditApplicationSettings({listing}:{listing:any}){
   const f=new FormData(e.currentTarget),get=(x:string)=>String(f.get(x)??'').trim();
   try{
    await send('/api/staff/leasing/'+listing.id+'/application-settings',{version:listing.version,
-    applicationMode:mode,applicationUrl:mode==='external'?get('applicationUrl'):'',
+    applicationMode:mode,managedByProInspect:mode==='proinspect'&&f.get('managedByProInspect')==='on',applicationUrl:mode==='external'?get('applicationUrl'):'',
     applicationAuthorityReference:mode==='proinspect'?get('applicationAuthorityReference'):'',
     applicationRecipientEmail:mode==='proinspect'?get('applicationRecipientEmail'):'',
     tenancyDatabaseNoticeMode:mode==='proinspect'?noticeMode:'unconfigured',
@@ -134,12 +135,13 @@ function EditApplicationSettings({listing}:{listing:any}){
  return <form onSubmit={save} className="stack"><h4>Application configuration — {listing.title}</h4>
   <div className="panel stack"><label className="field">Application method
    <select value={mode} onChange={e=>setMode(e.target.value as Mode)}>
-    <option value="unavailable">No applications</option><option value="external">Agency's own application link</option>
-    {listing.kind==='residential'&&<option value="proinspect">ProInspect online rental application</option>}
+    <option value="unavailable">No applications</option><option value="external">External application link — managed by another party</option>
+    {listing.kind==='residential'&&<option value="proinspect">ProInspect-managed property — secure application</option>}
    </select></label>
    {mode==='external'&&<label className="field">Approved external URL<input type="url" name="applicationUrl" defaultValue={listing.application_url??''} required/></label>}
    {mode==='proinspect'&&<>
-    <p className="small">This mode is for residential leasing only. Verify the signed instruction before enabling. The landlord or licensed agency remains the decision-maker.</p>
+  <label className="check"><input type="checkbox" name="managedByProInspect" required/>ProInspect directly manages this property and has authority to administer its applications.</label>
+    <p className="small">This mode is for residential properties directly managed by ProInspect. Verify the signed management instruction before enabling. The landlord or licensed agency remains the decision-maker.</p>
     <label className="field">Application authority reference<input name="applicationAuthorityReference" required defaultValue={listing.application_authority_reference??''} minLength={5}/></label>
     <label className="field">Verified recipient email<input type="email" required name="applicationRecipientEmail" defaultValue={listing.application_recipient_email??''}/></label>
     <label className="field">Tenancy database notice<select value={noticeMode} onChange={e=>setNoticeMode(e.target.value)}><option value="unconfigured">Not confirmed</option><option value="not_used">No tenancy database used</option><option value="configured">Written notice required</option></select></label>
@@ -165,10 +167,11 @@ function ApprovalControls({listing}:{listing:any}){
  <form className="stack" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);submit('rental-approve',{
  authorityAttestation:String(f.get('authorityAttestation')),authorityDocumentReference:String(f.get('authorityDocumentReference')),
  privacyNoticeVersion:String(f.get('privacyNoticeVersion')),confirmAuthority:f.get('confirmAuthority')==='on',
- confirmNotice:f.get('confirmNotice')==='on',confirmRecipient:f.get('confirmRecipient')==='on'});}}>
+ confirmDirectManagement:f.get('confirmDirectManagement')==='on',confirmNotice:f.get('confirmNotice')==='on',confirmRecipient:f.get('confirmRecipient')==='on'});}}>
  <label className="field">Written instruction reference<input name="authorityDocumentReference" minLength={6} required/></label>
  <label className="field">Authority evidence and approval notes<textarea name="authorityAttestation" rows={3} minLength={30} required/></label>
  <label className="field">Approved privacy collection notice version<input name="privacyNoticeVersion" minLength={3} required/></label>
+ <label><input type="checkbox" name="confirmDirectManagement" required/> I have verified that ProInspect directly manages this property.</label>
  <label><input type="checkbox" name="confirmAuthority" required/> I have checked the written application-processing authority.</label>
  <label><input type="checkbox" name="confirmNotice" required/> I have checked the approved privacy and tenancy-database notices.</label>
  <label><input type="checkbox" name="confirmRecipient" required/> The verified recipient is authorised for this listing.</label>

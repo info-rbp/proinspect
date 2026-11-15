@@ -95,7 +95,7 @@ export default function LeasingProperty(){
     {p.available_from&&<div><dt>Available</dt><dd>{p.available_from}</dd></div>}
    </dl>
   </div>
- <div className="panel"><h2>Leasing representative</h2><p><strong>{p.agent_name}</strong> · {p.agent_role==='landlord'?'Landlord':p.agent_role==='property_manager'?'Property manager':'Leasing agent'}</p><p>ProInspect conducts the advertised open inspection on this representative's behalf. All rental terms and applications are managed by the responsible party.</p></div>
+ <div className="panel"><h2>Leasing information</h2><p>{handoffDisclaimer}</p></div>
  {p.kind==='residential'&&<section id="leasing-application" className={`panel leasing-application-panel${canApply?' leasing-application-panel--ready':''}`}>
    <p className="eyebrow">Rental applications</p>
    <h2>{canApply?'Ready to apply?':applicationCta.type==='external'?'Apply through the leasing representative':'Online applications not yet open'}</h2>
@@ -105,7 +105,7 @@ export default function LeasingProperty(){
      <a className="button leasing-application-button" href={applicationCta.href} target="_blank" rel="noopener noreferrer">Continue to approved application provider</a></>:
     <><p>Online applications are not currently available for this property. Register your interest below while the leasing representative finalises the application arrangements.</p>
      <a className="button secondary leasing-application-button" href="#leasing-enquiry">Register your interest</a></>}
-   <p className="small leasing-application-note">An application is not a tenancy agreement. {p.agent_name} or their authorised representative makes leasing decisions.</p>
+   <p className="small leasing-application-note">An application is not a tenancy agreement. The responsible party or their authorised representative makes leasing decisions.</p>
   </section>}
   {p.kind==='commercial'&&canApplyCommercial&&<div className="panel leasing-application-panel"><h2>Apply for this commercial property</h2><p>Complete the entity-adaptive commercial application privately. Each signatory and guarantor uses their own link. Submission does not execute a lease or guarantee.</p><Link className="button" to={applicationCta.href}>Start commercial leasing application</Link></div>}
   {p.kind==='commercial'&&applicationCta.type==='external'&&<div className="panel leasing-application-panel">

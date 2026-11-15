@@ -1,3 +1,4 @@
+import { managedRentalListingApproved } from './rental-governance.server';
 import { requireReleaseApproval,releaseFeatureReady } from './release-governance.server';
 import { legalStatements,currentLegalDocument } from './legal-acceptance.server';
 import { hasRentalRetentionPolicy,retentionDeadline,retentionDays } from '../../../../packages/marketing/rental-retention';
@@ -46,9 +47,10 @@ async function listing(env:Env,id:string){
  assert(r,404,'PROPERTY_NOT_AVAILABLE','Property not available.');
  return r;
 }
-function active(r:RentalListing){
+async function active(env:Env,r:RentalListing){
  assert(r.kind==='residential'&&r.status==='published'&&r.application_mode==='proinspect'&&r.application_url===null&&r.rental_approval_state==='approved'&&Boolean(r.rental_recipient_verified_at),404,
  'RENTAL_APPLICATION_UNAVAILABLE','This property does not accept ProInspect applications.');
+ assert(await managedRentalListingApproved(env,r.id),404,'RENTAL_MANAGEMENT_REQUIRED','Native applications are available only for properties directly managed by ProInspect.');
 }
 async function enabled(env:Env){assert(rentalEnabled(env),503,'RENTAL_NOT_ENABLED','New application processing is temporarily unavailable.');await requireReleaseApproval(env,'rental');}
 async function collectionNotice(env:Env,l:RentalListing){
@@ -61,7 +63,7 @@ async function collectionNotice(env:Env,l:RentalListing){
   providers:'Provider and overseas-processing disclosures are those in the identified approved privacy policy. Use private access recovery to request access, correction or withdrawal.'};
 }
 async function editableAccess(env:Env,token:string){
- const value=await tokenAccess(env,token);active(value.l);
+ const value=await tokenAccess(env,token);await active(env,value.l);
  assert((await collectionNotice(env,value.l)).approved,503,'COLLECTION_NOTICE_REQUIRED','The approved collection notice requires review.');
  return value;
 }
@@ -70,13 +72,13 @@ export async function rentalStartPage(env:Env,slug:string){
  const row=await statement(env.DB,"SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,application_url,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email,rental_approved_notice_version FROM leasing_listings WHERE kind='residential' AND slug=? AND status='published' AND application_mode='proinspect' AND application_url IS NULL AND rental_approval_state='approved' AND rental_recipient_verified_at IS NOT NULL",slug).first<RentalListing>();
  assert(row,404,'RENTAL_APPLICATION_UNAVAILABLE','Online applications are unavailable for this property.');
  const notice=await collectionNotice(env,row);
- return {listing:{id:row.id,slug:row.slug,title:row.title,address:row.display_address,suburb:row.suburb,agentName:row.agent_name},collectionNotice:notice,
-  enabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&notice.approved,siteKey:env.MARKETING_TURNSTILE_SITE_KEY??''};
+ return {listing:{id:row.id,slug:row.slug,title:row.title,address:row.display_address,suburb:row.suburb},collectionNotice:notice,
+  enabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&notice.approved&&await managedRentalListingApproved(env,row.id),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??''};
 }
 export async function startRental(env:Env,request:Request,listingId:string,input:unknown,security?:string){
  await enabled(env);
  const d=startApplicationSchema.parse(input);
- const l=await listing(env,listingId);active(l);
+ const l=await listing(env,listingId);await active(env,l);
  assert((await collectionNotice(env,l)).approved,503,'COLLECTION_NOTICE_REQUIRED','The approved collection notice requires review.');
  const ip=await digest(env.DATA_ENCRYPTION_KEY+':applicant:'+String(request.headers.get('CF-Connecting-IP')??'unknown'));
  await limit(env,'origin:'+ip,5);await limit(env,'email:'+d.email,4);
@@ -136,7 +138,7 @@ export async function rentalPage(env:Env,token:string){
  const moreInformation=app.status==='information_requested'&&app.review_request_envelope?
   await unseal<{instructions:string}>(env.DATA_ENCRYPTION_KEY,'rental-followup:'+app.id,app.review_request_envelope):null;
  const privacyRequests=(await statement(env.DB,"SELECT kind,status,created_at FROM rental_application_privacy_requests WHERE applicant_id=? ORDER BY created_at DESC LIMIT 12",person.id).all()).results;
- return {reference:app.reference,status:app.status,intakeEnabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&(await collectionNotice(env,l)).approved&&l.kind==='residential'&&l.status==='published'&&l.application_mode==='proinspect'&&l.application_url===null&&l.rental_approval_state==='approved'&&Boolean(l.rental_recipient_verified_at),version:person.version,role:person.role,ordinal:person.ordinal,
+ return {reference:app.reference,status:app.status,intakeEnabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&(await collectionNotice(env,l)).approved&&l.kind==='residential'&&l.status==='published'&&l.application_mode==='proinspect'&&l.application_url===null&&l.rental_approval_state==='approved'&&Boolean(l.rental_recipient_verified_at)&&await managedRentalListingApproved(env,l.id),version:person.version,role:person.role,ordinal:person.ordinal,
   state:person.state,noticeMatches,declaredAt:person.declared_at,submittedAt:app.submitted_at,
   property:{title:l.title,address:l.display_address,suburb:l.suburb,agentName:l.agent_name},
   notice:{mode:configuredNotice?.mode??l.tenancy_database_notice_mode,entries:notice,version:l.rental_approved_notice_version},moreInformation,privacyRequests,answers,documents,household};
@@ -281,7 +283,7 @@ export async function submitRental(env:Env,token:string){
  }
  assert(person.role==='primary'&&allowedEdit(app.status),403,'SUBMISSION_NOT_ALLOWED','Only the primary applicant submits the household application.');
  assert(tenancyPreferencesComplete(answers),422,'TENANCY_PREFERENCES_INCOMPLETE','Complete the proposed occupants and pets information before submission.');
- active(l);
+ await active(env,l);
  assert((await collectionNotice(env,l)).approved,503,'COLLECTION_NOTICE_REQUIRED','The approved collection notice requires review.');
  const rows=(await statement(env.DB,"SELECT id,ordinal,state,declared_at,notice_digest FROM rental_applicants WHERE application_id=? AND state!='removed'",app.id).all<{id:string;ordinal:number;state:string;declared_at:string|null;notice_digest:string|null}>()).results;
  assert(Number(answers.identity.totalOccupants)>=rows.length,422,'OCCUPANTS_BELOW_APPLICANTS','Total occupants cannot be fewer than the number of adult applicants.');

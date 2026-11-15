@@ -145,7 +145,7 @@ export default function LeasingIndex() {
                           ? `${property.area_sqm.toLocaleString()} m²`
                           : 'Commercial property'}
                     </p>
-                    <p className="small">Leasing representative: {property.agent_name}</p>
+                    <p className="small">Inspections facilitated by ProInspect</p>
                     <Link className="pi-inline-link" to={propertyUrl(property.kind, property.slug)}>
                       View property, inspections &amp; applications{' '}
                       <span aria-hidden="true">→</span>

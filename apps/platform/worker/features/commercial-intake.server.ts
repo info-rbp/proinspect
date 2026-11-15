@@ -27,6 +27,7 @@ export const commercialPrivateHeaders = {
 const text = z.string().trim().max(5000);
 export const commercialFlowInput = z.object({
   listingId: z.string().min(3).max(100),
+  managedByProInspect: z.literal(true),
   authorityReference: text.min(8),
   recipient: z
     .email()
@@ -244,6 +245,7 @@ export async function commercialFlow(env: Env, id: string, available = true) {
     );
     const config = await flowConfig(env, row),
       policy = await currentLegalDocument(env, 'privacy');
+    assert(config.managedByProInspect===true,503,'COMMERCIAL_MANAGEMENT_REQUIRED','Native intake is available only for properties directly managed by ProInspect.');
     assert(
       config.listingSnapshot.propertyId === row.property_id &&
         config.listingSnapshot.clientId === row.instructed_by_client_id &&

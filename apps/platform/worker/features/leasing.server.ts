@@ -1,4 +1,4 @@
-import { issueRecipientChallenge,approveRentalListing } from './rental-governance.server';
+import { issueRecipientChallenge,approveRentalListing,managedRentalListingApproved } from './rental-governance.server';
 import { applicationSettingsSchema } from '../../../../packages/marketing/form18';
 import { z } from 'zod';
 import { statement, assert, now, uid, type Env } from '../../../../packages/database/types';
@@ -13,7 +13,7 @@ import { hasRentalRetentionPolicy } from '../../../../packages/marketing/rental-
 import { checkedHttpsEndpoint } from '../../../../packages/marketing/rental-governance';
 import { releaseFeatureReady } from './release-governance.server';
 
-const cols='id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,agent_name,agent_role,application_url,application_mode,rental_approval_state,rental_recipient_verified_at,published_at';
+const cols='id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,application_url,application_mode,rental_approval_state,rental_recipient_verified_at,published_at';
 export async function publicListings(env:Env,kind?:string){
  const rows=await statement(env.DB,`SELECT ${cols} FROM leasing_listings WHERE status='published' AND (? IS NULL OR kind=?) ORDER BY published_at DESC LIMIT 100`,kind??null,kind??null).all();
  return rows.results;
@@ -144,7 +144,7 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
  if(method==='POST'&&parts.length===0){
   const d=listingInput.parse(body);
   const config=applicationSettingsSchema.parse({
-   applicationMode:d.applicationMode,applicationUrl:d.applicationUrl??'',
+   applicationMode:d.applicationMode,managedByProInspect:d.managedByProInspect,applicationUrl:d.applicationUrl??'',
    applicationAuthorityReference:d.applicationAuthorityReference,
    applicationRecipientEmail:d.applicationRecipientEmail,
    tenancyDatabaseNoticeMode:d.tenancyDatabaseNoticeMode,
@@ -167,7 +167,7 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   return {id};
  }
  const [listingId,section,other]=parts;
- const listing=await statement(env.DB,'SELECT id,status,version,kind FROM leasing_listings WHERE id=?',listingId).first<{id:string;status:string;version:number;kind:string}>();
+ const listing=await statement(env.DB,'SELECT id,status,version,kind,property_id,instructed_by_client_id,owner_client_id,slug FROM leasing_listings WHERE id=?',listingId).first<{id:string;status:string;version:number;kind:string;property_id:string;instructed_by_client_id:string;owner_client_id:string|null;slug:string}>();
  assert(listing,404,'LISTING_NOT_FOUND','Listing not found.');
  if(method==='GET'&&parts.length===1){
   const sessions=(await statement(env.DB,'SELECT * FROM leasing_sessions WHERE listing_id=? ORDER BY starts_at DESC LIMIT 100',listingId).all()).results;
@@ -187,7 +187,7 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
    recipientVerifiedAt:(details as Record<string,any>).rental_recipient_verified_at,
    approvalState:(details as Record<string,any>).rental_approval_state,
    noticeMode:mode,noticeCount:Array.isArray(notices)?notices.length:0,
-   retentionConfigured:hasRentalRetentionPolicy(env),
+   retentionConfigured:hasRentalRetentionPolicy(env),managedPropertyApproved:await managedRentalListingApproved(env,listingId),
    scannerConfigured,handoffConfigured,
    scannerReleaseApproved:await releaseFeatureReady(env,'rental_scanner'),
    handoffReleaseApproved:await releaseFeatureReady(env,'rental_script'),
@@ -199,12 +199,20 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
  if(method==='POST'&&section==='rental-approve')return approveRentalListing(env,user,listingId,body);
  if(method==='POST'&&section==='application-settings'){
   const d=applicationSettingsSchema.parse(body),settingsVersion=z.number().int().positive().parse((body as Record<string,unknown>).version);
+  assert(listing.version===settingsVersion,409,'STALE_LISTING','The listing changed. Reload before updating application settings.');
   assert(listing.kind==='residential'||d.applicationMode!=='proinspect',422,'RESIDENTIAL_APPLICATION_ONLY','The WA Form 18 workflow is available for residential leasing only.');
-  const update=await statement(env.DB,"UPDATE leasing_listings SET application_mode=?,application_url=?,application_authority_reference=?,application_recipient_email=?,tenancy_database_notice_mode=?,tenancy_database_notice_json=?,version=version+1,updated_at=? WHERE id=? AND version=?",
-   d.applicationMode,safeApplicationUrl(d.applicationUrl),d.applicationAuthorityReference||null,
-   d.applicationRecipientEmail||null,d.tenancyDatabaseNoticeMode,JSON.stringify(d.tenancyDatabaseNotices),
-   now(),listingId,settingsVersion).run();
-  assert(update.meta.changes===1,409,'STALE_LISTING','The listing changed. Reload before updating application settings.');
+  const changes=await env.DB.batch([
+   statement(env.DB,"UPDATE leasing_listings SET application_mode=?,application_url=?,application_authority_reference=?,application_recipient_email=?,tenancy_database_notice_mode=?,tenancy_database_notice_json=?,version=version+1,updated_at=? WHERE id=? AND version=? RETURNING version",
+    d.applicationMode,safeApplicationUrl(d.applicationUrl),d.applicationAuthorityReference||null,
+    d.applicationRecipientEmail||null,d.tenancyDatabaseNoticeMode,JSON.stringify(d.tenancyDatabaseNotices),
+    now(),listingId,settingsVersion),
+   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+   statement(env.DB,'INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,property_id,metadata_json,created_at) VALUES(?,?,?,?,?,?,?,?)',
+    uid('aud'),user.id,'leasing.application_route_configured','leasing_listing',listingId,listing.property_id,
+    JSON.stringify({applicationMode:d.applicationMode,managedByProInspect:d.managedByProInspect,externalHost:d.applicationMode==='external'?new URL(d.applicationUrl).host:null,beforeVersion:settingsVersion}),now()),
+   statement(env.DB,'DELETE FROM mutation_guards')
+  ]);
+  assert(changes[0]?.results?.length===1,409,'STALE_LISTING','The listing changed. Reload before updating application settings.');
   return {ok:true,applicationMode:d.applicationMode};
  }
  if(method==='POST'&&section==='edit'){

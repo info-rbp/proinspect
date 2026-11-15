@@ -16,7 +16,7 @@ export async function loader({context,params}:LoaderFunctionArgs){
  if(!published)throw new Response('Property not found',{status:404});
  // Public listing data only. Never reveal an unpublished listing through an application URL.
  const l=published.listing;
- const unavailable={listing:{id:l.id,slug:l.slug,title:l.title,address:l.display_address,suburb:l.suburb,agentName:l.agent_name},
+ const unavailable={listing:{id:l.id,slug:l.slug,title:l.title,address:l.display_address,suburb:l.suburb},
   enabled:false,siteKey:'',unavailable:true,collectionNotice:null};
  const headers={'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'};
  if(l.application_mode!=='proinspect'||l.rental_approval_state!=='approved'||!l.rental_recipient_verified_at)
@@ -77,7 +77,7 @@ export default function RentalStart(){
       </Form>
     </>}
   </section>
-  <aside className="rental-side"><div className="rental-property-panel"><p className="eyebrow">Property you're applying for</p><h3>{listing.title}</h3><p>{listing.address}, {listing.suburb} WA</p><p>Application administered by ProInspect on behalf of <strong>{listing.agentName}</strong>.</p></div>
+  <aside className="rental-side"><div className="rental-property-panel"><p className="eyebrow">Property you're applying for</p><h3>{listing.title}</h3><p>{listing.address}, {listing.suburb} WA</p><p>Secure applications for properties directly managed by ProInspect.</p></div>
   <div className="rental-property-panel"><h3>How it works</h3><ol><li>Receive your private application link.</li><li>Complete your rental application details in short sections.</li><li>Invite other adult applicants if needed.</li><li>Upload supporting evidence securely.</li><li>Review and submit as a household.</li></ol><p className="rental-muted">This application is not a tenancy agreement or an offer. The landlord or authorised leasing representative makes leasing decisions.</p></div></aside>
   </div>
  </div></div>;

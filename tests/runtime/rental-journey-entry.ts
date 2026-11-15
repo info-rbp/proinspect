@@ -2,7 +2,9 @@
  * Isolated integration test entrypoint. This file is NEVER imported by
  * production routing, and its synthetic endpoints are unavailable online.
  */
-import { publicListing } from '../../apps/platform/worker/features/leasing.server';
+import { publicListing,publicListings,staffLeasing } from '../../apps/platform/worker/features/leasing.server';
+import { publicOpenHomeSessions } from '../../apps/platform/worker/features/open-home.server';
+import { issueRecipientChallenge,verifyRecipient,approveRentalListing } from '../../apps/platform/worker/features/rental-governance.server';
 import { rentalStartPage, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental,changeRentalEmail,inviteRentalApplicant,withdrawRental } from '../../apps/platform/worker/features/rental-applications.server';
 import { updateRentalStatus } from '../../apps/platform/worker/features/rental-review.server';
 import { dispatchRentalHandoffs } from '../../apps/platform/worker/features/rental-script-dispatch.server';
@@ -17,9 +19,29 @@ export default {
   if(env.APP_ENV!=='local')return new Response('Not available',{status:404});
   const path=url.pathname;
   try{
+   const administrator={id:'usr_rental_synthetic_admin',staffRole:'administrator'} as Principal;
+   if(path==='/__test/application-settings'&&request.method==='POST'){
+    const d=await request.json() as {listingId:string;input:unknown};
+    const settingsRequest=new Request(request.url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d.input)});
+    return Response.json(await staffLeasing(env,administrator,settingsRequest,d.listingId+'/application-settings'));
+   }
+   if(path==='/__test/recipient-challenge'&&request.method==='POST'){
+    const d=await request.json() as {listingId:string;version:number};
+    return Response.json(await issueRecipientChallenge(env,administrator,d.listingId,{version:d.version}));
+   }
+   if(path==='/__test/recipient-verify'&&request.method==='POST'){
+    const d=await request.json() as {token:string};
+    return Response.json(await verifyRecipient(env,d.token));
+   }
+   if(path==='/__test/approve-listing'&&request.method==='POST'){
+    const d=await request.json() as {listingId:string;input:unknown};
+    return Response.json(await approveRentalListing(env,administrator,d.listingId,d.input));
+   }
    if(path==='/__test/listing'){
     return Response.json(await publicListing(env,'residential',url.searchParams.get('slug')??''));
    }
+   if(path==='/__test/listings')return Response.json(await publicListings(env));
+   if(path==='/__test/public-sessions')return Response.json(await publicOpenHomeSessions(env));
    if(path==='/__test/start-page'){
     return Response.json(await rentalStartPage(env,url.searchParams.get('slug')??''));
    }

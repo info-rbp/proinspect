@@ -86,6 +86,10 @@ try{
   'usr_rental_synthetic_staff','reviewer@example.invalid',1,stamp,stamp);
  await run('INSERT INTO staff_profiles(user_id,role,active) VALUES(?,?,?)',
   'usr_rental_synthetic_staff','operations_manager',1);
+ await run('INSERT INTO users(id,email,active,verified_at,created_at) VALUES(?,?,?,?,?)',
+  'usr_rental_synthetic_admin','administrator@example.invalid',1,stamp,stamp);
+ await run('INSERT INTO staff_profiles(user_id,role,active) VALUES(?,?,?)',
+  'usr_rental_synthetic_admin','administrator',1);
  await run('INSERT INTO clients(id,name,client_type,status,created_at) VALUES(?,?,?,?,?)',
   'cli_lighthouse_property_group_pty_ltd','Lighthouse synthetic fixture','landlord','active',stamp);
  for(const unit of [6,16]){
@@ -112,13 +116,53 @@ try{
    address+', Cloverdale WA 6105',address+', Cloverdale WA 6105',
    address,'Cloverdale','6105','Lighthouse Property Group Pty Ltd',
    'usr_rental_synthetic_staff',stamp,stamp,stamp);
+  await run('INSERT INTO leasing_sessions(id,listing_id,starts_at,ends_at,created_at,updated_at) VALUES(?,?,?,?,?,?)',
+   'session_synthetic_'+unit,listing,new Date(Date.now()+3600000).toISOString(),new Date(Date.now()+7200000).toISOString(),stamp,stamp);
  }
- await check('two published test listing URLs resolve to the correct Lighthouse properties',async()=>{
+ await check('legacy approval without direct-management proof cannot accept applications',async()=>{
+  const start=await call('/__test/start-page?slug=unit-6-273-fulham-street-cloverdale');
+  assert.equal(start.enabled,false);
+  const blocked=await mf.dispatchFetch('http://localhost/__test/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+   listingId:'lst_synthetic_fulham_6',name:'Unconfirmed Management',email:'unconfirmed@example.invalid',consent:true
+  })});
+  assert.equal(blocked.status,404);
+  assert.equal((await blocked.json()).code,'RENTAL_MANAGEMENT_REQUIRED');
+  assert.equal((await first('SELECT COUNT(*) AS n FROM rental_applications')).n,0);
+ });
+ await check('verified recipient and explicit management approval enable each synthetic listing',async()=>{
+  for(const unit of [6,16]){
+   const listingId='lst_synthetic_fulham_'+unit;
+   await call('/__test/recipient-challenge',{listingId,version:1});
+   const row=await first("SELECT id,envelope FROM outbox_events WHERE kind='rental.recipient.verification' ORDER BY created_at DESC,id DESC LIMIT 1");
+   const mail=await unseal(key,'outbox:'+row.id,row.envelope);
+   await call('/__test/recipient-verify',{token:new URL(mail.href).pathname.split('/').pop()});
+   const input={version:1,authorityAttestation:'Synthetic directly managed property authority, isolated test only.',
+    authorityDocumentReference:'SYNTHETIC-MANAGEMENT-INSTRUCTION',privacyNoticeVersion:'synthetic-privacy-v1',
+    confirmAuthority:true,confirmDirectManagement:true,confirmNotice:true,confirmRecipient:true};
+   const missing=await mf.dispatchFetch('http://localhost/__test/approve-listing',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({listingId,input:{...input,confirmDirectManagement:false}})});
+   assert.equal(missing.status,422);
+   await call('/__test/approve-listing',{listingId,input});
+  }
+ });
+ await check('public listings resolve without exposing landlord names or roles',async()=>{
+  const listings=await call('/__test/listings');
+  const sessions=await call('/__test/public-sessions');
+  assert.equal(listings.length,2);
+  assert.equal(sessions.length,2);
+  for(const payload of [listings,sessions]){
+   assert.equal(JSON.stringify(payload).includes('Lighthouse Property Group'),false);
+   for(const item of payload)for(const key of ['agent_name','agent_role','agentName','owner_client_id','instructed_by_client_id'])
+    assert.equal(Object.hasOwn(item,key),false,key+' must stay private');
+  }
+  assert.equal((await first("SELECT agent_name FROM leasing_listings WHERE id='lst_synthetic_fulham_6'")).agent_name,'Lighthouse Property Group Pty Ltd');
   for(const unit of [6,16]){
    const slug='unit-'+unit+'-273-fulham-street-cloverdale';
    const listing=await call('/__test/listing?slug='+slug);
    assert.equal(listing.listing.slug,slug);
-   assert.equal(listing.listing.agent_name,'Lighthouse Property Group Pty Ltd');
+   assert.equal(Object.hasOwn(listing.listing,'agent_name'),false);
+   assert.equal(Object.hasOwn(listing.listing,'agent_role'),false);
+   assert.equal(JSON.stringify(listing).includes('Lighthouse Property Group'),false);
    const start=await call('/__test/start-page?slug='+slug);
    assert.equal(start.enabled,true);
    assert.equal(start.listing.title.includes('Unit '+unit+','),true);
@@ -274,7 +318,14 @@ try{
  await check('An external representative URL blocks direct native residential intake as well as the CTA',async()=>{
   const before=await first('SELECT COUNT(*) AS count FROM rental_applications');
   await assert.rejects(()=>run('UPDATE leasing_listings SET application_url=? WHERE id=?','https://approved.example.invalid/apply','lst_synthetic_fulham_6'),/EXTERNAL_APPLICATION_PRECEDENCE/);
-  await run("UPDATE leasing_listings SET application_mode='external',application_url=? WHERE id=?",'https://approved.example.invalid/apply','lst_synthetic_fulham_6');
+  const listing=await first("SELECT version FROM leasing_listings WHERE id='lst_synthetic_fulham_6'");
+  const settings={listingId:'lst_synthetic_fulham_6',input:{version:listing.version,applicationMode:'external',applicationUrl:'https://approved.example.invalid/apply'}};
+  await call('/__test/application-settings',settings);
+  const audit=await first("SELECT metadata_json FROM audit_events WHERE action='leasing.application_route_configured' AND entity_id='lst_synthetic_fulham_6'");
+  assert.equal(JSON.parse(audit.metadata_json).externalHost,'approved.example.invalid');
+  const stale=await mf.dispatchFetch('http://localhost/__test/application-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(settings)});
+  assert.equal(stale.status,409);
+  assert.equal((await first("SELECT COUNT(*) AS n FROM audit_events WHERE action='leasing.application_route_configured' AND entity_id='lst_synthetic_fulham_6'")).n,1);
   const page=await mf.dispatchFetch('http://localhost/__test/start-page?slug=unit-6-273-fulham-street-cloverdale');
   assert.equal(page.status,404);
   const start=await mf.dispatchFetch('http://localhost/__test/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({listingId:'lst_synthetic_fulham_6',name:'Synthetic External Applicant',email:'external-blocked@example.invalid',consent:true})});

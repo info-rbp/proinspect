@@ -4,8 +4,9 @@ import { readFileSync } from 'node:fs';
 import { rentalApprovalInput,rentalOutcomeInput,rentalReferenceCheckInput,rentalApplicationCc,checkedHttpsEndpoint,nextRetry } from '../packages/marketing/rental-governance.ts';
 const read=(p:string)=>readFileSync(p,'utf8');
 test('rental approvals require affirmative checks and a substantial written authority statement',()=>{
- const input={version:3,authorityAttestation:'The signed authority was checked against the instructing landlord and was approved.',authorityDocumentReference:'AUTH-ABC-123',privacyNoticeVersion:'privacy-2026-10',confirmAuthority:true,confirmNotice:true,confirmRecipient:true};
+ const input={version:3,authorityAttestation:'The signed authority was checked against the instructing landlord and was approved.',authorityDocumentReference:'AUTH-ABC-123',privacyNoticeVersion:'privacy-2026-10',confirmAuthority:true,confirmDirectManagement:true,confirmNotice:true,confirmRecipient:true};
  assert.equal(rentalApprovalInput.safeParse(input).success,true);
+ assert.equal(rentalApprovalInput.safeParse({...input,confirmDirectManagement:false}).success,false);
  assert.equal(rentalApprovalInput.safeParse({...input,confirmRecipient:false}).success,false);
  assert.equal(rentalApprovalInput.safeParse({...input,authorityAttestation:'yes'}).success,false);
 });

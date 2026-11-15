@@ -24,7 +24,7 @@ export type ApplicationReadinessInput={
  listingKind:string;listingStatus:string;applicationMode:string;authorityReference?:string|null;
  recipientVerifiedAt?:string|null;approvalState?:string|null;
  noticeMode?:string|null;noticeCount:number;retentionConfigured:boolean;
- scannerConfigured:boolean;handoffConfigured:boolean;intakeReleaseApproved:boolean;
+ managedPropertyApproved?:boolean;scannerConfigured:boolean;handoffConfigured:boolean;intakeReleaseApproved:boolean;
  scannerReleaseApproved:boolean;handoffReleaseApproved:boolean;
 };
 export type ApplicationReadinessCheck={key:string;label:string;passed:boolean;nextAction:string};
@@ -32,6 +32,7 @@ export function residentialApplicationReadiness(input:ApplicationReadinessInput)
  const checks:ApplicationReadinessCheck[]=[
   {key:'published',label:'Published residential listing',passed:input.listingKind==='residential'&&input.listingStatus==='published',nextAction:'Approve the advertisement and publish the property.'},
   {key:'mode',label:'ProInspect-hosted application selected',passed:input.applicationMode==='proinspect',nextAction:'Record the authorised application method; an agency link takes precedence.'},
+  {key:'managed',label:'Direct ProInspect management confirmed',passed:input.managedPropertyApproved===true,nextAction:'Record explicit direct-management confirmation with the property authority approval.'},
   {key:'authority',label:'Written application-processing instruction referenced',passed:Boolean(input.authorityReference?.trim()),nextAction:'Obtain the responsible party\'s written authority and record its reference.'},
   {key:'recipient',label:'Recipient inbox verified',passed:Boolean(input.recipientVerifiedAt),nextAction:'Send the recipient a single-use verification challenge.'},
   {key:'approval',label:'Property-specific administrator approval',passed:input.approvalState==='approved',nextAction:'Complete the documented authority, privacy and notice review.'},

@@ -6,6 +6,7 @@ export const rentalApprovalInput=z.object({
  authorityDocumentReference:z.string().trim().min(6).max(240),
  privacyNoticeVersion:z.string().trim().min(3).max(80),
  confirmAuthority:z.literal(true),
+ confirmDirectManagement:z.literal(true),
  confirmNotice:z.literal(true),
  confirmRecipient:z.literal(true)
 });

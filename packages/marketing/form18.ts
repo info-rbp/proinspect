@@ -101,6 +101,7 @@ export const noticeEntry=z.object({
 });
 export const applicationSettingsSchema=z.object({
  applicationMode:z.enum(APPLICATION_MODES),
+ managedByProInspect:z.boolean().default(false),
  applicationUrl:z.string().trim().max(1000).optional().default(''),
  applicationAuthorityReference:z.string().trim().max(200).optional().default(''),
  applicationRecipientEmail:z.string().trim().email().max(254).or(z.literal('')).optional().default(''),
@@ -109,6 +110,7 @@ export const applicationSettingsSchema=z.object({
 }).superRefine((d,ctx)=>{
  if(d.applicationMode==='external'&&!safeUrl(d.applicationUrl))ctx.addIssue({code:'custom',message:'An approved HTTPS application link is required.',path:['applicationUrl']});
  if(d.applicationMode==='proinspect'){
+  if(!d.managedByProInspect)ctx.addIssue({code:'custom',message:'Confirm that ProInspect directly manages this property before selecting native intake.',path:['managedByProInspect']});
   if(d.applicationUrl.trim())ctx.addIssue({code:'custom',message:'Remove the agency application URL before activating a ProInspect-hosted form.',path:['applicationUrl']});
   if(d.applicationAuthorityReference.length<5)ctx.addIssue({code:'custom',message:'Record the signed application-handling authority.',path:['applicationAuthorityReference']});
   if(!d.applicationRecipientEmail)ctx.addIssue({code:'custom',message:'Name an authorised recipient for applications.',path:['applicationRecipientEmail']});
