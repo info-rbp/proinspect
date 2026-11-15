@@ -66,7 +66,7 @@ test('ten audience segments include each new customer type and concrete outputs'
   assert.equal(Object.keys(AUDIENCES).length,10);
   for (const slug of ['co-living-operators','student-accommodation-operators','construction-project-owners','construction-teams']) {
     assert.ok(AUDIENCES[slug].programme);
-    assert.ok(AUDIENCES[slug].deliverables?.length >= 3);
+    assert.ok((AUDIENCES[slug].deliverables?.length ?? 0) >= 3);
   }
 });
 
