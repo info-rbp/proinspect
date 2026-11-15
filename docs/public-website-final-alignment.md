@@ -50,9 +50,9 @@ The confirmed public entity is ProInspect Property Services Pty Ltd, ABN 52 703 
 
 Old sector URLs remain routable and use current descriptions with canonical links to the corresponding main sector page. No redirects or route removals are introduced.
 
-## Location reference limitation
+## Location reference verification
 
-The supplied CSV contains 589 suburb/postcode pairs and no exception flags. The register references a companion JSON with 146 manual-review entries, which has not been located. The lookup uses exact pairs, marks the explicitly identified island, postal-only and regional anomalies for manual review, and describes every other match as a reference requiring confirmation. It does not claim that the full 146-entry classification has been reconstructed or that a reference match is operational approval. Reconcile the companion JSON before authorising automated coverage decisions.
+The operator supplied the companion ProInspect_Perth_Peel_Service_Areas_Reference.json. All 589 unique suburb/postcode pairs match the CSV after case normalisation: 443 standard_reference and 146 manual_review entries. The lookup preserves every supplied exception reason and normalises case, spaces and punctuation only in suburb names; postcode remains an exact four-character string. A standard reference match still requires service, access and appointment confirmation; other WA locations remain by request. The dataset is a reference, not an automatic live service allowlist.
 
 ## Review and release
 

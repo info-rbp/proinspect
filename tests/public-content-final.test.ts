@@ -6,6 +6,7 @@ import { descriptiveCatalogue, descriptiveV4Service } from '../packages/marketin
 import { SERVICE_SEEDS } from '../packages/service-catalogue/index.ts';
 import { v4Catalogue } from '../packages/v4/catalogue.ts';
 import { findServiceArea } from '../packages/marketing/service-areas.ts';
+import coverageReference from '../packages/marketing/service-area-reference.json' with { type: 'json' };
 import { enquirySchema } from '../packages/marketing/enquiry.ts';
 
 test('final public offers and service groups use the controlling register', () => {
@@ -34,7 +35,11 @@ test('anonymous catalogue projections cannot expose stored amounts or future rat
   }
 });
 test('location matching requires the exact pair and never infers a broad postcode range', () => {
+  assert.equal(coverageReference.length,589);
+  assert.equal(coverageReference.filter(r=>r.classification==='manual_review').length,146);
+  assert.equal(coverageReference.filter(r=>r.classification==='standard_reference').length,443);
   assert.equal(findServiceArea('Perth','6000').classification,'standard_reference');
+  assert.equal(findServiceArea('  ALEXANDER-HEIGHTS  ','6064').classification,'standard_reference');
   assert.equal(findServiceArea('Perth','6168').classification,'by_request');
   assert.equal(findServiceArea('Garden Island','6168').classification,'manual_review');
   assert.equal(findServiceArea('Rottnest Island','6161').classification,'manual_review');

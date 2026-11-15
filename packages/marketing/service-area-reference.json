@@ -1,3534 +1,3534 @@
 [
   {
-    "suburb": "ALEXANDER HEIGHTS",
+    "suburb": "Alexander Heights",
     "postcode": "6064",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ALFRED COVE",
+    "suburb": "Alfred Cove",
     "postcode": "6154",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ALKIMOS",
+    "suburb": "Alkimos",
     "postcode": "6038",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ANKETELL",
+    "suburb": "Anketell",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "APPLECROSS",
+    "suburb": "Applecross",
     "postcode": "6153",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "APPLECROSS",
+    "suburb": "Applecross",
     "postcode": "6953",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "APPLECROSS NORTH",
+    "suburb": "Applecross North",
     "postcode": "6153",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ARDROSS",
+    "suburb": "Ardross",
     "postcode": "6153",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ARMADALE",
+    "suburb": "Armadale",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ARMADALE",
+    "suburb": "Armadale",
     "postcode": "6992",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "ASCOT",
+    "suburb": "Ascot",
     "postcode": "6104",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ASHBY",
+    "suburb": "Ashby",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ASHENDON",
+    "suburb": "Ashendon",
     "postcode": "6111",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ASHFIELD",
+    "suburb": "Ashfield",
     "postcode": "6054",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ATTADALE",
+    "suburb": "Attadale",
     "postcode": "6156",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ATWELL",
+    "suburb": "Atwell",
     "postcode": "6164",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "AUBIN GROVE",
+    "suburb": "Aubin Grove",
     "postcode": "6164",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "AVELEY",
+    "suburb": "Aveley",
     "postcode": "6069",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BAILUP",
+    "suburb": "Bailup",
     "postcode": "6082",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BALCATTA",
+    "suburb": "Balcatta",
     "postcode": "6021",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BALCATTA",
+    "suburb": "Balcatta",
     "postcode": "6914",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BALDIVIS",
+    "suburb": "Baldivis",
     "postcode": "6171",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BALGA",
+    "suburb": "Balga",
     "postcode": "6061",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BALLAJURA",
+    "suburb": "Ballajura",
     "postcode": "6066",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BANJUP",
+    "suburb": "Banjup",
     "postcode": "6164",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BANKSIA GROVE",
+    "suburb": "Banksia Grove",
     "postcode": "6031",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BANKSIADALE",
+    "suburb": "Banksiadale",
     "postcode": "6213",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BANNISTER",
+    "suburb": "Bannister",
     "postcode": "6390",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "BARRAGUP",
+    "suburb": "Barragup",
     "postcode": "6209",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BARRAGUP",
+    "suburb": "Barragup",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BASKERVILLE",
+    "suburb": "Baskerville",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BASSENDEAN",
+    "suburb": "Bassendean",
     "postcode": "6054",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BASSENDEAN",
+    "suburb": "Bassendean",
     "postcode": "6934",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BASSENDEAN DC",
+    "suburb": "Bassendean Dc",
     "postcode": "6054",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BASSENDEAN DC",
+    "suburb": "Bassendean Dc",
     "postcode": "6942",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BATEMAN",
+    "suburb": "Bateman",
     "postcode": "6150",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BAYSWATER",
+    "suburb": "Bayswater",
     "postcode": "6053",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BAYSWATER",
+    "suburb": "Bayswater",
     "postcode": "6933",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BEACONSFIELD",
+    "suburb": "Beaconsfield",
     "postcode": "6162",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BECKENHAM",
+    "suburb": "Beckenham",
     "postcode": "6107",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BEDFORD",
+    "suburb": "Bedford",
     "postcode": "6052",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BEDFORDALE",
+    "suburb": "Bedfordale",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BEECHBORO",
+    "suburb": "Beechboro",
     "postcode": "6063",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BEELIAR",
+    "suburb": "Beeliar",
     "postcode": "6164",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BELDON",
+    "suburb": "Beldon",
     "postcode": "6027",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BELHUS",
+    "suburb": "Belhus",
     "postcode": "6069",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BELLEVUE",
+    "suburb": "Bellevue",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BELMONT",
+    "suburb": "Belmont",
     "postcode": "6104",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BELMONT",
+    "suburb": "Belmont",
     "postcode": "6984",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BENNETT SPRINGS",
+    "suburb": "Bennett Springs",
     "postcode": "6063",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BENTLEY",
+    "suburb": "Bentley",
     "postcode": "6102",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BENTLEY",
+    "suburb": "Bentley",
     "postcode": "6982",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BENTLEY DC",
+    "suburb": "Bentley Dc",
     "postcode": "6102",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BENTLEY DC",
+    "suburb": "Bentley Dc",
     "postcode": "6983",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BENTLEY SOUTH",
+    "suburb": "Bentley South",
     "postcode": "6102",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BERTRAM",
+    "suburb": "Bertram",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BIBRA LAKE",
+    "suburb": "Bibra Lake",
     "postcode": "6163",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BIBRA LAKE DC",
+    "suburb": "Bibra Lake Dc",
     "postcode": "6163",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BIBRA LAKE DC",
+    "suburb": "Bibra Lake Dc",
     "postcode": "6965",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BICKLEY",
+    "suburb": "Bickley",
     "postcode": "6076",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BICTON",
+    "suburb": "Bicton",
     "postcode": "6157",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BIRCHMONT",
+    "suburb": "Birchmont",
     "postcode": "6214",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BLYTHEWOOD",
+    "suburb": "Blythewood",
     "postcode": "6208",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BODDINGTON",
+    "suburb": "Boddington",
     "postcode": "6390",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "BOORAGOON",
+    "suburb": "Booragoon",
     "postcode": "6154",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BOORAGOON",
+    "suburb": "Booragoon",
     "postcode": "6954",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "BORANING",
+    "suburb": "Boraning",
     "postcode": "6391",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "BOUVARD",
+    "suburb": "Bouvard",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BOUVARD",
+    "suburb": "Bouvard",
     "postcode": "6211",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BOYA",
+    "suburb": "Boya",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BRABHAM",
+    "suburb": "Brabham",
     "postcode": "6055",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BRENTWOOD",
+    "suburb": "Brentwood",
     "postcode": "6153",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BRIGADOON",
+    "suburb": "Brigadoon",
     "postcode": "6069",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BROADWAY NEDLANDS",
+    "suburb": "Broadway Nedlands",
     "postcode": "6009",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BROOKDALE",
+    "suburb": "Brookdale",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BULL CREEK",
+    "suburb": "Bull Creek",
     "postcode": "6149",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BURNS BEACH",
+    "suburb": "Burns Beach",
     "postcode": "6028",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BURSWOOD",
+    "suburb": "Burswood",
     "postcode": "6100",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BUSHMEAD",
+    "suburb": "Bushmead",
     "postcode": "6055",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BUTLER",
+    "suburb": "Butler",
     "postcode": "6036",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "BYFORD",
+    "suburb": "Byford",
     "postcode": "6122",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CALISTA",
+    "suburb": "Calista",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CAMILLO",
+    "suburb": "Camillo",
     "postcode": "6111",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CANNING BRIDGE APPLECROSS",
+    "suburb": "Canning Bridge Applecross",
     "postcode": "6153",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CANNING MILLS",
+    "suburb": "Canning Mills",
     "postcode": "6111",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CANNING VALE",
+    "suburb": "Canning Vale",
     "postcode": "6155",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CANNING VALE DC",
+    "suburb": "Canning Vale Dc",
     "postcode": "6155",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "CANNING VALE DC",
+    "suburb": "Canning Vale Dc",
     "postcode": "6970",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "CANNING VALE SOUTH",
+    "suburb": "Canning Vale South",
     "postcode": "6155",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CANNINGTON",
+    "suburb": "Cannington",
     "postcode": "6107",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CANNINGTON",
+    "suburb": "Cannington",
     "postcode": "6980",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "CANNINGTON",
+    "suburb": "Cannington",
     "postcode": "6987",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "CARABOODA",
+    "suburb": "Carabooda",
     "postcode": "6033",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CARDUP",
+    "suburb": "Cardup",
     "postcode": "6122",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CARINE",
+    "suburb": "Carine",
     "postcode": "6020",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CARLISLE",
+    "suburb": "Carlisle",
     "postcode": "6101",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CARLISLE NORTH",
+    "suburb": "Carlisle North",
     "postcode": "6101",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CARLISLE SOUTH",
+    "suburb": "Carlisle South",
     "postcode": "6101",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CARMEL",
+    "suburb": "Carmel",
     "postcode": "6076",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CARRAMAR",
+    "suburb": "Carramar",
     "postcode": "6031",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CASUARINA",
+    "suburb": "Casuarina",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CAVERSHAM",
+    "suburb": "Caversham",
     "postcode": "6055",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CHAMPION LAKES",
+    "suburb": "Champion Lakes",
     "postcode": "6111",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CHURCHLANDS",
+    "suburb": "Churchlands",
     "postcode": "6018",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CITY BEACH",
+    "suburb": "City Beach",
     "postcode": "6015",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CITY DELIVERY CENTRE",
+    "suburb": "City Delivery Centre",
     "postcode": "6000",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "CLAREMONT",
+    "suburb": "Claremont",
     "postcode": "6010",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CLAREMONT",
+    "suburb": "Claremont",
     "postcode": "6910",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "CLAREMONT NORTH",
+    "suburb": "Claremont North",
     "postcode": "6010",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CLARKSON",
+    "suburb": "Clarkson",
     "postcode": "6030",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CLIFTON",
+    "suburb": "Clifton",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CLIFTON",
+    "suburb": "Clifton",
     "postcode": "6211",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CLOISTERS SQUARE PO",
+    "suburb": "Cloisters Square Po",
     "postcode": "6850",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "CLOVERDALE",
+    "suburb": "Cloverdale",
     "postcode": "6105",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "COCKBURN CENTRAL",
+    "suburb": "Cockburn Central",
     "postcode": "6164",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "COMO",
+    "suburb": "Como",
     "postcode": "6152",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "COMO",
+    "suburb": "Como",
     "postcode": "6952",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "CONGELIN",
+    "suburb": "Congelin",
     "postcode": "6391",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "CONNOLLY",
+    "suburb": "Connolly",
     "postcode": "6027",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "COODANUP",
+    "suburb": "Coodanup",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "COOGEE",
+    "suburb": "Coogee",
     "postcode": "6166",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "COOLBELLUP",
+    "suburb": "Coolbellup",
     "postcode": "6163",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "COOLBINIA",
+    "suburb": "Coolbinia",
     "postcode": "6050",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "COOLOONGUP",
+    "suburb": "Cooloongup",
     "postcode": "6168",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "COOLUP",
+    "suburb": "Coolup",
     "postcode": "6214",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "COTTESLOE",
+    "suburb": "Cottesloe",
     "postcode": "6011",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "COTTESLOE",
+    "suburb": "Cottesloe",
     "postcode": "6911",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "CRAIGIE",
+    "suburb": "Craigie",
     "postcode": "6025",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CRAWLEY",
+    "suburb": "Crawley",
     "postcode": "6009",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CROSSMAN",
+    "suburb": "Crossman",
     "postcode": "6390",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "CULBIN",
+    "suburb": "Culbin",
     "postcode": "6391",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "CULLACABARDEE",
+    "suburb": "Cullacabardee",
     "postcode": "6067",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "CURRAMBINE",
+    "suburb": "Currambine",
     "postcode": "6028",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DAGLISH",
+    "suburb": "Daglish",
     "postcode": "6008",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DALKEITH",
+    "suburb": "Dalkeith",
     "postcode": "6009",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DARCH",
+    "suburb": "Darch",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DARLING DOWNS",
+    "suburb": "Darling Downs",
     "postcode": "6122",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DARLINGTON",
+    "suburb": "Darlington",
     "postcode": "6070",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DAWESVILLE",
+    "suburb": "Dawesville",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DAWESVILLE",
+    "suburb": "Dawesville",
     "postcode": "6211",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DAYTON",
+    "suburb": "Dayton",
     "postcode": "6055",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DIANELLA",
+    "suburb": "Dianella",
     "postcode": "6059",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DOG SWAMP",
+    "suburb": "Dog Swamp",
     "postcode": "6060",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DOOBARDA",
+    "suburb": "Doobarda",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DOUBLEVIEW",
+    "suburb": "Doubleview",
     "postcode": "6018",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DUDLEY PARK",
+    "suburb": "Dudley Park",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DUNCRAIG",
+    "suburb": "Duncraig",
     "postcode": "6023",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "DWELLINGUP",
+    "suburb": "Dwellingup",
     "postcode": "6213",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "EAST CANNINGTON",
+    "suburb": "East Cannington",
     "postcode": "6107",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "EAST FREMANTLE",
+    "suburb": "East Fremantle",
     "postcode": "6158",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "EAST PERTH",
+    "suburb": "East Perth",
     "postcode": "6004",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "EAST PERTH",
+    "suburb": "East Perth",
     "postcode": "6892",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "EAST ROCKINGHAM",
+    "suburb": "East Rockingham",
     "postcode": "6168",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "EAST VICTORIA PARK",
+    "suburb": "East Victoria Park",
     "postcode": "6101",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "EAST VICTORIA PARK",
+    "suburb": "East Victoria Park",
     "postcode": "6981",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "EDEN HILL",
+    "suburb": "Eden Hill",
     "postcode": "6054",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "EDGEWATER",
+    "suburb": "Edgewater",
     "postcode": "6027",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "EGLINTON",
+    "suburb": "Eglinton",
     "postcode": "6034",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ELLENBROOK",
+    "suburb": "Ellenbrook",
     "postcode": "6069",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ELLENBROOK EAST",
+    "suburb": "Ellenbrook East",
     "postcode": "6069",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "EMBLETON",
+    "suburb": "Embleton",
     "postcode": "6062",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ERSKINE",
+    "suburb": "Erskine",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ETMILYN",
+    "suburb": "Etmilyn",
     "postcode": "6213",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "FAIRBRIDGE",
+    "suburb": "Fairbridge",
     "postcode": "6208",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "FALCON",
+    "suburb": "Falcon",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "FERNDALE",
+    "suburb": "Ferndale",
     "postcode": "6148",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "FLOREAT",
+    "suburb": "Floreat",
     "postcode": "6014",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "FLOREAT FORUM",
+    "suburb": "Floreat Forum",
     "postcode": "6014",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "FORRESTDALE",
+    "suburb": "Forrestdale",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "FORRESTFIELD",
+    "suburb": "Forrestfield",
     "postcode": "6058",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "FREMANTLE",
+    "suburb": "Fremantle",
     "postcode": "6160",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "FREMANTLE",
+    "suburb": "Fremantle",
     "postcode": "6959",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "FURNISSDALE",
+    "suburb": "Furnissdale",
     "postcode": "6209",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "FURNISSDALE",
+    "suburb": "Furnissdale",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GARDEN ISLAND",
+    "suburb": "Garden Island",
     "postcode": "6168",
     "classification": "manual_review",
-    "reason": "Island access requires individual confirmation"
+    "reason": "Access restrictions or special travel conditions likely; manual booking check"
   },
   {
-    "suburb": "GERALDTON",
+    "suburb": "Geraldton",
     "postcode": "6531",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Geographic boundary exception: confirm whether standard coverage is intended"
   },
   {
-    "suburb": "GIDGEGANNUP",
+    "suburb": "Gidgegannup",
     "postcode": "6083",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GIRRAWHEEN",
+    "suburb": "Girrawheen",
     "postcode": "6064",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GLEN FORREST",
+    "suburb": "Glen Forrest",
     "postcode": "6071",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GLENDALOUGH",
+    "suburb": "Glendalough",
     "postcode": "6016",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GLENGARRY",
+    "suburb": "Glengarry",
     "postcode": "6023",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GNANGARA",
+    "suburb": "Gnangara",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GNANGARA",
+    "suburb": "Gnangara",
     "postcode": "6077",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GOLDEN BAY",
+    "suburb": "Golden Bay",
     "postcode": "6174",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GOOSEBERRY HILL",
+    "suburb": "Gooseberry Hill",
     "postcode": "6076",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GOSNELLS",
+    "suburb": "Gosnells",
     "postcode": "6110",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GOSNELLS",
+    "suburb": "Gosnells",
     "postcode": "6990",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "GREENFIELDS",
+    "suburb": "Greenfields",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GREENMOUNT",
+    "suburb": "Greenmount",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GREENWOOD",
+    "suburb": "Greenwood",
     "postcode": "6024",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GREENWOOD",
+    "suburb": "Greenwood",
     "postcode": "6924",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "GUILDFORD",
+    "suburb": "Guildford",
     "postcode": "6055",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GUILDFORD",
+    "suburb": "Guildford",
     "postcode": "6935",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "GWELUP",
+    "suburb": "Gwelup",
     "postcode": "6018",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "GWELUP DC",
+    "suburb": "Gwelup Dc",
     "postcode": "6018",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "HACKETTS GULLY",
+    "suburb": "Hacketts Gully",
     "postcode": "6076",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HALLS HEAD",
+    "suburb": "Halls Head",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HAMEL",
+    "suburb": "Hamel",
     "postcode": "6215",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HAMERSLEY",
+    "suburb": "Hamersley",
     "postcode": "6022",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HAMILTON HILL",
+    "suburb": "Hamilton Hill",
     "postcode": "6163",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HAMILTON HILL",
+    "suburb": "Hamilton Hill",
     "postcode": "6963",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "HAMMOND PARK",
+    "suburb": "Hammond Park",
     "postcode": "6164",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HARRISDALE",
+    "suburb": "Harrisdale",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HAYNES",
+    "suburb": "Haynes",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HAZELMERE",
+    "suburb": "Hazelmere",
     "postcode": "6055",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HEATHRIDGE",
+    "suburb": "Heathridge",
     "postcode": "6027",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HELENA VALLEY",
+    "suburb": "Helena Valley",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HENDERSON",
+    "suburb": "Henderson",
     "postcode": "6166",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HENLEY BROOK",
+    "suburb": "Henley Brook",
     "postcode": "6055",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HERDSMAN",
+    "suburb": "Herdsman",
     "postcode": "6017",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HERNE HILL",
+    "suburb": "Herne Hill",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HERRON",
+    "suburb": "Herron",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HERRON",
+    "suburb": "Herron",
     "postcode": "6211",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HIGH WYCOMBE",
+    "suburb": "High Wycombe",
     "postcode": "6057",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HIGHGATE",
+    "suburb": "Highgate",
     "postcode": "6003",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HILBERT",
+    "suburb": "Hilbert",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HILLARYS",
+    "suburb": "Hillarys",
     "postcode": "6025",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HILLARYS",
+    "suburb": "Hillarys",
     "postcode": "6923",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "HILLMAN",
+    "suburb": "Hillman",
     "postcode": "6168",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HILLMAN RIVER",
+    "suburb": "Hillman River",
     "postcode": "6391",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "HILTON",
+    "suburb": "Hilton",
     "postcode": "6163",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HOCKING",
+    "suburb": "Hocking",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HOLYOAKE",
+    "suburb": "Holyoake",
     "postcode": "6213",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HOPE VALLEY",
+    "suburb": "Hope Valley",
     "postcode": "6165",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HOPELAND",
+    "suburb": "Hopeland",
     "postcode": "6125",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HOVEA",
+    "suburb": "Hovea",
     "postcode": "6071",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "HUNTINGDALE",
+    "suburb": "Huntingdale",
     "postcode": "6110",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ILUKA",
+    "suburb": "Iluka",
     "postcode": "6028",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "INGLEHOPE",
+    "suburb": "Inglehope",
     "postcode": "6213",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "INGLEWOOD",
+    "suburb": "Inglewood",
     "postcode": "6052",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "INGLEWOOD",
+    "suburb": "Inglewood",
     "postcode": "6932",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "INNALOO",
+    "suburb": "Innaloo",
     "postcode": "6018",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "INNALOO",
+    "suburb": "Innaloo",
     "postcode": "6918",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "JANDABUP",
+    "suburb": "Jandabup",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "JANDABUP",
+    "suburb": "Jandabup",
     "postcode": "6077",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "JANDAKOT",
+    "suburb": "Jandakot",
     "postcode": "6164",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "JANE BROOK",
+    "suburb": "Jane Brook",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "JARRAHDALE",
+    "suburb": "Jarrahdale",
     "postcode": "6124",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "JINDALEE",
+    "suburb": "Jindalee",
     "postcode": "6036",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "JOLIMONT",
+    "suburb": "Jolimont",
     "postcode": "6014",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "JOONDALUP",
+    "suburb": "Joondalup",
     "postcode": "6027",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "JOONDALUP DC",
+    "suburb": "Joondalup Dc",
     "postcode": "6027",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "JOONDALUP DC",
+    "suburb": "Joondalup Dc",
     "postcode": "6919",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "JOONDANNA",
+    "suburb": "Joondanna",
     "postcode": "6060",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KALAMUNDA",
+    "suburb": "Kalamunda",
     "postcode": "6076",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KALAMUNDA",
+    "suburb": "Kalamunda",
     "postcode": "6926",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "KALLAROO",
+    "suburb": "Kallaroo",
     "postcode": "6025",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KARAWARA",
+    "suburb": "Karawara",
     "postcode": "6152",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KARDINYA",
+    "suburb": "Kardinya",
     "postcode": "6163",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KARNUP",
+    "suburb": "Karnup",
     "postcode": "6176",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KARRAGULLEN",
+    "suburb": "Karragullen",
     "postcode": "6111",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KARRAKATTA",
+    "suburb": "Karrakatta",
     "postcode": "6010",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KARRAKUP",
+    "suburb": "Karrakup",
     "postcode": "6122",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KARRINYUP",
+    "suburb": "Karrinyup",
     "postcode": "6018",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KARRINYUP",
+    "suburb": "Karrinyup",
     "postcode": "6921",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "KELMSCOTT",
+    "suburb": "Kelmscott",
     "postcode": "6111",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KELMSCOTT",
+    "suburb": "Kelmscott",
     "postcode": "6991",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "KELMSCOTT DC",
+    "suburb": "Kelmscott Dc",
     "postcode": "6111",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "KELMSCOTT DC",
+    "suburb": "Kelmscott Dc",
     "postcode": "6997",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "KENSINGTON",
+    "suburb": "Kensington",
     "postcode": "6151",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KENWICK",
+    "suburb": "Kenwick",
     "postcode": "6107",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KERALUP",
+    "suburb": "Keralup",
     "postcode": "6182",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KEWDALE",
+    "suburb": "Kewdale",
     "postcode": "6105",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KEYSBROOK",
+    "suburb": "Keysbrook",
     "postcode": "6126",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KIARA",
+    "suburb": "Kiara",
     "postcode": "6054",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KINGS PARK",
+    "suburb": "Kings Park",
     "postcode": "6005",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KINGSLEY",
+    "suburb": "Kingsley",
     "postcode": "6026",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KINGSWAY",
+    "suburb": "Kingsway",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KINROSS",
+    "suburb": "Kinross",
     "postcode": "6028",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KOONDOOLA",
+    "suburb": "Koondoola",
     "postcode": "6064",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KOONGAMIA",
+    "suburb": "Koongamia",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KWINANA",
+    "suburb": "Kwinana",
     "postcode": "6966",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "KWINANA BEACH",
+    "suburb": "Kwinana Beach",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "KWINANA TOWN CENTRE",
+    "suburb": "Kwinana Town Centre",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LAKE CLIFTON",
+    "suburb": "Lake Clifton",
     "postcode": "6215",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LAKE COOGEE",
+    "suburb": "Lake Coogee",
     "postcode": "6166",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LAKELANDS",
+    "suburb": "Lakelands",
     "postcode": "6180",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LAKELANDS",
+    "suburb": "Lakelands",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LANDSDALE",
+    "suburb": "Landsdale",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LANGFORD",
+    "suburb": "Langford",
     "postcode": "6147",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LATHLAIN",
+    "suburb": "Lathlain",
     "postcode": "6100",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LEDA",
+    "suburb": "Leda",
     "postcode": "6170",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LEEDERVILLE",
+    "suburb": "Leederville",
     "postcode": "6007",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LEEDERVILLE",
+    "suburb": "Leederville",
     "postcode": "6900",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "LEEDERVILLE",
+    "suburb": "Leederville",
     "postcode": "6902",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "LEEDERVILLE",
+    "suburb": "Leederville",
     "postcode": "6903",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "LEEMING",
+    "suburb": "Leeming",
     "postcode": "6149",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LESLEY",
+    "suburb": "Lesley",
     "postcode": "6111",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LESMURDIE",
+    "suburb": "Lesmurdie",
     "postcode": "6076",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LEXIA",
+    "suburb": "Lexia",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LEXIA",
+    "suburb": "Lexia",
     "postcode": "6079",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LOCKRIDGE",
+    "suburb": "Lockridge",
     "postcode": "6054",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "LOWER HOTHAM",
+    "suburb": "Lower Hotham",
     "postcode": "6390",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "LYNWOOD",
+    "suburb": "Lynwood",
     "postcode": "6147",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MADDINGTON",
+    "suburb": "Maddington",
     "postcode": "6109",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MADDINGTON",
+    "suburb": "Maddington",
     "postcode": "6989",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MADELEY",
+    "suburb": "Madeley",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MADORA BAY",
+    "suburb": "Madora Bay",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MAHOGANY CREEK",
+    "suburb": "Mahogany Creek",
     "postcode": "6072",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MAIDA VALE",
+    "suburb": "Maida Vale",
     "postcode": "6057",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MALAGA",
+    "suburb": "Malaga",
     "postcode": "6090",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MALAGA",
+    "suburb": "Malaga",
     "postcode": "6944",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MALAGA DC",
+    "suburb": "Malaga Dc",
     "postcode": "6945",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MANDOGALUP",
+    "suburb": "Mandogalup",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MANDURAH",
+    "suburb": "Mandurah",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MANDURAH DC",
+    "suburb": "Mandurah Dc",
+    "postcode": "6210",
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
+  },
+  {
+    "suburb": "Mandurah East",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MANDURAH EAST",
+    "suburb": "Mandurah North",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MANDURAH NORTH",
-    "postcode": "6210",
-    "classification": "standard_reference",
-    "reason": ""
-  },
-  {
-    "suburb": "MANNING",
+    "suburb": "Manning",
     "postcode": "6152",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MARANGAROO",
+    "suburb": "Marangaroo",
     "postcode": "6064",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MARDELLA",
+    "suburb": "Mardella",
     "postcode": "6125",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MARIGINIUP",
+    "suburb": "Mariginiup",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MARIGINIUP",
+    "suburb": "Mariginiup",
     "postcode": "6078",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MARMION",
+    "suburb": "Marmion",
     "postcode": "6020",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MARRADONG",
+    "suburb": "Marradong",
     "postcode": "6390",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "MARRINUP",
+    "suburb": "Marrinup",
     "postcode": "6213",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MARTIN",
+    "suburb": "Martin",
     "postcode": "6110",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MAYLANDS",
+    "suburb": "Maylands",
     "postcode": "6051",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MAYLANDS",
+    "suburb": "Maylands",
     "postcode": "6931",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MEADOW SPRINGS",
+    "suburb": "Meadow Springs",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MEDINA",
+    "suburb": "Medina",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MEELON",
+    "suburb": "Meelon",
     "postcode": "6208",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MELALEUCA",
+    "suburb": "Melaleuca",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MELALEUCA",
+    "suburb": "Melaleuca",
     "postcode": "6079",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MELVILLE",
+    "suburb": "Melville",
     "postcode": "6156",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MELVILLE",
+    "suburb": "Melville",
     "postcode": "6956",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MENORA",
+    "suburb": "Menora",
     "postcode": "6050",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MERRIWA",
+    "suburb": "Merriwa",
     "postcode": "6030",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MIDDLE SWAN",
+    "suburb": "Middle Swan",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MIDLAND",
+    "suburb": "Midland",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MIDLAND DC",
+    "suburb": "Midland Dc",
     "postcode": "6936",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MIDVALE",
+    "suburb": "Midvale",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MILLENDON",
+    "suburb": "Millendon",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MINDARIE",
+    "suburb": "Mindarie",
     "postcode": "6030",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MIRRABOOKA",
+    "suburb": "Mirrabooka",
     "postcode": "6061",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MIRRABOOKA",
+    "suburb": "Mirrabooka",
     "postcode": "6941",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MORANGUP",
+    "suburb": "Morangup",
     "postcode": "6083",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MORLEY",
+    "suburb": "Morley",
     "postcode": "6062",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MORLEY",
+    "suburb": "Morley",
     "postcode": "6943",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MOSMAN PARK",
+    "suburb": "Mosman Park",
     "postcode": "6012",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MOSMAN PARK",
+    "suburb": "Mosman Park",
     "postcode": "6912",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MOUNT CLAREMONT",
+    "suburb": "Mount Claremont",
     "postcode": "6010",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MOUNT COOKE",
+    "suburb": "Mount Cooke",
     "postcode": "6390",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "MOUNT HAWTHORN",
+    "suburb": "Mount Hawthorn",
     "postcode": "6016",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MOUNT HAWTHORN",
+    "suburb": "Mount Hawthorn",
     "postcode": "6915",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MOUNT HELENA",
+    "suburb": "Mount Helena",
     "postcode": "6082",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MOUNT LAWLEY",
+    "suburb": "Mount Lawley",
     "postcode": "6050",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MOUNT LAWLEY",
+    "suburb": "Mount Lawley",
     "postcode": "6929",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MOUNT NASURA",
+    "suburb": "Mount Nasura",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MOUNT PLEASANT",
+    "suburb": "Mount Pleasant",
     "postcode": "6153",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MOUNT RICHON",
+    "suburb": "Mount Richon",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MOUNT WELLS",
+    "suburb": "Mount Wells",
     "postcode": "6390",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "MULLALOO",
+    "suburb": "Mullaloo",
     "postcode": "6027",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MUNDARING",
+    "suburb": "Mundaring",
     "postcode": "6073",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MUNDARING DC",
+    "suburb": "Mundaring Dc",
+    "postcode": "6073",
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
+  },
+  {
+    "suburb": "Mundaring Weir",
     "postcode": "6073",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MUNDARING WEIR",
-    "postcode": "6073",
-    "classification": "standard_reference",
-    "reason": ""
-  },
-  {
-    "suburb": "MUNDIJONG",
+    "suburb": "Mundijong",
     "postcode": "6123",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MUNSTER",
+    "suburb": "Munster",
     "postcode": "6166",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MURDOCH",
+    "suburb": "Murdoch",
     "postcode": "6150",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MYARA",
+    "suburb": "Myara",
     "postcode": "6207",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MYAREE",
+    "suburb": "Myaree",
     "postcode": "6154",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "MYAREE",
+    "suburb": "Myaree",
     "postcode": "6960",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "MYAREE BC",
+    "suburb": "Myaree Bc",
     "postcode": "6960",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "NAMBEELUP",
+    "suburb": "Nambeelup",
     "postcode": "6207",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NANGA BROOK",
+    "suburb": "Nanga Brook",
     "postcode": "6215",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NARRAKINE",
+    "suburb": "Narrakine",
     "postcode": "6391",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "NAVAL BASE",
+    "suburb": "Naval Base",
     "postcode": "6165",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NEDLANDS",
+    "suburb": "Nedlands",
     "postcode": "6009",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NEDLANDS",
+    "suburb": "Nedlands",
     "postcode": "6907",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "NEDLANDS",
+    "suburb": "Nedlands",
     "postcode": "6909",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "NEDLANDS DC",
+    "suburb": "Nedlands Dc",
     "postcode": "6009",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "NEERABUP",
+    "suburb": "Neerabup",
     "postcode": "6031",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NIRIMBA",
+    "suburb": "Nirimba",
     "postcode": "6208",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NOLLAMARA",
+    "suburb": "Nollamara",
     "postcode": "6061",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NORANDA",
+    "suburb": "Noranda",
     "postcode": "6062",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NORTH BANNISTER",
+    "suburb": "North Bannister",
     "postcode": "6390",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "NORTH BEACH",
+    "suburb": "North Beach",
     "postcode": "6020",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NORTH BEACH",
+    "suburb": "North Beach",
     "postcode": "6920",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "NORTH COOGEE",
+    "suburb": "North Coogee",
     "postcode": "6163",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NORTH DANDALUP",
+    "suburb": "North Dandalup",
     "postcode": "6207",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NORTH FREMANTLE",
+    "suburb": "North Fremantle",
     "postcode": "6159",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NORTH LAKE",
+    "suburb": "North Lake",
     "postcode": "6163",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NORTH PERTH",
+    "suburb": "North Perth",
     "postcode": "6006",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NORTH PERTH",
+    "suburb": "North Perth",
     "postcode": "6906",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "NORTH YUNDERUP",
+    "suburb": "North Yunderup",
     "postcode": "6208",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NORTHBRIDGE",
+    "suburb": "Northbridge",
     "postcode": "6003",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "NORTHBRIDGE",
+    "suburb": "Northbridge",
     "postcode": "6803",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "NORTHBRIDGE",
+    "suburb": "Northbridge",
     "postcode": "6865",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "NOWERGUP",
+    "suburb": "Nowergup",
     "postcode": "6032",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "O'CONNOR",
+    "suburb": "O'Connor",
     "postcode": "6163",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "OAKFORD",
+    "suburb": "Oakford",
     "postcode": "6121",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "OAKLEY",
+    "suburb": "Oakley",
     "postcode": "6208",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "OCEAN REEF",
+    "suburb": "Ocean Reef",
     "postcode": "6027",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "OLDBURY",
+    "suburb": "Oldbury",
     "postcode": "6121",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ORANGE GROVE",
+    "suburb": "Orange Grove",
     "postcode": "6109",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ORELIA",
+    "suburb": "Orelia",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "OSBORNE PARK",
+    "suburb": "Osborne Park",
     "postcode": "6017",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "OSBORNE PARK",
+    "suburb": "Osborne Park",
     "postcode": "6916",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "OSBORNE PARK",
+    "suburb": "Osborne Park",
     "postcode": "6917",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "OSBORNE PARK DC",
+    "suburb": "Osborne Park Dc",
     "postcode": "6017",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "OSBORNE PARK DC",
+    "suburb": "Osborne Park Dc",
     "postcode": "6916",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "O’CONNOR",
+    "suburb": "O’Connor",
     "postcode": "6163",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PADBURY",
+    "suburb": "Padbury",
     "postcode": "6025",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PALMYRA",
+    "suburb": "Palmyra",
     "postcode": "6157",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PALMYRA",
+    "suburb": "Palmyra",
     "postcode": "6957",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PALMYRA DC",
+    "suburb": "Palmyra Dc",
     "postcode": "6157",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PALMYRA DC",
+    "suburb": "Palmyra Dc",
     "postcode": "6961",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PARKERVILLE",
+    "suburb": "Parkerville",
     "postcode": "6081",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PARKLANDS",
+    "suburb": "Parklands",
     "postcode": "6180",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PARKLANDS",
+    "suburb": "Parklands",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PARKWOOD",
+    "suburb": "Parkwood",
     "postcode": "6147",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PARMELIA",
+    "suburb": "Parmelia",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PAULLS VALLEY",
+    "suburb": "Paulls Valley",
     "postcode": "6076",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PEARSALL",
+    "suburb": "Pearsall",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PEPPERMINT GROVE",
+    "suburb": "Peppermint Grove",
     "postcode": "6011",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PERON",
+    "suburb": "Peron",
     "postcode": "6168",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6000",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6001",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6800",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6809",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6817",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6820",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6827",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6830",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6837",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6838",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6839",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6840",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6841",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6842",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6843",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6844",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6845",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6846",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6847",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH",
+    "suburb": "Perth",
     "postcode": "6848",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH AIRPORT",
+    "suburb": "Perth Airport",
     "postcode": "6105",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PERTH BC",
+    "suburb": "Perth Bc",
     "postcode": "6849",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH EAST ST GEORGES TCE",
+    "suburb": "Perth East St Georges Tce",
     "postcode": "6832",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH GPO",
+    "suburb": "Perth Gpo",
     "postcode": "6000",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PERTH ST GEORGES TCE",
+    "suburb": "Perth St Georges Tce",
     "postcode": "6831",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "PIARA WATERS",
+    "suburb": "Piara Waters",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PICKERING BROOK",
+    "suburb": "Pickering Brook",
     "postcode": "6076",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PIESSE BROOK",
+    "suburb": "Piesse Brook",
     "postcode": "6076",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PINJAR",
+    "suburb": "Pinjar",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PINJAR",
+    "suburb": "Pinjar",
     "postcode": "6078",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PINJARRA",
+    "suburb": "Pinjarra",
     "postcode": "6208",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "POINT GREY",
+    "suburb": "Point Grey",
     "postcode": "6208",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PORT KENNEDY",
+    "suburb": "Port Kennedy",
     "postcode": "6172",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "POSTANS",
+    "suburb": "Postans",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "PRESTON BEACH",
+    "suburb": "Preston Beach",
     "postcode": "6215",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "QUEENS PARK",
+    "suburb": "Queens Park",
     "postcode": "6107",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "QUINDANNING",
+    "suburb": "Quindanning",
     "postcode": "6391",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "QUINNS ROCKS",
+    "suburb": "Quinns Rocks",
     "postcode": "6030",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "RANFORD",
+    "suburb": "Ranford",
     "postcode": "6390",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "RAVENSWOOD",
+    "suburb": "Ravenswood",
     "postcode": "6208",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "RED HILL",
+    "suburb": "Red Hill",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "REDCLIFFE",
+    "suburb": "Redcliffe",
     "postcode": "6104",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "RESERVOIR",
+    "suburb": "Reservoir",
     "postcode": "6076",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "RIDGEWOOD",
+    "suburb": "Ridgewood",
     "postcode": "6030",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "RIVERTON",
+    "suburb": "Riverton",
     "postcode": "6148",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "RIVERVALE",
+    "suburb": "Rivervale",
     "postcode": "6103",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ROCKINGHAM",
+    "suburb": "Rockingham",
     "postcode": "6168",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ROCKINGHAM",
+    "suburb": "Rockingham",
     "postcode": "6968",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "ROCKINGHAM BEACH",
+    "suburb": "Rockingham Beach",
     "postcode": "6168",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ROCKINGHAM BEACH",
+    "suburb": "Rockingham Beach",
     "postcode": "6969",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "ROCKINGHAM DC",
+    "suburb": "Rockingham Dc",
     "postcode": "6168",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "ROCKINGHAM DC",
+    "suburb": "Rockingham Dc",
     "postcode": "6967",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "ROLEYSTONE",
+    "suburb": "Roleystone",
     "postcode": "6111",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ROSSMOYNE",
+    "suburb": "Rossmoyne",
     "postcode": "6148",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ROTTNEST ISLAND",
+    "suburb": "Rottnest Island",
     "postcode": "6161",
     "classification": "manual_review",
-    "reason": "Island access requires individual confirmation"
+    "reason": "Access restrictions or special travel conditions likely; manual booking check"
   },
   {
-    "suburb": "SAFETY BAY",
+    "suburb": "Safety Bay",
     "postcode": "6169",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SALTER POINT",
+    "suburb": "Salter Point",
     "postcode": "6152",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SAMSON",
+    "suburb": "Samson",
     "postcode": "6163",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SAN REMO",
+    "suburb": "San Remo",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SAWYERS VALLEY",
+    "suburb": "Sawyers Valley",
     "postcode": "6074",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SCARBOROUGH",
+    "suburb": "Scarborough",
     "postcode": "6019",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SCARBOROUGH",
+    "suburb": "Scarborough",
     "postcode": "6922",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "SECRET HARBOUR",
+    "suburb": "Secret Harbour",
     "postcode": "6173",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SERPENTINE",
+    "suburb": "Serpentine",
     "postcode": "6125",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SEVILLE GROVE",
+    "suburb": "Seville Grove",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SHELLEY",
+    "suburb": "Shelley",
     "postcode": "6148",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SHENTON PARK",
+    "suburb": "Shenton Park",
     "postcode": "6008",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SHOALWATER",
+    "suburb": "Shoalwater",
     "postcode": "6169",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SILVER SANDS",
+    "suburb": "Silver Sands",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SINAGRA",
+    "suburb": "Sinagra",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SINGLETON",
+    "suburb": "Singleton",
     "postcode": "6175",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SOLUS",
+    "suburb": "Solus",
     "postcode": "6207",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SORRENTO",
+    "suburb": "Sorrento",
     "postcode": "6020",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SOUTH FREMANTLE",
+    "suburb": "South Fremantle",
     "postcode": "6162",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SOUTH GUILDFORD",
+    "suburb": "South Guildford",
     "postcode": "6055",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SOUTH LAKE",
+    "suburb": "South Lake",
     "postcode": "6164",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SOUTH PERTH",
+    "suburb": "South Perth",
     "postcode": "6151",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SOUTH PERTH",
+    "suburb": "South Perth",
     "postcode": "6951",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "SOUTH PERTH ANGELO ST",
+    "suburb": "South Perth Angelo St",
     "postcode": "6151",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SOUTH YUNDERUP",
+    "suburb": "South Yunderup",
     "postcode": "6208",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SOUTHERN RIVER",
+    "suburb": "Southern River",
     "postcode": "6110",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SPEARWOOD",
+    "suburb": "Spearwood",
     "postcode": "6163",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "ST JAMES",
+    "suburb": "St James",
     "postcode": "6102",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "STAKE HILL",
+    "suburb": "Stake Hill",
     "postcode": "6181",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "STAKE HILL",
+    "suburb": "Stake Hill",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "STIRLING",
+    "suburb": "Stirling",
     "postcode": "6021",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "STONEVILLE",
+    "suburb": "Stoneville",
     "postcode": "6081",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "STRATTON",
+    "suburb": "Stratton",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SUBIACO",
+    "suburb": "Subiaco",
     "postcode": "6008",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SUBIACO",
+    "suburb": "Subiaco",
     "postcode": "6904",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "SUBIACO EAST",
+    "suburb": "Subiaco East",
     "postcode": "6008",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SUBIACO PO",
+    "suburb": "Subiaco Po",
     "postcode": "6904",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "SUCCESS",
+    "suburb": "Success",
     "postcode": "6164",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SUCCESS",
+    "suburb": "Success",
     "postcode": "6964",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "SWAN VIEW",
+    "suburb": "Swan View",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "SWANBOURNE",
+    "suburb": "Swanbourne",
     "postcode": "6010",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "TAMALA PARK",
+    "suburb": "Tamala Park",
     "postcode": "6030",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "TAPPING",
+    "suburb": "Tapping",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "TARWONGA",
+    "suburb": "Tarwonga",
     "postcode": "6391",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "TEESDALE",
+    "suburb": "Teesdale",
     "postcode": "6213",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "THE SPECTACLES",
+    "suburb": "The Spectacles",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "THE VINES",
+    "suburb": "The Vines",
     "postcode": "6069",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "THORNLIE",
+    "suburb": "Thornlie",
     "postcode": "6108",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "THORNLIE",
+    "suburb": "Thornlie",
     "postcode": "6988",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "TREEBY",
+    "suburb": "Treeby",
     "postcode": "6164",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "TRIGG",
+    "suburb": "Trigg",
     "postcode": "6029",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "TUART HILL",
+    "suburb": "Tuart Hill",
     "postcode": "6060",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "TUART HILL",
+    "suburb": "Tuart Hill",
     "postcode": "6937",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "TUART HILL",
+    "suburb": "Tuart Hill",
     "postcode": "6938",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "TUART HILL",
+    "suburb": "Tuart Hill",
     "postcode": "6939",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "TUART HILL",
+    "suburb": "Tuart Hill",
     "postcode": "6940",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "TWO ROCKS",
+    "suburb": "Two Rocks",
     "postcode": "6037",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "UPPER MURRAY",
+    "suburb": "Upper Murray",
     "postcode": "6390",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "UPPER SWAN",
+    "suburb": "Upper Swan",
     "postcode": "6069",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "VICTORIA PARK",
+    "suburb": "Victoria Park",
     "postcode": "6100",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "VICTORIA PARK",
+    "suburb": "Victoria Park",
     "postcode": "6979",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "VIVEASH",
+    "suburb": "Viveash",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WAGERUP",
+    "suburb": "Wagerup",
     "postcode": "6215",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WAIKIKI",
+    "suburb": "Waikiki",
     "postcode": "6169",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WALLISTON",
+    "suburb": "Walliston",
     "postcode": "6076",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WALLISTON DC",
+    "suburb": "Walliston Dc",
     "postcode": "6076",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "WALLISTON DC",
+    "suburb": "Walliston Dc",
     "postcode": "6925",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "WANDI",
+    "suburb": "Wandi",
     "postcode": "6167",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WANGARA",
+    "suburb": "Wangara",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WANGARA DC",
+    "suburb": "Wangara Dc",
     "postcode": "6065",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "WANGARA DC",
+    "suburb": "Wangara Dc",
     "postcode": "6947",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "WANNANUP",
+    "suburb": "Wannanup",
     "postcode": "6210",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WANNEROO",
+    "suburb": "Wanneroo",
     "postcode": "6065",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WANNEROO",
+    "suburb": "Wanneroo",
     "postcode": "6946",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "WARNBRO",
+    "suburb": "Warnbro",
     "postcode": "6169",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WAROONA",
+    "suburb": "Waroona",
     "postcode": "6215",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WARWICK",
+    "suburb": "Warwick",
     "postcode": "6024",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WATERFORD",
+    "suburb": "Waterford",
     "postcode": "6152",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WATERMANS BAY",
+    "suburb": "Watermans Bay",
     "postcode": "6020",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WATTLE GROVE",
+    "suburb": "Wattle Grove",
     "postcode": "6107",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WATTLEUP",
+    "suburb": "Wattleup",
     "postcode": "6166",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WELLARD",
+    "suburb": "Wellard",
     "postcode": "6170",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WELSHPOOL",
+    "suburb": "Welshpool",
     "postcode": "6106",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WELSHPOOL DC",
+    "suburb": "Welshpool Dc",
     "postcode": "6106",
-    "classification": "standard_reference",
-    "reason": ""
+    "classification": "manual_review",
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "WELSHPOOL DC",
+    "suburb": "Welshpool Dc",
     "postcode": "6986",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "WEMBLEY",
+    "suburb": "Wembley",
     "postcode": "6014",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WEMBLEY",
+    "suburb": "Wembley",
     "postcode": "6913",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "WEMBLEY DOWNS",
+    "suburb": "Wembley Downs",
     "postcode": "6019",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WEST COOLUP",
+    "suburb": "West Coolup",
     "postcode": "6214",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WEST LEEDERVILLE",
+    "suburb": "West Leederville",
     "postcode": "6007",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WEST LEEDERVILLE",
+    "suburb": "West Leederville",
     "postcode": "6901",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "WEST PERTH",
+    "suburb": "West Perth",
     "postcode": "6005",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WEST PERTH",
+    "suburb": "West Perth",
     "postcode": "6872",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "WEST PINJARRA",
+    "suburb": "West Pinjarra",
     "postcode": "6208",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WEST SWAN",
+    "suburb": "West Swan",
     "postcode": "6055",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WESTFIELD",
+    "suburb": "Westfield",
     "postcode": "6111",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WESTMINSTER",
+    "suburb": "Westminster",
     "postcode": "6061",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WHITBY",
+    "suburb": "Whitby",
     "postcode": "6123",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WHITE GUM VALLEY",
+    "suburb": "White Gum Valley",
     "postcode": "6162",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WHITEMAN",
+    "suburb": "Whiteman",
     "postcode": "6068",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WHITTAKER",
+    "suburb": "Whittaker",
     "postcode": "6207",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WILLAGEE",
+    "suburb": "Willagee",
     "postcode": "6156",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WILLAGEE CENTRAL",
+    "suburb": "Willagee Central",
     "postcode": "6156",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WILLETTON",
+    "suburb": "Willetton",
     "postcode": "6155",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WILLETTON",
+    "suburb": "Willetton",
     "postcode": "6955",
     "classification": "manual_review",
-    "reason": "Postal-only reference requires a physical locality"
+    "reason": "Postal or delivery code: verify ordinary site address applicability"
   },
   {
-    "suburb": "WILLIAMS",
+    "suburb": "Williams",
     "postcode": "6391",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "WILSON",
+    "suburb": "Wilson",
     "postcode": "6107",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WINTHROP",
+    "suburb": "Winthrop",
     "postcode": "6150",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WOODBRIDGE",
+    "suburb": "Woodbridge",
     "postcode": "6056",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WOODLANDS",
+    "suburb": "Woodlands",
     "postcode": "6018",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WOODVALE",
+    "suburb": "Woodvale",
     "postcode": "6026",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WOOROLOO",
+    "suburb": "Wooroloo",
     "postcode": "6558",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Geographic boundary exception: confirm whether standard coverage is intended"
   },
   {
-    "suburb": "WUNGONG",
+    "suburb": "Wungong",
     "postcode": "6112",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "WURAMING",
+    "suburb": "Wuraming",
     "postcode": "6390",
     "classification": "manual_review",
-    "reason": "Regional or anomalous reference requires operational review"
+    "reason": "Outer Peel / remote service logistics: confirm default turnaround and rate treatment"
   },
   {
-    "suburb": "YANCHEP",
+    "suburb": "Yanchep",
     "postcode": "6035",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "YANGEBUP",
+    "suburb": "Yangebup",
     "postcode": "6164",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "YOKINE",
+    "suburb": "Yokine",
     "postcode": "6060",
     "classification": "standard_reference",
     "reason": ""
   },
   {
-    "suburb": "YOKINE SOUTH",
+    "suburb": "Yokine South",
     "postcode": "6060",
     "classification": "standard_reference",
     "reason": ""

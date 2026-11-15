@@ -1,5 +1,5 @@
 import reference from './service-area-reference.json' with { type: 'json' };
-const normalise = (value: string) => value.trim().normalize('NFKC').toLocaleLowerCase('en-AU').replace(/\s+/g, ' ');
+const normalise = (value: string) => value.trim().normalize('NFKC').toLocaleLowerCase('en-AU').replace(/[^a-z0-9]/g, '');
 export function findServiceArea(suburb: string, postcode: string) {
   const matches = reference.filter(row => normalise(row.suburb) === normalise(suburb) && row.postcode === postcode.trim());
   if (!matches.length) return { classification: 'by_request', message: 'This suburb and postcode combination is not in the supplied reference. Ask us to confirm coverage and any travel requirements.' };
