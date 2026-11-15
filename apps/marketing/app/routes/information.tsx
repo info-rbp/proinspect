@@ -1,6 +1,7 @@
 import {runtimeContext} from '../../../../packages/database/context';
 import type {Env} from '../../../../packages/database/types';
 import {currentLegalDocument} from '../../../platform/worker/features/legal-acceptance.server';
+import {managedPrivacyDocument} from '../../../platform/worker/features/managed-rental-intake.server';
 import { ENGAGEMENTS } from '../../../../packages/marketing/content';
 import { CoverageLookup } from '../components/coverage-lookup';
 import { PUBLIC_LEGAL_DRAFTS, PUBLIC_LEGAL_APPROVAL, type PublicLegalKey } from '../../../../packages/marketing/legal-drafts';
@@ -120,7 +121,8 @@ export async function loader({ params,context }: LoaderFunctionArgs) {
   const key = params.page ?? '';
   if (Object.prototype.hasOwnProperty.call(PUBLIC_LEGAL_DRAFTS,key)) {
     const legalKey = key as PublicLegalKey;
-    const approved=await currentLegalDocument(context.get(runtimeContext).env as Env,key);
+    const env=context.get(runtimeContext).env as Env;
+    const approved=(key==='privacy'?await managedPrivacyDocument(env):null)??await currentLegalDocument(env,key);
     if(approved)return {title:approved.title,intro:approved.body.intro,sections:approved.body.sections as Array<[string,string]>,path:'/'+key,legalApproved:true,version:approved.version_label,effectiveAt:approved.effective_at};
     return {
       ...PUBLIC_LEGAL_DRAFTS[legalKey],

@@ -15,9 +15,7 @@ test('leasing is marketing-only, with separated residential/commercial public ro
  assert.ok(site.includes('cancel'));
 });
 test('property claims distinguish ProInspect from leasing representatives',()=>{
- assert.match(handoffDisclaimer,/on behalf of/i);
- assert.match(handoffDisclaimer,/not the leasing agent/i);
- assert.match(handoffDisclaimer,/not.*landlord|landlord.*not/i);
+ assert.equal(handoffDisclaimer,"ProInspect conducts the advertised open inspection on this representative's behalf. All rental terms and applications are managed by the responsible party.");
  assert.equal(propertyUrl('residential','sample-unit'),'/properties-for-lease/residential/sample-unit');
  assert.equal(displayPrice(65000,'week'),'$650 / week');
 });
@@ -99,9 +97,9 @@ test('Perth inspection time conversion rejects malformed or rollover values',asy
 test('per-property readiness fails closed on provider release flags and independent approval',async()=>{
  const {residentialApplicationReadiness}=await import('../packages/marketing/leasing-operations.ts');
  const base={listingKind:'residential',listingStatus:'published',applicationMode:'proinspect',authorityReference:'AUTH-123',recipientVerifiedAt:'2026-11-01T00:00:00Z',approvalState:'approved',noticeMode:'not_used',noticeCount:0,retentionConfigured:true,
- scannerConfigured:true,handoffConfigured:true,intakeReleaseApproved:true,scannerReleaseApproved:true,handoffReleaseApproved:true};
+ managedPropertyApproved:true,scannerConfigured:true,handoffConfigured:true,intakeReleaseApproved:true,scannerReleaseApproved:true,handoffReleaseApproved:true};
  assert.equal(residentialApplicationReadiness(base).technicalReady,true);
- for(const field of ['retentionConfigured','scannerConfigured','handoffConfigured','intakeReleaseApproved','scannerReleaseApproved','handoffReleaseApproved'] as const){
+ for(const field of ['managedPropertyApproved','retentionConfigured','scannerConfigured','handoffConfigured','intakeReleaseApproved','scannerReleaseApproved','handoffReleaseApproved'] as const){
   const result=residentialApplicationReadiness({...base,[field]:false});
   assert.equal(result.technicalReady,false);
   assert.equal(result.checks.some(x=>!x.passed),true);

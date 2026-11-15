@@ -11,7 +11,7 @@ const root = process.cwd(),
   restored = join(dir, 'restored'),
   config = join(dir, 'wrangler.jsonc');
 const files = readdirSync('database/migrations')
-    .filter((f) => /^\d{4}_.+\.sql$/.test(f))
+    .filter((f) => /^\d{4}_.+\.sql$/.test(f) && Number(f.slice(0,4))<=55)
     .sort(),
   checks = [];
 const environment = { ...process.env, CI: 'true' };

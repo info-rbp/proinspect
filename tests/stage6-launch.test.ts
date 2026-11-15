@@ -15,13 +15,13 @@ function fixture():Stage6Inputs{
   operations:[{code:'mail_failed',state:'clear',count:0}],
  };
 }
-test('Stage 6 deployed baseline remains 53; migration 0054 is proposed but unapplied',()=>{
+test('Stage 6 recorded acceptance baseline remains separate from additive migrations',()=>{
  const all=readdirSync('database/migrations').filter(x=>/^\d{4}_.+\.sql$/.test(x)).sort();
  assert.equal(EXPECTED_SCHEMA.count,53);
- assert.equal(all.length,EXPECTED_SCHEMA.count+2);
+ assert.equal(all.length,EXPECTED_SCHEMA.count+3);
  assert.equal(all[EXPECTED_SCHEMA.count-1],EXPECTED_SCHEMA.latest);
  assert.equal(all[53],'0054_client_service_interests.sql');
- assert.equal(all.at(-1),'0055_commercial_applications.sql');
+ assert.equal(all.at(-1),'0056_managed_property_intake.sql');
  assert.equal(EXPECTED_SCHEMA.catalogueServices,23);
  assert.equal(Object.keys(WORKSPACES).length,9);
  assert.ok(Object.hasOwn(WORKSPACES,'building-manager'));

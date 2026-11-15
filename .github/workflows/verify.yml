@@ -61,7 +61,7 @@ jobs:
             playwright-report/
           retention-days: 7
   staging-preview:
-    if: github.repository == 'info-rbp/proinspect' && ((github.event_name == 'workflow_dispatch' && contains(fromJSON('["refs/heads/feat/pr01-account-driven-client-portal","refs/heads/feat/public-site-services-refresh","refs/heads/feat/public-content-final-alignment","refs/heads/feat/residential-application-readiness","refs/heads/feat/commercial-dynamic-application"]'), github.ref)) || (github.event_name == 'pull_request' && contains(fromJSON('["feat/pr01-account-driven-client-portal","feat/public-site-services-refresh","feat/public-content-final-alignment","feat/residential-application-readiness","feat/commercial-dynamic-application"]'), github.event.pull_request.head.ref) && github.event.pull_request.head.repo.full_name == github.repository))
+    if: github.repository == 'info-rbp/proinspect' && ((github.event_name == 'workflow_dispatch' && contains(fromJSON('["refs/heads/feat/pr01-account-driven-client-portal","refs/heads/feat/public-site-services-refresh","refs/heads/feat/public-content-final-alignment","refs/heads/feat/residential-application-readiness","refs/heads/feat/commercial-dynamic-application","refs/heads/feat/managed-property-application-routing"]'), github.ref)) || (github.event_name == 'pull_request' && contains(fromJSON('["feat/pr01-account-driven-client-portal","feat/public-site-services-refresh","feat/public-content-final-alignment","feat/residential-application-readiness","feat/commercial-dynamic-application","feat/managed-property-application-routing"]'), github.event.pull_request.head.ref) && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:

@@ -122,11 +122,12 @@ export async function action({context,params,request}:ActionFunctionArgs){
   return fail(safe,error instanceof AppError?error.status:422);
  }
 }
-function Fields({section,answers,primary}: {section:AnswerStep;answers:Record<string,string>;primary:boolean}){
+function Fields({section,answers,primary,detailsOnly=false}: {section:AnswerStep;answers:Record<string,string>;primary:boolean;detailsOnly?:boolean}){
  const [rental,setRental]=useState(answers.hasRentalHistory??'');
  const [employment,setEmployment]=useState(answers.employmentType??'');
  const [pets,setPets]=useState(answers.petsProposed??'');
  return <div className="rental-fields">{FIELDS[section].map((field:Form18Field)=>{
+  if(detailsOnly&&(field.key==='idType'||/^(nextKin|emergency)/.test(field.key)||/^reference[12]Address$/.test(field.key)))return null;
   if(section==='identity'&&TENANCY_PREFERENCE_KEYS.includes(field.key)&&!primary)return null;
   if(section==='identity'&&field.key==='petDetails'&&pets!=='Yes')return null;
   if(section==='rental'&&field.key==='noHistoryReason'&&rental!=='No')return null;
@@ -199,7 +200,8 @@ function Household({people,editable}:{
    </Form></div>}
  </section>;
 }
-function Documents({docs,editable}: {docs:any[];editable:boolean}){
+function Documents({docs,editable,uploadsEnabled=true}: {docs:any[];editable:boolean;uploadsEnabled?:boolean}){
+ if(!uploadsEnabled)return <div className="rental-section-note"><h3>No documents are needed to submit this application</h3><p>Complete the application details and continue to your declaration. Identity-document and other file uploads are currently disabled. ProInspect will explain any necessary evidence request and its secure handling arrangements separately. Do not email identity documents.</p><Link className="button secondary" to="?step=review">Continue to review and declare</Link></div>;
  return <><div className="rental-section-note">Documents are stored privately. Files are quarantined for security review and are never shared through public marketing pages or ordinary email attachments. Please upload only requested evidence.</div>
  {editable&&<Form method="post" encType="multipart/form-data" className="rental-form">
   <input type="hidden" name="intent" value="upload"/>
@@ -244,7 +246,7 @@ function Review({page,editable}:{page:any;editable:boolean}){
    <p>Collection notice version: {page.notice.version||'Pending approval'}. Recipient: {page.property.agentName}. Information is used to administer this application. Request access or corrections through the private recovery and privacy-request process below. No credit-check permission is inferred.</p>
    {page.notice.mode==='configured'?<div className="rental-notice-list">{page.notice.entries.map((n:any,i:number)=><article key={i}><strong>{n.name}</strong><p>Operator: {n.operatorContact}</p><p>How to obtain information: {n.accessInstructions}</p></article>)}</div>:
     <p>The leasing representative has confirmed that tenancy databases are not used for this application. If that changes, an appropriate written notice must be provided.</p>}
-   <p className="rental-legal">This is an electronic residential application, not a signed lease. Do not lodge identification documents by ordinary email. Authorised staff review uploaded files through restricted document storage.</p>
+   <p className="rental-legal">{page.detailsOnly?'This application is submitted for private ProInspect review. No document uploads are required. Do not email identity documents.':'This is an electronic residential application, not a signed lease. Do not lodge identification documents by ordinary email. Authorised staff review uploaded files through restricted document storage.'}</p>
   </section>
   {page.state==='complete'&&page.noticeMatches&&editable?<div className="rental-success"><h3>Your declaration is complete</h3><p>If you edit any section, you must declare again.</p></div>:null}
   {editable&&(page.state!=='complete'||!page.noticeMatches)&&<Form method="post" className="rental-form">
@@ -306,11 +308,11 @@ export default function RentalApplication(){
     <div className="rental-card-heading"><div><p className="rental-progress-label">{page.role==='primary'?'Primary applicant':'Applicant '+page.ordinal}</p><h2>{stepDef.title}</h2><p>{stepDef.help}</p></div></div>
     {result?.error&&<p role="alert" className="notice warning">{result.error}</p>}
     {step==='review'?<Review page={page} editable={editable}/>:
-     step==='documents'?<Documents docs={page.documents} editable={editable}/>:
+     step==='documents'?<Documents docs={page.documents} editable={editable} uploadsEnabled={page.uploadsEnabled}/>:
      <>{editable?<Form method="post" className="rental-form" key={step}>
         <input type="hidden" name="intent" value="save"/><input type="hidden" name="section" value={step}/><input type="hidden" name="version" value={page.version}/>
         {step==='identity'&&<div className="rental-section-note">Contact email: <strong>{page.answers.identity?.email}</strong>. Your private link is tied to this address. It cannot be changed from the form.</div>}
-        <Fields section={step as AnswerStep} answers={page.answers[step]??{}} primary={page.role==='primary'}/>
+        <Fields section={step as AnswerStep} answers={page.answers[step]??{}} primary={page.role==='primary'} detailsOnly={page.detailsOnly}/>
         <div className="rental-actions"><Link to={'?step='+FORM18_STEPS[Math.max(0,index-1)].id}>← Previous step</Link>
          <button className="button" type="submit">Save &amp; continue →</button></div>
        </Form>:<><p className="rental-muted">The application is read-only at this stage.</p><dl className="rental-summary">{FIELDS[step as AnswerStep].filter(f=>page.answers[step]?.[f.key]).map(f=><Entry key={f.key} label={f.label} value={page.answers[step][f.key]}/>)}</dl><Link to="?step=review">View submission status</Link></>}</>}

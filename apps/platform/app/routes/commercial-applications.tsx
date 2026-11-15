@@ -50,6 +50,7 @@ export default function CommercialApplications() {
                 label="Prepare flow and request mailbox verification"
                 build={(f) => ({
                   listingId: get(f, 'listingId'),
+                  managedByProInspect: f.get('managedByProInspect') === 'on',
                   authorityReference: get(f, 'authorityReference'),
                   recipient: get(f, 'recipient'),
                   privacyVersion: get(f, 'privacyVersion'),
@@ -75,6 +76,10 @@ export default function CommercialApplications() {
                       </option>
                     ))}
                   </select>
+                </label>
+                <label className="check">
+                  <input type="checkbox" name="managedByProInspect" required />
+                  ProInspect directly manages this property and has authority to administer its applications.
                 </label>
                 <label>
                   Signed application-processing authority reference

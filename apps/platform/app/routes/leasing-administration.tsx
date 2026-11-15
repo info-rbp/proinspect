@@ -34,12 +34,13 @@ function ModeFields({kind,mode,setMode,noticeMode,setNoticeMode,notices,setNotic
  <label className="field">Application method
   <select name="applicationMode" value={mode} onChange={e=>setMode(e.target.value as Mode)}>
    <option value="unavailable">Applications not currently available</option>
-   <option value="external">Agency/landlord application portal</option>
-   {kind==='residential'&&<option value="proinspect">ProInspect online rental application</option>}
+   <option value="external">External application link — managed by another party</option>
+   {kind==='residential'&&<option value="proinspect">ProInspect-managed property — secure application</option>}
   </select>
  </label>
  {mode==='external'&&<label className="field">Approved application URL<input type="url" name="applicationUrl" required placeholder="https://agency.example/apply/property" maxLength={1000}/></label>}
  {mode==='proinspect'&&<>
+  <label className="check"><input type="checkbox" name="managedByProInspect" required/>ProInspect directly manages this property and has authority to administer its applications.</label>
   <p className="notice warning">Activate only after verifying a written application-processing instruction. ProInspect facilitates the application; the landlord or licensed leasing representative decides the outcome.</p>
   <label className="field">Written authority reference<input name="applicationAuthorityReference" required minLength={5} maxLength={200}/></label>
   <label className="field">Authorised landlord/agency recipient email<input type="email" name="applicationRecipientEmail" required maxLength={254}/></label>
@@ -70,7 +71,7 @@ function CreateListing({clients,properties,selectedPropertyId}:{clients:any[];pr
     priceCents:input('priceAud')?Math.round(Number(input('priceAud'))*100):null,pricePeriod:input('pricePeriod'),
     bedrooms:num('bedrooms'),bathrooms:num('bathrooms'),parking:num('parking'),areaSqm:num('areaSqm'),
     availableFrom:input('availableFrom')||null,agentName:input('agentName'),
-    agentRole:input('agentRole'),applicationMode:mode,
+    agentRole:input('agentRole'),applicationMode:mode,managedByProInspect:mode==='proinspect'&&f.get('managedByProInspect')==='on',
     ...(mode==='external'?{applicationUrl:input('applicationUrl')}:{}),
     applicationAuthorityReference:mode==='proinspect'?input('applicationAuthorityReference'):'',
     applicationRecipientEmail:mode==='proinspect'?input('applicationRecipientEmail'):'',
@@ -102,7 +103,7 @@ function CreateListing({clients,properties,selectedPropertyId}:{clients:any[];pr
     <label className="field">Parking<input type="number" min={0} name="parking"/></label>
    </>:<label className="field">Internal floor area (m²)<input type="number" min={0} name="areaSqm"/></label>}
    <label className="field">Available from<input type="date" name="availableFrom"/></label>
-   <label className="field">Responsible leasing representative<input name="agentName" required/></label>
+   <label className="field">Responsible leasing representative (private staff record)<input name="agentName" required/></label>
    <label className="field">Leasing representative role<select name="agentRole"><option value="leasing_agent">Leasing agent</option><option value="property_manager">Property manager</option><option value="landlord">Landlord</option></select></label>
   </div>
   <label className="field">Approved property description<textarea rows={5} name="description" minLength={50} maxLength={8000} required/></label>
@@ -122,7 +123,7 @@ function EditApplicationSettings({listing}:{listing:any}){
   const f=new FormData(e.currentTarget),get=(x:string)=>String(f.get(x)??'').trim();
   try{
    await send('/api/staff/leasing/'+listing.id+'/application-settings',{version:listing.version,
-    applicationMode:mode,applicationUrl:mode==='external'?get('applicationUrl'):'',
+    applicationMode:mode,managedByProInspect:mode==='proinspect'&&f.get('managedByProInspect')==='on',applicationUrl:mode==='external'?get('applicationUrl'):'',
     applicationAuthorityReference:mode==='proinspect'?get('applicationAuthorityReference'):'',
     applicationRecipientEmail:mode==='proinspect'?get('applicationRecipientEmail'):'',
     tenancyDatabaseNoticeMode:mode==='proinspect'?noticeMode:'unconfigured',
@@ -134,12 +135,13 @@ function EditApplicationSettings({listing}:{listing:any}){
  return <form onSubmit={save} className="stack"><h4>Application configuration — {listing.title}</h4>
   <div className="panel stack"><label className="field">Application method
    <select value={mode} onChange={e=>setMode(e.target.value as Mode)}>
-    <option value="unavailable">No applications</option><option value="external">Agency's own application link</option>
-    {listing.kind==='residential'&&<option value="proinspect">ProInspect online rental application</option>}
+    <option value="unavailable">No applications</option><option value="external">External application link — managed by another party</option>
+    {listing.kind==='residential'&&<option value="proinspect">ProInspect-managed property — secure application</option>}
    </select></label>
    {mode==='external'&&<label className="field">Approved external URL<input type="url" name="applicationUrl" defaultValue={listing.application_url??''} required/></label>}
    {mode==='proinspect'&&<>
-    <p className="small">This mode is for residential leasing only. Verify the signed instruction before enabling. The landlord or licensed agency remains the decision-maker.</p>
+  <label className="check"><input type="checkbox" name="managedByProInspect" required/>ProInspect directly manages this property and has authority to administer its applications.</label>
+    <p className="small">This mode is for residential properties directly managed by ProInspect. Verify the signed management instruction before enabling. The landlord or licensed agency remains the decision-maker.</p>
     <label className="field">Application authority reference<input name="applicationAuthorityReference" required defaultValue={listing.application_authority_reference??''} minLength={5}/></label>
     <label className="field">Verified recipient email<input type="email" required name="applicationRecipientEmail" defaultValue={listing.application_recipient_email??''}/></label>
     <label className="field">Tenancy database notice<select value={noticeMode} onChange={e=>setNoticeMode(e.target.value)}><option value="unconfigured">Not confirmed</option><option value="not_used">No tenancy database used</option><option value="configured">Written notice required</option></select></label>
@@ -159,16 +161,18 @@ function ApprovalControls({listing}:{listing:any}){
   catch(error){setMessage(error instanceof Error?error.message:'Approval action failed.');}finally{setBusy(false);}
  };
  if(listing.kind!=='residential'||listing.application_mode!=='proinspect')return null;
+ if(listing.details_only_intake)return <section className="panel stack"><h4>ProInspect-managed application intake is active</h4><p>Applications are collected for the restricted staff review queue under the recorded owner-authorised release and published privacy policy. Document uploads and external application forwarding are disabled for this intake mode.</p></section>;
  return <section className="panel stack"><h4>Residential application approval</h4>
  <p className="small">Approval: {listing.rental_approval_state??'pending'} · Recipient verified: {listing.rental_recipient_verified_at?'Yes':'No'}</p>
  <button className="button secondary" type="button" disabled={busy} onClick={()=>submit('recipient-challenge',{})}>Send recipient verification email</button>
  <form className="stack" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);submit('rental-approve',{
  authorityAttestation:String(f.get('authorityAttestation')),authorityDocumentReference:String(f.get('authorityDocumentReference')),
  privacyNoticeVersion:String(f.get('privacyNoticeVersion')),confirmAuthority:f.get('confirmAuthority')==='on',
- confirmNotice:f.get('confirmNotice')==='on',confirmRecipient:f.get('confirmRecipient')==='on'});}}>
+ confirmDirectManagement:f.get('confirmDirectManagement')==='on',confirmNotice:f.get('confirmNotice')==='on',confirmRecipient:f.get('confirmRecipient')==='on'});}}>
  <label className="field">Written instruction reference<input name="authorityDocumentReference" minLength={6} required/></label>
  <label className="field">Authority evidence and approval notes<textarea name="authorityAttestation" rows={3} minLength={30} required/></label>
  <label className="field">Approved privacy collection notice version<input name="privacyNoticeVersion" minLength={3} required/></label>
+ <label><input type="checkbox" name="confirmDirectManagement" required/> I have verified that ProInspect directly manages this property.</label>
  <label><input type="checkbox" name="confirmAuthority" required/> I have checked the written application-processing authority.</label>
  <label><input type="checkbox" name="confirmNotice" required/> I have checked the approved privacy and tenancy-database notices.</label>
  <label><input type="checkbox" name="confirmRecipient" required/> The verified recipient is authorised for this listing.</label>
@@ -215,12 +219,12 @@ function ListingInspectionManagement({listing}:{listing:any}){
  };
  return <details className="panel">
   <summary style={{fontWeight:750,cursor:'pointer'}}>Inspection scheduling and rental application readiness</summary>
-  <p className="small">Inspection times are entered and displayed in Perth time (AWST). Rental intake cannot be enabled from this page; independent approvals are required.</p>
+  <p className="small">Inspection times are entered and displayed in Perth time (AWST). Use the management tag and the recorded application release to determine the permitted intake method.</p>
   <button type="button" className="button secondary small" onClick={start} disabled={busy}>{busy?'Loading…':detail?'Refresh property operations':'Load property operations'}</button>
   {message&&<p role="status">{message}</p>}
   {detail&&<div className="stack">
    <section className="panel stack"><h4>Application release checklist</h4>
-    <p className="small">{detail.applicationReadiness.technicalReady?'Recorded technical and approval checks satisfied; independent acceptance still required.':'Application intake remains gated until all required checks are completed.'}</p>
+    <p className="small">{detail.applicationReadiness.technicalReady?'The configured intake checks are satisfied.':'Complete the listed checks for the selected intake method.'}</p>
     <div className="stack">{detail.applicationReadiness.checks.map(check=><div className="record-row" key={check.key}>
      <div><strong>{check.passed?'✓':'○'} {check.label}</strong>{!check.passed&&<p className="small">{check.nextAction}</p>}</div>
     </div>)}</div><p className="small">{detail.applicationReadiness.notice}</p>
@@ -340,6 +344,7 @@ function ListingOperations({listing}:{listing:any}){
   <div className="actions">{listing.status!=='published'&&<button className="button small" type="button" onClick={()=>publish('published')} disabled={busy}>Publish approved listing</button>}
    {listing.status==='published'&&<button className="button secondary small" type="button" onClick={()=>publish('withdrawn')} disabled={busy}>Withdraw listing</button>}
    {listing.status==='published'&&<button className="button secondary small" type="button" onClick={()=>publish('leased')} disabled={busy}>Mark leased</button>}</div>
+  <ManagementTag key={listing.management_version??0} listing={listing}/>
   <EditListingFacts listing={listing}/>
   <details><summary>Upload approved listing photograph</summary><form onSubmit={photo} className="stack">
    <label className="field">Image file<input name="file" type="file" required accept="image/jpeg,image/png,image/webp"/></label>
@@ -352,6 +357,22 @@ function ListingOperations({listing}:{listing:any}){
    <ApprovalControls listing={listing}/>
   {message&&<p role="status">{message}</p>}
  </div>;
+}
+function ManagementTag({listing}:{listing:any}){
+ const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),revalidator=useRevalidator();
+ const label=listing.management_provider==='proinspect'?'ProInspect-managed':listing.management_provider==='external'?'Managed by another party':'Management not confirmed';
+ return <section className="panel stack"><h4>Property management tag — {label}</h4>
+  <p className="small">This classification applies to every listing for this property. Changing it away from ProInspect-managed immediately closes native intake. Save an approved application link for externally managed properties.</p>
+  <form className="stack" onSubmit={async e=>{e.preventDefault();setBusy(true);const f=new FormData(e.currentTarget);
+   try{await send('/api/staff/leasing/'+listing.id+'/management',{provider:f.get('provider'),reference:f.get('reference'),version:listing.management_version??0});setMessage('Management tag saved.');revalidator.revalidate();}
+   catch(error){setMessage(error instanceof Error?error.message:'Tag could not be saved.');}finally{setBusy(false);}}}>
+   <label className="field">Managed by<select name="provider" defaultValue={listing.management_provider??'unconfirmed'}>
+    <option value="unconfirmed">Not confirmed — native applications closed</option><option value="proinspect">ProInspect — directly managed</option><option value="external">Another party — external application link</option>
+   </select></label>
+   <label className="field">Management instruction or owner confirmation reference<input name="reference" minLength={8} maxLength={300} required defaultValue={listing.management_reference??''}/></label>
+   <button className="button secondary" disabled={busy} type="submit">{busy?'Saving…':'Save management tag'}</button>
+   {message&&<p role="status">{message}</p>}
+  </form></section>;
 }
 export async function loader({request,context,params}:LoaderFunctionArgs){
  const [leasing,admin]=await Promise.all([
