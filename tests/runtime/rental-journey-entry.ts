@@ -5,7 +5,7 @@
 import { publicListing,publicListings,staffLeasing } from '../../apps/platform/worker/features/leasing.server';
 import { publicOpenHomeSessions } from '../../apps/platform/worker/features/open-home.server';
 import { issueRecipientChallenge,verifyRecipient,approveRentalListing } from '../../apps/platform/worker/features/rental-governance.server';
-import { rentalStartPage, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental,changeRentalEmail,inviteRentalApplicant,withdrawRental,uploadRentalDocument,deleteRentalDocument } from '../../apps/platform/worker/features/rental-applications.server';
+import { rentalStartPage, rentalListingReady, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental,changeRentalEmail,inviteRentalApplicant,withdrawRental,uploadRentalDocument,deleteRentalDocument } from '../../apps/platform/worker/features/rental-applications.server';
 import {dispatchRentalScans} from '../../apps/platform/worker/features/rental-scan-dispatch.server';
 import {acceptRentalScan} from '../../apps/platform/worker/features/rental-malware.server';
 import {rentalDocumentDownload,reviewRentalDocument} from '../../apps/platform/worker/features/rental-review.server';
@@ -74,6 +74,7 @@ export default {
    if(path==='/__test/start-page'){
     return Response.json(await rentalStartPage(env,url.searchParams.get('slug')??''));
    }
+   if(path==='/__test/listing-ready')return Response.json({ready:await rentalListingReady(env,url.searchParams.get('slug')??'')});
    if(path==='/__test/start'&&request.method==='POST'){
     const d=await request.json() as {listingId:string;name:string;email:string;consent:boolean;turnstile?:string};
     return Response.json(await startRental(env,request,d.listingId,{name:d.name,email:d.email,consent:d.consent},d.turnstile));

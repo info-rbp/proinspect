@@ -61,6 +61,7 @@ try{
  await check('a flag alone cannot enable intake or publish a privacy policy',async()=>{
   const state=await call('/__test/release-state');assert.equal(state.rental,false);assert.equal(state.privacy,null);
   assert.equal((await call('/__test/start-page?slug=managed-synthetic')).enabled,false);
+  assert.equal((await call('/__test/listing-ready?slug=managed-synthetic')).ready,false);
  });
  if(documentsMode){
   await run("INSERT INTO managed_rental_document_releases(id,environment,source_sha,policy_version,policy_sha256,intake_mode,scanner_worker_name,scanner_source_sha,scanner_image_digest,scanner_key_id,scanner_public_jwk,scanner_test_sha256,scanner_verified_at,authorized_by,authorization_reference,enabled,created_at) VALUES('mdr_synthetic','production',?,?,?,'scanned_documents','proinspect-private-document-scanner',?,?,?,?,?,?,'synthetic-owner','Synthetic only, never live acceptance evidence',1,?)",source,MANAGED_RENTAL_POLICY_VERSION,policyHash,source,SCANNER_BASE_IMAGE_DIGEST,keyId,JSON.stringify(publicKey),'c'.repeat(64),stamp,stamp);
@@ -71,6 +72,7 @@ try{
   for(const key of ['handoff','commercial'])assert.equal(state[key],false);
   assert.equal(state.privacy.version_label,MANAGED_RENTAL_POLICY_VERSION);
   assert.equal((await call('/__test/start-page?slug=managed-synthetic')).enabled,false,'A management tag is still required');
+  assert.equal((await call('/__test/listing-ready?slug=managed-synthetic')).ready,false);
   await assert.rejects(()=>run(documentsMode?"UPDATE managed_rental_document_releases SET source_sha=?":"UPDATE managed_rental_intake_releases SET source_sha=?",'b'.repeat(40)),documentsMode?/DOCUMENT_RELEASE_IMMUTABLE/:/MANAGED_RELEASE_IMMUTABLE/);
  });
  await check('staff can tag a property; stale changes cannot overwrite its classification',async()=>{
@@ -78,6 +80,7 @@ try{
   await call('/__test/management-tag',body);await call('/__test/management-tag',body,409);
   assert.equal((await first("SELECT provider,version FROM property_application_management WHERE property_id='prop_managed_synthetic'")).provider,'proinspect');
   assert.equal((await call('/__test/start-page?slug=managed-synthetic')).enabled,true);
+  assert.equal((await call('/__test/listing-ready?slug=managed-synthetic')).ready,true,'The property-page link must load the same release-bound retention policy as the application form');
   assert.equal((await first("SELECT rental_approval_state,rental_recipient_verified_at FROM leasing_listings WHERE id='lst_managed_synthetic'")).rental_approval_state,'pending','No independent approval or verified inbox was fabricated');
  });
  await check('managed intake creates a private application with a 14-day draft deadline',async()=>{
@@ -171,6 +174,7 @@ try{
  await check('an external management tag closes native intake even with an accepted release',async()=>{
   await call('/__test/management-tag',{listingId:'lst_managed_synthetic',input:{provider:'external',reference:'SYNTHETIC-EXTERNAL-INSTRUCTION',version:1}});
   assert.equal((await call('/__test/start-page?slug=managed-synthetic')).enabled,false);
+  assert.equal((await call('/__test/listing-ready?slug=managed-synthetic')).ready,false,'External management closes the property-page native application link too');
   await call('/__test/start',{listingId:'lst_managed_synthetic',name:'Blocked Applicant',email:'blocked@example.invalid',consent:true,turnstile:'synthetic'},404);
   assert.equal((await first('SELECT COUNT(*) AS n FROM rental_applications')).n,0);
  });

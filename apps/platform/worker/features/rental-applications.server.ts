@@ -112,7 +112,6 @@ export async function startRental(env:Env,request:Request,listingId:string,input
 }
 /** Public CTA readiness reuses every hosted start-page gate, including the approved notice. */
 export async function rentalListingReady(env:Env,slug:string){
- if(!rentalEnabled(env))return false;
  try{return (await rentalStartPage(env,slug)).enabled;}catch{return false;}
 }
 export async function tokenAccess(env:Env,token:string){
