@@ -13,7 +13,7 @@ test('the public home, every service and all content routes are part of the one 
   const routes = source('apps/platform/app/routes.ts');
   assert.match(routes, /layout\('routes\/public-layout\.tsx'/);
   assert.match(routes, /index\('\.\.\/\.\.\/marketing\/app\/routes\/home\.tsx'\)/);
-  for (const file of ['home', 'services', 'service', 'sector', 'content', 'resources', 'information'])
+  for (const file of ['home', 'services', 'service', 'sector-redirect', 'content', 'resources', 'information'])
     assert.ok(routes.includes(`../../marketing/app/routes/${file}.tsx`), file);
   assert.match(routes, /route\('contact', 'routes\/public-contact\.tsx'\)/);
   assert.match(routes, /route\('signin', 'routes\/signin\.tsx'\)/);
@@ -27,13 +27,15 @@ test('the public home, every service and all content routes are part of the one 
 
 test('public marketing pages are indexable only on the canonical domain, private pages never are', () => {
   for (const publicPath of ['/', '/services', '/contact', '/services/routine-inspection',
-    '/sectors/strata-building', '/how-it-works', '/resources', '/resources/pre-vacate-vs-final',
+    '/student-living', '/how-it-works', '/resources', '/resources/pre-vacate-vs-final',
     '/why-proinspect', '/sitemap.xml', '/robots.txt']) {
     assert.equal(isPublicSitePath(publicPath), true, publicPath);
     assert.equal(shouldIndexPublicPage(publicPath, 'https://proinspect.systems', 'production'), true);
     assert.equal(shouldIndexPublicPage(publicPath, 'https://some-preview.workers.dev', 'production'), false);
     assert.equal(shouldIndexPublicPage(publicPath, 'https://proinspect.systems', 'local'), false);
   }
+  assert.equal(isPublicSitePath('/sectors/strata-building'), true);
+  assert.equal(shouldIndexPublicPage('/sectors/strata-building', 'https://proinspect.systems', 'production'), false);
   // The drafts are public pages but must never be indexed until formally approved.
   for (const draft of ['/privacy', '/terms']) {
     assert.equal(isPublicSitePath(draft), true);
