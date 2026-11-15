@@ -53,6 +53,8 @@ export interface Workspace {
   name: string;
   role: string;
   href: string;
+  accountType?: string;
+  experienceTags?: string[];
 }
 export interface User {
   id: string;
