@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PUBLIC_PLANS, PUBLIC_COMPANY, RESIDENTIAL_SERVICE_GROUPS, BUILDING_SERVICE_GROUPS } from '../packages/marketing/public-facts.ts';
@@ -49,4 +50,10 @@ test('contact categories and postcode stay compatible with existing enquiry stor
   const value=enquirySchema.parse({requestKey:crypto.randomUUID(),name:'Example Enquirer',email:'example@example.test',kind:'portfolio',category:'student-living',postcode:'6000',message:'Please scope our shared property support.',consent:true});
   assert.equal(value.kind,'portfolio'); assert.equal(value.category,'student-living');
   assert.equal(enquirySchema.safeParse({...value,postcode:'60000'}).success,false);
+});
+
+test('inactive guest campaign copy does not expose obsolete rates in public JavaScript',()=>{
+ const source=readFileSync('apps/platform/app/routes/guest-book.tsx','utf8');
+ assert.doesNotMatch(source,/\$[0-9]+/);
+ assert.match(source,/Sign in to view individual service pricing or request a quote/);
 });
