@@ -25,6 +25,10 @@
 .site .mkt-brand {
   flex-shrink: 0;
 }
+.site .mkt-site-header .marketing-menu {
+  padding: 0;
+  border: 0;
+}
 .site .pi-brand-image {
   display: block;
   width: 100%;
@@ -575,6 +579,11 @@
     display: none;
   }
 }
+@media (min-width: 381px) {
+  .site .mkt-header-wrap .mkt-site-header {
+    flex-wrap: nowrap;
+  }
+}
 @media (max-width: 800px) {
   .site .pi-editorial-hero {
     padding-bottom: 3rem;
@@ -639,6 +648,10 @@
 @media (max-width: 560px) {
   .site .mkt-site-header {
     gap: 0.8rem;
+  }
+  .site .mkt-header-actions .button {
+    font-size: 0.72rem;
+    padding: 0.65rem 0.8rem;
   }
   .site .pi-editorial-copy {
     padding: 0.5rem 0 0;
