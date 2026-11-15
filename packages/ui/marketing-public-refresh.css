@@ -538,7 +538,7 @@
 .site :is(.pi-editorial-hero, .pi-editorial-section) [id] {
   scroll-margin-top: 2rem;
 }
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
   .site .mkt-site-links {
     display: none;
   }
@@ -574,7 +574,7 @@
     gap: 3rem;
   }
 }
-@media (min-width: 1201px) {
+@media (min-width: 1401px) {
   .site .marketing-menu {
     display: none;
   }
