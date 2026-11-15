@@ -169,9 +169,10 @@ try {
     stamp,
   );
   await check('listing-specific authority and independent review are required', async () => {
-    const flow = await call('/draft-flow', {
-      input: {
+    await run("INSERT INTO property_application_management(property_id,provider,authority_reference,updated_by,updated_at) VALUES('prop_cm_synthetic','proinspect','SYNTHETIC-MANAGEMENT-AUTHORITY','usr_cm_a',?)",stamp);
+    const draftInput = {
         listingId: 'lst_cm_synthetic',
+        managedByProInspect: true,
         authorityReference: 'SYNTHETIC-SIGNED-AUTHORITY',
         recipient: 'lessor@example.invalid',
         privacyVersion: 'synthetic-privacy-v1',
@@ -182,8 +183,9 @@ try {
         guarantee: 'required',
         securityRequirements: 'Synthetic proposed guarantee assessment; no guarantee is executed.',
         retention: { draft: 30, submitted: 180, withdrawn: 30 },
-      },
-    });
+    };
+    await call('/draft-flow', {input:{...draftInput,managedByProInspect:false}},422);
+    const flow = await call('/draft-flow', {input:draftInput});
     flowId = flow.id;
     const row = await first(
         "SELECT id,envelope FROM outbox_events WHERE kind='commercial.recipient.verify' ORDER BY created_at DESC LIMIT 1",

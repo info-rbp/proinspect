@@ -18,7 +18,7 @@ export async function publicOpenHomeSessions(env:Env,at=new Date()){
   after,before).all<SessionRow>()).results;
  return rows.map(s=>({id:s.id,listingId:s.listing_id,kind:s.kind,slug:s.slug,
   title:s.title,address:s.display_address,suburb:s.suburb,postcode:s.postcode,
-  agentName:s.agent_name,startsAt:s.starts_at,endsAt:s.ends_at,
+  startsAt:s.starts_at,endsAt:s.ends_at,
   acceptingCheckIn:isOpenHomeCheckInAvailable(s,at)}));
 }
 async function throttle(env:Env,name:string,max:number){

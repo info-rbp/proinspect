@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { propertyManagementTag } from './managed-rental-intake.server';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal } from '../../../../packages/domain/index';
 import { digest, randomToken, seal, unseal } from '../../../../packages/auth/crypto';
@@ -27,6 +28,7 @@ export const commercialPrivateHeaders = {
 const text = z.string().trim().max(5000);
 export const commercialFlowInput = z.object({
   listingId: z.string().min(3).max(100),
+  managedByProInspect: z.literal(true),
   authorityReference: text.min(8),
   recipient: z
     .email()
@@ -232,6 +234,7 @@ export async function commercialFlow(env: Env, id: string, available = true) {
   assert(row, 404, 'COMMERCIAL_APPLICATION_UNAVAILABLE', 'Commercial application unavailable.');
   if (available) {
     await commercialGate(env);
+    assert((await propertyManagementTag(env,row.property_id))?.provider==='proinspect',404,'COMMERCIAL_MANAGEMENT_REQUIRED','Native applications require the ProInspect-managed property tag.');
     assert(
       row.kind === 'commercial' &&
         row.listing_status === 'published' &&
@@ -244,6 +247,7 @@ export async function commercialFlow(env: Env, id: string, available = true) {
     );
     const config = await flowConfig(env, row),
       policy = await currentLegalDocument(env, 'privacy');
+    assert(config.managedByProInspect===true,503,'COMMERCIAL_MANAGEMENT_REQUIRED','Native intake is available only for properties directly managed by ProInspect.');
     assert(
       config.listingSnapshot.propertyId === row.property_id &&
         config.listingSnapshot.clientId === row.instructed_by_client_id &&

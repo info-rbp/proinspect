@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { managedIntakeRelease } from './managed-rental-intake.server';
 import {providerReadiness} from '../../../../packages/operations/provider-readiness';
 import {operationalHealth} from './operational-health.server';
 import {stage6LaunchData} from './stage6-launch.server';
@@ -27,6 +28,8 @@ function configured(env: Env, feature: ReleaseFeature) {
   return (env as unknown as Record<string, unknown>)[RELEASE_FEATURES[feature]] === 'true';
 }
 async function activeApproval(env: Env, feature: ReleaseFeature) {
+  // The owner's explicit waiver applies only to tagged, document-free residential intake.
+  if(feature==='rental'){const release=await managedIntakeRelease(env);if(release)return {id:release.id};}
   if (!env.BUILD_SHA || !/^[a-f0-9]{40}$/.test(env.BUILD_SHA)) return null;
   return statement(env.DB, `SELECT a.id FROM feature_release_approvals a
     JOIN users u ON u.id=a.reviewed_by AND u.active=1 AND u.verified_at IS NOT NULL

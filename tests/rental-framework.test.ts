@@ -4,8 +4,9 @@ import { readFileSync } from 'node:fs';
 import { rentalApprovalInput,rentalOutcomeInput,rentalReferenceCheckInput,rentalApplicationCc,checkedHttpsEndpoint,nextRetry } from '../packages/marketing/rental-governance.ts';
 const read=(p:string)=>readFileSync(p,'utf8');
 test('rental approvals require affirmative checks and a substantial written authority statement',()=>{
- const input={version:3,authorityAttestation:'The signed authority was checked against the instructing landlord and was approved.',authorityDocumentReference:'AUTH-ABC-123',privacyNoticeVersion:'privacy-2026-10',confirmAuthority:true,confirmNotice:true,confirmRecipient:true};
+ const input={version:3,authorityAttestation:'The signed authority was checked against the instructing landlord and was approved.',authorityDocumentReference:'AUTH-ABC-123',privacyNoticeVersion:'privacy-2026-10',confirmAuthority:true,confirmDirectManagement:true,confirmNotice:true,confirmRecipient:true};
  assert.equal(rentalApprovalInput.safeParse(input).success,true);
+ assert.equal(rentalApprovalInput.safeParse({...input,confirmDirectManagement:false}).success,false);
  assert.equal(rentalApprovalInput.safeParse({...input,confirmRecipient:false}).success,false);
  assert.equal(rentalApprovalInput.safeParse({...input,authorityAttestation:'yes'}).success,false);
 });
@@ -31,7 +32,7 @@ test('reference checks are consent-gated and require evidence',()=>{
  assert.match(migration,/rental_reference_check_applicant_guard/);
  assert.match(migration,/rental_reference_check_immutable_delete/);
  assert.match(read('apps/platform/worker/features/rental-privacy.server.ts'),/DELETE FROM rental_application_reference_checks/);
- assert.equal(JSON.parse(read('apps/platform/wrangler.jsonc')).env.connected.vars.RENTAL_APPLICATIONS_ENABLED,'false');
+ assert.equal(JSON.parse(read('apps/platform/wrangler.jsonc')).env.connected.vars.RENTAL_APPLICATIONS_ENABLED,'true');
 });
 test('only independently allowed HTTPS endpoints can receive applicant information',()=>{
  assert.equal(checkedHttpsEndpoint('http://script.google.com/macro','script.google.com'),null);
@@ -43,7 +44,7 @@ test('only independently allowed HTTPS endpoints can receive applicant informati
 test('public rental intake requires explicit approval and verified recipient',()=>{
  const src=read('apps/platform/worker/features/rental-applications.server.ts');
  assert.match(src,/rental_approval_state==='approved'/);
- assert.match(src,/rental_recipient_verified_at IS NOT NULL/);
+ assert.match(src,/Boolean\(r.rental_recipient_verified_at\)/);
  const sql=read('database/migrations/0029_rental_application_completion.sql');
  assert.match(sql,/rental_listing_changes_revoke_approval/);
  assert.match(sql,/rental_recipient_challenge_listing/);
