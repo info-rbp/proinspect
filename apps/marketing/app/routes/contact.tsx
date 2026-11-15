@@ -29,7 +29,9 @@ export async function submitContact({request,context}:ActionFunctionArgs,
  const raw=await request.text();if(new TextEncoder().encode(raw).byteLength>20000)return fail('Your enquiry is too large.',413);
  const form=new URLSearchParams(raw);
  if(form.get('website'))return fail('Please submit the form directly.',422);
- const parsed=enquirySchema.safeParse({...Object.fromEntries(form),serviceId:form.get('serviceId')||undefined,consent:form.get('consent')==='yes'});
+ const category=form.get('category')||undefined;
+ const kind=category?(['service','strata','other'].includes(String(category))?category:'portfolio'):form.get('kind');
+ const parsed=enquirySchema.safeParse({...Object.fromEntries(form),kind,category,serviceId:form.get('serviceId')||undefined,consent:form.get('consent')==='yes'});
  if(!parsed.success)return fail('Check the highlighted fields.',422,parsed.error.flatten().fieldErrors);
  const target=env.PLATFORM_ORIGIN||env.APP_ORIGIN||'http://localhost:5173',host=new URL(target);
  if(!local&&host.protocol!=='https:')return fail('The enquiry service is not configured yet.',503);
@@ -65,9 +67,9 @@ export default function Contact() {
       <Field label="Your name" name="name"><input name="name" required minLength={2} maxLength={100} autoComplete="name" {...field('name')}/></Field>{error('name')}
       <Field label="Email address" name="email"><input name="email" required type="email" maxLength={254} autoComplete="email" {...field('email')}/></Field>{error('email')}
       <div className="grid-2"><Field label="Phone (optional)" name="phone"><input name="phone" maxLength={40} type="tel" autoComplete="tel"/></Field><Field label="Organisation (optional)" name="organisation"><input name="organisation" maxLength={180} autoComplete="organization"/></Field></div>
-      <Field label="What would you like to discuss?" name="kind"><select name="kind" defaultValue={settings.serviceId?'service':'portfolio'}><option value="service">A property service</option><option value="portfolio">Portfolio or ongoing support</option><option value="strata">Strata or building operations</option><option value="other">Another requirement</option></select></Field>
+      <Field label="What would you like to discuss?" name="category"><select name="category" defaultValue={settings.serviceId?'service':'portfolio'}><option value="service">An individual property service</option><option value="portfolio">Portfolio or outsourced operations</option><option value="residential">Residential support</option><option value="commercial">Commercial support</option><option value="strata">Strata or building services</option><option value="co-living">Co-Living support</option><option value="student-living">Student Living support</option><option value="construction">Construction project support</option><option value="maintenance">Maintenance or property care</option><option value="subscription">Subscription enquiry</option><option value="other">Another requirement</option></select></Field>
       <Field label="Service (optional)" name="serviceId"><select name="serviceId" defaultValue={settings.serviceId}><option value="">Help me choose</option>{SERVICES.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>{error('serviceId')}
-      <Field label="Suburb or service area (optional)" name="suburb"><input name="suburb" maxLength={100} autoComplete="address-level2"/></Field>
+      <div className="grid-2"><Field label="Suburb or locality (optional)" name="suburb"><input name="suburb" maxLength={100} autoComplete="address-level2"/></Field><Field label="Postcode (optional)" name="postcode"><input name="postcode" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} autoComplete="postal-code" {...field('postcode')}/></Field></div>{error('postcode')}
       <Field label="How can ProInspect help?" name="message"><textarea name="message" required minLength={15} maxLength={4000} rows={6} {...field('message')}/></Field>{error('message')}
       <label className="check"><input type="checkbox" name="consent" value="yes" required/>I agree to ProInspect using these details to respond to this enquiry. This does not subscribe me to marketing.</label>{error('consent')}
       <p className="small"><Link to="/privacy">Privacy information</Link>. This form is not monitored as an emergency service.</p>
@@ -77,7 +79,7 @@ export default function Contact() {
     </Form></>}
    </article>
    <aside className="stack mkt-contact-sidebar">
-    <section className="panel mkt-contact-support-panel pi-contact-direct"><p className="eyebrow">Get in touch</p><h2>A better starting point for property support.</h2><p>Service enquiries · Portfolio support · Strata &amp; buildings</p><a className="pi-inline-link" href="mailto:info@proinspect.systems">info@proinspect.systems <span aria-hidden="true">↗</span></a><p className="small">Western Australia. Service coverage and appointment availability are confirmed for your location.</p></section>
+    <section className="panel mkt-contact-support-panel pi-contact-direct"><p className="eyebrow">Get in touch</p><h2>A better starting point for property support.</h2><p>ProInspect Property Services Pty Ltd<br/>ABN 52 703 550 609 · ACN 703 550 609</p><a className="pi-inline-link" href="mailto:info@proinspect.systems">info@proinspect.systems <span aria-hidden="true">↗</span></a><p className="small">Scheduled services across approved Perth and Peel suburb/postcode combinations. Other WA locations by request. Scope, access and appointment availability are confirmed before work proceeds.</p></section>
     <section className="panel mkt-contact-support-panel"><h2>What happens next?</h2><ol className="pi-contact-next"><li>We review your property and requirements.</li><li>We clarify suitability, location and scope.</li><li>You receive the appropriate next step before any work is confirmed.</li></ol></section>
     <section className="panel mkt-contact-support-panel"><h2>Already a client or tenant?</h2><p>Use your authorised workspace for existing property requests and records. Tenancy decisions and urgent repairs should go to your responsible landlord or property manager.</p><Link className="pi-inline-link" to="/client">Sign Up/Sign In to access <span aria-hidden="true">→</span></Link><p><Link to="/tenants">Find tenant information</Link></p></section>
    </aside>

@@ -30,8 +30,8 @@ const services: Array<{ key: BrandImageKey; name: string; copy: string; to: stri
 
 export const meta = () =>
   seo(
-    'Property Inspections & Property Support — Western Australia',
-    'Explore residential, commercial and strata property inspections, leasing and maintenance support in WA. Practical on-site services with clear property records.',
+    'Property Inspections, Outsourced Operations & Building Services — Perth & Peel',
+    'Inspections, outsourced property operations and building services across Perth and Peel. Residential, commercial, strata, Co-Living, Student Living and construction support.',
     '/',
   );
 
@@ -42,7 +42,7 @@ export default function Home() {
         home
         eyebrow="ProInspect Property Services · Western Australia"
         title="Your property. Our practical support."
-        intro="From inspections and condition reports to leasing attendance and maintenance follow-up, we help you look after the detail — with clear instructions, on-site support and connected property records."
+        intro="Inspections. Outsourced property operations. Building services. From a single condition report to ongoing operational support, we connect practical work with clear records for owners, managers and building teams across Perth and Peel."
         image="residential"
         primary={{ label: 'Explore our services', to: '#property-services' }}
         secondary={{ label: 'Sign Up / Sign In', to: '/client' }}
@@ -55,8 +55,8 @@ export default function Home() {
               <h2>The right support for every kind of property.</h2>
             </div>
             <p>
-              One property or a growing portfolio. A one-off visit or an ongoing requirement. Find
-              the area that fits your needs.
+              Homes, workplaces, shared buildings and projects. Choose a one-off service, an
+              approved subscription or a tailored scope that fits the property and your responsibilities.
             </p>
           </div>
           <div className="pi-property-grid">
@@ -99,14 +99,15 @@ export default function Home() {
           </div>
           <div>
             <p>
-              Property decisions are easier when the right details are in front of you. We connect
-              the agreed task, on-site observations and resulting record, helping owners and
-              managers follow through with confidence.
+              Residential Inspection Only is $20 + GST per property/month. Residential All-Inclusive
+              and Commercial All-Inclusive are each $150 + GST per property/month. Each has an initial
+              24-month term, then continues month-to-month with 60 days’ written cancellation notice.
+              Inclusions, allowances, extras and any early-exit obligations are agreed before you commit.
             </p>
             <ul className="pi-principles">
-              <li>A defined scope before work starts</li>
-              <li>Records connected to the relevant property</li>
-              <li>Access that reflects each person’s role</li>
+              <li>Inspections: factual condition records for the next decision</li>
+              <li>Outsourced operations: administration, attendance and follow-through</li>
+              <li>Building services: presentation, grounds, minor works and specialist coordination</li>
             </ul>
             <Link className="pi-inline-link" to="/about">
               Discover the ProInspect approach <span aria-hidden="true">↗</span>

@@ -37,7 +37,7 @@ export default function LeasingIndex() {
     (x: any) =>
       (!kind || x.kind === kind) &&
       (!q ||
-        String(x.suburb + ' ' + x.display_address + ' ' + x.title)
+        String(x.suburb + ' ' + x.postcode + ' ' + x.display_address + ' ' + x.title)
           .toLowerCase()
           .includes(q)),
   );

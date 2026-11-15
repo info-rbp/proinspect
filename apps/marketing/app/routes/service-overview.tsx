@@ -21,7 +21,7 @@ export function loader({ request }: LoaderFunctionArgs) {
 export const meta: MetaFunction<typeof loader> = ({ loaderData: page }) =>
   page
     ? seo(page.name + ' Property Services — Western Australia', page.summary, '/' + page.key, {
-        type: page.planned ? 'WebPage' : 'Service',
+        type: 'Service',
         breadcrumbs: [{ name: page.name, path: '/' + page.key }],
       })
     : [];
@@ -49,13 +49,13 @@ export default function ServiceOverview() {
             <p className="pi-audience">{page.audience}</p>
           </div>
         </div>
-        {page.planned && (
+        {page.availability && (
           <div className="site-container">
             <aside className="pi-availability" aria-label="Service availability">
-              <strong>Future management capability</strong>
-              <p>{page.planned}</p>
+              <strong>Tailored service delivery</strong>
+              <p>{page.availability}</p>
               <Link to="/contact">
-                Discuss an existing service <span aria-hidden="true">→</span>
+                Request a tailored proposal <span aria-hidden="true">→</span>
               </Link>
             </aside>
           </div>
