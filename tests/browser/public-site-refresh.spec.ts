@@ -29,8 +29,8 @@ test('logo returns home and all service overviews have working images, FAQs and 
     await page.goto('/' + slug);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(content.headline);
     await expect(
-      page.locator('.pi-editorial-copy').getByRole('link', { name: 'Sign Up/Sign In to access' }),
-    ).toHaveAttribute('href', '/client');
+      page.locator('.pi-editorial-copy').getByRole('link', { name: 'Discuss your requirements' }),
+    ).toHaveAttribute('href', '/contact');
     const image = page.locator('.pi-editorial-hero-image img');
     await expect(image).toBeVisible();
     await expect
@@ -57,6 +57,7 @@ test('new pages reflow at narrow sizes and include canonical metadata and tenant
     '/commercial',
     '/strata',
     '/co-living',
+    '/student-living',
     '/construction',
     '/maintenance',
     '/leasing',
@@ -70,9 +71,26 @@ test('new pages reflow at narrow sizes and include canonical metadata and tenant
     for (const path of paths) {
       await page.goto(path);
       await expect(page.locator('main h1')).toHaveCount(1);
+      const overflow = await page.evaluate(() => {
+        const viewport = window.innerWidth;
+        const offenders = Array.from(document.querySelectorAll('main *'))
+          .map((element) => ({
+            tag: element.tagName.toLowerCase(),
+            className: String(element.className).slice(0, 80),
+            right: Math.round(element.getBoundingClientRect().right),
+            text: (element.textContent || '').trim().slice(0, 65),
+          }))
+          .filter((item) => item.right > viewport + 2)
+          .slice(0, 8);
+        return {
+          fits: document.documentElement.scrollWidth <= viewport + 2,
+          scrollWidth: document.documentElement.scrollWidth,
+          offenders,
+        };
+      });
       expect(
-        await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2),
-        width + 'px ' + path,
+        overflow.fits,
+        width + 'px ' + path + ' ' + JSON.stringify(overflow),
       ).toBe(true);
       await expect(page.locator('main .mkt-art-illustration-note')).toHaveCount(0);
     }

@@ -4,7 +4,7 @@ import { RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED } from '../../../../packages/ma
 /** Public marketing route families for the unified Worker, including unapproved legal drafts. */
 export function isPublicSitePath(pathname: string): boolean {
   if (pathname === '/' || pathname === '/services' || pathname === '/contact' || pathname === '/tenants' ||
-      pathname === '/resources' || new Set(['/residential','/commercial','/strata','/co-living','/construction','/leasing','/maintenance']).has(pathname) || pathname === '/service-finder' || pathname === '/who-we-help' || pathname === '/residential-property-support' || pathname === '/robots.txt' || pathname === '/sitemap.xml')
+      pathname === '/resources' || new Set(['/residential','/commercial','/strata','/co-living','/student-living','/construction','/leasing','/maintenance']).has(pathname) || pathname === '/service-finder' || pathname === '/who-we-help' || pathname === '/residential-property-support' || pathname === '/robots.txt' || pathname === '/sitemap.xml')
     return true;
   if (pathname === '/properties-for-lease' || /^\/properties-for-lease\/(?:residential|commercial)(?:\/[a-z0-9-]+)?$/.test(pathname)) return true;
   if (/^\/(?:services|sectors|how-we-work|resources|who-we-help)\/.+/.test(pathname)) return true;
@@ -16,6 +16,8 @@ export function isPublicSitePath(pathname: string): boolean {
 
 /** Never index the Worker preview alias or pages containing customer data. */
 export function shouldIndexPublicPage(pathname: string, requestOrigin: string, appEnv: string): boolean {
+  // Canonical sector redirects remain routable but must not be indexed as distinct pages.
+  if (/^\/sectors\/(?:residential|commercial|strata-building)$/.test(pathname)) return false;
   // Do not publicly index unapproved leasing/visitor flows in V3.
   if (pathname === '/residential-property-support' && !RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED) return false;
   if (pathname === '/leasing' || pathname.startsWith('/properties-for-lease') || pathname.startsWith('/open-home')) return false;

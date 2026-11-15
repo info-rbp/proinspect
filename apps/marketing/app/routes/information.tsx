@@ -18,89 +18,49 @@ import { MarketingPageHero, MarketingSectionTitle, MarketingEditorialBlocks } fr
 
 const pages: Record<string, { title: string; intro: string; sections: Array<[string, string]> }> = {
   'how-it-works': {
-    title: 'A practical path from instruction to property record.',
-    intro: 'Choose a single service, an ongoing subscription or a tailored outsourced operating scope. Agree the work, authority and commercial terms before it begins.',
+    title: 'From first instruction to a dependable property routine.',
+    intro: 'Choose an individual service, a residential or commercial subscription, or a tailored property programme. The onboarding steps differ according to the support you need.',
     sections: [
-      [
-        '1. Choose the outcome',
-        'Explore the service catalogue or discuss the property task you need help with.',
-      ],
-      [
-        '2. Set up your account and property',
-        'Verify your email, establish the appropriate relationship and select the property.',
-      ],
-      [
-        '3. Confirm the work',
-        'Agree the service, access arrangements, price and appointment before the work proceeds.',
-      ],
-      [
-        '4. Keep the result',
-        'Issued reports and documents are made available through the authorised property account.',
-      ],
-      [
-        'Ongoing arrangements',
-        'Residential Inspection Only is $20 + GST per property/month; Residential All-Inclusive and Commercial All-Inclusive are each $150 + GST per property/month. Initial term 24 months, then month-to-month with 60 days written cancellation notice. Confirm inclusions, allowances, extras and any early-exit obligations before committing. Individual service pricing is available to authorised signed-in clients, or request a quote.',
-      ],
+      ['1. Identify the right service', 'Tell us about the property, location, tenant or building context and the outcome you need. A one-off inspection can begin with a specific task; an ongoing programme starts with understanding your operating workload.'],
+      ['2. Confirm who can authorise the work', 'Identify the landlord, appointed manager, building representative or project team. Agree entry arrangements, instructions, spending approvals, permitted records and reporting recipients.'],
+      ['3. Review the scope and price', 'For one-off work, confirm the quote or signed-in individual service price. For subscriptions, review the included-service matrix, visit allowances, extras, initial term and separate early-exit provisions before accepting.'],
+      ['4. Mobilise the property or portfolio', 'For recurring work, confirm existing records, contacts, contractors, responsibilities, upcoming dates, reporting frequency and applicable checklists. For individual work, confirm the visit and property access.'],
+      ['5. Deliver the task and retain a record', 'The assigned work is completed within the agreed scope. Reports, images, issues registers or attendance records are issued to the appropriate authorised client or property workspace.'],
+      ['6. Review next steps', 'The client approves any new spend, follow-up attendance or specialist work outside the original scope. Subscription work continues to the agreed schedule rather than assuming unlimited services.'],
     ],
   },
   'client-experience': {
-    title: 'Your property work does not disappear into email.',
-    intro:
-      'One account connects you to the properties and relationships you are authorised to manage.',
+    title: 'A connected view of the work behind your property.',
+    intro: 'Keep requested tasks, responsible contacts and issued records associated with the relevant property and authorised relationship.',
     sections: [
-      [
-        'A record for the property',
-        'Bookings, requests, work orders and issued reports belong to the same property context.',
-      ],
-      [
-        'Access follows your role',
-        'A private landlord, tenant and operations employee do not see the same information. Access is checked for each relationship and document.',
-      ],
-      [
-        'Reports when they are ready',
-        'Email tells you an issued report is available. Your account remains its secure point of access.',
-      ],
-      [
-        'A workspace for each relationship',
-        'Self-managing landlords, property managers, strata managers, tenants, residents and council members use different authorised workspaces. Organisation review, invitations and effective membership dates determine access. Hosted availability is confirmed during release, not by this preview.',
-      ],
+      ['Start with your property', 'Identify the home, commercial tenancy, building or project relevant to your authorised role. Different people may have access to different records and actions.'],
+      ['Arrange or review an instruction', 'The service request records the location, purpose, access requirements and approved task. An enquiry or tentative calendar time is not automatically a confirmed booking.'],
+      ['See the documented outcome', 'Depending on the service, an issued record may contain dated photographs, condition observations, a completed-work summary, a handover list or matters needing review.'],
+      ['Follow up a task', 'The responsible client can consider issues, ask about next actions and separately authorise work beyond the initial service. Reports do not themselves make financial, legal or specialist decisions.'],
+      ['Permission follows responsibility', 'Private landlords, professional managers, contractors, tenants, resident groups and strata representatives do not share unrestricted access. Invitations and verified relationships determine what can be viewed.'],
+      ['An ongoing service relationship', 'Under an approved recurring programme, agreed reporting and service schedules support oversight across the property. Specific portal features depend on their authorised release and service permissions.'],
     ],
   },
   'why-proinspect': {
-    title: 'Practical work, connected records.',
-    intro: 'Choose one service or discuss ongoing property support.',
+    title: 'Practical attendance backed by a clear next action.',
+    intro: 'ProInspect connects inspections, property operations and building services so clients can spend less time chasing activity and more time making informed decisions.',
     sections: [
-      [
-        'A clear operational boundary',
-        'Confirm the instruction, access and reporting output before work starts.',
-      ],
-      [
-        'Property and scheme context',
-        'Keep bookings, requests and issued records connected instead of scattered across separate email conversations.',
-      ],
-      [
-        'Different roles, appropriate access',
-        'Self-managing landlords, professional managers, residents, tenants and council members have different permissions.',
-      ],
-      [
-        'Evidence rather than unsupported claims',
-        'Ask about the intended report and service scope. Testimonials, performance figures and credentials will only be published after verification.',
-      ],
+      ['Work shaped around the property', 'An apartment needs different care from a commercial tenancy, student accommodation operation or strata building. We scope the work around occupancy, shared facilities, building routines and the people responsible.'],
+      ['One-off work and operational continuity', 'Choose a single dated inspection or delegate an agreed recurring workload. The same practical service approach supports both specific tasks and broader outsourced operations.'],
+      ['Reports that support decisions', 'Condition photographs, issue registers, handover records, contractor attendance notes and owner updates explain what happened, what remains outstanding and who needs to decide.'],
+      ['Clear responsibilities', 'A documented authority matrix identifies the client, instructed activities, entry and safety conditions, approval limits and specialist responsibilities. That clarity helps prevent work from being lost between parties.'],
+      ['A practical partner for different teams', 'Self-managing landlords, agencies, asset managers, strata councils, shared-accommodation operators and project teams can obtain the type of service appropriate to their role.'],
+      ['Defined fees rather than assumptions', 'Subscriptions have disclosed marketing prices; individual service rates sit in authorised client accounts. Every paid engagement requires approved inclusions, expenses, allowances and additional work arrangements before acceptance.'],
     ],
   },
   'areas-we-service': {
-    title: 'Confirm service availability for your location.',
-    intro:
-      'Scheduled services use approved Perth and Peel suburb/postcode combinations. Other Western Australian locations are considered by request. Always confirm the task, access, capacity and travel before attendance.',
+    title: 'Where ProInspect provides property services.',
+    intro: 'Our standard scheduled service area covers approved suburbs in Perth and Peel. For other Western Australian locations, send an enquiry and we will assess coverage, travel and the work required.',
     sections: [
-      [
-        'Tell us the general location',
-        'Provide both suburb and postcode. Our 589-pair reference is a guide, not an automatic operational approval. Postal-only, island, regional and other flagged entries require manual review. Do not send access codes or confidential tenancy information.',
-      ],
-      [
-        'Confirm before booking',
-        'A location appearing in a guide does not establish a service-area or urgent-response commitment. Availability is confirmed with the appointment or quotation.',
-      ],
+      ['Search using suburb and postcode', 'Enter both details to locate your property in the Perth and Peel service reference. A match helps identify potential scheduled coverage but is not an appointment confirmation.'],
+      ['Some locations require individual confirmation', 'Island, postal delivery, regional or other specially flagged entries are reviewed manually. A general postal code does not necessarily establish practical travel or service availability.'],
+      ['Outside Perth and Peel', 'We consider other WA locations upon request. Include the general location, work type, access requirements and preferred timeframe so we can review capacity and appropriate travel arrangements.'],
+      ['Before confirming any service', 'We check the property instructions, lawful access, staffing, travel, scope and any additional cost. An urgent request does not guarantee immediate or emergency attendance.'],
     ],
   },
   about: {
@@ -215,7 +175,7 @@ export default function Information() {
             title={legal ? (p.legalApproved?'Approved document version':'Review the proposed contents.') : how ? 'Simple steps. Agreed responsibilities.' : why ? 'What matters in a property service.' : client ? 'Property work with context.' : serviceArea ? 'Check your location before arranging attendance.' : 'The practical approach behind the work.'}
             description={legal
               ? (p.legalApproved?'Version '+p.version+'; effective '+p.effectiveAt+'. Accepted historical versions are retained separately.':'The final policy or contract will take effect only after its actual operator, commitments, applicable disclosures and publication date have been approved.')
-              : 'We describe our service boundaries clearly and only make commitments once the instruction is confirmed.'}
+              : how ? 'Different engagements need different onboarding steps, approvals and reporting.' : client ? 'See how instructions, records and next actions stay associated with the property.' : why ? 'The outcome matters: a documented task, a clear next action and appropriate oversight.' : serviceArea ? 'Enter a suburb and postcode to review the local service reference.' : 'Find the right support and agree the scope before attendance.'}
           />
           <MarketingEditorialBlocks sections={p.sections} numbered={how} />
           {serviceArea && <CoverageLookup />}

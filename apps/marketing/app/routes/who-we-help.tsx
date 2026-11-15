@@ -30,6 +30,10 @@ const priorities: Record<string, string[]> = {
     'Building attendance and contractor access',
     'Documented follow-up for the scheme',
   ],
+  'co-living-operators': ['Room and common-area conditions', 'Resident departures and arrivals', 'Shared-facility care and coordination'],
+  'student-accommodation-operators': ['Room inventories and readiness', 'Resident orientation and departures', 'Communal cleaning and maintenance follow-up'],
+  'construction-project-owners': ['Milestone progress observations', 'Defect and issue registers', 'Practical handover preparation'],
+  'construction-teams': ['Site action follow-up', 'Contractor meeting attendance', 'Handover and completion evidence'],
   'building-operators': [
     'A presence on site for agreed tasks',
     'Access coordination and operational observations',
@@ -73,8 +77,8 @@ export default function WhoWeHelp() {
                   {audience.visual === 'strata'
                     ? 'Shared buildings'
                     : audience.visual === 'commercial'
-                      ? 'Commercial property'
-                      : 'Residential property'}
+                      ? (slug.includes('construction') ? 'Construction projects' : 'Commercial property')
+                      : (slug.includes('living') || slug.includes('accommodation') ? 'Shared accommodation' : 'Residential property')}
                 </p>
                 <h3>{audience.name}</h3>
                 <p>{audience.description}</p>
@@ -118,14 +122,14 @@ export default function WhoWeHelp() {
               </Link>
             </article>
             <article>
-              <h3>Co-living operators</h3>
+              <h3>Shared accommodation operators</h3>
               <p>
                 Tailored room and shared-area inspections, resident onboarding, turnover
                 coordination and everyday property support for Co-Living and Student Living.
-                Scope services separately from dedicated room and occupancy software releases.
+                Explore dedicated options for Student Living and Co-Living, with tailored operational scope and appropriate resident privacy.
               </p>
-              <Link className="pi-inline-link" to="/co-living">
-                Explore co-living <span aria-hidden="true">→</span>
+              <Link className="pi-inline-link" to="/student-living">
+                Explore Student Living <span aria-hidden="true">→</span>
               </Link>
             </article>
             <article>

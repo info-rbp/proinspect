@@ -62,22 +62,24 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
         <div className="mkt-footer-top">
           <div className="mkt-footer-intro">
             <Link className="brand inverse" to="/">ProInspect<span>PROPERTY SERVICES</span></Link>
-            <p>Practical on-site property services. Documented outcomes and connected records for residential, commercial and strata properties.</p>
+            <p>Inspections, outsourced property operations and building care for residential, commercial, shared accommodation and construction clients across Perth and Peel.</p>
             <Link className="mkt-footer-contact" to="/contact">Talk to ProInspect <span aria-hidden="true">↗</span></Link>
           </div>
           <div className="mkt-footer-group">
             <h3>Services</h3>
-            <Link to="/services">All services</Link>
+            <Link to="/services">Individual services</Link>
             <Link to="/service-finder">Find a service</Link>
+            <Link to="/how-we-work/outsourced-operations">Ongoing operations</Link>
             <Link to="/services/category/inspections">Inspections &amp; reports</Link>
             <Link to="/services/category/maintenance">Maintenance &amp; works</Link>
             <Link to="/services/category/access">Contractor access</Link>
           </div>
           <div className="mkt-footer-group">
             <h3>Who we help</h3>
-            {PUBLIC_NAVIGATION.filter(item => ['residential','commercial','strata','co-living','construction'].includes(item.href.slice(1))).map(item => <Link key={item.href} to={item.href}>{item.label}</Link>)}
+            {PUBLIC_NAVIGATION.filter(item => ['residential','commercial','strata','co-living','student-living','construction'].includes(item.href.slice(1))).map(item => <Link key={item.href} to={item.href}>{item.label}</Link>)}
             <Link to="/who-we-help">All customer types</Link>
             <Link to="/residential-property-support">Residential support options</Link>
+            <Link to="/student-living">Student Living</Link>
           </div>
           <div className="mkt-footer-group">
             <h3>ProInspect</h3>

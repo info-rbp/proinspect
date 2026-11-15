@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { SECTOR_OVERVIEWS } from '../../../../packages/marketing/sector-overviews';
 import { BrandImage, type BrandImageKey } from '../components/brand-image';
 import { EditorialHero, EditorialSteps } from '../components/editorial';
+import { PlanComparison } from '../components/plan-comparison';
 import { MarketingCta } from '../components/marketing-ui';
 import { seo } from '../lib/seo';
 
@@ -9,7 +10,7 @@ const services: Array<{ key: BrandImageKey; name: string; copy: string; to: stri
   ...Object.entries(SECTOR_OVERVIEWS)
     .filter(([key]) => key !== 'maintenance')
     .map(([key, page]) => ({
-      key: key as BrandImageKey,
+      key: (key === 'student-living' ? 'co-living' : key) as BrandImageKey,
       name: page.name,
       copy: page.summary,
       to: '/' + key,
@@ -45,7 +46,7 @@ export default function Home() {
         intro="Inspections. Outsourced property operations. Building services. From a single condition report to ongoing operational support, we connect practical work with clear records for owners, managers and building teams across Perth and Peel."
         image="residential"
         primary={{ label: 'Explore our services', to: '#property-services' }}
-        secondary={{ label: 'Sign Up / Sign In', to: '/client' }}
+        secondary={{ label: 'Discuss ongoing support', to: '/contact' }}
       />
       <section className="mkt-section pi-editorial-section" id="property-services">
         <div className="site-container">
@@ -115,6 +116,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <PlanComparison />
       <EditorialSteps />
       <section className="mkt-section pi-editorial-section">
         <div className="site-container pi-tenant-feature">

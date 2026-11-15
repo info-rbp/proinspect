@@ -5,7 +5,7 @@ import { MarketingPageHero } from '../components/page-patterns';
 import { MarketingCta } from '../components/marketing-ui';
 import { seo } from '../lib/seo';
 
-type Sector='residential'|'commercial'|'strata-building';
+type Sector='residential'|'commercial'|'strata-building'|'co-living'|'student-living'|'construction'|'ongoing';
 type Choice={value:string;label:string;explanation:string;ids:string[]};
 const choices:Record<Sector,Choice[]>={
   residential:[
@@ -28,9 +28,29 @@ const choices:Record<Sector,Choice[]>={
     {value:'moves',label:'We need help with a move or building handover',explanation:'Support specified access arrangements or operational transition.',ids:['move-in-move-out-attendance','building-handover-attendance']},
     {value:'urgent',label:'A building matter needs prompt attention',explanation:'Request review subject to safe access and capacity; not emergency response.',ids:['urgent-building-attendance','building-management-attendance']},
   ],
+  'co-living': [
+    {value:'rooms',label:'I need room or shared-area condition records',explanation:'Start with room inspections and lawful shared-space checks.',ids:['routine-inspection','common-property-inspection']},
+    {value:'turnover',label:'A resident is arriving or departing',explanation:'Scope keys, inventories, condition and cleaning follow-up with the operator.',ids:['key-handover-collection','move-in-move-out-attendance']},
+    {value:'operations',label:'I need ongoing Co-Living support',explanation:'Discuss an operator programme for rooms, residents, cleaning and maintenance.',ids:[]},
+  ],
+  'student-living': [
+    {value:'turnover',label:'A student room needs a turnover',explanation:'Agree room evidence, keys, inventory and readiness activities.',ids:['property-condition-report','key-handover-collection']},
+    {value:'care',label:'Shared student facilities need care',explanation:'Agree shared inspections, cleaning, maintenance and contractor follow-up.',ids:['common-property-inspection','maintenance-attendance']},
+    {value:'programme',label:'I need a student accommodation programme',explanation:'Scope room-by-room operations and resident support with the operator.',ids:[]},
+  ],
+  construction: [
+    {value:'progress',label:'I need progress or milestone observations',explanation:'Discuss site attendance and photographic reporting.',ids:['other-custom-appointment','property-meeting']},
+    {value:'defects',label:'I need defect or handover follow-up',explanation:'Record outstanding items and visible rectification progress.',ids:['defect-rectification-inspection','completed-works-inspection']},
+    {value:'programme',label:'I need recurring project support',explanation:'Define contractor coordination, reporting and handover.',ids:[]},
+  ],
+  ongoing: [
+    {value:'residential',label:'Residential inspection or operational subscription',explanation:'Compare residential plans and tailored portfolio support.',ids:[]},
+    {value:'commercial',label:'Commercial outsourced operations',explanation:'Explore Commercial All-Inclusive and delegated operations.',ids:[]},
+    {value:'building',label:'Building management, grounds or cleaning',explanation:'Request a building programme including routine care and reporting.',ids:[]},
+  ],
 };
 export const meta=()=>seo('Find the Right Property Inspection or Attendance',
-  'Use the ProInspect guided service finder to identify suitable residential, commercial or strata inspections, condition reports, make-good records and property attendance in WA.',
+  'Choose inspections or ongoing property operations for residential, commercial, strata, Co-Living, Student Living and construction settings in WA.',
   '/service-finder',{breadcrumbs:[{name:'Services',path:'/services'},{name:'Service finder',path:'/service-finder'}]});
 export default function ServiceFinder(){
   const {appOrigin}=useOutletContext<{appOrigin:string}>();
@@ -53,6 +73,10 @@ export default function ServiceFinder(){
           <option value="residential">Residential rental property</option>
           <option value="commercial">Commercial property</option>
           <option value="strata-building">Strata or shared building</option>
+          <option value="co-living">Co-Living property</option>
+          <option value="student-living">Student accommodation</option>
+          <option value="construction">Construction project</option>
+          <option value="ongoing">Ongoing property operations</option>
         </select>
         <p className="eyebrow">Step 2 of 2</p><h2>What needs to happen?</h2>
         <label className="mkt-finder-label" htmlFor="service-finder-task">Your intended outcome</label>
@@ -70,6 +94,12 @@ export default function ServiceFinder(){
     <section className="section mkt-section mkt-stone" aria-live="polite"><div className="site-container">
       <div className="mkt-section-heading"><div><p className="eyebrow">Suggested services</p><h2>Start with one of these options.</h2></div>
       <p>Compare the purpose and limits before arranging a visit.</p></div>
+      {matches.length === 0 && <div className="mkt-callout-panel">
+        <h3>A tailored programme fits this request.</h3>
+        <p>Review your property, operating workload, site or room count, reporting needs and approval responsibilities with us.</p>
+        <Link className="button secondary" to={sector === 'ongoing' && task === 'residential' ? '/residential-property-support' : sector === 'ongoing' && task === 'commercial' ? '/commercial' : sector === 'ongoing' ? '/strata' : '/' + sector}>Explore the programme <span aria-hidden="true">→</span></Link>
+        <Link className="mkt-text-link" to="/contact">Request a tailored scope <span aria-hidden="true">→</span></Link>
+      </div>}
       <div className="mkt-catalogue-grid">
         {matches.map(s=><article className="mkt-related-card mkt-catalogue-card" key={s.id}><p className="mkt-kicker">Property service</p>
           <h3>{s.name}</h3><p>{s.summary}</p>

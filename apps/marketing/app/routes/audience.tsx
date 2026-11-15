@@ -33,16 +33,23 @@ export default function AudiencePage(){
       <div className="mkt-editorial-grid">{d.what.map(([title,body],i)=><article key={title} className="mkt-editorial-panel">
         <span className="mkt-card-number">{String(i+1).padStart(2,'0')}</span><h3>{title}</h3><p>{body}</p></article>)}</div>
     </div></section>
+    {d.deliverables && <section className="section mkt-section"><div className="site-container">
+      <MarketingSectionTitle eyebrow="What you receive" title="Useful records and follow-through."
+        description="The following are example work products; the approved scope determines their exact format and frequency." />
+      <div className="mkt-editorial-grid">{d.deliverables.map((item,i) => <article className="mkt-editorial-panel" key={item}>
+        <span className="mkt-card-number">{String(i+1).padStart(2,'0')}</span><h3>{item}</h3></article>)}</div>
+      {d.programme && <p className="mkt-section-footnote"><Link to={d.programme}>Explore the full operating programme <span aria-hidden="true">→</span></Link></p>}
+    </div></section>}
     <section className="section mkt-section"><div className="site-container">
       <MarketingSectionTitle eyebrow="Relevant services" title={'Explore services for '+d.name.toLowerCase()+'.'}
         description="Read what each service usually covers, what it excludes and the intended outcome."
-        to="/services" linkText="Browse all 23 services" />
+        to="/services" linkText="Browse individual services" />
       <MarketingServiceGrid services={d.services} />
     </div></section>
     <section className="section mkt-section mkt-stone"><div className="site-container mkt-callout-grid">
       <div><p className="eyebrow">Service boundaries</p><h2>Your authority stays with you.</h2><p>{d.boundary}</p></div>
       <div className="mkt-callout-panel"><h3>One-off work or ongoing support?</h3><p>Discuss the property, expected workload and who is authorised to instruct services. We will confirm scope, availability and applicable commercial terms before accepting an engagement.</p>
-      {d.slug==='private-landlords'&&<Link className="mkt-text-link" to="/residential-property-support">Residential property support options <span aria-hidden="true">→</span></Link>}
+      {d.programme && <Link className="mkt-text-link" to={d.programme}>Explore the relevant service programme <span aria-hidden="true">→</span></Link>}
       <Link className="mkt-text-link" to="/contact">Talk through your requirement <span aria-hidden="true">→</span></Link></div>
     </div></section>
     <MarketingCta title="Have a property that needs attention?" description="Tell us the task, general location and intended outcome. We will clarify the service and next step." appOrigin={appOrigin}/>

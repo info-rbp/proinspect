@@ -8,8 +8,8 @@ const read=(path:string)=>readFileSync(path,'utf8');
 const w=(kind:Workspace['kind'],role='owner'):Workspace=>({kind,scopeId:'client_a',href:'/w/'+kind+'/client_a',name:'Example',role});
 const prop=(sector:string):Property=>({id:'prop_a',address:'Example',suburb:'Perth',state:'WA',postcode:'6000',property_type:'House',sector});
 const svc=(sectors:string[]):Service=>({id:'svc',name:'Inspection',family:'inspections',sectors,summary:'',duration_minutes:45,buffer_before:0,buffer_after:0,notice_hours:1,horizon_days:30,price_ex_gst_cents:10000,booking_mode:'instant',active:1});
-test('public navigation reflects the twelve approved destinations in order',()=>{
- assert.deepEqual(PUBLIC_NAVIGATION.map(x=>x.label),['Residential','Commercial','Strata','Co-Living','Construction','Leasing','Tenants','Maintenance','About Us','Who We Help','Sign Up / Sign In','Contact Us']);
+test('public navigation includes all thirteen public destinations in order',()=>{
+ assert.deepEqual(PUBLIC_NAVIGATION.map(x=>x.label),['Residential','Commercial','Strata','Co-Living','Student Living','Construction','Leasing','Tenants','Maintenance','About Us','Who We Help','Sign Up / Sign In','Contact Us']);
  const routes=read('apps/platform/app/routes.ts');
  for(const path of ['residential','commercial','strata','co-living','construction','leasing','maintenance'])assert.ok(routes.includes("route('"+path+"'"));
  assert.match(routes,/route\('client', 'routes\/client-entry\.tsx'\)/);

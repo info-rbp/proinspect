@@ -2,6 +2,7 @@ import { Link, useOutletContext } from 'react-router';
 import { MarketingPageHero } from '../components/page-patterns';
 import { MarketingCta } from '../components/marketing-ui';
 import { seo } from '../lib/seo';
+import { PlanComparison } from '../components/plan-comparison';
 
 import { RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED } from '../../../../packages/marketing/pricing-publication';
 export const meta=()=>seo(
@@ -17,7 +18,7 @@ export default function ResidentialSupport(){
     <MarketingPageHero eyebrow="Residential landlords" title="Begin with a property account. Choose support as you need it."
       intro="Explore inspections, keep your property information together and consider ongoing support separately. Signing up does not mean agreeing to a new paid subscription."
       crumbs={[{label:'Who we help',to:'/who-we-help'},{label:'Residential property support'}]}
-      visual="residential" primary={{label:'Explore residential inspections',to:'/sectors/residential'}} />
+      visual="residential" primary={{label:'Explore residential services',to:'/residential'}} />
     <section className="section mkt-section"><div className="site-container mkt-service-intro-grid">
       <div><p className="eyebrow">Flexible ways to work with us</p><h2>One property. Clear choices.</h2>
         <p>Create an account using your verified email, set up a property you are authorised to manage and view the services available to you. You can also request an individual inspection without committing to ongoing support.</p>
@@ -41,10 +42,11 @@ export default function ResidentialSupport(){
           <p>Review the selected plan’s exact inclusions and terms before separately opting in. The service agreement identifies commencement, responsibilities, limits and any extra charges. Existing arrangements remain subject to their own terms; account creation does not change them.</p></article>
       </div>
     </div></section>
+    <PlanComparison market="residential" />
     <section className="section mkt-section"><div className="site-container mkt-faq-grid">
       <div><p className="eyebrow">Common questions</p><h2>Know what happens before you register.</h2></div>
       <div className="mkt-faq-list">
-        <details><summary>Does creating a ProInspect account start a paid subscription?<span aria-hidden="true">+</span></summary><p>No new paid subscription or Stripe charge should be started solely because you create an account. Legacy service entitlements and eligibility rules are separate from new paid billing.</p></details>
+        <details><summary>Does creating a ProInspect account start a paid subscription?<span aria-hidden="true">+</span></summary><p>Creating a free account does not enrol you in a paid plan or authorise a recurring charge. A subscription requires a separate affirmative agreement.</p></details>
         <details><summary>What are the price and term of each plan?<span aria-hidden="true">+</span></summary><p>Residential Inspection Only is $20 + GST per property/month. Residential All-Inclusive is $150 + GST per property/month. Each begins with 24 months, then continues month-to-month with 60 days’ written cancellation notice. Inclusions, extras and any early-exit obligations must be disclosed and agreed before you subscribe. There is no paid checkout on this page.</p></details>
         <details><summary>Can I request one inspection without joining a plan?<span aria-hidden="true">+</span></summary><p>Yes. Browse the individual services and follow the available one-off booking or enquiry path. Some work needs a reviewed quotation or confirmed appointment.</p></details>
         <details><summary>Will the plan include every service?<span aria-hidden="true">+</span></summary><p>No coverage promise is made until the applicable agreement and service list are approved. Property type, location, access, service limits and suitability can affect availability.</p></details>

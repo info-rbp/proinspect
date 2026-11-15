@@ -1,6 +1,7 @@
 import { SERVICE_FOCUS } from '../../../../packages/marketing/content';
 import { PRIVATE_SERVICE_PRICING, SERVICE_COVERAGE } from '../../../../packages/marketing/public-facts';
 import { SERVICE_EDITORIAL } from '../../../../packages/marketing/service-editorial';
+import { RELATED_SERVICE_IDS, SERVICE_EXAMPLES } from '../../../../packages/marketing/related-services';
 import { serviceScopeFor } from '../../../../packages/marketing/service-scopes';
 import { Link, useLoaderData, useOutletContext, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
 import { findService, SERVICE_SEEDS, FAMILIES } from '../../../../packages/service-catalogue/index';
@@ -15,7 +16,8 @@ export function loader({ params }: LoaderFunctionArgs) {
     service,
     editorial: SERVICE_EDITORIAL[service.id],
     scope: serviceScopeFor(service.id),
-    related: SERVICE_SEEDS.filter((s) => s.family === service.family && s.id !== service.id).slice(0, 3),
+    related: (RELATED_SERVICE_IDS[service.id] ?? []).map(id => SERVICE_SEEDS.find(s => s.id === id)).filter((s): s is (typeof SERVICE_SEEDS)[number] => Boolean(s)),
+    examples: SERVICE_EXAMPLES[service.id] ?? [],
   };
 }
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
@@ -55,7 +57,7 @@ const generalFaq: [string, string][] = [
 ];
 
 export default function ServicePage() {
-  const { service: s, related, scope, editorial } = useLoaderData<typeof loader>();
+  const { service: s, related, scope, editorial, examples } = useLoaderData<typeof loader>();
   const { appOrigin } = useOutletContext<{ appOrigin: string }>();
   const routine = s.id === 'routine-inspection';
   const focus = SERVICE_FOCUS[s.id];
@@ -242,6 +244,15 @@ export default function ServicePage() {
         </>
       )}
 
+      {examples.length > 0 && <section className="section mkt-section">
+        <div className="site-container">
+          <div className="mkt-section-heading"><div><p className="eyebrow">Common uses</p><h2>When this service can help.</h2></div>
+            <p>Examples describe suitable requests, not guaranteed reports or unlimited attendance.</p></div>
+          <div className="mkt-editorial-grid">{examples.map((example, i) => <article key={example} className="mkt-editorial-panel">
+            <span className="mkt-card-number">{String(i+1).padStart(2,'0')}</span><h3>Example {i+1}</h3><p>{example}</p></article>)}</div>
+          <p className="mkt-section-footnote">Report format, photographic coverage, delivery and specialist work are confirmed for the accepted instruction.</p>
+        </div>
+      </section>}
       <section className="section mkt-section mkt-stone" aria-labelledby="service-booking-pricing">
         <div className="site-container mkt-callout-grid">
           <div>
