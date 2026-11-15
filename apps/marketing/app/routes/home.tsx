@@ -1,34 +1,145 @@
-import { useOutletContext } from 'react-router';
-import { HomeArrangementsSection } from '../components/home/HomeArrangementsSection';
-import { HomeHero } from '../components/home/HomeHero';
-import { HomeProcessSection } from '../components/home/HomeProcessSection';
-import { HomeRecordSection } from '../components/home/HomeRecordSection';
-import { HomeSectorsSection } from '../components/home/HomeSectorsSection';
-import { HomeServicesSection } from '../components/home/HomeServicesSection';
+import { Link } from 'react-router';
+import { SECTOR_OVERVIEWS } from '../../../../packages/marketing/sector-overviews';
+import { BrandImage, type BrandImageKey } from '../components/brand-image';
+import { EditorialHero, EditorialSteps } from '../components/editorial';
 import { MarketingCta } from '../components/marketing-ui';
 import { seo } from '../lib/seo';
 
+const services: Array<{ key: BrandImageKey; name: string; copy: string; to: string }> = [
+  ...Object.entries(SECTOR_OVERVIEWS)
+    .filter(([key]) => key !== 'maintenance')
+    .map(([key, page]) => ({
+      key: key as BrandImageKey,
+      name: page.name,
+      copy: page.summary,
+      to: '/' + key,
+    })),
+  {
+    key: 'leasing',
+    name: 'Leasing',
+    copy: 'Find your next place, explore published properties and register for an open home. Follow each property’s application instructions when you are ready.',
+    to: '/leasing',
+  },
+  {
+    key: 'maintenance',
+    name: 'Maintenance',
+    copy: SECTOR_OVERVIEWS.maintenance.summary,
+    to: '/maintenance',
+  },
+];
+
 export const meta = () =>
   seo(
-    'Property Inspections & On-Site Support — Western Australia',
-    'Practical property inspections, condition reports, contractor access and property attendance in WA. On-site work, documented outcomes and connected records.',
+    'Property Inspections & Property Support — Western Australia',
+    'Explore residential, commercial and strata property inspections, leasing and maintenance support in WA. Practical on-site services with clear property records.',
     '/',
   );
 
 export default function Home() {
-  const { appOrigin } = useOutletContext<{ appOrigin: string }>();
   return (
-    <div className="pi-home">
-      <HomeHero appOrigin={appOrigin} />
-      <HomeServicesSection />
-      <HomeSectorsSection />
-      <HomeProcessSection />
-      <HomeRecordSection />
-      <HomeArrangementsSection appOrigin={appOrigin} />
+    <div className="pi-public-home">
+      <EditorialHero
+        home
+        eyebrow="ProInspect Property Services · Western Australia"
+        title="Your property. Our practical support."
+        intro="From inspections and condition reports to leasing attendance and maintenance follow-up, we help you look after the detail — with clear instructions, on-site support and connected property records."
+        image="residential"
+        primary={{ label: 'Explore our services', to: '#property-services' }}
+        secondary={{ label: 'Sign Up / Sign In', to: '/client' }}
+      />
+      <section className="mkt-section pi-editorial-section" id="property-services">
+        <div className="site-container">
+          <div className="pi-section-heading pi-section-heading-wide">
+            <div>
+              <p className="eyebrow">How we can help</p>
+              <h2>The right support for every kind of property.</h2>
+            </div>
+            <p>
+              One property or a growing portfolio. A one-off visit or an ongoing requirement. Find
+              the area that fits your needs.
+            </p>
+          </div>
+          <div className="pi-property-grid">
+            {services.map((service) => (
+              <article className="pi-property-card" key={service.key}>
+                <Link
+                  className="pi-card-image-link"
+                  to={service.to}
+                  aria-label={'Explore ' + service.name.toLowerCase() + ' services'}
+                >
+                  <BrandImage name={service.key} />
+                </Link>
+                <div>
+                  <h3>
+                    <Link to={service.to}>{service.name}</Link>
+                  </h3>
+                  <p>{service.copy}</p>
+                  <Link className="pi-inline-link" to={service.to}>
+                    Explore {service.name.toLowerCase()} <span aria-hidden="true">↗</span>
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+          <p className="pi-discovery">
+            Have a specific task in mind?{' '}
+            <Link to="/services">Browse the detailed service catalogue</Link> or{' '}
+            <Link to="/service-finder">find a service.</Link>
+          </p>
+        </div>
+      </section>
+      <section className="mkt-section pi-editorial-section pi-deep">
+        <div className="site-container pi-introduction">
+          <div>
+            <p className="eyebrow">More than another site visit</p>
+            <h2>
+              Practical work.
+              <br />A clearer picture.
+            </h2>
+          </div>
+          <div>
+            <p>
+              Property decisions are easier when the right details are in front of you. We connect
+              the agreed task, on-site observations and resulting record, helping owners and
+              managers follow through with confidence.
+            </p>
+            <ul className="pi-principles">
+              <li>A defined scope before work starts</li>
+              <li>Records connected to the relevant property</li>
+              <li>Access that reflects each person’s role</li>
+            </ul>
+            <Link className="pi-inline-link" to="/about">
+              Discover the ProInspect approach <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+      <EditorialSteps />
+      <section className="mkt-section pi-editorial-section">
+        <div className="site-container pi-tenant-feature">
+          <BrandImage name="leasing" />
+          <div>
+            <p className="eyebrow">Looking for your next home?</p>
+            <h2>A clearer path from viewing to moving.</h2>
+            <p>
+              Browse current properties, register for an advertised open home and find the
+              application instructions for the home you are interested in. Already a tenant? Find
+              the right support for your property.
+            </p>
+            <div className="actions">
+              <Link className="button" to="/leasing">
+                View properties for lease <span aria-hidden="true">→</span>
+              </Link>
+              <Link className="pi-inline-link" to="/tenants">
+                Support for tenants <span aria-hidden="true">↗</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
       <MarketingCta
-        title="Have a property task to arrange?"
-        description="Choose a service or tell us what needs doing. We will confirm the practical next step."
-        appOrigin={appOrigin}
+        title="Let’s make property work easier."
+        description="Tell us what you need inspected, attended or followed up. We’ll help you find the right starting point."
       />
     </div>
   );

@@ -7,7 +7,7 @@ async function login(c:BrowserContext,email:string){const start=await post(c,'/a
 test('public enquiry reaches authorised Staff triage and a recorded email reply',async({page,browser})=>{
  const refName='Enquiry Browser '+randomUUID().slice(0,8);
  await page.goto('http://127.0.0.1:5173/contact?service=routine-inspection');
- await expect(page.getByRole('heading',{level:1})).toHaveText('Tell us what the property needs.');
+ await expect(page.getByRole('heading',{level:1})).toHaveText('Let’s talk about your property.');
  await expect(page.getByLabel('Service (optional)',{exact:true})).toHaveValue('routine-inspection');
  await page.getByLabel('Your name',{exact:true}).fill(refName);
  await page.getByLabel('Email address',{exact:true}).fill('browser-'+randomUUID()+'@proinspect.test');

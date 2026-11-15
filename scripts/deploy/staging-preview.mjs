@@ -8,6 +8,13 @@ const sourcePath = new URL('apps/platform/wrangler.jsonc', root);
 const pointerPath = new URL('apps/platform/.wrangler/deploy/config.json', root);
 const stagingOrigin = 'https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev';
 
+export function isApprovedStagingPreview(env) {
+  const branches = ['feat/pr01-account-driven-client-portal', 'feat/public-site-services-refresh'];
+  return env.PR01_STAGING_PREVIEW === '1' && env.GITHUB_REPOSITORY === 'info-rbp/proinspect' &&
+    ((env.GITHUB_EVENT_NAME === 'pull_request' && branches.includes(env.GITHUB_HEAD_REF)) ||
+     (env.GITHUB_EVENT_NAME === 'workflow_dispatch' && branches.some(branch => env.GITHUB_REF === 'refs/heads/' + branch)));
+}
+
 export function assertStagingPreview(config) {
   assert.equal(config.name, 'proinspect-v3-staging', 'Preview must target the existing staging Worker');
   assert.equal(config.vars?.APP_ENV, 'staging');

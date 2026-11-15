@@ -11,6 +11,13 @@ export function loader() {
   const paths = [
     '/',
     '/services',
+    '/residential',
+    '/commercial',
+    '/strata',
+    '/co-living',
+    '/construction',
+    '/maintenance',
+    '/tenants',
     '/service-finder',
     '/who-we-help',
     '/sectors/residential',

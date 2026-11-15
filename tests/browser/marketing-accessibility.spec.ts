@@ -70,9 +70,10 @@ test('draft legal content is visible but not presented as approved or indexable'
   }
 });
 
-test('public imagery remains labelled as illustration until genuinely approved local assets exist', async ({ page }) => {
+test('brand imagery is local, caption-free and separate from genuine customer records', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('.mkt-art-illustration-note').first()).toBeVisible();
+  await expect(page.locator('.mkt-art-illustration-note')).toHaveCount(0);
+  await expect(page.locator('.pi-editorial-hero-image img')).toBeVisible();
   expect(await page.locator('img[src*="/api/"],img[src*="/w/"],img[src*="r2"]').count()).toBe(0);
   await page.goto('/services/routine-inspection');
   await expect(page.getByText('ILLUSTRATIVE EXAMPLE', { exact: true })).toBeVisible();

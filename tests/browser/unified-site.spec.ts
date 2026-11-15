@@ -10,7 +10,7 @@ test('public industry pages lead into one secure Client Portal entry',async({pag
  await expect(page.locator('body')).toHaveClass(/site/);
  await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Residential'}).click();
  await expect(page).toHaveURL(origin+'/residential');
- await page.getByRole('link',{name:'Access the Client Portal'}).first().click();
+ await page.getByRole('link',{name:'Sign Up/Sign In to access'}).first().click();
  await expect(page).toHaveURL(origin+'/client');
  await page.getByRole('link',{name:'Continue with email'}).click();
  await expect(page).toHaveURL(/\/signin\?/);
