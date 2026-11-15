@@ -40,6 +40,8 @@ jobs:
           pnpm --dir apps/platform exec wrangler deploy --dry-run
       - name: Rehearse 0054 in a clean local Cloudflare D1 database
         run: pnpm test:pr01-d1
+      - name: Rehearse additive commercial 0055 and isolated backup recovery
+        run: pnpm test:commercial-d1
       - name: Verify existing staging preview isolation
         run: node --test tests/staging-preview.test.mjs
       - name: Prepare isolated browser test data

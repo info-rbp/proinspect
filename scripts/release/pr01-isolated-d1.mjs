@@ -31,7 +31,7 @@ function query(sql,expectedFailure=false){
 }
 function check(label,ok){assert.equal(Boolean(ok),true,label);evidence.checks.push(label);}
 try{
- check('54 sequential migrations present',all.length===54&&all.every((name,index)=>name.startsWith(String(index+1).padStart(4,'0')+'_'))&&all[52]==='0053_account_first_free_registration.sql'&&all[53]===evidence.forwardMigration);
+ check('0054 exists in sequential migration history',all.length>=54&&all.every((name,index)=>name.startsWith(String(index+1).padStart(4,'0')+'_'))&&all[52]==='0053_account_first_free_registration.sql'&&all[53]===evidence.forwardMigration);
  mkdirSync(mig,{recursive:true});
  for(const name of all.slice(0,53))copyFileSync(join(root,'database','migrations',name),join(mig,name));
  writeFileSync(config,JSON.stringify({name:'proinspect-pr01-isolated',compatibility_date:'2026-07-01',d1_databases:[{binding:'DB',database_name:'proinspect-pr01-local',database_id:'pr01-local',migrations_dir:'./migrations'}]},null,2));

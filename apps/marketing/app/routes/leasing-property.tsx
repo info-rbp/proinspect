@@ -1,3 +1,4 @@
+import { commercialListingReady } from '../../../platform/worker/features/commercial-intake.server';
 import { useState } from 'react';
 import { Link,Form,useLoaderData,useActionData,type LoaderFunctionArgs,type ActionFunctionArgs,data } from 'react-router';
 import { runtimeContext } from '../../../../packages/database/context';
@@ -15,7 +16,8 @@ export async function loader({params,context}:LoaderFunctionArgs) {
  const env=context.get(runtimeContext).env as Env;
  const result=await publicListing(env,params.kind!,params.slug!);
  if(!result)throw new Response('Property not found',{status:404});
- return data({result,requestKey:crypto.randomUUID(),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??'',rentalReady:result.listing.kind==='residential'&&await rentalListingReady(env,result.listing.slug),ready:Boolean(env.DATA_ENCRYPTION_KEY&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SECRET_KEY&&env.MARKETING_TURNSTILE_SITE_KEY))},{headers:{'Cache-Control':'no-store'}});
+ const commercialReady=result.listing.kind==='commercial'&&Boolean(await commercialListingReady(env,result.listing.id));
+ return data({commercialReady,result,requestKey:crypto.randomUUID(),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??'',rentalReady:result.listing.kind==='residential'&&await rentalListingReady(env,result.listing.slug),ready:Boolean(env.DATA_ENCRYPTION_KEY&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SECRET_KEY&&env.MARKETING_TURNSTILE_SITE_KEY))},{headers:{'Cache-Control':'no-store'}});
 }
 export async function action({request,context,params}:ActionFunctionArgs){
  const env=context.get(runtimeContext).env as Env;
@@ -39,10 +41,10 @@ export async function action({request,context,params}:ActionFunctionArgs){
  }
 }
 export default function LeasingProperty(){
- const {result,requestKey,siteKey,rentalReady,ready}=useLoaderData<typeof loader>();
+ const {result,requestKey,siteKey,rentalReady,commercialReady,ready}=useLoaderData<typeof loader>();
  const res=useActionData<typeof action>() as {success?:boolean;reference?:string;error?:string}|undefined,p=result.listing as any,photos=result.photos as any[],sessions=result.sessions as any[];
- const applicationCta=listingApplicationAction({kind:p.kind,slug:p.slug,applicationMode:p.application_mode,applicationUrl:p.application_url,rentalReady});
- const canApply=applicationCta.type==='proinspect';
+ const applicationCta=listingApplicationAction({kind:p.kind,slug:p.slug,applicationMode:commercialReady?'proinspect_commercial':p.application_mode,applicationUrl:p.application_url,rentalReady,commercialReady});
+ const canApply=applicationCta.type==='proinspect',canApplyCommercial=applicationCta.type==='proinspect_commercial';
  const [kind,setKind]=useState<'inspection'|'interest'>(sessions.length?'inspection':'interest');
  return <>
  <header className="service-hero leasing-hero">
@@ -64,7 +66,7 @@ export default function LeasingProperty(){
     {p.area_sqm!=null&&<div><strong>{p.area_sqm}</strong><span>m²</span></div>}
    </div>
    <div className="leasing-hero-actions">
-    {canApply?<Link className="button leasing-hero-primary" to={applicationCta.href}>Start rental application</Link>:
+    {canApply||canApplyCommercial?<Link className="button leasing-hero-primary" to={applicationCta.href}>{canApplyCommercial?'Start commercial application':'Start rental application'}</Link>:
      applicationCta.type==='external'?<a className="button leasing-hero-primary" href={applicationCta.href} target="_blank" rel="noopener noreferrer">Apply through leasing representative</a>:
      <a className="button leasing-hero-primary" href="#leasing-enquiry">Register your interest</a>}
     <a className="button secondary leasing-hero-secondary" href="#leasing-gallery">View property photos</a>
@@ -105,6 +107,7 @@ export default function LeasingProperty(){
      <a className="button secondary leasing-application-button" href="#leasing-enquiry">Register your interest</a></>}
    <p className="small leasing-application-note">An application is not a tenancy agreement. {p.agent_name} or their authorised representative makes leasing decisions.</p>
   </section>}
+  {p.kind==='commercial'&&canApplyCommercial&&<div className="panel leasing-application-panel"><h2>Apply for this commercial property</h2><p>Complete the entity-adaptive commercial application privately. Each signatory and guarantor uses their own link. Submission does not execute a lease or guarantee.</p><Link className="button" to={applicationCta.href}>Start commercial leasing application</Link></div>}
   {p.kind==='commercial'&&applicationCta.type==='external'&&<div className="panel leasing-application-panel">
    <h2>Apply for this commercial property</h2><p>Applications are managed by the leasing representative.</p>
    <a className="button" href={applicationCta.href} target="_blank" rel="noopener noreferrer">Continue to application provider</a>
