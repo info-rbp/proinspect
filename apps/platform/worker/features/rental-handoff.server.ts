@@ -10,6 +10,8 @@ type Subject={id:string;reference:string;application_recipient_email:string|null
  * validated delivery receipt before "forwarded" can be set.
  */
 export async function stageRentalAppsScriptHandoff(env:Env,app:Subject){
+ const intake=await statement(env.DB,'SELECT consent_version FROM rental_applications WHERE id=?',app.id).first<{consent_version:string}>();
+ assert(!intake?.consent_version.includes('|managed-details:'),409,'MANAGED_INTAKE_FORWARDING_DISABLED','This application is for internal ProInspect review. External forwarding requires a separately approved intake process.');
  assert(app.application_recipient_email,409,'AGENCY_EMAIL_NOT_CONFIGURED',
   'Configure an authorised agency or landlord email before staging an application.');
  assert(!app.privacy_hold_until||app.privacy_hold_until<=now(),409,'PRIVACY_HOLD_ACTIVE',

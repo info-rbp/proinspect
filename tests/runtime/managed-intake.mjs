@@ -87,6 +87,9 @@ try{
   assert.equal((await first('SELECT COUNT(*) AS n FROM rental_application_documents')).n,0);
   const app=await first('SELECT status,retained_until FROM rental_applications WHERE id=?',applicationId);
   assert.equal(app.status,'submitted');assert(Math.abs(Date.parse(app.retained_until)-Date.now()-90*86400000)<10000);
+  const current=await first('SELECT version FROM rental_applications WHERE id=?',applicationId);
+  assert.equal((await call('/__test/staff-ready',{applicationId,version:current.version},409)).code,'MANAGED_INTAKE_FORWARDING_DISABLED');
+  assert.equal((await first('SELECT COUNT(*) AS n FROM rental_application_handoffs')).n,0);
  });
  await check('expired applications respect holds and erase even after the listing closes',async()=>{
   await run("UPDATE leasing_listings SET status='leased' WHERE id='lst_managed_synthetic'");
