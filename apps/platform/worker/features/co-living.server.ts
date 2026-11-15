@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { Env } from '../../../../packages/database/types';
 import { assert, statement, now, uid } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
-import { currentTenancy, operationsWrite, propertyAccess } from '../../../../packages/authorization/server';
+import { operationsWrite, propertyAccess } from '../../../../packages/authorization/server';
 
 const id = z.string().min(4).max(100).regex(/^[a-zA-Z0-9_-]+$/);
 
@@ -82,20 +82,25 @@ export async function coLivingCommand(env: Env, user: Principal, w: Workspace, p
 /** A Resident user sees ONLY their own assigned space plus named shared areas. */
 export async function myCoLivingSpace(env: Env, user: Principal, w: Workspace) {
   assert(w.kind === 'tenant', 403, 'RESIDENT_INVITATION_REQUIRED','Resident access requires a verified tenancy invitation.');
-  await currentTenancy(env,user,w.scopeId);
+  const membership=await statement(env.DB,
+    'SELECT id FROM tenancy_memberships WHERE tenancy_id=? AND user_id=? AND starts_at<=?',
+    w.scopeId,user.id,now(),
+  ).first();
+  assert(membership,403,'RESIDENT_INVITATION_REQUIRED','A verified invitation is required for this residence.');
   const space=await statement(env.DB,
-    `SELECT s.label,s.space_type,p.address
+    `SELECT s.id,s.label,s.space_type,p.address
      FROM co_living_occupancies o JOIN co_living_spaces s ON s.id=o.space_id
      JOIN properties p ON p.id=s.property_id WHERE o.tenancy_id=?`,
     w.scopeId,
-  ).first<{label:string;space_type:string;address:string}>();
+  ).first<{id:string;label:string;space_type:string;address:string}>();
   if (!space) return { space: null, sharedAreas: [] };
   const sharedAreas=(await statement(env.DB,
-    `SELECT s.label FROM co_living_spaces s JOIN co_living_occupancies o ON o.space_id IN
-       (SELECT private_space.id FROM co_living_spaces private_space WHERE private_space.property_id=s.property_id)
+    `SELECT s.id,s.label FROM co_living_spaces s
+     JOIN co_living_spaces mine ON mine.property_id=s.property_id
+     JOIN co_living_occupancies o ON o.space_id=mine.id
      WHERE o.tenancy_id=? AND s.space_type='shared_area' AND s.active=1
      ORDER BY s.label`,
     w.scopeId,
-  ).all<{label:string}>()).results;
+  ).all<{id:string;label:string}>()).results;
   return {space,sharedAreas};
 }
