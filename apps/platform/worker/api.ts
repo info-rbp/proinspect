@@ -2,9 +2,10 @@ import {ownerInvitationPreview,claimOwnerInvitation} from './features/agency-own
 import {releaseReadiness,releaseCommand,requireReleaseApproval} from './features/release-governance.server';
 import * as legalAcceptance from './features/legal-acceptance.server';
 import { boundedText } from '../../../packages/http-bodies';
+import {pricingAdmin,pricingCommand} from './features/service-pricing.server';
+import {descriptiveCatalogue} from '../../../packages/marketing/public-catalogue';
 import { commercialStaffHttp } from './features/commercial-http.server';
 import { acceptCommercialScan,retrieveCommercialReferral } from './features/commercial-delivery.server';
-import {pricingAdmin,pricingCommand,guestPriceVariants} from './features/service-pricing.server';
 import { createSubscriptionCheckout } from './features/stripe-billing.server';
 import { contractorConnectWebhook } from './features/contractor-payments.server';
 import * as agencyOutsourcing from './features/agency-outsourcing.server';
@@ -260,7 +261,7 @@ export async function handleApi(
     if(legalDoc&&method==='GET')return Response.json(await legalAcceptance.approvedLegalDocument(env,legalDoc[1]),{headers:{'Cache-Control':'no-store'}});
     if(path==='/api/v4/requests/quote' && method==='GET')return Response.json(await v4.quotePreview(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
     if(path==='/api/v4/requests/quote/accept' && method==='POST')return Response.json(await v4.acceptQuote(request,env));
-    if(path==='/api/guest/prices'&&method==='GET')return Response.json(await guestPriceVariants(env,url.searchParams.get('serviceId')??'',url.searchParams.get('postcode')??'',url.searchParams.get('propertyType')??''),{headers:{'Cache-Control':'no-store'}});
+    if(path==='/api/guest/prices'&&method==='GET')return Response.json({variants:[],message:'Sign in to view individual service pricing or request a quote.'},{headers:{'Cache-Control':'no-store'}});
     if (path === '/api/guest/requests' && method === 'POST') return Response.json(await guest.beginGuest(request,env),{status:201});
     if (path === '/api/guest/verify' && method === 'POST') return Response.json(await guest.verifyGuest(request,env));
     if (path === '/api/guest/quote' && method === 'GET') return Response.json(await guest.guestQuotePreview(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
@@ -311,7 +312,7 @@ export async function handleApi(
     if(path==='/api/public/open-home/sessions'&&method==='GET')
       return Response.json({sessions:await publicOpenHomeSessions(env)},{headers:{'Cache-Control':'private, no-store'}});
     if (path === '/api/catalogue' && method === 'GET')
-      return Response.json({ services: await catalogue(env) });
+      return Response.json({ services: descriptiveCatalogue(await catalogue(env)) });
     if (path === '/api/auth/start' && method === 'POST') {
       const result = await beginSignIn(request, env, await json(request));
       if (ctx) ctx.waitUntil(dispatchOutbox(env));

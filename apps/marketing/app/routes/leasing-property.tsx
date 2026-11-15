@@ -4,8 +4,7 @@ import { Link,Form,useLoaderData,useActionData,type LoaderFunctionArgs,type Acti
 import { runtimeContext } from '../../../../packages/database/context';
 import type { Env } from '../../../../packages/database/types';
 import { publicListing,createLead } from '../../../platform/worker/features/leasing.server';
-import { rentalEnabled } from '../../../platform/worker/features/rental-applications.server';
-import { releaseFeatureReady } from '../../../platform/worker/features/release-governance.server';
+import { rentalListingReady } from '../../../platform/worker/features/rental-applications.server';
 import { displayPrice,handoffDisclaimer,listingApplicationAction } from '../../../../packages/marketing/leasing';
 import { digest } from '../../../../packages/auth/crypto';
 import { Turnstile } from '../../../../packages/ui/Turnstile';
@@ -18,7 +17,7 @@ export async function loader({params,context}:LoaderFunctionArgs) {
  const result=await publicListing(env,params.kind!,params.slug!);
  if(!result)throw new Response('Property not found',{status:404});
  const commercialReady=result.listing.kind==='commercial'&&Boolean(await commercialListingReady(env,result.listing.id));
- return data({commercialReady,result,requestKey:crypto.randomUUID(),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??'',rentalReady:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&result.listing.rental_approval_state==='approved'&&Boolean(result.listing.rental_recipient_verified_at),ready:Boolean(env.DATA_ENCRYPTION_KEY&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SECRET_KEY&&env.MARKETING_TURNSTILE_SITE_KEY))},{headers:{'Cache-Control':'no-store'}});
+ return data({commercialReady,result,requestKey:crypto.randomUUID(),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??'',rentalReady:result.listing.kind==='residential'&&await rentalListingReady(env,result.listing.slug),ready:Boolean(env.DATA_ENCRYPTION_KEY&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SECRET_KEY&&env.MARKETING_TURNSTILE_SITE_KEY))},{headers:{'Cache-Control':'no-store'}});
 }
 export async function action({request,context,params}:ActionFunctionArgs){
  const env=context.get(runtimeContext).env as Env;

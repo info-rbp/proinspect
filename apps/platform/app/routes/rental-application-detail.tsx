@@ -1,3 +1,4 @@
+import { repeaterSummary } from '../../../../packages/marketing/rental-repeaters';
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { loadApi } from '../lib/api.server';
 import { useWorkspace } from '../lib/workspace';
@@ -22,6 +23,7 @@ export default function RentalApplicationDetail(){
     <h3>Applicant {person.ordinal}: {person.answers.identity?.fullName}</h3><p className="small">{person.role} · <Badge status={person.state}/> · Declared: {person.declaredAt?new Date(person.declaredAt).toLocaleString('en-AU'):'Not declared'}</p>
     {ANSWER_STEPS.map((step:AnswerStep)=><details key={step} className="panel" style={{boxShadow:'none'}}><summary style={{fontWeight:700,cursor:'pointer'}}>{step.replaceAll('_',' ')} — Application details</summary>
      <dl className="detail-grid" style={{marginTop:'1rem'}}>{FIELDS[step].map(field=><div key={field.key}><dt className="small">{field.label}</dt><dd style={{marginLeft:0,overflowWrap:'anywhere'}}>{person.answers[step]?.[field.key]||'—'}</dd></div>)}</dl>
+     <dl>{(['additionalHistory','additionalReferences'] as const).flatMap(key=>repeaterSummary(key,person.answers[step]?.[key])).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
     </details>)}
    </article>)}
   </Panel>

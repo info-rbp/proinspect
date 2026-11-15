@@ -32,7 +32,7 @@ export default function Services() {
       <MarketingPageHero
         eyebrow="The service catalogue"
         title={family ? FAMILIES[family].name : 'The right service for the property.'}
-        intro="From inspections and property attendance to contractor access and ongoing operational support. Explore the purpose, scope and recorded outcome before you choose."
+        intro="Explore inspections, outsourced property operations and building services. Each detailed service explains its purpose, activities, limits and documented output. Individual service prices are available to authorised signed-in clients; request a quote for a tailored scope."
         crumbs={[{ label: 'Services' }]}
         visual="services"
         primary={{ label: 'Find the right service', to: '/service-finder' }}
@@ -90,7 +90,9 @@ export default function Services() {
               Create your account <span aria-hidden="true">→</span>
             </a>
             <p className="small">
-              Creating an account does not activate paid subscription billing.
+              Sign in to view individual service pricing. Account creation does not activate
+              a subscription. Extra attendance, travel, specialist and urgent work require
+              an agreed scope and price.
             </p>
           </div>
         </div>

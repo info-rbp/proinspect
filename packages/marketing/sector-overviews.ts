@@ -1,368 +1,145 @@
+import { PLAN_SCOPE, PLAN_TERM, SERVICE_COVERAGE, PRIVATE_SERVICE_PRICING, RESIDENTIAL_SERVICE_GROUPS, BUILDING_SERVICE_GROUPS } from './public-facts.ts';
 export type SectorOverview = {
-  name: string;
-  headline: string;
-  summary: string;
-  description: string;
-  audience: string;
-  outcome: string;
-  services: Array<[string, string]>;
-  difference: Array<[string, string]>;
-  questions: Array<[string, string]>;
-  planned?: string;
+  name: string; headline: string; summary: string; description: string; audience: string;
+  outcome: string; services: Array<[string, string]>; difference: Array<[string, string]>;
+  questions: Array<[string, string]>; availability?: string;
 };
-
+const groups = (items: ReadonlyArray<readonly [string, string]>) => items.map(([name, detail]) => name + ': ' + detail).join(' ');
+const coverage: [string, string] = ['Where do you work?', SERVICE_COVERAGE + ' ' + PRIVATE_SERVICE_PRICING];
 export const SECTOR_OVERVIEWS = {
   residential: {
-    name: 'Residential',
-    headline: 'More clarity. Less chasing. A better cared-for property.',
-    summary:
-      'Residential property inspections, condition reports and practical on-site support for landlords and property managers in Western Australia.',
-    description:
-      'A home is a significant investment, and the small details matter. ProInspect helps you understand its condition, arrange the right attendance and keep a useful record of what happens next. From a single inspection to recurring property support, we work to an agreed scope that fits your property.',
-    audience:
-      'For self-managing landlords, residential agencies and rental property owners who need dependable support on the ground.',
-    outcome:
-      'Spend less time coordinating visits and more time making informed property decisions.',
+    name: 'Residential', headline: 'Practical support for every stage of your rental property.',
+    summary: 'Residential inspections, outsourced property operations and practical building services for self-managing landlords and property managers across Perth and Peel.',
+    description: 'Keep control of your property while we help with the work behind it. From an incoming condition record to an open home, maintenance follow-up or coordinated vacate, ProInspect brings inspections, administration and attendance together. Choose an individual service, an inspection plan or broader outsourced operations. Residential Inspection Only is $20 + GST per property per month; Residential All-Inclusive is $150 + GST per property per month. ' + PLAN_TERM,
+    audience: 'For self-managing landlords, rental property owners and residential agencies needing operational capacity. Your scope identifies who instructs, who approves and who receives the records.',
+    outcome: 'Less coordination. Better records. More time for the decisions that matter.',
     services: [
-      [
-        'Inspections and condition reports',
-        'Build a clearer picture with routine inspections, incoming property condition reports, pre-vacate visits and final inspections. Record visible condition and items that need your attention.',
-      ],
-      [
-        'Maintenance assessment and follow-up',
-        'Have a reported issue attended, relevant observations documented and completed work checked against the agreed instruction. Keep the next action connected to the property.',
-      ],
-      [
-        'Access, keys and handovers',
-        'Arrange authorised contractor access, key collection or a property handover when you cannot be there yourself. Confirm the purpose, access arrangements and responsibilities before the visit.',
-      ],
-      [
-        'Support as your portfolio grows',
-        'Discuss a one-off task or a recurring inspection arrangement across several homes. Your account brings together the properties and services you are authorised to manage.',
-      ],
+      ['Inspect, advertise and commence', groups(RESIDENTIAL_SERVICE_GROUPS.slice(0, 3))],
+      ['Support the tenancy and care for the home', groups(RESIDENTIAL_SERVICE_GROUPS.slice(3, 8))],
+      ['Attend, record and manage the exit', groups(RESIDENTIAL_SERVICE_GROUPS.slice(8, 11))],
+      ['Help with complex property matters', groups(RESIDENTIAL_SERVICE_GROUPS.slice(11))],
     ],
     difference: [
-      [
-        'The visit and the record, together',
-        'On-site attendance and its resulting documentation stay in the same property context, helping you pick up the next step without piecing together separate email chains.',
-      ],
-      [
-        'Your property, your decisions',
-        'You retain control of approvals, expenditure and tenancy decisions. We provide the agreed observations and practical support to help you act.',
-      ],
-      [
-        'Support that fits the task',
-        'Start with the service you need. Broader support and any subscription are separately agreed, with scope and availability confirmed first.',
-      ],
+      ['Inspections with a useful outcome', 'Incoming PCRs, routine visits, follow-ups, vacancy checks, inventories, pre-leasing reviews and final inspections answer different questions. We confirm the purpose, accessible areas and required record before attending.'],
+      ['Outsourced operations, with your authority clear', 'Choose support across fourteen service groups. Notices, rent collection, expenditure, bond decisions, legal representation and regulated work require the appropriate appointment, authority or specialist.'],
+      ['Two clear subscription options', 'Inspection Only: $20 + GST per property/month. All-Inclusive: $150 + GST per property/month. ' + PLAN_TERM + ' ' + PLAN_SCOPE],
     ],
     questions: [
-      [
-        'Can I arrange just one inspection?',
-        'Yes. Start with an individual service enquiry or use the Client Portal to see services relevant to your verified account and property. Availability and pricing are confirmed before work proceeds.',
-      ],
-      [
-        'Do you replace my property manager?',
-        'An inspection or attendance instruction does not transfer property management authority. We can support a self-managing landlord or work alongside an authorised agency within an agreed scope.',
-      ],
-      [
-        'What information should I provide?',
-        'Tell us the suburb, property type, service required and preferred timeframe. Access instructions and private tenancy information should be shared through the appropriate secure process.',
-      ],
+      ['Can I request one inspection or a tailored service?', 'Yes. Request a single service or tailored combination. ' + PRIVATE_SERVICE_PRICING],
+      ['What does a subscription include?', PLAN_SCOPE + ' Account registration is separate from subscribing; no paid plan starts merely because you sign up.'], coverage,
     ],
   },
   commercial: {
-    name: 'Commercial',
-    headline: 'Keep your commercial property moving.',
-    summary:
-      'Commercial property inspections, condition documentation, access and site attendance for owners, asset managers and commercial agencies in WA.',
-    description:
-      'Commercial property work needs to fit around tenants, contractors and the way a site operates. ProInspect provides a practical presence on the ground, with clear instructions and documented outcomes that help you manage the next decision from wherever you are.',
-    audience:
-      'For commercial owners, asset managers, facilities teams and agencies overseeing offices, retail premises and other commercial assets.',
-    outcome:
-      'Get a clearer view of your asset without needing to attend every site visit yourself.',
+    name: 'Commercial', headline: 'A practical operating partner for your commercial property.',
+    summary: 'Commercial inspections, leasing administration, outsourced operations and building support for owners, asset managers and agencies across Perth and Peel.',
+    description: 'Connect your premises, its occupants and the people making decisions. We combine inspections, property administration, contractor coordination and site attendance so you can act on clear records. Commercial All-Inclusive is $150 + GST per property per month. ' + PLAN_TERM + ' It is our sole commercial subscription; tailored and individual services can also be scoped.',
+    audience: 'For commercial landlords, managing agents, asset managers and facilities teams responsible for retail, offices, industrial, warehouse and mixed-use assets.',
+    outcome: 'Keep your asset, your instructions and the next action connected.',
     services: [
-      [
-        'Condition inspections',
-        'Document visible property condition at an agreed point in time, including tenancy transitions, periodic reviews and specific areas of concern. Confirm the inspected areas and reporting requirements in advance.',
-      ],
-      [
-        'Make-good and handover observations',
-        'Record the visible state of the premises and items for review at handover. A practical record helps the responsible parties assess the next step against their own agreements.',
-      ],
-      [
-        'Contractor and site access',
-        'Coordinate authorised access, keys and agreed attendance around site requirements. Set clear expectations for who is attending, the purpose of the visit and the areas involved.',
-      ],
-      [
-        'Facilities and completed-work checks',
-        'Arrange a defined visit to observe reported issues or completed work. Keep observations and follow-up items available to the authorised property team.',
-      ],
+      ['Inspections and condition records', 'Periodic visual inspections, commencement and exit records, vacancy observations and make-good evidence document accessible premises. Agree areas, trading constraints and outputs. Lease interpretation, valuations and certification remain with appropriate advisers.'],
+      ['Leasing and tenancy administration', 'Listing information, viewings, enquiries, private application administration, authorised references and lease-document coordination. Tenant selection, offers, execution and statutory roles remain with authorised parties. An application is not a lease or approval.'],
+      ['Outsourced property operations', 'Approved access, maintenance requests, quotes, work follow-up, utilities administration and owner reporting. Spending authority, arrears or notice decisions and licensed functions must be expressly agreed; attendance alone does not confer them.'],
+      ['Building support and tailored scopes', 'Combine presentation, cleaning coordination, grounds care, minor maintenance and specialist-provider coordination. Custom scopes address site operations, access, reporting and projects. ' + PLAN_SCOPE],
     ],
     difference: [
-      [
-        'A practical extension of your team',
-        'Use defined on-site support to reduce unnecessary travel and coordination across a single building or a wider commercial portfolio.',
-      ],
-      [
-        'Context for the next decision',
-        'Keep the instruction, attendance and resulting record linked to the asset, making the outcome easier to review and share with authorised colleagues.',
-      ],
-      [
-        'Clear responsibilities from the start',
-        'Agree access, site requirements and reporting boundaries first. Technical certification, valuations and lease determinations require the appropriate specialist.',
-      ],
+      ['One commercial subscription', 'Commercial All-Inclusive: $150 + GST per property/month. ' + PLAN_TERM + ' There is no separate commercial inspection-only subscription.'],
+      ['Continuity around your site', 'Agree inductions, trading hours, access and reporting contacts. Defined work and property-linked records help your team follow through across one premises or a portfolio.'],
+      ['Clear authority and specialist boundaries', 'Your appointed representative retains leasing and expenditure decisions. Trades, legal advisers, certifiers and insurers retain their professional responsibilities. Extra costs and any early-exit terms are disclosed before agreement.'],
     ],
     questions: [
-      [
-        'Can you work alongside our managing agent?',
-        'Yes. The instruction can sit alongside an authorised agent, asset manager or facilities team. We confirm who can instruct the work and receive the resulting record.',
-      ],
-      [
-        'Can attendance be arranged around site operations?',
-        'Tell us about trading hours, inductions and access constraints when enquiring. Timing and any site-specific requirements must be confirmed before attendance.',
-      ],
-      [
-        'Is a make-good observation a legal assessment?',
-        'No. We document the agreed visible condition. Interpretation of a lease, responsibility for costs and specialist assessments remain with the relevant parties and advisers.',
-      ],
+      ['Can you work alongside our managing agent?', 'Yes. Agree the authorised contact, workstream, frequency, site requirements and outputs. After-hours attendance and specialist costs are separately scoped; no continuous response commitment is implied.'],
+      ['Can you tailor a commercial package?', 'Yes. Tell us the asset, workload and desired outcome. The proposal identifies tasks, responsibilities, limits and extras. ' + PRIVATE_SERVICE_PRICING], coverage,
     ],
   },
   strata: {
-    name: 'Strata',
-    headline: 'Shared spaces deserve clear follow-through.',
-    summary:
-      'Common-property inspections, contractor access and practical building support for strata managers and authorised scheme representatives in Western Australia.',
-    description:
-      'A well-run building depends on the details being noticed and followed through. ProInspect helps strata and building teams maintain a practical view of common property, coordinate agreed attendance and keep the resulting observations available to the people responsible.',
-    audience:
-      'For strata managers, building operators and authorised council or scheme representatives managing shared property.',
-    outcome: 'Turn scattered building tasks into defined instructions and useful records.',
+    name: 'Strata', headline: 'Better cared-for buildings. Clearer day-to-day operations.',
+    summary: 'Common-property inspections, building operations, cleaning, grounds care and maintenance coordination for strata managers and authorised building teams.',
+    description: 'A shared building works best when small tasks have an owner and issues are followed through. ProInspect supports schemes and operators with practical attendance, recurring care and useful records across eight building service groups. Select individual work or a tailored building scope with agreed frequencies, reporting and costs. Appointed representatives retain governance, budgets and statutory responsibilities.',
+    audience: 'For strata managers, building operators, councils and authorised scheme representatives overseeing residential, commercial and mixed-use shared property.',
+    outcome: 'Bring the building’s daily work into a clear, accountable routine.',
     services: [
-      [
-        'Common-property inspections',
-        'Arrange an agreed review of accessible shared areas, with visible observations and matters for further attention documented for the authorised representative.',
-      ],
-      [
-        'Building attendance',
-        'Have a practical presence on site for a defined task, meeting or follow-up visit when the managing team cannot be there. Confirm the areas, purpose and expected outcome first.',
-      ],
-      [
-        'Contractor access and coordination',
-        'Support authorised contractor attendance and access to agreed common areas. Specialist trades remain responsible for their own technical work and site obligations.',
-      ],
-      [
-        'Maintenance follow-up',
-        'Connect reported building issues, observations and completed-work checks to the scheme context so the responsible people can review what needs to happen next.',
-      ],
+      ['Building operations and presentation', groups(BUILDING_SERVICE_GROUPS.slice(0, 2))],
+      ['Waste, gardens and grounds', groups(BUILDING_SERVICE_GROUPS.slice(2, 4))],
+      ['Maintenance and specialist systems', groups(BUILDING_SERVICE_GROUPS.slice(4, 6))],
+      ['Reporting and tailored support', groups(BUILDING_SERVICE_GROUPS.slice(6))],
     ],
     difference: [
-      [
-        'A record for the building',
-        'Keep instructions and issued records in the relevant property or scheme context, with access reflecting each person’s authorised relationship.',
-      ],
-      [
-        'Support for the people responsible',
-        'Give managers and representatives practical on-site assistance while keeping approvals, budgets and scheme decisions with the authorised parties.',
-      ],
-      [
-        'A scope everyone can understand',
-        'Define what will be attended, observed and reported before work starts, especially where several stakeholders are involved.',
-      ],
+      ['A scope built around the building', 'Agree areas, frequency, standards, access, reporting and approval limits. A custom scope can combine several services around the building’s needs.'],
+      ['Practical delivery and specialist coordination', 'Safe general works may be delivered within agreed competence and scope. Regulated trades, pools, lifts, fire systems and technical certification require qualified providers.'],
+      ['Records for the people responsible', 'Attendance, issue logs and follow-up help managers and councils see what needs action. Scheme decisions and spending approvals stay with authorised parties.'],
     ],
     questions: [
-      [
-        'Can a council member instruct work?',
-        'The person instructing must have the appropriate authority for the scheme and the task. We confirm the relationship and scope before proceeding.',
-      ],
-      [
-        'Do inspections include technical certification?',
-        'A general visual inspection does not certify structural, fire, electrical or other specialist compliance. Where specialist assessment is needed, the scope must be referred to the appropriate provider.',
-      ],
-      [
-        'Can support cover recurring building tasks?',
-        'Discuss the building, the tasks and the required frequency with us. Any recurring arrangement needs agreed responsibilities, service availability and commercial terms.',
-      ],
+      ['Can you manage recurring building tasks?', 'Yes. Scope operations, cleaning, waste, grounds and maintenance coordination. Frequencies, after-hours needs, materials, specialist work and extra charges are agreed in the proposal.'],
+      ['Does this appoint ProInspect as our strata manager?', 'A service enquiry or attendance instruction does not create that appointment. Governance, trust money, statutory and licensed functions require appropriate separate authority.'], coverage,
     ],
   },
   'co-living': {
-    name: 'Co-Living',
-    headline: 'Better shared living starts with the details.',
-    summary:
-      'Explore property inspection and shared-space support for co-living operators, with future room and occupancy management being developed separately.',
-    description:
-      'Shared homes bring together private rooms, communal spaces and several people’s expectations. A clear view of property condition and practical follow-up can help operators create a better everyday experience. Talk to ProInspect about the inspection or attendance task your property needs.',
-    audience:
-      'For shared-accommodation owners and co-living operators planning practical support for rooms and communal areas.',
-    outcome:
-      'Build a clearer picture of shared property needs, from room condition to common-space follow-up.',
+    name: 'Co-Living', headline: 'Shared living, supported from room to common space.',
+    summary: 'Tailored Co-Living and Student Living support: room and common-area inspections, resident administration, turnover coordination and practical property care.',
+    description: 'Rooms, shared spaces and resident turnover create a workload that ordinary whole-property routines can miss. We offer tailored support to inspect rooms, coordinate authorised access, organise onboarding and departure tasks, maintain presentation and track property issues. We agree your operating model, resident privacy, responsibilities and reporting before work begins.',
+    audience: 'For shared-accommodation owners, Co-Living operators, Student Living providers and authorised accommodation managers.',
+    outcome: 'A more consistent property experience for operators and residents.',
     services: [
-      [
-        'Room-condition requirements',
-        'Discuss the areas that need to be observed and the record you need at a change of occupancy. Any available inspection must be confirmed under its own agreed scope.',
-      ],
-      [
-        'Shared-space observations',
-        'Identify practical inspection requirements for kitchens, living areas and other communal spaces, with privacy and access arrangements clarified before any attendance.',
-      ],
-      [
-        'Maintenance and access support',
-        'Enquire about defined property attendance, authorised contractor access or follow-up observations for a shared accommodation property.',
-      ],
-      [
-        'Planning ongoing support',
-        'Describe your property, operating model and recurring workload so we can assess what existing services may suit and what remains a future capability.',
-      ],
+      ['Room and shared-space inspections', 'Room-condition records, turnover observations and checks of agreed kitchens, bathrooms, living areas and grounds. Confirm lawful access, private areas and recipients of each record.'],
+      ['Resident onboarding and communications', 'Welcome information, keys, orientation, ordinary requests and maintenance reporting. Agreements, eligibility, rent collection and tenancy decisions remain with the authorised operator.'],
+      ['Day-to-day management support', 'Organise cleaning, waste, gardens, maintenance, contractor access and follow-up around shared living. Agree routines and escalation contacts rather than assuming an always-on response service.'],
+      ['Turnovers and custom operating scopes', 'Room readiness, departure records and handover coordination. Tailor inspections, administration and building services to your rooms, occupancy pattern and site standards. Inclusions, frequency and extras are quoted before commitment.'],
     ],
     difference: [
-      [
-        'Start with the property task',
-        'An enquiry helps establish whether an existing inspection or attendance service is appropriate, without assuming a full management package is available.',
-      ],
-      [
-        'Respect for shared and private spaces',
-        'Clear instructions identify the permitted areas, access arrangements and people authorised to receive any resulting record.',
-      ],
-      [
-        'A considered path forward',
-        'Future room, bed and occupancy features are being developed separately. Interest in them does not activate a service or create a subscription.',
-      ],
+      ['Tailored to your operation', 'Co-Living and Student Living services are available for enquiry and a tailored proposal, from a single room turnover to recurring operations.'],
+      ['Considered access and privacy', 'Agree notice, permissions, safe access and information handling. A shared property does not make every resident’s information available to every other resident.'],
+      ['Clear decisions and responsibilities', 'Operational support does not imply a statutory appointment or financial authority. The engagement identifies who can approve, instruct and receive records.'],
     ],
-    planned:
-      'Full Co-Living management is planned and is not yet available to book. Room, bed and occupancy management will require a separate approved release. Enquire about the suitability of existing property services.',
+    availability: 'Co-Living and Student Living services are offered through an agreed tailored scope. Dedicated room, bed and occupancy software features are subject to their own approved release; an enquiry does not activate an unapproved module.',
     questions: [
-      [
-        'Can I book full Co-Living management now?',
-        'No. Full Co-Living management is planned. Contact us to discuss whether an existing property inspection or attendance service can meet a specific requirement.',
-      ],
-      [
-        'Does signing up activate room or occupancy management?',
-        'No. Your account only shows services available for your verified relationships. Registering interest does not activate a planned module.',
-      ],
-      [
-        'What should an operator include in an enquiry?',
-        'Include the general location, property layout, shared and private areas involved, and the task you need addressed. Leave personal occupant details out of an initial enquiry.',
-      ],
+      ['Is Co-Living or Student Living support available now?', 'Yes. Contact us to scope the property, rooms, shared areas and workload. We confirm delivery, responsibilities and commercial terms before accepting the engagement.'],
+      ['Can you help onboard residents and manage turnovers?', 'Yes, within agreed authority and scope. Resident agreements, permissions and regulated functions remain with the responsible operator and appropriate professionals.'], coverage,
     ],
   },
   construction: {
-    name: 'Construction',
-    headline: 'A clearer view of what is happening on site.',
-    summary:
-      'Discuss construction-related property attendance, observations and handover requirements. Full construction project management is a planned future capability.',
-    description:
-      'Site visits are more useful when everyone understands the question they need to answer. ProInspect can review a defined requirement for property attendance or documentation and clarify whether an existing service is suitable, including its access, safety and reporting boundaries.',
-    audience:
-      'For property owners, developers and project teams seeking a defined on-site observation or attendance requirement.',
-    outcome:
-      'Start with a clear instruction and understand what the resulting record can help you decide.',
+    name: 'Construction', headline: 'Keep your project’s practical details moving.',
+    summary: 'Construction project support, site attendance, progress records, contractor coordination and handover follow-up for owners, developers and project teams.',
+    description: 'Projects create visits, questions, records and actions that need follow-through. ProInspect offers tailored construction project support, connecting practical attendance and administration with clear progress and handover records. Agree the project stage, authority, safety requirements, deliverables and escalation contacts before starting.',
+    audience: 'For owners, developers, investors and project teams seeking coordination, observations and administration alongside their appointed builders and advisers.',
+    outcome: 'A clearer view of progress and the actions still to be closed.',
     services: [
-      [
-        'Site attendance requirements',
-        'Discuss the purpose of a visit, the relevant areas and any induction or safety arrangements. Attendance is subject to service suitability, authorisation and confirmed access.',
-      ],
-      [
-        'Visible-condition documentation',
-        'Explore a record of agreed visible property conditions or observations at a point in time. This is distinct from building certification or technical construction assessment.',
-      ],
-      [
-        'Handover and follow-up',
-        'Clarify the observations or follow-up information you need for a property handover. Specialist defect assessment and certification require separately qualified providers.',
-      ],
-      [
-        'Future project coordination',
-        'Tell us about your project-linked workflow needs. Full project, milestone and contractor-management functionality will be considered through a separate approved release.',
-      ],
+      ['Project setup and coordination', 'Project records, action registers, contacts, attendance and milestone follow-up. Confirm instructions, approval limits, reporting frequency and delegated authority.'],
+      ['Site attendance and progress records', 'Document safely accessible visible conditions and agreed progress observations. Follow site access, induction and safety requirements. Attendance does not replace the builder’s supervision or safety duties.'],
+      ['Contractor and issue follow-up', 'Authorised meetings, access, information requests and action tracking. Designs, variations, payment certification and contractual determinations stay with the appointed professionals and principal.'],
+      ['Handover and completion support', 'Visible-condition records, handover information, outstanding-item registers and follow-up. Specialist defects, engineering, surveying, statutory inspections and certification require qualified providers. Scope a single stage or ongoing project support.'],
     ],
     difference: [
-      [
-        'The right question before the visit',
-        'Agree the purpose and reporting output so the record addresses the task you actually need help with.',
-      ],
-      [
-        'A practical record of attendance',
-        'Where a service is available and confirmed, retain the resulting observations in the appropriate authorised property context.',
-      ],
-      [
-        'Clear technical boundaries',
-        'Construction expertise, certification and contractual decisions are not implied by general attendance. We clarify suitability before accepting an instruction.',
-      ],
+      ['Support shaped around your project', 'Construction project support is available for enquiry and a tailored proposal. We define work, outputs, timing and fees before accepting an instruction.'],
+      ['A connected record of the next step', 'Site observations, actions and authorised communications stay in context so the responsible people can review progress and follow up.'],
+      ['Your professional team keeps its responsibilities', 'General support does not imply appointment as builder, designer, engineer, certifier or legal adviser. Regulated work and technical approvals stay with the appropriate parties.'],
     ],
-    planned:
-      'Full Construction project management is planned and is not yet available to book. Project, milestone and contractor-management features remain subject to separate development and approval.',
+    availability: 'Construction project support is offered through a tailored scope. Dedicated project, milestone and contractor-management software features remain subject to a separate approved release.',
     questions: [
-      [
-        'Is full construction project management available?',
-        'No. This is a planned future capability. Contact us about a defined attendance or property observation task so we can assess existing service suitability.',
-      ],
-      [
-        'Do you certify building work?',
-        'General property attendance does not provide building certification, engineering advice or specialist compliance assessment. Those requirements must be addressed by the appropriate professional.',
-      ],
-      [
-        'What does a site enquiry need to include?',
-        'Tell us the location, project stage, reason for attendance and known access or induction requirements. We confirm suitability and scope before any instruction proceeds.',
-      ],
+      ['Is construction project support available?', 'Yes. Tell us the location, project stage, appointed team and workload. We will clarify the coordination, attendance and reporting we can provide.'],
+      ['Does attendance certify work or approve payment?', 'General observations and administration are distinct from engineering, certification, quantity surveying, contractual decisions and statutory inspections. Those require appropriate qualifications and authority.'], coverage,
     ],
   },
   maintenance: {
-    name: 'Maintenance',
-    headline: 'From a reported issue to a clear next step.',
-    summary:
-      'Property maintenance assessment, contractor access and completed-work follow-up for residential, commercial and strata properties in WA.',
-    description:
-      'A maintenance report is only the beginning. ProInspect helps owners and managers clarify what has been reported, arrange agreed on-site support and retain a record of the follow-up. You can focus on the decision while the practical property task gets the attention it needs.',
-    audience:
-      'For property owners, managers, strata teams and tenants using the authorised maintenance reporting process for their property.',
-    outcome:
-      'Understand the issue, coordinate the next action and keep track of what was observed.',
+    name: 'Maintenance', headline: 'Property care that follows the issue through.',
+    summary: 'Maintenance coordination, preventative care, safe minor works and specialist-contractor follow-up for residential, commercial and shared buildings.',
+    description: 'Connect the reported issue with an approved action and a clear outcome. ProInspect helps organise requests, observe conditions, coordinate quotes and access, and follow up completed work. Combine individual tasks with recurring care for the property, gardens and shared spaces under a tailored scope.',
+    audience: 'For owners, agencies, strata and building teams. Tenants should use their property’s nominated reporting process and the responsible manager’s urgent-maintenance instructions.',
+    outcome: 'Notice the issue. Agree the work. Keep the outcome in view.',
     services: [
-      [
-        'Reported-issue assessment',
-        'Arrange a defined visit to observe the reported problem and document relevant visible conditions. A clear description and supporting record help the authorised decision-maker choose the next step.',
-      ],
-      [
-        'Authorised contractor access',
-        'Coordinate agreed attendance, access or key arrangements for the contractor instructed by the responsible owner or manager.',
-      ],
-      [
-        'Completed-work observations',
-        'Have the visible outcome of a repair or other work checked against an agreed instruction, with follow-up items documented for review.',
-      ],
-      [
-        'Property-linked follow-up',
-        'Keep maintenance requests, attendance and resulting records connected to the relevant property and authorised account. Existing tenants should use their property’s nominated reporting channel.',
-      ],
+      ['Assessment and preventative care', 'Record the issue, location and visible conditions; identify the next step and plan agreed checks. General observations are distinct from specialist diagnosis or certification.'],
+      ['Quotes, contractors and access', 'Seek scoped quotes, coordinate approved trades and arrange authorised keys or attendance. Owners or appointed managers approve expenditure and variations within agreed authority.'],
+      ['Practical property and building care', 'Safe general minor works, cleaning and presentation, waste routines, gardens and reticulation observations. Electrical, gas, plumbing and other regulated work is referred to qualified contractors.'],
+      ['Completion and ongoing support', 'Document visible results, outstanding items and follow-up. Agree frequency, materials, travel, after-hours and specialist costs before work proceeds; no unlimited repairs or emergency response is implied.'],
     ],
     difference: [
-      [
-        'Useful detail for a practical decision',
-        'Focus the attendance on what needs to be understood, where it is and what the responsible person needs recorded.',
-      ],
-      [
-        'Approvals stay in the right hands',
-        'Repair instructions, spending approvals and technical work remain with the authorised owner, manager and appointed trade unless separately agreed.',
-      ],
-      [
-        'A clearer handover between steps',
-        'Keep the property context available as an issue moves from a report to attendance and follow-up, reducing the need to explain the same task again.',
-      ],
+      ['Useful detail before a decision', 'A clear request and property observations help the authorised decision-maker choose the right contractor or next action.'],
+      ['Delivery with clear limits', 'Distinguish agreed general work from regulated repairs and specialist assessment. Record repair approvals and spending limits before work proceeds.'],
+      ['Follow-through you can review', 'Keep requests, attendance and outcomes connected to the property. Extra work and third-party costs need the appropriate approval.'],
     ],
     questions: [
-      [
-        'Do you carry out every repair yourselves?',
-        'Maintenance attendance and observations do not automatically include a trade repair. The responsible party confirms repair approval and the appropriate contractor under the agreed arrangement.',
-      ],
-      [
-        'How should a tenant report an issue?',
-        'Use the maintenance process nominated by your landlord or property manager, or your authorised tenant workspace where available. Include the location, description and relevant photos without sharing private access details publicly.',
-      ],
-      [
-        'What if the issue is urgent?',
-        'This website and its enquiry form are not an emergency response service. Follow the urgent-maintenance instructions in your tenancy or building information and contact emergency services if there is immediate danger.',
-      ],
+      ['Can I arrange one task or ongoing care?', 'Yes. Request a single task or a tailored recurring scope. ' + PRIVATE_SERVICE_PRICING],
+      ['How should a tenant report maintenance?', 'Use the property’s nominated channel, with a clear description and safe photos. Keep access codes and sensitive evidence private. Follow your manager’s urgent instructions; this website is not an emergency service. Contact emergency services if there is immediate danger.'], coverage,
     ],
   },
 } satisfies Record<string, SectorOverview>;
-
 export type SectorKey = keyof typeof SECTOR_OVERVIEWS;

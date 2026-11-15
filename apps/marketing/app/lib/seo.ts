@@ -1,7 +1,8 @@
 import type { MetaDescriptor } from 'react-router';
+import { PUBLIC_COMPANY } from '../../../../packages/marketing/public-facts.ts';
 
 const ORIGIN = 'https://proinspect.systems';
-const business = { '@type': 'Organization', name: 'ProInspect Property Services', url: ORIGIN };
+const business = { '@type': 'Organization', name: PUBLIC_COMPANY.name, legalName: PUBLIC_COMPANY.name, taxID: PUBLIC_COMPANY.abn, identifier: { '@type': 'PropertyValue', propertyID: 'ACN', value: PUBLIC_COMPANY.acn }, email: PUBLIC_COMPANY.email, url: ORIGIN };
 
 export type SeoOptions = {
   type?: 'WebPage' | 'CollectionPage' | 'Service';
