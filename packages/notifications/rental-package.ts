@@ -11,7 +11,7 @@ export async function authorisedRentalPackage(env:Env,id:string,forSend=false):P
  if(!r||r.revoked_at||r.expires_at<=now()||!['submitted','ready_for_handoff','forwarded','decision_recorded'].includes(r.status)||r.privacy_hold_until&&r.privacy_hold_until>now()||r.provider!=='proinspect'||r.management_version!==r.current_management_version||r.listing_status!=='published'||r.application_mode!=='proinspect'||r.application_url||!r.application_recipient_email||r.rental_recipient_verified_at!==r.recipient_verified_at||!r.consent_version.includes('|managed-temporary:'+TEMPORARY_RENTAL_POLICY_VERSION))return null;
  const release=await statement(env.DB,"SELECT policy_sha256 FROM managed_rental_temporary_releases WHERE environment=? AND source_sha=? AND enabled=1 AND policy_version=?",env.APP_ENV,env.BUILD_SHA??'',TEMPORARY_RENTAL_POLICY_VERSION).first<{policy_sha256:string}>();
  if(release?.policy_sha256!==await digest(JSON.stringify(TEMPORARY_RENTAL_POLICY)))return null;
- if(!forSend&&!r.sent_at)return null;
+ if(forSend&&r.sent_at||!forSend&&!r.sent_at)return null;
  const cc=env.OPERATIONS_EMAIL??PUBLIC_COMPANY.email;
  if(r.recipient_hash!==await packageRecipientHash(env,r.application_recipient_email)||r.cc_hash!==await packageRecipientHash(env,cc))return null;
  const latest=await statement(env.DB,'SELECT id FROM rental_application_submissions WHERE application_id=? ORDER BY version DESC LIMIT 1',r.application_id).first<{id:string}>();
@@ -33,7 +33,8 @@ export async function rentalPackageMailAllowed(env:Env,id:string,outboxId:string
 export function rentalPackageSentStatements(env:Env,id:string,providerId:string,stamp:string){
  const deadline=new Date(Date.parse(stamp)+7*86400000).toISOString();
  return [
-  statement(env.DB,'UPDATE rental_temporary_packages SET sent_at=?,provider_id=?,expires_at=? WHERE id=? AND sent_at IS NULL AND revoked_at IS NULL',stamp,providerId,deadline,id),
+  statement(env.DB,'UPDATE rental_temporary_packages SET sent_at=?,provider_id=?,expires_at=? WHERE id=? AND sent_at IS NULL',stamp,providerId,deadline,id),
+  statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   statement(env.DB,"UPDATE rental_temporary_documents SET delete_after=? WHERE id IN(SELECT value FROM rental_temporary_packages p,json_each(p.document_ids_json) WHERE p.id=? AND p.sent_at=?) AND state='approved'",deadline,id,stamp),
  ];
 }
