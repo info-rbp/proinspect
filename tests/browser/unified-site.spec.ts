@@ -6,6 +6,7 @@ test('public industry pages lead into one secure Client Portal entry',async({pag
  for(const path of ['/','/residential','/commercial','/strata','/co-living','/student-living','/construction','/leasing','/maintenance']){
   const response=await request.get(path);expect(response.status(),path).toBe(200);
  }
+ await page.setViewportSize({width:1600,height:900});
  await page.goto('/');
  await expect(page.locator('body')).toHaveClass(/site/);
  await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Residential'}).click();
