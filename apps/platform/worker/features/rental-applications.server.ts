@@ -1,4 +1,5 @@
-import { withManagedIntakePolicy,managedIntakeRelease,managedApplicationListing,isManagedApplication,isScannedManagedApplication } from './managed-rental-intake.server';
+import {temporaryDocumentList,uploadTemporaryDocument,removeTemporaryDocument,purgeTemporaryApplication} from './rental-temporary-documents.server';
+import { withManagedIntakePolicy,managedIntakeRelease,managedApplicationListing,isManagedApplication,isScannedManagedApplication,isTemporaryManagedApplication } from './managed-rental-intake.server';
 import { PUBLIC_COMPANY } from '../../../../packages/marketing/public-facts';
 import {verifyPrivateScanResponse} from '../../../../packages/marketing/private-scan';
 import { managedRentalListingApproved } from './rental-governance.server';
@@ -79,7 +80,7 @@ export async function rentalStartPage(env:Env,slug:string){
  assert(row,404,'RENTAL_APPLICATION_UNAVAILABLE','Online applications are unavailable for this property.');
  row=await listing(env,row.id);
  const notice=await collectionNotice(env,row);
- return {listing:{id:row.id,slug:row.slug,title:row.title,address:row.display_address,suburb:row.suburb},collectionNotice:notice,
+ return {listing:{id:row.id,slug:row.slug,title:row.title,address:row.display_address,suburb:row.suburb},collectionNotice:notice,temporaryUploads:(await managedIntakeRelease(env))?.intake_mode==='temporary_documents',
   enabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&notice.approved&&await managedRentalListingApproved(env,row.id),detailsOnly:(await managedIntakeRelease(env))?.intake_mode==='details_only',siteKey:env.MARKETING_TURNSTILE_SITE_KEY??''};
 }
 export async function startRental(env:Env,request:Request,listingId:string,input:unknown,security?:string){
@@ -102,7 +103,7 @@ export async function startRental(env:Env,request:Request,listingId:string,input
  }
  const appId=uid('rapp'),applicantId=uid('rap'),reference='RNT-'+crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase();
  await env.DB.batch([
-  statement(env.DB,"INSERT INTO rental_applications(id,listing_id,reference,status,started_at,updated_at,consent_version,retained_until) VALUES(?,?,?,'draft',?,?,?,?)",appId,listingId,reference,t,t,await managedIntakeRelease(env)?FORM18_VERSION+((await managedIntakeRelease(env))!.intake_mode==='details_only'?'|managed-details:':'|managed-documents:')+(await managedIntakeRelease(env))!.policy_version:FORM18_VERSION,retentionDeadline(env,'draft')),
+  statement(env.DB,"INSERT INTO rental_applications(id,listing_id,reference,status,started_at,updated_at,consent_version,retained_until) VALUES(?,?,?,'draft',?,?,?,?)",appId,listingId,reference,t,t,await managedIntakeRelease(env)?FORM18_VERSION+((await managedIntakeRelease(env))!.intake_mode==='details_only'?'|managed-details:':(await managedIntakeRelease(env))!.intake_mode==='temporary_documents'?'|managed-temporary:':'|managed-documents:')+(await managedIntakeRelease(env))!.policy_version:FORM18_VERSION,retentionDeadline(env,'draft')),
   statement(env.DB,"INSERT INTO rental_applicants(id,application_id,ordinal,role,email_hash,access_token_hash,access_expires_at,answers_envelope,state,created_at,updated_at) VALUES(?,?,1,'primary',?,?,?,?,'in_progress',?,?)",
     applicantId,appId,hash,tokenHash,expiry(),await seal(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+applicantId,initialAnswers(d.name,d.email)),t,t),
   await event(env,appId,'started',{propertyId:listingId,formVersion:FORM18_VERSION},applicantId),
@@ -130,6 +131,7 @@ export async function rentalPage(env:Env,token:string){
  env=await withManagedIntakePolicy(env);
  const {person,app,l,answers}=await tokenAccess(env,token);
  const documents=(await statement(env.DB,'SELECT id,category,filename,size_bytes,review_status,scan_status,uploaded_at FROM rental_application_documents WHERE applicant_id=? ORDER BY uploaded_at DESC',person.id).all()).results;
+ const temporaryDocuments=await temporaryDocumentList(env,app.id,person.id);
  const expectedNotice=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name,l.rental_approved_notice_version]));
  const noticeMatches=person.notice_digest===expectedNotice;
  const household:{ordinal:number;state:string;maskedEmail:string;name:string}[]=[];
@@ -145,7 +147,7 @@ export async function rentalPage(env:Env,token:string){
  const moreInformation=app.status==='information_requested'&&app.review_request_envelope?
   await unseal<{instructions:string}>(env.DATA_ENCRYPTION_KEY,'rental-followup:'+app.id,app.review_request_envelope):null;
  const privacyRequests=(await statement(env.DB,"SELECT kind,status,created_at FROM rental_application_privacy_requests WHERE applicant_id=? ORDER BY created_at DESC LIMIT 12",person.id).all()).results;
- return {reference:app.reference,status:app.status,intakeEnabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&(await collectionNotice(env,l)).approved&&l.kind==='residential'&&l.status==='published'&&l.application_mode==='proinspect'&&l.application_url===null&&(await managedApplicationListing(env,l.id)||l.rental_approval_state==='approved'&&Boolean(l.rental_recipient_verified_at)&&await managedRentalListingApproved(env,l.id)),detailsOnly:app.consent_version.includes('|managed-details:'),minimalCollection:isManagedApplication(app.consent_version),uploadsEnabled:!await managedIntakeRelease(env)||isScannedManagedApplication(app.consent_version)&&(await managedIntakeRelease(env))?.intake_mode==='scanned_documents',version:person.version,role:person.role,ordinal:person.ordinal,
+ return {reference:app.reference,status:app.status,intakeEnabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&(await collectionNotice(env,l)).approved&&l.kind==='residential'&&l.status==='published'&&l.application_mode==='proinspect'&&l.application_url===null&&(await managedApplicationListing(env,l.id)||l.rental_approval_state==='approved'&&Boolean(l.rental_recipient_verified_at)&&await managedRentalListingApproved(env,l.id)),temporaryUploads:isTemporaryManagedApplication(app.consent_version)&&(await managedIntakeRelease(env))?.intake_mode==='temporary_documents',temporaryDocuments,detailsOnly:app.consent_version.includes('|managed-details:'),minimalCollection:isManagedApplication(app.consent_version),uploadsEnabled:isTemporaryManagedApplication(app.consent_version)&&(await managedIntakeRelease(env))?.intake_mode==='temporary_documents'||!await managedIntakeRelease(env)||isScannedManagedApplication(app.consent_version)&&(await managedIntakeRelease(env))?.intake_mode==='scanned_documents',version:person.version,role:person.role,ordinal:person.ordinal,
   state:person.state,noticeMatches,declaredAt:person.declared_at,submittedAt:app.submitted_at,
   property:{title:l.title,address:l.display_address,suburb:l.suburb,agentName:l.agent_name},
   notice:{mode:configuredNotice?.mode??l.tenancy_database_notice_mode,entries:notice,version:l.rental_approved_notice_version},moreInformation,privacyRequests,answers,documents,household};
@@ -256,6 +258,7 @@ export async function removeRentalApplicant(env:Env,token:string,ordinal:number)
   await event(env,app.id,'coapplicant_removed',{ordinal,documentsRemoved:files.length},person.id),
   statement(env.DB,'DELETE FROM mutation_guards'),
  ]);
+ await purgeTemporaryApplication(env,app.id,match.id);
  for(const f of files)await env.RESTRICTED_DOCUMENTS.delete(f.object_key);
  return {removed:true};
 }
@@ -267,7 +270,8 @@ export async function finishRentalApplicant(env:Env,token:string,consent:unknown
  assert(allDetailsComplete(answers),422,'APPLICATION_INCOMPLETE','Complete the required application sections before declaring.');
  assert(person.role!=='primary'||tenancyPreferencesComplete(answers),422,'TENANCY_PREFERENCES_INCOMPLETE','Complete the proposed occupants and pets information before declaring.');
  const d=z.object({accurate:z.literal(true),shareWithRepresentative:z.literal(true),
-  notAnAgreement:z.literal(true),noticeAcknowledged:z.literal(true),referenceConsent:z.boolean(),legalConsent:z.unknown().optional()}).parse(consent);
+  notAnAgreement:z.literal(true),noticeAcknowledged:z.literal(true),referenceConsent:z.boolean(),temporaryEvidenceConsent:z.boolean().optional(),legalConsent:z.unknown().optional()}).parse(consent);
+ assert(!isTemporaryManagedApplication(app.consent_version)||d.temporaryEvidenceConsent===true,422,'DOCUMENT_SHARING_CONSENT_REQUIRED','Review and accept the temporary evidence-sharing and retention notice.');
  const l=await listing(env,app.listing_id);
  assert(l.tenancy_database_notice_mode!=='unconfigured',503,'TENANCY_NOTICE_REQUIRED','Database notice has not been configured.');
  const noticeDigest=await digest(JSON.stringify([l.tenancy_database_notice_mode,l.tenancy_database_notice_json,l.agent_name,l.rental_approved_notice_version]));
@@ -311,6 +315,8 @@ export async function submitRental(env:Env,token:string){
   return {ordinal:row.ordinal,declaredAt:row.declared_at,
    answers:await unseal<Form18Answers>(env.DATA_ENCRYPTION_KEY,'rental-applicant:'+row.id,record.answers_envelope)};
  }));
+ const temporaryManifest=await temporaryDocumentList(env,app.id);
+ assert(!temporaryManifest.some(d=>!d.stored_at||d.state==='purging'||d.delete_after<=now()),409,'DOCUMENT_UPLOAD_IN_PROGRESS','Finish or remove incomplete or expired uploads before submitting.');
  const fileManifest=(await statement(env.DB,'SELECT applicant_id,category,filename,size_bytes,sha256,review_status,scan_status FROM rental_application_documents WHERE application_id=? ORDER BY uploaded_at',app.id).all()).results;
  assert(fileManifest.every(file=>file.scan_status==='clean'&&(isScannedManagedApplication(app.consent_version)?file.review_status!=='rejected':file.review_status==='released')),409,'DOCUMENTS_NOT_READY','Supporting files must finish the required security checks before submission. Remove unsafe or failed files, or wait for scanning and refresh the page.');
  const prior=await statement(env.DB,'SELECT COALESCE(MAX(version),0) AS n FROM rental_application_submissions WHERE application_id=?',app.id).first<{n:number}>();
@@ -318,10 +324,10 @@ export async function submitRental(env:Env,token:string){
  assert(snapshotVersion<=30,422,'SUBMISSION_LIMIT','Submission history requires staff review.');
  const snapshot={reference:app.reference,formVersion:FORM18_VERSION,submittedAt:stamp,
   property:l.display_address,leasingRepresentative:l.agent_name,
-  applicants:completePeople,notice,documents:fileManifest};
+  applicants:completePeople,notice,documents:fileManifest,temporaryDocuments:temporaryManifest.map(({id,sha256,size_bytes})=>({id,sha256,size_bytes}))};
  const submissionId=uid('ras');
  await env.DB.batch([
-  statement(env.DB,"UPDATE rental_applications SET status='submitted',notice_envelope=?,submitted_at=COALESCE(submitted_at,?),retained_until=?,updated_at=?,version=version+1 WHERE id=? AND status IN('draft','information_requested') AND version=? AND NOT EXISTS(SELECT 1 FROM rental_applicants p WHERE p.application_id=rental_applications.id AND p.state NOT IN('complete','removed')) AND NOT EXISTS(SELECT 1 FROM rental_application_documents d WHERE d.application_id=rental_applications.id AND (d.scan_status!='clean' OR d.review_status='rejected' OR (?=0 AND d.review_status!='released'))) AND (SELECT COUNT(*) FROM rental_application_documents d WHERE d.application_id=rental_applications.id)=?",
+  statement(env.DB,"UPDATE rental_applications SET status='submitted',notice_envelope=?,submitted_at=COALESCE(submitted_at,?),retained_until=?,updated_at=?,version=version+1 WHERE id=? AND status IN('draft','information_requested') AND version=? AND NOT EXISTS(SELECT 1 FROM rental_applicants p WHERE p.application_id=rental_applications.id AND p.state NOT IN('complete','removed')) AND NOT EXISTS(SELECT 1 FROM rental_application_documents d WHERE d.application_id=rental_applications.id AND (d.scan_status!='clean' OR d.review_status='rejected' OR (?=0 AND d.review_status!='released'))) AND (SELECT COUNT(*) FROM rental_application_documents d WHERE d.application_id=rental_applications.id)=?"+(isTemporaryManagedApplication(app.consent_version)?" AND (SELECT COUNT(*) FROM rental_temporary_documents d WHERE d.application_id=rental_applications.id AND d.state!='purged')="+temporaryManifest.length+" AND NOT EXISTS(SELECT 1 FROM rental_temporary_documents d WHERE d.application_id=rental_applications.id AND d.state!='purged' AND (d.stored_at IS NULL OR d.state='purging' OR d.delete_after<=strftime('%Y-%m-%dT%H:%M:%fZ','now')))":''),
    await seal(env.DATA_ENCRYPTION_KEY,'rental-notice:'+app.id,notice),stamp,retentionDeadline(env,'submitted'),stamp,app.id,app.version,isScannedManagedApplication(app.consent_version)?1:0,fileManifest.length),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
   statement(env.DB,'INSERT INTO rental_application_submissions(id,application_id,submitted_by_applicant_id,version,form_version,snapshot_envelope,created_at) VALUES(?,?,?,?,?,?,?)',
@@ -333,7 +339,7 @@ export async function submitRental(env:Env,token:string){
    facts:{Reference:app.reference,Property:l.display_address},sensitive:true}),
   ...(env.OPERATIONS_EMAIL?[await mailEvent(env,'rental.application.operations',{to:env.OPERATIONS_EMAIL,
    subject:'Residential application ready — '+app.reference,heading:'A residential rental application needs review',
-   body:await managedIntakeRelease(env)?'An encrypted residential application was submitted. Review it in the restricted staff application queue. External forwarding is disabled for this intake mode.':'An encrypted residential application was submitted. Open the restricted staff application queue to review and forward it securely.',
+   body:isTemporaryManagedApplication(app.consent_version)?'An encrypted application with optional quarantined supporting files needs review. Record a managed-device antivirus check and use the verified-recipient sharing controls in the staff queue.':await managedIntakeRelease(env)?'An encrypted residential application was submitted. Review it in the restricted staff application queue. External forwarding is disabled for this intake mode.':'An encrypted residential application was submitted. Open the restricted staff application queue to review and forward it securely.',
    facts:{Reference:app.reference,Property:l.display_address}})]:[]),
   statement(env.DB,'DELETE FROM mutation_guards'),
  ]);
@@ -365,6 +371,7 @@ export async function uploadRentalDocument(env:Env,token:string,form:FormData){
  const release=await managedIntakeRelease(env);
  const {person,app,l}=await editableAccess(env,token);
  await limit(env,'document-upload:'+person.id,25);
+ if(release?.intake_mode==='temporary_documents')return uploadTemporaryDocument(env,{person,app,l},form);
  assert(!release||release.intake_mode==='scanned_documents'&&isScannedManagedApplication(app.consent_version)&&await managedApplicationListing(env,l.id),503,'DOCUMENT_UPLOADS_DISABLED','Document uploads are disabled for this application. Complete your details without attachments.');
  if(release){
   assert(env.PRIVATE_DOCUMENT_SCANNER&&release.scanner_public_jwk,503,'SCANNER_UNAVAILABLE','Private document scanning is temporarily unavailable.');
@@ -399,6 +406,7 @@ export async function deleteRentalDocument(env:Env,token:string,docId:string){
  env=await enabled(env);
  const {person,app}=await editableAccess(env,token);
  assert(allowedEdit(app.status),409,'APPLICATION_LOCKED','Documents cannot be changed after submission.');
+ if(docId.startsWith('rtd_'))return removeTemporaryDocument(env,app.id,person.id,docId);
  const row=await statement(env.DB,'SELECT id,object_key FROM rental_application_documents WHERE id=? AND applicant_id=? AND application_id=?',
  docId,person.id,app.id).first<{id:string;object_key:string}>();
  assert(row,404,'DOCUMENT_NOT_FOUND','Document unavailable.');

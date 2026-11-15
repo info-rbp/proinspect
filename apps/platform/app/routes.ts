@@ -38,6 +38,7 @@ export default [
     route('properties-for-lease/cancel/:token', '../../marketing/app/routes/leasing-cancel.tsx'),
     route('properties-for-lease/:kind', '../../marketing/app/routes/leasing-sector.tsx'),
     route('properties-for-lease/:kind/:slug/apply', '../../marketing/app/routes/rental-start.tsx'),
+    route('rental-package/:token', '../../marketing/app/routes/rental-package.tsx'),
     route('rental-application/recover','../../marketing/app/routes/rental-recover.tsx'),
      route('rental-application/:token', '../../marketing/app/routes/rental-application.tsx'),
      route('rental-recipient/verify/:token','../../marketing/app/routes/rental-recipient-verify.tsx'),

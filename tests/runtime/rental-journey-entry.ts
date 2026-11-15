@@ -1,3 +1,5 @@
+import {dispatchTemporaryDocumentRetention,temporarySecurityDownload,reviewTemporaryDocument,stageTemporaryPackage,temporaryPackageAccess,controlTemporaryPackage} from '../../apps/platform/worker/features/rental-temporary-documents.server';
+import {deliverEvent} from '../../packages/notifications/server';
 /**
  * Isolated integration test entrypoint. This file is NEVER imported by
  * production routing, and its synthetic endpoints are unavailable online.
@@ -26,6 +28,13 @@ export default {
   const path=url.pathname;
   try{
    const administrator={id:'usr_rental_synthetic_admin',staffRole:'administrator'} as Principal;
+   if(path==='/__test/temporary-retention'){await dispatchTemporaryDocumentRetention(env);return Response.json({completed:true});}
+   if(path==='/__test/temporary-security'&&request.method==='POST'){const d=await request.json() as {applicationId:string;documentId:string;acknowledged:boolean};return await temporarySecurityDownload(env,administrator,d.applicationId,d.documentId,d.acknowledged);}
+   if(path==='/__test/temporary-review'&&request.method==='POST'){const d=await request.json() as {applicationId:string;documentId:string;input:unknown;nonAdmin?:boolean};return Response.json(await reviewTemporaryDocument(env,d.nonAdmin?{...administrator,staffRole:'operations_manager'}:administrator,d.applicationId,d.documentId,d.input));}
+   if(path==='/__test/package-control'&&request.method==='POST'){const d=await request.json() as {applicationId:string;id:string;action:'retry'|'revoke'};return Response.json(await controlTemporaryPackage(env,administrator,d.applicationId,d.id,d.action));}
+   if(path==='/__test/temporary-package'&&request.method==='POST'){const d=await request.json() as {applicationId:string};return Response.json(await stageTemporaryPackage(env,administrator,d.applicationId,{confirmAuthority:true,confirmRecipients:true,confirmSecurityReview:true}));}
+   if(path==='/__test/mail'&&request.method==='POST'){const d=await request.json() as {eventId:string};await deliverEvent(env,d.eventId);return Response.json({completed:true});}
+   if(path==='/__test/package-access'){const value=await temporaryPackageAccess(env,url.searchParams.get('token')??'',url.searchParams.get('document')??undefined);return value instanceof Response?value:Response.json(value);}
    if(path==='/__test/upload'&&request.method==='POST'){
     const form=await request.formData();return Response.json(await uploadRentalDocument(env,String(form.get('token')),form));
    }
@@ -94,8 +103,8 @@ export default {
     return Response.json(await saveRentalSection(env,d.token,d.section,d.raw,d.version));
    }
    if(path==='/__test/complete'&&request.method==='POST'){
-    const d=await request.json() as {token:string;version:number};
-    return Response.json(await finishRentalApplicant(env,d.token,{accurate:true,shareWithRepresentative:true,notAnAgreement:true,noticeAcknowledged:true,referenceConsent:false},d.version));
+    const d=await request.json() as {token:string;version:number;temporaryEvidenceConsent?:boolean};
+    return Response.json(await finishRentalApplicant(env,d.token,{accurate:true,shareWithRepresentative:true,notAnAgreement:true,noticeAcknowledged:true,referenceConsent:false,temporaryEvidenceConsent:d.temporaryEvidenceConsent!==false},d.version));
    }
    if(path==='/__test/submit'&&request.method==='POST'){
     const d=await request.json() as {token:string};

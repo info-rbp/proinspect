@@ -17,7 +17,7 @@ export async function loader({context,params}:LoaderFunctionArgs){
  // Public listing data only. Never reveal an unpublished listing through an application URL.
  const l=published.listing;
  const unavailable={listing:{id:l.id,slug:l.slug,title:l.title,address:l.display_address,suburb:l.suburb},
-  enabled:false,detailsOnly:false,siteKey:'',unavailable:true,collectionNotice:null};
+  enabled:false,detailsOnly:false,temporaryUploads:false,siteKey:'',unavailable:true,collectionNotice:null};
  const headers={'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'};
  if(l.application_mode!=='proinspect')
   return data(unavailable,{headers});
@@ -53,7 +53,7 @@ export async function action({request,context,params}:ActionFunctionArgs){
  }
 }
 export default function RentalStart(){
- const {listing,enabled,siteKey,unavailable,detailsOnly,collectionNotice}=useLoaderData<typeof loader>();
+ const {listing,enabled,siteKey,unavailable,detailsOnly,temporaryUploads,collectionNotice}=useLoaderData<typeof loader>();
  const result=useActionData<typeof action>() as {success?:boolean;error?:string}|undefined;
  return <div className="rental-shell"><div className="site-container">
   <nav className="rental-breadcrumb" aria-label="Breadcrumb"><Link to="/properties-for-lease/residential">Residential properties</Link><span aria-hidden="true"> / </span><Link to={'/properties-for-lease/residential/'+listing.slug}>Property details</Link></nav>
@@ -77,6 +77,7 @@ export default function RentalStart(){
     </>}
   </section>
   <aside className="rental-side"><div className="rental-property-panel"><p className="eyebrow">Property you're applying for</p><h3>{listing.title}</h3><p>{listing.address}, {listing.suburb} WA</p><p>Secure applications for properties directly managed by ProInspect.</p></div>
+  {temporaryUploads&&<div className="rental-property-panel"><h3>Private supporting documents</h3><p>Temporary document uploads are available. Files are encrypted and quarantined for manual antivirus review before sharing with the verified landlord, with ProInspect copied. Private document access ends seven days after successful sending. Unsent uploads expire after 14 days.</p></div>}
   <div className="rental-property-panel"><h3>How it works</h3><ol><li>Receive your private application link.</li><li>Complete your rental application details in short sections.</li><li>Invite other adult applicants if needed.</li><li>{detailsOnly?'Continue without document uploads.':'Upload supporting evidence securely.'}</li><li>Review and submit as a household.</li></ol><p className="rental-muted">This application is not a tenancy agreement or an offer. The landlord or authorised leasing representative makes leasing decisions.</p></div></aside>
   </div>
  </div></div>;

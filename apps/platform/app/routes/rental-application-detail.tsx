@@ -1,3 +1,4 @@
+import {TemporaryRentalDocuments} from '../components/TemporaryRentalDocuments';
 import { repeaterSummary } from '../../../../packages/marketing/rental-repeaters';
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { loadApi } from '../lib/api.server';
@@ -62,6 +63,7 @@ export default function RentalApplicationDetail(){
      </OperationForm>}
    </div></article>)}
   </Panel>
+  {d.temporaryUploads&&<TemporaryRentalDocuments applicationId={a.id} documents={d.temporaryDocuments??[]} packages={d.temporaryPackages??[]} administrator={role==='administrator'} submitted={a.status==='submitted'}/>}
   <Panel title="Application activity"><div className="stack">{d.history.map((e:any)=><div className="record-row" key={e.id}><div><strong>{e.kind.replaceAll('_',' ')}</strong><p className="small">{new Date(e.created_at).toLocaleString('en-AU')}</p></div></div>)}</div></Panel>
  </div><aside className="stack">
   <Panel title="Decision-making boundary"><p>ProInspect is administering this application on behalf of the authorised landlord or leasing agency. ProInspect does not determine applicant suitability, offer a tenancy or execute the tenancy agreement through this workflow.</p>
