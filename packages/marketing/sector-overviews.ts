@@ -96,6 +96,29 @@ export const SECTOR_OVERVIEWS = {
       ['Can you help onboard residents and manage turnovers?', 'Yes, within agreed authority and scope. Resident agreements, permissions and regulated functions remain with the responsible operator and appropriate professionals.'], coverage,
     ],
   },
+  'student-living': {
+    name: 'Student Living', headline: 'Room-by-room support for a better student accommodation experience.',
+    summary: 'Student accommodation inspections, resident move-in support, room turnovers, communal living care and operational coordination across Perth and Peel.',
+    description: 'Student accommodation requires a room-level operating model: furnished bedrooms, shared amenities, resident arrivals and departures, cleaning and maintenance across communal areas. ProInspect supports operators with condition records, onboarding activities, authorised access, room readiness and recurring property care. A property-specific scope defines the work and responsibilities.',
+    audience: 'For student accommodation landlords, purpose-built student living operators and managers of room-by-room shared apartments and houses.',
+    outcome: 'Every room and shared space has a practical next step.',
+    services: [
+      ['Room configuration and incoming records', 'Document agreed bedrooms, private ensuites where provided, shared bathrooms, furnishings and common facilities, with lawful access and authorised recipients.'],
+      ['Resident onboarding and orientation', 'Assist with approved arrival information, key custody, move-in instructions, condition evidence and ordinary requests. The operator remains responsible for rental and occupancy decisions.'],
+      ['Shared facilities and recurring care', 'Coordinate cleaning, waste, maintenance observations, contractor access and reporting for kitchens, lounges, laundries, bathrooms and grounds.'],
+      ['Room turnover and readiness', 'Departure observations, inventories, issue registers, cleaning follow-up, room handovers and readiness checks ahead of the next resident.'],
+    ],
+    difference: [
+      ['Purpose-built around occupancy', 'Arrange practical work by room, apartment or building with a defined turnover and shared-space schedule.'],
+      ['Evidence and privacy by room', 'Residents may share areas but not all rooms or personal records; permissions and disclosure follow the accepted instruction.'],
+      ['Operator-facing support', 'Combine agreed inspections, onboarding administration, communal care and room turnaround with documented actions and escalation.'],
+    ],
+    availability: 'Student Living is available as a tailored operational service. Dedicated bed and room occupancy software may be introduced separately; this page does not promise an unapproved platform module.',
+    questions: [
+      ['Can ProInspect support an entire student accommodation property?', 'Yes, through an agreed room and communal-area scope identifying inspections, room turnovers, routines, records and responsibilities.'],
+      ['Can support be arranged room by room?', 'Room-by-room tasks and recurring programmes can be scoped. Final commercial terms depend on the property and workload; no standard room tariff is implied.'], coverage,
+    ],
+  },
   construction: {
     name: 'Construction', headline: 'Keep your project’s practical details moving.',
     summary: 'Construction project support, site attendance, progress records, contractor coordination and handover follow-up for owners, developers and project teams.',

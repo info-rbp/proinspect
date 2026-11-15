@@ -538,7 +538,7 @@
 .site :is(.pi-editorial-hero, .pi-editorial-section) [id] {
   scroll-margin-top: 2rem;
 }
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
   .site .mkt-site-links {
     display: none;
   }
@@ -574,7 +574,7 @@
     gap: 3rem;
   }
 }
-@media (min-width: 1201px) {
+@media (min-width: 1401px) {
   .site .marketing-menu {
     display: none;
   }
@@ -657,7 +657,22 @@
     padding: 0.5rem 0 0;
   }
   .site .pi-editorial-copy h1 {
-    font-size: 2.45rem;
+    /* Long programme names must reflow at 320px rather than widen the viewport. */
+    font-size: clamp(2rem, 9vw, 2.45rem);
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+  }
+  .site .pi-editorial-copy,
+  .site .pi-editorial-hero-grid > *,
+  .site .mkt-editorial-panel,
+  .site .pi-process-list li,
+  .site .pi-service-details article {
+    min-width: 0;
+  }
+  .site .pi-editorial-section :is(h2, h3),
+  .site .mkt-editorial-panel :is(h2, h3) {
+    overflow-wrap: anywhere;
   }
   .site .pi-editorial-intro {
     font-size: 1rem;
@@ -698,4 +713,66 @@
   .site .pi-card-image-link:hover img {
     transform: none;
   }
+}
+
+/* Public content overhaul: approved-price plan cards and programme outcomes */
+.site .pi-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.35rem;
+  align-items: stretch;
+  margin: 2rem 0 1.25rem;
+}
+.site .pi-plan-card {
+  min-width: 0;
+  border: 1px solid var(--mkt-line);
+  background: #fff;
+  padding: clamp(1.25rem, 2vw, 1.9rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.site .pi-plan-card h3 {
+  font-size: clamp(1.3rem, 2vw, 1.65rem);
+  line-height: 1.22;
+  margin: 0;
+  color: var(--mkt-ink);
+}
+.site .pi-plan-card p { margin: 0; line-height: 1.65; }
+.site .pi-plan-card .pi-plan-price {
+  font-size: clamp(2rem, 3vw, 2.65rem);
+  font-weight: 700;
+  color: var(--mkt-ink);
+  line-height: 1.15;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--mkt-line);
+}
+.site .pi-plan-price span {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #49665f;
+  margin-top: 0.25rem;
+}
+.site .pi-plan-card .mkt-check-list { margin: 0 0 0.75rem; padding-left: 1.25rem; }
+.site .pi-plan-card .pi-inline-link { margin-top: auto; }
+.site .pi-plan-disclosure {
+  max-width: 83ch;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: #415b60;
+  margin: 0 0 1.5rem;
+}
+.site .mkt-engagement-grid .mkt-engagement-card { min-width: 0; }
+.site .pi-plan-card :focus-visible { outline: 3px solid #0e6a65; outline-offset: 4px; }
+@media (max-width: 1000px) {
+  .site .pi-plan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .site .pi-plan-grid { grid-template-columns: minmax(0, 1fr); }
+  .site .pi-plan-card { padding: 1.35rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site .pi-plan-card { scroll-behavior: auto; }
 }

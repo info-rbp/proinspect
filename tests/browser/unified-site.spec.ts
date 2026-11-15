@@ -3,14 +3,15 @@ import { expect, test } from '@playwright/test';
 // PR-01 keeps the public website and client login on the existing single origin.
 test('public industry pages lead into one secure Client Portal entry',async({page,request})=>{
  const origin='http://127.0.0.1:5173';
- for(const path of ['/','/residential','/commercial','/strata','/co-living','/construction','/leasing','/maintenance']){
+ for(const path of ['/','/residential','/commercial','/strata','/co-living','/student-living','/construction','/leasing','/maintenance']){
   const response=await request.get(path);expect(response.status(),path).toBe(200);
  }
+ await page.setViewportSize({width:1600,height:900});
  await page.goto('/');
  await expect(page.locator('body')).toHaveClass(/site/);
  await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Residential'}).click();
  await expect(page).toHaveURL(origin+'/residential');
- await page.getByRole('link',{name:'Sign Up/Sign In to access'}).first().click();
+ await page.locator('.mkt-header-actions').getByRole('link',{name:'Sign Up / Sign In'}).click();
  await expect(page).toHaveURL(origin+'/client');
  await page.getByRole('link',{name:'Continue with email'}).click();
  await expect(page).toHaveURL(/\/signin\?/);

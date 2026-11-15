@@ -4,7 +4,7 @@ import { ENGAGEMENTS, GUIDES } from '../../packages/marketing/content';
 import { AUDIENCES } from '../../packages/marketing/audiences';
 
 const publicRoutes = [
-  '/', '/services', '/service-finder', '/who-we-help', '/residential-property-support', '/sectors/residential', '/sectors/commercial', '/sectors/strata-building',
+  '/', '/services', '/service-finder', '/who-we-help', '/residential-property-support', '/residential', '/commercial', '/strata', '/co-living', '/student-living', '/construction', '/maintenance',
   '/how-it-works', '/client-experience', '/about', '/contact', '/why-proinspect',
   '/areas-we-service', '/resources', '/privacy', '/terms',
   ...Object.keys(AUDIENCES).map((audience) => '/who-we-help/' + audience),
@@ -25,7 +25,7 @@ test('every public marketing route uses shared navigation, typography, footer an
     expect(html, path).toContain('mkt-site-footer');
     expect(html, path).toContain('id="main"');
     expect(html, path).toMatch(/<h1[\s>]/);
-    if (['/', '/who-we-help', '/about', '/contact'].includes(path)) expect(html).toContain('pi-editorial-hero');
+    if (['/', '/who-we-help', '/about', '/contact', '/residential', '/commercial', '/strata', '/co-living', '/student-living', '/construction', '/maintenance'].includes(path)) expect(html).toContain('pi-editorial-hero');
     else if (path.startsWith('/services/') && !path.startsWith('/services/category/')) {
       expect(html, path).toContain('mkt-detail-hero');
     } else expect(html, path).toContain('mkt-page-hero');
@@ -36,7 +36,7 @@ test('all public page families use the shared responsive layout without horizont
   const representatives = [
     '/', '/services', '/service-finder', '/who-we-help', '/who-we-help/private-landlords', '/residential-property-support', '/services/category/documents', '/services/category/inspections',
     '/services/routine-inspection', '/services/commercial-property-inspection',
-    '/sectors/commercial', '/sectors/strata-building', '/how-it-works',
+    '/commercial', '/strata', '/student-living', '/how-it-works',
     '/how-we-work/inspection-plans', '/resources', '/resources/routine-inspection-vs-pcr',
     '/why-proinspect', '/client-experience', '/about', '/areas-we-service', '/contact', '/privacy',
   ];

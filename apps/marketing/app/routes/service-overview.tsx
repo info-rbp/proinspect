@@ -8,6 +8,8 @@ import { EditorialHero, EditorialSteps } from '../components/editorial';
 import { MarketingCta } from '../components/marketing-ui';
 import { MarketingFaq } from '../components/page-patterns';
 import { BrandImage } from '../components/brand-image';
+import { PlanComparison } from '../components/plan-comparison';
+import { SECTOR_PROGRAMMES } from '../../../../packages/marketing/sector-programmes';
 import { seo } from '../lib/seo';
 
 export function loader({ request }: LoaderFunctionArgs) {
@@ -34,9 +36,9 @@ export default function ServiceOverview() {
         eyebrow={page.name}
         title={page.headline}
         intro={page.summary}
-        image={page.key}
-        primary={{ label: 'Sign Up/Sign In to access', to: '/client' }}
-        secondary={{ label: 'Discuss your property', to: '/contact' }}
+        image={page.key === 'student-living' ? 'co-living' : page.key}
+        primary={{ label: 'Discuss your requirements', to: '/contact' }}
+        secondary={{ label: 'Browse individual services', to: '/services' }}
       />
       <section className="mkt-section pi-editorial-section">
         <div className="site-container pi-introduction">
@@ -83,7 +85,7 @@ export default function ServiceOverview() {
       <section className="mkt-section pi-editorial-section">
         <div className="site-container pi-difference">
           <div className="pi-difference-image">
-            <BrandImage name={page.key} />
+            <BrandImage name={page.key === 'student-living' ? 'co-living' : page.key} />
           </div>
           <div>
             <p className="eyebrow">The ProInspect approach</p>
@@ -100,6 +102,24 @@ export default function ServiceOverview() {
           </div>
         </div>
       </section>
+      {SECTOR_PROGRAMMES[page.key] && <section className="mkt-section pi-editorial-section pi-neutral">
+        <div className="site-container">
+          <div className="pi-section-heading"><p className="eyebrow">What we deliver</p>
+            <h2>Practical outcomes, connected to the property.</h2>
+            <p>{SECTOR_PROGRAMMES[page.key].benefit}</p></div>
+          <div className="mkt-editorial-grid">{SECTOR_PROGRAMMES[page.key].outputs.map(([title, copy]) =>
+            <article key={title} className="mkt-editorial-panel"><h3>{title}</h3><p>{copy}</p></article>)}</div>
+        </div>
+      </section>}
+      {SECTOR_PROGRAMMES[page.key] && <section className="mkt-section pi-editorial-section">
+        <div className="site-container">
+          <div className="pi-section-heading"><p className="eyebrow">Getting started</p><h2>From enquiry to a working programme.</h2>
+            <p>{SECTOR_PROGRAMMES[page.key].nextStep}</p></div>
+          <ol className="pi-process-list">{SECTOR_PROGRAMMES[page.key].onboarding.map(([title, copy], i) =>
+            <li key={title}><span className="pi-step-number">0{i+1}</span><h3>{title}</h3><p>{copy}</p></li>)}</ol>
+        </div>
+      </section>}
+      {(page.key === 'residential' || page.key === 'commercial') && <PlanComparison market={page.key} />}
       <EditorialSteps />
       <section className="mkt-section pi-editorial-section">
         <div className="site-container pi-faq-layout">
