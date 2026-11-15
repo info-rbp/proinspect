@@ -63,6 +63,24 @@ BEGIN
       AND (incoming.ends_at IS NULL OR prior.starts_at<incoming.ends_at)
   );
 END;
+-- Updating tenancy dates or status must never create an overlap after allocation.
+CREATE TRIGGER co_living_tenancy_date_guard BEFORE UPDATE OF status,starts_at,ends_at ON tenancies
+WHEN EXISTS (SELECT 1 FROM co_living_occupancies WHERE tenancy_id=NEW.id)
+BEGIN
+  SELECT RAISE(ABORT,'CO_LIVING_OCCUPANCY_CONFLICT') WHERE NEW.status IN ('active','pending')
+    AND EXISTS (
+      SELECT 1 FROM co_living_occupancies mine
+      JOIN co_living_occupancies other ON other.space_id=mine.space_id AND other.tenancy_id!=mine.tenancy_id
+      JOIN tenancies prior ON prior.id=other.tenancy_id
+      WHERE mine.tenancy_id=NEW.id AND prior.status IN ('active','pending')
+        AND (prior.ends_at IS NULL OR prior.ends_at>NEW.starts_at)
+        AND (NEW.ends_at IS NULL OR prior.starts_at<NEW.ends_at)
+    );
+END;
+CREATE TRIGGER co_living_tenancy_property_immutable BEFORE UPDATE OF property_id ON tenancies
+WHEN EXISTS (SELECT 1 FROM co_living_occupancies WHERE tenancy_id=OLD.id)
+BEGIN SELECT RAISE(ABORT,'CO_LIVING_OCCUPANCY_IMMUTABLE'); END;
+
 -- Existing tenancy/occupancy links cannot be reassigned by changing identifiers.
 CREATE TRIGGER co_living_occupancy_immutable BEFORE UPDATE OF tenancy_id,space_id ON co_living_occupancies
 BEGIN SELECT RAISE(ABORT,'CO_LIVING_OCCUPANCY_IMMUTABLE'); END;
