@@ -1,6 +1,7 @@
 *
 !Dockerfile
 !scanner.py
+!drop-privileges.py
 !entrypoint.sh
 !clamd.conf
 !freshclam.conf

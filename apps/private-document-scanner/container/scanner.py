@@ -21,7 +21,7 @@ def reply(connection):
             break
         value += part
         if value.endswith(b'\0'):
-            return value[:-1].decode('ascii','strict')
+            return value[:-1].decode('ascii','strict').strip()
     raise ValueError('Incomplete engine response')
 
 def command(name):
@@ -66,8 +66,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.result(404, {'error':'NOT_FOUND'})
         try:
             return self.result(200, health())
-        except Exception:
-            return self.result(503, {'error':'ENGINE_NOT_READY'})
+        except Exception as error:
+            reason='ENGINE_SOCKET_UNAVAILABLE' if isinstance(error,OSError) else 'ENGINE_HEALTH_INVALID'
+            if isinstance(error,ValueError) and str(error)=='Stale definitions': reason='DEFINITIONS_STALE'
+            return self.result(503, {'error':reason})
     def do_POST(self):
         if self.path != '/scan':
             return self.result(404, {'error':'NOT_FOUND'})
@@ -112,9 +114,7 @@ class Handler(BaseHTTPRequestHandler):
             LOCK.release()
 
 if __name__ == '__main__':
-    if os.getuid() == 0:
-        account = pwd.getpwnam('clamav')
-        os.setgroups([])
-        os.setgid(account.pw_gid)
-        os.setuid(account.pw_uid)
+    status = dict(line.split(':',1) for line in open('/proc/self/status') if ':' in line)
+    if os.getuid()!=pwd.getpwnam('clamav').pw_uid or any(int(status[name].strip(),16) for name in ['CapInh','CapPrm','CapEff','CapBnd','CapAmb']) or status['NoNewPrivs'].strip()!='1':
+        raise RuntimeError('SCANNER_PRIVILEGES_UNSAFE')
     ThreadingHTTPServer(('0.0.0.0',8080), Handler).serve_forever()

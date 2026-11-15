@@ -15,7 +15,7 @@ export class SignatureDownloads extends WorkerEntrypoint<ScannerEnv>{
   if(url.hostname!=='database.clamav.net'||url.search||url.username||url.password||
    !['GET','HEAD'].includes(request.method)||!/^\/(?:daily|main|bytecode)(?:-\d{1,8})?\.(?:cvd|cld|cdiff)$/.test(url.pathname))
    return new Response('Forbidden',{status:403});
-  const headers=new Headers({'User-Agent':'ProInspect-private-ClamAV-updater','Accept-Encoding':'identity'});
+  const headers=new Headers({'User-Agent':'ClamAV/1.5.4 (ProInspect private definition updater)','Accept-Encoding':'identity'});
   const range=request.headers.get('Range');if(range&&/^bytes=\d{1,12}-\d{0,12}$/.test(range))headers.set('Range',range);
   return fetch('https://database.clamav.net'+url.pathname,{method:request.method,headers,redirect:'manual'});
  }

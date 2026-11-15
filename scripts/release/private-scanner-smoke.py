@@ -16,12 +16,14 @@ def request(method,path,body=None,headers=None):
         connection.close()
 
 deadline=time.monotonic()+300
+last={'error':'ENGINE_NOT_STARTED'}
 while True:
     try:
         status,engine=request('GET','/health')
+        last=engine
         if status==200: break
     except (OSError,ValueError): pass
-    if time.monotonic()>deadline: raise RuntimeError('Real ClamAV engine not ready with fresh definitions')
+    if time.monotonic()>deadline: raise RuntimeError('Real ClamAV engine not ready: '+json.dumps(last))
     time.sleep(2)
 
 # The standard harmless EICAR antivirus test string; never a real malware sample.
@@ -35,8 +37,14 @@ for body,verdict in [(clean,'clean'),(eicar,'unsafe')]:
     assert set(result)=={'engine','verdict','complete','sha256'}
 status,result=request('POST','/scan',clean,{'X-Expected-SHA256':'0'*64})
 assert status==503 and result=={'error':'SCAN_FAILED'}
-status,result=request('POST','/scan',b'x'*(8*1024*1024+1),{'X-Expected-SHA256':'0'*64})
-assert status==413
+connection=http.client.HTTPConnection('127.0.0.1',18080,timeout=10)
+connection.putrequest('POST','/scan')
+connection.putheader('Content-Length',str(8*1024*1024+1))
+connection.putheader('X-Expected-SHA256','0'*64)
+connection.endheaders()
+response=connection.getresponse()
+assert response.status==413
+response.read();connection.close()
 status,result=request('GET','/unknown')
 assert status==404
 print(json.dumps({'synthetic':True,'actualClamAV':True,'engine':engine,'clean':True,'eicarBlocked':True,'digestMismatchBlocked':True,'oversizeBlocked':True,'applicantDataUsed':False}))
