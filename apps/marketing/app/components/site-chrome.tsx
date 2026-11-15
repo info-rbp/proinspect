@@ -78,6 +78,7 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
             {PUBLIC_NAVIGATION.filter(item => ['residential','commercial','strata','co-living','construction'].includes(item.href.slice(1))).map(item => <Link key={item.href} to={item.href}>{item.label}</Link>)}
             <Link to="/who-we-help">All customer types</Link>
             <Link to="/residential-property-support">Residential support options</Link>
+            <Link to="/student-living">Student Living</Link>
           </div>
           <div className="mkt-footer-group">
             <h3>ProInspect</h3>
