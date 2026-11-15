@@ -2,6 +2,8 @@ import {ownerInvitationPreview,claimOwnerInvitation} from './features/agency-own
 import {releaseReadiness,releaseCommand,requireReleaseApproval} from './features/release-governance.server';
 import * as legalAcceptance from './features/legal-acceptance.server';
 import { boundedText } from '../../../packages/http-bodies';
+import { commercialStaffHttp } from './features/commercial-http.server';
+import { acceptCommercialScan,retrieveCommercialReferral } from './features/commercial-delivery.server';
 import {pricingAdmin,pricingCommand,guestPriceVariants} from './features/service-pricing.server';
 import { createSubscriptionCheckout } from './features/stripe-billing.server';
 import { contractorConnectWebhook } from './features/contractor-payments.server';
@@ -333,7 +335,12 @@ export async function handleApi(
     }
     if(path==='/api/internal/rental-document-scan' && method==='POST')
       return Response.json(await acceptRentalScan(env,request));
+    if(path==='/api/internal/commercial-document-scan'&&method==='POST')return Response.json(await acceptCommercialScan(env,request),{headers:{'Cache-Control':'private, no-store'}});
+    const commercialGrant=path.match(/^\/api\/internal\/commercial-referrals\/([a-f0-9]{64})(?:\/documents\/([a-zA-Z0-9_-]{3,100}))?$/);
+    if(commercialGrant&&method==='GET')return await retrieveCommercialReferral(env,request,commercialGrant[1],commercialGrant[2]);
     const user = await requireUser(request, env);
+    const commercialStaff=path.match(/^\/api\/staff\/commercial-applications(?:\/(.*))?$/);
+    if(commercialStaff)return await commercialStaffHttp(request,env,user,commercialStaff[1]??'');
     const propertyReportLaunch=path.match(/^\/api\/staff\/work-orders\/([a-zA-Z0-9_-]+)\/property-report-tool$/);
     if(propertyReportLaunch && method==='POST'){
       requireOrigin(request,env);

@@ -292,7 +292,7 @@ export async function withdrawRental(env:Env,token:string){
  ]);
  return {withdrawn:true};
 }
-function validMagic(type:string,bytes:Uint8Array){
+export function validMagic(type:string,bytes:Uint8Array){
  if(type==='application/pdf')return bytes[0]===37&&bytes[1]===80&&bytes[2]===68&&bytes[3]===70&&bytes[4]===45;
  if(type==='image/jpeg')return bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
  if(type==='image/png')return bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71;

@@ -368,7 +368,7 @@ export default function StaffLeasing(){
  const data=useWorkspace();
  return <><PageHeading title="Property leasing administration" eyebrow="ProInspect operations"
   description="Create and publish approved leasing advertisements, identify the instructing client and choose whether applications use the agency's portal or the authorised ProInspect residential application process."/>
- <div className="actions"><Link className="button secondary" to={data.workspace.href+'/rental-applications'}>View submitted rental applications</Link><Link className="button secondary" to={data.workspace.href+'/open-home-checkins'}>Open home check-ins & next-day reports</Link></div>
+ <div className="actions"><Link className="button secondary" to={data.workspace.href+'/commercial-applications'}>Commercial application controls</Link><Link className="button secondary" to={data.workspace.href+'/rental-applications'}>View submitted rental applications</Link><Link className="button secondary" to={data.workspace.href+'/open-home-checkins'}>Open home check-ins & next-day reports</Link></div>
  {selectedPropertyId&&<div className="actions"><p>Showing leasing records for the selected property.</p>
   <Link className="button secondary" to={data.workspace.href+'/properties/'+encodeURIComponent(selectedPropertyId)}>Return to property</Link>
   <Link className="button secondary" to={data.workspace.href+'/leasing'}>All leasing records</Link></div>}
