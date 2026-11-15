@@ -277,7 +277,7 @@ function Review({page,editable}:{page:any;editable:boolean}){
     <button type="submit" className="button secondary">Send privacy request</button>
    </Form>
   </section>
-  {page.role==='primary'&&editable&&<div className="rental-actions"><Link to="?step=documents">← Supporting documents</Link></div>}{page.role==='primary'&&!['withdrawn','decision_recorded'].includes(page.status)&&<div className="rental-actions"><Form method="post"><input name="intent" value="withdraw" type="hidden"/><button type="submit" className="rental-inline-button">Withdraw this application</button></Form></div>}
+  {page.role==='primary'&&editable&&<div className="rental-actions"><Link to="?step=documents">← Supporting documents</Link></div>}{!['withdrawn','decision_recorded'].includes(page.status)&&<div className="rental-actions"><Form method="post"><input name="intent" value="withdraw" type="hidden"/><button type="submit" className="rental-inline-button">{page.role==='primary'?'Withdraw this application':'Withdraw my participation and stop household processing'}</button></Form></div>}
  </>;
 }
 function Entry({label,value}:{label:string;value:string}){return <><dt>{label}</dt><dd>{value}</dd></>;}

@@ -101,6 +101,11 @@ export async function startRental(env:Env,request:Request,listingId:string,input
  ]);
  return {sent:true};
 }
+/** Public CTA readiness reuses every hosted start-page gate, including the approved notice. */
+export async function rentalListingReady(env:Env,slug:string){
+ if(!rentalEnabled(env))return false;
+ try{return (await rentalStartPage(env,slug)).enabled;}catch{return false;}
+}
 export async function tokenAccess(env:Env,token:string){
  existingAccess(env);
  assert(/^[a-f0-9]{64}$/.test(token),404,'APPLICATION_LINK_INVALID','Application link unavailable.');
@@ -131,7 +136,7 @@ export async function rentalPage(env:Env,token:string){
  const moreInformation=app.status==='information_requested'&&app.review_request_envelope?
   await unseal<{instructions:string}>(env.DATA_ENCRYPTION_KEY,'rental-followup:'+app.id,app.review_request_envelope):null;
  const privacyRequests=(await statement(env.DB,"SELECT kind,status,created_at FROM rental_application_privacy_requests WHERE applicant_id=? ORDER BY created_at DESC LIMIT 12",person.id).all()).results;
- return {reference:app.reference,status:app.status,intakeEnabled:rentalEnabled(env),version:person.version,role:person.role,ordinal:person.ordinal,
+ return {reference:app.reference,status:app.status,intakeEnabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&(await collectionNotice(env,l)).approved&&l.kind==='residential'&&l.status==='published'&&l.application_mode==='proinspect'&&l.rental_approval_state==='approved'&&Boolean(l.rental_recipient_verified_at),version:person.version,role:person.role,ordinal:person.ordinal,
   state:person.state,noticeMatches,declaredAt:person.declared_at,submittedAt:app.submitted_at,
   property:{title:l.title,address:l.display_address,suburb:l.suburb,agentName:l.agent_name},
   notice:{mode:configuredNotice?.mode??l.tenancy_database_notice_mode,entries:notice,version:l.rental_approved_notice_version},moreInformation,privacyRequests,answers,documents,household};
@@ -325,14 +330,14 @@ export async function submitRental(env:Env,token:string){
 }
 export async function withdrawRental(env:Env,token:string){
  const {person,app}=await tokenAccess(env,token);
- assert(person.role==='primary'&&!['withdrawn','decision_recorded'].includes(app.status),403,'WITHDRAW_NOT_ALLOWED','Only the primary applicant can withdraw an active application.');
+ assert(!['withdrawn','decision_recorded'].includes(app.status),403,'WITHDRAW_NOT_ALLOWED','This application is already closed. Use the privacy request process for retained information.');
  const stamp=now();
  await env.DB.batch([
   statement(env.DB,"UPDATE rental_applications SET status='withdrawn',withdrawn_at=?,retained_until=?,updated_at=?,version=version+1 WHERE id=? AND version=? AND status NOT IN('withdrawn','decision_recorded')",
    stamp,retentionDeadline(env,'withdrawn'),stamp,app.id,app.version),
-  statement(env.DB,"UPDATE rental_application_handoffs SET status='cancelled' WHERE application_id=? AND status='awaiting_script'",app.id),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
-  await event(env,app.id,'withdrawn',{at:stamp},person.id),
+  statement(env.DB,"UPDATE rental_application_handoffs SET status='cancelled' WHERE application_id=? AND status='awaiting_script'",app.id),
+  await event(env,app.id,'withdrawn',{at:stamp,participantWithdrew:true,stopsHouseholdProcessing:true,downstreamReviewRequired:true},person.id),
   statement(env.DB,'DELETE FROM mutation_guards'),
  ]);
  return {withdrawn:true};

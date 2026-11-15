@@ -22,6 +22,7 @@ Encrypted D1 answers, immutable submission revisions, private R2 quarantine, typ
 - Each applicant can correct their own email before submission. The transaction revokes old links and declarations, sends a new private link and requires renewed access through the corrected mailbox. No other applicant can edit it.
 - Hosted starts and edits require the listing's approved notice version to match the current approved privacy policy. The start displays the recipient, purpose, policy version, privacy contact and configured retention windows. Exact notice version is bound to each declaration and snapshot.
 - Pending/unsafe/unreviewed evidence blocks final submission. Reposting an already submitted application returns the original receipt without another snapshot or notification. The commit also checks that no active applicant has become incomplete.
+- Any adult participant can withdraw and stop household processing; it does not depend on a queued handoff. The withdrawal transaction guards the application change itself, and cancelled delivery cannot proceed.
 - A safe approved external application URL takes precedence over native intake.
 
 ## Release dependencies

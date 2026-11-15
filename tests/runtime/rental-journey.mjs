@@ -255,6 +255,22 @@ try{
    assert.equal(invitations.count,1);
   });
  }
+ await check('A co-applicant can stop household processing before any handoff exists',async()=>{
+  const email='withdraw-lead@example.invalid',other='withdraw-participant@example.invalid';
+  await call('/__test/start',{listingId:'lst_synthetic_fulham_6',name:'Synthetic Withdrawal Lead',email,consent:true});
+  const messages=async(kind,address)=>{
+   const rows=(await db.prepare('SELECT id,envelope FROM outbox_events WHERE kind=? ORDER BY created_at DESC,id DESC').bind(kind).all()).results;
+   for(const row of rows){const message=await unseal(key,'outbox:'+row.id,row.envelope);if(message.to===address)return new URL(message.href).pathname.split('/').pop();}
+   throw Error('Synthetic invitation not found');
+  };
+  const token=await messages('rental.application.started',email);
+  await call('/__test/invite',{token,name:'Synthetic Participant',email:other});
+  const privateToken=await messages('rental.coapplicant.invited',other);
+  assert.equal((await call('/__test/withdraw',{token:privateToken})).withdrawn,true);
+  const page=await call('/__test/page',{token});assert.equal(page.status,'withdrawn');
+  const blocked=await mf.dispatchFetch('http://localhost/__test/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
+  assert.equal(blocked.status,403);
+ });
  report.status='PASS';
 }catch(error){
  report.error=error instanceof Error?error.message:String(error);

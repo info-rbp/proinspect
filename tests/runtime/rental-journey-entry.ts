@@ -3,7 +3,7 @@
  * production routing, and its synthetic endpoints are unavailable online.
  */
 import { publicListing } from '../../apps/platform/worker/features/leasing.server';
-import { rentalStartPage, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental,changeRentalEmail } from '../../apps/platform/worker/features/rental-applications.server';
+import { rentalStartPage, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental,changeRentalEmail,inviteRentalApplicant,withdrawRental } from '../../apps/platform/worker/features/rental-applications.server';
 import { updateRentalStatus } from '../../apps/platform/worker/features/rental-review.server';
 import { dispatchRentalHandoffs } from '../../apps/platform/worker/features/rental-script-dispatch.server';
 import { recordRentalOutcome } from '../../apps/platform/worker/features/rental-outcomes.server';
@@ -35,6 +35,8 @@ export default {
     const d=await request.json() as {token:string;email:string;version:number};
     return Response.json(await changeRentalEmail(env,d.token,{email:d.email,version:d.version}));
    }
+   if(path==='/__test/invite'&&request.method==='POST'){const d=await request.json() as {token:string;name:string;email:string};return Response.json(await inviteRentalApplicant(env,d.token,{name:d.name,email:d.email,adultConfirmed:true}));}
+   if(path==='/__test/withdraw'&&request.method==='POST'){const d=await request.json() as {token:string};return Response.json(await withdrawRental(env,d.token));}
    if(path==='/__test/section'&&request.method==='POST'){
     const d=await request.json() as {token:string;section:'identity'|'rental'|'employment'|'references';raw:Record<string,unknown>;version:number};
     return Response.json(await saveRentalSection(env,d.token,d.section,d.raw,d.version));
