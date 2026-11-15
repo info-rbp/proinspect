@@ -68,12 +68,18 @@ export async function uploadTemporaryDocument(env:Env,context:{person:{id:string
  if(stored.meta.changes!==1){await env.RESTRICTED_DOCUMENTS.delete(objectKey);await purgeTemporaryDocument(env,id);assert(false,409,'UPLOAD_CLOSED','The application changed while uploading. Your file was removed.');}
  return {uploaded:true,quarantined:true};
 }
-async function purgeTemporaryDocument(env:Env,id:string){
- const doc=await statement(env.DB,"UPDATE rental_temporary_documents SET state='purging' WHERE id=? AND state!='purged' RETURNING *",id).first<TemporaryDocument>();
- if(!doc)return;
- await env.RESTRICTED_DOCUMENTS.delete(doc.object_key);
- await statement(env.DB,"UPDATE rental_temporary_documents SET state='purged',metadata_envelope=NULL,security_evidence_envelope=NULL,purged_at=? WHERE id=? AND state='purging'",now(),id).run();
+async function purgeTemporaryBatch(env:Env,ids:string[],dueOnly=false){
+ if(!ids.length)return;
+ const encoded=JSON.stringify(ids);
+ const due=dueOnly?" AND delete_after<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND EXISTS(SELECT 1 FROM rental_applications a WHERE a.id=rental_temporary_documents.application_id AND (a.privacy_hold_until IS NULL OR a.privacy_hold_until<=strftime('%Y-%m-%dT%H:%M:%fZ','now')))":'';
+ const claimed=(await statement(env.DB,"UPDATE rental_temporary_documents SET state='purging' WHERE id IN(SELECT value FROM json_each(?)) AND state!='purged'"+due+" RETURNING id,object_key",encoded).all<{id:string;object_key:string}>()).results;
+ if(!claimed.length)return;
+ // One private-storage call and bounded SQL operations keep the shared cron
+ // within the existing hosting request budget. A partial failure stays tracked.
+ await env.RESTRICTED_DOCUMENTS.delete(claimed.map(d=>d.object_key));
+ await statement(env.DB,"UPDATE rental_temporary_documents SET state='purged',metadata_envelope=NULL,security_evidence_envelope=NULL,purged_at=? WHERE id IN(SELECT value FROM json_each(?)) AND state='purging'",now(),JSON.stringify(claimed.map(d=>d.id))).run();
 }
+async function purgeTemporaryDocument(env:Env,id:string){await purgeTemporaryBatch(env,[id]);}
 export async function removeTemporaryDocument(env:Env,appId:string,applicantId:string,id:string){
  const row=await statement(env.DB,"UPDATE rental_temporary_documents SET state='purging' WHERE id=? AND application_id=? AND applicant_id=? AND state!='purged' AND EXISTS(SELECT 1 FROM rental_applications a WHERE a.id=? AND a.status IN('draft','information_requested') AND (a.privacy_hold_until IS NULL OR a.privacy_hold_until<=strftime('%Y-%m-%dT%H:%M:%fZ','now'))) RETURNING id",id,appId,applicantId,appId).first();
  assert(row,409,'DOCUMENT_REMOVE_CLOSED','This file cannot be removed from the current application state.');await purgeTemporaryDocument(env,id);return {deleted:true};
@@ -81,7 +87,7 @@ export async function removeTemporaryDocument(env:Env,appId:string,applicantId:s
 export async function purgeTemporaryApplication(env:Env,appId:string,applicantId?:string){
  if(!await hasTemporaryDocuments(env))return;
  const docs=(await statement(env.DB,"SELECT id FROM rental_temporary_documents WHERE application_id=? AND (? IS NULL OR applicant_id=?) AND state!='purged'",appId,applicantId??null,applicantId??null).all<{id:string}>()).results;
- for(const doc of docs)await purgeTemporaryDocument(env,doc.id);
+ await purgeTemporaryBatch(env,docs.map(d=>d.id));
  if(!applicantId){
   // Revoke queued access and clear sensitive outbox payloads before deleting
   // references during an approved full application purge.
@@ -95,7 +101,7 @@ export async function dispatchTemporaryDocumentRetention(env:Env){
  // Independent of the upload release flag: disabling new collection must not
  // disable erasure. Holds suppress physical deletion, never normal expiry.
  const rows=(await statement(env.DB,"SELECT d.id FROM rental_temporary_documents d JOIN rental_applications a ON a.id=d.application_id WHERE d.state!='purged' AND d.delete_after<=? AND (a.privacy_hold_until IS NULL OR a.privacy_hold_until<=?) ORDER BY d.delete_after LIMIT 20",now(),now()).all<{id:string}>()).results;
- for(const row of rows){try{await purgeTemporaryDocument(env,row.id);}catch{console.error(JSON.stringify({event:'rental_temporary.purge_retry'}));}}
+ try{await purgeTemporaryBatch(env,rows.map(r=>r.id),true);}catch{console.error(JSON.stringify({event:'rental_temporary.purge_retry'}));}
  await statement(env.DB,"UPDATE outbox_events SET status=CASE WHEN status='sent' THEN 'sent' ELSE 'failed' END,envelope='{}',error_code='RENTAL_PACKAGE_EXPIRED',lease_token=NULL,lease_until=NULL WHERE id IN(SELECT outbox_id FROM rental_temporary_packages WHERE expires_at<=? OR revoked_at IS NOT NULL)",now()).run();
 }
 export async function temporarySecurityDownload(env:Env,user:Principal,appId:string,id:string,acknowledged:boolean){
