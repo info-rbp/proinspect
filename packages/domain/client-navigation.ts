@@ -19,7 +19,13 @@ export function resolveClientAreas(w:Workspace,properties:Property[],schemes:unk
  }
  return CLIENT_AREAS.filter(area=>selected.has(area)||defaults.has(area)).map((area):ClientAreaLink=>{
   const label=({'residential':'Residential','commercial':'Commercial','strata':'Strata','co-living':'Co-Living','construction':'Construction','leasing':'Leasing','maintenance':'Maintenance'} as Record<ClientArea,string>)[area];
-  if(area==='co-living'||area==='construction')return {area,label,status:'planned',href:null,description:'In development; not bookable'};
+  if(area==='construction')return {area,label,status:'planned',href:null,description:'In development; not bookable'};
+  if(area==='co-living'){
+    const residential=['landlord','property-manager'].includes(w.kind) && properties.some(p=>p.sector==='residential');
+    return {area,label,status:residential?'available':'setup_required',
+      href:residential?base+'/properties':null,
+      description:residential?'Configure private rooms or beds and shared areas from an authorised property':'Add an authorised residential property first'};
+  }
   if(area==='leasing') {
    const permitted=properties.length>0 && ['landlord','property-manager','commercial'].includes(w.kind);
    return {area,label,status:permitted?'available':'setup_required',href:permitted?base+'/service-area/leasing':null,description:permitted?'Leasing overview and authorised activity':'Add an authorised property'};
