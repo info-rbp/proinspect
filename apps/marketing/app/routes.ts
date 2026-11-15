@@ -21,7 +21,7 @@ export default [
   route('resources', 'routes/resources.tsx'),
   route('resources/:guide', 'routes/content.tsx', { id: 'resource-guide' }),
   route('services/:slug', 'routes/service.tsx'),
-  route('sectors/:sector', 'routes/sector.tsx'),
+  route('sectors/:sector', 'routes/sector-redirect.tsx'),
   route('properties-for-lease', 'routes/leasing-index.tsx'),
   route('open-home/check-in', 'routes/open-home-check-in.tsx'),
   route('properties-for-lease/cancel/:token', 'routes/leasing-cancel.tsx'),
