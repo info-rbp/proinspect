@@ -30,7 +30,7 @@ export default function Invitation() {
     <main id="main" className="auth-page form-width">
       <section className="panel stack">
         <p className="eyebrow">Workspace invitation</p>
-        <h1>Accept your workspace invitation.</h1>
+        <h1>Accept your ProInspect invitation.</h1>
         <p>
           You are signed in as {data.email}. Only the invited email address can accept this
           invitation.
