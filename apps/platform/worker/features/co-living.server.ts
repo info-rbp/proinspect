@@ -57,6 +57,9 @@ export async function coLivingCommand(env: Env, user: Principal, w: Workspace, p
       statement(env.DB,
         'INSERT INTO co_living_sites(property_id,allocation_mode,created_by,created_at) VALUES(?,?,?,?)',
         propertyId,action.allocationMode,user.id,now()),
+      statement(env.DB,
+        'INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,property_id,created_at) VALUES(?,?,?,?,?,?,?)',
+        uid('aud'),user.id,'co_living.configured','property',propertyId,propertyId,now()),
     ];
     if (w.kind !== 'staff') {
       statements.push(statement(env.DB,
@@ -73,9 +76,15 @@ export async function coLivingCommand(env: Env, user: Principal, w: Workspace, p
   assert(action.spaceType === 'shared_area' || action.spaceType === site.allocation_mode,
     422,'CO_LIVING_SPACE_MODE','Private space type must match the selected room or bed allocation mode.');
   const spaceId=uid('cls');
-  await statement(env.DB,
-    'INSERT INTO co_living_spaces(id,property_id,label,space_type,created_by,created_at) VALUES(?,?,?,?,?,?)',
-    spaceId,propertyId,action.label,action.spaceType,user.id,now()).run();
+  await env.DB.batch([
+    statement(env.DB,
+      'INSERT INTO co_living_spaces(id,property_id,label,space_type,created_by,created_at) VALUES(?,?,?,?,?,?)',
+      spaceId,propertyId,action.label,action.spaceType,user.id,now()),
+    statement(env.DB,
+      'INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,property_id,metadata_json,created_at) VALUES(?,?,?,?,?,?,?,?)',
+      uid('aud'),user.id,'co_living.space_added','co_living_space',spaceId,propertyId,
+      JSON.stringify({spaceType:action.spaceType}),now()),
+  ]);
   return {ok:true,spaceId,message:'Space added. Private occupancy begins only after a separate verified invitation.'};
 }
 
