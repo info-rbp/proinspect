@@ -33,8 +33,10 @@ export async function rentalPackageMailAllowed(env:Env,id:string,outboxId:string
 export function rentalPackageSentStatements(env:Env,id:string,providerId:string,stamp:string){
  const deadline=new Date(Date.parse(stamp)+7*86400000).toISOString();
  return [
-  statement(env.DB,'UPDATE rental_temporary_packages SET sent_at=?,provider_id=?,expires_at=? WHERE id=? AND sent_at IS NULL',stamp,providerId,deadline,id),
+  // A later submission or resend must never restart an already-shared file's
+  // seven-day clock. Earlier package receipts remain immutable evidence.
+  statement(env.DB,"UPDATE rental_temporary_packages SET sent_at=?,provider_id=?,expires_at=MIN(?,COALESCE((SELECT MIN(d.delete_after) FROM rental_temporary_documents d WHERE d.id IN(SELECT value FROM json_each(rental_temporary_packages.document_ids_json)) AND EXISTS(SELECT 1 FROM rental_temporary_packages prior,json_each(prior.document_ids_json) item WHERE prior.application_id=d.application_id AND prior.id!=rental_temporary_packages.id AND prior.sent_at IS NOT NULL AND item.value=d.id)),?)) WHERE id=? AND sent_at IS NULL",stamp,providerId,deadline,deadline,id),
   statement(env.DB,'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
-  statement(env.DB,"UPDATE rental_temporary_documents SET delete_after=? WHERE id IN(SELECT value FROM rental_temporary_packages p,json_each(p.document_ids_json) WHERE p.id=? AND p.sent_at=?) AND state='approved'",deadline,id,stamp),
+  statement(env.DB,"UPDATE rental_temporary_documents SET delete_after=CASE WHEN EXISTS(SELECT 1 FROM rental_temporary_packages prior,json_each(prior.document_ids_json) item WHERE prior.application_id=rental_temporary_documents.application_id AND prior.id!=? AND prior.sent_at IS NOT NULL AND item.value=rental_temporary_documents.id) THEN MIN(delete_after,?) ELSE ? END WHERE id IN(SELECT value FROM rental_temporary_packages p,json_each(p.document_ids_json) WHERE p.id=? AND p.sent_at=?) AND state='approved'",id,deadline,deadline,id,stamp),
  ];
 }

@@ -9,7 +9,7 @@ export function TemporaryRentalDocuments({applicationId,documents,packages,admin
    {!doc.stored_at&&<p role="status">Upload has not finished. Do not approve or share this file.</p>}
    {administrator&&submitted&&doc.stored_at&&doc.state==='quarantined'&&<>
     <form method="post" action={base+'/'+doc.id+'/security-download'} target="_blank" className="stack">
-     <label><input type="checkbox" name="acknowledge" value="yes" required/> I will download this unscanned file only to a managed device for antivirus checking. I will not email it, open it in an unsafe application or submit it to a public scanning service.</label>
+     <label><input type="checkbox" name="acknowledge" value="yes" required/> I will download this unscanned file only to a managed device for antivirus checking. I will not email it, open it in an unsafe application or submit it to a public scanning service. I will remove my local review copy after recording the result.</label>
      <button className="button secondary" type="submit">Download quarantined file for antivirus checking</button>
     </form>
     <OperationForm endpoint={base+'/'+doc.id+'/review'} defaults={{sha256:doc.sha256}} label="Record actual antivirus result">

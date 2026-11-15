@@ -13,7 +13,7 @@ Files enter quarantine. An application may be submitted with quarantined tempora
 ## Staff workflow
 
 1. Open the restricted rental application queue as an administrator.
-2. Explicitly acknowledge that a quarantined download is unscanned and will be handled only on a managed device. Run a current local antivirus check; do not upload applicant evidence to a public scanning website.
+2. Explicitly acknowledge that a quarantined download is unscanned and will be handled only on a managed device. Run a current local antivirus check; do not upload applicant evidence to a public scanning website. Remove the managed-device review copy after recording the result.
 3. Record the actual engine/version, scan time, definitions time, exact file SHA-256 and internal evidence reference. A scan must be within 24 hours and definitions within 72 hours. Record rejection for an unsafe file. The application never invents a scan or treats an upload as clean.
 4. Confirm the current property-management authority, applicant sharing declarations, verified landlord inbox and configured ProInspect copy address. All included documents must have approved manual security evidence.
 5. Stage the private application package. The durable existing Resend outbox sends to the verified landlord with a real CC to ProInspect. It contains a private expiring link, never file attachments or complete applicant answers. The package includes the immutable submitted application and approved evidence.
@@ -23,7 +23,7 @@ Files enter quarantine. An application may be submitted with quarantined tempora
 
 Only a successful provider send receipt starts the seven-day package access window. It records provider acceptance, not inbox delivery or reading. Sending is idempotent through the existing outbox key. Failed sends remain visible and establish no successful-send timestamp.
 
-Unsent documents expire 14 days from upload. Once the approved package is sent, included documents expire seven days after the recorded send time. Package and download endpoints enforce expiry immediately; the existing two-minute scheduled job then deletes private file bytes and clears encrypted identifying storage metadata/security evidence. Failed object deletion leaves a tracked retry, rather than deleting the tracking row first. Disabling new uploads does not disable this cleanup. Documented legal holds delay physical deletion but do not keep expired links open. Application answers retain their separately disclosed 14/90/30-day policy; a downloaded recipient copy is outside ProInspect's storage deletion control.
+Unsent documents expire 14 days from upload. Once the approved package is sent, included documents expire seven days after their first recorded send time. A retry or later submission cannot extend an already-shared file’s deadline; a revised package adopts an earlier file expiry where necessary. Package and download endpoints enforce expiry immediately; the existing two-minute scheduled job then deletes private file bytes and clears encrypted identifying storage metadata/security evidence. Failed object deletion leaves a tracked retry, rather than deleting the tracking row first. Disabling new uploads does not disable this cleanup. Documented legal holds delay physical deletion but do not keep expired links open. Application answers retain their separately disclosed 14/90/30-day policy; a downloaded recipient copy is outside ProInspect's storage deletion control.
 
 ## Safe release
 
