@@ -1,5 +1,4 @@
-import {MANAGED_RENTAL_POLICY_VERSION} from '../../../../packages/marketing/managed-rental-policy';
-import {withManagedIntakePolicy,managedIntakeRelease} from './managed-rental-intake.server';
+import {withManagedIntakePolicy,managedIntakeRelease,isManagedApplication} from './managed-rental-intake.server';
 import { z } from 'zod';
 import { assert, now, statement, uid, type Env } from '../../../../packages/database/types';
 import { digest, seal, unseal } from '../../../../packages/auth/crypto';
@@ -80,7 +79,7 @@ async function purgeRental(env:Env,appId:string,reason:PurgeReason,actorId:strin
  const app=await statement(env.DB,'SELECT id,listing_id,consent_version,reference,status,retained_until,privacy_hold_until,version FROM rental_applications WHERE id=?',appId).first<PurgeRow>();
  assert(app,404,'APPLICATION_NOT_FOUND','Application unavailable.');
  assert(!app.privacy_hold_until||app.privacy_hold_until<=now(),409,'RETENTION_HOLD','A current privacy/legal hold prevents erasure.');
- const expiredManaged=reason==='retention_expired'&&Boolean(app.retained_until&&app.retained_until<=now())&&['submitted','under_review','information_requested'].includes(app.status)&&app.consent_version.endsWith('|managed-details:'+MANAGED_RENTAL_POLICY_VERSION)&&Boolean(await managedIntakeRelease(env));
+ const expiredManaged=reason==='retention_expired'&&Boolean(app.retained_until&&app.retained_until<=now())&&['submitted','under_review','information_requested'].includes(app.status)&&isManagedApplication(app.consent_version)&&Boolean(await managedIntakeRelease(env));
  assert(['draft','withdrawn','decision_recorded'].includes(app.status)||expiredManaged,409,'APPLICATION_ACTIVE',
   'An active submitted application cannot be deleted before the authorised process is closed.');
  if(reason==='retention_expired')
@@ -145,7 +144,7 @@ export async function dispatchRentalRetention(env:Env){
  if(env.RENTAL_RETENTION_AUTOPURGE_ENABLED!=='true'||!hasRentalRetentionPolicy(env))return;
  const handoverTable=await statement(env.DB,"SELECT name FROM sqlite_master WHERE type='table' AND name='rental_tenancy_handovers'").first();
  const linkedFilter=handoverTable?" AND NOT EXISTS(SELECT 1 FROM rental_tenancy_handovers h WHERE h.application_id=rental_applications.id)":"";
- const managedStates=await managedIntakeRelease(env)?" OR (status IN('submitted','under_review','information_requested') AND INSTR(consent_version,'|managed-details:"+MANAGED_RENTAL_POLICY_VERSION+"')>0)":'';
+ const managedStates=await managedIntakeRelease(env)?" OR (status IN('submitted','under_review','information_requested') AND (INSTR(consent_version,'|managed-details:')>0 OR INSTR(consent_version,'|managed-documents:')>0))":'';
  const rows=(await statement(env.DB,"SELECT id FROM rental_applications WHERE retained_until IS NOT NULL AND retained_until<=? AND (privacy_hold_until IS NULL OR privacy_hold_until<=?) AND (status IN('draft','withdrawn','decision_recorded')"+managedStates+")"+linkedFilter+" ORDER BY retained_until LIMIT 10",
  now(),now()).all<{id:string}>()).results;
  for(const row of rows){

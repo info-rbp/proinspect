@@ -1,0 +1,36 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "proinspect-private-document-scanner",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-15",
+  "workers_dev": false,
+  "preview_urls": false,
+  "keep_vars": true,
+  "limits": {"cpu_ms": 100},
+  "durable_objects": {"bindings": [{"name": "ENGINE", "class_name": "ClamAvContainer"}]},
+  "migrations": [{"tag": "v1", "new_sqlite_classes": ["ClamAvContainer"]}],
+  "containers": [{
+    "class_name": "ClamAvContainer",
+    "scheduling_policy": "durable_object",
+    "images": {"base": "./container/Dockerfile"},
+    "image_build_context": "./container",
+    "max_instances": 1
+  }],
+  "observability": {
+    "enabled": true, "redact_query_string": true,
+    "logs": {"enabled": true, "invocation_logs": false, "head_sampling_rate": 0.1},
+    "traces": {"enabled": true, "head_sampling_rate": 0.01}
+  },
+  "env": {
+    "staging": {
+      "name": "proinspect-private-document-scanner-staging",
+      "durable_objects": {"bindings": [{"name": "ENGINE", "class_name": "ClamAvContainer"}]},
+      "migrations": [{"tag": "v1", "new_sqlite_classes": ["ClamAvContainer"]}],
+      "containers": [{
+        "class_name": "ClamAvContainer", "scheduling_policy": "durable_object",
+        "images": {"base": "./container/Dockerfile"},
+        "image_build_context": "./container", "max_instances": 1
+      }]
+    }
+  }
+}

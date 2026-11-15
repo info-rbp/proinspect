@@ -101,6 +101,7 @@
   "env": {
     "connected": {
       "name": "proinspect-platform",
+      "services": [{"binding":"PRIVATE_DOCUMENT_SCANNER","service":"proinspect-private-document-scanner"}],
       "workers_dev": true,
       "preview_urls": false,
       "vars": {
@@ -228,6 +229,7 @@
     },
     "staging": {
       "name": "proinspect-v3-staging",
+      "services": [{"binding":"PRIVATE_DOCUMENT_SCANNER","service":"proinspect-private-document-scanner-staging"}],
       "workers_dev": true,
       "preview_urls": false,
       "vars": {

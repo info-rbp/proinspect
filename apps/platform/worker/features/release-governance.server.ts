@@ -28,8 +28,8 @@ function configured(env: Env, feature: ReleaseFeature) {
   return (env as unknown as Record<string, unknown>)[RELEASE_FEATURES[feature]] === 'true';
 }
 async function activeApproval(env: Env, feature: ReleaseFeature) {
-  // The owner's explicit waiver applies only to tagged, document-free residential intake.
-  if(feature==='rental'){const release=await managedIntakeRelease(env);if(release)return {id:release.id};}
+  // The owner's release is limited to tagged residential intake and its private scanner.
+  if(feature==='rental'||feature==='rental_scanner'){const release=await managedIntakeRelease(env);if(release&&(feature==='rental'||release.intake_mode==='scanned_documents'&&env.PRIVATE_DOCUMENT_SCANNER))return {id:release.id};}
   if (!env.BUILD_SHA || !/^[a-f0-9]{40}$/.test(env.BUILD_SHA)) return null;
   return statement(env.DB, `SELECT a.id FROM feature_release_approvals a
     JOIN users u ON u.id=a.reviewed_by AND u.active=1 AND u.verified_at IS NOT NULL
@@ -39,6 +39,7 @@ async function activeApproval(env: Env, feature: ReleaseFeature) {
     feature, env.APP_ENV, env.BUILD_SHA, now()).first<{ id: string }>();
 }
 export async function releaseFeatureReady(env:Env,feature:ReleaseFeature){
+ if(feature==='rental_scanner'&&(await managedIntakeRelease(env))?.intake_mode==='scanned_documents'&&env.PRIVATE_DOCUMENT_SCANNER)return true;
  if(!configured(env,feature))return false;
  return env.APP_ENV==='local'||Boolean(await activeApproval(env,feature));
 }

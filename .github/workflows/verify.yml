@@ -10,7 +10,33 @@ concurrency:
   group: verify-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  private-scanner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Build the pinned private ClamAV image
+        run: docker build -t proinspect-private-scanner apps/private-document-scanner/container
+      - name: Exercise real clean, EICAR and fail-closed scans
+        run: |
+          set -euo pipefail
+          docker run -d --name private-scanner --memory=4g --cpus=1 -p 127.0.0.1:18080:8080 proinspect-private-scanner
+          mkdir -p artifacts
+          python3 scripts/release/private-scanner-smoke.py | tee artifacts/private-scanner-engine.json
+      - name: Stop the synthetic private engine
+        if: always()
+        run: docker rm -f private-scanner || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: private-scanner-engine
+          path: artifacts/private-scanner-engine.json
+          retention-days: 7
   verify:
+    needs: private-scanner
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -21,6 +47,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Require successful real antivirus acceptance
+        if: needs.private-scanner.result != 'success'
+        run: exit 1
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Capture exact source and repository-only acceptance status
@@ -61,7 +90,7 @@ jobs:
             playwright-report/
           retention-days: 7
   staging-preview:
-    if: github.repository == 'info-rbp/proinspect' && ((github.event_name == 'workflow_dispatch' && contains(fromJSON('["refs/heads/feat/pr01-account-driven-client-portal","refs/heads/feat/public-site-services-refresh","refs/heads/feat/public-content-final-alignment","refs/heads/feat/residential-application-readiness","refs/heads/feat/commercial-dynamic-application","refs/heads/feat/managed-property-application-routing"]'), github.ref)) || (github.event_name == 'pull_request' && contains(fromJSON('["feat/pr01-account-driven-client-portal","feat/public-site-services-refresh","feat/public-content-final-alignment","feat/residential-application-readiness","feat/commercial-dynamic-application","feat/managed-property-application-routing"]'), github.event.pull_request.head.ref) && github.event.pull_request.head.repo.full_name == github.repository))
+    if: github.repository == 'info-rbp/proinspect' && ((github.event_name == 'workflow_dispatch' && contains(fromJSON('["refs/heads/feat/pr01-account-driven-client-portal","refs/heads/feat/public-site-services-refresh","refs/heads/feat/public-content-final-alignment","refs/heads/feat/residential-application-readiness","refs/heads/feat/commercial-dynamic-application","refs/heads/feat/managed-property-application-routing","refs/heads/feat/private-managed-document-scanning"]'), github.ref)) || (github.event_name == 'pull_request' && contains(fromJSON('["feat/pr01-account-driven-client-portal","feat/public-site-services-refresh","feat/public-content-final-alignment","feat/residential-application-readiness","feat/commercial-dynamic-application","feat/managed-property-application-routing","feat/private-managed-document-scanning"]'), github.event.pull_request.head.ref) && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:

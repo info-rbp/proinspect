@@ -1,3 +1,4 @@
+import {isManagedApplication,isScannedManagedApplication} from './managed-rental-intake.server';
 import { z } from 'zod';
 import { statement, assert, uid, now, type Env } from '../../../../packages/database/types';
 import { seal, unseal } from '../../../../packages/auth/crypto';
@@ -56,7 +57,7 @@ export async function rentalStaffDetail(env:Env,user:Principal,id:string){
   {mode:app.tenancy_database_notice_mode,entries:JSON.parse(app.tenancy_database_notice_json)};
  await statement(env.DB,"INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?, 'rental_application.viewed','rental_application',?,'{}',?)",
   uid('aud'),user.id,id,now()).run();
- return {detailsOnly:String(app.consent_version).includes('|managed-details:'),tenancyHandover:await rentalTenancyHandoverStatus(env,user,id),latestSubmission,handoffs,privacyRequests,outcome,privacyHoldUntil:app.privacy_hold_until,retainedUntil:app.retained_until,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
+ return {managedIntake:isManagedApplication(String(app.consent_version)),scannedDocuments:isScannedManagedApplication(String(app.consent_version)),detailsOnly:String(app.consent_version).includes('|managed-details:'),tenancyHandover:await rentalTenancyHandoverStatus(env,user,id),latestSubmission,handoffs,privacyRequests,outcome,privacyHoldUntil:app.privacy_hold_until,retainedUntil:app.retained_until,application:{id:app.id,reference:app.reference,status:app.status,version:app.version,submittedAt:app.submitted_at,
   property:app.display_address,title:app.title,leasingRepresentative:app.agent_name,instructingClientId:app.instructed_by_client_id,
   forwardedAt:app.forwarded_at,noticeVersion:app.consent_version},applicants,documents,referenceChecks,notice,history};
 }
@@ -143,16 +144,16 @@ export async function reviewRentalDocument(env:Env,user:Principal,appId:string,d
  return {ok:true};
 }
 export async function rentalDocumentDownload(env:Env,user:Principal,appId:string,docId:string,quarantine=false){
- staff(user);await appRow(env,appId);
+ staff(user);const app=await appRow(env,appId);
  const doc=await statement(env.DB,"SELECT id,object_key,filename,review_status,scan_status FROM rental_application_documents WHERE application_id=? AND id=?",appId,docId).first<{id:string;object_key:string;filename:string;review_status:string;scan_status:string}>();
  assert(doc,404,'DOCUMENT_NOT_FOUND','Document unavailable.');
- assert(doc.review_status==='released'&&doc.scan_status==='clean',
+ assert(doc.scan_status==='clean'&&(doc.review_status==='released'||doc.review_status==='quarantined'&&isScannedManagedApplication(String(app.consent_version))),
  403,'DOCUMENT_QUARANTINED','Document is unavailable until an approved malware scanner confirms it is clean.');
  const obj=await env.RESTRICTED_DOCUMENTS.get(doc.object_key);assert(obj,404,'DOCUMENT_UNAVAILABLE','Document not found.');
  await env.DB.batch([
   statement(env.DB,"INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,metadata_json,created_at) VALUES(?,?, 'rental_document.downloaded','rental_application_document',?,'{}',?)",
    uid('aud'),user.id,doc.id,now()),
-  await audit(env,appId,'document_reviewed',user.id,{documentId:docId,action:'released_download'}),
+  await audit(env,appId,'document_reviewed',user.id,{documentId:docId,action:doc.review_status==='released'?'released_download':'security_clean_review_download'}),
  ]);
  const name=doc.filename.replace(/[^a-zA-Z0-9 ._()-]/g,'_').slice(0,110)||'document';
  return new Response(obj.body,{headers:{'Content-Type':'application/octet-stream',

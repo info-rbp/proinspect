@@ -9,7 +9,7 @@ const pointerPath = new URL('apps/platform/.wrangler/deploy/config.json', root);
 const stagingOrigin = 'https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev';
 
 export function isApprovedStagingPreview(env) {
-  const branches = ['feat/pr01-account-driven-client-portal', 'feat/public-site-services-refresh', 'feat/public-content-final-alignment', 'feat/residential-application-readiness', 'feat/commercial-dynamic-application', 'feat/managed-property-application-routing'];
+  const branches = ['feat/pr01-account-driven-client-portal', 'feat/public-site-services-refresh', 'feat/public-content-final-alignment', 'feat/residential-application-readiness', 'feat/commercial-dynamic-application', 'feat/managed-property-application-routing', 'feat/private-managed-document-scanning'];
   return env.PR01_STAGING_PREVIEW === '1' && env.GITHUB_REPOSITORY === 'info-rbp/proinspect' &&
     ((env.GITHUB_EVENT_NAME === 'pull_request' && branches.includes(env.GITHUB_HEAD_REF)) ||
      (env.GITHUB_EVENT_NAME === 'workflow_dispatch' && branches.some(branch => env.GITHUB_REF === 'refs/heads/' + branch)));
@@ -38,6 +38,7 @@ export function assertStagingPreview(config) {
   }
   assert.deepEqual(config.durable_objects?.bindings, [{ name: 'SCHEDULER', class_name: 'BookingScheduler' }]);
   assert.deepEqual(config.migrations, [{ tag: 'v1', new_sqlite_classes: ['BookingScheduler'] }]);
+  assert.deepEqual(config.services,[{binding:'PRIVATE_DOCUMENT_SCANNER',service:'proinspect-private-document-scanner-staging'}]);
   assert.equal(config.triggers?.crons?.length ?? 0, 0);
   for (const forbidden of ['dd4f4bc7-cd24-433a-a9ee-d1ffbcc229ea', 'proinspect-platform-data',
     'proinspect-production-documents', 'proinspect-platform-restricted-documents', 'proinspect-platform-events'])

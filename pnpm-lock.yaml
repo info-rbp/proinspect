@@ -71,6 +71,8 @@ importers:
 
   apps/platform: {}
 
+  apps/private-document-scanner: {}
+
 packages:
 
   '@babel/code-frame@7.29.7':
