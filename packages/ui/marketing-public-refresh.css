@@ -657,7 +657,22 @@
     padding: 0.5rem 0 0;
   }
   .site .pi-editorial-copy h1 {
-    font-size: 2.45rem;
+    /* Long programme names must reflow at 320px rather than widen the viewport. */
+    font-size: clamp(2rem, 9vw, 2.45rem);
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+  }
+  .site .pi-editorial-copy,
+  .site .pi-editorial-hero-grid > *,
+  .site .mkt-editorial-panel,
+  .site .pi-process-list li,
+  .site .pi-service-details article {
+    min-width: 0;
+  }
+  .site .pi-editorial-section :is(h2, h3),
+  .site .mkt-editorial-panel :is(h2, h3) {
+    overflow-wrap: anywhere;
   }
   .site .pi-editorial-intro {
     font-size: 1rem;
