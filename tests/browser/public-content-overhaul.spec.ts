@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('Student Living is an independent, usable service programme with responsive content', async ({ page }) => {
-  for (const width of [390, 1440]) {
+  for (const width of [320, 390, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/student-living');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
