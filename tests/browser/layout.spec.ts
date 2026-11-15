@@ -24,7 +24,7 @@ test('long workspace names retain usable mobile navigation and keyboard skip acc
       clientName: 'A deliberately long residential property account name for mobile review',
     });
     const page = await context.newPage();
-    const response = await page.goto(`/w/landlord/${client.clientId}`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    const response = await page.goto(`/w/landlord/${client.clientId}`, { waitUntil: 'load', timeout: 20000 });
     expect(response?.ok()).toBe(true);
     const header = page.getByRole('banner');
     const toggle = page.getByRole('button', { name: 'Open navigation', exact: true });
