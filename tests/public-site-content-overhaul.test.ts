@@ -23,6 +23,9 @@ test('dedicated Student Living service is published alongside all seven programm
     assert.ok(p.benefit.length > 40);
   }
   assert.equal(shouldIndexPublicPage('/student-living', 'https://proinspect.systems','production'), true);
+  const routes = readFileSync('apps/platform/app/routes.ts','utf8');
+  assert.match(routes,/route\('student-living'/);
+  assert.match(routes,/route\('sectors\/:sector', '\.\.\/\.\.\/marketing\/app\/routes\/sector-redirect\.tsx'/);
 });
 
 test('three approved marketing prices remain unchanged, without invented entitlements', () => {
