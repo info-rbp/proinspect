@@ -7,7 +7,7 @@ import { seo } from '../lib/seo';
 export const meta = () =>
   seo(
     'About Us — Property Services in Western Australia',
-    'Get to know ProInspect: practical property inspections, on-site attendance and connected records for owners, managers, strata teams and tenants in WA.',
+    'ProInspect Property Services Pty Ltd connects inspections, outsourced property operations and building services across Perth and Peel, Western Australia.',
     '/about',
     { breadcrumbs: [{ name: 'About Us', path: '/about' }] },
   );
@@ -18,7 +18,7 @@ export default function About() {
       <EditorialHero
         eyebrow="About Us"
         title="Property work, with the detail taken care of."
-        intro="ProInspect brings practical on-site support and structured property records together, helping people responsible for property see what matters and follow through."
+        intro="Inspections, outsourced property operations and building services, connected by clear records. ProInspect helps owners, managers and operators take care of the practical detail across Perth and Peel."
         image="commercial"
         primary={{ label: 'Talk to ProInspect', to: '/contact' }}
         secondary={{ label: 'Explore our services', to: '/services' }}
@@ -36,13 +36,16 @@ export default function About() {
               useful to the next person.
             </p>
             <p>
-              That is where ProInspect fits. We provide property inspection and operational
-              attendance services in Western Australia, supporting self-managing landlords,
-              professional agencies, commercial owners and strata or building teams.
+              That is where ProInspect fits. ProInspect Property Services Pty Ltd
+              (ABN 52 703 550 609; ACN 703 550 609) supports self-managing landlords,
+              professional agencies, commercial owners, strata and building teams, Co-Living
+              and Student Living operators, and construction project teams.
             </p>
             <p>
-              Our approach connects the physical visit with its property context, so agreed work and
-              resulting records are easier to follow.
+              Choose one task, an inspection subscription or a tailored operational scope.
+              We connect physical attendance, administration and property care with the records
+              your authorised team needs. Scheduled services use approved Perth and Peel suburb
+              and postcode combinations; other WA locations are considered by request.
             </p>
           </div>
         </div>
@@ -58,8 +61,9 @@ export default function About() {
             <div className="pi-difference-item">
               <h3>Useful work on the ground</h3>
               <p>
-                From condition inspections and property attendance to contractor access and
-                maintenance follow-up, each service starts with the task you need addressed.
+                Inspections create factual condition records. Outsourced operations cover agreed
+                administration, leasing support, access and follow-up. Building services bring
+                presentation, cleaning, grounds, safe minor works and specialist coordination together.
               </p>
             </div>
             <div className="pi-difference-item">
@@ -94,8 +98,9 @@ export default function About() {
             <article>
               <h3>Homes and portfolios</h3>
               <p>
-                Condition reporting, rental inspections and practical follow-up for owners and
-                residential agencies.
+                Fourteen residential service groups cover inspections, marketing, tenancy
+                administration, maintenance, access, vacates and complex property support.
+                Owners and agencies retain the decisions and authority appropriate to their role.
               </p>
               <Link className="pi-inline-link" to="/residential">
                 Residential services <span aria-hidden="true">↗</span>
@@ -104,8 +109,9 @@ export default function About() {
             <article>
               <h3>Workplaces and shared buildings</h3>
               <p>
-                Commercial attendance, common-property observations and contractor access for
-                authorised teams.
+                Commercial operations and eight building service groups help authorised teams
+                look after workplaces and shared buildings. Tailored Co-Living, Student Living
+                and construction support can address a different operating model.
               </p>
               <Link className="pi-inline-link" to="/who-we-help">
                 Who we help <span aria-hidden="true">↗</span>

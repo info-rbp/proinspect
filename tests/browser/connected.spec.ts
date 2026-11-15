@@ -134,7 +134,9 @@ test('tenant evidence, reviewed PCR and cost approval connect to the self-managi
       owner.page.getByText('The wall mark was present before this tenancy began.'),
     ).toBeVisible();
     await owner.page.getByRole('button', { name: 'Acknowledge response' }).click();
-    await saved(owner.page);
+    // Acknowledgement replaces this form, so verify the persisted result rather than its removed status.
+    await expect(owner.page.getByText('acknowledged', { exact: true })).toBeVisible();
+    await expect(owner.page.getByRole('button', { name: 'Acknowledge response' })).toHaveCount(0);
     const request = await post(tenant.context, tenantApi + '/requests', {
       title: 'Browser fan repair',
       details: 'The bathroom fan no longer operates.',

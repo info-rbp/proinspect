@@ -1,3 +1,4 @@
+import { PLAN_TERM, PLAN_SCOPE, PRIVATE_SERVICE_PRICING } from './public-facts.ts';
 /** Editorial draft; no invented prices, credentials, turnaround promises or testimonials. */
 export const SERVICE_FOCUS: Record<string, [string, string, string]> = {
   'routine-inspection': [
@@ -126,7 +127,7 @@ export const ENGAGEMENTS: Record<
     sections: [
       [
         'Choose the task',
-        'Confirm the property, service scope, price, access and appointment before work starts.',
+        'Confirm the property, service scope, access and appointment before work starts. ' + PRIVATE_SERVICE_PRICING,
       ],
       [
         'Keep the outcome',
@@ -136,7 +137,7 @@ export const ENGAGEMENTS: Record<
   },
   'inspection-plans': {
     title: 'Inspection planning',
-    intro: 'Organise recurring needs across a property or portfolio.',
+    intro: 'Residential Inspection Only: $20 + GST per property/month. ' + PLAN_TERM,
     sections: [
       [
         'Plan before booking',
@@ -150,11 +151,11 @@ export const ENGAGEMENTS: Record<
   },
   'standard-support': {
     title: 'Ongoing operational support',
-    intro: 'Discuss a defined workload and responsibilities.',
+    intro: 'Residential All-Inclusive and Commercial All-Inclusive: each $150 + GST per property/month. ' + PLAN_TERM,
     sections: [
       [
         'Agree the arrangement',
-        'Define properties, tasks, instructions, reporting and commercial terms.',
+        'Define properties, tasks, instructions, reporting and commercial terms. ' + PLAN_SCOPE,
       ],
       [
         'Retain control',
@@ -164,7 +165,7 @@ export const ENGAGEMENTS: Record<
   },
   'outsourced-operations': {
     title: 'Outsourced property operations',
-    intro: 'Arrange on-the-ground work while retaining your management responsibilities.',
+    intro: 'Tailor inspections, administration and building services around your operating workload while retaining the appropriate management authority.',
     sections: [
       [
         'Define the boundary',

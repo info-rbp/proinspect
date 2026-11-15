@@ -1,4 +1,5 @@
 import { SERVICE_FOCUS } from '../../../../packages/marketing/content';
+import { PRIVATE_SERVICE_PRICING, SERVICE_COVERAGE } from '../../../../packages/marketing/public-facts';
 import { SERVICE_EDITORIAL } from '../../../../packages/marketing/service-editorial';
 import { serviceScopeFor } from '../../../../packages/marketing/service-scopes';
 import { Link, useLoaderData, useOutletContext, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
@@ -74,10 +75,10 @@ export default function ServicePage() {
               <h1>{s.name}</h1>
               <p className="mkt-hero-lead">{editorial.lead}</p>
               <div className="actions">
-                <a className="button" href={appOrigin + '/book/' + s.id}>Arrange this service <span aria-hidden="true">→</span></a>
-                <Link className="button secondary" to={'/contact?service=' + s.id}>Ask about the scope</Link>
+                <a className="button" href={appOrigin + '/book/' + s.id}>Sign in to view pricing <span aria-hidden="true">→</span></a>
+                <Link className="button secondary" to={'/contact?service=' + s.id}>Request a quote</Link>
               </div>
-              <p className="mkt-booking-note">New customers can discuss one-off services without subscribing. Eligible existing clients can sign in to book included services. One-off requests and quotations do not reserve an appointment until confirmed.</p>
+              <p className="mkt-booking-note">{PRIVATE_SERVICE_PRICING} A request or quotation does not reserve an appointment until confirmed.</p>
             </div>
             <div className="mkt-detail-visual">
               <PropertyArtwork slot="service-hero" kind={s.sectors.includes('commercial') && !s.sectors.includes('residential') ? 'commercial' : s.sectors.includes('strata-building') && !s.sectors.includes('residential') ? 'strata' : 'residential'} />
@@ -115,7 +116,7 @@ export default function ServicePage() {
                 <ul className="mkt-check-list">{scope.deliverables.map((item) => <li key={item}>{item}</li>)}</ul>
               </article>
             </div>
-            <p className="mkt-section-footnote">No certification, legal determination, specific report format or guaranteed timing is implied by this marketing guidance.</p>
+            <p className="mkt-section-footnote">{SERVICE_COVERAGE} No technical certification, legal determination or guaranteed timing is implied by general attendance. Statutory reporting requirements are confirmed for the relevant instruction.</p>
           </div>
         </section>
       )}
@@ -216,7 +217,7 @@ export default function ServicePage() {
                 <div className="mkt-service-record-line"><span>Focus</span><strong>{focus?.[0] ?? s.summary}</strong></div>
                 <div className="mkt-service-record-line"><span>Preparation</span><strong>{focus?.[1] ?? 'Agreed property and access details'}</strong></div>
                 <div className="mkt-service-record-line"><span>Intended record</span><strong>{focus?.[2] ?? 'A documented service outcome'}</strong></div>
-                <p className="mkt-image-disclosure">Editorial illustration, not a real issued report or a promise of a fixed report format.</p>
+                <p className="mkt-image-disclosure">Sample report layout. Issued records reflect the agreed service and actual property observations.</p>
               </div>
             </div>
           </section>

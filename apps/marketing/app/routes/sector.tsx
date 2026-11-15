@@ -1,4 +1,5 @@
 import { Link, useLoaderData, useOutletContext, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
+import { SECTOR_OVERVIEWS } from '../../../../packages/marketing/sector-overviews';
 import { SERVICE_SEEDS } from '../../../../packages/service-catalogue/index';
 import { MarketingCta } from '../components/marketing-ui';
 import { MarketingPageHero, MarketingSectionTitle, MarketingServiceGrid } from '../components/page-patterns';
@@ -45,10 +46,11 @@ const sectors = {
 export function loader({ params }: LoaderFunctionArgs) {
   const key = params.sector as keyof typeof sectors;
   if (!sectors[key]) throw new Response('Not found', { status: 404 });
-  return { key, ...sectors[key], services: SERVICE_SEEDS.filter((service) => service.sectors.includes(key)) };
+  const page=SECTOR_OVERVIEWS[key==='strata-building'?'strata':key];
+  return { key, ...sectors[key], description:page.summary, body:page.description, services: SERVICE_SEEDS.filter((service) => service.sectors.includes(key)) };
 }
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) =>
-  loaderData ? seo(loaderData.name + ' Property Services — Western Australia', loaderData.description, '/sectors/' + loaderData.key, { breadcrumbs: [{ name: 'Who we help', path: '/who-we-help' }, { name: loaderData.name, path: '/sectors/' + loaderData.key }] }) : [];
+  loaderData ? seo(loaderData.name + ' Property Services — Western Australia', loaderData.description, '/' + (loaderData.key==='strata-building'?'strata':loaderData.key), { breadcrumbs: [{ name: 'Who we help', path: '/who-we-help' }, { name: loaderData.name, path: '/sectors/' + loaderData.key }] }) : [];
 
 export default function Sector() {
   const d = useLoaderData<typeof loader>();

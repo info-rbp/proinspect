@@ -9,6 +9,7 @@ import { isLocal, requireOrigin } from '../../../../packages/auth/server';
 import { mailEvent } from '../../../../packages/notifications/server';
 import { readJson, guard, clearGuard, activity } from '../../../../packages/operations/core';
 import { v4Catalogue, v4Service, type V4Service } from '../../../../packages/v4/catalogue';
+import { descriptiveV4Service, descriptivePrice, PUBLIC_PRICE_MESSAGE } from '../../../../packages/marketing/public-catalogue';
 import { allowedForGuest, requestableStatus, validateAnswers, v4Price } from '../../../../packages/v4/workflows';
 
 const requestSchema=z.object({
@@ -71,16 +72,16 @@ export async function publicCatalogue(env:Env,sector?:string){
  const preview=env.APP_ENV==='local'||env.V4_SERVICE_REQUESTS_ENABLED==='true';
  const selected=preview?all.services.filter(s=>(sector===undefined||s.sector===sector)&&allowedForGuest(s)):[];
  return {enabled:env.V4_SERVICE_REQUESTS_ENABLED==='true',sourceVersion:all.sourceVersion,
-  disclaimer:'Prices are source PAYG schedule references; no online charge or appointment is confirmed by submitting a request.',
+  disclaimer:PUBLIC_PRICE_MESSAGE,
   services:selected.map(s=>({id:s.id,name:s.name,category:s.category,sector:s.sector,description:s.description,
-   feeText:s.feeText,pricing:v4Price(s),pathway:s.pathway,workflowCode:s.workflowCode,
+   feeText:PUBLIC_PRICE_MESSAGE,pricing:descriptivePrice(s.chargingUnit),pathway:s.pathway,workflowCode:s.workflowCode,
    requestStatus:requestableStatus(s)}))};
 }
 export async function publicService(env:Env,id:string){
  assert(env.APP_ENV==='local'||env.V4_SERVICE_REQUESTS_ENABLED==='true',503,'V4_INTAKE_DISABLED','Service requests are not activated.');
  const s=await v4Service(id);assert(s&&allowedForGuest(s),404,'SERVICE_UNAVAILABLE','This service is not available for public requests.');
  const wf=(await v4Catalogue()).workflows.find(x=>x.code===s.workflowCode);
- return {service:{...s,pricing:v4Price(s),requestStatus:requestableStatus(s)},workflow:wf,enabled:env.V4_SERVICE_REQUESTS_ENABLED==='true',turnstileKey:env.TURNSTILE_SITE_KEY??null};
+ return {service:{...descriptiveV4Service(s),pricing:descriptivePrice(s.chargingUnit),requestStatus:requestableStatus(s)},workflow:wf?{code:wf.code,cta:wf.cta,pathway:wf.pathway,intake:wf.intake,deliverable:wf.deliverable,restrictions:wf.restrictions}:undefined,enabled:env.V4_SERVICE_REQUESTS_ENABLED==='true',turnstileKey:env.TURNSTILE_SITE_KEY??null};
 }
 export async function begin(request:Request,env:Env){
  requireOrigin(request,env);

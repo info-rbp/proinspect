@@ -34,7 +34,7 @@ export function HomeHero({ appOrigin }: { appOrigin: string }) {
               fetchPriority="high"
             />
           </div>
-          <p className="mkt-art-illustration-note">Illustrative property image — not a ProInspect customer property.</p>
+          <p className="mkt-art-illustration-note">Property services across Perth and Peel.</p>
           <p>
             On-site work <span>·</span> Documented outcomes <span>·</span> Connected records
           </p>

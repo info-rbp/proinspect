@@ -51,7 +51,7 @@ export default function WhoWeHelp() {
       <EditorialHero
         eyebrow="Who We Help"
         title="The right support for the role you play."
-        intro="A landlord, a managing agent and a building team look after property in different ways. ProInspect provides practical on-site support that fits your responsibilities, your property and the outcome you need."
+        intro="From private landlords and agencies to commercial owners, strata teams, Co-Living and Student Living operators and construction teams, we combine inspections, outsourced operations and building services around your responsibilities."
         image="strata"
         primary={{ label: 'Find your service', to: '/service-finder' }}
         secondary={{ label: 'Talk through your requirements', to: '/contact' }}
@@ -120,8 +120,9 @@ export default function WhoWeHelp() {
             <article>
               <h3>Co-living operators</h3>
               <p>
-                Discuss a defined inspection or shared-space attendance requirement. Full room and
-                occupancy management is a planned future capability.
+                Tailored room and shared-area inspections, resident onboarding, turnover
+                coordination and everyday property support for Co-Living and Student Living.
+                Scope services separately from dedicated room and occupancy software releases.
               </p>
               <Link className="pi-inline-link" to="/co-living">
                 Explore co-living <span aria-hidden="true">→</span>
@@ -130,8 +131,8 @@ export default function WhoWeHelp() {
             <article>
               <h3>Owners and construction teams</h3>
               <p>
-                Talk through property observations and site attendance suitability. Full
-                construction project management remains planned.
+                Tailored project coordination, progress records, site attendance and handover
+                follow-up alongside your appointed builder and professional advisers.
               </p>
               <Link className="pi-inline-link" to="/construction">
                 Explore construction <span aria-hidden="true">→</span>
