@@ -1,4 +1,5 @@
 import {LegalAcceptance} from '../../../platform/app/components/LegalAcceptance';
+import {boundedScanBody} from '../../../../packages/marketing/private-scan';
 import { useState } from 'react';
 import { Form, Link, redirect, data, useLoaderData, useActionData, useSearchParams,
  type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
@@ -30,7 +31,10 @@ export async function action({context,params,request}:ActionFunctionArgs){
  try{
   const type=request.headers.get('content-type')??'';
   let form:FormData;
-  if(type.includes('multipart/form-data'))form=await request.formData();
+  if(type.includes('multipart/form-data')){
+   const bytes=await boundedScanBody(request.body,10*1024*1024);
+   form=await new Response(bytes,{headers:{'Content-Type':type}}).formData();
+  }
   else {
    const body=await request.text();
    if(body.length>20000)return fail('The form is too large.',413);
@@ -202,7 +206,7 @@ function Household({people,editable}:{
 }
 function Documents({docs,editable,uploadsEnabled=true}: {docs:any[];editable:boolean;uploadsEnabled?:boolean}){
  if(!uploadsEnabled)return <div className="rental-section-note"><h3>No documents are needed to submit this application</h3><p>Complete the application details and continue to your declaration. Identity-document and other file uploads are currently disabled. ProInspect will explain any necessary evidence request and its secure handling arrangements separately. Do not email identity documents.</p><Link className="button secondary" to="?step=review">Continue to review and declare</Link></div>;
- return <><div className="rental-section-note">Documents are stored privately. Files are quarantined for security review and are never shared through public marketing pages or ordinary email attachments. Please upload only requested evidence.</div>
+ return <><div className="rental-section-note">Documents are stored privately. Files are checked by our private malware scanner before submission and are never shared through public pages or ordinary email attachments. Upload only requested evidence. Redact account numbers, identity numbers and unrelated sensitive details. Staff review takes place after you submit.</div>
  {editable&&<Form method="post" encType="multipart/form-data" className="rental-form">
   <input type="hidden" name="intent" value="upload"/>
   <div className="rental-drop-zone"><div className="rental-field">
@@ -213,9 +217,10 @@ function Documents({docs,editable,uploadsEnabled=true}: {docs:any[];editable:boo
      <select id="rental-category" name="category" required><option value="identity">Identification</option><option value="income">Income or employment</option><option value="rental_history">Rental history</option><option value="other">Other requested evidence</option></select>
    </div><button className="button secondary" type="submit">Upload securely</button></div>
  </Form>}
+ <p className="rental-muted">Security checks usually run within a few minutes. <Link to="?step=documents">Refresh document status</Link> before submitting. Pending, unsafe or failed files must be removed or pass scanning first.</p>
  <h3 style={{marginTop:'2rem'}}>Your uploaded documents ({docs.length})</h3>
  {docs.length===0?<p className="rental-muted">No documents uploaded. You can continue unless the authorised leasing representative specifically requests supporting evidence.</p>:
- <ul className="rental-document-list">{docs.map((doc:any)=><li key={doc.id}><div><strong>{doc.filename}</strong><small>{doc.category.replaceAll('_',' ')} · {(doc.size_bytes/1048576).toFixed(2)} MB · {doc.review_status==='quarantined'?'Pending security review':doc.review_status}</small></div>
+ <ul className="rental-document-list">{docs.map((doc:any)=><li key={doc.id}><div><strong>{doc.filename}</strong><small>{doc.category.replaceAll('_',' ')} · {(doc.size_bytes/1048576).toFixed(2)} MB · {doc.scan_status==='pending'?'Security scan pending':doc.scan_status==='clean'?'Security check passed — staff review follows submission':doc.scan_status==='unsafe'?'Unsafe file — remove and replace':'Security check failed — remove and retry'}</small></div>
  {editable&&<Form method="post"><input type="hidden" name="intent" value="delete-document"/><input type="hidden" name="documentId" value={doc.id}/><button className="rental-inline-button" type="submit">Remove file</button></Form>}</li>)}</ul>}
  {editable&&<div className="rental-actions"><Link to="?step=references">← Back to references</Link><Link className="button" to="?step=review">Review my application →</Link></div>}
  </>;
@@ -312,7 +317,7 @@ export default function RentalApplication(){
      <>{editable?<Form method="post" className="rental-form" key={step}>
         <input type="hidden" name="intent" value="save"/><input type="hidden" name="section" value={step}/><input type="hidden" name="version" value={page.version}/>
         {step==='identity'&&<div className="rental-section-note">Contact email: <strong>{page.answers.identity?.email}</strong>. Your private link is tied to this address. It cannot be changed from the form.</div>}
-        <Fields section={step as AnswerStep} answers={page.answers[step]??{}} primary={page.role==='primary'} detailsOnly={page.detailsOnly}/>
+        <Fields section={step as AnswerStep} answers={page.answers[step]??{}} primary={page.role==='primary'} detailsOnly={page.minimalCollection??page.detailsOnly}/>
         <div className="rental-actions"><Link to={'?step='+FORM18_STEPS[Math.max(0,index-1)].id}>← Previous step</Link>
          <button className="button" type="submit">Save &amp; continue →</button></div>
        </Form>:<><p className="rental-muted">The application is read-only at this stage.</p><dl className="rental-summary">{FIELDS[step as AnswerStep].filter(f=>page.answers[step]?.[f.key]).map(f=><Entry key={f.key} label={f.label} value={page.answers[step][f.key]}/>)}</dl><Link to="?step=review">View submission status</Link></>}</>}

@@ -6,16 +6,37 @@ import {mkdirSync,writeFileSync} from 'node:fs';
 import {build} from 'esbuild';
 import {Miniflare} from 'miniflare';
 import {unseal} from '../../packages/auth/crypto.ts';
-import {MANAGED_RENTAL_POLICY,MANAGED_RENTAL_POLICY_VERSION} from '../../packages/marketing/managed-rental-policy.ts';
+import * as detailsPolicy from '../../packages/marketing/managed-rental-policy-v1.ts';
+import * as documentPolicy from '../../packages/marketing/managed-rental-policy.ts';
+import {scanKeyId,SCANNER_BASE_IMAGE_DIGEST} from '../../packages/marketing/private-scan.ts';
+const documentsMode=process.argv.includes('--documents');
+const {MANAGED_RENTAL_POLICY,MANAGED_RENTAL_POLICY_VERSION}=documentsMode?documentPolicy:detailsPolicy;
+const pair=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);
+const publicKey=await crypto.subtle.exportKey('jwk',pair.publicKey),keyId=await scanKeyId(publicKey);
+let scannerMode='valid',scanCount=0;
+async function scanner(request){
+ const nonce=request.headers.get('X-ProInspect-Scan-Nonce'),path=new URL(request.url).pathname;
+ if(scannerMode==='unavailable')return new Response('Unavailable',{status:503});
+ const evidence={protocol:'proinspect-private-scan-v1',kind:path==='/health'?'health':'scan',sourceSha:'a'.repeat(40),baseImageDigest:SCANNER_BASE_IMAGE_DIGEST,nonce,keyId,eventId:crypto.randomUUID(),checkedAt:new Date().toISOString(),engine:{engineVersion:'ClamAV 1.5.4',databaseVersion:12345,definitionsUpdatedAt:new Date(Date.now()-3600000).toISOString()}};
+ if(path==='/scan'){
+  const meta=JSON.parse(atob(request.headers.get('X-ProInspect-Scan-Metadata')));
+  assert.deepEqual(Object.keys(meta).sort(),['contentType','documentId','nonce','sha256','sizeBytes'].sort(),'No applicant, property or filename is sent to the engine');
+  const bytes=await request.arrayBuffer();assert.equal(createHash('sha256').update(Buffer.from(bytes)).digest('hex'),meta.sha256);scanCount++;
+  Object.assign(evidence,{documentId:meta.documentId,sha256:meta.sha256,verdict:Buffer.from(bytes).includes(Buffer.from('SYNTHETIC-UNSAFE-FIXTURE'))?'unsafe':'clean',complete:scannerMode!=='incomplete'});
+ }
+ const timestamp=String(Math.floor(Date.now()/1000)),raw=JSON.stringify(evidence);
+ const signature=Buffer.from(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},pair.privateKey,new TextEncoder().encode(timestamp+'.'+raw))).toString('base64url');
+ return new Response(scannerMode==='forged'?raw.replace('12345','12346'):raw,{headers:{'X-ProInspect-Scan-Time':timestamp,'X-ProInspect-Scan-Signature':signature}});
+}
 
 mkdirSync('artifacts',{recursive:true});
 await build({entryPoints:['tests/runtime/rental-journey-entry.ts'],outfile:'artifacts/managed-intake-worker.mjs',bundle:true,format:'esm',platform:'browser',target:'es2022',external:['cloudflare:workers','node:crypto']});
 const key=randomBytes(32).toString('base64'),source='a'.repeat(40),stamp=new Date().toISOString();
 const policyHash=createHash('sha256').update(JSON.stringify(MANAGED_RENTAL_POLICY)).digest('hex');
 const report={synthetic:true,productionDataAccessed:false,liveEmailSent:false,checks:[],status:'FAIL'};
-const mf=new Miniflare({modules:true,scriptPath:'artifacts/managed-intake-worker.mjs',compatibilityDate:'2026-07-01',compatibilityFlags:['nodejs_compat'],
+const mf=new Miniflare({serviceBindings:documentsMode?{PRIVATE_DOCUMENT_SCANNER:scanner}:{},modules:true,scriptPath:'artifacts/managed-intake-worker.mjs',compatibilityDate:'2026-07-01',compatibilityFlags:['nodejs_compat'],
  d1Databases:{DB:'isolated-managed-intake'},r2Buckets:{DOCUMENTS:'isolated-managed-documents',RESTRICTED_DOCUMENTS:'isolated-managed-restricted'},
- bindings:{APP_ENV:'production',APP_ORIGIN:'http://localhost',BUILD_SHA:source,ISOLATED_MANAGED_INTAKE:'true',DATA_ENCRYPTION_KEY:key,EMAIL_PROVIDER:'local',RENTAL_APPLICATIONS_ENABLED:'true',RENTAL_RETENTION_AUTOPURGE_ENABLED:'true',RENTAL_SCANNER_ENABLED:'false',RENTAL_APPS_SCRIPT_ENABLED:'false',OPERATIONS_EMAIL:'operations@example.invalid',MARKETING_TURNSTILE_SECRET_KEY:'synthetic-turnstile-secret'},
+ bindings:{APP_ENV:'production',APP_ORIGIN:'http://localhost',BUILD_SHA:source,ISOLATED_MANAGED_INTAKE:'true',DATA_ENCRYPTION_KEY:key,EMAIL_PROVIDER:'local',RENTAL_APPLICATIONS_ENABLED:'true',RENTAL_RETENTION_AUTOPURGE_ENABLED:'true',RENTAL_SCANNER_ENABLED:'false',RENTAL_SCANNER_WEBHOOK_SECRET:'synthetic-legacy-scanner-secret-not-production',RENTAL_APPS_SCRIPT_ENABLED:'false',OPERATIONS_EMAIL:'operations@example.invalid',MARKETING_TURNSTILE_SECRET_KEY:'synthetic-turnstile-secret'},
  outboundService:async request=>{
   const url=new URL(request.url);
   assert.equal(url.hostname,'challenges.cloudflare.com','No applicant information may be sent to scanner or handoff providers');
@@ -41,13 +62,16 @@ try{
   const state=await call('/__test/release-state');assert.equal(state.rental,false);assert.equal(state.privacy,null);
   assert.equal((await call('/__test/start-page?slug=managed-synthetic')).enabled,false);
  });
- await run("INSERT INTO managed_rental_intake_releases(id,environment,source_sha,policy_version,policy_sha256,intake_mode,authorized_by,authorization_reference,enabled,created_at) VALUES('mip_synthetic','production',?,?,?,'details_only','synthetic-owner','Synthetic owner instruction, never production acceptance',1,?)",source,MANAGED_RENTAL_POLICY_VERSION,policyHash,stamp);
- await check('source-bound owner release enables only the document-free rental capability',async()=>{
+ if(documentsMode){
+  await run("INSERT INTO managed_rental_document_releases(id,environment,source_sha,policy_version,policy_sha256,intake_mode,scanner_worker_name,scanner_source_sha,scanner_image_digest,scanner_key_id,scanner_public_jwk,scanner_test_sha256,scanner_verified_at,authorized_by,authorization_reference,enabled,created_at) VALUES('mdr_synthetic','production',?,?,?,'scanned_documents','proinspect-private-document-scanner',?,?,?,?,?,?,'synthetic-owner','Synthetic only, never live acceptance evidence',1,?)",source,MANAGED_RENTAL_POLICY_VERSION,policyHash,source,SCANNER_BASE_IMAGE_DIGEST,keyId,JSON.stringify(publicKey),'c'.repeat(64),stamp,stamp);
+ }else await run("INSERT INTO managed_rental_intake_releases(id,environment,source_sha,policy_version,policy_sha256,intake_mode,authorized_by,authorization_reference,enabled,created_at) VALUES('mip_synthetic','production',?,?,?,'details_only','synthetic-owner','Synthetic owner instruction, never production acceptance',1,?)",source,MANAGED_RENTAL_POLICY_VERSION,policyHash,stamp);
+ await check(documentsMode?'source-bound owner release enables private scanned managed intake only':'source-bound owner release enables only the document-free rental capability',async()=>{
   const state=await call('/__test/release-state');assert.equal(state.rental,true);
-  for(const key of ['scanner','handoff','commercial'])assert.equal(state[key],false);
+  assert.equal(state.scanner,documentsMode);
+  for(const key of ['handoff','commercial'])assert.equal(state[key],false);
   assert.equal(state.privacy.version_label,MANAGED_RENTAL_POLICY_VERSION);
   assert.equal((await call('/__test/start-page?slug=managed-synthetic')).enabled,false,'A management tag is still required');
-  await assert.rejects(()=>run("UPDATE managed_rental_intake_releases SET source_sha=?", 'b'.repeat(40)),/MANAGED_RELEASE_IMMUTABLE/);
+  await assert.rejects(()=>run(documentsMode?"UPDATE managed_rental_document_releases SET source_sha=?":"UPDATE managed_rental_intake_releases SET source_sha=?",'b'.repeat(40)),documentsMode?/DOCUMENT_RELEASE_IMMUTABLE/:/MANAGED_RELEASE_IMMUTABLE/);
  });
  await check('staff can tag a property; stale changes cannot overwrite its classification',async()=>{
   const body={listingId:'lst_managed_synthetic',input:{provider:'proinspect',reference:'SYNTHETIC-OWNER-CONFIRMATION',version:0}};
@@ -58,7 +82,7 @@ try{
  });
  await check('managed intake creates a private application with a 14-day draft deadline',async()=>{
   const page=await call('/__test/start-page?slug=managed-synthetic');
-  assert.equal(page.detailsOnly,true);assert.equal(page.collectionNotice.recipient,'ProInspect Property Services Pty Ltd');
+  assert.equal(page.detailsOnly,!documentsMode);assert.equal(page.collectionNotice.recipient,'ProInspect Property Services Pty Ltd');
   assert.deepEqual(page.collectionNotice.retention,{draft:14,submitted:90,withdrawn:30});
   await call('/__test/start',{listingId:'lst_managed_synthetic',name:'Fictional Applicant',email:'applicant@example.invalid',consent:true,turnstile:'synthetic'});
   const row=await first("SELECT id,envelope FROM outbox_events WHERE kind='rental.application.started'");
@@ -66,9 +90,9 @@ try{
   const app=await first("SELECT id,retained_until FROM rental_applications");applicationId=app.id;
   assert(Math.abs(Date.parse(app.retained_until)-Date.now()-14*86400000)<10000);
  });
- await check('uploads are blocked in the server and unnecessary third-party contact fields are discarded',async()=>{
-  const page=await call('/__test/page',{token});assert.equal(page.uploadsEnabled,false);
-  assert.equal((await call('/__test/upload-blocked',{token},503)).code,'DOCUMENT_UPLOADS_DISABLED');
+ await check(documentsMode?'managed intake minimises unnecessary personal information':'uploads are blocked in the server and unnecessary third-party contact fields are discarded',async()=>{
+  const page=await call('/__test/page',{token});assert.equal(page.uploadsEnabled,documentsMode);
+  if(!documentsMode)assert.equal((await call('/__test/upload-blocked',{token},503)).code,'DOCUMENT_UPLOADS_DISABLED');
   const sections={
    identity:{fullName:'Fictional Applicant',dateOfBirth:'1990-01-01',mobile:'0400000000',currentAddress:'1 Fictional Road',totalOccupants:'1',petsProposed:'No'},
    rental:{hasRentalHistory:'No',noHistoryReason:'First tenancy; relevant alternative evidence can be arranged.'},
@@ -80,11 +104,55 @@ try{
   assert.equal(saved.answers.identity.idType,'Not yet available');
   assert(!JSON.stringify(saved.answers).includes('Must not be collected'));
  });
- await check('an application submits without attachments for private staff review',async()=>{
+ if(documentsMode)await check('scanned uploads stay private, reject forged and incomplete results, and permit submission before human review',async()=>{
+  async function upload(body,expected=200){
+   const form=new FormData();form.set('token',token);form.set('category','income');form.set('file',new File([body],'synthetic-evidence.pdf',{type:'application/pdf'}));
+   const request=new Request('http://localhost/__test/upload',{method:'POST',body:form});
+   const response=await mf.dispatchFetch(request.url,{method:'POST',headers:request.headers,body:await request.arrayBuffer()});
+   const result=await response.json();assert.equal(response.status,expected,JSON.stringify(result));return result;
+  }
+  scannerMode='unavailable';await upload('%PDF-1.4 unavailable',503);
+  assert.equal((await first('SELECT COUNT(*) AS n FROM rental_application_documents')).n,0);
+  scannerMode='valid';await upload('%PDF-1.4 synthetic clean evidence');
+  const doc=await first('SELECT id,scan_status,review_status,reviewed_by FROM rental_application_documents');
+  assert.equal(doc.scan_status,'pending');assert.equal(doc.review_status,'quarantined');assert.equal(doc.reviewed_by,null);
+  const stored=await first('SELECT sha256 FROM rental_application_documents WHERE id=?',doc.id);
+  const legacyRaw=JSON.stringify({eventId:crypto.randomUUID(),applicationId,documentId:doc.id,sha256:stored.sha256,verdict:'clean',engine:'Legacy test transport',reference:'SYNTHETIC-CALLBACK-NOT-PRIVATE-ENGINE'}),timestamp=String(Math.floor(Date.now()/1000));
+  const hmac=await crypto.subtle.importKey('raw',new TextEncoder().encode('synthetic-legacy-scanner-secret-not-production'),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  const signature=Buffer.from(await crypto.subtle.sign('HMAC',hmac,new TextEncoder().encode(timestamp+'.'+legacyRaw))).toString('hex');
+  const legacy=await mf.dispatchFetch('http://localhost/__test/legacy-scan',{method:'POST',body:legacyRaw,headers:{'Content-Type':'application/json','X-ProInspect-Scan-Time':timestamp,'X-ProInspect-Scan-Signature':'sha256='+signature}});
+  assert.equal(legacy.status,409);assert.equal((await legacy.json()).code,'PRIVATE_SCAN_REQUIRED');
+  assert.equal((await first('SELECT scan_status FROM rental_application_documents WHERE id=?',doc.id)).scan_status,'pending');
+  assert.equal((await mf.dispatchFetch('http://localhost/__test/document-download?app='+applicationId+'&doc='+doc.id)).status,404,'Staff cannot open draft application files');
+  for(const mode of ['forged','incomplete']){
+   scannerMode=mode;await run('UPDATE rental_document_scan_jobs SET next_attempt_at=?',stamp);await call('/__test/scan-dispatch',{});
+   assert.equal((await first('SELECT scan_status FROM rental_application_documents WHERE id=?',doc.id)).scan_status,'pending');
+  }
+  scannerMode='valid';await run('UPDATE rental_document_scan_jobs SET next_attempt_at=?',stamp);await call('/__test/scan-dispatch',{});
+  const clean=await first('SELECT scan_status,review_status,reviewed_by FROM rental_application_documents WHERE id=?',doc.id);
+  assert.equal(clean.scan_status,'clean');assert.equal(clean.review_status,'quarantined');assert.equal(clean.reviewed_by,null,'No human reviewer is fabricated');
+  await upload('%PDF-1.4 SYNTHETIC-UNSAFE-FIXTURE');await call('/__test/scan-dispatch',{});
+  const unsafe=await first("SELECT id,scan_status,review_status FROM rental_application_documents WHERE scan_status='unsafe'");
+  assert.equal(unsafe.review_status,'rejected');
+  const page=await call('/__test/page',{token});await call('/__test/complete',{token,version:page.version});
+  assert.equal((await call('/__test/submit',{token},409)).code,'DOCUMENTS_NOT_READY');
+  await call('/__test/delete-document',{token,documentId:unsafe.id});
+  assert.equal((await first('SELECT COUNT(*) AS n FROM rental_document_scan_receipts WHERE document_id=?',unsafe.id)).n,0);
+ });
+ await check(documentsMode?'security-cleared files submit for separate private staff review':'an application submits without attachments for private staff review',async()=>{
   const page=await call('/__test/page',{token});await call('/__test/complete',{token,version:page.version});
   const response=await call('/__test/submit',{token});assert.equal(response.submitted,true);
   assert.equal((await first('SELECT COUNT(*) AS n FROM rental_application_handoffs')).n,0);
-  assert.equal((await first('SELECT COUNT(*) AS n FROM rental_application_documents')).n,0);
+  assert.equal((await first('SELECT COUNT(*) AS n FROM rental_application_documents')).n,documentsMode?1:0);
+  if(documentsMode){
+   const doc=await first('SELECT id FROM rental_application_documents');
+   const response=await mf.dispatchFetch('http://localhost/__test/document-download?app='+applicationId+'&doc='+doc.id);
+   assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');assert.equal(response.headers.get('X-Content-Type-Options'),'nosniff');assert.match(response.headers.get('Content-Disposition'),/^attachment/);
+   assert.equal((await first('SELECT reviewed_by FROM rental_application_documents')).reviewed_by,null);
+   await call('/__test/document-review',{applicationId,documentId:doc.id});
+   assert.equal((await first('SELECT reviewed_by FROM rental_application_documents')).reviewed_by,'usr_rental_synthetic_admin');
+   assert(scanCount>=4);
+  }
   const app=await first('SELECT status,retained_until FROM rental_applications WHERE id=?',applicationId);
   assert.equal(app.status,'submitted');assert(Math.abs(Date.parse(app.retained_until)-Date.now()-90*86400000)<10000);
   const current=await first('SELECT version FROM rental_applications WHERE id=?',applicationId);
@@ -108,4 +176,4 @@ try{
  });
  report.status='PASS';
 }catch(error){report.error=String(error?.stack??error);console.error(report.error);process.exitCode=1;}
-finally{writeFileSync('artifacts/managed-intake-acceptance.json',JSON.stringify(report,null,2)+'\n');await mf.dispose();console.log(JSON.stringify(report,null,2));}
+finally{writeFileSync(documentsMode?'artifacts/private-document-scanning-acceptance.json':'artifacts/managed-intake-acceptance.json',JSON.stringify(report,null,2)+'\n');await mf.dispose();console.log(JSON.stringify(report,null,2));}

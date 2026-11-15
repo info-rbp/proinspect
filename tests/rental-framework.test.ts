@@ -52,7 +52,7 @@ test('public rental intake requires explicit approval and verified recipient',()
 });
 test('document scanning remains gated and cannot claim a clean scan without callback attestation',()=>{
  const dispatch=read('apps/platform/worker/features/rental-scan-dispatch.server.ts');
- assert.match(dispatch,/RENTAL_SCANNER_ENABLED!=='true'/);
+ assert.match(dispatch,/releaseFeatureReady\(env,'rental_scanner'\)/);
  assert.match(dispatch,/RESTRICTED_DOCUMENTS\.get/);
  assert.match(dispatch,/scan_status='pending'/);
  const callback=read('apps/platform/worker/features/rental-malware.server.ts');

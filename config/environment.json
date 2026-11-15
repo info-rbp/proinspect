@@ -664,7 +664,8 @@
     "EMAIL",
     "EVENTS",
     "RESTRICTED_DOCUMENTS",
-    "SCHEDULER"
+    "SCHEDULER",
+    "PRIVATE_DOCUMENT_SCANNER"
   ],
   "externalOnly": {
     "PROINSPECT_WEBHOOK_SECRET": "Apps Script property; same value as SHEETS_WEBHOOK_SECRET for that environment",

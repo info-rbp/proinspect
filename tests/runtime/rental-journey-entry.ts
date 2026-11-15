@@ -5,7 +5,10 @@
 import { publicListing,publicListings,staffLeasing } from '../../apps/platform/worker/features/leasing.server';
 import { publicOpenHomeSessions } from '../../apps/platform/worker/features/open-home.server';
 import { issueRecipientChallenge,verifyRecipient,approveRentalListing } from '../../apps/platform/worker/features/rental-governance.server';
-import { rentalStartPage, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental,changeRentalEmail,inviteRentalApplicant,withdrawRental,uploadRentalDocument } from '../../apps/platform/worker/features/rental-applications.server';
+import { rentalStartPage, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental,changeRentalEmail,inviteRentalApplicant,withdrawRental,uploadRentalDocument,deleteRentalDocument } from '../../apps/platform/worker/features/rental-applications.server';
+import {dispatchRentalScans} from '../../apps/platform/worker/features/rental-scan-dispatch.server';
+import {acceptRentalScan} from '../../apps/platform/worker/features/rental-malware.server';
+import {rentalDocumentDownload,reviewRentalDocument} from '../../apps/platform/worker/features/rental-review.server';
 import {dispatchRentalRetention} from '../../apps/platform/worker/features/rental-privacy.server';
 import {releaseFeatureReady} from '../../apps/platform/worker/features/release-governance.server';
 import {managedPrivacyDocument} from '../../apps/platform/worker/features/managed-rental-intake.server';
@@ -23,6 +26,19 @@ export default {
   const path=url.pathname;
   try{
    const administrator={id:'usr_rental_synthetic_admin',staffRole:'administrator'} as Principal;
+   if(path==='/__test/upload'&&request.method==='POST'){
+    const form=await request.formData();return Response.json(await uploadRentalDocument(env,String(form.get('token')),form));
+   }
+   if(path==='/__test/delete-document'&&request.method==='POST'){
+    const d=await request.json() as {token:string;documentId:string};return Response.json(await deleteRentalDocument(env,d.token,d.documentId));
+   }
+   if(path==='/__test/scan-dispatch'&&request.method==='POST'){await dispatchRentalScans(env);return Response.json({completed:true});}
+   if(path==='/__test/legacy-scan'&&request.method==='POST')return Response.json(await acceptRentalScan(env,request));
+   if(path==='/__test/document-download')return await rentalDocumentDownload(env,administrator,url.searchParams.get('app')??'',url.searchParams.get('doc')??'');
+   if(path==='/__test/document-review'&&request.method==='POST'){
+    const d=await request.json() as {applicationId:string;documentId:string};
+    return Response.json(await reviewRentalDocument(env,administrator,d.applicationId,d.documentId,{status:'released',note:'Synthetic authorised review of an already scanned clean document.'}));
+   }
    if(path==='/__test/management-tag'&&request.method==='POST'){
     const d=await request.json() as {listingId:string;input:unknown};
     return Response.json(await staffLeasing(env,administrator,new Request(request.url,{method:'POST',body:JSON.stringify(d.input)}),d.listingId+'/management'));

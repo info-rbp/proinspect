@@ -5,7 +5,7 @@ import tempfile
 with tempfile.TemporaryDirectory(prefix='proinspect-managed-migration-') as directory:
     db = sqlite3.connect(pathlib.Path(directory) / 'source.sqlite')
     db.execute('PRAGMA foreign_keys=ON')
-    files = sorted(pathlib.Path('database/migrations').glob('*.sql'))
+    files = sorted(p for p in pathlib.Path('database/migrations').glob('*.sql') if p.name[:4] <= '0056')
     assert files[-1].name == '0056_managed_property_intake.sql'
     for path in files[:-1]:
         db.executescript(path.read_text())

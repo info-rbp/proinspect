@@ -74,7 +74,7 @@ test('applicant access is separate from public listing, restricted R2 is used, p
  assert.match(read('apps/platform/worker/features/rental-review.server.ts'),/r\.status!=='draft'/);
  assert.match(read('apps/platform/worker/features/rental-review.server.ts'),/DOCUMENT_QUARANTINED/);
  assert.equal(JSON.parse(wrapper).env.connected.vars.RENTAL_APPLICATIONS_ENABLED,'true');
- assert.match(server,/managedDetailsOnlyListing/);
+ assert.match(server,/managedApplicationListing/);
  assert.match(server,/DOCUMENT_UPLOADS_DISABLED/);
 });
 

@@ -1,5 +1,5 @@
 import { issueRecipientChallenge,approveRentalListing,managedRentalListingApproved } from './rental-governance.server';
-import { withManagedIntakePolicy,managedIntakeRelease,managedDetailsOnlyListing,propertyManagementTag } from './managed-rental-intake.server';
+import { withManagedIntakePolicy,managedIntakeRelease,managedDetailsOnlyListing,managedApplicationListing,propertyManagementTag } from './managed-rental-intake.server';
 import { applicationSettingsSchema } from '../../../../packages/marketing/form18';
 import { z } from 'zod';
 import { statement, assert, now, uid, type Env } from '../../../../packages/database/types';
@@ -197,7 +197,8 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
   const notices=JSON.parse(String((details as Record<string,any>).tenancy_database_notice_json??'[]')) as unknown;
   const mode=String((details as Record<string,any>).tenancy_database_notice_mode??'');
   const secureProvider=(endpoint:string|undefined,host:string|undefined)=>Boolean(checkedHttpsEndpoint(endpoint,host));
-  const scannerConfigured=env.RENTAL_SCANNER_ENABLED==='true'&&secureProvider(env.RENTAL_SCANNER_ENDPOINT,env.RENTAL_SCANNER_ALLOWED_HOST)&&
+  const managedPrivate=await managedApplicationListing(env,listingId)&&(await managedIntakeRelease(env))?.intake_mode==='scanned_documents';
+  const scannerConfigured=Boolean(managedPrivate&&env.PRIVATE_DOCUMENT_SCANNER)||env.RENTAL_SCANNER_ENABLED==='true'&&secureProvider(env.RENTAL_SCANNER_ENDPOINT,env.RENTAL_SCANNER_ALLOWED_HOST)&&
    Boolean(env.RENTAL_SCANNER_OUTBOUND_SECRET&&env.RENTAL_SCANNER_OUTBOUND_SECRET.length>=32&&env.RENTAL_SCANNER_WEBHOOK_SECRET&&env.RENTAL_SCANNER_WEBHOOK_SECRET.length>=32);
   const handoffConfigured=env.RENTAL_APPS_SCRIPT_ENABLED==='true'&&secureProvider(env.RENTAL_APPS_SCRIPT_ENDPOINT,env.RENTAL_APPS_SCRIPT_ALLOWED_HOST)&&
    Boolean(env.RENTAL_APPS_SCRIPT_SECRET&&env.RENTAL_APPS_SCRIPT_SECRET.length>=32);
@@ -206,8 +207,8 @@ export async function staffLeasing(env:Env,user:Principal,request:Request,path:s
    listingKind:listing.kind,listingStatus:listing.status,applicationMode:String((details as Record<string,any>).application_mode??''),
    authorityReference:(details as Record<string,any>).application_authority_reference,
    recipientVerifiedAt:(details as Record<string,any>).rental_recipient_verified_at,
-   approvalState:detailsOnly?'owner_authorized':(details as Record<string,any>).rental_approval_state,detailsOnly,
-   noticeMode:mode,noticeCount:Array.isArray(notices)?notices.length:0,
+   approvalState:detailsOnly||managedPrivate?'owner_authorized':(details as Record<string,any>).rental_approval_state,detailsOnly,managedPrivate,
+   noticeMode:detailsOnly||managedPrivate?'not_used':mode,noticeCount:Array.isArray(notices)?notices.length:0,
    retentionConfigured:hasRentalRetentionPolicy(env),managedPropertyApproved:await managedRentalListingApproved(env,listingId),
    scannerConfigured,handoffConfigured,
    scannerReleaseApproved:await releaseFeatureReady(env,'rental_scanner'),
