@@ -130,6 +130,29 @@ export default function About() {
           </div>
         </div>
       </section>
+      <section className="mkt-section pi-editorial-section pi-neutral">
+        <div className="site-container">
+          <div className="pi-section-heading">
+            <p className="eyebrow">How our service model connects</p>
+            <h2>Three ways to take practical property work off your desk.</h2>
+            <p>ProInspect Property Services Pty Ltd is a Western Australian property services company offering individual site work, agreed outsourced operations and ongoing building care.</p>
+          </div>
+          <div className="mkt-editorial-grid">
+            <article className="mkt-editorial-panel"><h3>Individual inspections and attendance</h3>
+              <p>Arrange a defined property condition record, access appointment, maintenance observation or completion check. The client approves the task and receives the agreed evidence.</p>
+              <Link className="pi-inline-link" to="/services">Browse individual services <span aria-hidden="true">→</span></Link>
+            </article>
+            <article className="mkt-editorial-panel"><h3>Outsourced property operations</h3>
+              <p>Commission an agreed mix of tenancy administration, inspections, contractor coordination, owner reporting and ongoing follow-up. Each role and approval threshold is identified during onboarding.</p>
+              <Link className="pi-inline-link" to="/how-we-work/outsourced-operations">Explore outsourcing <span aria-hidden="true">→</span></Link>
+            </article>
+            <article className="mkt-editorial-panel"><h3>Building and accommodation care</h3>
+              <p>Scope building presentation, cleaning, waste, grounds, safe minor work, room turnovers and shared-living support. Specialist certification and regulated appointments remain with the responsible providers.</p>
+              <Link className="pi-inline-link" to="/strata">Explore building services <span aria-hidden="true">→</span></Link>
+            </article>
+          </div>
+        </div>
+      </section>
       <EditorialSteps />
       <MarketingCta
         title="Tell us what looking after your property involves."
