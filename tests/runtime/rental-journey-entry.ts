@@ -7,6 +7,7 @@ import { publicOpenHomeSessions } from '../../apps/platform/worker/features/open
 import { issueRecipientChallenge,verifyRecipient,approveRentalListing } from '../../apps/platform/worker/features/rental-governance.server';
 import { rentalStartPage, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental,changeRentalEmail,inviteRentalApplicant,withdrawRental,uploadRentalDocument,deleteRentalDocument } from '../../apps/platform/worker/features/rental-applications.server';
 import {dispatchRentalScans} from '../../apps/platform/worker/features/rental-scan-dispatch.server';
+import {acceptRentalScan} from '../../apps/platform/worker/features/rental-malware.server';
 import {rentalDocumentDownload,reviewRentalDocument} from '../../apps/platform/worker/features/rental-review.server';
 import {dispatchRentalRetention} from '../../apps/platform/worker/features/rental-privacy.server';
 import {releaseFeatureReady} from '../../apps/platform/worker/features/release-governance.server';
@@ -32,6 +33,7 @@ export default {
     const d=await request.json() as {token:string;documentId:string};return Response.json(await deleteRentalDocument(env,d.token,d.documentId));
    }
    if(path==='/__test/scan-dispatch'&&request.method==='POST'){await dispatchRentalScans(env);return Response.json({completed:true});}
+   if(path==='/__test/legacy-scan'&&request.method==='POST')return Response.json(await acceptRentalScan(env,request));
    if(path==='/__test/document-download')return await rentalDocumentDownload(env,administrator,url.searchParams.get('app')??'',url.searchParams.get('doc')??'');
    if(path==='/__test/document-review'&&request.method==='POST'){
     const d=await request.json() as {applicationId:string;documentId:string};

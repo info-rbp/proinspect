@@ -19,4 +19,6 @@ os.setuid(account.pw_uid)
 status=dict(line.split(':',1) for line in open('/proc/self/status') if ':' in line)
 if any(int(status[name].strip(),16)!=0 for name in ['CapInh','CapPrm','CapEff','CapBnd','CapAmb']) or status['NoNewPrivs'].strip()!='1':
     raise RuntimeError('PRIVILEGE_DROP_NOT_EFFECTIVE')
-os.execl('/bin/sh','sh','-c','freshclam --no-dns --daemon --foreground --config-file=/etc/clamav/freshclam.conf >/dev/null 2>&1 & clamd --foreground=true --config-file=/etc/clamav/clamd.conf >/dev/null 2>&1 & exec python3 /opt/proinspect/scanner.py')
+# Refresh BEFORE clamd loads its databases. A concurrent startup update may
+# miss NotifyClamd before the socket exists, leaving stale in-memory definitions.
+os.execl('/bin/sh','sh','-c','freshclam --no-dns --config-file=/etc/clamav/freshclam.conf >/dev/null 2>&1 || true; freshclam --no-dns --daemon --foreground --config-file=/etc/clamav/freshclam.conf >/dev/null 2>&1 & clamd --foreground=true --config-file=/etc/clamav/clamd.conf >/dev/null 2>&1 & exec python3 /opt/proinspect/scanner.py')

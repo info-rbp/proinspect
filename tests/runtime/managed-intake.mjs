@@ -36,7 +36,7 @@ const policyHash=createHash('sha256').update(JSON.stringify(MANAGED_RENTAL_POLIC
 const report={synthetic:true,productionDataAccessed:false,liveEmailSent:false,checks:[],status:'FAIL'};
 const mf=new Miniflare({serviceBindings:documentsMode?{PRIVATE_DOCUMENT_SCANNER:scanner}:{},modules:true,scriptPath:'artifacts/managed-intake-worker.mjs',compatibilityDate:'2026-07-01',compatibilityFlags:['nodejs_compat'],
  d1Databases:{DB:'isolated-managed-intake'},r2Buckets:{DOCUMENTS:'isolated-managed-documents',RESTRICTED_DOCUMENTS:'isolated-managed-restricted'},
- bindings:{APP_ENV:'production',APP_ORIGIN:'http://localhost',BUILD_SHA:source,ISOLATED_MANAGED_INTAKE:'true',DATA_ENCRYPTION_KEY:key,EMAIL_PROVIDER:'local',RENTAL_APPLICATIONS_ENABLED:'true',RENTAL_RETENTION_AUTOPURGE_ENABLED:'true',RENTAL_SCANNER_ENABLED:'false',RENTAL_APPS_SCRIPT_ENABLED:'false',OPERATIONS_EMAIL:'operations@example.invalid',MARKETING_TURNSTILE_SECRET_KEY:'synthetic-turnstile-secret'},
+ bindings:{APP_ENV:'production',APP_ORIGIN:'http://localhost',BUILD_SHA:source,ISOLATED_MANAGED_INTAKE:'true',DATA_ENCRYPTION_KEY:key,EMAIL_PROVIDER:'local',RENTAL_APPLICATIONS_ENABLED:'true',RENTAL_RETENTION_AUTOPURGE_ENABLED:'true',RENTAL_SCANNER_ENABLED:'false',RENTAL_SCANNER_WEBHOOK_SECRET:'synthetic-legacy-scanner-secret-not-production',RENTAL_APPS_SCRIPT_ENABLED:'false',OPERATIONS_EMAIL:'operations@example.invalid',MARKETING_TURNSTILE_SECRET_KEY:'synthetic-turnstile-secret'},
  outboundService:async request=>{
   const url=new URL(request.url);
   assert.equal(url.hostname,'challenges.cloudflare.com','No applicant information may be sent to scanner or handoff providers');
@@ -116,6 +116,13 @@ try{
   scannerMode='valid';await upload('%PDF-1.4 synthetic clean evidence');
   const doc=await first('SELECT id,scan_status,review_status,reviewed_by FROM rental_application_documents');
   assert.equal(doc.scan_status,'pending');assert.equal(doc.review_status,'quarantined');assert.equal(doc.reviewed_by,null);
+  const stored=await first('SELECT sha256 FROM rental_application_documents WHERE id=?',doc.id);
+  const legacyRaw=JSON.stringify({eventId:crypto.randomUUID(),applicationId,documentId:doc.id,sha256:stored.sha256,verdict:'clean',engine:'Legacy test transport',reference:'SYNTHETIC-CALLBACK-NOT-PRIVATE-ENGINE'}),timestamp=String(Math.floor(Date.now()/1000));
+  const hmac=await crypto.subtle.importKey('raw',new TextEncoder().encode('synthetic-legacy-scanner-secret-not-production'),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  const signature=Buffer.from(await crypto.subtle.sign('HMAC',hmac,new TextEncoder().encode(timestamp+'.'+legacyRaw))).toString('hex');
+  const legacy=await mf.dispatchFetch('http://localhost/__test/legacy-scan',{method:'POST',body:legacyRaw,headers:{'Content-Type':'application/json','X-ProInspect-Scan-Time':timestamp,'X-ProInspect-Scan-Signature':'sha256='+signature}});
+  assert.equal(legacy.status,409);assert.equal((await legacy.json()).code,'PRIVATE_SCAN_REQUIRED');
+  assert.equal((await first('SELECT scan_status FROM rental_application_documents WHERE id=?',doc.id)).scan_status,'pending');
   assert.equal((await mf.dispatchFetch('http://localhost/__test/document-download?app='+applicationId+'&doc='+doc.id)).status,404,'Staff cannot open draft application files');
   for(const mode of ['forged','incomplete']){
    scannerMode=mode;await run('UPDATE rental_document_scan_jobs SET next_attempt_at=?',stamp);await call('/__test/scan-dispatch',{});
