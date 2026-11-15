@@ -24,7 +24,7 @@ export const PUBLICATION_REGISTER: readonly PublicationRecord[] = [
   record('COPY-WHO-WE-HELP', 'copy', '/who-we-help', 'Approve six audience journeys, role descriptions and conversion destinations.'),
   ...Object.keys(AUDIENCES).map(slug => record('COPY-AUDIENCE-' + slug, 'copy', '/who-we-help/' + slug, 'Verify sector-specific claims, authority boundaries and linked services.')),
   record('COPY-SERVICE-FINDER', 'copy', '/service-finder', 'Approve service-to-customer-need mappings and all visible boundary statements.'),
-  record('COPY-RESIDENTIAL-SUPPORT', 'copy', '/residential-property-support', 'Proposed AUD $50 ex GST per property per week is NOT approved or available for purchase. Verify inclusions, billing timing, GST, cancellation and grandfathering before indexing and selling.'),
+  record('COPY-RESIDENTIAL-SUPPORT', 'copy', '/residential-property-support', 'Operator register 15 November 2026 confirms Inspection Only $20 and All-Inclusive $150 plus GST per property/month, initial 24 months then monthly with 60 days written notice. Exact inclusions, allowances, extras, early-exit schedule and checkout acceptance remain release dependencies.'),
   record('COPY-LEASING', 'copy', '/properties-for-lease', 'Confirm agency inspection-only role, consent text, application handoff and lawful approved listing data.'),
   record('COPY-ENGAGEMENT', 'copy', '/how-we-work/*', 'Approve commercial engagement-model claims and scope.'),
   ...SERVICE_SEEDS.map(s => record('SERVICE-' + s.id, 'service', '/services/' + s.id,

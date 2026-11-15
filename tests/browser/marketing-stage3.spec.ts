@@ -43,7 +43,8 @@ test('unapproved plan is present as information but not for sale or search index
   expect(response.status()).toBe(200);
   const html=await response.text();
   expect(html).toContain('noindex, nofollow');
-  expect(html).toContain('$50 + GST per property, per week');
+  expect(html).toContain('Residential Inspection Only at $20 + GST');
+  expect(html).toContain('Residential All-Inclusive at $150 + GST');
   await page.goto('/residential-property-support');
   await expect(page.getByText(/not an available checkout offer/)).toBeVisible();
   await expect(page.getByRole('link',{name:/Create account \/ Sign in/})).toHaveAttribute('href','/signin');

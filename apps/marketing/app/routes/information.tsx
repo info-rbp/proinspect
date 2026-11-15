@@ -2,6 +2,7 @@ import {runtimeContext} from '../../../../packages/database/context';
 import type {Env} from '../../../../packages/database/types';
 import {currentLegalDocument} from '../../../platform/worker/features/legal-acceptance.server';
 import { ENGAGEMENTS } from '../../../../packages/marketing/content';
+import { CoverageLookup } from '../components/coverage-lookup';
 import { PUBLIC_LEGAL_DRAFTS, PUBLIC_LEGAL_APPROVAL, type PublicLegalKey } from '../../../../packages/marketing/legal-drafts';
 import {
   Link,
@@ -17,7 +18,7 @@ import { MarketingPageHero, MarketingSectionTitle, MarketingEditorialBlocks } fr
 const pages: Record<string, { title: string; intro: string; sections: Array<[string, string]> }> = {
   'how-it-works': {
     title: 'A practical path from instruction to property record.',
-    intro: 'Start with one service or discuss a recurring arrangement.',
+    intro: 'Choose a single service, an ongoing subscription or a tailored outsourced operating scope. Agree the work, authority and commercial terms before it begins.',
     sections: [
       [
         '1. Choose the outcome',
@@ -37,7 +38,7 @@ const pages: Record<string, { title: string; intro: string; sections: Array<[str
       ],
       [
         'Ongoing arrangements',
-        'Inspection plans, standard support and outsourced operations need a defined scope, responsibilities and agreed commercial terms. Talk to ProInspect about the workload rather than assuming a package covers every task.',
+        'Residential Inspection Only is $20 + GST per property/month; Residential All-Inclusive and Commercial All-Inclusive are each $150 + GST per property/month. Initial term 24 months, then month-to-month with 60 days written cancellation notice. Confirm inclusions, allowances, extras and any early-exit obligations before committing. Individual service pricing is available to authorised signed-in clients, or request a quote.',
       ],
     ],
   },
@@ -89,11 +90,11 @@ const pages: Record<string, { title: string; intro: string; sections: Array<[str
   'areas-we-service': {
     title: 'Confirm service availability for your location.',
     intro:
-      'ProInspect is focused on property work in Western Australia. Coverage and attendance depend on the location, service and agreed scope.',
+      'Scheduled services use approved Perth and Peel suburb/postcode combinations. Other Western Australian locations are considered by request. Always confirm the task, access, capacity and travel before attendance.',
     sections: [
       [
         'Tell us the general location',
-        'Include the suburb or locality in your enquiry. Do not send access codes or confidential tenancy information.',
+        'Provide both suburb and postcode. Our 589-pair reference is a guide, not an automatic operational approval. Postal-only, island, regional and other flagged entries require manual review. Do not send access codes or confidential tenancy information.',
       ],
       [
         'Confirm before booking',
@@ -215,6 +216,7 @@ export default function Information() {
               : 'We describe our service boundaries clearly and only make commitments once the instruction is confirmed.'}
           />
           <MarketingEditorialBlocks sections={p.sections} numbered={how} />
+          {serviceArea && <CoverageLookup />}
         </div>
       </section>
 

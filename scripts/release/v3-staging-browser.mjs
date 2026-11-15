@@ -33,7 +33,7 @@ try{
   await page.locator('nav[aria-label="Primary navigation"] a[href="/residential"]').click();
   await page.waitForURL('**/residential',{timeout:12000});
   assert.equal(new URL(page.url()).pathname,'/residential');
-  await expect(page.getByRole('heading',{level:1})).toHaveText(/^(Residential|More clarity\. Less chasing\. A better cared-for property\.)$/);
+  await expect(page.getByRole('heading',{level:1})).toHaveText(/^(Residential|More clarity\. Less chasing\. A better cared-for property\.|Practical support for every stage of your rental property\.)$/);
   await expect(page.locator('main a[href="/client"]').first()).toBeVisible();
  });
  await check('service category route and marketing link hydration',async()=>{
@@ -59,7 +59,7 @@ try{
   assert.equal(await menu.getAttribute('open'),'');
   await menu.locator('a[href="/residential"]').first().click();
   await page.waitForURL('**/residential',{timeout:12000});
-  await expect(page.getByRole('heading',{level:1})).toHaveText(/^(Residential|More clarity\. Less chasing\. A better cared-for property\.)$/);
+  await expect(page.getByRole('heading',{level:1})).toHaveText(/^(Residential|More clarity\. Less chasing\. A better cared-for property\.|Practical support for every stage of your rental property\.)$/);
   await expect(menu).not.toHaveAttribute('open','');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+2));
  });

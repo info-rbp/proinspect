@@ -5,7 +5,7 @@ import { publicListings } from '../../../platform/worker/features/leasing.server
 import { displayPrice,propertyUrl,handoffDisclaimer } from '../../../../packages/marketing/leasing';
 import { seo } from '../lib/seo';
 import '../../../../packages/ui/leasing.css';
-export const meta=({params}:any)=>seo(params.kind==='commercial'?'Commercial Properties for Lease':'Residential Properties for Lease','View approved rental and commercial lease listings and open inspections conducted by ProInspect on behalf of the responsible leasing representative.',`/properties-for-lease/${params.kind}`);
+export const meta=({params}:any)=>seo(params.kind==='commercial'?'Commercial Properties for Lease':'Residential Properties for Lease','View approved rental and commercial lease listings and open inspections conducted by ProInspect on behalf of the responsible leasing representative.',`/properties-for-lease/${params.kind}`,{noindex:true});
 export async function loader({params,context}:LoaderFunctionArgs){
  if(!['residential','commercial'].includes(params.kind??''))throw new Response('Not found',{status:404});
  const env=context.get(runtimeContext).env as Env;

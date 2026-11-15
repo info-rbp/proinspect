@@ -83,7 +83,9 @@ export default function Tenants() {
               <p>
                 Where ProInspect is instructed to attend, follow the appointment and access
                 information supplied by your manager. Let the responsible person know about relevant
-                property concerns so the visit can address the agreed scope.
+                property concerns so the visit can address the agreed scope. Keep your incoming
+                condition report and safe supporting evidence; raise corrections or concerns
+                through your responsible representative.
               </p>
             </article>
             <article>
@@ -91,7 +93,9 @@ export default function Tenants() {
               <p>
                 Use your property’s nominated reporting process. Describe where the issue is, what
                 is happening and any relevant photos. Use your authorised tenant workspace if your
-                property provides one.
+                property provides one. Requests about pets, modifications, replacement keys,
+                access or permissions should go to the responsible landlord or manager for a
+                decision. Keep private documents and access secrets out of general enquiries.
               </p>
               <Link className="pi-inline-link" to="/maintenance">
                 How maintenance support works <span aria-hidden="true">→</span>
