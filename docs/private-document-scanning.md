@@ -16,7 +16,8 @@ are unchanged. Sign In / Sign Up is outside this change.
   and MIME are checked. The multipart request is bounded even without a valid
   Content-Length. Upload requests are rate limited; simultaneous requests cannot
   exceed the document count at the database boundary.
-- The engine uses INSTREAM scanning without applicant files on disk. Its HTTP
+- The engine uses INSTREAM scanning with ClamAV temporary files restricted to a
+  checked private tmpfs RAM directory and removed after processing. Its HTTP
   adapter runs as the unprivileged clamav user. No request-body or filename logs.
   Internet access is denied except official ClamAV definition downloads through a
   fixed-host, fixed-path intercept. Definitions older than 72 hours fail closed.
