@@ -27,7 +27,7 @@ test('different verified account types have different navigation',()=>{
 test('co-living uses the Residential property workspace without exposing unfinished sectors',()=>{
  const list=resolveClientAreas(w('landlord'),[prop('residential')],[],['co-living','construction','commercial'],[svc(['residential'])]);
  assert.equal(list.find(x=>x.area==='co-living')?.status,'available');
- assert.equal(list.find(x=>x.area==='co-living')?.href,'/w/landlord/client_a/properties');
+ assert.equal(list.find(x=>x.area==='co-living')?.href,'/w/landlord/client_a/co-living');
  assert.equal(list.find(x=>x.area==='construction')?.status,'planned');
  assert.equal(list.find(x=>x.area==='commercial')?.href,null);
 });
