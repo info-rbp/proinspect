@@ -37,6 +37,11 @@ class CoLivingSchema(unittest.TestCase):
             self.db.execute("INSERT INTO co_living_occupancies VALUES('t2','shared','u','2026-11-15')")
         self.db.execute("INSERT INTO co_living_occupancies VALUES('t2','r2','u','2026-11-15')")
         self.db.execute("INSERT INTO co_living_occupancies VALUES('t3','r1','u','2026-12-01')")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'CO_LIVING_OCCUPANCY_CONFLICT'):
+            self.db.execute("UPDATE tenancies SET starts_at='2026-11-20' WHERE id='t3'")
+        self.assertEqual(self.db.execute("SELECT starts_at FROM tenancies WHERE id='t3'").fetchone(),('2026-12-01',))
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'CO_LIVING_OCCUPANCY_IMMUTABLE'):
+            self.db.execute("UPDATE tenancies SET property_id='q' WHERE id='t3'")
         with self.assertRaisesRegex(sqlite3.IntegrityError,'CO_LIVING_OCCUPANCY_IMMUTABLE'):
             self.db.execute("UPDATE co_living_occupancies SET space_id='r2' WHERE tenancy_id='t3'")
         self.db.execute("INSERT INTO account_experience_tags VALUES('c','co_living','u','2026-11-01')")
