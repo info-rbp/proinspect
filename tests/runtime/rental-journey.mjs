@@ -271,6 +271,16 @@ try{
   const blocked=await mf.dispatchFetch('http://localhost/__test/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
   assert.equal(blocked.status,403);
  });
+ await check('An external representative URL blocks direct native residential intake as well as the CTA',async()=>{
+  const before=await first('SELECT COUNT(*) AS count FROM rental_applications');
+  await assert.rejects(()=>run('UPDATE leasing_listings SET application_url=? WHERE id=?','https://approved.example.invalid/apply','lst_synthetic_fulham_6'),/EXTERNAL_APPLICATION_PRECEDENCE/);
+  await run("UPDATE leasing_listings SET application_mode='external',application_url=? WHERE id=?",'https://approved.example.invalid/apply','lst_synthetic_fulham_6');
+  const page=await mf.dispatchFetch('http://localhost/__test/start-page?slug=unit-6-273-fulham-street-cloverdale');
+  assert.equal(page.status,404);
+  const start=await mf.dispatchFetch('http://localhost/__test/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({listingId:'lst_synthetic_fulham_6',name:'Synthetic External Applicant',email:'external-blocked@example.invalid',consent:true})});
+  assert.equal(start.status,404);
+  assert.equal((await first('SELECT COUNT(*) AS count FROM rental_applications')).count,before.count);
+ });
  report.status='PASS';
 }catch(error){
  report.error=error instanceof Error?error.message:String(error);

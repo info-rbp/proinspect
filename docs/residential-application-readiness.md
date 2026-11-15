@@ -23,7 +23,7 @@ Encrypted D1 answers, immutable submission revisions, private R2 quarantine, typ
 - Hosted starts and edits require the listing's approved notice version to match the current approved privacy policy. The start displays the recipient, purpose, policy version, privacy contact and configured retention windows. Exact notice version is bound to each declaration and snapshot.
 - Pending/unsafe/unreviewed evidence blocks final submission. Reposting an already submitted application returns the original receipt without another snapshot or notification. The commit also checks that no active applicant has become incomplete.
 - Any adult participant can withdraw and stop household processing; it does not depend on a queued handoff. The withdrawal transaction guards the application change itself, and cancelled delivery cannot proceed.
-- A safe approved external application URL takes precedence over native intake.
+- A safe approved external application URL takes precedence over native intake. A configured external URL also blocks direct native GET/POST collection, so a bookmarked link cannot bypass the representative’s route.
 
 ## Release dependencies
 
