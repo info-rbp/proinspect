@@ -1,36 +1,149 @@
-import { Link, useOutletContext } from 'react-router';
+import { Link } from 'react-router';
 import { AUDIENCES } from '../../../../packages/marketing/audiences';
-import { MarketingPageHero, MarketingSectionTitle } from '../components/page-patterns';
+import { EditorialHero } from '../components/editorial';
 import { MarketingCta } from '../components/marketing-ui';
 import { seo } from '../lib/seo';
 
-export const meta = () => seo(
-  'Who We Help — Property Owners, Agencies, Strata & Buildings',
-  'Find property inspection and attendance services for private landlords, residential agencies, commercial owners, asset managers, strata managers and building operators in WA.',
-  '/who-we-help',
-  {type:'CollectionPage',breadcrumbs:[{name:'Who we help',path:'/who-we-help'}]},
-);
-export default function WhoWeHelp(){
-  const {appOrigin}=useOutletContext<{appOrigin:string}>();
-  return <>
-    <MarketingPageHero eyebrow="Who we help" title="Property services for the people responsible." intro="The right on-site support depends on your property, responsibilities and the outcome you need. Choose your role to find relevant inspections, attendances and documentation." crumbs={[{label:'Who we help'}]} visual="residential" primary={{label:'Explore services',to:'/services'}}/>
-    <section className="section mkt-section"><div className="site-container">
-      <MarketingSectionTitle eyebrow="Choose your role" title="Find your starting point." description="Every engagement has a defined scope, authorised instructions and the right people making property decisions."/>
-      <div className="mkt-catalogue-grid">
-      {Object.entries(AUDIENCES).map(([slug,audience])=><article key={slug} className="mkt-related-card mkt-catalogue-card">
-        <p className="mkt-kicker">{audience.visual==='strata'?'Strata & buildings':audience.visual==='commercial'?'Commercial':'Residential'}</p>
-        <h3>{audience.name}</h3><p>{audience.description}</p>
-        <Link className="mkt-text-link" to={'/who-we-help/'+slug}>Explore services for your role <span aria-hidden="true">→</span></Link>
-      </article>)}
-      </div>
-    </div></section>
-    <section className="section mkt-section mkt-stone"><div className="site-container mkt-callout-grid">
-      <div><p className="eyebrow">Not sure which fits?</p><h2>Start with the work, not the job title.</h2><p>You can review all 23 services, use the guided finder or send a property enquiry without taking out a subscription.</p></div>
-      <div className="mkt-callout-panel"><h3>Three ways to begin</h3>
-        <p><Link to="/service-finder">Find a relevant service</Link> for a specific property task.</p>
-        <p><Link to="/services">Browse the full catalogue</Link> to compare service scopes.</p>
-        <p><Link to="/contact">Describe your requirement</Link> when the work needs a custom instruction.</p></div>
-    </div></section>
-    <MarketingCta title="Discuss a defined property requirement." description="Tell us the property type, general location and outcome required so we can clarify the right next step." appOrigin={appOrigin}/>
-  </>;
+const priorities: Record<string, string[]> = {
+  'private-landlords': [
+    'Rental inspections and condition reports',
+    'Authorised access when you cannot attend',
+    'Maintenance observations and follow-up',
+  ],
+  'property-management-agencies': [
+    'Extra on-site capacity for your team',
+    'Defined inspection and attendance instructions',
+    'Property records for authorised colleagues',
+  ],
+  'commercial-property-owners': [
+    'Visible-condition and handover observations',
+    'Contractor access and site attendance',
+    'A clearer view of your commercial asset',
+  ],
+  'commercial-asset-managers': [
+    'Practical support across a portfolio',
+    'Site visits with an agreed reporting outcome',
+    'Facilities and completed-work observations',
+  ],
+  'strata-managers': [
+    'Common-property inspections',
+    'Building attendance and contractor access',
+    'Documented follow-up for the scheme',
+  ],
+  'building-operators': [
+    'A presence on site for agreed tasks',
+    'Access coordination and operational observations',
+    'Clear records for the responsible building team',
+  ],
+};
+
+export const meta = () =>
+  seo(
+    'Who We Help — Owners, Agencies, Strata & Tenants',
+    'Property inspections and practical support for WA landlords, residential agencies, commercial owners, asset managers, strata teams and tenants.',
+    '/who-we-help',
+    { type: 'CollectionPage', breadcrumbs: [{ name: 'Who We Help', path: '/who-we-help' }] },
+  );
+
+export default function WhoWeHelp() {
+  return (
+    <>
+      <EditorialHero
+        eyebrow="Who We Help"
+        title="The right support for the role you play."
+        intro="A landlord, a managing agent and a building team look after property in different ways. ProInspect provides practical on-site support that fits your responsibilities, your property and the outcome you need."
+        image="strata"
+        primary={{ label: 'Find your service', to: '/service-finder' }}
+        secondary={{ label: 'Talk through your requirements', to: '/contact' }}
+      />
+      <section className="mkt-section pi-editorial-section">
+        <div className="site-container">
+          <div className="pi-section-heading">
+            <p className="eyebrow">People and property</p>
+            <h2>Less time coordinating. More clarity to act.</h2>
+            <p>
+              Choose the role that best describes you. We agree who can instruct the work, the
+              service scope and who should receive the resulting record.
+            </p>
+          </div>
+          <div className="pi-audience-grid">
+            {Object.entries(AUDIENCES).map(([slug, audience]) => (
+              <article key={slug}>
+                <p className="eyebrow">
+                  {audience.visual === 'strata'
+                    ? 'Shared buildings'
+                    : audience.visual === 'commercial'
+                      ? 'Commercial property'
+                      : 'Residential property'}
+                </p>
+                <h3>{audience.name}</h3>
+                <p>{audience.description}</p>
+                <ul>
+                  {(
+                    priorities[slug] ?? [
+                      'Defined property attendance',
+                      'Useful observations and connected records',
+                    ]
+                  ).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+                <Link className="pi-inline-link" to={'/who-we-help/' + slug}>
+                  Explore support for your role <span aria-hidden="true">↗</span>
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+      <section className="mkt-section pi-editorial-section pi-neutral">
+        <div className="site-container pi-introduction">
+          <div>
+            <p className="eyebrow">More ways we can help</p>
+            <h2>Property support includes the people who live there.</h2>
+            <p>
+              Find the right path whether you are looking for a rental, living in a property or
+              planning a new operating model.
+            </p>
+          </div>
+          <div className="pi-support-list">
+            <article>
+              <h3>Tenants and prospective renters</h3>
+              <p>
+                Browse current properties, register for inspections and find the right channel for
+                maintenance and property access questions.
+              </p>
+              <Link className="pi-inline-link" to="/tenants">
+                Tenant support <span aria-hidden="true">→</span>
+              </Link>
+            </article>
+            <article>
+              <h3>Co-living operators</h3>
+              <p>
+                Discuss a defined inspection or shared-space attendance requirement. Full room and
+                occupancy management is a planned future capability.
+              </p>
+              <Link className="pi-inline-link" to="/co-living">
+                Explore co-living <span aria-hidden="true">→</span>
+              </Link>
+            </article>
+            <article>
+              <h3>Owners and construction teams</h3>
+              <p>
+                Talk through property observations and site attendance suitability. Full
+                construction project management remains planned.
+              </p>
+              <Link className="pi-inline-link" to="/construction">
+                Explore construction <span aria-hidden="true">→</span>
+              </Link>
+            </article>
+          </div>
+        </div>
+      </section>
+      <MarketingCta
+        title="Start with the work you need help with."
+        description="You do not need to have every detail worked out. Tell us the property type, suburb and intended outcome, and we’ll help identify the right next step."
+      />
+    </>
+  );
 }

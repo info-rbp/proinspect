@@ -8,8 +8,8 @@ import { SERVICE_SEEDS as SERVICES } from '../../../../packages/service-catalogu
 import { Field } from '../../../../packages/ui/components';
 import { Turnstile } from '../../../../packages/ui/Turnstile';
 import { seo } from '../lib/seo';
-import { MarketingPageHero } from '../components/page-patterns';
-export const meta=()=>seo('Discuss your property requirements','Enquire about a ProInspect service, portfolio or strata arrangement.','/contact');
+import { EditorialHero } from '../components/editorial';
+export const meta=()=>seo('Contact Us — Property Inspections & Support in WA','Talk to ProInspect about residential, commercial or strata property inspections, maintenance attendance and portfolio support in Western Australia.','/contact');
 export function loader({request,context}:LoaderFunctionArgs) {
  const env=context.get(runtimeContext).env as Record<string,string>;
  const url=new URL(request.url),requested=url.searchParams.get('service')??'';
@@ -53,11 +53,11 @@ export default function Contact() {
  const field=(name:string)=>({'aria-invalid':!!result?.fields?.[name],'aria-describedby':result?.fields?.[name]?`${name}-error`:undefined});
  const error=(name:string)=>result?.fields?.[name]?.length?<p className="error-text" id={`${name}-error`}>{result.fields[name].join(' ')}</p>:null;
  return <>
-  <MarketingPageHero eyebrow="Talk to ProInspect" title="Tell us what the property needs." intro="Start with one service, a property portfolio or an ongoing building support requirement. Describe the outcome you want and we can clarify the appropriate next step." crumbs={[{ label: 'Contact' }]} visual="process" />
+  <EditorialHero eyebrow="Contact Us" title="Let’s talk about your property." intro="A single inspection, a growing portfolio or a building that needs practical support. Tell us what you have in mind and we’ll help clarify the next step." image="maintenance" />
   <section className="section mkt-section mkt-contact-section"><div className="site-container contact-grid mkt-contact-grid">
    <article className="panel mkt-contact-form-panel">
     {result?.reference?<div role="status" className="stack"><h2>Your enquiry has been received.</h2><p>Reference <strong>{result.reference}</strong></p><p>ProInspect will review your requirements and contact you using the details supplied. This is not a confirmed booking or an account registration.</p><Link className="button" to="/services">Explore services</Link></div>:<>
-    <h2>Your requirements</h2><p className="small">Use general property information only. Do not include keys, access codes, confidential evidence or sensitive tenant information.</p>
+    <p className="eyebrow">Start a conversation</p><h2>How can we help?</h2><p>Share a little about the property and the support you need.</p><p className="small">Use general property information only. Do not include keys, access codes, confidential evidence or sensitive tenant information.</p>
     {!settings.ready&&<p role="status">The enquiry service is not configured in this environment. Use synthetic information for repository testing.</p>}
     <Form method="post" reloadDocument className="form" aria-label="Property enquiry">
       <input type="hidden" name="requestKey" value={requestKey}/>
@@ -76,7 +76,11 @@ export default function Contact() {
       <button className="button" disabled={pending||!settings.ready}>{pending?'Sending enquiry...':'Send enquiry'}</button>
     </Form></>}
    </article>
-   <aside className="stack mkt-contact-sidebar"><section className="panel mkt-contact-support-panel"><h2>Know the service you need?</h2><p>Explore the scope, then sign in to select your property and confirm a booking.</p><Link className="button secondary" to="/services">Explore services</Link></section><section className="panel mkt-contact-support-panel"><h2>What happens next</h2><p>Your enquiry goes to the ProInspect operations team, who will review the scope, service area and next step with you.</p><p>No property access or management authority is created by submitting this form.</p></section></aside>
+   <aside className="stack mkt-contact-sidebar">
+    <section className="panel mkt-contact-support-panel pi-contact-direct"><p className="eyebrow">Get in touch</p><h2>A better starting point for property support.</h2><p>Service enquiries · Portfolio support · Strata &amp; buildings</p><a className="pi-inline-link" href="mailto:info@proinspect.systems">info@proinspect.systems <span aria-hidden="true">↗</span></a><p className="small">Western Australia. Service coverage and appointment availability are confirmed for your location.</p></section>
+    <section className="panel mkt-contact-support-panel"><h2>What happens next?</h2><ol className="pi-contact-next"><li>We review your property and requirements.</li><li>We clarify suitability, location and scope.</li><li>You receive the appropriate next step before any work is confirmed.</li></ol></section>
+    <section className="panel mkt-contact-support-panel"><h2>Already a client or tenant?</h2><p>Use your authorised workspace for existing property requests and records. Tenancy decisions and urgent repairs should go to your responsible landlord or property manager.</p><Link className="pi-inline-link" to="/client">Sign Up/Sign In to access <span aria-hidden="true">→</span></Link><p><Link to="/tenants">Find tenant information</Link></p></section>
+   </aside>
   </div></section>
  </>;
 }

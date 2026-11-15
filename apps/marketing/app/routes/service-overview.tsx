@@ -1,26 +1,122 @@
 import { Link, useLoaderData, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
-import { MarketingPageHero } from '../components/page-patterns';
+import {
+  SECTOR_OVERVIEWS,
+  type SectorKey,
+  type SectorOverview,
+} from '../../../../packages/marketing/sector-overviews';
+import { EditorialHero, EditorialSteps } from '../components/editorial';
+import { MarketingCta } from '../components/marketing-ui';
+import { MarketingFaq } from '../components/page-patterns';
+import { BrandImage } from '../components/brand-image';
 import { seo } from '../lib/seo';
-export const SECTOR_OVERVIEWS = {
- residential:{title:'Residential',summary:'Inspections, rental condition records and practical property support for owners and managers.',examples:['Routine and condition inspections','Property attendance','Maintenance follow-up'],visual:'residential',ready:true},
- commercial:{title:'Commercial',summary:'Condition observations, make-good, asset support and agreed site attendance.',examples:['Commercial inspections','Site access and handovers','Facilities and completed-work checks'],visual:'commercial',ready:true},
- strata:{title:'Strata',summary:'Shared-space inspections and building support, with scheme decisions retained by authorised representatives.',examples:['Common-property inspections','Building operations','Contractor access'],visual:'strata',ready:true},
- 'co-living':{title:'Co-Living',summary:'Developing connected room, occupancy and shared-space management services for operators.',examples:['Room and bed management','Occupancy and turnovers','Common-space support'],visual:'residential',ready:false},
- construction:{title:'Construction',summary:'Developing full construction project management and project-linked site services.',examples:['Stages and milestone tracking','Defect and contractor coordination','Project inspections and handover'],visual:'commercial',ready:false},
- leasing:{title:'Leasing',summary:'Property listings, inspection registrations and authorised rental application pathways.',examples:['Listings and enquiries','Open inspections','Applications and handover'],visual:'residential',ready:true},
- maintenance:{title:'Maintenance',summary:'Capture, coordinate and follow up maintenance matters with clear property records.',examples:['Request intake','On-site attendance','Completion follow-up'],visual:'residential',ready:true},
-} as const;
-type SectorKey=keyof typeof SECTOR_OVERVIEWS;
-export function loader({request}:LoaderFunctionArgs) {
- const key=new URL(request.url).pathname.replace(/\.data$/,'').slice(1) as SectorKey;
- const page=SECTOR_OVERVIEWS[key];if(!page)throw new Response('Not found',{status:404});
- return {key,...page};
+
+export function loader({ request }: LoaderFunctionArgs) {
+  const key = new URL(request.url).pathname.replace(/\.data$/, '').slice(1) as SectorKey;
+  if (!Object.prototype.hasOwnProperty.call(SECTOR_OVERVIEWS, key))
+    throw new Response('Not found', { status: 404 });
+  const page: SectorOverview = SECTOR_OVERVIEWS[key];
+  return { key, ...page };
 }
-export const meta:MetaFunction<typeof loader>=({loaderData:d})=>d?seo(d.title+' — ProInspect',d.summary,'/'+d.key):[];
-export default function ServiceOverview(){
- const d=useLoaderData<typeof loader>();
- return <><MarketingPageHero eyebrow="Property services" title={d.title} intro={d.summary} crumbs={[{label:d.title}]} visual={d.visual} primary={{label:'Access the Client Portal',to:'/client'}}/>
- <section className="section mkt-section"><div className="site-container mkt-callout-grid"><div><h2>How ProInspect can help</h2><p>Explore support for your property and discuss the appropriate scope for your circumstances.</p>{!d.ready&&<p role="status">This management area is planned and is not yet available to book.</p>}</div>
- <div className="mkt-callout-panel"><h3>Areas of support</h3><ul className="mkt-check-list">{d.examples.map(item=><li key={item}>{item}</li>)}</ul><p>Availability and terms are confirmed before any instruction proceeds.</p></div></div></section>
- <section className="section mkt-section mkt-stone"><div className="site-container"><h2>Get started</h2><p>Sign in to manage properties and see services relevant to your verified account.</p><div className="actions"><Link className="button" to="/client">Sign up / Sign in</Link><Link className="button secondary" to="/contact">Contact Us</Link>{d.key==='leasing'&&<Link className="button secondary" to="/properties-for-lease">Browse listings</Link>}</div></div></section></>;
+
+export const meta: MetaFunction<typeof loader> = ({ loaderData: page }) =>
+  page
+    ? seo(page.name + ' Property Services — Western Australia', page.summary, '/' + page.key, {
+        type: page.planned ? 'WebPage' : 'Service',
+        breadcrumbs: [{ name: page.name, path: '/' + page.key }],
+      })
+    : [];
+
+export default function ServiceOverview() {
+  const page = useLoaderData<typeof loader>();
+  return (
+    <>
+      <EditorialHero
+        eyebrow={page.name}
+        title={page.headline}
+        intro={page.summary}
+        image={page.key}
+        primary={{ label: 'Sign Up/Sign In to access', to: '/client' }}
+        secondary={{ label: 'Discuss your property', to: '/contact' }}
+      />
+      <section className="mkt-section pi-editorial-section">
+        <div className="site-container pi-introduction">
+          <div>
+            <p className="eyebrow">Built around your property</p>
+            <h2>{page.outcome}</h2>
+          </div>
+          <div>
+            <p>{page.description}</p>
+            <p className="pi-audience">{page.audience}</p>
+          </div>
+        </div>
+        {page.planned && (
+          <div className="site-container">
+            <aside className="pi-availability" aria-label="Service availability">
+              <strong>Future management capability</strong>
+              <p>{page.planned}</p>
+              <Link to="/contact">
+                Discuss an existing service <span aria-hidden="true">→</span>
+              </Link>
+            </aside>
+          </div>
+        )}
+      </section>
+      <section className="mkt-section pi-editorial-section pi-neutral">
+        <div className="site-container">
+          <div className="pi-section-heading">
+            <p className="eyebrow">{page.name} support</p>
+            <h2>A practical service for the work at hand.</h2>
+          </div>
+          <div className="pi-service-details">
+            {page.services.map(([title, copy], index) => (
+              <article key={title}>
+                <span className="pi-step-number">0{index + 1}</span>
+                <div>
+                  <h3>{title}</h3>
+                  <p>{copy}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+      <section className="mkt-section pi-editorial-section">
+        <div className="site-container pi-difference">
+          <div className="pi-difference-image">
+            <BrandImage name={page.key} />
+          </div>
+          <div>
+            <p className="eyebrow">The ProInspect approach</p>
+            <h2>On the ground. Across the detail.</h2>
+            {page.difference.map(([title, copy]) => (
+              <div className="pi-difference-item" key={title}>
+                <h3>{title}</h3>
+                <p>{copy}</p>
+              </div>
+            ))}
+            <Link className="pi-inline-link" to="/about">
+              Get to know ProInspect <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+      <EditorialSteps />
+      <section className="mkt-section pi-editorial-section">
+        <div className="site-container pi-faq-layout">
+          <div>
+            <p className="eyebrow">Good to know</p>
+            <h2>Your questions, answered.</h2>
+            <p>
+              Need to talk through a particular property? <Link to="/contact">Get in touch.</Link>
+            </p>
+          </div>
+          <MarketingFaq questions={page.questions} />
+        </div>
+      </section>
+      <MarketingCta
+        title={'Let’s talk about your ' + page.name.toLowerCase() + ' property.'}
+        description="Start with a service, a property or a practical task. We’ll help clarify the next step."
+      />
+    </>
+  );
 }

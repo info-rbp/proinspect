@@ -32,7 +32,7 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
     <div className="mkt-header-wrap">
       <div className="site-container">
         <header className="site-header mkt-site-header">
-          <Link className="brand mkt-brand" to="/" aria-label="ProInspect homepage">
+          <Link className="brand mkt-brand" to="/" aria-label="ProInspect home" aria-current={pathname === '/' ? 'page' : undefined}>
             ProInspect<span>PROPERTY SERVICES</span>
           </Link>
           <nav className="site-links mkt-site-links" aria-label="Primary navigation">
@@ -46,7 +46,7 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
           <details className="marketing-menu" ref={mobileMenu}>
             <summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span>Menu</span></summary>
             <nav aria-label="Mobile site navigation">
-              {PUBLIC_NAVIGATION.map(item => <Link key={item.href} to={item.href}>{item.label}</Link>)}
+              {PUBLIC_NAVIGATION.map(item => <Link key={item.href} to={item.href} aria-current={pathname === item.href ? 'page' : undefined}>{item.label}</Link>)}
             </nav>
           </details>
         </header>
@@ -84,6 +84,7 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
             <Link to="/how-it-works">How it works</Link>
             <Link to="/client-experience">Client experience</Link>
             <Link to="/properties-for-lease">Properties for lease</Link>
+            <Link to="/tenants">Tenant support</Link>
             <Link to="/resources">Resources</Link>
             <Link to="/about">About</Link>
             <Link to="/contact">Contact</Link>

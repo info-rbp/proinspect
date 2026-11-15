@@ -1,7 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { assertStagingPreview, assertStagingBuildEnvironment } from '../scripts/deploy/staging-preview.mjs';
+import { assertStagingPreview, assertStagingBuildEnvironment, isApprovedStagingPreview } from '../scripts/deploy/staging-preview.mjs';
+
+test('shared staging preview accepts only the named repository and authorised branches', () => {
+  const environment = { PR01_STAGING_PREVIEW: '1', GITHUB_REPOSITORY: 'info-rbp/proinspect', GITHUB_EVENT_NAME: 'pull_request' };
+  for (const branch of ['feat/pr01-account-driven-client-portal', 'feat/public-site-services-refresh']) {
+    assert.equal(isApprovedStagingPreview({ ...environment, GITHUB_HEAD_REF: branch }), true);
+    assert.equal(isApprovedStagingPreview({ ...environment, GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/' + branch }), true);
+  }
+  assert.equal(isApprovedStagingPreview({ ...environment, GITHUB_HEAD_REF: 'main' }), false);
+  assert.equal(isApprovedStagingPreview({ ...environment, GITHUB_HEAD_REF: 'feat/public-site-services-refresh', GITHUB_REPOSITORY: 'another/repository' }), false);
+  assert.equal(isApprovedStagingPreview({ ...environment, GITHUB_HEAD_REF: 'feat/public-site-services-refresh', PR01_STAGING_PREVIEW: '0' }), false);
+  assert.equal(isApprovedStagingPreview({ ...environment, GITHUB_EVENT_NAME: 'push', GITHUB_HEAD_REF: 'feat/public-site-services-refresh' }), false);
+});
 
 const configuration = () => JSON.parse(readFileSync('apps/platform/wrangler.jsonc', 'utf8'));
 

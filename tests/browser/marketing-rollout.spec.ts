@@ -25,7 +25,7 @@ test('every public marketing route uses shared navigation, typography, footer an
     expect(html, path).toContain('mkt-site-footer');
     expect(html, path).toContain('id="main"');
     expect(html, path).toMatch(/<h1[\s>]/);
-    if (path === '/') expect(html).toContain('mkt-home-hero');
+    if (['/', '/who-we-help', '/about', '/contact'].includes(path)) expect(html).toContain('pi-editorial-hero');
     else if (path.startsWith('/services/') && !path.startsWith('/services/category/')) {
       expect(html, path).toContain('mkt-detail-hero');
     } else expect(html, path).toContain('mkt-page-hero');
@@ -53,7 +53,7 @@ test('all public page families use the shared responsive layout without horizont
 
 test('marketing contact form preserves scoped service request and signed submission elements', async ({ page }) => {
   await page.goto('/contact?service=routine-inspection');
-  await expect(page.getByRole('heading', { name: 'Tell us what the property needs.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Let’s talk about your property.' })).toBeVisible();
   await expect(page.getByRole('form', { name: 'Property enquiry' })).toBeVisible();
   await expect(page.getByLabel('Service (optional)')).toHaveValue('routine-inspection');
   await expect(page.getByRole('checkbox', { name: /agree to ProInspect/i })).toBeVisible();
@@ -62,12 +62,11 @@ test('marketing contact form preserves scoped service request and signed submiss
 
 test('category and engagement navigation use canonical URLs rather than obsolete filters', async ({ page }) => {
   await page.goto('/');
-  const category = page.locator('.pi-service-card').first().getByRole('link');
-  await expect(category).toHaveAttribute('href', '/services/category/inspections');
-  await expect(page.locator('.pi-arrangements article')).toHaveCount(1);
-  await expect(page.locator('.pi-arrangements').getByRole('link', { name: 'Start a conversation with ProInspect' })).toHaveAttribute('href', '/contact');
-  await expect(page.getByRole('link', { name: 'See the full process' })).toHaveAttribute('href', '/how-it-works');
+  const category = page.getByRole('link', { name: 'Browse the detailed service catalogue' });
+  await expect(category).toHaveAttribute('href', '/services');
+  await expect(page.getByRole('link', { name: /Discover the ProInspect approach/ })).toHaveAttribute('href', '/about');
+  await expect(page.locator('.pi-process-list li')).toHaveCount(3);
   await category.click();
-  await expect(page).toHaveURL(/\/services\/category\/inspections$/);
-  await expect(page.locator('.mkt-catalogue-card').first()).toBeVisible();
+  await expect(page).toHaveURL(/\/services$/);
+  await expect(page.locator('.mkt-family-card').first()).toBeVisible();
 });
