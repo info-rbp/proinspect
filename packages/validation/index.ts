@@ -49,6 +49,7 @@ export const bookingSchema = z.object({
 });
 export const requestSchema = z.object({
   propertyId: id.optional(),
+  spaceId: id.optional(),
   tenancyId: id.optional(),
   schemeId: id.optional(),
   category: z
