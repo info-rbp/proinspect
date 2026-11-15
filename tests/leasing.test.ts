@@ -60,7 +60,7 @@ test('public listing CTAs enforce the exact applicant release gate and avoid unu
  assert.deepEqual(listingApplicationAction({...base,applicationMode:'external',applicationUrl:'https://example.test/approved',rentalReady:false}),{type:'external',href:'https://example.test/approved'});
  assert.deepEqual(listingApplicationAction({...base,applicationMode:'external',applicationUrl:'javascript:alert(1)',rentalReady:false}),{type:'interest',href:'#leasing-enquiry'});
  const page=text('apps/marketing/app/routes/leasing-property.tsx');
- assert.match(page,/releaseFeatureReady\(env,'rental'\)/);
+ assert.match(page,/rentalListingReady\(env,result.listing.slug\)/);
  assert.match(page,/leasing-gallery--single/);
  assert.match(page,/id="leasing-enquiry"/);
  assert.match(page,/id="leasing-application"/);
@@ -68,6 +68,7 @@ test('public listing CTAs enforce the exact applicant release gate and avoid unu
  assert.match(page,/Start or resume application/);
  assert.match(text('packages\/ui\/leasing.css'),/leasing-gallery--single img:first-child/);
  const server=text('apps/platform/worker/features/rental-applications.server.ts');
+ assert.match(server,/await rentalStartPage\(env,slug\)/);
  assert.match(server,/enabled:rentalEnabled\(env\)&&await releaseFeatureReady\(env,'rental'\)/);
 });
 
