@@ -31,7 +31,7 @@ export function PlanComparison({ market = 'all' }: { market?: 'all' | 'residenti
       <div className="pi-section-heading">
         <p className="eyebrow">Subscription options</p>
         <h2 id="pi-plan-comparison-heading">Choose a defined service arrangement.</h2>
-        <p>These are the three advertised plans. The service areas below illustrate each plan’s purpose; they are not confirmed included entitlements or unlimited attendance allowances.</p>
+        <p>These are the advertised {market === 'residential' ? 'residential' : market === 'commercial' ? 'commercial' : 'standard'} arrangements. The service areas below illustrate each plan’s purpose; they are not confirmed included entitlements or unlimited attendance allowances.</p>
       </div>
       <div className="pi-plan-grid">
         {plans.map(plan => {
