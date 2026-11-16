@@ -1321,6 +1321,27 @@ try {
         operator,{decision:'approved',reviewReference:'Independently verified synthetic election minutes'}
       );
       await invited(council,councilApproval.localInvitationUrl);
+      const invalidCouncil=await api(strataOrg.base+'/team/invite',{
+        cookie:strataUser.cookie,body:{
+          email:'unverified-council@tests.example',schemeId:scheme.id,
+          role:'council_member',endsAt:expires,
+        },
+      });
+      assert.equal(invalidCouncil.status,422);
+      const selfProposed=await ok(staffBase+'/team/invite',operator,{
+        email:'staff-proposed-council@tests.example',schemeId:scheme.id,
+        role:'council_member',endsAt:expires,
+        appointmentReference:'Independent council appointment test reference',
+      });
+      const selfReview=await api(staffBase+'/council-appointments/'+selfProposed.reviewId+'/review',{
+        cookie:operator.cookie,body:{decision:'approved',reviewReference:'Cannot independently approve this request'},
+      });
+      assert.equal(selfReview.status,403);
+      const declined=await ok(staffBase+'/council-appointments/'+selfProposed.reviewId+'/review',admin,{
+        decision:'declined',reviewReference:'Independent review found no verified appointment',
+      });
+      assert.equal(declined.status,'declined');
+      assert.equal(declined.localInvitationUrl,undefined);
       council.base = `/api/w/council/${scheme.id}`;
       const ws = (await ok('/api/session', tenant)).workspaces;
       assert.ok(ws.some((w) => w.kind === 'tenant') && ws.some((w) => w.kind === 'building'));
