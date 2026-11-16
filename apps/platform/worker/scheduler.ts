@@ -187,7 +187,16 @@ export class BookingScheduler extends DurableObject<Env> {
           'IDEMPOTENCY_MISMATCH',
           'This submission key was already used. Reload and review the booking.',
         );
-        return Response.json({ id: existing.id, reference: existing.reference, replayed: true });
+        const pendingPayment=await statement(this.env.DB,
+          `SELECT p.id AS payment_id,p.total_cents,p.status
+           FROM registered_booking_payment_links l JOIN payments p ON p.id=l.payment_id
+           WHERE l.booking_id=?`,existing.id).first<{payment_id:string;total_cents:number;status:string}>();
+        return Response.json({
+          id:existing.id,reference:existing.reference,replayed:true,
+          paymentId:pendingPayment?.payment_id??null,
+          paymentRequired:Boolean(pendingPayment&&pendingPayment.status!=='paid'),
+          totalCents:pendingPayment?.total_cents??0,
+        });
       }
       const service = (await catalogue(this.env)).find((s) => s.id === data.serviceId);
       assert(service, 404, 'SERVICE_NOT_FOUND', 'Service not found.');
