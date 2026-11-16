@@ -282,12 +282,17 @@ test('resident report reaches strata operations and council sees only its decisi
       [resident, 'resident'],
       [council, 'council_member'],
     ] as const) {
-      const invitation = await post(manager.context, firm.api + '/team/invite', {
+      const proposal = await post(manager.context, firm.api + '/team/invite', {
         email: who.email,
         role,
         schemeId,
-        ...(role === 'council_member' ? { endsAt: future() } : {}),
+        ...(role === 'council_member'
+          ? { endsAt: future(), appointmentReference:'Synthetic browser council appointment minutes' } : {}),
       });
+      const invitation=role==='council_member'
+        ? await post(operator.context,'/api/w/staff/operations/council-appointments/'+proposal.reviewId+'/review',{
+            decision:'approved',reviewReference:'Independently verified browser council minutes'})
+        : proposal;
       await post(who.context, '/api/invitations/accept', {
         token: new URL(invitation.localInvitationUrl).searchParams.get('token'),
       });
