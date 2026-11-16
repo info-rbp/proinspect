@@ -2,6 +2,7 @@ import { coLivingOverview, coLivingCommand, myCoLivingSpace } from './features/c
 import { coLivingOperationsData,coLivingOperationsCommand } from './features/co-living-operations.server';
 import { experiencePreferences, saveExperiencePreferences } from './features/experience-preferences.server';
 import { amenityDirectory, amenityCommand } from './features/amenities.server';
+import {financeReviewData,financeReviewCommand} from './features/finance-reviews.server';
 import { getAccountTagDirectory, changeAccountTag } from './features/account-tags.server';
 import {ownerInvitationPreview,claimOwnerInvitation} from './features/agency-owner-invitations.server';
 import {releaseReadiness,releaseCommand,requireReleaseApproval} from './features/release-governance.server';
@@ -593,6 +594,14 @@ export async function handleApi(
       if(method==='GET')return Response.json(await experiencePreferences(env,user,w),
         {headers:{'Cache-Control':'private, no-store'}});
       if(method==='POST'){requireOrigin(request,env);return Response.json(await saveExperiencePreferences(env,user,w,await json(request)));}
+    }
+    if(tail==='finance-reviews'&&w.kind==='staff'){
+      if(method==='GET')return Response.json(await financeReviewData(env,user,w),
+        {headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'){
+        requireOrigin(request,env);
+        return Response.json(await financeReviewCommand(env,user,w,await json(request)));
+      }
     }
     if(tail==='amenities'){
       if(method==='GET')return Response.json(await amenityDirectory(env,user,w),
