@@ -139,7 +139,7 @@ export default function WorkspaceLayout() {
   const secondary = items.filter(([path]) => !primaryPaths.includes(path));
   const pathname = useLocation().pathname;
   const toolGroups = [
-    { label: 'Operations', paths: ['amenities','co-living','records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
+    { label: 'Operations', paths: ['community','amenities','co-living','records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
     { label: 'Documents & services', paths: ['documents','reports','document-operations','service-agreements','wa-form-queue','bond-review-queue','services','reporting','confidential','market-packs','enterprise-intelligence','v2-business'] },
     { label: 'Administration', paths: ['account-tags','finance','billing','contractor-payments','team','agency-administration','administration','release-readiness','pricing-administration','legal-administration','integrations','enquiries','owner-invitations'] },
   ];
