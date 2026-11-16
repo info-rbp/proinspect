@@ -35,10 +35,10 @@ test('Resident entry is invitation-only and all new service bookings require a v
  assert.match(signin,/invitation-only/);
  assert.match(routes,/route\('invitations\/accept'/);
  assert.match(routes,/guest\/book\/\:serviceId\?', 'routes\/retired-guest-entry\.tsx'/);
- assert.match(routes,/guest\/request\/\:serviceCode', 'routes\/retired-guest-entry\.tsx'/);
+ assert.match(routes,/guest\/request\/\:serviceCode', 'routes\/retired-guest-request\.tsx'/);
  assert.match(api,/path==='\/api\/v4\/requests' && method==='POST'\)throw new AppError\(410/);
  assert.match(api,/path === '\/api\/guest\/requests' && method === 'POST'\) throw new AppError\(410/);
- assert.match(guard,/tenant_memberships/);
+ assert.match(guard,/tenancy_memberships/);
  assert.match(guard,/scheme_memberships/);
 });
 test('co-living requires authorised management, private-space occupancy and a per-tenancy Resident view',()=>{
