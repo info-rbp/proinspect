@@ -124,6 +124,7 @@ export default [
     route('work-orders', 'routes/work-orders.tsx'),
     route('documents', 'routes/documents.tsx'),
     route('tenancies', 'routes/tenancies.tsx'),
+    route('resident-invitations', 'routes/resident-invitations.tsx'),
     route('inspections', 'routes/inspections.tsx'),
     route('leasing', 'routes/leasing-administration.tsx'),
     route('open-home-checkins', 'routes/open-home-checkins.tsx'),
