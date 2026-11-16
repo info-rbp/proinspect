@@ -70,6 +70,7 @@ export async function commercialOccupancyAccess(env: Env, user: Principal, occup
     FROM commercial_occupancies o
     JOIN commercial_occupant_memberships m ON m.occupancy_id=o.id
     JOIN clients c ON c.id=o.client_id AND c.status='active'
+    JOIN client_entitlements e ON e.client_id=o.client_id AND e.workspace_kind='commercial' AND e.active=1
     JOIN properties p ON p.id=o.property_id AND p.sector='commercial' AND p.archived_at IS NULL
     JOIN property_management_relationships pm ON pm.property_id=o.property_id
       AND pm.manager_client_id=o.client_id AND pm.starts_at<=? AND (pm.ends_at IS NULL OR pm.ends_at>?)
@@ -114,6 +115,10 @@ export async function acceptCommercialInvitation(env: Env,user:Principal,token:u
   assert(inviter,403,'INVITATION_REVOKED','The inviting account is no longer authorised.');
   const m=await clientMembership(env,inviter,i.client_id,true);
   assert(['owner','admin'].includes(m.role),403,'INVITATION_REVOKED','The inviting authority has changed.');
+  assert(await statement(env.DB,`SELECT client_id FROM client_entitlements
+    WHERE client_id=? AND workspace_kind='commercial' AND active=1`,
+    i.client_id).first(),403,'INVITATION_REVOKED','The commercial organisation access has been revoked.');
+
   const w:Workspace={kind:'commercial',scopeId:i.client_id,name:'Commercial',role:m.role,href:`/w/commercial/${i.client_id}`};
   await propertyAccess(env,inviter,w,i.property_id,true);
   const membershipId=uid('ocm');
