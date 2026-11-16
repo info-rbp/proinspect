@@ -68,6 +68,9 @@ class FinalSprintSchema(unittest.TestCase):
    before={t:db.execute('SELECT '+','.join(cols[t])+' FROM '+t+' ORDER BY id').fetchall() for t in tables}
    for p in paths[26:]:db.executescript(p.read_text())
    for t in tables:self.assertEqual(before[t],db.execute('SELECT '+','.join(cols[t])+' FROM '+t+' ORDER BY id').fetchall(),t)
-   self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(),[]);self.assertEqual(len(paths),57)  # Historical baseline remains separate from additive application migrations.
+   self.assertEqual(db.execute('PRAGMA foreign_key_check').fetchall(),[])
+   self.assertGreaterEqual(len(paths),60)  # Deployed 26-migration history remains immutable; source may add reviewed migrations.
+   self.assertEqual([p.name[:4] for p in paths],[f'{i:04d}' for i in range(1,len(paths)+1)])
+   self.assertEqual([p.name for p in paths[57:60]],['0058_portal_experience_coliving.sql','0059_registered_workflows_and_preferences.sql','0060_finance_reviews_and_photo_annotations.sql'])
   finally:db.close()
 if __name__=='__main__':unittest.main()
