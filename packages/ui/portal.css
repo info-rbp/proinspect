@@ -153,3 +153,9 @@
 .client-dashboard-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:1rem;}
 .client-dashboard-grid .panel {min-width:0;}
 @media(max-width:720px){.client-service-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}.client-service-tab{justify-content:center;text-align:center;}}
+
+/* Individual user preference; CSS never substitutes for workspace authorisation. */
+.app-shell[data-density='compact'] .content .panel{padding:0.85rem;}
+.app-shell[data-density='compact'] .record-row{padding-block:0.42rem;}
+.app-shell[data-density='compact'] .table-wrap td,
+.app-shell[data-density='compact'] .table-wrap th{padding-block:0.48rem;}
