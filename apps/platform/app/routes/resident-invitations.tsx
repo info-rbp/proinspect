@@ -18,7 +18,8 @@ export default function ResidentInvitations() {
   const allowed = ['landlord','property-manager','commercial','strata-manager'].includes(w.kind);
   const tenancyFlow = getOnboardingFlow(commercial ? 'ONB-INV-COM' : 'ONB-INV-RES')!;
   const buildingFlow = getOnboardingFlow('ONB-INV-STR')!;
-  if (!allowed || w.role === 'viewer') {
+  if (!allowed || w.role === 'viewer' ||
+      (['commercial','strata-manager'].includes(w.kind) && !['owner','admin'].includes(w.role))) {
     return <Panel title="Invitations unavailable"><p>Only an authorised property or scheme manager can invite a member. Invitations do not grant access to unrelated records.</p><Link to={w.href}>Return to overview</Link></Panel>;
   }
   return <>
