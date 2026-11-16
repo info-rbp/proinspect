@@ -30,7 +30,7 @@ export function shouldIndexPublicPage(pathname: string, requestOrigin: string, a
 export function isMarketingStylePath(pathname: string): boolean {
   if (/^\/commercial-application\/(?:session|recover|[a-f0-9]{64}|recipient\/[a-f0-9]{64})$/.test(pathname) ||
       /^\/properties-for-lease\/commercial\/[a-z0-9-]+\/apply$/.test(pathname)) return true;
-  return isPublicSitePath(pathname) || /^\/guest\/(?:services|request(?:\/[a-zA-Z0-9_-]+)?)$/.test(pathname) || /^\/guest\/(?:book(?:\/[a-z0-9-]+)?|verify|manage|quote|checkout-result)$/.test(pathname) || /^\/rental-application\/[a-f0-9]{64}$/.test(pathname) ||
+  return isPublicSitePath(pathname) || /^\/guest\/(?:services|request(?:\/[a-zA-Z0-9_-]+)?)$/.test(pathname) || /^\/guest\/(?:book(?:\/[a-z0-9-]+)?|verify|manage|quote|checkout-result)$/.test(pathname) || /^\/(?:rental-application|rental-package)\/[a-f0-9]{64}$/.test(pathname) ||
     /^\/rental-recipient\/verify\/[a-f0-9]{64}$/.test(pathname) || pathname === '/rental-application/recover' || pathname === '/open-home/check-in' || /^\/properties-for-lease\/cancel\/[a-f0-9]{64}$/.test(pathname) ||
     /^\/properties-for-lease\/residential\/[a-z0-9-]+\/apply$/.test(pathname);
 }

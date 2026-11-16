@@ -9,7 +9,8 @@ const source=process.env.EXPECTED_SOURCE_SHA;assert.match(source??'',/^[a-f0-9]{
 const phase=process.env.RELEASE_REVIEW_PHASE??'live';assert(['preflight','live'].includes(phase));
 const version=process.env.TARGET_VERSION_UUID;if(version)assert.match(version,/^[a-f0-9-]{36}$/);
 const headers=version?{'Cloudflare-Workers-Version-Overrides':'proinspect-platform="'+version+'"'}:{};
-const folder='artifacts/rental-availability-release/'+phase;mkdirSync(folder,{recursive:true});
+const temporary=process.env.RENTAL_DOCUMENT_MODE==='temporary';
+const folder=(temporary?'artifacts/temporary-document-release/':'artifacts/rental-availability-release/')+phase;mkdirSync(folder,{recursive:true});
 const report={at:new Date().toISOString(),source,origin,phase,version:version??null,readOnly:true,checks:[],status:'FAIL'};
 const browser=await chromium.launch({headless:true});
 try{
@@ -39,10 +40,10 @@ try{
    await expect(page.getByRole('button',{name:'Email my secure application link',exact:true})).toBeEnabled();
    assert.equal(await page.locator('input[type=file]').count(),0);
    const text=await page.locator('main').innerText();
-   assert(text.includes('No document uploads are required for this intake.'));
-   assert(text.includes('privacy-managed-intake-2026-11-15-v1'));
+   assert(text.includes(temporary?'Temporary document uploads are available.':'No document uploads are required for this intake.'));
+   assert(text.includes(temporary?'privacy-managed-temporary-2026-11-16-v3':'privacy-managed-intake-2026-11-15-v1'));
    assert(text.includes('draft 14 days; submitted 90 days; withdrawn 30 days'));
-   report.checks.push({unit,viewport:viewport.name,propertyLinksEnabled:true,formEnabled:true,uploadsDisabled:true,privacyNotice:true,disclaimerPreserved:true});
+   report.checks.push({unit,viewport:viewport.name,propertyLinksEnabled:true,formEnabled:true,temporaryUploadsAvailable:temporary,uploadsDeferred:!temporary,privacyNotice:true,disclaimerPreserved:true});
   }
  }
  assert.deepEqual(errors,[]);report.status='PASS';

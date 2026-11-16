@@ -5,7 +5,7 @@ import { assertStagingPreview, assertStagingBuildEnvironment, isApprovedStagingP
 
 test('shared staging preview accepts only the named repository and authorised branches', () => {
   const environment = { PR01_STAGING_PREVIEW: '1', GITHUB_REPOSITORY: 'info-rbp/proinspect', GITHUB_EVENT_NAME: 'pull_request' };
-  for (const branch of ['feat/pr01-account-driven-client-portal', 'feat/public-site-services-refresh', 'feat/public-content-final-alignment', 'feat/residential-application-readiness', 'feat/commercial-dynamic-application', 'feat/managed-property-application-routing', 'feat/private-managed-document-scanning', 'fix/managed-rental-application-availability']) {
+  for (const branch of ['feat/pr01-account-driven-client-portal', 'feat/public-site-services-refresh', 'feat/public-content-final-alignment', 'feat/residential-application-readiness', 'feat/commercial-dynamic-application', 'feat/managed-property-application-routing', 'feat/private-managed-document-scanning', 'fix/managed-rental-application-availability', 'feat/temporary-rental-document-delivery']) {
     assert.equal(isApprovedStagingPreview({ ...environment, GITHUB_HEAD_REF: branch }), true);
     assert.equal(isApprovedStagingPreview({ ...environment, GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/' + branch }), true);
   }
