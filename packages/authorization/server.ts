@@ -14,6 +14,7 @@ export const ENABLED_WORKSPACES: readonly WorkspaceKind[] = [
   'strata-manager',
   'commercial',
   'tenant',
+  'commercial-occupant',
   'building',
   'council',
   'staff',
@@ -55,6 +56,26 @@ export async function workspaces(env: Env, user: Principal): Promise<Workspace[]
       role: 'tenant',
       href: `/w/tenant/${t.id}`,
     });
+  // Commercial occupants are distinct from tenants, landlords and scheme members.
+  // Revoked/expired relationships disappear from every session and route immediately.
+  const occupancies = await statement(
+    env.DB,
+    `SELECT o.id,p.address,o.premises_label FROM commercial_occupant_memberships m
+     JOIN commercial_occupancies o ON o.id=m.occupancy_id AND o.status='active'
+     JOIN properties p ON p.id=o.property_id AND p.sector='commercial' AND p.archived_at IS NULL
+     JOIN clients c ON c.id=o.client_id AND c.status='active'
+     JOIN property_management_relationships pm ON pm.property_id=o.property_id
+       AND pm.manager_client_id=o.client_id
+       AND pm.starts_at<=? AND (pm.ends_at IS NULL OR pm.ends_at>?)
+     WHERE m.user_id=? AND m.starts_at<=? AND (m.ends_at IS NULL OR m.ends_at>?)
+       AND o.starts_at<=? AND (o.ends_at IS NULL OR o.ends_at>?)
+     ORDER BY p.address LIMIT 100`,
+    now(),now(),user.id,now(),now(),now(),now(),
+  ).all<{id:string;address:string;premises_label:string}>();
+  for (const o of occupancies.results) result.push({
+    kind:'commercial-occupant',scopeId:o.id,name:o.address+' / '+o.premises_label,
+    role:'occupant',href:'/w/commercial-occupant/'+o.id,
+  });
   const schemes = await statement(
     env.DB,
     `SELECT DISTINCT s.id,s.name,m.role FROM scheme_memberships m JOIN strata_schemes s ON s.id=m.scheme_id WHERE m.user_id=? AND m.starts_at<=? AND (m.ends_at IS NULL OR m.ends_at>?)`,
@@ -179,7 +200,7 @@ export function propertyScope(
           values: [user.id],
         }
       : { sql: '1=1', values: [] };
-  if (w.kind === 'building-manager') return {sql:'0=1',values:[]};
+  if (w.kind === 'building-manager' || w.kind === 'commercial-occupant') return {sql:'0=1',values:[]};
   if (w.kind === 'tenant')
     return {
       sql: `EXISTS(SELECT 1 FROM tenancies t JOIN tenancy_memberships m ON m.tenancy_id=t.id WHERE t.property_id=${alias}.id AND t.id=? AND m.user_id=? AND m.starts_at<=?)`,
