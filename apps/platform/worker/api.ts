@@ -253,6 +253,17 @@ export async function handleApi(
     if (path === '/api/v4/catalogue' && method === 'GET') return Response.json(await v4.publicCatalogue(env,url.searchParams.get('sector')??undefined),{headers:{'Cache-Control':'private, no-store'}});
     const v4Item=path.match(/^\/api\/v4\/catalogue\/((?:RES|COM)-\d{3})$/);
     if(v4Item && method==='GET')return Response.json(await v4.publicService(env,v4Item[1]),{headers:{'Cache-Control':'private, no-store'}});
+    // New guest service commissioning is retired in hosted environments.
+    // Preserve read/management and completion endpoints for historical orders.
+    // Local legacy tests retain their isolated fixtures until converted.
+    if (method === 'POST' && env.APP_ENV !== 'local' &&
+        (path === '/api/v4/requests' || path === '/api/guest/requests')) {
+      return Response.json({
+        code: 'ACCOUNT_REQUIRED',
+        message: 'Sign in or create a free ProInspect account to request or book a service.',
+        href: '/signin?returnTo=%2Fbook',
+      }, { status: 410, headers: { 'Cache-Control': 'no-store' } });
+    }
     if(path==='/api/v4/requests' && method==='POST')return Response.json(await v4.begin(request,env),{status:201});
     if(path==='/api/v4/requests/verify' && method==='POST')return Response.json(await v4.verify(request,env));
     if(path==='/api/v4/requests/status' && method==='GET')return Response.json(await v4.status(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
