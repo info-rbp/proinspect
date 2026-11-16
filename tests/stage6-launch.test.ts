@@ -18,12 +18,13 @@ function fixture():Stage6Inputs{
 test('Stage 6 recorded acceptance baseline remains separate from additive migrations',()=>{
  const all=readdirSync('database/migrations').filter(x=>/^\d{4}_.+\.sql$/.test(x)).sort();
  assert.equal(EXPECTED_SCHEMA.count,53);
- assert.equal(all.length,EXPECTED_SCHEMA.count+4);
+ assert.equal(all.length,EXPECTED_SCHEMA.count+5);
  assert.equal(all[EXPECTED_SCHEMA.count-1],EXPECTED_SCHEMA.latest);
  assert.equal(all[53],'0054_client_service_interests.sql');
- assert.equal(all.at(-1),'0057_private_document_scanning.sql');
+ assert.equal(all[56],'0057_private_document_scanning.sql');
+ assert.equal(all.at(-1),'0058_resident_occupancies_and_council_appointments.sql');
  assert.equal(EXPECTED_SCHEMA.catalogueServices,23);
- assert.equal(Object.keys(WORKSPACES).length,9);
+ assert.equal(Object.keys(WORKSPACES).length,10);
  assert.ok(Object.hasOwn(WORKSPACES,'building-manager'));
  // The nine-role hosted acceptance script is independently checked by portal-execution.test.mjs.
 });
