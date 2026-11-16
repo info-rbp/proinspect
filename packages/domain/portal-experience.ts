@@ -62,3 +62,20 @@ export function groupWorkspaces(workspaces: Workspace[]) {
     }))
     .filter(group => group.workspaces.length > 0);
 }
+
+/** Availability filters for preferences; never used to authorise API access. */
+export const EXPERIENCE_SECTIONS: Record<WorkspaceKind,readonly string[]> = {
+  landlord:['overview','properties','bookings','requests','documents','co-living','finance'],
+  'property-manager':['overview','properties','bookings','requests','documents','co-living','finance'],
+  commercial:['overview','properties','bookings','requests','documents','finance'],
+  'strata-manager':['overview','properties','requests','documents','facilities','finance'],
+  'building-manager':['overview','facilities','documents'],
+  tenant:['overview','my-room','requests','documents'],
+  building:['overview','requests','documents','facilities'],
+  council:['overview','requests','documents','finance'],
+  staff:['overview','properties','bookings','requests','documents','finance','facilities'],
+};
+export function permittedExperienceSections(w:Pick<Workspace,'kind'|'experienceTags'>):string[]{
+  return EXPERIENCE_SECTIONS[w.kind].filter(section=>
+    section!=='co-living'||(w.experienceTags??[]).some(t=>['co_living','student_living'].includes(t)));
+}
