@@ -54,6 +54,7 @@ export async function coLivingOperationsCommand(env:Env,user:Principal,w:Workspa
       rentPeriod:z.enum(['weekly','fortnightly','monthly']),expectedBondCents:z.number().int().min(0).max(100000000).nullable(),
       utilityBasis:z.enum(['included','equal_share','metered','manual']),
       sourceReference:z.string().trim().min(8).max(240),agreementDocumentId:recordId.nullable().optional()}),
+    z.object({action:z.literal('review_terms'),tenancyId:recordId}),
     z.object({action:z.literal('occupancy_event'),tenancyId:recordId,
       kind:z.enum(['check_in','check_out','condition_review','transfer_requested','agreement_review','rent_review','bond_review','utilities_review']),
       effectiveAt:z.string().datetime({offset:true}),note:z.string().trim().min(8).max(3000),
@@ -95,6 +96,27 @@ export async function coLivingOperationsCommand(env:Env,user:Principal,w:Workspa
         JSON.stringify({reference:data.sourceReference,legalAgreementExecuted:false,bondLodged:false}),timestamp),
     ]);
     return {ok:true,status:'draft',message:'Terms recorded for review. No rent collected, bond lodged or agreement signed.'};
+  }
+  if(data.action==='review_terms'){
+    assert(w.kind==='staff',403,'INDEPENDENT_REVIEW_REQUIRED',
+      'Only an independent authorised ProInspect reviewer can confirm operational data.');
+    await tenancy(env,propertyId,data.tenancyId);
+    const terms=await statement(env.DB,
+      'SELECT updated_by,review_status FROM co_living_lease_terms WHERE tenancy_id=?',
+      data.tenancyId).first<{updated_by:string;review_status:string}>();
+    assert(terms&&terms.review_status==='draft',409,'TERMS_NOT_DRAFT','Terms must be recorded before review.');
+    assert(terms.updated_by!==user.id,403,'SELF_REVIEW_DENIED',
+      'Terms must be independently reviewed.');
+    await env.DB.batch([
+      statement(env.DB,
+        "UPDATE co_living_lease_terms SET review_status='reviewed',reviewed_by=?,updated_at=? WHERE tenancy_id=? AND review_status='draft'",
+        user.id,timestamp,data.tenancyId),
+      statement(env.DB,
+        'INSERT INTO audit_events(id,actor_id,action,entity_type,entity_id,property_id,created_at) VALUES(?,?,?,?,?,?,?)',
+        uid('aud'),user.id,'co_living.terms_verified','tenancy',data.tenancyId,propertyId,timestamp),
+    ]);
+    return {ok:true,status:'reviewed',
+      message:'Operational figures verified for resident visibility. This is not legal agreement approval or bond lodgement.'};
   }
   if(data.action==='occupancy_event'){
     await tenancy(env,propertyId,data.tenancyId);
