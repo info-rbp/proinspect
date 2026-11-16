@@ -1,6 +1,7 @@
 import { assert, statement, now, type Env } from '../../../../packages/database/types';
 import type { Principal } from '../../../../packages/domain/index';
 import { digest } from '../../../../packages/auth/crypto';
+import { previewCommercialInvitation } from './resident-commercial.server';
 /**
  * Invitation-only preview: a token and current verified identity are both
  * required. No public lookup by property address or recipient email exists.
@@ -8,6 +9,8 @@ import { digest } from '../../../../packages/auth/crypto';
 export async function invitedRelationshipPreview(env: Env, user: Principal, token: unknown) {
   assert(typeof token === 'string' && /^[a-f0-9]{64}$/.test(token),
     404, 'INVITATION_NOT_FOUND', 'This invitation is unavailable.');
+  const commercial = await previewCommercialInvitation(env,user,token);
+  if(commercial)return commercial;
   const hash = await digest(token);
   const tenancy = await statement(env.DB, `
     SELECT CASE WHEN p.sector='commercial' THEN 'ONB-INV-COM' ELSE 'ONB-INV-RES' END AS flow_id,
