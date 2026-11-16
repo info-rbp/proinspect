@@ -7,7 +7,7 @@ export const meta = () => [{ title: 'My ProInspect | ProInspect' }];
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const session = await loadApi(request, context, '/api/session');
   const serviceId = bookingIntent(new URL(request.url).searchParams.get('service'));
-  return { ...session, serviceId };
+  return { user: session.user, workspaces: session.workspaces as Workspace[], serviceId };
 }
 const families = ['residential','commercial','strata','resident','operations'] as const;
 export default function Workspaces() {
