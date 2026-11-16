@@ -14,7 +14,7 @@ with tempfile.TemporaryDirectory(prefix='private-scan-rehearsal-') as directory:
     counts={name:db.execute('SELECT COUNT(*) FROM "'+name+'"').fetchone()[0] for kind,name,_ in before if kind=='table'}
     recovery=sqlite3.connect(pathlib.Path(directory)/'recovery.sqlite')
     db.backup(recovery)
-    db.executescript(files[-1].read_text())
+    db.executescript(files[56].read_text())
     for original in before:
         assert db.execute('SELECT type,name,sql FROM sqlite_schema WHERE type=? AND name=?',original[:2]).fetchone()==original
     for name,count in counts.items(): assert db.execute('SELECT COUNT(*) FROM "'+name+'"').fetchone()[0]==count

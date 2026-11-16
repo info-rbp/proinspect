@@ -10,7 +10,7 @@ export const PORTAL_FAMILIES: Record<PortalFamily, { name: string; description: 
   operations: { name: 'ProInspect Operations', description: 'Authorised internal service delivery' },
 };
 
-/** Presentation categories only. The original nine workspace kinds remain server-side permissions. */
+/** Presentation categories only. The underlying workspace kinds remain server-side permissions. */
 export function portalFamily(kind: WorkspaceKind): PortalFamily {
   if (kind === 'landlord' || kind === 'property-manager') return 'residential';
   if (kind === 'commercial') return 'commercial';
@@ -40,6 +40,7 @@ export function effectiveExperienceLabels(workspace: Workspace): string[] {
     'strata-manager': 'Strata management',
     'building-manager': 'Building management',
     tenant: 'Tenant',
+    'commercial-occupant': 'Commercial occupant',
     building: workspace.role === 'owner' ? 'Lot owner' : 'Building resident',
     council: 'Council member',
     staff: 'ProInspect staff',
@@ -61,4 +62,22 @@ export function groupWorkspaces(workspaces: Workspace[]) {
       workspaces: workspaces.filter(w => portalFamily(w.kind) === family),
     }))
     .filter(group => group.workspaces.length > 0);
+}
+
+/** Availability filters for preferences; never used to authorise API access. */
+export const EXPERIENCE_SECTIONS: Record<WorkspaceKind,readonly string[]> = {
+  landlord:['overview','properties','bookings','requests','documents','co-living','finance'],
+  'property-manager':['overview','properties','bookings','requests','documents','co-living','finance'],
+  commercial:['overview','properties','bookings','requests','documents','finance'],
+  'strata-manager':['overview','properties','requests','documents','facilities','finance'],
+  'building-manager':['overview','facilities','documents'],
+  'commercial-occupant':['overview','occupant-premises','occupant-requests'],
+  tenant:['overview','my-room','requests','documents'],
+  building:['overview','requests','documents','facilities'],
+  council:['overview','requests','documents','finance'],
+  staff:['overview','properties','bookings','requests','documents','finance','facilities'],
+};
+export function permittedExperienceSections(w:Pick<Workspace,'kind'|'experienceTags'>):string[]{
+  return EXPERIENCE_SECTIONS[w.kind].filter(section=>
+    section!=='co-living'||(w.experienceTags??[]).some(t=>['co_living','student_living'].includes(t)));
 }

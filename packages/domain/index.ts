@@ -60,6 +60,8 @@ export interface Workspace {
   href: string;
   accountType?: string;
   experienceTags?: string[];
+  landingSection?: string;
+  displayDensity?: 'comfortable' | 'compact';
 }
 export interface User {
   id: string;

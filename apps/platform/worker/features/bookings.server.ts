@@ -72,11 +72,25 @@ export async function changeBooking(
     'BOOKING_STARTED',
     'Only future confirmed bookings can be changed.',
   );
+  const payment = await statement(env.DB,
+    `SELECT p.id,p.status,p.provider,p.checkout_session_id FROM registered_booking_payment_links l
+     JOIN payments p ON p.id=l.payment_id WHERE l.booking_id=?`,id,
+  ).first<{id:string;status:string;provider:string;checkout_session_id:string|null}>();
+  if(payment&&d.action==='cancel'){
+    assert(payment.status==='payment_required'&&!payment.checkout_session_id,409,
+      'PAYMENT_CANCELLATION_REVIEW',
+      'A paid or open checkout requires a separate financial cancellation and reconciliation review.');
+    const pending=await statement(env.DB,
+      "SELECT id FROM payment_checkout_attempts WHERE payment_id=? AND status IN('creating','open','processing')",
+      payment.id).first();
+    assert(!pending,409,'PAYMENT_CANCELLATION_REVIEW',
+      'Reconcile the pending Checkout attempt before cancelling this appointment.');
+  }
   const wo = await statement(env.DB, 'SELECT * FROM work_orders WHERE booking_id=?', id).first<
     Record<string, any>
   >();
   assert(
-    wo && ['scheduled', 'assigned', 'triage'].includes(wo.status),
+    wo && ['scheduled', 'assigned', 'triage','awaiting_approval'].includes(wo.status),
     409,
     'WORK_STARTED',
     'This work has started or needs an operational review.',
@@ -125,7 +139,7 @@ export async function changeBooking(
     statement(
       env.DB,
       'UPDATE work_orders SET status=?,assigned_staff_id=NULL,version=version+1,updated_at=? WHERE id=? AND version=?',
-      d.action === 'cancel' ? 'cancelled' : 'scheduled',
+      d.action === 'cancel' ? 'cancelled' : (payment&&payment.status!=='paid'?'awaiting_approval':'scheduled'),
       now(),
       wo.id,
       wo.version,
@@ -156,6 +170,19 @@ export async function changeBooking(
     receipt(env, user, `booking:${id}`, d.requestKey, prior.fingerprint, result),
     clearGuard(env),
   ];
+  if(payment&&d.action==='cancel'){
+    statements.push(
+      statement(env.DB,
+        "UPDATE payments SET status='waived',version=version+1,updated_at=? WHERE id=? AND status='payment_required' AND checkout_session_id IS NULL",
+        now(),payment.id),
+      guard(env),
+      statement(env.DB,
+        'INSERT INTO payment_events(id,payment_id,actor_id,from_status,to_status,reference,created_at) VALUES(?,?,?,?,?,?,?)',
+        uid('pe'),payment.id,user.id,'payment_required','waived',
+        'Unpaid registered booking cancelled before checkout',now()),
+      clearGuard(env),
+    );
+  }
   if (original)
     statements.push(
       await mailEvent(env, 'booking.changed', {

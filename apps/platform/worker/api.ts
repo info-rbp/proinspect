@@ -1,6 +1,10 @@
 import {temporarySecurityDownload,reviewTemporaryDocument,stageTemporaryPackage,temporaryPackageAccess,controlTemporaryPackage} from './features/rental-temporary-documents.server';
 
 import { coLivingOverview, coLivingCommand, myCoLivingSpace } from './features/co-living.server';
+import { coLivingOperationsData,coLivingOperationsCommand } from './features/co-living-operations.server';
+import { experiencePreferences, saveExperiencePreferences } from './features/experience-preferences.server';
+import { amenityDirectory, amenityCommand } from './features/amenities.server';
+import {financeReviewData,financeReviewCommand} from './features/finance-reviews.server';
 import { getAccountTagDirectory, changeAccountTag } from './features/account-tags.server';
 import {ownerInvitationPreview,claimOwnerInvitation} from './features/agency-owner-invitations.server';
 import { acceptCommercialInvitation, inviteCommercialOccupant, listCommercialOccupants, endCommercialOccupancy, occupantWorkspaceData, createOccupantRequest, updateOccupantRequest } from './features/resident-commercial.server';
@@ -161,7 +165,7 @@ async function inviteTenant(env: Env, user: Principal, w: Workspace, input: unkn
   if (coLiving) {
     const privateSpace = await statement(env.DB,
       `SELECT id FROM co_living_spaces WHERE id=? AND property_id=? AND active=1 AND space_type=?`,
-      data.spaceId,data.propertyId,coLiving.allocation_mode,
+      data.spaceId ?? null,data.propertyId,coLiving.allocation_mode,
     ).first();
     assert(privateSpace, 404,'CO_LIVING_SPACE_NOT_FOUND','This private room or bed is unavailable.');
   }
@@ -173,7 +177,7 @@ async function inviteTenant(env: Env, user: Principal, w: Workspace, input: unkn
        AND (t.ends_at IS NULL OR t.ends_at>?) AND (? IS NULL OR t.starts_at<?)
        AND (? IS NULL OR o.tenancy_id IS NULL OR o.space_id=?)
      LIMIT 1`,
-    data.propertyId,start,end,end,coLiving ? data.spaceId : null,data.spaceId ?? null,
+    data.propertyId,start,end,end,coLiving ? (data.spaceId ?? null) : null,data.spaceId ?? null,
   ).first();
   assert(!overlap,409,'TENANCY_REVIEW_REQUIRED',
     coLiving ? 'This space is already allocated for overlapping tenancy dates.' :
@@ -633,6 +637,31 @@ export async function handleApi(
     }
     const feature = await featureApi(request, env, user, w, tail);
     if (feature) return feature;
+    const operationsPath = tail.match(/^properties\/([a-zA-Z0-9_-]+)\/co-living\/operations$/);
+    if(operationsPath){
+      if(method==='GET')return Response.json(await coLivingOperationsData(env,user,w,operationsPath[1]),
+        {headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'){requireOrigin(request,env);return Response.json(
+        await coLivingOperationsCommand(env,user,w,operationsPath[1],await json(request)));}
+    }
+    if(tail==='experience-preferences'){
+      if(method==='GET')return Response.json(await experiencePreferences(env,user,w),
+        {headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'){requireOrigin(request,env);return Response.json(await saveExperiencePreferences(env,user,w,await json(request)));}
+    }
+    if(tail==='finance-reviews'&&w.kind==='staff'){
+      if(method==='GET')return Response.json(await financeReviewData(env,user,w),
+        {headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'){
+        requireOrigin(request,env);
+        return Response.json(await financeReviewCommand(env,user,w,await json(request)));
+      }
+    }
+    if(tail==='amenities'){
+      if(method==='GET')return Response.json(await amenityDirectory(env,user,w),
+        {headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'){requireOrigin(request,env);return Response.json(await amenityCommand(env,user,w,await json(request)));}
+    }
     const coLivingPath = tail.match(/^properties\/([a-zA-Z0-9_-]+)\/co-living$/);
     if (coLivingPath) {
       if(method==='GET') return Response.json(await coLivingOverview(env,user,w,coLivingPath[1]),{headers:{'Cache-Control':'private, no-store'}});

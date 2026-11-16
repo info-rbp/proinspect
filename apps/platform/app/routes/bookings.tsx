@@ -45,7 +45,11 @@ export default function Bookings() {
                   <td>{displayDate(b.starts_at)}</td>
                   <td>{money(b.price_ex_gst_cents)}</td>
                   <td>
-                    <Badge status={b.status} />
+                    <Badge status={b.payment_status==='payment_required'||b.payment_status==='failed'?'payment_required':b.status} />
+                    {b.payment_id && ['payment_required','failed'].includes(b.payment_status??'') &&
+                      <p><Link to={d.workspace.href+'/finance?payment='+encodeURIComponent(b.payment_id)}>
+                        Review payment
+                      </Link></p>}
                   </td>
                 </tr>
               ))}

@@ -120,6 +120,10 @@ export default function WorkspaceLayout() {
   if(w.kind==='building-manager')items.splice(0,items.length,['','Overview',''],['facilities','Building operations',''],['building-communications','Notice drafts',''],['documents','Authorised building reports','']);
   if(w.kind==='commercial-occupant')items.splice(0,items.length,
     ['','Overview',''],['occupant-premises','My premises',''],['occupant-requests','My requests','']);
+  if(['building','council','strata-manager','building-manager'].includes(w.kind))
+    items.push(['community','Community & building updates','']);
+  if(data.amenitiesEnabled && ['strata-manager','building'].includes(w.kind))
+    items.push(['amenities','Shared amenity requests','']);
   // Keep specialist routes and deep links intact while showing a concise first-level menu.
   const primaryByKind: Record<string, string[]> = {
     landlord: ['', 'properties', 'requests', 'tenancies', 'reports', 'billing'],
@@ -146,7 +150,7 @@ export default function WorkspaceLayout() {
   const secondary = items.filter(([path]) => !primaryPaths.includes(path));
   const pathname = useLocation().pathname;
   const toolGroups = [
-    { label: 'Operations', paths: ['co-living','records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','resident-invitations','commercial-occupancies','occupant-premises','occupant-requests','council-appointments','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
+    { label: 'Operations', paths: ['community','amenities','co-living','records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','resident-invitations','commercial-occupancies','occupant-premises','occupant-requests','council-appointments','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
     { label: 'Documents & services', paths: ['documents','reports','document-operations','service-agreements','wa-form-queue','bond-review-queue','services','reporting','confidential','market-packs','enterprise-intelligence','v2-business'] },
     { label: 'Administration', paths: ['account-tags','finance','billing','contractor-payments','team','agency-administration','administration','release-readiness','pricing-administration','legal-administration','integrations','enquiries','owner-invitations'] },
   ];
@@ -161,7 +165,7 @@ export default function WorkspaceLayout() {
     pathname === `${w.href}/${path}` || pathname.startsWith(`${w.href}/${path}/`),
   );
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-density={w.displayDensity ?? 'comfortable'}>
       {pending && <div className="loading-line" role="progressbar" aria-label="Loading page" />}
       <aside className={`sidebar ${open ? 'open' : ''}`} aria-label="Workspace navigation">
         <Link className="brand inverse" to="/workspaces">
@@ -202,6 +206,7 @@ export default function WorkspaceLayout() {
           )}
         </nav>
         <div className="sidebar-foot">
+          <Link to={w.href+'/experience-settings'}>My portal preferences</Link>
           <Link to="/account">Account &amp; sign-in security</Link>
           <Link to="/workspaces">My ProInspect / Switch workspace →</Link>
           {open && (

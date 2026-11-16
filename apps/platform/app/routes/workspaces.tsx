@@ -37,7 +37,7 @@ export default function Workspaces() {
             <div className="panel-header"><div><h2>{group.name}</h2><p>{group.description}</p></div></div>
             <div className="workspace-grid">
               {group.workspaces.map(w=>(
-                <Link key={w.href} to={w.href} className="workspace-card">
+                <Link key={w.href} to={w.href+(w.landingSection&&w.landingSection!=='overview'?'/'+w.landingSection:'')} className="workspace-card">
                   <p className="eyebrow">{WORKSPACES[w.kind].name}</p>
                   <h3>{w.name}</h3>
                   <p>{effectiveExperienceLabels(w).join(' · ')}</p>

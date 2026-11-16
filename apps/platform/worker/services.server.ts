@@ -397,6 +397,22 @@ export async function updateWorkOrder(
     'INVALID_TRANSITION',
     'This status change is not available.',
   );
+  if(order.booking_id){
+    const linkedPayment=await statement(env.DB,
+      `SELECT p.status,p.provider,p.checkout_session_id FROM registered_booking_payment_links l
+        JOIN payments p ON p.id=l.payment_id WHERE l.booking_id=?`,order.booking_id,
+    ).first<{status:string;provider:string;checkout_session_id:string|null}>();
+    if(linkedPayment&&next!==order.status&&next!=='cancelled'){
+      assert(linkedPayment.status==='paid'&&linkedPayment.provider==='stripe'&&
+        Boolean(linkedPayment.checkout_session_id),409,'REGISTERED_PAYMENT_NOT_VERIFIED',
+        'The one-off booking cannot proceed until a provider-signed payment is settled.');
+    }
+    if(linkedPayment&&next==='cancelled'){
+      assert(linkedPayment.status!=='paid'&&!linkedPayment.checkout_session_id,409,
+        'PAYMENT_CANCELLATION_REVIEW',
+        'A payment or open Checkout requires a separate financial cancellation/reconciliation review.');
+    }
+  }
   if (next === 'approved')
     assert(
       await statement(

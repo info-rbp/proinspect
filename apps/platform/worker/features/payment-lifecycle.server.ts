@@ -82,6 +82,20 @@ export async function paymentSessionEvent(env:Env,event:ProviderEvent,raw:string
    if(p.checkout_session_id!==s.id||(pi&&p.stripe_payment_intent_id&&pi!==p.stripe_payment_intent_id))effects.push(reconciliation(env,event.id,p.id,'duplicate_successful_checkout',s.id));
   }else if(['payment_required','failed'].includes(p.status)&&p.total_cents===s.amount_total){
    next='paid';effects.push(statement(env.DB,"UPDATE payments SET status='paid',provider='stripe',external_reference=?,stripe_payment_intent_id=COALESCE(stripe_payment_intent_id,?),checkout_session_id=?,checkout_url=NULL,version=version+1,updated_at=? WHERE id=? AND status IN('payment_required','failed') AND total_cents=?",pi??s.id,pi,s.id,now(),p.id,s.amount_total),guard(env),statement(env.DB,"INSERT INTO payment_events(id,payment_id,from_status,to_status,reference,created_at) VALUES(?,?,?,'paid',?,?)",uid('pe'),p.id,p.status,event.id,now()),clearGuard(env));
+   // Only a verified Stripe payment for a server-created registered booking
+   // can release its held Work Order. An unrelated invoice never changes the schedule.
+   const registered=await statement(env.DB,
+     `SELECT b.id,b.status,w.id AS work_order_id,w.status AS work_status
+      FROM registered_booking_payment_links l JOIN bookings b ON b.id=l.booking_id
+      JOIN work_orders w ON w.booking_id=b.id
+      WHERE l.payment_id=? AND l.price_ex_gst_cents+l.gst_cents=?`,
+     p.id,p.total_cents,
+   ).first<{id:string;status:string;work_order_id:string;work_status:string}>();
+   if(registered?.status==='confirmed'&&registered.work_status==='awaiting_approval'){
+     effects.push(statement(env.DB,
+       "UPDATE work_orders SET status='scheduled',version=version+1,updated_at=? WHERE id=? AND status='awaiting_approval'",
+       now(),registered.work_order_id),guard(env),clearGuard(env));
+   }
    effects.push(settlePcrDiscount(env,p.id));
    const heldDiscount=await statement(env.DB,"SELECT status FROM pcr_discount_reservations WHERE payment_id=? AND status IN('released','exception')",p.id).first();
    if(heldDiscount)effects.push(reconciliation(env,event.id,p.id,'discount_settlement_requires_review',s.id));

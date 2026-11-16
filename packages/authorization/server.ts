@@ -1,4 +1,5 @@
 import type { Env } from '../database/types';
+import { portalFamily,permittedExperienceSections } from '../domain/portal-experience';
 import { assert, statement, now } from '../database/types';
 import {
   WORKSPACES,
@@ -55,9 +56,11 @@ export async function workspaces(env: Env, user: Principal): Promise<Workspace[]
     });
   const tenancies = await statement(
     env.DB,
-    `SELECT t.id,p.address FROM tenancy_memberships m JOIN tenancies t ON t.id=m.tenancy_id JOIN properties p ON p.id=t.property_id WHERE m.user_id=? AND m.starts_at<=?`,
-    user.id,
-    now(),
+    `SELECT t.id,p.address FROM tenancy_memberships m JOIN tenancies t ON t.id=m.tenancy_id
+       JOIN properties p ON p.id=t.property_id
+       WHERE m.user_id=? AND m.starts_at<=? AND (m.ends_at IS NULL OR m.ends_at>?)
+         AND t.status='active' AND t.starts_at<=? AND (t.ends_at IS NULL OR t.ends_at>?)`,
+    user.id,now(),now(),now(),now(),
   ).all<{ id: string; address: string }>();
   for (const t of tenancies.results)
     result.push({
@@ -119,6 +122,16 @@ export async function workspaces(env: Env, user: Principal): Promise<Workspace[]
       role: user.staffRole,
       href: '/w/staff/operations',
     });
+  const preferences=(await statement(env.DB,
+    'SELECT portal_family,landing_section,display_density FROM user_portal_preferences WHERE user_id=?',
+    user.id).all<{portal_family:string;landing_section:string;display_density:'compact'|'comfortable'}>()).results;
+  for(const w of result){
+    const row=preferences.find(p=>p.portal_family===portalFamily(w.kind));
+    if(!row)continue;
+    w.displayDensity=row.display_density;
+    w.landingSection=permittedExperienceSections(w).includes(row.landing_section)
+      ? row.landing_section : 'overview';
+  }
   return result;
 }
 export async function workspace(

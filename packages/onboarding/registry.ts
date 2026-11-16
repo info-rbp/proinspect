@@ -124,7 +124,7 @@ export const ONBOARDING_FLOWS = {
   },
   'UX-BOOK': {
     id: 'UX-BOOK', version: '1.0.0', family: 'residential', entry: 'self-registration',
-    title: 'Registered service booking', summary: 'Commissioning a ProInspect service requires an account.',
+    title: 'Registered service booking', summary: 'Commissioning a ProInspect service requires an account; priced one-off appointments have a separate verified payment obligation.',
     requiredAtStart: ['verifiedIdentity', 'propertyAuthority'],
     laterWhenRelevant: ['paymentOrQuote'],
     steps: ['BOOK-01', 'BOOK-02', 'BOOK-03'],
@@ -156,6 +156,6 @@ export const PORTAL_FAMILIES = {
   residential: { label: 'Residential', description: 'My homes, rentals and managed portfolios' },
   commercial: { label: 'Commercial', description: 'Commercial properties and assets' },
   strata: { label: 'Strata', description: 'Schemes and building operations' },
-  resident: { label: 'Resident & Member', description: 'Invited tenancies, buildings and council memberships' },
+  resident: { label: 'Resident', description: 'Invited tenancies, buildings and council memberships' },
   operations: { label: 'ProInspect Operations', description: 'Internal team operations' },
 } as const;

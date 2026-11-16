@@ -425,6 +425,11 @@
       "group": "release",
       "default": "false"
     },
+    "STRATA_AMENITIES_ENABLED": {
+      "targets": ["platform"],
+      "group": "release",
+      "default": "false"
+    },
     "BUILDING_OPERATIONS_ENABLED": {
       "targets": [
         "platform"
