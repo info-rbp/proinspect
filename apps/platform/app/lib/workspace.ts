@@ -8,6 +8,7 @@ export interface WorkspaceData {
   user: Principal;
   workspace: Workspace;
   councilGovernanceEnabled?:boolean;
+  amenitiesEnabled?:boolean;
   properties: Property[];
   bookings: RecordRow[];
   workOrders: RecordRow[];
