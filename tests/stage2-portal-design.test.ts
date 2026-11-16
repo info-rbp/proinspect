@@ -8,7 +8,7 @@ const overview = readFileSync('apps/platform/app/routes/overview.tsx', 'utf8');
 const css = readFileSync('packages/ui/portal.css', 'utf8');
 const docs = readFileSync('docs/PORTALS.md', 'utf8');
 
-test('all nine workspace kinds have a distinct compact first-level navigation', () => {
+test('all ten workspace kinds have a distinct compact first-level navigation', () => {
   const map = layout.match(/const primaryByKind: Record<string, string\[\]> = \{([\s\S]*?)\n  \};/)?.[1];
   assert.ok(map, 'Missing kind-specific navigation registry');
   const keys = [...map.matchAll(/^\s*('?[\w-]+'?): \[/gm)].map(x => x[1].replaceAll("'", ''));
