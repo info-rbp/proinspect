@@ -161,7 +161,7 @@ async function inviteTenant(env: Env, user: Principal, w: Workspace, input: unkn
   if (coLiving) {
     const privateSpace = await statement(env.DB,
       `SELECT id FROM co_living_spaces WHERE id=? AND property_id=? AND active=1 AND space_type=?`,
-      data.spaceId,data.propertyId,coLiving.allocation_mode,
+      data.spaceId ?? null,data.propertyId,coLiving.allocation_mode,
     ).first();
     assert(privateSpace, 404,'CO_LIVING_SPACE_NOT_FOUND','This private room or bed is unavailable.');
   }
@@ -173,7 +173,7 @@ async function inviteTenant(env: Env, user: Principal, w: Workspace, input: unkn
        AND (t.ends_at IS NULL OR t.ends_at>?) AND (? IS NULL OR t.starts_at<?)
        AND (? IS NULL OR o.tenancy_id IS NULL OR o.space_id=?)
      LIMIT 1`,
-    data.propertyId,start,end,end,coLiving ? data.spaceId : null,data.spaceId ?? null,
+    data.propertyId,start,end,end,coLiving ? (data.spaceId ?? null) : null,data.spaceId ?? null,
   ).first();
   assert(!overlap,409,'TENANCY_REVIEW_REQUIRED',
     coLiving ? 'This space is already allocated for overlapping tenancy dates.' :
