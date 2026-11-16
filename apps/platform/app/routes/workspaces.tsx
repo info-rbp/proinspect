@@ -1,10 +1,13 @@
 import { Link, Form, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { loadApi } from '../lib/api.server';
+import { bookingIntent } from '../../../../packages/domain/booking-intent';
 import { WORKSPACES, type Workspace } from '../../../../packages/domain/index';
 import { portalFamilyForWorkspace, PORTAL_FAMILIES } from '../../../../packages/onboarding/registry';
 export const meta = () => [{ title: 'My ProInspect | ProInspect' }];
 export async function loader({ request, context }: LoaderFunctionArgs) {
-  return loadApi(request, context, '/api/session');
+  const session = await loadApi(request, context, '/api/session');
+  const serviceId = bookingIntent(new URL(request.url).searchParams.get('service'));
+  return { ...session, serviceId };
 }
 const families = ['residential','commercial','strata','resident','operations'] as const;
 export default function Workspaces() {
@@ -17,6 +20,7 @@ export default function Workspaces() {
     workspaces: workspaces.filter(w => portalFamilyForWorkspace(w.kind) === family),
   })).filter(g => g.workspaces.length);
   const hasOwner = (kind: 'landlord'|'commercial') => workspaces.some(w=>w.kind===kind);
+  const ownerLink = (flow: string) => '/onboarding?flow='+flow+(data.serviceId?'&service='+encodeURIComponent(data.serviceId):'');
   return (
     <main id="main" className="auth-page">
       <header className="page-heading">
@@ -56,8 +60,8 @@ export default function Workspaces() {
           <h2>Own and self-manage property?</h2>
           <p>Choose the sector for your free account. A subscription or paid service is a separate decision.</p>
           <div className="actions">
-            {!hasOwner('landlord')&&<Link className="button" to="/onboarding?flow=ONB-RES-OWNER">Residential owner</Link>}
-            {!hasOwner('commercial')&&<Link className="button secondary" to="/onboarding?flow=ONB-COM-OWNER">Commercial owner</Link>}
+            {!hasOwner('landlord')&&<Link className="button" to={ownerLink("ONB-RES-OWNER")}>Residential owner</Link>}
+            {!hasOwner('commercial')&&<Link className="button secondary" to={ownerLink("ONB-COM-OWNER")}>Commercial owner</Link>}
           </div>
         </section>}
         <section className="panel stack">
