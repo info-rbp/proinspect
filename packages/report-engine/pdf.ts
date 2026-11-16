@@ -134,7 +134,8 @@ export async function renderReportPdf(input:ReportPdfInput):Promise<Uint8Array>{
   if(photo.sourceSha256){
     if(!/^[a-f0-9]{64}$/.test(photo.sourceSha256))
       throw new ReportPdfError('PDF_SOURCE_HASH','Evidence provenance hash is invalid.');
-    const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',photo.bytes));
+    const evidenceBytes=Uint8Array.from(photo.bytes);
+    const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',evidenceBytes.buffer as ArrayBuffer));
     const actual=Array.from(digest,b=>b.toString(16).padStart(2,'0')).join('');
     if(actual!==photo.sourceSha256)throw new ReportPdfError('PDF_SOURCE_CHANGED',
       'Approved photograph differs from its recorded original; rendering stopped.');
