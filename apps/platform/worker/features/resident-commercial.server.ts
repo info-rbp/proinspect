@@ -21,7 +21,7 @@ type OccupancyRow = {
 };
 /** Property managers must be account admins AND have an active commercial property relationship. */
 async function managerAccess(env: Env, user: Principal, w: Workspace, propertyId?: string) {
-  assert(['commercial','property-manager'].includes(w.kind), 403, 'COMMERCIAL_MANAGER_REQUIRED',
+  assert(w.kind === 'commercial', 403, 'COMMERCIAL_MANAGER_REQUIRED',
     'Use the authorised commercial management account.');
   await clientAdmin(env, user, w);
   if (propertyId) {
