@@ -1,3 +1,4 @@
+import {temporarySecurityDownload,reviewTemporaryDocument,stageTemporaryPackage,temporaryPackageAccess,controlTemporaryPackage} from './features/rental-temporary-documents.server';
 import {ownerInvitationPreview,claimOwnerInvitation} from './features/agency-owner-invitations.server';
 import { acceptCommercialInvitation, inviteCommercialOccupant, listCommercialOccupants, endCommercialOccupancy, occupantWorkspaceData, createOccupantRequest, updateOccupantRequest } from './features/resident-commercial.server';
 import { invitedRelationshipPreview } from './features/invitation-preview.server';
@@ -352,6 +353,11 @@ export async function handleApi(
     if(path==='/api/internal/commercial-document-scan'&&method==='POST')return Response.json(await acceptCommercialScan(env,request),{headers:{'Cache-Control':'private, no-store'}});
     const commercialGrant=path.match(/^\/api\/internal\/commercial-referrals\/([a-f0-9]{64})(?:\/documents\/([a-zA-Z0-9_-]{3,100}))?$/);
     if(commercialGrant&&method==='GET')return await retrieveCommercialReferral(env,request,commercialGrant[1],commercialGrant[2]);
+    const temporaryDownload=path.match(/^\/api\/public\/rental-package\/([a-f0-9]{64})\/documents\/(rtd_[a-zA-Z0-9_-]+)$/);
+    if(temporaryDownload&&method==='GET'){
+      const result=await temporaryPackageAccess(env,temporaryDownload[1],temporaryDownload[2]);
+      assert(result instanceof Response,404,'DOCUMENT_UNAVAILABLE','Document unavailable.');return result;
+    }
     const user = await requireUser(request, env);
     const commercialStaff=path.match(/^\/api\/staff\/commercial-applications(?:\/(.*))?$/);
     if(commercialStaff)return await commercialStaffHttp(request,env,user,commercialStaff[1]??'');
@@ -390,6 +396,13 @@ export async function handleApi(
       const tail=(rentalStaff[1]??'').split('/').filter(Boolean);
       if(method!=='GET'&&method!=='HEAD')requireOrigin(request,env);
       if(method==='GET'&&tail.length===0)return Response.json(await listRentalApplications(env,user,url.searchParams.get('listingId')??undefined));
+      if(method==='POST'&&tail.length===4&&tail[1]==='temporary-package'&&(tail[3]==='retry'||tail[3]==='revoke'))return Response.json(await controlTemporaryPackage(env,user,tail[0],tail[2],tail[3]));
+      if(method==='POST'&&tail.length===2&&tail[1]==='temporary-package')return Response.json(await stageTemporaryPackage(env,user,tail[0],await json(request)));
+      if(method==='POST'&&tail.length===4&&tail[1]==='temporary-documents'&&tail[3]==='review')return Response.json(await reviewTemporaryDocument(env,user,tail[0],tail[2],await json(request)));
+      if(method==='POST'&&tail.length===4&&tail[1]==='temporary-documents'&&tail[3]==='security-download'){
+        const form=new URLSearchParams(await boundedText(request,2000));
+        return await temporarySecurityDownload(env,user,tail[0],tail[2],form.get('acknowledge')==='yes');
+      }
       if(method==='GET'&&tail.length===1)return Response.json(await rentalStaffDetail(env,user,tail[0]));
       if(method==='GET'&&tail.length===2&&tail[1]==='tenancy-handover')return Response.json(await rentalTenancyHandoverStatus(env,user,tail[0]),{headers:{'Cache-Control':'private, no-store'}});
       if(method==='POST'&&tail.length===2&&tail[1]==='tenancy-handover')return Response.json(await prepareRentalTenancyHandover(env,user,tail[0],await json(request)));
