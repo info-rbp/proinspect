@@ -77,6 +77,8 @@ jobs:
         run: pnpm test:pr01-d1
       - name: Rehearse additive commercial 0055 and isolated backup recovery
         run: pnpm test:commercial-d1
+      - name: Rehearse co-living 0058 on isolated local D1 and verify pre-migration recovery
+        run: pnpm test:coliving-d1
       - name: Verify existing staging preview isolation
         run: node --test tests/staging-preview.test.mjs
       - name: Prepare isolated browser test data
