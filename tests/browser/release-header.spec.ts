@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 for (const width of [320, 390, 1100, 1440]) {
   test(`public header retains account entry, sector links and mobile accessibility at ${width}px`, async ({ page }) => {
     await page.setViewportSize({width, height:950});
-    await page.goto('/guest/book/routine-inspection');
+    // Retired guest booking entry redirects to registered account onboarding; test the public marketing header on the canonical service page.
+    await page.goto('/services/routine-inspection');
     await expect(page.locator('body')).toHaveClass(/site/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(true);
     const header=page.locator('.mkt-site-header');

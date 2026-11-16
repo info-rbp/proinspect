@@ -1,4 +1,4 @@
-import { PLAN_TERM, PLAN_SCOPE, PRIVATE_SERVICE_PRICING } from './public-facts.ts';
+import { PLAN_TERM, PLAN_SCOPE, PRIVATE_SERVICE_PRICING, INSPECTION_ONLY_SERVICES, INSPECTION_ONLY_SCOPE, RESIDENTIAL_BILLING_UNIT, MAINTENANCE_APPROVAL } from './public-facts.ts';
 /** Editorial draft; no invented prices, credentials, turnaround promises or testimonials. */
 export const SERVICE_FOCUS: Record<string, [string, string, string]> = {
   'routine-inspection': [
@@ -130,22 +130,22 @@ export const ENGAGEMENTS: Record<string,{ title: string; intro: string; sections
   },
   'inspection-plans': {
     title:'Residential Inspection Only',
-    intro:'Residential Inspection Only: $20 + GST per property/month. ' + PLAN_TERM,
+    intro:'Keep condition and tenant communication on track for $20 + GST a month per whole property or separately leased room.',
     sections:[
-      ['The plan’s purpose','A structured ongoing arrangement for residential inspection planning and documented condition work, rather than full tenancy administration.'],
-      ['Confirm eligible inspections','The property-specific subscription schedule must name eligible inspection types, report formats, visit frequency, inclusions, exclusions, allowances and additional costs. No unlimited visits are implied by the monthly price.'],
-      ['Arrange each visit lawfully','Identify the property, responsible manager, tenant notice process and agreed times. Planning a due date does not itself issue a notice or confirm property access.'],
-      ['Receive findings and arrange follow-up','The report records visible condition and matters requiring review. Additional contractor works, administration and other visits remain separately agreed unless expressly included.'],
+      ['Five included service types', INSPECTION_ONLY_SERVICES.join('; ') + '.'],
+      ['A clear inspection rhythm', INSPECTION_ONLY_SCOPE],
+      ['The right unit for your property', RESIDENTIAL_BILLING_UNIT],
+      ['Know your terms', PLAN_TERM + ' Your schedule confirms the detailed scope and any early-exit terms before you join. Account registration is free; subscribing is a separate choice.'],
     ],
   },
   'standard-support': {
     title:'All-Inclusive operational support',
-    intro:'Residential All-Inclusive and Commercial All-Inclusive: each $150 + GST per property/month. ' + PLAN_TERM,
+    intro:'Take everyday coordination off your list. Residential All-Inclusive is $150 + GST a month per whole property or separately leased room; Commercial All-Inclusive is $150 + GST per commercial unit a month.',
     sections:[
-      ['Residential property support','Arrange an agreed mix of inspections, tenancy administration assistance, maintenance enquiries, contractor access and reporting through the residential operating schedule.'],
-      ['Commercial property support','Coordinate agreed commercial occupant requests, site and make-good records, lease diary tasks, contractor works and landlord updates under the sole commercial subscription.'],
-      ['Confirm what included means','The accepted property-specific service matrix identifies each task, visit frequency, allowances, escalation, client approvals and separately chargeable work. All-Inclusive is not unlimited attendance or third-party expenses.'],
-      ['Mobilise and review','Confirm parties, properties, existing agreements, access and reporting contacts. Complete the agreed onboarding before work begins, then follow the defined operational schedule.'],
+      ['Residential support', 'Build a service schedule around inspections, tenant enquiries, administration, access and vacate support.'],
+      ['Commercial support', 'Coordinate site records, occupant requests, lease diary tasks, contractor access and owner updates. Inspection frequency and allowances are agreed for each unit.'],
+      ['Your agreed service schedule', PLAN_SCOPE + ' ' + MAINTENANCE_APPROVAL],
+      ['Get started', PLAN_TERM + ' Tell us about your property and workload. We will confirm the responsibilities, included work and costs before you accept.'],
     ],
   },
   'outsourced-operations': {
@@ -217,7 +217,7 @@ export const GUIDES: Record<string,{ title: string; intro: string; sections: [st
       ['During the tenancy','Maintain a diary for lawful routine inspections, tenant requests, repairs, contractor access and the required notices. Use property-linked records rather than scattered messages.'],
       ['When maintenance is reported','Describe the problem, location and safe access requirements. Obtain approved quotes where relevant, instruct qualified trades where needed, then retain completion evidence and outstanding items.'],
       ['Before and after vacate','Consider an early pre-vacate check, document final condition against available incoming records, manage authorised key returns and use the applicable bond process.'],
-      ['Choose individual work or a plan','Request PAYG services when needed, compare Residential Inspection Only ($20 + GST per property/month) with Residential All-Inclusive ($150 + GST per property/month), and obtain the exact service entitlements and 24-month conditions before enrolling.'],
+      ['Choose individual work or a plan','Request PAYG services when needed, compare Residential Inspection Only ($20 + GST/month) with Residential All-Inclusive ($150 + GST/month), each per whole property or separately leased room, and obtain the exact service entitlements and 24-month conditions before enrolling.'],
     ],
     services:['routine-inspection','maintenance-attendance'],
   },

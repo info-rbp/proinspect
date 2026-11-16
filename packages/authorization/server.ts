@@ -1,4 +1,5 @@
 import type { Env } from '../database/types';
+import { portalFamily,permittedExperienceSections } from '../domain/portal-experience';
 import { assert, statement, now } from '../database/types';
 import {
   WORKSPACES,
@@ -14,6 +15,7 @@ export const ENABLED_WORKSPACES: readonly WorkspaceKind[] = [
   'strata-manager',
   'commercial',
   'tenant',
+  'commercial-occupant',
   'building',
   'council',
   'staff',
@@ -30,22 +32,35 @@ export async function workspaces(env: Env, user: Principal): Promise<Workspace[]
   const result: Workspace[] = [];
   const clients = await statement(
     env.DB,
-    `SELECT c.id,c.name,e.workspace_kind,m.role FROM clients c JOIN client_memberships m ON m.client_id=c.id JOIN client_entitlements e ON e.client_id=c.id AND e.active=1 WHERE m.user_id=? AND m.active=1 AND c.status='active'`,
+    `SELECT c.id,c.name,c.client_type,e.workspace_kind,m.role FROM clients c JOIN client_memberships m ON m.client_id=c.id JOIN client_entitlements e ON e.client_id=c.id AND e.active=1 WHERE m.user_id=? AND m.active=1 AND c.status='active'`,
     user.id,
-  ).all<{ id: string; name: string; workspace_kind: WorkspaceKind; role: string }>();
+  ).all<{ id: string; name: string; client_type: string; workspace_kind: WorkspaceKind; role: string }>();
+  const allTags = await statement(
+    env.DB,
+    `SELECT t.client_id,t.tag FROM account_experience_tags t JOIN client_memberships m ON m.client_id=t.client_id
+     JOIN clients c ON c.id=m.client_id AND c.status='active' WHERE m.user_id=? AND m.active=1 ORDER BY t.tag`,
+    user.id,
+  ).all<{ client_id: string; tag: string }>();
+  const tagsByClient = new Map<string, string[]>();
+  for (const row of allTags.results)
+    tagsByClient.set(row.client_id, [...(tagsByClient.get(row.client_id) ?? []), row.tag]);
   for (const c of clients.results)
     result.push({
       kind: c.workspace_kind,
       scopeId: c.id,
       name: c.name,
       role: c.role,
+      accountType: c.client_type,
+      experienceTags: tagsByClient.get(c.id) ?? [],
       href: `/w/${c.workspace_kind}/${c.id}`,
     });
   const tenancies = await statement(
     env.DB,
-    `SELECT t.id,p.address FROM tenancy_memberships m JOIN tenancies t ON t.id=m.tenancy_id JOIN properties p ON p.id=t.property_id WHERE m.user_id=? AND m.starts_at<=?`,
-    user.id,
-    now(),
+    `SELECT t.id,p.address FROM tenancy_memberships m JOIN tenancies t ON t.id=m.tenancy_id
+       JOIN properties p ON p.id=t.property_id
+       WHERE m.user_id=? AND m.starts_at<=? AND (m.ends_at IS NULL OR m.ends_at>?)
+         AND t.status='active' AND t.starts_at<=? AND (t.ends_at IS NULL OR t.ends_at>?)`,
+    user.id,now(),now(),now(),now(),
   ).all<{ id: string; address: string }>();
   for (const t of tenancies.results)
     result.push({
@@ -55,6 +70,27 @@ export async function workspaces(env: Env, user: Principal): Promise<Workspace[]
       role: 'tenant',
       href: `/w/tenant/${t.id}`,
     });
+  // Commercial occupants are distinct from tenants, landlords and scheme members.
+  // Revoked/expired relationships disappear from every session and route immediately.
+  const occupancies = await statement(
+    env.DB,
+    `SELECT o.id,p.address,o.premises_label FROM commercial_occupant_memberships m
+     JOIN commercial_occupancies o ON o.id=m.occupancy_id AND o.status='active'
+     JOIN properties p ON p.id=o.property_id AND p.sector='commercial' AND p.archived_at IS NULL
+     JOIN clients c ON c.id=o.client_id AND c.status='active'
+     JOIN client_entitlements e ON e.client_id=o.client_id AND e.workspace_kind='commercial' AND e.active=1
+     JOIN property_management_relationships pm ON pm.property_id=o.property_id
+       AND pm.manager_client_id=o.client_id
+       AND pm.starts_at<=? AND (pm.ends_at IS NULL OR pm.ends_at>?)
+     WHERE m.user_id=? AND m.starts_at<=? AND (m.ends_at IS NULL OR m.ends_at>?)
+       AND o.starts_at<=? AND (o.ends_at IS NULL OR o.ends_at>?)
+     ORDER BY p.address LIMIT 100`,
+    now(),now(),user.id,now(),now(),now(),now(),
+  ).all<{id:string;address:string;premises_label:string}>();
+  for (const o of occupancies.results) result.push({
+    kind:'commercial-occupant',scopeId:o.id,name:o.address+' / '+o.premises_label,
+    role:'occupant',href:'/w/commercial-occupant/'+o.id,
+  });
   const schemes = await statement(
     env.DB,
     `SELECT DISTINCT s.id,s.name,m.role FROM scheme_memberships m JOIN strata_schemes s ON s.id=m.scheme_id WHERE m.user_id=? AND m.starts_at<=? AND (m.ends_at IS NULL OR m.ends_at>?)`,
@@ -86,6 +122,16 @@ export async function workspaces(env: Env, user: Principal): Promise<Workspace[]
       role: user.staffRole,
       href: '/w/staff/operations',
     });
+  const preferences=(await statement(env.DB,
+    'SELECT portal_family,landing_section,display_density FROM user_portal_preferences WHERE user_id=?',
+    user.id).all<{portal_family:string;landing_section:string;display_density:'compact'|'comfortable'}>()).results;
+  for(const w of result){
+    const row=preferences.find(p=>p.portal_family===portalFamily(w.kind));
+    if(!row)continue;
+    w.displayDensity=row.display_density;
+    w.landingSection=permittedExperienceSections(w).includes(row.landing_section)
+      ? row.landing_section : 'overview';
+  }
   return result;
 }
 export async function workspace(
@@ -179,7 +225,7 @@ export function propertyScope(
           values: [user.id],
         }
       : { sql: '1=1', values: [] };
-  if (w.kind === 'building-manager') return {sql:'0=1',values:[]};
+  if (w.kind === 'building-manager' || w.kind === 'commercial-occupant') return {sql:'0=1',values:[]};
   if (w.kind === 'tenant')
     return {
       sql: `EXISTS(SELECT 1 FROM tenancies t JOIN tenancy_memberships m ON m.tenancy_id=t.id WHERE t.property_id=${alias}.id AND t.id=? AND m.user_id=? AND m.starts_at<=?)`,

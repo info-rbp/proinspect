@@ -77,6 +77,8 @@ jobs:
         run: pnpm test:pr01-d1
       - name: Rehearse additive commercial 0055 and isolated backup recovery
         run: pnpm test:commercial-d1
+      - name: Rehearse co-living 0059 on isolated local D1 and verify pre-migration recovery
+        run: pnpm test:coliving-d1
       - name: Verify existing staging preview isolation
         run: node --test tests/staging-preview.test.mjs
       - name: Prepare isolated browser test data
@@ -97,7 +99,7 @@ jobs:
             playwright-report/
           retention-days: 7
   staging-preview:
-    if: github.repository == 'info-rbp/proinspect' && ((github.event_name == 'workflow_dispatch' && contains(fromJSON('["refs/heads/feat/pr01-account-driven-client-portal","refs/heads/feat/public-site-services-refresh","refs/heads/feat/public-content-final-alignment","refs/heads/feat/residential-application-readiness","refs/heads/feat/commercial-dynamic-application","refs/heads/feat/managed-property-application-routing","refs/heads/feat/private-managed-document-scanning","refs/heads/fix/managed-rental-application-availability","refs/heads/feat/temporary-rental-document-delivery"]'), github.ref)) || (github.event_name == 'pull_request' && contains(fromJSON('["feat/pr01-account-driven-client-portal","feat/public-site-services-refresh","feat/public-content-final-alignment","feat/residential-application-readiness","feat/commercial-dynamic-application","feat/managed-property-application-routing","feat/private-managed-document-scanning","fix/managed-rental-application-availability","feat/temporary-rental-document-delivery"]'), github.event.pull_request.head.ref) && github.event.pull_request.head.repo.full_name == github.repository))
+    if: github.repository == 'info-rbp/proinspect' && ((github.event_name == 'workflow_dispatch' && contains(fromJSON('["refs/heads/feat/pr01-account-driven-client-portal","refs/heads/feat/public-site-services-refresh","refs/heads/feat/public-content-final-alignment","refs/heads/feat/residential-application-readiness","refs/heads/feat/commercial-dynamic-application","refs/heads/feat/managed-property-application-routing","refs/heads/feat/private-managed-document-scanning","refs/heads/fix/managed-rental-application-availability","refs/heads/feat/temporary-rental-document-delivery","refs/heads/integrate/public-offering-portals-20261116"]'), github.ref)) || (github.event_name == 'pull_request' && contains(fromJSON('["feat/pr01-account-driven-client-portal","feat/public-site-services-refresh","feat/public-content-final-alignment","feat/residential-application-readiness","feat/commercial-dynamic-application","feat/managed-property-application-routing","feat/private-managed-document-scanning","fix/managed-rental-application-availability","feat/temporary-rental-document-delivery","integrate/public-offering-portals-20261116"]'), github.event.pull_request.head.ref) && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
@@ -136,7 +138,7 @@ jobs:
       - name: Check hosted navigation, hydration and responsive layout
         run: node scripts/release/v3-staging-browser.mjs
       - name: Review public service pages and capture desktop and mobile layouts
-        if: github.head_ref == 'feat/public-site-services-refresh' || github.head_ref == 'feat/public-content-final-alignment' || github.ref == 'refs/heads/feat/public-site-services-refresh' || github.ref == 'refs/heads/feat/public-content-final-alignment'
+        if: github.head_ref == 'integrate/public-offering-portals-20261116' || github.head_ref == 'feat/public-site-services-refresh' || github.head_ref == 'feat/public-content-final-alignment' || github.ref == 'refs/heads/feat/public-site-services-refresh' || github.ref == 'refs/heads/feat/public-content-final-alignment'
         env:
           PUBLIC_SITE_REVIEW_ORIGIN: https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev
         run: node scripts/release/public-site-review.mjs

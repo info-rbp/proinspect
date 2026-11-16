@@ -97,7 +97,8 @@ test('professional booking creates a job and scoped full record browsing opens i
     await expect(page.getByRole('radio').first()).toBeVisible();
     await page.getByRole('radio').first().check();
     await page.getByRole('button', { name: 'Confirm booking', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Your service is booked.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Appointment recorded — payment required.' })).toBeVisible();
+    await expect(page.getByText(/work cannot proceed until the payment has settled/)).toBeVisible();
     await page.goto(href + '/records/bookings');
     await expect(page.getByRole('status')).toHaveText('1 matching authorised records.');
     await page.getByRole('link', { name: 'Open record' }).click();

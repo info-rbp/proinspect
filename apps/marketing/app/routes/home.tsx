@@ -43,7 +43,7 @@ export default function Home() {
         home
         eyebrow="ProInspect Property Services · Western Australia"
         title="Your property. Our practical support."
-        intro="Inspections. Outsourced property operations. Building services. From a single condition report to ongoing operational support, we connect practical work with clear records for owners, managers and building teams across Perth and Peel."
+        intro="From a single inspection to everyday property care, ProInspect takes practical work off your list. Clear reports, coordinated attendance and ongoing support for owners and managers across Perth and Peel."
         image="residential"
         primary={{ label: 'Explore our services', to: '#property-services' }}
         secondary={{ label: 'Discuss ongoing support', to: '/contact' }}
@@ -100,10 +100,9 @@ export default function Home() {
           </div>
           <div>
             <p>
-              Residential Inspection Only is $20 + GST per property/month. Residential All-Inclusive
-              and Commercial All-Inclusive are each $150 + GST per property/month. Each has an initial
-              24-month term, then continues month-to-month with 60 days’ written cancellation notice.
-              Inclusions, allowances, extras and any early-exit obligations are agreed before you commit.
+              Get a clear picture of condition, keep everyday tasks moving and follow through
+              on the work that matters. Choose a one-off service or discuss ongoing support
+              for your home, premises or shared building.
             </p>
             <ul className="pi-principles">
               <li>Inspections: factual condition records for the next decision</li>

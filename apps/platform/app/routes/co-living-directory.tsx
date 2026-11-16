@@ -1,0 +1,19 @@
+import { Link } from 'react-router';
+import { useWorkspace } from '../lib/workspace';
+import { PageHeading, EmptyState } from '../../../../packages/ui/components';
+export default function CoLivingDirectory(){
+  const d=useWorkspace();
+  const properties=d.properties.filter(p=>p.sector==='residential');
+  return <>
+    <PageHeading eyebrow="Residential" title="Co-living & shared residences"
+      description="Manage individual private rooms or beds within one authorised residential property, with resident-specific invitations and shared-area maintenance."/>
+    <div className="stack">
+      {properties.length?<section className="workspace-grid">
+        {properties.map(p=><article className="workspace-card" key={p.id}>
+          <h2>{p.address}</h2><p>{p.suburb} · {p.property_type}</p>
+          <Link className="button secondary" to={d.workspace.href+'/properties/'+encodeURIComponent(p.id)+'/co-living'}>Manage rooms & shared areas</Link>
+        </article>)}
+      </section>:<EmptyState title="No residential properties available" description="Add or obtain authorised access to a residential property before configuring co-living."/>}
+    </div>
+  </>;
+}

@@ -2,17 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { WORKSPACES } from '../packages/domain/index.ts';
+import { PORTAL_MENU_PROFILES, MORE_TOOL_GROUPS } from '../packages/domain/portal-navigation.ts';
 
 const layout = readFileSync('apps/platform/app/routes/workspace.tsx', 'utf8');
 const overview = readFileSync('apps/platform/app/routes/overview.tsx', 'utf8');
 const css = readFileSync('packages/ui/portal.css', 'utf8');
 const docs = readFileSync('docs/PORTALS.md', 'utf8');
 
-test('all nine workspace kinds have a distinct compact first-level navigation', () => {
-  const map = layout.match(/const primaryByKind: Record<string, string\[\]> = \{([\s\S]*?)\n  \};/)?.[1];
-  assert.ok(map, 'Missing kind-specific navigation registry');
-  const keys = [...map.matchAll(/^\s*('?[\w-]+'?): \[/gm)].map(x => x[1].replaceAll("'", ''));
-  assert.deepEqual(keys.sort(), Object.keys(WORKSPACES).sort());
+test('all ten workspace kinds have a distinct compact first-level navigation', () => {
+  assert.deepEqual(Object.keys(PORTAL_MENU_PROFILES).sort(), Object.keys(WORKSPACES).sort());
+  assert.match(layout, /getNavigationProfile\(w.kind\)/);
+  const tags=new Set(Object.values(PORTAL_MENU_PROFILES).map(profile=>profile.tag));
+  assert.equal(tags.size, Object.keys(WORKSPACES).length);
+  for (const profile of Object.values(PORTAL_MENU_PROFILES)) {
+    assert.match(profile.tag,/^NAV-[A-Z-]+$/);
+    assert.match(profile.version,/^\d+\.\d+\.\d+$/);
+    assert.ok(profile.primary.includes(''));
+    assert.ok(profile.primary.length<=7);
+  }
   assert.ok(layout.includes('const primary = items.filter'), 'Keep the permission-aware source of available links');
   assert.ok(layout.includes('const secondary = items.filter'), 'Keep specialist deep links');
   assert.match(layout, /moreActive/);
@@ -21,7 +28,9 @@ test('all nine workspace kinds have a distinct compact first-level navigation', 
 });
 
 test('specialist navigation is grouped and searchable without privilege changes', () => {
-  for (const group of ['Operations', 'Documents & services', 'Administration']) assert.ok(layout.includes(group));
+  for (const group of ['Operations', 'Documents & services', 'Administration'])
+    assert.ok(MORE_TOOL_GROUPS.some(g=>g.label===group));
+  assert.match(layout, /const toolGroups = MORE_TOOL_GROUPS/);
   assert.match(layout, /type="search"/);
   assert.match(layout, /aria-label="More tools"/);
   assert.match(layout, /staff && \['administrator', 'operations_manager'\]/);

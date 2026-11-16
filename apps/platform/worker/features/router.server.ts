@@ -20,7 +20,9 @@ import { type Env, assert, statement } from '../../../../packages/database/types
 import type { Principal, Workspace } from '../../../../packages/domain/index';
 import { readJson } from '../../../../packages/operations/core';
 import { operationsWrite } from '../../../../packages/authorization/server';
+import { requireOrigin } from '../../../../packages/auth/server';
 import * as portfolio from './portfolio.server';
+import * as councilAppointments from './council-appointments.server';
 import * as booking from './bookings.server';
 import * as documents from './documents.server';
 import * as finance from './finance.server';
@@ -118,6 +120,7 @@ export async function featureApi(
     if (tail === 'search')
       return ok(await admin.searchOperations(env, user, w, url.searchParams.get('q') ?? ''));
     if (tail === 'team') return ok(await admin.teamData(env, user, w));
+    if (tail === 'council-appointments') return ok(await councilAppointments.councilReviews(env,user,w));
     if (tail === 'integrations') return ok(await integrations.integrationData(env, user, w));
     if (area === 'requests' && id && parts.length === 2)
       return ok(await documents.requestDetail(env, user, w, id));
@@ -208,6 +211,11 @@ export async function featureApi(
   if (area === 'organisation-applications' && id && action === 'review') {
     staff();
     return ok(await portfolio.approveOrganisation(env, user, id, await body()));
+  }
+  if (area === 'council-appointments' && id && action === 'review') {
+    requireOrigin(request,env);
+    staff();
+    return ok(await councilAppointments.reviewCouncilAppointment(env,user,id,await body()));
   }
   if (tail === 'team/invite') return ok(await portfolio.inviteMember(env, user, w, await body()));
   if (tail === 'team/assignments')

@@ -196,6 +196,7 @@ export default function ReportDetail(){
   {payload.draft&&editor&&<Editor record={report} initial={payload.draft.content} staff={d.staff}/>}
   {staff&&payload.history&&<HistoryPanel history={payload.history}/>}
   {staff&&<section className="panel stack-sm"><h2>Evidence and quality review</h2>
+    <Link className="button secondary small" to={d.workspace.href+'/reports/'+report.id+'/annotations'}>Review photo marker annotations</Link>
     {(payload.evidence||[]).length?payload.evidence.map((e:any)=><div className="list-row" key={e.id}><div>
       <strong>Photo {e.id}</strong><p className="small muted">{e.status} · {e.area_id}{e.component_id?' / '+e.component_id:''}</p>
       <a href={`/api/w/staff/operations/reports/${report.id}/evidence/${e.id}/download`}>View private evidence</a>

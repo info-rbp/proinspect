@@ -1,37 +1,41 @@
-/** Operator-confirmed marketing facts, 15 November 2026. Does not activate billing. */
+/** Operator-confirmed marketing facts, 16 November 2026; reconciled to the subscription decision workbook. Does not activate billing. */
 export const PUBLIC_COMPANY = { name: 'ProInspect Property Services Pty Ltd', abn: '52 703 550 609', acn: '703 550 609', email: 'info@proinspect.systems' } as const;
 export const PUBLIC_PLANS = [
-  { id: 'residential-inspection-only', name: 'Residential Inspection Only', monthlyExGst: 20 },
-  { id: 'residential-all-inclusive', name: 'Residential All-Inclusive', monthlyExGst: 150 },
-  { id: 'commercial-all-inclusive', name: 'Commercial All-Inclusive', monthlyExGst: 150 },
+  { id: 'residential-inspection-only', name: 'Residential Inspection Only', monthlyExGst: 20, billingUnit: 'property or separately leased room', billingBasis: 'residential-property-or-room' },
+  { id: 'residential-all-inclusive', name: 'Residential All-Inclusive', monthlyExGst: 150, billingUnit: 'property or separately leased room', billingBasis: 'residential-property-or-room' },
+  { id: 'commercial-all-inclusive', name: 'Commercial All-Inclusive', monthlyExGst: 150, billingUnit: 'commercial unit', billingBasis: 'commercial-unit' },
 ] as const;
 export const PLAN_TERM = 'An initial 24-month term, followed by month-to-month continuation with 60 days’ written cancellation notice.';
-export const PLAN_SCOPE = 'The property-specific agreement confirms included work, frequency, allowances, exclusions, authorised extras and any early-exit obligations before you commit. “All-Inclusive” is a plan name, not a promise of unlimited services or third-party costs.';
-export const SERVICE_COVERAGE = 'Scheduled services cover approved suburb and postcode combinations across Perth and Peel, subject to the task, access and capacity. Other Western Australian locations are considered by request. Island, regional and postal-only entries require manual confirmation.';
-export const PRIVATE_SERVICE_PRICING = 'Sign in to view individual service pricing or request a quote. Travel, specialist work, urgency and additional attendance are scoped and agreed before work proceeds.';
+export const INSPECTION_ONLY_SERVICES = ['Quarterly routine inspection', 'Incoming Property Condition Report', 'Exit inspection', 'Report generated on the ProInspect Platform', 'Tenant communication'] as const;
+export const RESIDENTIAL_BILLING_UNIT = 'Per whole property when leased as a whole, or per separately leased room. Shared-area work is scoped separately to avoid duplicate charges.';
+export const INSPECTION_ONLY_SCOPE = 'Routine visits follow lawful access requirements, with no more than four in any rolling 12 months and no carry-over of unused visits. Your schedule confirms PCR and exit allowances, tenant communication, notice responsibilities and report delivery before you join.';
+export const MAINTENANCE_APPROVAL = 'You approve the quote before expenditure. Trade labour, materials and specialist costs are separate from coordination unless expressly included in your agreement.';
+export const PLAN_SCOPE = 'Your agreed service schedule sets inclusions, visit limits, extras and any early-exit terms before you join. All-Inclusive covers that agreed scope; trade costs and specialist work are separate unless expressly included.';
+export const SERVICE_COVERAGE = 'Scheduled services across approved Perth and Peel suburbs. Other WA locations, islands and special-access sites are considered by request, subject to travel, access and availability.';
+export const PRIVATE_SERVICE_PRICING = 'Sign in for individual service prices or ask for a tailored quote. Any travel, urgency or specialist extras are agreed before work starts.';
 export const RESIDENTIAL_SERVICE_GROUPS = [
-  ['Property inspections & condition reports', 'Incoming PCRs using the applicable WA Form 1 requirements, routine and follow-up inspections, vacant-property checks, inventory records, pre-leasing and final inspections. Visual reports cover accessible conditions; specialist certification is separate.'],
-  ['Marketing & property viewings', 'Listing information, enquiry coordination, advertised open homes, private viewings and attendance records under the responsible representative’s authority.'],
-  ['Tenant applications & tenancy commencement', 'Secure application administration, authorised reference follow-up, commencement records and handover coordination. The landlord or appointed representative selects applicants and approves terms.'],
-  ['Lease reviews, breaches & formal notices', 'Diary, evidence and document preparation support for the authorised decision-maker. Prescribed notices, service and legal interpretation require appropriate authority and advice.'],
-  ['Tenant requests & communications', 'Organise ordinary requests and follow-up without taking over decisions on pets, modifications, permissions or tenancy rights.'],
-  ['Maintenance requests & contractor works', 'Triage reported issues, seek approved quotes, coordinate authorised attendance and record completion. Spending limits and contractor instructions are agreed first.'],
-  ['Preventative care & condition monitoring', 'Planned checks and practical observations identify matters for review. Frequency and scope are property-specific.'],
-  ['Residential safety & compliance', 'Record visible concerns and coordinate qualified providers. General attendance does not certify electrical, gas, fire, structural or other regulated compliance.'],
-  ['Keys, access & property attendance', 'Authorised key collection, access coordination, handovers and attendance with clear custody and entry instructions.'],
-  ['Utilities, records & owner reporting', 'Agreed utility administration, property records and owner updates. Rent collection and licensed or statutory management functions are not implied.'],
-  ['Vacate, exit & bond administration', 'Vacate coordination, final condition evidence and bond administration support. Liability, deductions, bond release and disputes remain with the authorised parties and applicable process.'],
-  ['Abandonment, goods & property recovery', 'Document observations and coordinate authorised next steps. An inspection alone does not establish abandonment, disposal, possession or a right of entry.'],
-  ['Disputes, court & sensitive tenancy matters', 'Factual records and administrative support with restricted access. Legal advice, representation and sensitive-case decisions require the appropriate professional and authority.'],
-  ['Insurance, incidents & specialist support', 'Factual incident records and approved provider or insurer coordination. Coverage decisions, loss assessment and specialist advice are separately determined.'],
+  ['Property inspections & condition reports', 'Incoming PCRs, routine visits, vacancy checks, inventories and exit records give you a useful view of property condition.'],
+  ['Marketing & property viewings', 'Listing support, enquiries, open homes and private viewings help move your leasing campaign forward.'],
+  ['Tenant applications & tenancy commencement', 'Application administration, reference follow-up and handovers support your choice of tenant.'],
+  ['Lease reviews, breaches & formal notices', 'Keep review dates, evidence and notice preparation organised for the authorised decision-maker.'],
+  ['Tenant requests & communications', 'Give everyday tenant enquiries a clear contact and a recorded next step.'],
+  ['Maintenance requests & contractor works', 'Record issues, obtain quotes and coordinate approved work through to completion.'],
+  ['Preventative care & condition monitoring', 'Plan practical checks that bring emerging maintenance needs to your attention.'],
+  ['Residential safety & compliance', 'Record visible concerns and arrange qualified providers for specialist checks or certification.'],
+  ['Keys, access & property attendance', 'Arrange keys, contractor access and handovers with clear custody records.'],
+  ['Utilities, records & owner reporting', 'Keep agreed utility administration, property records and owner updates together.'],
+  ['Vacate, exit & bond administration', 'Coordinate vacates, outgoing condition records and bond paperwork for the responsible parties.'],
+  ['Abandonment, goods & property recovery', 'Prepare factual records and coordinate lawful next steps with the responsible manager or adviser.'],
+  ['Disputes, court & sensitive tenancy matters', 'Organise factual records and private administration alongside the appropriate professional advice.'],
+  ['Insurance, incidents & specialist support', 'Document incidents and coordinate approved insurer or specialist follow-up.'],
 ] as const;
 export const BUILDING_SERVICE_GROUPS = [
-  ['Building management & operations', 'Attendance, common-area checks, access, contractor coordination, handovers and agreed routines. Governance, budgets and statutory decisions remain with authorised representatives.'],
-  ['Cleaning & presentation', 'Common-area cleaning, presentation checks and specialist cleaning coordination with agreed standards and frequencies.'],
-  ['Waste management & recycling', 'Bin presentation, waste-area checks, recycling coordination and contractor follow-up within the building schedule.'],
-  ['Gardening & reticulation', 'Grounds care, garden presentation and reticulation observations, with regulated or specialist work referred to appropriate providers.'],
-  ['Minor maintenance & repairs', 'Safe general minor works within agreed competence and scope, plus licensed-trade coordination. Materials and additional works are agreed separately.'],
-  ['Pools & specialist building systems', 'Operational observations and qualified pool, lift, fire and mechanical contractor coordination. Technical servicing and certification remain with those providers.'],
-  ['Records, reporting & technology', 'Building logs, issue registers, attendance records and authorised reporting keep the next action connected to the site.'],
-  ['Specialist & enhanced services', 'Tailored project and exceptional building tasks. Frequency, after-hours requirements and third-party costs are quoted rather than assumed included.'],
+  ['Building management & operations', 'Common-area checks, contractor access and handovers keep daily building tasks moving.'],
+  ['Cleaning & presentation', 'Maintain shared-space presentation through an agreed cleaning schedule.'],
+  ['Waste management & recycling', 'Keep bins, recycling and waste areas on an organised routine.'],
+  ['Gardening & reticulation', 'Support garden presentation, grounds care and reticulation checks.'],
+  ['Minor maintenance & repairs', 'Arrange safe minor works and coordinate licensed trades, with costs approved first.'],
+  ['Pools & specialist building systems', 'Coordinate qualified providers for pools, lifts, fire and other building systems.'],
+  ['Records, reporting & technology', 'Give your team clear attendance records, issue logs and action updates.'],
+  ['Specialist & enhanced services', 'Scope projects, unusual tasks and after-hours work around your building.'],
 ] as const;

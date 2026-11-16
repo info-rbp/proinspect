@@ -1,4 +1,5 @@
-import { Link } from 'react-router';
+import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
+import { loadApi } from '../lib/api.server';
 import {
   Form,
   useActionData,
@@ -16,6 +17,10 @@ import {
   Field,
 } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
+export async function loader({request,context,params}:LoaderFunctionArgs) {
+  if(params.kind!=='tenant')return {coLiving:null};
+  return {coLiving:await loadApi(request,context,`/api/w/${params.kind}/${params.scopeId}/my-room`)};
+}
 export async function action(args: ActionFunctionArgs) {
   const f = await args.request.formData();
   if (f.get('intent') === 'convert')
@@ -30,6 +35,7 @@ export async function action(args: ActionFunctionArgs) {
     'requests',
     {
       propertyId: f.get('propertyId') || undefined,
+      spaceId: f.get('spaceId') || undefined,
       category: f.get('category'),
       title: f.get('title'),
       details: f.get('details'),
@@ -40,6 +46,9 @@ export async function action(args: ActionFunctionArgs) {
 }
 export default function Requests() {
   const d = useWorkspace();
+  const {coLiving}=useLoaderData<typeof loader>();
+  const mySpace=coLiving?.space as {id:string;label:string}|undefined;
+  const sharedSpaces=(coLiving?.sharedAreas??[]) as {id:string;label:string}[];
   const w = d.workspace;
   const result = useActionData<any>();
   const [search] = useSearchParams();
@@ -121,6 +130,14 @@ export default function Requests() {
                   </select>
                 </Field>
               )}
+              {w.kind==='tenant'&&mySpace&&<Field label="Location in your co-living property" name="spaceId"
+                help="Your private room or an authorised shared area; other residents' rooms are not listed.">
+                <select name="spaceId" id="spaceId" defaultValue="">
+                  <option value="">General property issue</option>
+                  <option value={mySpace.id}>My {mySpace.label}</option>
+                  {sharedSpaces.map(s=><option value={s.id} key={s.id}>{s.label} (shared area)</option>)}
+                </select>
+              </Field>}
               <div className="grid-2">
                 <Field label="Request type" name="category">
                   <select id="category" name="category">

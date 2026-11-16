@@ -1,6 +1,8 @@
 # ProInspect Residential Property Support — Commercial terms draft
 
-**Status: internal legal/commercial review only. Not yet a customer agreement.**
+**Status: historical weekly-model draft, superseded for new advertised plans by the 16 November 2026 subscription decision workbook. Not a current customer offer.**
+
+The $50/week, Friday billing, grace and weekly cancellation proposals below document a gated legacy implementation only. New public offers are $20/$150 residential per whole property or separately leased room and $150 commercial per unit, plus GST monthly, with an initial 24-month term then month-to-month and 60 days written notice. See `SUBSCRIPTION_WORKBOOK_RECONCILIATION_2026-11-16.md`. Existing signed arrangements and paid entitlements are not silently converted.
 
 ## Parties and authority
 The subscriber is the verified owner of the residential property or an authorised individual responsible for its self-management. ProInspect provides inspection, attendance, documentation and operational coordination services within the approved scope. The subscriber retains management/legal responsibility and must give lawful instructions, access arrangements and relevant tenant notices. Activities requiring a licensed property agent or legal adviser are outside this contract unless an authorised professional is separately engaged.

@@ -28,7 +28,13 @@ export async function renderApprovedReport(env:Env,user:Principal,w:Workspace,id
  const wanted=new Set(content.areas.flatMap(area=>[...area.overviewPhotoIds,...area.components.flatMap(c=>c.photoIds)]));
  const evidence=(await statement(env.DB,'SELECT id,object_key,sha256,status,size FROM report_evidence WHERE report_id=?',id)
     .all<{id:string,object_key:string,sha256:string,status:string,size:number}>()).results;
- const match=new Map(evidence.map(e=>[e.id,e])),photos=new Map<string,{bytes:Uint8Array,caption:string}>();
+ const annotations=(await statement(env.DB,
+    "SELECT evidence_id,source_sha256,annotations_json,review_status FROM report_photo_annotations WHERE report_id=?",
+    id).all<{evidence_id:string;source_sha256:string;annotations_json:string;review_status:string}>()).results;
+ const annotationsById=new Map(annotations.map(a=>[a.evidence_id,a]));
+ const match=new Map(evidence.map(e=>[e.id,e])),
+   photos=new Map<string,{bytes:Uint8Array;caption:string;sourceSha256?:string;
+     annotations?:Array<{x:number;y:number;label:string}>}>();
  let total=0;
  for(const photoId of wanted){
   const info=match.get(photoId);
@@ -39,7 +45,14 @@ export async function renderApprovedReport(env:Env,user:Principal,w:Workspace,id
   assert(object,409,'EVIDENCE_MISSING','Required evidence cannot be loaded.');
   const data=await object.arrayBuffer();
   assert(await digest(data)===info.sha256,409,'EVIDENCE_HASH_MISMATCH','Original evidence does not match its stored hash.');
-  photos.set(photoId,{bytes:new Uint8Array(data),caption:'Inspection evidence '+photoId});
+  const annotation=annotationsById.get(photoId);
+  assert(!annotation||annotation.review_status==='accepted',409,'ANNOTATIONS_PENDING',
+    'Photograph annotations need independent acceptance before the approved PDF can be rendered.');
+  assert(!annotation||annotation.source_sha256===info.sha256,409,'PHOTO_PROVENANCE_CHANGED',
+    'Photograph source hash no longer agrees with its reviewed observations.');
+  photos.set(photoId,{bytes:new Uint8Array(data),caption:'Inspection evidence '+photoId,
+    sourceSha256:info.sha256,
+    annotations:annotation?JSON.parse(annotation.annotations_json) as Array<{x:number;y:number;label:string}>:[]});
  }
  let pdf:Uint8Array;
  try{pdf=await renderReportPdf({title:'ProInspect '+report.report_type+' report',
@@ -52,7 +65,11 @@ export async function renderApprovedReport(env:Env,user:Principal,w:Workspace,id
  const documentId=uid('doc'),key=`reports-native/${id}/${version.id}/${documentId}.pdf`,createdAt=now();
  const manifest={reportId:id,reportVersionId:version.id,contentSha256:version.content_sha256,
   layoutSha256:version.layout_sha256,templateId:report.template_id,templateVersion:report.template_version,
-  rendererVersion:'proinspect-native-pdf-2',photoSha256:evidence.filter(e=>wanted.has(e.id)).map(e=>({id:e.id,sha256:e.sha256})),documentSha256:pdfHash};
+  rendererVersion:'proinspect-native-pdf-3',
+  photoSha256:evidence.filter(e=>wanted.has(e.id)).map(e=>({id:e.id,sha256:e.sha256})),
+  photoAnnotations:annotations.filter(a=>wanted.has(a.evidence_id)).map(a=>({
+    evidenceId:a.evidence_id,sourceSha256:a.source_sha256,reviewStatus:a.review_status,
+    annotations:JSON.parse(a.annotations_json)})),documentSha256:pdfHash};
  await env.DOCUMENTS.put(key,pdf,{httpMetadata:{contentType:'application/pdf'},customMetadata:{sha256:pdfHash,reportVersion:version.id}});
  try{
   await env.DB.batch([

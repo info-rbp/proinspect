@@ -187,7 +187,16 @@ export class BookingScheduler extends DurableObject<Env> {
           'IDEMPOTENCY_MISMATCH',
           'This submission key was already used. Reload and review the booking.',
         );
-        return Response.json({ id: existing.id, reference: existing.reference, replayed: true });
+        const pendingPayment=await statement(this.env.DB,
+          `SELECT p.id AS payment_id,p.total_cents,p.status
+           FROM registered_booking_payment_links l JOIN payments p ON p.id=l.payment_id
+           WHERE l.booking_id=?`,existing.id).first<{payment_id:string;total_cents:number;status:string}>();
+        return Response.json({
+          id:existing.id,reference:existing.reference,replayed:true,
+          paymentId:pendingPayment?.payment_id??null,
+          paymentRequired:Boolean(pendingPayment&&pendingPayment.status!=='paid'),
+          totalCents:pendingPayment?.total_cents??0,
+        });
       }
       const service = (await catalogue(this.env)).find((s) => s.id === data.serviceId);
       assert(service, 404, 'SERVICE_NOT_FOUND', 'Service not found.');
@@ -267,6 +276,16 @@ export class BookingScheduler extends DurableObject<Env> {
         reference = `PI-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
         woId = `wo_${id.slice(4)}`,
         time = now();
+      const amountExGstCents = includedSubscription ? 0 : service.price_ex_gst_cents ?? 0;
+      const paymentRequired = !includedSubscription && amountExGstCents > 0;
+      const gstCents = paymentRequired ? Math.round(amountExGstCents / 10) : 0;
+      // The existing Checkout integration is sandbox-only; production must not
+      // reserve an uncollectable one-off paid appointment until a separately
+      // accepted live Stripe flow and legal/tax release are deployed.
+      assert(!paymentRequired || this.env.APP_ENV!=='production',503,
+        'ONE_OFF_LIVE_CHECKOUT_NOT_RELEASED',
+        'New one-off paid appointments are not yet activated. No booking or charge has been created.');
+      const paymentId = paymentRequired ? uid('pay') : null;
       const legal = await legalStatements(this.env,{kind:'user',id:user.id},'booking',id,{clientId,propertyId:property.id,serviceId:service.id,startsAt:window.startsAt,priceExGstCents:includedSubscription?0:service.price_ex_gst_cents,subscriptionId:includedSubscription?.id??null,access:data.access},data.legalConsent);
       const statements = [
         ...legal,
@@ -300,16 +319,27 @@ export class BookingScheduler extends DurableObject<Env> {
         ),
         statement(
           this.env.DB,
-          `INSERT INTO work_orders(id,reference,booking_id,client_id,property_id,title,status,created_at,updated_at) VALUES(?,?,?,?,?,?,'scheduled',?,?)`,
+          `INSERT INTO work_orders(id,reference,booking_id,client_id,property_id,title,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?, ?,?)`,
           woId,
           `WO-${reference.slice(3)}`,
           id,
           clientId,
           property.id,
           service.name,
+          paymentRequired ? 'awaiting_approval' : 'scheduled',
           time,
           time,
         ),
+        ...(paymentId ? [
+          statement(this.env.DB,
+            `INSERT INTO payments(id,client_id,property_id,work_order_id,description,amount_ex_gst_cents,gst_cents,total_cents,status,created_at,updated_at)
+             VALUES(?,?,?,?,?,?,?,?,'payment_required',?,?)`,
+            paymentId,clientId,property.id,woId,service.name,amountExGstCents,gstCents,
+            amountExGstCents+gstCents,time,time),
+          statement(this.env.DB,
+            'INSERT INTO registered_booking_payment_links(booking_id,payment_id,price_ex_gst_cents,gst_cents,created_at) VALUES(?,?,?,?,?)',
+            id,paymentId,amountExGstCents,gstCents,time),
+        ] : []),
         statement(
           this.env.DB,
           'INSERT INTO booking_access_secrets(booking_id,envelope,updated_at) VALUES(?,?,?)',
@@ -320,9 +350,11 @@ export class BookingScheduler extends DurableObject<Env> {
         audit(this.env, user, 'booking.created', 'booking', id, property.id, { workOrderId: woId }),
         await mailEvent(this.env, 'booking.confirmed', {
           to: user.email,
-          subject: `Booking confirmed: ${reference}`,
-          heading: 'Your booking is confirmed',
-          body: 'Your booking and work order are now linked to your property. Your report will appear in your account after it is issued.',
+          subject: `${paymentRequired ? 'Payment required for booking' : 'Booking confirmed'}: ${reference}`,
+          heading: paymentRequired ? 'Complete payment to proceed' : 'Your booking is confirmed',
+          body: paymentRequired
+            ? 'Your appointment has been recorded but service delivery requires a separately verified payment. Use Finance in your account to open secure Checkout after any required pricing, tax and provider approvals.'
+            : 'Your booking and work order are now linked to your property. Your report will appear in your account after it is issued.',
           href: `${this.env.APP_ORIGIN}${w.href}/bookings`,
           facts: {
             Reference: reference,
@@ -389,7 +421,7 @@ export class BookingScheduler extends DurableObject<Env> {
       statements.push(
         projection(this.env, 'booking.created', id, {
           reference,
-          status: 'confirmed',
+          status: paymentRequired ? 'payment_required' : 'confirmed',
           propertyId: property.id,
           serviceId: service.id,
           workOrderId: woId,
@@ -397,7 +429,11 @@ export class BookingScheduler extends DurableObject<Env> {
         }),
       );
       await this.env.DB.batch(statements);
-      return Response.json({ id, reference, workOrderId: woId }, { status: 201 });
+      return Response.json({
+        id,reference,workOrderId:woId,paymentId,paymentRequired,
+        totalCents:paymentRequired ? amountExGstCents+gstCents : 0,
+        message:paymentRequired ? 'Appointment recorded. Payment is required before service delivery.' : 'Booking confirmed.',
+      },{status:201});
     } catch (error) {
       if (error instanceof AppError)
         return Response.json(

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useOutletContext } from 'react-router';
 import { SERVICE_SEEDS } from '../../../../packages/service-catalogue/index';
 import { MarketingPageHero } from '../components/page-patterns';
@@ -54,6 +54,9 @@ export const meta=()=>seo('Find the Right Property Inspection or Attendance',
   '/service-finder',{breadcrumbs:[{name:'Services',path:'/services'},{name:'Service finder',path:'/service-finder'}]});
 export default function ServiceFinder(){
   const {appOrigin}=useOutletContext<{appOrigin:string}>();
+  // Prevent a selection before hydration from being dropped without updating results.
+  const [interactive,setInteractive]=useState(false);
+  useEffect(()=>{setInteractive(true);},[]);
   const [sector,setSector]=useState<Sector>('residential');
   const [task,setTask]=useState('incoming');
   const options=choices[sector];
@@ -68,7 +71,7 @@ export default function ServiceFinder(){
       <div>
         <p className="eyebrow">Step 1 of 2</p><h2>What kind of property is it?</h2>
         <label className="mkt-finder-label" htmlFor="service-finder-sector">Property setting</label>
-        <select className="mkt-finder-select" id="service-finder-sector" value={sector}
+        <select className="mkt-finder-select" id="service-finder-sector" disabled={!interactive} value={sector}
           onChange={e=>changeSector(e.target.value as Sector)}>
           <option value="residential">Residential rental property</option>
           <option value="commercial">Commercial property</option>
@@ -80,7 +83,7 @@ export default function ServiceFinder(){
         </select>
         <p className="eyebrow">Step 2 of 2</p><h2>What needs to happen?</h2>
         <label className="mkt-finder-label" htmlFor="service-finder-task">Your intended outcome</label>
-        <select className="mkt-finder-select" id="service-finder-task" value={choice.value}
+        <select className="mkt-finder-select" id="service-finder-task" disabled={!interactive} value={choice.value}
           onChange={e=>setTask(e.target.value)}>
           {options.map(opt=><option key={opt.value} value={opt.value}>{opt.label}</option>)}
         </select>

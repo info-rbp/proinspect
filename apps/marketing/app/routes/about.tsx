@@ -44,8 +44,7 @@ export default function About() {
             <p>
               Choose one task, an inspection subscription or a tailored operational scope.
               We connect physical attendance, administration and property care with the records
-              your authorised team needs. Scheduled services use approved Perth and Peel suburb
-              and postcode combinations; other WA locations are considered by request.
+              your authorised team needs. We work across approved Perth and Peel suburbs, with other WA locations considered by request.
             </p>
           </div>
         </div>
@@ -98,9 +97,8 @@ export default function About() {
             <article>
               <h3>Homes and portfolios</h3>
               <p>
-                Fourteen residential service groups cover inspections, marketing, tenancy
-                administration, maintenance, access, vacates and complex property support.
-                Owners and agencies retain the decisions and authority appropriate to their role.
+                From incoming inspections to tenant enquiries, maintenance and vacates,
+                give your property a clear routine while you stay in control.
               </p>
               <Link className="pi-inline-link" to="/residential">
                 Residential services <span aria-hidden="true">↗</span>
@@ -109,9 +107,9 @@ export default function About() {
             <article>
               <h3>Workplaces and shared buildings</h3>
               <p>
-                Commercial operations and eight building service groups help authorised teams
-                look after workplaces and shared buildings. Tailored Co-Living, Student Living
-                and construction support can address a different operating model.
+                Keep workplaces and shared buildings running through practical attendance,
+                building care and contractor coordination. Tailor support for Co-Living,
+                Student Living or your next construction project.
               </p>
               <Link className="pi-inline-link" to="/who-we-help">
                 Who we help <span aria-hidden="true">↗</span>
