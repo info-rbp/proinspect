@@ -15,4 +15,8 @@ test('normal PCR catalogue page and general booking are preserved', async ({ pag
   await expect(page.getByRole('heading', { name: /Property Condition Report/i }).first()).toBeVisible();
   await page.goto('/book/property-condition-report');
   await expect(page.getByRole('heading', { name: 'Book using your ProInspect account' })).toBeVisible();
+  await expect(page.getByText(/One-off service customers can create a free account/)).toBeVisible();
+  await page.getByRole('link',{name:'Continue with email'}).click();
+  await expect(page).toHaveURL(/\/signin\?returnTo=/);
+  await expect(page.getByLabel('Email address',{exact:true})).toBeVisible();
 });

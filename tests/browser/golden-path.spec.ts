@@ -35,8 +35,13 @@ test('marketing is server rendered and responsive', async ({ page, request }) =>
 });
 test('new Landlord registration is free and can consider a subscription later', async ({ page }) => {
   const email = `landlord-${Date.now()}@proinspect.test`;
-  await signIn(page, email, '/book/subscriber/routine-inspection');
-  await page.getByRole('link', { name: 'Set up account', exact: true }).click();
+  await signIn(page, email, '/book/routine-inspection');
+  await expect(page.getByRole('heading',{name:'Book using your ProInspect account'})).toBeVisible();
+  await page.getByRole('link',{name:'Open My ProInspect'}).click();
+  await expect(page).toHaveURL(/\/workspaces\?service=routine-inspection$/);
+  await page.getByRole('link',{name:'Residential owner'}).click();
+  await expect(page).toHaveURL(/\/onboarding\?flow=ONB-RES-OWNER&service=routine-inspection$/);
+  await expect(page.getByRole('heading',{name:'Set up residential property'})).toBeVisible();
   await page.getByLabel('Your name', { exact: true }).fill('Jordan Example');
   await page.getByLabel('Account name', { exact: true }).fill('Example Self Managed');
   await page.getByRole('checkbox', { name: /I own and self-manage/ }).check();
@@ -68,9 +73,12 @@ test('new Landlord registration is free and can consider a subscription later', 
 
 test('commercial Landlord signup is free and does not grant included inspection services', async ({ page }) => {
   const email = `commercial-owner-${Date.now()}@proinspect.test`;
-  await signIn(page, email, '/book/subscriber/commercial-property-inspection');
-  await page.getByRole('link', { name: 'Set up account', exact: true }).click();
-  await page.getByRole('link', { name: 'Commercial owner', exact: true }).click();
+  await signIn(page, email, '/book/commercial-property-inspection');
+  await expect(page.getByRole('heading',{name:'Book using your ProInspect account'})).toBeVisible();
+  await page.getByRole('link',{name:'Open My ProInspect'}).click();
+  await expect(page).toHaveURL(/\/workspaces\?service=commercial-property-inspection$/);
+  await page.getByRole('link',{name:'Commercial owner'}).click();
+  await expect(page).toHaveURL(/\/onboarding\?flow=ONB-COM-OWNER&service=commercial-property-inspection$/);
   await expect(page.getByRole('heading', { name: 'Set up commercial property' })).toBeVisible();
   await page.getByLabel('Your name', { exact: true }).fill('Commercial Test Owner');
   await page.getByLabel('Account name', { exact: true }).fill('Synthetic Commercial Ownership');
