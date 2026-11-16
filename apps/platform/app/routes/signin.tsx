@@ -10,15 +10,35 @@ import {
 } from 'react-router';
 import { platformEnv } from '../../../../packages/database/context';
 import { beginSignIn, isLocal } from '../../../../packages/auth/server';
-import { safeReturnTo } from '../../../../packages/domain/index';
+import { bookingIntent } from '../../../../packages/domain/booking-intent';
+import {
+  ENTRY_CHOICES,
+  authDestination,
+  entryFlow,
+  entryPath,
+  withService,
+} from '../../../../packages/onboarding/entry';
 import { apiError } from '../../worker/api';
 import { Feedback, Field } from '../../../../packages/ui/components';
 import { Turnstile } from '../components/Turnstile';
-export const meta = () => [{ title: 'Sign in | ProInspect' }];
+export const meta = ({ data: settings }: { data?: { signup: boolean } }) => [
+  { title: settings?.signup ? 'Create your free account | ProInspect' : 'Sign in | ProInspect' },
+  { name: 'robots', content: 'noindex,nofollow' },
+];
 export function loader({ request, context }: LoaderFunctionArgs) {
   const env = platformEnv(context);
+  const url = new URL(request.url);
+  const returnTo = authDestination(url.searchParams.get('returnTo'));
+  const destination = new URL(returnTo, url.origin);
+  const serviceId =
+    bookingIntent(destination.searchParams.get('service')) ??
+    bookingIntent(url.searchParams.get('service'));
   return {
-    returnTo: safeReturnTo(new URL(request.url).searchParams.get('returnTo')),
+    signup: false,
+    returnTo: returnTo === '/start' ? withService(returnTo, serviceId) : returnTo,
+    chooseRole: destination.pathname === '/start',
+    flow:
+      entryFlow(destination.searchParams.get('flow')) ?? entryFlow(url.searchParams.get('flow')),
     siteKey: env.TURNSTILE_SITE_KEY,
     local: isLocal(request, env),
   };
@@ -26,7 +46,21 @@ export function loader({ request, context }: LoaderFunctionArgs) {
 export async function action({ request, context }: ActionFunctionArgs) {
   try {
     const form = await request.formData();
-    return await beginSignIn(request, platformEnv(context), Object.fromEntries(form));
+    let returnTo = authDestination(form.get('returnTo'));
+    const destination = new URL(returnTo, request.url);
+    if (form.get('mode') === 'signup' && destination.pathname === '/start') {
+      const flow = entryFlow(form.get('flow'));
+      if (!flow)
+        return data(
+          { error: 'Choose the role that best describes you to continue.' },
+          { status: 422 },
+        );
+      returnTo = entryPath(flow, destination.searchParams.get('service'));
+    }
+    return await beginSignIn(request, platformEnv(context), {
+      ...Object.fromEntries(form),
+      returnTo,
+    });
   } catch (error) {
     const response = apiError(error);
     const result = (await response.json()) as any;
@@ -44,27 +78,49 @@ export default function SignIn() {
       </Link>
       <div className="auth-grid">
         <section className="auth-copy">
-          <p className="eyebrow">Welcome to your workspace</p>
+          <p className="eyebrow">Your ProInspect Client Portal</p>
           <h1>
-            Your properties.
-            <br />
-            Your work.
-            <br />
-            One place.
+            {settings.signup ? 'Property support starts here.' : 'Welcome back to ProInspect.'}
           </h1>
           <p>
-            Sign in securely to book a service, manage a request or view a report. No password to
-            remember.
+            Inspections, property reports, leasing and maintenance support, with the right tools for
+            your role.
+          </p>
+          <p>
+            Residential, Commercial, Strata and Resident portals, connected through one secure
+            account.
           </p>
         </section>
         <section className="panel auth-panel">
-          <h2>Sign in or create an account</h2>
+          <h2>{settings.signup ? 'Create your free account' : 'Sign in to your account'}</h2>
           <p>
-            Enter your email to sign in or register. We will send a secure one-time link.
-            Creating an account does not require payment or start a paid subscription.
+            {settings.signup
+              ? 'Verify your email, then complete the setup for your role. No payment details are needed.'
+              : 'Enter your email and we will send a secure one-time link. No password to remember.'}
           </p>
           <Form method="post" className="form">
             <input type="hidden" name="returnTo" value={settings.returnTo} />
+            <input type="hidden" name="mode" value={settings.signup ? 'signup' : 'signin'} />
+            {settings.signup && settings.chooseRole && (
+              <Field
+                label="Which best describes you?"
+                name="flow"
+                help="This guides your setup. Property access is confirmed separately."
+              >
+                <select id="flow" name="flow" required defaultValue={settings.flow ?? ''}>
+                  <option value="">Choose your role</option>
+                  {['Residential', 'Commercial', 'Strata', 'Resident'].map((family) => (
+                    <optgroup label={family} key={family}>
+                      {ENTRY_CHOICES.filter((choice) => choice.family === family).map((choice) => (
+                        <option key={choice.id} value={choice.id}>
+                          {choice.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </Field>
+            )}
             <Field label="Email address" name="email">
               <input
                 id="email"
@@ -88,9 +144,36 @@ export default function SignIn() {
             )}
           </Form>
           <p className="auth-foot">
-            New property owner? After verifying your email, choose Residential or Commercial,
-            add your property and decide later whether to take out an eligible paid subscription.
-            Resident Portal access (tenants, building residents, lot owners and council members) is invitation-only. Use the link sent by your landlord, building representative or strata manager.
+            {settings.signup ? (
+              <>
+                Already registered?{' '}
+                <Link to={'/signin?returnTo=' + encodeURIComponent(settings.returnTo)}>
+                  Sign in with your existing email
+                </Link>
+                .
+              </>
+            ) : (
+              <>
+                New to ProInspect?{' '}
+                <Link to={'/signup?returnTo=' + encodeURIComponent(settings.returnTo)}>
+                  Create a free account
+                </Link>
+                .
+              </>
+            )}
+          </p>
+          <p className="auth-foot">
+            An account does not start a subscription. Professional management access requires
+            review. Resident access is invitation-only; building managers need an approved
+            assignment.
+          </p>
+          <p className="auth-foot">
+            Have an invitation? Open the original link and use the email it was sent to. Looking for
+            a rental? <Link to="/properties-for-lease">View properties and apply</Link>.
+          </p>
+          <p className="auth-foot">
+            <Link to="/privacy">Privacy information</Link> ·{' '}
+            <Link to="/contact">Get help signing in</Link>
           </p>
         </section>
       </div>

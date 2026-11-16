@@ -45,6 +45,7 @@ try{
  await inspect('/api/public/leasing',200);
  await inspect('/api/catalogue',200);
  await inspect('/signin',200,true);
+ await inspect('/signup',200,true);
  await inspect('/privacy',200,true);
  await inspect('/terms',200,true);
  await inspect('/api/guest/report?token='+('f'.repeat(64)),404);

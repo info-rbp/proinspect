@@ -32,9 +32,9 @@ export async function workspaces(env: Env, user: Principal): Promise<Workspace[]
   const result: Workspace[] = [];
   const clients = await statement(
     env.DB,
-    `SELECT c.id,c.name,c.client_type,e.workspace_kind,m.role FROM clients c JOIN client_memberships m ON m.client_id=c.id JOIN client_entitlements e ON e.client_id=c.id AND e.active=1 WHERE m.user_id=? AND m.active=1 AND c.status='active'`,
+    `SELECT c.id,c.name,c.client_type,e.workspace_kind,e.approved_by,m.role FROM clients c JOIN client_memberships m ON m.client_id=c.id JOIN client_entitlements e ON e.client_id=c.id AND e.active=1 WHERE m.user_id=? AND m.active=1 AND c.status='active'`,
     user.id,
-  ).all<{ id: string; name: string; client_type: string; workspace_kind: WorkspaceKind; role: string }>();
+  ).all<{ id: string; name: string; client_type: string; workspace_kind: WorkspaceKind; approved_by: string | null; role: string }>();
   const allTags = await statement(
     env.DB,
     `SELECT t.client_id,t.tag FROM account_experience_tags t JOIN client_memberships m ON m.client_id=t.client_id
@@ -51,6 +51,7 @@ export async function workspaces(env: Env, user: Principal): Promise<Workspace[]
       name: c.name,
       role: c.role,
       accountType: c.client_type,
+      professionalPortfolio: Boolean(c.approved_by),
       experienceTags: tagsByClient.get(c.id) ?? [],
       href: `/w/${c.workspace_kind}/${c.id}`,
     });

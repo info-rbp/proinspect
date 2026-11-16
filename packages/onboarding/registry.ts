@@ -20,7 +20,7 @@ export type OnboardingFlow = {
 
 export const ONBOARDING_FLOWS = {
   'ONB-AUTH': {
-    id: 'ONB-AUTH', version: '1.0.0', family: 'residential', entry: 'self-registration',
+    id: 'ONB-AUTH', version: '1.1.0', family: 'residential', entry: 'self-registration',
     title: 'One ProInspect identity', summary: 'Verify an email address before opening an authorised workspace.',
     requiredAtStart: ['email', 'emailVerification'],
     laterWhenRelevant: ['displayName', 'platformTerms', 'mobile'],
@@ -116,7 +116,7 @@ export const ONBOARDING_FLOWS = {
     steps: ['STAFF-01', 'STAFF-02'],
   },
   'UX-DASH': {
-    id: 'UX-DASH', version: '1.0.0', family: 'residential', entry: 'self-registration',
+    id: 'UX-DASH', version: '1.1.0', family: 'residential', entry: 'self-registration',
     title: 'My ProInspect', summary: 'Group authorised workspaces without combining their permissions.',
     requiredAtStart: ['activeSession'],
     laterWhenRelevant: ['workspaceSelection'],
