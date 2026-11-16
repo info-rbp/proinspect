@@ -8,13 +8,14 @@ with tempfile.TemporaryDirectory(prefix='private-scan-rehearsal-') as directory:
     db=sqlite3.connect(pathlib.Path(directory)/'rehearsal.sqlite')
     db.execute('PRAGMA foreign_keys=ON')
     files=sorted(pathlib.Path('database/migrations').glob('*.sql'))
-    assert files[-1].name=='0057_private_document_scanning.sql'
-    for file in files[:-1]: db.executescript(file.read_text())
+    assert len(files)>=57 and files[56].name=='0057_private_document_scanning.sql'
+    assert [p.name[:4] for p in files]==[f'{i:04d}' for i in range(1,len(files)+1)]
+    for file in files[:56]: db.executescript(file.read_text())
     before=db.execute("SELECT type,name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name").fetchall()
     counts={name:db.execute('SELECT COUNT(*) FROM "'+name+'"').fetchone()[0] for kind,name,_ in before if kind=='table'}
     recovery=sqlite3.connect(pathlib.Path(directory)/'recovery.sqlite')
     db.backup(recovery)
-    db.executescript(files[-1].read_text())
+    db.executescript(files[56].read_text())
     for original in before:
         assert db.execute('SELECT type,name,sql FROM sqlite_schema WHERE type=? AND name=?',original[:2]).fetchone()==original
     for name,count in counts.items(): assert db.execute('SELECT COUNT(*) FROM "'+name+'"').fetchone()[0]==count
