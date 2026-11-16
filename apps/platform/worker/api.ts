@@ -579,7 +579,7 @@ export async function handleApi(
     }
     const feature = await featureApi(request, env, user, w, tail);
     if (feature) return feature;
-    const coLivingPath=tail.match(/^properties\\/([a-zA-Z0-9_-]+)\\/co-living$/);
+    const coLivingPath = tail.match(/^properties\/([a-zA-Z0-9_-]+)\/co-living$/);
     if (coLivingPath) {
       if(method==='GET') return Response.json(await coLivingOverview(env,user,w,coLivingPath[1]),{headers:{'Cache-Control':'private, no-store'}});
       if(method==='POST') {
