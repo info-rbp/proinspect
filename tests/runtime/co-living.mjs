@@ -85,7 +85,8 @@ try{
   const outsiderWorkspace=await api('/api/session',{cookie:other.cookie});
   assert.equal(outsiderWorkspace.data.workspaces.some(w=>w.scopeId===clientId),false);
   const invitationsBefore=await sql('SELECT COUNT(*) AS n FROM invitations').first();
-  const start='2026-11-17T08:00:00.000Z',end='2027-02-01T08:00:00.000Z';
+  const start=new Date(Date.now()+3*86400000).toISOString();
+  const end=new Date(Date.now()+95*86400000).toISOString();
   // Creating separate overlapping room tenancies is permitted across rooms, not within a room.
   const invite=await api(base+'/tenancies',{cookie:owner.cookie,
     body:{propertyId:prop,email:resident.email,spaceId:rooms['Room Alpha'],startsAt:start,endsAt:end}});
