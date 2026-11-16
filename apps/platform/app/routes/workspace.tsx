@@ -13,6 +13,7 @@ import {
 import { loadApi } from '../lib/api.server';
 import type { WorkspaceData } from '../lib/workspace';
 import { portalFamily, PORTAL_FAMILIES, effectiveExperienceLabels } from '../../../../packages/domain/portal-experience';
+import { getNavigationProfile, MORE_TOOL_GROUPS } from '../../../../packages/domain/portal-navigation';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
   return (await loadApi(
     request,
@@ -37,7 +38,8 @@ export default function WorkspaceLayout() {
     items.push(['properties', management ? 'My properties' : 'Properties', '']);
   if (['landlord','property-manager'].includes(w.kind) && (w.experienceTags ?? []).some(tag => tag === 'co_living' || tag === 'student_living'))
     items.push(['co-living', (w.experienceTags ?? []).includes('student_living') ? 'Student & co-living' : 'Co-living', '']);
-  if (w.kind === 'property-manager') items.push(['outsourcing','Outsourced ProInspect services','']);
+  if (w.kind === 'property-manager' && ['owner','admin'].includes(w.role))
+    items.push(['outsourcing','Outsourced ProInspect services','']);
   if ((['landlord','property-manager'].includes(w.kind) && w.role !== 'viewer') ||
       (['commercial','strata-manager'].includes(w.kind) && ['owner','admin'].includes(w.role)))
     items.push(['resident-invitations', 'Invite residents & members', '']);
@@ -76,7 +78,7 @@ export default function WorkspaceLayout() {
   if (w.kind === 'tenant') items.push(['inspections', 'Inspections', ''], ['my-room', 'My residence', '']);
   items.push(['reports', w.kind === 'staff' ? 'Report creation & review' : 'Issued inspection reports', '']);
   items.push(['documents', 'Documents & reports', '']);
-  if (customer || (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? '')))
+  if ((customer && w.role !== 'viewer') || (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? '')))
     items.push(['document-operations', 'Document preparation', '']);
   if (customer) items.push(['service-agreements', 'Service agreements', '']);
   if (staff && ['administrator','operations_manager'].includes(user.staffRole??'')) {
@@ -114,7 +116,9 @@ export default function WorkspaceLayout() {
   if (data.restrictedEnabled && (w.kind === 'tenant' || staff))
     items.push(['confidential', 'Confidential assistance', '']);
   if((w.kind==='property-manager'&&['owner','admin'].includes(w.role))||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['owner-invitations','Owner visibility invitations','']);
-  if(['commercial','property-manager'].includes(w.kind)||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['commercial-leases','Lease obligations & dates','']);
+  if((['commercial','property-manager'].includes(w.kind) && data.properties.some(p=>p.sector==='commercial')) ||
+     (staff&&['administrator','operations_manager'].includes(user.staffRole??'')))
+    items.push(['commercial-leases','Lease obligations & dates','']);
   if(['strata-manager','building','council'].includes(w.kind)||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['facilities','Building operations','']);
   if(w.kind==='strata-manager'||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['building-communications','Notice draft reviews','']);
   if(w.kind==='building-manager')items.splice(0,items.length,['','Overview',''],['facilities','Building operations',''],['building-communications','Notice drafts',''],['documents','Authorised building reports','']);
@@ -125,21 +129,9 @@ export default function WorkspaceLayout() {
   if(data.amenitiesEnabled && ['strata-manager','building'].includes(w.kind))
     items.push(['amenities','Shared amenity requests','']);
   // Keep specialist routes and deep links intact while showing a concise first-level menu.
-  const primaryByKind: Record<string, string[]> = {
-    landlord: ['', 'properties', 'requests', 'tenancies', 'reports', 'billing'],
-    'property-manager': ['', 'properties', 'portfolio', 'tenancies', 'work-orders', 'reports', 'finance'],
-    commercial: ['', 'properties', 'commercial-leases', 'commercial-occupancies', 'requests', 'reports', 'finance'],
-    'strata-manager': ['', 'schemes', 'work-orders', 'resident-invitations', 'council-appointments', 'finance', 'reports'],
-    tenant: ['', 'tenancies', 'my-room', 'inspections', 'requests', 'documents'],
-    'commercial-occupant': ['', 'occupant-premises', 'occupant-requests'],
-    building: ['', 'schemes', 'requests', 'documents', 'facilities'],
-    council: ['', 'schemes', 'finance', 'reports', 'documents'],
-    'building-manager': ['', 'facilities', 'building-communications', 'documents'],
-    staff: ['', 'bookings', 'work-orders', 'reports', 'properties', 'finance'],
-  };
-  const primaryPaths = [
-    ...(primaryByKind[w.kind] ?? ['', 'requests', 'documents']),
-    ...(w.kind === 'landlord' && (w.experienceTags ?? []).some(tag => tag === 'co_living' || tag === 'student_living') ? ['co-living'] : []),
+  const navigationProfile = getNavigationProfile(w.kind);
+  const primaryPaths = [...navigationProfile.primary,
+    ...(w.kind === 'landlord' && (w.experienceTags ?? []).some(tag => ['co_living','student_living'].includes(tag)) ? ['co-living'] : []),
   ];
   const primary = items.filter(([path]) => primaryPaths.includes(path)).map(([path, label, icon]) => [
     path, w.kind === 'staff' ? ({
@@ -149,11 +141,7 @@ export default function WorkspaceLayout() {
   ]);
   const secondary = items.filter(([path]) => !primaryPaths.includes(path));
   const pathname = useLocation().pathname;
-  const toolGroups = [
-    { label: 'Operations', paths: ['community','amenities','co-living','records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','resident-invitations','commercial-occupancies','occupant-premises','occupant-requests','council-appointments','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
-    { label: 'Documents & services', paths: ['documents','reports','document-operations','service-agreements','wa-form-queue','bond-review-queue','services','reporting','confidential','market-packs','enterprise-intelligence','v2-business'] },
-    { label: 'Administration', paths: ['account-tags','finance','billing','contractor-payments','team','agency-administration','administration','release-readiness','pricing-administration','legal-administration','integrations','enquiries','owner-invitations'] },
-  ];
+  const toolGroups = MORE_TOOL_GROUPS;
   const searchText = toolSearch.trim().toLocaleLowerCase();
   const groupedTools = toolGroups.map(group => ({
     label: group.label,
