@@ -21,7 +21,10 @@ test('Stage 6 recorded acceptance baseline remains separate from additive migrat
  assert.ok(all.length>=60,'Source may contain unapproved migrations beyond the 53-migration production baseline');
  assert.equal(all[EXPECTED_SCHEMA.count-1],EXPECTED_SCHEMA.latest);
  assert.equal(all[53],'0054_client_service_interests.sql');
- assert.equal(all.at(-1),'0057_private_document_scanning.sql');
+ assert.equal(all[56],'0057_private_document_scanning.sql');
+ assert.equal(all[57],'0058_portal_experience_coliving.sql');
+ assert.equal(all[58],'0059_registered_workflows_and_preferences.sql');
+ assert.equal(all[59],'0060_finance_reviews_and_photo_annotations.sql');
  assert.equal(EXPECTED_SCHEMA.catalogueServices,23);
  assert.equal(Object.keys(WORKSPACES).length,9);
  assert.ok(Object.hasOwn(WORKSPACES,'building-manager'));
