@@ -34,10 +34,14 @@ export default function Workspaces() {
         {groups.map(group => <section className="stack" key={group.family} aria-label={group.name+' portal'}>
           <div><h2>{group.name}</h2><p className="small">{group.description}</p></div>
           <div className="workspace-grid">
-            {group.workspaces.map(w => <Link key={w.href} to={w.href} className="workspace-card">
+            {group.workspaces.map(w => <Link key={w.href}
+              to={w.href+(w.landingSection&&w.landingSection!=='overview'?'/'+w.landingSection:'')}
+              className="workspace-card">
               <p className="eyebrow">{group.name}</p>
               <h3>{w.name}</h3>
               <p className="small">{effectiveExperienceLabels(w).join(' · ')}</p>
+              {w.landingSection&&w.landingSection!=='overview'&&
+                <p className="small">Opens at: {w.landingSection.replaceAll('-',' ')}</p>}
               <small>Open workspace →</small>
             </Link>)}
           </div>
