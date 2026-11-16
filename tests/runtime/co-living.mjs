@@ -124,7 +124,10 @@ try{
     body:{category:'maintenance',title:'Shared kitchen tap',details:'Synthetic shared area repair request',priority:'routine',
       spaceId:rooms['Shared kitchen']}});
   assert.equal(goodRequest.status,201,JSON.stringify(goodRequest.data));
-  await sql('UPDATE tenancy_memberships SET ends_at=? WHERE id=?','2026-11-01T00:00:00.000Z','cl_member_alpha').run();
+  // End the synthetic relationship after its start; preserve the stricter
+  // date-ordering invariant from the verified Resident migration.
+  await sql('UPDATE tenancy_memberships SET ends_at=? WHERE id=?',
+    '2026-11-02T00:00:00.000Z','cl_member_alpha').run();
   assert.equal((await api('/api/w/tenant/'+invite.data.id+'/my-room',{cookie:resident.cookie})).status,403);
   assert.equal((await api('/api/w/tenant/'+invite.data.id+'/requests',{cookie:resident.cookie,
     body:{category:'maintenance',title:'Old occupant test',details:'Do not permit expired access',priority:'routine'}})).status,403);
