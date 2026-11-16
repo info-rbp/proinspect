@@ -92,8 +92,12 @@ export async function coLivingCommand(env: Env, user: Principal, w: Workspace, p
 export async function myCoLivingSpace(env: Env, user: Principal, w: Workspace) {
   assert(w.kind === 'tenant', 403, 'RESIDENT_INVITATION_REQUIRED','Resident access requires a verified tenancy invitation.');
   const membership=await statement(env.DB,
-    'SELECT id FROM tenancy_memberships WHERE tenancy_id=? AND user_id=? AND starts_at<=?',
-    w.scopeId,user.id,now(),
+    `SELECT m.id FROM tenancy_memberships m JOIN tenancies t ON t.id=m.tenancy_id
+     WHERE m.tenancy_id=? AND m.user_id=? AND m.starts_at<=?
+       AND (m.ends_at IS NULL OR m.ends_at>?)
+       AND t.status='active' AND t.starts_at<=?
+       AND (t.ends_at IS NULL OR t.ends_at>?)`,
+    w.scopeId,user.id,now(),now(),now(),now(),
   ).first();
   assert(membership,403,'RESIDENT_INVITATION_REQUIRED','A verified invitation is required for this residence.');
   const space=await statement(env.DB,
