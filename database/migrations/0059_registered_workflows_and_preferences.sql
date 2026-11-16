@@ -8,6 +8,19 @@ CREATE TABLE registered_booking_payment_links (
   created_at TEXT NOT NULL
 ) STRICT;
 CREATE INDEX registered_booking_payment_by_payment ON registered_booking_payment_links(payment_id);
+CREATE TRIGGER registered_booking_payment_scope BEFORE INSERT ON registered_booking_payment_links
+BEGIN
+  SELECT RAISE(ABORT,'REGISTERED_PAYMENT_SCOPE_MISMATCH') WHERE NOT EXISTS(
+    SELECT 1 FROM bookings b JOIN work_orders w ON w.booking_id=b.id
+    JOIN payments p ON p.id=NEW.payment_id AND p.work_order_id=w.id
+    WHERE b.id=NEW.booking_id AND b.client_id=p.client_id
+      AND b.property_id=p.property_id
+      AND p.total_cents=NEW.price_ex_gst_cents+NEW.gst_cents
+      AND b.price_ex_gst_cents=NEW.price_ex_gst_cents
+  );
+END;
+CREATE TRIGGER registered_booking_payment_immutable BEFORE UPDATE ON registered_booking_payment_links
+BEGIN SELECT RAISE(ABORT,'REGISTERED_PAYMENT_LINK_IMMUTABLE'); END;
 
 -- User-level presentation, never portal authority/entitlement.
 CREATE TABLE user_portal_preferences (
@@ -63,9 +76,22 @@ CREATE TABLE co_living_area_inspections (
   reviewed_by TEXT REFERENCES users(id),
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
-  CHECK(status!='published' OR (length(trim(public_summary))>=8 AND reviewed_by IS NOT NULL))
+  CHECK(status!='published' OR (COALESCE(length(trim(public_summary)),0)>=8 AND reviewed_by IS NOT NULL))
 ) STRICT;
 CREATE INDEX co_living_inspections_property ON co_living_area_inspections(property_id,inspected_at);
+CREATE TRIGGER co_living_shared_review_independent BEFORE UPDATE OF status ON co_living_area_inspections
+WHEN NEW.status='published' AND OLD.status!='published'
+BEGIN
+ SELECT RAISE(ABORT,'CO_LIVING_SELF_REVIEW_DENIED') WHERE NEW.reviewed_by IS NULL OR NEW.reviewed_by=OLD.created_by;
+END;
+CREATE TRIGGER co_living_shared_published_immutable BEFORE UPDATE ON co_living_area_inspections
+WHEN OLD.status='published'
+BEGIN SELECT RAISE(ABORT,'CO_LIVING_PUBLISHED_IMMUTABLE'); END;
+CREATE TRIGGER co_living_terms_independent BEFORE UPDATE OF review_status ON co_living_lease_terms
+WHEN NEW.review_status='reviewed' AND OLD.review_status!='reviewed'
+BEGIN
+ SELECT RAISE(ABORT,'CO_LIVING_SELF_REVIEW_DENIED') WHERE NEW.reviewed_by IS NULL OR NEW.reviewed_by=OLD.updated_by;
+END;
 CREATE TRIGGER co_living_shared_area_guard BEFORE INSERT ON co_living_area_inspections
 BEGIN
  SELECT RAISE(ABORT,'CO_LIVING_SHARED_AREA_REQUIRED') WHERE NOT EXISTS (
