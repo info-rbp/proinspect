@@ -1,10 +1,10 @@
-"""Rehearse 0058 on an isolated D1-compatible SQLite copy without changing legacy records."""
+"""Rehearse 0059 on an isolated D1-compatible SQLite copy without changing legacy records."""
 import pathlib
 import sqlite3
 import tempfile
 
 migrations = pathlib.Path('database/migrations')
-target = migrations / '0058_resident_occupancies_and_council_appointments.sql'
+target = migrations / '0059_resident_occupancies_and_council_appointments.sql'
 with tempfile.TemporaryDirectory(prefix='resident-scope-0058-') as folder:
     db = sqlite3.connect(pathlib.Path(folder) / 'resident.sqlite')
     db.execute('PRAGMA foreign_keys=ON')
@@ -49,4 +49,4 @@ with tempfile.TemporaryDirectory(prefix='resident-scope-0058-') as folder:
     }
     recovery.close()
     db.close()
-print('Resident scope 0058: additive schema, preserved records, FK integrity and isolated recovery verified')
+print('Resident scope 0059: additive schema, preserved records, FK integrity and isolated recovery verified')
