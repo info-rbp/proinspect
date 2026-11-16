@@ -13,6 +13,12 @@ CREATE TABLE report_photo_annotations (
   updated_at TEXT NOT NULL
 ) STRICT;
 CREATE INDEX report_annotations_report ON report_photo_annotations(report_id,review_status);
+CREATE TRIGGER report_annotations_independent BEFORE UPDATE OF review_status ON report_photo_annotations
+WHEN NEW.review_status IN ('accepted','rejected') AND OLD.review_status='draft'
+BEGIN
+ SELECT RAISE(ABORT,'ANNOTATION_SELF_REVIEW_DENIED')
+ WHERE NEW.reviewed_by IS NULL OR NEW.reviewed_by=OLD.created_by;
+END;
 CREATE TRIGGER report_annotations_immutable AFTER UPDATE ON report_photo_annotations
 WHEN OLD.review_status='accepted'
 BEGIN SELECT RAISE(ABORT,'REVIEWED_ANNOTATIONS_IMMUTABLE'); END;
@@ -33,6 +39,12 @@ CREATE TABLE invoice_credit_proposals (
   created_at TEXT NOT NULL
 ) STRICT;
 CREATE INDEX invoice_credit_proposals_invoice ON invoice_credit_proposals(stripe_invoice_id,status);
+CREATE TRIGGER invoice_credit_independent BEFORE UPDATE OF status ON invoice_credit_proposals
+WHEN NEW.status IN ('approved','rejected') AND OLD.status='requested'
+BEGIN
+ SELECT RAISE(ABORT,'FINANCE_SELF_REVIEW_DENIED')
+ WHERE NEW.reviewed_by IS NULL OR NEW.reviewed_by=OLD.requested_by OR NEW.reviewed_at IS NULL;
+END;
 CREATE TRIGGER invoice_credit_immutable BEFORE UPDATE ON invoice_credit_proposals
 WHEN OLD.status IN ('approved','rejected')
 BEGIN SELECT RAISE(ABORT,'CREDIT_PROPOSAL_IMMUTABLE'); END;
@@ -52,6 +64,12 @@ CREATE TABLE bank_reconciliation_observations (
   reviewed_at TEXT
 ) STRICT;
 CREATE INDEX bank_observations_payment ON bank_reconciliation_observations(payment_id,status);
+CREATE TRIGGER bank_observation_independent BEFORE UPDATE OF status ON bank_reconciliation_observations
+WHEN NEW.status IN ('reviewed','disputed') AND OLD.status='recorded'
+BEGIN
+ SELECT RAISE(ABORT,'FINANCE_SELF_REVIEW_DENIED')
+ WHERE NEW.reviewed_by IS NULL OR NEW.reviewed_by=OLD.requested_by OR NEW.reviewed_at IS NULL;
+END;
 CREATE TRIGGER bank_observation_immutable BEFORE UPDATE ON bank_reconciliation_observations
 WHEN OLD.status IN ('reviewed','disputed')
 BEGIN SELECT RAISE(ABORT,'BANK_OBSERVATION_IMMUTABLE'); END;
