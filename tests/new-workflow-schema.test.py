@@ -12,6 +12,7 @@ class NewWorkflowSchema(unittest.TestCase):
         for migration in MIGRATIONS:
             self.db.executescript(migration.read_text())
         self.db.execute("INSERT INTO users(id,email,created_at) VALUES('u','local@example.invalid','2026-11-01')")
+        self.db.execute("INSERT INTO users(id,email,created_at) VALUES('u2','reviewer@example.invalid','2026-11-01')")
         self.db.execute("INSERT INTO clients(id,name,client_type,created_at) VALUES('c','Local owner','landlord','2026-11-01')")
         self.db.execute("INSERT INTO properties(id,address,suburb,postcode,address_key,sector,created_at) VALUES('p','79 Local Street','Perth','6000','new-workflow-79','residential','2026-11-01')")
         self.db.execute("INSERT INTO tenancies(id,property_id,status,starts_at) VALUES('t','p','active','2026-11-01')")
@@ -47,7 +48,11 @@ class NewWorkflowSchema(unittest.TestCase):
         self.db.execute("INSERT INTO co_living_area_inspections(id,property_id,space_id,inspected_at,summary_envelope,created_by,created_at,updated_at) VALUES('good','p','common','2026-11-16','cipher','u','2026-11-16','2026-11-16')")
         with self.assertRaises(sqlite3.IntegrityError):
             self.db.execute("UPDATE co_living_area_inspections SET status='published' WHERE id='good'")
-        self.db.execute("UPDATE co_living_area_inspections SET status='published',public_summary='Reviewed shared space only',reviewed_by='u' WHERE id='good'")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'CO_LIVING_SELF_REVIEW_DENIED'):
+            self.db.execute("UPDATE co_living_area_inspections SET status='published',public_summary='Self reviewed shared area',reviewed_by='u' WHERE id='good'")
+        self.db.execute("UPDATE co_living_area_inspections SET status='published',public_summary='Reviewed shared space only',reviewed_by='u2' WHERE id='good'")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'CO_LIVING_PUBLISHED_IMMUTABLE'):
+            self.db.execute("UPDATE co_living_area_inspections SET public_summary='Changed after approval' WHERE id='good'")
     def test_amenity_approval_never_double_books(self):
         self.db.execute("INSERT INTO strata_schemes(id,name,created_at) VALUES('s','Local scheme','2026-11-01')")
         self.db.execute("INSERT INTO strata_amenities(id,scheme_id,name,created_by,created_at) VALUES('a','s','Meeting room','u','2026-11-16')")
