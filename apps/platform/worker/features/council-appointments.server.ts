@@ -31,9 +31,10 @@ export async function proposeCouncilAppointment(env:Env,user:Principal,w:Workspa
   const id=uid('car');
   await env.DB.batch([
     statement(env.DB,`INSERT INTO council_appointment_reviews
-      (id,scheme_id,lot_id,email,starts_at,ends_at,appointment_reference,requested_by,created_at)
-      VALUES(?,?,?,?,?,?,?,?,?)`,
-      id,d.schemeId,d.lotId??null,d.email,start,d.endsAt,d.appointmentReference,user.id,now()),
+      (id,scheme_id,lot_id,email,starts_at,ends_at,appointment_reference,requested_by,origin_client_id,created_at)
+      VALUES(?,?,?,?,?,?,?,?,?,?)`,
+      id,d.schemeId,d.lotId??null,d.email,start,d.endsAt,d.appointmentReference,user.id,
+      w.kind==='strata-manager'?w.scopeId:null,now()),
     activity(env,user,'council.appointment_review_requested','council_appointment',id,null,d.schemeId,
       {flowId:'ONB-INV-COUNCIL',version:'1.1.0'}),
   ]);
@@ -89,10 +90,10 @@ export async function reviewCouncilAppointment(env:Env,user:Principal,id:string,
       SELECT l.client_id FROM scheme_client_links l
       JOIN clients c ON c.id=l.client_id AND c.status='active'
       JOIN client_memberships m ON m.client_id=l.client_id AND m.user_id=? AND m.active=1
-      WHERE l.scheme_id=? AND l.role='strata_manager'
+      WHERE l.scheme_id=? AND l.client_id=? AND l.role='strata_manager'
         AND l.starts_at<=? AND (l.ends_at IS NULL OR l.ends_at>?)
         AND m.role IN('owner','admin') LIMIT 1`,
-      inviter.id,r.scheme_id,now(),now()).first();
+      inviter.id,r.scheme_id,r.origin_client_id,now(),now()).first();
     assert(authorized,403,'COUNCIL_INVITER_INACTIVE','The original scheme appointment authority has ended.');
   }
   const time=now(),token=randomToken();
@@ -130,7 +131,7 @@ export async function assertCouncilInvitationVerified(env:Env,i:Record<string,an
   assert(i.council_review_id,403,'COUNCIL_REVIEW_REQUIRED',
     'Council appointments require independent verification. Request a renewed invitation.');
   const review=await statement(env.DB,`
-    SELECT r.id,r.requested_by,r.ends_at
+    SELECT r.id,r.requested_by,r.ends_at,r.origin_client_id
     FROM council_appointment_reviews r
     JOIN staff_profiles sp ON sp.user_id=r.reviewed_by AND sp.active=1
       AND sp.role IN('administrator','operations_manager')
@@ -141,4 +142,16 @@ export async function assertCouncilInvitationVerified(env:Env,i:Record<string,an
     i.starts_at,i.ends_at,i.lot_id
   ).first();
   assert(review,403,'COUNCIL_REVIEW_REQUIRED','Council appointment verification is not active.');
+  if((review as {origin_client_id?:string|null}).origin_client_id){
+    const manager=await statement(env.DB,`
+      SELECT l.id FROM scheme_client_links l
+      JOIN clients c ON c.id=l.client_id AND c.status='active'
+      JOIN client_memberships m ON m.client_id=l.client_id AND m.user_id=? AND m.active=1
+      WHERE l.client_id=? AND l.scheme_id=? AND l.role='strata_manager'
+        AND l.starts_at<=? AND (l.ends_at IS NULL OR l.ends_at>?)
+        AND m.role IN('owner','admin') LIMIT 1`,
+      i.created_by,(review as {origin_client_id:string}).origin_client_id,
+      i.scheme_id,now(),now()).first();
+    assert(manager,403,'COUNCIL_REVIEW_REQUIRED','The original managing organisation no longer has authority.');
+  }
 }
