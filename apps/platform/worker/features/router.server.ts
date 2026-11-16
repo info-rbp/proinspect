@@ -20,6 +20,7 @@ import { type Env, assert, statement } from '../../../../packages/database/types
 import type { Principal, Workspace } from '../../../../packages/domain/index';
 import { readJson } from '../../../../packages/operations/core';
 import { operationsWrite } from '../../../../packages/authorization/server';
+import { requireOrigin } from '../../../../packages/auth/server';
 import * as portfolio from './portfolio.server';
 import * as councilAppointments from './council-appointments.server';
 import * as booking from './bookings.server';
@@ -212,6 +213,7 @@ export async function featureApi(
     return ok(await portfolio.approveOrganisation(env, user, id, await body()));
   }
   if (area === 'council-appointments' && id && action === 'review') {
+    requireOrigin(request,env);
     staff();
     return ok(await councilAppointments.reviewCouncilAppointment(env,user,id,await body()));
   }
