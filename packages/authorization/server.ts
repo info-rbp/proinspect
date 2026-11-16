@@ -64,6 +64,7 @@ export async function workspaces(env: Env, user: Principal): Promise<Workspace[]
      JOIN commercial_occupancies o ON o.id=m.occupancy_id AND o.status='active'
      JOIN properties p ON p.id=o.property_id AND p.sector='commercial' AND p.archived_at IS NULL
      JOIN clients c ON c.id=o.client_id AND c.status='active'
+     JOIN client_entitlements e ON e.client_id=o.client_id AND e.workspace_kind='commercial' AND e.active=1
      JOIN property_management_relationships pm ON pm.property_id=o.property_id
        AND pm.manager_client_id=o.client_id
        AND pm.starts_at<=? AND (pm.ends_at IS NULL OR pm.ends_at>?)
