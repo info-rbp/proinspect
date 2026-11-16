@@ -49,6 +49,9 @@ test('legacy duplicate sector pages permanently redirect and canonical sitemap i
 
 test('guided service finder distinguishes Student Living room tasks from tailored programmes', async ({ page }) => {
   await page.goto('/service-finder');
+  // SSR controls remain disabled until React can reliably respond to selections.
+  await expect(page.getByLabel('Property setting')).toBeEnabled();
+  await expect(page.getByLabel('Your intended outcome')).toBeEnabled();
   await page.getByLabel('Property setting').selectOption('student-living');
   await expect(page.getByRole('link', { name: /View scope and next steps/ })).toHaveCount(2);
   await page.getByLabel('Your intended outcome').selectOption('programme');
