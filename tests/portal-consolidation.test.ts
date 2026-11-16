@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { portalFamily,groupWorkspaces,effectiveExperienceLabels,PORTAL_FAMILIES } from '../packages/domain/portal-experience.ts';
 import type { Workspace } from '../packages/domain/index.ts';
 
-const scope=(kind:Workspace['kind'],name=kind,accountType?:string):Workspace=>({
+const scope=(kind:Workspace['kind'],name:string=kind,accountType?:string):Workspace=>({
  kind,name,scopeId:'scope_'+kind,role:kind==='council'?'council_member':'owner',
  href:'/w/'+kind+'/scope_'+kind,accountType,
 });
