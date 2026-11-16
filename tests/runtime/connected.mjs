@@ -229,16 +229,17 @@ try {
   ).propertyId;
   const tenant = await makeTenant(owner, base, propertyId, 'tenant@tests.example');
   await check('commercial occupant invite is property-bound, email-verified, request-scoped and revocable', async () => {
-    const commercialOwner=await ok('/api/onboarding',owner,{
+    const commercialManager = await login('commercial-occupancy-manager@tests.example');
+    const commercialOwner=await ok('/api/onboarding',commercialManager,{
       displayName:'Commercial verification owner',clientName:'Commercial occupant fixture',landlordType:'commercial'
     },201);
     const commercialBase=`/api/w/commercial/${commercialOwner.clientId}`;
-    const property=await ok(commercialBase+'/properties',owner,{
+    const property=await ok(commercialBase+'/properties',commercialManager,{
       address:'71 Occupancy Verification Court',suburb:'Perth',postcode:'6000',
       propertyType:'Office',selfManaged:true,
     },201);
     const recipient=await login('commercial-occupant@tests.example');
-    const invitation=await ok(commercialBase+'/commercial-occupancies/invite',owner,{
+    const invitation=await ok(commercialBase+'/commercial-occupancies/invite',commercialManager,{
       propertyId:property.propertyId,email:recipient.email,premisesLabel:'Suite 3',
       relationshipKind:'employee',authorityReference:'Approved premises access agreement',
     },201);
@@ -260,14 +261,14 @@ try {
     const request=await ok(occupantBase+'/occupant-requests',recipient,{
       title:'Premises access issue',details:'The approved rear access door is not opening with our current access pass.',
     },201);
-    const manager=await ok(commercialBase+'/commercial-occupancies',owner);
+    const manager=await ok(commercialBase+'/commercial-occupancies',commercialManager);
     assert.ok(manager.requests.some(r=>r.id===request.id));
-    await ok(commercialBase+'/commercial-occupant-requests/'+request.id+'/review',owner,{
+    await ok(commercialBase+'/commercial-occupant-requests/'+request.id+'/review',commercialManager,{
       status:'closed',managerResponse:'Property manager has arranged a replacement access pass.',
     });
     const updated=await ok(occupantBase+'/occupant-requests',recipient);
     assert.equal(updated.requests.find(r=>r.id===request.id).status,'closed');
-    await ok(commercialBase+'/commercial-occupancies/'+invitation.occupancyId+'/end',owner,{});
+    await ok(commercialBase+'/commercial-occupancies/'+invitation.occupancyId+'/end',commercialManager,{});
     assert.equal((await api(occupantBase,{cookie:recipient.cookie})).status,403);
     assert.ok(!(await ok('/api/session',recipient)).workspaces.some(w=>w.kind==='commercial-occupant'));
   });
