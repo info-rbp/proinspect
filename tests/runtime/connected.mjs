@@ -228,6 +228,50 @@ try {
     )
   ).propertyId;
   const tenant = await makeTenant(owner, base, propertyId, 'tenant@tests.example');
+  await check('commercial occupant invite is property-bound, email-verified, request-scoped and revocable', async () => {
+    const commercialOwner=await ok('/api/onboarding',owner,{
+      displayName:'Commercial verification owner',clientName:'Commercial occupant fixture',landlordType:'commercial'
+    },201);
+    const commercialBase=`/api/w/commercial/${commercialOwner.clientId}`;
+    const property=await ok(commercialBase+'/properties',owner,{
+      address:'71 Occupancy Verification Court',suburb:'Perth',postcode:'6000',
+      propertyType:'Office',selfManaged:true,
+    },201);
+    const recipient=await login('commercial-occupant@tests.example');
+    const invitation=await ok(commercialBase+'/commercial-occupancies/invite',owner,{
+      propertyId:property.propertyId,email:recipient.email,premisesLabel:'Suite 3',
+      relationshipKind:'employee',authorityReference:'Approved premises access agreement',
+    },201);
+    const token=new URL(invitation.localInvitationUrl).searchParams.get('token');
+    assert.equal((await api('/api/invitations/preview?token='+token,{cookie:outsider.cookie})).status,404);
+    assert.equal((await ok('/api/invitations/preview?token='+token,recipient)).flow_id,'ONB-INV-COM');
+    assert.equal((await api('/api/invitations/accept',{cookie:outsider.cookie,body:{token}})).status,400);
+    const accepted=await ok('/api/invitations/accept',recipient,{token});
+    assert.equal(accepted.occupancyId,invitation.occupancyId);
+    assert.equal((await api('/api/invitations/accept',{cookie:recipient.cookie,body:{token}})).status,400);
+    const occupantBase=`/api/w/commercial-occupant/${invitation.occupancyId}`;
+    const scoped=await ok(occupantBase,recipient);
+    assert.equal(scoped.occupancy.premises_label,'Suite 3');
+    assert.deepEqual(scoped.bookings,[]);
+    assert.deepEqual(scoped.tenancies,[]);
+    assert.deepEqual(scoped.documents,[]);
+    assert.equal((await api(commercialBase,{cookie:recipient.cookie})).status,403);
+    assert.equal((await api(occupantBase+'/bookings',{cookie:recipient.cookie})).status,404);
+    const request=await ok(occupantBase+'/occupant-requests',recipient,{
+      title:'Premises access issue',details:'The approved rear access door is not opening with our current access pass.',
+    },201);
+    const manager=await ok(commercialBase+'/commercial-occupancies',owner);
+    assert.ok(manager.requests.some(r=>r.id===request.id));
+    await ok(commercialBase+'/commercial-occupant-requests/'+request.id+'/review',owner,{
+      status:'closed',managerResponse:'Property manager has arranged a replacement access pass.',
+    });
+    const updated=await ok(occupantBase+'/occupant-requests',recipient);
+    assert.equal(updated.requests.find(r=>r.id===request.id).status,'closed');
+    await ok(commercialBase+'/commercial-occupancies/'+invitation.occupancyId+'/end',owner,{});
+    assert.equal((await api(occupantBase,{cookie:recipient.cookie})).status,403);
+    assert.ok(!(await ok('/api/session',recipient)).workspaces.some(w=>w.kind==='commercial-occupant'));
+  });
+
   await check('WA residential form catalogue, private draft, review, delivery evidence and commercial denial', async () => {
     const defs = await ok(`${tenant.base}/tenancies/${tenant.tenancyId}/wa-forms`, tenant);
     assert.ok(defs.definitions.some(f => f.code === 'WA_FORM_25'));
