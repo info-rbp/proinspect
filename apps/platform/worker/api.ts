@@ -3,6 +3,8 @@ import {temporarySecurityDownload,reviewTemporaryDocument,stageTemporaryPackage,
 import { coLivingOverview, coLivingCommand, myCoLivingSpace } from './features/co-living.server';
 import { getAccountTagDirectory, changeAccountTag } from './features/account-tags.server';
 import {ownerInvitationPreview,claimOwnerInvitation} from './features/agency-owner-invitations.server';
+import { acceptCommercialInvitation, inviteCommercialOccupant, listCommercialOccupants, endCommercialOccupancy, occupantWorkspaceData, createOccupantRequest, updateOccupantRequest } from './features/resident-commercial.server';
+import { invitedRelationshipPreview } from './features/invitation-preview.server';
 import {releaseReadiness,releaseCommand,requireReleaseApproval} from './features/release-governance.server';
 import * as legalAcceptance from './features/legal-acceptance.server';
 import { boundedText } from '../../../packages/http-bodies';
@@ -547,8 +549,16 @@ export async function handleApi(
       return Response.json(
         await decideApproval(env, user, null, ownApproval[1], await json(request)),
       );
+    if (path === '/api/invitations/preview' && method === 'GET') {
+      return Response.json(await invitedRelationshipPreview(env, user, url.searchParams.get('token')), {
+        headers: { 'Cache-Control': 'private, no-store' },
+      });
+    }
     if (path === '/api/invitations/accept' && method === 'POST') {
+      requireOrigin(request,env);
       const token = (await json(request)).token;
+      const commercial = await acceptCommercialInvitation(env,user,token);
+      if(commercial)return Response.json(commercial);
       const portal = await acceptPortalInvitation(env, user, token);
       return Response.json(portal ?? (await acceptInvitation(env, user, token)));
     }
@@ -582,6 +592,36 @@ export async function handleApi(
     assert(match, 404, 'NOT_FOUND', 'Page not found.');
     const w = await workspace(env, user, match[1], match[2]),
       tail = match[3] ?? '';
+    // Narrow commercial occupant context: no generic customer/staff feature endpoints.
+    if(w.kind==='commercial-occupant'){
+      if(method==='GET'&&(!tail||tail==='data'))
+        return Response.json(await occupantWorkspaceData(env,user,w),
+          {headers:{'Cache-Control':'private, no-store'}});
+      if(method==='GET'&&tail==='occupant-requests')
+        return Response.json({requests:(await occupantWorkspaceData(env,user,w)).requests},
+          {headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'&&tail==='occupant-requests'){
+        requireOrigin(request,env);
+        return Response.json(await createOccupantRequest(env,user,w,await json(request)),{status:201});
+      }
+      throw new AppError(404,'OCCUPANT_ROUTE_NOT_FOUND','This function is not available to an occupant.');
+    }
+    if(tail==='commercial-occupancies'&&method==='GET')
+      return Response.json(await listCommercialOccupants(env,user,w),{headers:{'Cache-Control':'private, no-store'}});
+    if(tail==='commercial-occupancies/invite'&&method==='POST'){
+      requireOrigin(request,env);
+      return Response.json(await inviteCommercialOccupant(env,user,w,await json(request)),{status:201});
+    }
+    const endOccupancy=tail.match(/^commercial-occupancies\/([a-zA-Z0-9_-]+)\/end$/);
+    if(endOccupancy&&method==='POST'){
+      requireOrigin(request,env);
+      return Response.json(await endCommercialOccupancy(env,user,w,endOccupancy[1]));
+    }
+    const occupantRequestDecision=tail.match(/^commercial-occupant-requests\/([a-zA-Z0-9_-]+)\/review$/);
+    if(occupantRequestDecision&&method==='POST'){
+      requireOrigin(request,env);
+      return Response.json(await updateOccupantRequest(env,user,w,occupantRequestDecision[1],await json(request)));
+    }
     if (method === 'GET' && (!tail || tail === 'data'))
       return Response.json(await expandedWorkspaceData(env, user, w));
     if(w.kind==='property-manager'&&tail==='outsourcing'&&method==='GET')

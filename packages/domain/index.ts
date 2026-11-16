@@ -28,6 +28,11 @@ export const WORKSPACES = {
     purpose: 'Oversee commercial property operations',
     scope: 'client',
   },
+  'commercial-occupant': {
+    name: 'Resident & Member Portal',
+    purpose: 'Access only your invited commercial premises and requests',
+    scope: 'occupancy',
+  },
   tenant: {
     name: 'Resident Portal',
     purpose: 'Manage your tenancy requests and documents',

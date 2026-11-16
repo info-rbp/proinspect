@@ -228,6 +228,51 @@ try {
     )
   ).propertyId;
   const tenant = await makeTenant(owner, base, propertyId, 'tenant@tests.example');
+  await check('commercial occupant invite is property-bound, email-verified, request-scoped and revocable', async () => {
+    const commercialManager = await login('commercial-occupancy-manager@tests.example');
+    const commercialOwner=await ok('/api/onboarding',commercialManager,{
+      displayName:'Commercial verification owner',clientName:'Commercial occupant fixture',landlordType:'commercial'
+    },201);
+    const commercialBase=`/api/w/commercial/${commercialOwner.clientId}`;
+    const property=await ok(commercialBase+'/properties',commercialManager,{
+      address:'71 Occupancy Verification Court',suburb:'Perth',postcode:'6000',
+      propertyType:'Office',selfManaged:true,
+    },201);
+    const recipient=await login('commercial-occupant@tests.example');
+    const invitation=await ok(commercialBase+'/commercial-occupancies/invite',commercialManager,{
+      propertyId:property.propertyId,email:recipient.email,premisesLabel:'Suite 3',
+      relationshipKind:'employee',authorityReference:'Approved premises access agreement',
+    },201);
+    const token=new URL(invitation.localInvitationUrl).searchParams.get('token');
+    assert.equal((await api('/api/invitations/preview?token='+token,{cookie:outsider.cookie})).status,404);
+    assert.equal((await ok('/api/invitations/preview?token='+token,recipient)).flow_id,'ONB-INV-COM');
+    assert.equal((await api('/api/invitations/accept',{cookie:outsider.cookie,body:{token}})).status,400);
+    const accepted=await ok('/api/invitations/accept',recipient,{token});
+    assert.equal(accepted.occupancyId,invitation.occupancyId);
+    assert.equal((await api('/api/invitations/accept',{cookie:recipient.cookie,body:{token}})).status,400);
+    const occupantBase=`/api/w/commercial-occupant/${invitation.occupancyId}`;
+    const scoped=await ok(occupantBase,recipient);
+    assert.equal(scoped.occupancy.premises_label,'Suite 3');
+    assert.deepEqual(scoped.bookings,[]);
+    assert.deepEqual(scoped.tenancies,[]);
+    assert.deepEqual(scoped.documents,[]);
+    assert.equal((await api(commercialBase,{cookie:recipient.cookie})).status,403);
+    assert.equal((await api(occupantBase+'/bookings',{cookie:recipient.cookie})).status,404);
+    const request=await ok(occupantBase+'/occupant-requests',recipient,{
+      title:'Premises access issue',details:'The approved rear access door is not opening with our current access pass.',
+    },201);
+    const manager=await ok(commercialBase+'/commercial-occupancies',commercialManager);
+    assert.ok(manager.requests.some(r=>r.id===request.id));
+    await ok(commercialBase+'/commercial-occupant-requests/'+request.id+'/review',commercialManager,{
+      status:'closed',managerResponse:'Property manager has arranged a replacement access pass.',
+    });
+    const updated=await ok(occupantBase+'/occupant-requests',recipient);
+    assert.equal(updated.requests.find(r=>r.id===request.id).status,'closed');
+    await ok(commercialBase+'/commercial-occupancies/'+invitation.occupancyId+'/end',commercialManager,{});
+    assert.equal((await api(occupantBase,{cookie:recipient.cookie})).status,403);
+    assert.ok(!(await ok('/api/session',recipient)).workspaces.some(w=>w.kind==='commercial-occupant'));
+  });
+
   await check('WA residential form catalogue, private draft, review, delivery evidence and commercial denial', async () => {
     const defs = await ok(`${tenant.base}/tenancies/${tenant.tenancyId}/wa-forms`, tenant);
     assert.ok(defs.definitions.some(f => f.code === 'WA_FORM_25'));
@@ -1266,17 +1311,38 @@ try {
       );
       resident = { ...tenant, base: `/api/w/building/${scheme.id}` };
       council = await login('council@tests.example');
-      await invited(
-        council,
-        (
-          await ok(strataOrg.base + '/team/invite', strataUser, {
-            email: council.email,
-            schemeId: scheme.id,
-            role: 'council_member',
-            endsAt: expires,
-          })
-        ).localInvitationUrl,
+      const councilProposal = await ok(strataOrg.base + '/team/invite', strataUser, {
+        email: council.email, schemeId: scheme.id, role: 'council_member',
+        endsAt: expires, appointmentReference: 'Synthetic council election minutes 2026-11',
+      });
+      assert.equal(councilProposal.pendingReview,true);
+      assert.equal((await api('/api/w/council/'+scheme.id,{cookie:council.cookie})).status,403);
+      const councilApproval=await ok(
+        staffBase+'/council-appointments/'+councilProposal.reviewId+'/review',
+        operator,{decision:'approved',reviewReference:'Independently verified synthetic election minutes'}
       );
+      await invited(council,councilApproval.localInvitationUrl);
+      const invalidCouncil=await api(strataOrg.base+'/team/invite',{
+        cookie:strataUser.cookie,body:{
+          email:'unverified-council@tests.example',schemeId:scheme.id,
+          role:'council_member',endsAt:expires,
+        },
+      });
+      assert.equal(invalidCouncil.status,422);
+      const selfProposed=await ok(staffBase+'/team/invite',operator,{
+        email:'staff-proposed-council@tests.example',schemeId:scheme.id,
+        role:'council_member',endsAt:expires,
+        appointmentReference:'Independent council appointment test reference',
+      });
+      const selfReview=await api(staffBase+'/council-appointments/'+selfProposed.reviewId+'/review',{
+        cookie:operator.cookie,body:{decision:'approved',reviewReference:'Cannot independently approve this request'},
+      });
+      assert.equal(selfReview.status,403);
+      const declined=await ok(staffBase+'/council-appointments/'+selfProposed.reviewId+'/review',admin,{
+        decision:'declined',reviewReference:'Independent review found no verified appointment',
+      });
+      assert.equal(declined.status,'declined');
+      assert.equal(declined.localInvitationUrl,undefined);
       council.base = `/api/w/council/${scheme.id}`;
       const ws = (await ok('/api/session', tenant)).workspaces;
       assert.ok(ws.some((w) => w.kind === 'tenant') && ws.some((w) => w.kind === 'building'));
@@ -1439,12 +1505,15 @@ try {
     'one tenant resident and council member sees independent notices and loses only expired council access',
     async () => {
       const extra = await ok(`${strataOrg.base}/team/invite`, strataUser, {
-        email: tenant.email,
-        schemeId: scheme.id,
-        role: 'council_member',
-        endsAt: expires,
+        email: tenant.email,schemeId: scheme.id,role: 'council_member',
+        endsAt: expires,appointmentReference: 'Synthetic council co-option resolution',
       });
-      await invited(tenant, extra.localInvitationUrl);
+      assert.equal(extra.pendingReview,true);
+      const reviewed=await ok(
+        staffBase+'/council-appointments/'+extra.reviewId+'/review',
+        operator,{decision:'approved',reviewReference:'Independently verified synthetic co-option resolution'}
+      );
+      await invited(tenant, reviewed.localInvitationUrl);
       const kinds = (await ok('/api/session', tenant)).workspaces.map((w) => w.kind);
       for (const kind of ['tenant', 'building', 'council'])
         assert.ok(kinds.includes(kind), `Expected independent ${kind} workspace`);
