@@ -33,8 +33,18 @@ export async function invitedRelationshipPreview(env: Env, user: Principal, toke
     LEFT JOIN strata_schemes s ON s.id=i.scheme_id
     LEFT JOIN strata_lots l ON l.id=i.lot_id
     LEFT JOIN clients c ON c.id=i.client_id
-    WHERE i.token_hash=? AND i.email=? AND i.consumed_at IS NULL AND i.expires_at>?`,
-    hash, user.email, now()
+    WHERE i.token_hash=? AND i.email=? AND i.consumed_at IS NULL AND i.expires_at>?
+      AND (i.role!='council_member' OR EXISTS (
+        SELECT 1 FROM council_appointment_reviews r
+        JOIN staff_profiles reviewer ON reviewer.user_id=r.reviewed_by AND reviewer.active=1
+          AND reviewer.role IN('administrator','operations_manager')
+        JOIN users reviewer_user ON reviewer_user.id=r.reviewed_by AND reviewer_user.active=1
+        WHERE r.id=i.council_review_id AND r.status='approved'
+          AND r.scheme_id=i.scheme_id AND r.email=i.email
+          AND r.requested_by=i.created_by AND r.starts_at=i.starts_at
+          AND r.ends_at=i.ends_at AND r.lot_id IS i.lot_id AND r.ends_at>?
+      ))`,
+    hash, user.email, now(), now()
   ).first<Record<string, any>>();
   assert(portal, 404, 'INVITATION_NOT_FOUND', 'This invitation is unavailable or belongs to another account.');
   const flow = portal.scheme_id
