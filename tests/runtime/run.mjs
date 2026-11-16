@@ -610,6 +610,12 @@ try {
     assert.equal((await first('SELECT COUNT(*) AS n FROM payments WHERE work_order_id=?', booked.data.workOrderId)).n, 0);
     assert.ok((await api('/api/w/staff/operations', { cookie: operator.cookie })).data.workOrders.some(o => o.booking_id === booked.data.id));
   });
+  await check('all new anonymous guest service requests are retired while historical references remain readable', async () => {
+    const denied=await api('/api/guest/requests',{body:{name:'New guest'}});
+    assert.equal(denied.status,410,JSON.stringify(denied.data));
+    const deniedV4=await api('/api/v4/requests',{body:{name:'New guest'}});
+    assert.equal(deniedV4.status,410,JSON.stringify(deniedV4.data));
+  });
   await check('guest one-off booking uses verification, canonical records, no portal and no subscription', async () => {
     const visit = new Date(Date.now()+14*86400000);
     while ([0,6].includes(visit.getUTCDay())) visit.setUTCDate(visit.getUTCDate()+1);
@@ -619,9 +625,9 @@ try {
       serviceId:'routine-inspection',sector:'residential',address:'141 Synthetic Guest Street',suburb:'Perth',postcode:'6000',propertyType:'House',
       access:{method:'owner',instructions:'Synthetic keys for test only',noticeConfirmed:true},consent:true,website:''
     };
-    const request=await api('/api/guest/requests',{body:guestInput});
+    const request=await api('/__test__/historical-guest-create',{body:guestInput});
     assert.equal(request.status,201,JSON.stringify(request.data));
-    const retry=await api('/api/guest/requests',{body:guestInput});
+    const retry=await api('/__test__/historical-guest-create',{body:guestInput});
     assert.equal(retry.status,201);
     assert.equal(retry.data.reference,request.data.reference);
     assert.equal((await first("SELECT count(*) n FROM subscriptions WHERE client_id='cli_guest_transactions'")).n,0);
@@ -684,9 +690,9 @@ try {
       serviceId:'property-condition-report',sector:'residential',address:'191 Quote Test Street',suburb:'Perth',postcode:'6000',propertyType:'House',
       access:{method:'owner',instructions:'Synthetic quote testing',noticeConfirmed:true},consent:true,website:''};
     const before=(await first('SELECT COUNT(*) n FROM guest_service_orders')).n;
-    assert.equal((await api('/__test__/guest-disabled',{body:input})).status,503);
+    assert.equal((await api('/__test__/guest-disabled',{body:input})).status,410);
     assert.equal((await first('SELECT COUNT(*) n FROM guest_service_orders')).n,before);
-    const started=await api('/api/guest/requests',{body:input});assert.equal(started.status,201,JSON.stringify(started.data));
+    const started=await api('/__test__/historical-guest-create',{body:input});assert.equal(started.status,201,JSON.stringify(started.data));
     const verified=await Promise.all([1,2].map(()=>api('/api/guest/verify',{body:{token:started.data.localVerifyToken}})));
     assert.equal(verified.filter(x=>x.status===200).length,1);
     assert.ok(verified.filter(x=>x.status!==200).every(x=>[404,409].includes(x.status)));

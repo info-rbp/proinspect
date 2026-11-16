@@ -6,7 +6,7 @@ import tempfile
 with tempfile.TemporaryDirectory(prefix='temporary-rental-rehearsal-') as directory:
     db=sqlite3.connect(pathlib.Path(directory)/'rehearsal.sqlite')
     db.execute('PRAGMA foreign_keys=ON')
-    files=sorted(pathlib.Path('database/migrations').glob('*.sql'))
+    files=sorted(p for p in pathlib.Path('database/migrations').glob('*.sql') if p.name<'0059')
     assert files[-1].name=='0058_temporary_rental_documents.sql'
     for p in files:
         if p.name[:4]<='0056': db.executescript(p.read_text())

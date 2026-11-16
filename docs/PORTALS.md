@@ -2,6 +2,14 @@
 
 All portals share identity, domain services and UI primitives. Separate workspace navigation does not mean separate databases or user accounts. Only implemented and authorised actions appear in navigation; planned modules are not represented as working screens.
 
+## Unified customer-facing portal families (development branch, 16 November 2026)
+
+This branch consolidates the **presentation** into four customer-facing families — **Residential** (Landlord and Property Manager), **Commercial** (Commercial owners and asset managers), **Strata** (Strata and approved Building Managers), and **Resident** (invited Tenants, Building Residents/lot owners, and Council members). **ProInspect Operations** is the internal fifth family. The nine existing backend workspace kinds, relationship checks and independently authenticated acceptance journeys remain distinct.
+
+A person cannot independently select or sign up for the Resident Portal. They may create a normal ProInspect identity to purchase an individual service, but Resident membership is available **only** after the appropriate tenancy, scheme/lot or council invitation and verification. Grouped account experience tags inform presentation and never confer a portal membership, property or scheme authority, paid service entitlement or document grants.
+
+Co-living remains inside Residential and uses one canonical residential property with separately assigned private rooms or beds, shared spaces and individually invited tenancy members. Existing whole-property tenancies require review before conversion. See [the scoped implementation plan](FOUR_PORTAL_CONSOLIDATION_AND_COLIVING_2026-11-16.md). This development-branch contract does not claim that migration 0058 is deployed, the legal agreement type accepted or nine hosted role journeys certified.
+
 | Workspace        | Purpose                                           | Required product capabilities                                                                                                                                    |
 | ---------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Landlord         | Self-manage privately owned residential rentals   | Properties, tenancy, booking, maintenance, documents/forms, approvals, payments, history                                                                         |

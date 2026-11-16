@@ -12,7 +12,7 @@ import {
 } from 'react-router';
 import { loadApi } from '../lib/api.server';
 import type { WorkspaceData } from '../lib/workspace';
-import { WORKSPACES } from '../../../../packages/domain/index';
+import { portalFamily, PORTAL_FAMILIES, effectiveExperienceLabels } from '../../../../packages/domain/portal-experience';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
   return (await loadApi(
     request,
@@ -35,6 +35,8 @@ export default function WorkspaceLayout() {
     staff = w.kind === 'staff';
   if (management || staff)
     items.push(['properties', management ? 'My properties' : 'Properties', '']);
+  if (['landlord','property-manager'].includes(w.kind) && (w.experienceTags ?? []).some(tag => tag === 'co_living' || tag === 'student_living'))
+    items.push(['co-living', (w.experienceTags ?? []).includes('student_living') ? 'Student & co-living' : 'Co-living', '']);
   if (w.kind === 'property-manager') items.push(['outsourcing','Outsourced ProInspect services','']);
   if (management)
     items.push([
@@ -63,13 +65,14 @@ export default function WorkspaceLayout() {
     ]);
   if (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''))
     items.push(['wa-form-queue', 'WA residential forms', ''], ['bond-review-queue', 'WA bond operations', '']);
-  if (w.kind === 'tenant') items.push(['inspections', 'Inspections', '']);
+  if (w.kind === 'tenant') items.push(['inspections', 'Inspections', ''], ['my-room', 'My residence', '']);
   items.push(['reports', w.kind === 'staff' ? 'Report creation & review' : 'Issued inspection reports', '']);
   items.push(['documents', 'Documents & reports', '']);
   if (customer || (staff && ['administrator', 'operations_manager'].includes(user.staffRole ?? '')))
     items.push(['document-operations', 'Document preparation', '']);
   if (customer) items.push(['service-agreements', 'Service agreements', '']);
   if (staff && ['administrator','operations_manager'].includes(user.staffRole??'')) {
+    items.push(['account-tags','Account experience tags','']);
     items.push(['release-readiness','Release acceptance','']);
     items.push(['pricing-administration','Service price approvals','']);
     items.push(['legal-administration','Legal versions & acceptance','']);
@@ -113,13 +116,16 @@ export default function WorkspaceLayout() {
     'property-manager': ['', 'properties', 'portfolio', 'bookings', 'work-orders', 'reports', 'finance'],
     commercial: ['', 'properties', 'commercial-leases', 'bookings', 'reports', 'finance'],
     'strata-manager': ['', 'schemes', 'work-orders', 'requests', 'reports', 'finance'],
-    tenant: ['', 'tenancies', 'inspections', 'requests', 'documents'],
+    tenant: ['', 'tenancies', 'my-room', 'inspections', 'requests', 'documents'],
     building: ['', 'schemes', 'requests', 'documents', 'facilities'],
     council: ['', 'schemes', 'finance', 'reports', 'documents'],
     'building-manager': ['', 'facilities', 'building-communications', 'documents'],
     staff: ['', 'bookings', 'work-orders', 'reports', 'properties', 'finance'],
   };
-  const primaryPaths = primaryByKind[w.kind] ?? ['', 'requests', 'documents'];
+  const primaryPaths = [
+    ...(primaryByKind[w.kind] ?? ['', 'requests', 'documents']),
+    ...(w.kind === 'landlord' && (w.experienceTags ?? []).some(tag => tag === 'co_living' || tag === 'student_living') ? ['co-living'] : []),
+  ];
   const primary = items.filter(([path]) => primaryPaths.includes(path)).map(([path, label, icon]) => [
     path, w.kind === 'staff' ? ({
       '': 'Today', bookings: 'Schedule', 'work-orders': 'Work Orders',
@@ -129,9 +135,9 @@ export default function WorkspaceLayout() {
   const secondary = items.filter(([path]) => !primaryPaths.includes(path));
   const pathname = useLocation().pathname;
   const toolGroups = [
-    { label: 'Operations', paths: ['records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
+    { label: 'Operations', paths: ['co-living','records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
     { label: 'Documents & services', paths: ['documents','reports','document-operations','service-agreements','wa-form-queue','bond-review-queue','services','reporting','confidential','market-packs','enterprise-intelligence','v2-business'] },
-    { label: 'Administration', paths: ['finance','billing','contractor-payments','team','agency-administration','administration','release-readiness','pricing-administration','legal-administration','integrations','enquiries','owner-invitations'] },
+    { label: 'Administration', paths: ['account-tags','finance','billing','contractor-payments','team','agency-administration','administration','release-readiness','pricing-administration','legal-administration','integrations','enquiries','owner-invitations'] },
   ];
   const searchText = toolSearch.trim().toLocaleLowerCase();
   const groupedTools = toolGroups.map(group => ({
@@ -150,7 +156,7 @@ export default function WorkspaceLayout() {
         <Link className="brand inverse" to="/workspaces">
           ProInspect<span>PROPERTY OPERATIONS</span>
         </Link>
-        <div className="workspace-label">{WORKSPACES[w.kind].name} workspace</div>
+        <div className="workspace-label">{PORTAL_FAMILIES[portalFamily(w.kind)].name} · {effectiveExperienceLabels(w).join(' · ')}</div>
         <nav className="side-nav">
           {primary.map(([path, label]) => (
             <NavLink end={!path} onClick={() => setOpen(false)} key={path}
@@ -212,7 +218,7 @@ export default function WorkspaceLayout() {
             </button>
             <div className="topbar-context">
               {w.name}
-              <span>{WORKSPACES[w.kind].name}</span>
+              <span>{PORTAL_FAMILIES[portalFamily(w.kind)].name}</span>
             </div>
           </div>
           <div className="topbar-user">
@@ -226,7 +232,7 @@ export default function WorkspaceLayout() {
           </div>
         </header>
         <main id="main" className="content">
-          <nav className="portal-breadcrumb" aria-label="Breadcrumb"><Link to="/workspaces">Workspaces</Link><span aria-hidden="true">/</span><span>{WORKSPACES[w.kind].name}</span></nav>
+          <nav className="portal-breadcrumb" aria-label="Breadcrumb"><Link to="/workspaces">Workspaces</Link><span aria-hidden="true">/</span><span>{PORTAL_FAMILIES[portalFamily(w.kind)].name}</span></nav>
           <ClientServiceTabs data={data} />
           <Outlet context={data} />
         </main>

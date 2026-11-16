@@ -1,4 +1,7 @@
 import {temporarySecurityDownload,reviewTemporaryDocument,stageTemporaryPackage,temporaryPackageAccess,controlTemporaryPackage} from './features/rental-temporary-documents.server';
+
+import { coLivingOverview, coLivingCommand, myCoLivingSpace } from './features/co-living.server';
+import { getAccountTagDirectory, changeAccountTag } from './features/account-tags.server';
 import {ownerInvitationPreview,claimOwnerInvitation} from './features/agency-owner-invitations.server';
 import {releaseReadiness,releaseCommand,requireReleaseApproval} from './features/release-governance.server';
 import * as legalAcceptance from './features/legal-acceptance.server';
@@ -130,6 +133,7 @@ async function inviteTenant(env: Env, user: Principal, w: Workspace, input: unkn
     .object({
       propertyId: z.string(),
       email: emailSchema,
+      spaceId: z.string().min(4).max(100).regex(/^[a-zA-Z0-9_-]+$/).optional(),
       startsAt: z.string().datetime({ offset: true }),
       endsAt: z.string().datetime({ offset: true }).optional(),
     })
@@ -145,20 +149,33 @@ async function inviteTenant(env: Env, user: Principal, w: Workspace, input: unkn
   const start = new Date(data.startsAt).toISOString(),
     end = data.endsAt ? new Date(data.endsAt).toISOString() : null;
   assert(!end || end > start, 422, 'TENANCY_DATES', 'The tenancy end must be after its start.');
+  const coLiving = await statement(env.DB,
+    'SELECT allocation_mode FROM co_living_sites WHERE property_id=?',data.propertyId,
+  ).first<{allocation_mode:string}>();
+  assert(!coLiving || data.spaceId, 422, 'CO_LIVING_SPACE_REQUIRED',
+    'Select a specific private room or bed when inviting a co-living resident.');
+  assert(coLiving || !data.spaceId, 422, 'CO_LIVING_NOT_CONFIGURED',
+    'Configure residential co-living before selecting a room or bed.');
+  if (coLiving) {
+    const privateSpace = await statement(env.DB,
+      `SELECT id FROM co_living_spaces WHERE id=? AND property_id=? AND active=1 AND space_type=?`,
+      data.spaceId,data.propertyId,coLiving.allocation_mode,
+    ).first();
+    assert(privateSpace, 404,'CO_LIVING_SPACE_NOT_FOUND','This private room or bed is unavailable.');
+  }
   const overlap = await statement(
     env.DB,
-    `SELECT id FROM tenancies WHERE property_id=? AND status IN('active','pending') AND (ends_at IS NULL OR ends_at>?) AND (? IS NULL OR starts_at<?)`,
-    data.propertyId,
-    start,
-    end,
-    end,
+    `SELECT t.id FROM tenancies t
+     LEFT JOIN co_living_occupancies o ON o.tenancy_id=t.id
+     WHERE t.property_id=? AND t.status IN('active','pending')
+       AND (t.ends_at IS NULL OR t.ends_at>?) AND (? IS NULL OR t.starts_at<?)
+       AND (? IS NULL OR o.tenancy_id IS NULL OR o.space_id=?)
+     LIMIT 1`,
+    data.propertyId,start,end,end,coLiving ? data.spaceId : null,data.spaceId ?? null,
   ).first();
-  assert(
-    !overlap,
-    409,
-    'TENANCY_REVIEW_REQUIRED',
-    'A current or overlapping tenancy already exists. Review it before adding another.',
-  );
+  assert(!overlap,409,'TENANCY_REVIEW_REQUIRED',
+    coLiving ? 'This space is already allocated for overlapping tenancy dates.' :
+      'A current or overlapping tenancy already exists. Review it before adding another.');
   const id = uid('tnc'),
     token = randomToken(),
     time = now();
@@ -171,6 +188,9 @@ async function inviteTenant(env: Env, user: Principal, w: Workspace, input: unkn
       start,
       end,
     ),
+    ...(data.spaceId ? [statement(env.DB,
+      'INSERT INTO co_living_occupancies(tenancy_id,space_id,created_by,created_at) VALUES(?,?,?,?)',
+      id,data.spaceId,user.id,time)] : []),
     statement(
       env.DB,
       `INSERT INTO invitations(token_hash,email,tenancy_id,role,expires_at,created_by,created_at) VALUES(?,?,?,'tenant',?,?,?)`,
@@ -253,7 +273,7 @@ export async function handleApi(
     if (path === '/api/v4/catalogue' && method === 'GET') return Response.json(await v4.publicCatalogue(env,url.searchParams.get('sector')??undefined),{headers:{'Cache-Control':'private, no-store'}});
     const v4Item=path.match(/^\/api\/v4\/catalogue\/((?:RES|COM)-\d{3})$/);
     if(v4Item && method==='GET')return Response.json(await v4.publicService(env,v4Item[1]),{headers:{'Cache-Control':'private, no-store'}});
-    if(path==='/api/v4/requests' && method==='POST')return Response.json(await v4.begin(request,env),{status:201});
+    if(path==='/api/v4/requests' && method==='POST')throw new AppError(410,'ACCOUNT_REQUIRED','Create a free ProInspect account to request or book a service.');
     if(path==='/api/v4/requests/verify' && method==='POST')return Response.json(await v4.verify(request,env));
     if(path==='/api/v4/requests/status' && method==='GET')return Response.json(await v4.status(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
     if(path==='/api/v4/requests/cancel' && method==='POST')return Response.json(await v4.cancel(request,env));
@@ -263,7 +283,7 @@ export async function handleApi(
     if(path==='/api/v4/requests/quote' && method==='GET')return Response.json(await v4.quotePreview(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
     if(path==='/api/v4/requests/quote/accept' && method==='POST')return Response.json(await v4.acceptQuote(request,env));
     if(path==='/api/guest/prices'&&method==='GET')return Response.json({variants:[],message:'Sign in to view individual service pricing or request a quote.'},{headers:{'Cache-Control':'no-store'}});
-    if (path === '/api/guest/requests' && method === 'POST') return Response.json(await guest.beginGuest(request,env),{status:201});
+    if (path === '/api/guest/requests' && method === 'POST') throw new AppError(410,'ACCOUNT_REQUIRED','Create a free ProInspect account to book a service.');
     if (path === '/api/guest/verify' && method === 'POST') return Response.json(await guest.verifyGuest(request,env));
     if (path === '/api/guest/quote' && method === 'GET') return Response.json(await guest.guestQuotePreview(env,url.searchParams.get('token')??''),{headers:{'Cache-Control':'private, no-store'}});
     if (path === '/api/guest/quote' && method === 'POST') return Response.json(await guest.acceptGuestQuote(request,env));
@@ -573,6 +593,20 @@ export async function handleApi(
     }
     const feature = await featureApi(request, env, user, w, tail);
     if (feature) return feature;
+    const coLivingPath = tail.match(/^properties\/([a-zA-Z0-9_-]+)\/co-living$/);
+    if (coLivingPath) {
+      if(method==='GET') return Response.json(await coLivingOverview(env,user,w,coLivingPath[1]),{headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST') {
+        requireOrigin(request,env);
+        return Response.json(await coLivingCommand(env,user,w,coLivingPath[1],await json(request)));
+      }
+    }
+    if(tail==='my-room' && method==='GET')
+      return Response.json(await myCoLivingSpace(env,user,w),{headers:{'Cache-Control':'private, no-store'}});
+    if(tail==='account-tags' && w.kind==='staff') {
+      if(method==='GET')return Response.json(await getAccountTagDirectory(env,user),{headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'){requireOrigin(request,env);return Response.json(await changeAccountTag(env,user,await json(request)));}
+    }
     if (method === 'GET' && tail === 'availability') {
       assert(
         booksServices(w),

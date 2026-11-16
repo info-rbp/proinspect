@@ -30,15 +30,26 @@ export async function workspaces(env: Env, user: Principal): Promise<Workspace[]
   const result: Workspace[] = [];
   const clients = await statement(
     env.DB,
-    `SELECT c.id,c.name,e.workspace_kind,m.role FROM clients c JOIN client_memberships m ON m.client_id=c.id JOIN client_entitlements e ON e.client_id=c.id AND e.active=1 WHERE m.user_id=? AND m.active=1 AND c.status='active'`,
+    `SELECT c.id,c.name,c.client_type,e.workspace_kind,m.role FROM clients c JOIN client_memberships m ON m.client_id=c.id JOIN client_entitlements e ON e.client_id=c.id AND e.active=1 WHERE m.user_id=? AND m.active=1 AND c.status='active'`,
     user.id,
-  ).all<{ id: string; name: string; workspace_kind: WorkspaceKind; role: string }>();
+  ).all<{ id: string; name: string; client_type: string; workspace_kind: WorkspaceKind; role: string }>();
+  const allTags = await statement(
+    env.DB,
+    `SELECT t.client_id,t.tag FROM account_experience_tags t JOIN client_memberships m ON m.client_id=t.client_id
+     JOIN clients c ON c.id=m.client_id AND c.status='active' WHERE m.user_id=? AND m.active=1 ORDER BY t.tag`,
+    user.id,
+  ).all<{ client_id: string; tag: string }>();
+  const tagsByClient = new Map<string, string[]>();
+  for (const row of allTags.results)
+    tagsByClient.set(row.client_id, [...(tagsByClient.get(row.client_id) ?? []), row.tag]);
   for (const c of clients.results)
     result.push({
       kind: c.workspace_kind,
       scopeId: c.id,
       name: c.name,
       role: c.role,
+      accountType: c.client_type,
+      experienceTags: tagsByClient.get(c.id) ?? [],
       href: `/w/${c.workspace_kind}/${c.id}`,
     });
   const tenancies = await statement(

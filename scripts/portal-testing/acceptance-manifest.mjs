@@ -14,7 +14,7 @@ export const ROLE_ALIASES = Object.freeze({
   staff: 'staff-testing@proinspect.systems',
 });
 
-const ROLE_WORKSPACE_KIND = Object.freeze({property_manager:'property-manager',strata_manager:'strata-manager',building_manager:'building-manager',council:'strata-council'});
+const ROLE_WORKSPACE_KIND = Object.freeze({property_manager:'property-manager',strata_manager:'strata-manager',building_manager:'building-manager',council:'council'});
 const scenario = (id, actors, success, denial, cleanup, isolated, browser = []) =>
   Object.freeze({ id, actors, success, denial, cleanup, isolated, browser });
 export const SCENARIOS = Object.freeze([

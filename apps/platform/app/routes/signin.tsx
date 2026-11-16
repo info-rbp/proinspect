@@ -90,7 +90,7 @@ export default function SignIn() {
           <p className="auth-foot">
             New property owner? After verifying your email, choose Residential or Commercial,
             add your property and decide later whether to take out an eligible paid subscription.
-            Tenant access requires an invitation.
+            Resident Portal access (tenants, building residents, lot owners and council members) is invitation-only. Use the link sent by your landlord, building representative or strata manager.
           </p>
         </section>
       </div>

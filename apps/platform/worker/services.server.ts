@@ -263,13 +263,30 @@ export async function createRequest(env: Env, user: Principal, w: Workspace, inp
     propertyId = data.propertyId;
     clientId = w.scopeId;
   }
+  if (data.spaceId) {
+    const space = w.kind === 'tenant'
+      ? await statement(env.DB,
+        `SELECT s.id FROM co_living_spaces s
+          JOIN co_living_occupancies own ON own.tenancy_id=? 
+          JOIN co_living_spaces mine ON mine.id=own.space_id AND mine.property_id=s.property_id
+          WHERE s.id=? AND s.property_id=? AND s.active=1
+            AND (s.space_type='shared_area' OR s.id=own.space_id)`,
+        tenancyId,data.spaceId,propertyId,
+      ).first()
+      : await statement(env.DB,
+        'SELECT id FROM co_living_spaces WHERE id=? AND property_id=? AND active=1',
+        data.spaceId,propertyId,
+      ).first();
+    assert(space,404,'CO_LIVING_SPACE_NOT_FOUND',
+      'Choose your own assigned room or bed, or an authorised shared area.');
+  }
   const id = uid('req'),
     reference = `REQ-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
     time = now();
   const statements = [
     statement(
       env.DB,
-      `INSERT INTO requests(id,reference,client_id,property_id,tenancy_id,created_by,source,category,title,details,priority,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,'submitted',?,?)`,
+      `INSERT INTO requests(id,reference,client_id,property_id,tenancy_id,created_by,source,category,title,details,priority,co_living_space_id,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,'submitted',?,?)`,
       id,
       reference,
       clientId,
@@ -281,6 +298,7 @@ export async function createRequest(env: Env, user: Principal, w: Workspace, inp
       data.title,
       data.details,
       data.priority,
+      data.spaceId ?? null,
       time,
       time,
     ),
