@@ -36,7 +36,8 @@ export default function WorkspaceLayout() {
   if (management || staff)
     items.push(['properties', management ? 'My properties' : 'Properties', '']);
   if (w.kind === 'property-manager') items.push(['outsourcing','Outsourced ProInspect services','']);
-  if (['landlord','property-manager','commercial','strata-manager'].includes(w.kind) && w.role !== 'viewer')
+  if ((['landlord','property-manager'].includes(w.kind) && w.role !== 'viewer') ||
+      (['commercial','strata-manager'].includes(w.kind) && ['owner','admin'].includes(w.role)))
     items.push(['resident-invitations', 'Invite residents & members', '']);
   if(w.kind==='commercial'&&['owner','admin'].includes(w.role))
     items.push(['commercial-occupancies','Occupants & invitations','']);
