@@ -76,6 +76,6 @@ test('new hosted guest service commissioning is stopped without deleting histori
   assert.match(api,/env.APP_ENV !== 'local'/);
   assert.match(api,/guest\.guestReport/);
   assert.match(booking,/Sign in or register for free/);
-  assert.match(routes,/guest\/book\/:serviceId\?', 'legacy redirect preserved');
+  assert.ok(routes.includes("route('guest/book/:serviceId?'"), 'legacy redirect preserved');
   assert.match(routes,/legacy-booking-redirect\.tsx/);
 });
