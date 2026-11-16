@@ -36,9 +36,13 @@ export default function ResidentInvitations() {
             </div>
           ) : <p>No authorised scheme is available. Complete the professional scheme assignment first.</p>}
         </Panel>
-      </> : <>
-        <Panel title={commercial?'Invite a commercial tenant contact':'Invite a residential tenant'}
-          description={tenancyFlow.id+' v'+tenancyFlow.version+' · The tenant must be linked to an existing tenancy; a property address alone is insufficient.'}>
+      </> : commercial ? <Panel title="Invite a commercial premises occupant"
+        description="ONB-INV-COM v1.1.0 · Property-bound invitations for commercial tenants, staff and other authorised occupants.">
+        <p>Select an existing commercial property and record the premises, relationship and authority reference. Only the invited email can activate limited premises access.</p>
+        <Link className="button" to={w.href+'/commercial-occupancies'}>Manage commercial occupants</Link>
+      </Panel> : <>
+        <Panel title="Invite a residential tenant"
+          description={'ONB-INV-RES v1.0.0 · The tenant must be linked to an existing tenancy; a property address alone is insufficient.'}>
           {d.tenancies.filter((t:any)=>t.status==='active').length ? <OperationForm
             endpoint={f=>api+'/tenancies/'+encodeURIComponent(String(f.get('tenancyId')))+'/invite'}
             label="Send secure invitation">
@@ -47,9 +51,7 @@ export default function ResidentInvitations() {
             }))}/>
             <Input name="email" type="email" label="Recipient email address"/>
           </OperationForm> : <p>No active tenancy is available. Add a verified tenancy to the property before inviting its tenant.</p>}
-          <p className="small">{commercial
-            ? 'Commercial contacts are linked only to a verified commercial tenancy. General non-tenant occupant access requires a separate reviewed membership model and is not enabled here.'
-            : 'For a new tenancy, open Tenancies & forms and choose Create tenancy & invite tenant.'}</p>
+          <p className="small">For a new tenancy, open Tenancies &amp; forms and choose Create tenancy &amp; invite tenant.</p>
           <Link className="button secondary" to={w.href+'/tenancies'}>Manage tenancies</Link>
         </Panel>
       </>}
