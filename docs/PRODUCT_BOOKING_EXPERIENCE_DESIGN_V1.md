@@ -1,7 +1,7 @@
 # ProInspect — Product booking experience (design proposal, NOT implementation)
 
-**Product design:** `UX-BOOK-PROPOSAL` · **Version:** `0.1.0` · **Date:** 2026-11-16  
-**Status:** Proposed for review. No new product, pricing, booking or payment functionality is authorised by this document.  
+**Product design:** `UX-BOOK-PROPOSAL` · **Version:** `0.1.0` · **Date:** 2026-11-16
+**Status:** Proposed for review. No new product, pricing, booking or payment functionality is authorised by this document.
 **Source contract:** `packages/service-catalogue/index.ts`, `apps/platform/app/routes/book.tsx`, `packages/authorization/subscription-booking.ts`, `docs/PORTALS.md`, `docs/LAUNCH_SCOPE.md`.
 
 ## Design objective

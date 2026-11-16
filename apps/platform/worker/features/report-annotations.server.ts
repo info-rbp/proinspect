@@ -58,7 +58,8 @@ export async function reportAnnotationCommand(env:Env,user:Principal,w:Workspace
       statement(env.DB,`INSERT INTO report_photo_annotations
         (evidence_id,report_id,source_sha256,annotations_json,created_by,source_reference,created_at,updated_at)
         VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(evidence_id) DO UPDATE SET
-        annotations_json=excluded.annotations_json,source_reference=excluded.source_reference,
+        -- Attribute the current draft to its last editor for independent review.
+        annotations_json=excluded.annotations_json,created_by=excluded.created_by,source_reference=excluded.source_reference,
         updated_at=excluded.updated_at`,
         evidence.id,reportId,evidence.sha256,JSON.stringify(command.annotations),user.id,
         command.sourceReference,timestamp,timestamp),

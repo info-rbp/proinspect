@@ -14,5 +14,5 @@ test('normal PCR catalogue page and general booking are preserved', async ({ pag
   await page.goto('/services/property-condition-report');
   await expect(page.getByRole('heading', { name: /Property Condition Report/i }).first()).toBeVisible();
   await page.goto('/book/property-condition-report');
-  await expect(page.getByRole('heading', { name: 'How would you like to book?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Book using your ProInspect account' })).toBeVisible();
 });

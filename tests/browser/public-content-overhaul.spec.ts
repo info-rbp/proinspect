@@ -23,7 +23,11 @@ test('homepage compares advertised prices without representing provisional entit
   await expect(page.locator('.pi-plan-card').nth(0)).toContainText('$20');
   await expect(page.locator('.pi-plan-card').nth(1)).toContainText('$150');
   await expect(page.locator('.pi-plan-card').nth(2)).toContainText('$150');
-  await expect(page.locator('.pi-plan-disclosure')).toContainText('property-specific subscription schedule');
+  await expect(page.locator('.pi-plan-disclosure').first()).toContainText('Your agreed service schedule');
+  await expect(page.locator('.pi-plan-card').first().locator('li')).toHaveCount(5);
+  await expect(page.locator('.pi-plan-card').first()).toContainText('separately leased room');
+  await expect(page.locator('.pi-plan-card').last()).toContainText('commercial unit');
+  await expect(page.locator('.pi-plan-disclosure').last()).toContainText('no carry-over');
   await expect(page.locator('.pi-property-card')).toHaveCount(8);
 });
 
