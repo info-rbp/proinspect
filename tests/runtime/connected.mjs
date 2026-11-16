@@ -1266,17 +1266,17 @@ try {
       );
       resident = { ...tenant, base: `/api/w/building/${scheme.id}` };
       council = await login('council@tests.example');
-      await invited(
-        council,
-        (
-          await ok(strataOrg.base + '/team/invite', strataUser, {
-            email: council.email,
-            schemeId: scheme.id,
-            role: 'council_member',
-            endsAt: expires,
-          })
-        ).localInvitationUrl,
+      const councilProposal = await ok(strataOrg.base + '/team/invite', strataUser, {
+        email: council.email, schemeId: scheme.id, role: 'council_member',
+        endsAt: expires, appointmentReference: 'Synthetic council election minutes 2026-11',
+      });
+      assert.equal(councilProposal.pendingReview,true);
+      assert.equal((await api('/api/w/council/'+scheme.id,{cookie:council.cookie})).status,403);
+      const councilApproval=await ok(
+        staffBase+'/council-appointments/'+councilProposal.reviewId+'/review',
+        operator,{decision:'approved',reviewReference:'Independently verified synthetic election minutes'}
       );
+      await invited(council,councilApproval.localInvitationUrl);
       council.base = `/api/w/council/${scheme.id}`;
       const ws = (await ok('/api/session', tenant)).workspaces;
       assert.ok(ws.some((w) => w.kind === 'tenant') && ws.some((w) => w.kind === 'building'));
@@ -1439,12 +1439,15 @@ try {
     'one tenant resident and council member sees independent notices and loses only expired council access',
     async () => {
       const extra = await ok(`${strataOrg.base}/team/invite`, strataUser, {
-        email: tenant.email,
-        schemeId: scheme.id,
-        role: 'council_member',
-        endsAt: expires,
+        email: tenant.email,schemeId: scheme.id,role: 'council_member',
+        endsAt: expires,appointmentReference: 'Synthetic council co-option resolution',
       });
-      await invited(tenant, extra.localInvitationUrl);
+      assert.equal(extra.pendingReview,true);
+      const reviewed=await ok(
+        staffBase+'/council-appointments/'+extra.reviewId+'/review',
+        operator,{decision:'approved',reviewReference:'Independently verified synthetic co-option resolution'}
+      );
+      await invited(tenant, reviewed.localInvitationUrl);
       const kinds = (await ok('/api/session', tenant)).workspaces.map((w) => w.kind);
       for (const kind of ['tenant', 'building', 'council'])
         assert.ok(kinds.includes(kind), `Expected independent ${kind} workspace`);
