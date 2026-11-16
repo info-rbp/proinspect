@@ -90,3 +90,41 @@ Existing accepted/historical council memberships are not silently rewritten by t
 - Isolated D1 migration/restore rehearsal, Cloudflare R2, hosted account journeys and independent acceptance before merge or production release.
 
 The implementation is a reviewable development candidate, not evidence of external approval or production readiness.
+
+
+## More Tools permissions — independently versioned NAV profiles
+
+The application now reads first-level paths and secondary group placement from
+`packages/domain/portal-navigation.ts`. Each `NAV-...` profile has its own
+semantic version, independent of onboarding and product-booking versions.
+A menu profile controls **visibility only** and is not a permission token.
+
+**Role levels:** `owner/admin` administer their own client organisation;
+`member` works only on assigned properties/areas; `viewer` is read-only.
+Separate staff roles and Resident relationships are never treated as these
+organisation roles.
+
+| Workspace | More Tools: authorised view | More Tools: conditional actions | Never granted by this menu |
+| --- | --- | --- | --- |
+| Residential owner | Their properties, bookings, inspections, documents, service agreements | Maintenance/work requests, tenant invitations, document preparation, approval/payment tasks; billing and account management for owner/admin only | Staff administration, another owner's property, professional portfolio by self-registration |
+| Residential agency | Assigned portfolios, orders, reports, tenancies, service agreements, audit-scoped records | Assigned tenancy requests/invitations for active management scope; outsourcing, team/assignments, billing, owner visibility and contractor payments for account admins | Unassigned owner records, agency-independent owner rights, staff overrides |
+| Commercial owner/manager | Authorised commercial assets, issued reports, commercial records and operational agreements | Property-bound occupant invitations and reviews for account admins, vetted lease obligations only when the commercial property and approved release exist; team, billing, payments and contractor management by authority | Residential tenant scope from a commercial occupant, lease or financial authority from a premises invitation |
+| Strata manager | Assigned schemes, common property work, notices, reports, authority-scoped records | Resident/owner invitations and council nomination by owner/admin; notice drafts and delegated operational actions; organisation administration only for permitted roles | Unreviewed council grants, formal statutory voting, other schemes' lot/private tenancy data |
+| Building manager | Assigned facilities, approved notices/drafts, explicitly issued building reports | Delegated facility, access and notice tasks inside active appointment and release gates | Client billing, council appointment verification, tenant private files, unassigned buildings |
+| Residential tenant | Own tenancy, inspections, issued tenancy documents/forms and personal requests | Maintenance/inspection-access requests; eligible statutory forms and restricted assistance when activated | Owner books/payments, landlord billing, another tenancy's documents or residents |
+| Commercial occupant | Invited premises label and personal requests | Submit an issue and read the property manager's response during active occupancy | Service bookings, leases, invoices, owner documents, other occupancies' requests or scheme/council access |
+| Building resident / lot owner | Scheme notices and explicitly granted issued documents, personal issues | Common-property or lot-linked requests within membership/lot scope, eligible building operations if release/assignment permits | Entire scheme member directory, tenancy/owner finances, council decisions without council term |
+| Council member | Scheme oversight, council-granted reports and operational decision packets | Record a **recommendation** or conflict declaration through the current council workflow, within active term and specific proposal | Statutory voting, direct work/payment approval by membership, resident directory, confidential tenancy data |
+| ProInspect Operations | Assigned orders, reporting and approved operational datasets | Administrators/operations managers may verify council appointments and manage controlled finance, legal/release review, customers and provider integrations; inspectors only assigned work; read-only staff may not mutate | Staff permission inferred from customer membership or an unrelated property |
+
+### More Tools visibility rules
+
+1. Hide menu entries when the user has no compatible underlying workspace relationship. Use direct server guards even when a link is hidden or a URL is typed manually.
+2. **No writes for `viewer`**: hide invitation, document-preparation, outsourcing administration and booking-change actions from read-only members.
+3. Show commercial lease tools only when a compatible commercial property exists in the authorised portfolio. Commercial release approval is still checked independently at the API.
+4. Do not imply council members can approve work simply because their workspace can record an operational recommendation.
+5. Restricted documentation, personal information, council packets and historic issued documents require their own active/specific grants.
+6. For future changes increment the version for **only that NAV tag** and test visibility + direct-URL API denial across all ten underlying workspace kinds.
+7. The shared **More Tools** groups are Operations, Documents & services, and Administration. Every visible link must point to an implemented route; unreleased service areas may be labelled as planned and must not impersonate a live workflow.
+
+This policy describes the intended menus and the current guarded operations, not approval for commercial feature release or statutory council authority.
