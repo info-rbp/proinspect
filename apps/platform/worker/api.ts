@@ -1,4 +1,5 @@
 import {ownerInvitationPreview,claimOwnerInvitation} from './features/agency-owner-invitations.server';
+import { invitedRelationshipPreview } from './features/invitation-preview.server';
 import {releaseReadiness,releaseCommand,requireReleaseApproval} from './features/release-governance.server';
 import * as legalAcceptance from './features/legal-acceptance.server';
 import { boundedText } from '../../../packages/http-bodies';
@@ -514,6 +515,11 @@ export async function handleApi(
       return Response.json(
         await decideApproval(env, user, null, ownApproval[1], await json(request)),
       );
+    if (path === '/api/invitations/preview' && method === 'GET') {
+      return Response.json(await invitedRelationshipPreview(env, user, url.searchParams.get('token')), {
+        headers: { 'Cache-Control': 'private, no-store' },
+      });
+    }
     if (path === '/api/invitations/accept' && method === 'POST') {
       const token = (await json(request)).token;
       const portal = await acceptPortalInvitation(env, user, token);
