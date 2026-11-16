@@ -31,9 +31,9 @@ test('Resident invitation and Staff registration cannot be self-selected', () =>
     assert.equal(isPublicOnboardingFlow(id), true, id);
   }
 });
-test('four customer-facing portal families retain all nine underlying workspace kinds', () => {
+test('four customer-facing portal families retain all existing workspace kinds plus distinct commercial occupants', () => {
   const all = Object.keys(WORKSPACES);
-  assert.equal(all.length,9);
+  assert.equal(all.length,10);
   for (const kind of all) assert.ok(PORTAL_FAMILIES[portalFamilyForWorkspace(kind)]);
   assert.equal(portalFamilyForWorkspace('landlord'),'residential');
   assert.equal(portalFamilyForWorkspace('property-manager'),'residential');
@@ -41,6 +41,7 @@ test('four customer-facing portal families retain all nine underlying workspace 
   assert.equal(portalFamilyForWorkspace('strata-manager'),'strata');
   assert.equal(portalFamilyForWorkspace('building-manager'),'strata');
   assert.equal(portalFamilyForWorkspace('tenant'),'resident');
+  assert.equal(portalFamilyForWorkspace('commercial-occupant'),'resident');
   assert.equal(portalFamilyForWorkspace('building'),'resident');
   assert.equal(portalFamilyForWorkspace('council'),'resident');
   assert.equal(portalFamilyForWorkspace('staff'),'operations');
