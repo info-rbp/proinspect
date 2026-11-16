@@ -38,6 +38,11 @@ export default function WorkspaceLayout() {
   if (w.kind === 'property-manager') items.push(['outsourcing','Outsourced ProInspect services','']);
   if (['landlord','property-manager','commercial','strata-manager'].includes(w.kind) && w.role !== 'viewer')
     items.push(['resident-invitations', 'Invite residents & members', '']);
+  if(w.kind==='commercial'&&['owner','admin'].includes(w.role))
+    items.push(['commercial-occupancies','Occupants & invitations','']);
+  if((w.kind==='strata-manager'&&['owner','admin'].includes(w.role))||
+     (staff&&['administrator','operations_manager'].includes(user.staffRole??'')))
+    items.push(['council-appointments','Council appointments','']);
   if (management)
     items.push([
       'portfolio',
@@ -109,13 +114,16 @@ export default function WorkspaceLayout() {
   if(['strata-manager','building','council'].includes(w.kind)||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['facilities','Building operations','']);
   if(w.kind==='strata-manager'||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['building-communications','Notice draft reviews','']);
   if(w.kind==='building-manager')items.splice(0,items.length,['','Overview',''],['facilities','Building operations',''],['building-communications','Notice drafts',''],['documents','Authorised building reports','']);
+  if(w.kind==='commercial-occupant')items.splice(0,items.length,
+    ['','Overview',''],['occupant-premises','My premises',''],['occupant-requests','My requests','']);
   // Keep specialist routes and deep links intact while showing a concise first-level menu.
   const primaryByKind: Record<string, string[]> = {
-    landlord: ['', 'properties', 'bookings', 'requests', 'reports', 'billing'],
-    'property-manager': ['', 'properties', 'portfolio', 'bookings', 'work-orders', 'reports', 'finance'],
-    commercial: ['', 'properties', 'commercial-leases', 'bookings', 'reports', 'finance'],
-    'strata-manager': ['', 'schemes', 'work-orders', 'requests', 'reports', 'finance'],
+    landlord: ['', 'properties', 'requests', 'tenancies', 'reports', 'billing'],
+    'property-manager': ['', 'properties', 'portfolio', 'tenancies', 'work-orders', 'reports', 'finance'],
+    commercial: ['', 'properties', 'commercial-leases', 'commercial-occupancies', 'requests', 'reports', 'finance'],
+    'strata-manager': ['', 'schemes', 'work-orders', 'resident-invitations', 'council-appointments', 'finance', 'reports'],
     tenant: ['', 'tenancies', 'inspections', 'requests', 'documents'],
+    'commercial-occupant': ['', 'occupant-premises', 'occupant-requests'],
     building: ['', 'schemes', 'requests', 'documents', 'facilities'],
     council: ['', 'schemes', 'finance', 'reports', 'documents'],
     'building-manager': ['', 'facilities', 'building-communications', 'documents'],
@@ -131,7 +139,7 @@ export default function WorkspaceLayout() {
   const secondary = items.filter(([path]) => !primaryPaths.includes(path));
   const pathname = useLocation().pathname;
   const toolGroups = [
-    { label: 'Operations', paths: ['records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','resident-invitations','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
+    { label: 'Operations', paths: ['records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','resident-invitations','commercial-occupancies','occupant-premises','occupant-requests','council-appointments','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
     { label: 'Documents & services', paths: ['documents','reports','document-operations','service-agreements','wa-form-queue','bond-review-queue','services','reporting','confidential','market-packs','enterprise-intelligence','v2-business'] },
     { label: 'Administration', paths: ['finance','billing','contractor-payments','team','agency-administration','administration','release-readiness','pricing-administration','legal-administration','integrations','enquiries','owner-invitations'] },
   ];
