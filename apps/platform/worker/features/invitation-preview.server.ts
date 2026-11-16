@@ -10,7 +10,8 @@ export async function invitedRelationshipPreview(env: Env, user: Principal, toke
     404, 'INVITATION_NOT_FOUND', 'This invitation is unavailable.');
   const hash = await digest(token);
   const tenancy = await statement(env.DB, `
-    SELECT 'ONB-INV-RES' AS flow_id, 'Residential tenant' AS role_label,
+    SELECT CASE WHEN p.sector='commercial' THEN 'ONB-INV-COM' ELSE 'ONB-INV-RES' END AS flow_id,
+      CASE WHEN p.sector='commercial' THEN 'Commercial tenant contact' ELSE 'Residential tenant' END AS role_label,
       p.address AS property_label, t.id AS scope_id, i.expires_at
     FROM invitations i
     JOIN tenancies t ON t.id=i.tenancy_id
@@ -19,7 +20,7 @@ export async function invitedRelationshipPreview(env: Env, user: Principal, toke
       AND i.role='tenant' AND t.status='active'`, hash, user.email, now()
   ).first<Record<string, any>>();
   if (tenancy) {
-    return { ...tenancy, flow_id: 'ONB-INV-RES', version: '1.0.0' };
+    return { ...tenancy, version: '1.0.0' };
   }
   const portal = await statement(env.DB, `
     SELECT i.role,i.scheme_id,i.lot_id,i.expires_at,
