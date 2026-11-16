@@ -135,8 +135,10 @@ export async function assertCouncilInvitationVerified(env:Env,i:Record<string,an
     JOIN staff_profiles sp ON sp.user_id=r.reviewed_by AND sp.active=1
       AND sp.role IN('administrator','operations_manager')
     WHERE r.id=? AND r.status='approved' AND r.scheme_id=? AND r.email=?
-      AND r.requested_by=? AND r.ends_at>?`,
-    i.council_review_id,i.scheme_id,recipient.email,i.created_by,now()
+      AND r.requested_by=? AND r.ends_at>? AND r.starts_at=? AND r.ends_at=?
+      AND r.lot_id IS ? AND r.reviewed_by!=r.requested_by`,
+    i.council_review_id,i.scheme_id,recipient.email,i.created_by,now(),
+    i.starts_at,i.ends_at,i.lot_id
   ).first();
   assert(review,403,'COUNCIL_REVIEW_REQUIRED','Council appointment verification is not active.');
 }
