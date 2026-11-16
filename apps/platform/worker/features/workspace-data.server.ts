@@ -255,6 +255,7 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
     payments,
     plans,
     documentRequests,
+    amenitiesEnabled: env.STRATA_AMENITIES_ENABLED === 'true',
     councilGovernanceEnabled: env.COUNCIL_GOVERNANCE_ENABLED === 'true',
     restrictedEnabled: env.RESTRICTED_WORKFLOWS_ENABLED === 'true',
   };
