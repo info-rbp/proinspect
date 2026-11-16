@@ -49,7 +49,12 @@ export default function CoLiving() {
     <PageHeading eyebrow="Residential property operations" title="Co-living"
       description="One property, separate private rooms or beds, shared areas and individually invited residents."/>
     <div className="stack">
-      <Link to={d.workspace.href+'/properties/'+encodeURIComponent(propertyId)}>Return to property</Link>
+      <div className="actions">
+        <Link to={d.workspace.href+'/properties/'+encodeURIComponent(propertyId)}>Return to property</Link>
+        <Link className="button secondary" to={d.workspace.href+'/properties/'+encodeURIComponent(propertyId)+'/co-living/operations'}>
+          Occupancy, finances &amp; common-area condition
+        </Link>
+      </div>
       <Feedback value={result}/>
       {!site?<section className="panel stack">
         <h2>Configure co-living</h2>
