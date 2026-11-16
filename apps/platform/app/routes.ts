@@ -57,7 +57,7 @@ export default [
     route('guest/request/verify', 'routes/v4-request-verify.tsx'),
     route('guest/request/manage', 'routes/v4-request-manage.tsx'),
     route('guest/request/quote', 'routes/v4-request-quote.tsx'),
-    route('guest/request/:serviceCode', 'routes/retired-guest-entry.tsx'),
+    route('guest/request/:serviceCode', 'routes/retired-guest-request.tsx'),
     route(':page', '../../marketing/app/routes/information.tsx'),
   ]),
   route('sitemap.xml', '../../marketing/app/routes/sitemap.ts'),
