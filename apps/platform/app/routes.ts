@@ -131,6 +131,7 @@ export default [
     route('my-room', 'routes/resident-room.tsx'),
     route('experience-settings', 'routes/experience-settings.tsx'),
     route('amenities', 'routes/amenities.tsx'),
+    route('community', 'routes/community-updates.tsx'),
     route('inspections', 'routes/inspections.tsx'),
     route('leasing', 'routes/leasing-administration.tsx'),
     route('open-home-checkins', 'routes/open-home-checkins.tsx'),
