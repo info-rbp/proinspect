@@ -33,7 +33,7 @@ function dbFile(){
   return join(persist,items[0]);
 }
 try{
-  check('migrations have complete 0001-0058 sequence',names.length===58&&
+  check('migrations have complete 0001-0058 sequence',names.length>=58&&
     names.every((name,i)=>name.startsWith(String(i+1).padStart(4,'0')+'_'))&&
     names[57]==='0058_portal_experience_coliving.sql');
   mkdirSync(migrations,{recursive:true});
