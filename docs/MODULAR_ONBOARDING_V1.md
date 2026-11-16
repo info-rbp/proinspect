@@ -45,9 +45,11 @@ Resident & Member cannot be selected at public signup. User identity is independ
 
 The existing tenancy invitation endpoint requires active tenancy, manager authority, and a verified recipient; the scheme invitation endpoint checks client admin, active scheme authority, lot membership and a future council end date. Council access is not statutory voting. Existing restricted documents require explicit issue grants regardless of membership.
 
-**Known gap:** A general commercial *non-tenant* occupant is not yet represented by a dedicated permission model. The branch deliberately exposes commercial *tenant contact* invitations only through an existing commercial tenancy and does not grant residential or scheme powers. A separate scoped commercial-occupant relationship, approval and tests are prerequisites before adding broader occupants.
+**Implemented in ONB-INV-COM v1.1.0:** A new, deliberately narrow `commercial-occupant` scope supports invited commercial tenants' contacts, employees, contractors and other authorised occupants. It requires an existing commercial property, a verified manager, an authority reference, an email-bound single-use token and active membership. It does not create residential tenancies or lease administration rights. Occupants can view only their premises and personal requests. `0058_resident_occupancies_and_council_appointments.sql` is the additive migration.
 
-**Known gap:** Scheme council appointment evidence and independent validation require follow-on release controls beyond the existing term and authorisation checks. A tagged UI does not imply those legal approvals have occurred.
+**Implemented in ONB-INV-COUNCIL v1.1.0:** Council nominations are pending requests until an independent ProInspect administrator/operations manager reviews the appointment evidence reference and term. Only approved nominations generate an email-bound invitation linked to the reviewed scheme, lot and term. Unreviewed legacy council invitation tokens cannot grant new membership. External documentation review and independent hosted acceptance remain release prerequisites.
+
+See `docs/PORTAL_MENUS_AND_RESIDENT_VERIFICATION_V1.md` for all primary and conditional portal menus. Product bookings remain a separate later phase.
 
 ### Change/version process
 
@@ -55,7 +57,7 @@ The existing tenancy invitation endpoint requires active tenancy, manager author
 - Increment its independent semantic version and amend only its own fields/steps unless shared dependencies also change.
 - Preserve historic invitation, tenancy, document, organisation and property IDs.
 - Future per-instance audit persistence requires an additive migration and release-gated version capture. Registry metadata alone must not be represented as a complete audit trail.
-- Verify all nine underlying authenticated role journeys, invitation email binding/replay/expiration, cross-account property isolation, building manager boundaries, payment entitlements, booking intent and mobile flows.
+- Verify the original nine underlying role journeys plus the new narrow commercial-occupant scope, invitation email binding/replay/expiration, cross-account property isolation, building manager boundaries, payment entitlements, booking intent and mobile flows.
 - No deployment to `main` or production until the staged acceptance and legal, security, accessibility and data-retention checks are complete.
 
 ## Release status
