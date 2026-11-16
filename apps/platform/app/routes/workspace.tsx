@@ -36,6 +36,8 @@ export default function WorkspaceLayout() {
   if (management || staff)
     items.push(['properties', management ? 'My properties' : 'Properties', '']);
   if (w.kind === 'property-manager') items.push(['outsourcing','Outsourced ProInspect services','']);
+  if (['landlord','property-manager','commercial','strata-manager'].includes(w.kind) && w.role !== 'viewer')
+    items.push(['resident-invitations', 'Invite residents & members', '']);
   if (management)
     items.push([
       'portfolio',
@@ -129,7 +131,7 @@ export default function WorkspaceLayout() {
   const secondary = items.filter(([path]) => !primaryPaths.includes(path));
   const pathname = useLocation().pathname;
   const toolGroups = [
-    { label: 'Operations', paths: ['records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
+    { label: 'Operations', paths: ['records','bookings','booking-changes','work-orders','requests','inspections','portfolio','outsourcing','tenancies','resident-invitations','schemes','facilities','building-communications','leasing','open-home-checkins','rental-applications','guest-orders','v4-service-requests','maintenance-delivery','asset-compliance','commercial-leases'] },
     { label: 'Documents & services', paths: ['documents','reports','document-operations','service-agreements','wa-form-queue','bond-review-queue','services','reporting','confidential','market-packs','enterprise-intelligence','v2-business'] },
     { label: 'Administration', paths: ['finance','billing','contractor-payments','team','agency-administration','administration','release-readiness','pricing-administration','legal-administration','integrations','enquiries','owner-invitations'] },
   ];
@@ -186,7 +188,7 @@ export default function WorkspaceLayout() {
         </nav>
         <div className="sidebar-foot">
           <Link to="/account">Account &amp; sign-in security</Link>
-          <Link to="/workspaces">Switch workspace →</Link>
+          <Link to="/workspaces">My ProInspect / Switch workspace →</Link>
           {open && (
             <button
               className="button secondary"
