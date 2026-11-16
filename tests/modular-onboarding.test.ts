@@ -62,7 +62,7 @@ test('resident invitation is email-and-property scoped, without public registrat
   assert.match(ui,/tenancies\/.*invite/);
   assert.match(ui,/schemes/);
   assert.match(portal,/schemeAccess\(env, user, w, d.schemeId, true\)/);
-  assert.match(portal,/i.email/);
+  assert.match(portal,/user.email/);
   assert.match(tenant,/tenancyAccess\(env, user, w, id, true\)/);
   assert.match(preview,/i.email=\?/);
   assert.match(preview,/consumed_at IS NULL/);
