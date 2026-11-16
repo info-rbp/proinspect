@@ -24,7 +24,7 @@ let eventSeq=0;async function webhook(event){const raw=JSON.stringify(event),tim
 const event=(type,object)=>({id:'evt_pcr_'+(++eventSeq),type,created:Math.floor(Date.now()/1000),livemode:false,data:{object}});
 const input={name:'Synthetic PCR purchaser',email:'pcr-owner@example.test',phone:'0400000000',sector:'residential',address:'813 Synthetic PCR Street',suburb:'Perth',postcode:'6000',propertyType:'House',access:{method:'owner',instructions:'Synthetic fixture only',noticeConfirmed:true},consent:true,website:''};
 const date=new Date(Date.now()+14*86400000);while([0,6].includes(date.getUTCDay()))date.setUTCDate(date.getUTCDate()+1);const day=date.toISOString().slice(0,10);
-async function requestGuest(serviceId,extras={}){const made=(await api('/api/guest/requests',{...input,requestKey:crypto.randomUUID(),serviceId,...extras},201)).value;const verified=(await api('/api/guest/verify',{token:made.localVerifyToken})).value;return {token:verified.localManageToken,reference:made.reference};}
+async function requestGuest(serviceId,extras={}){const made=(await api('/__test__/historical-guest-create',{...input,requestKey:crypto.randomUUID(),serviceId,...extras},201)).value;const verified=(await api('/api/guest/verify',{token:made.localVerifyToken})).value;return {token:verified.localManageToken,reference:made.reference};}
 async function slots(token){return (await api('/api/guest/availability?'+new URLSearchParams({token,date:day}))).value.slots;}
 let source,target,adminCookie,sourceSession,targetSession;
 try{
