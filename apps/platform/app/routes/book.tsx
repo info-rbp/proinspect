@@ -136,17 +136,24 @@ export default function Book() {
     return (
       <>
         <PageHeading
-          eyebrow="Booking confirmed"
-          title="Your service is booked."
-          description="Your booking and work order are now part of your property record."
+          eyebrow={result.result.paymentRequired ? 'Payment required' : 'Booking confirmed'}
+          title={result.result.paymentRequired ? 'Appointment recorded — payment required.' : 'Your service is booked.'}
+          description={result.result.paymentRequired
+            ? 'The appointment is reserved, but work cannot proceed until the payment has settled and is verified.'
+            : 'Your booking and work order are now part of your property record.'}
         />
         <section className="panel form-width stack">
           <h2>{result.result.reference}</h2>
           <Feedback value={result} />
-          <p>
-            ProInspect will carry out the booked work. Once your report is issued, it will appear
-            under Documents & reports in your account.
-          </p>
+          {result.result.paymentRequired
+            ? <>
+                <p>Amount awaiting collection, including provisional GST: <strong>{money(result.result.totalCents)}</strong>.</p>
+                <p>Checkout only opens when the approved Stripe, tax and legal release controls are enabled. No payment is taken by this page.</p>
+                <Link className="button" to={d.workspace.href+'/finance?payment='+encodeURIComponent(result.result.paymentId)}>
+                  Review payment and secure checkout
+                </Link>
+              </>
+            : <p>Once your report is issued, it will appear under Documents &amp; reports in your account.</p>}
           <div className="actions">
             <Link className="button" to={`${d.workspace.href}/bookings`}>
               View bookings
@@ -341,6 +348,11 @@ export default function Book() {
                   {!included && service.price_ex_gst_cents !== null ? ' + GST' : ''}
                 </strong>
               </div>
+              {!included && service.price_ex_gst_cents !== null && service.price_ex_gst_cents > 0 &&
+                <p className="notice warning">
+                  A one-off payment is required before work begins. Confirming this form records the
+                  booking and payment obligation; it does not charge your card.
+                </p>}
               <p className="small">
                 Your selected appointment is checked again when you confirm. A slot is not reserved
                 until the booking succeeds.
