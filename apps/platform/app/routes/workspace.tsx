@@ -110,6 +110,8 @@ export default function WorkspaceLayout() {
   if(['strata-manager','building','council'].includes(w.kind)||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['facilities','Building operations','']);
   if(w.kind==='strata-manager'||(staff&&['administrator','operations_manager'].includes(user.staffRole??'')))items.push(['building-communications','Notice draft reviews','']);
   if(w.kind==='building-manager')items.splice(0,items.length,['','Overview',''],['facilities','Building operations',''],['building-communications','Notice drafts',''],['documents','Authorised building reports','']);
+  if(['building','council','strata-manager','building-manager'].includes(w.kind))
+    items.push(['community','Community & building updates','']);
   if(data.amenitiesEnabled && ['strata-manager','building'].includes(w.kind))
     items.push(['amenities','Shared amenity requests','']);
   // Keep specialist routes and deep links intact while showing a concise first-level menu.
