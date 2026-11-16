@@ -4,27 +4,37 @@ import {
   type LoaderFunctionArgs, type ActionFunctionArgs,
 } from 'react-router';
 import { bookingIntent, propertySetupPath } from '../../../../packages/domain/booking-intent';
+import { getOnboardingFlow } from '../../../../packages/onboarding/registry';
 import { loadApi, callApi } from '../lib/api.server';
 import { Field, Feedback } from '../../../../packages/ui/components';
 
-export const meta = () => [{ title: 'Choose your Landlord type | ProInspect' }];
+type OwnerTag = 'ONB-RES-OWNER' | 'ONB-COM-OWNER';
+function ownerTag(value: unknown): OwnerTag {
+  return value === 'ONB-COM-OWNER' ? value : 'ONB-RES-OWNER';
+}
+export const meta = () => [{ title: 'Property owner onboarding | ProInspect' }];
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const session = await loadApi(request, context, '/api/session');
+  const url = new URL(request.url);
+  const flowId = ownerTag(url.searchParams.get('flow'));
   return {
     user: session.user,
-    serviceId: bookingIntent(new URL(request.url).searchParams.get('service')),
+    flowId,
+    flow: getOnboardingFlow(flowId)!,
+    serviceId: bookingIntent(url.searchParams.get('service')),
   };
 }
 export async function action({ request, context }: ActionFunctionArgs) {
   const form = await request.formData();
-  const landlordType = form.get('landlordType');
-  if (landlordType !== 'residential' && landlordType !== 'commercial')
-    return data({ error: 'Choose Residential or Commercial as your Landlord type.' }, { status: 422 });
+  // The selected tagged flow determines the account sector. A browser-supplied
+  // label cannot create organisation, tenant, council or Staff privileges.
+  const flowId = ownerTag(form.get('flowId'));
+  if (form.get('flowId') !== flowId)
+    return data({ error: 'Choose a valid property owner registration.' }, { status: 422 });
   if (form.get('selfManaged') !== 'yes')
-    return data({
-      error: 'Confirm that you own and self-manage the properties for this account.',
-    }, { status: 422 });
+    return data({ error: 'Confirm ownership and self-management before creating this account.' }, { status: 422 });
+  const landlordType = flowId === 'ONB-RES-OWNER' ? 'residential' : 'commercial';
   const response = await callApi(request, context, '/api/onboarding', {
     method: 'POST',
     body: {
@@ -44,70 +54,52 @@ export async function action({ request, context }: ActionFunctionArgs) {
   ));
 }
 export default function Onboarding() {
-  const { user, serviceId } = useLoaderData<typeof loader>();
+  const { user, flowId, flow, serviceId } = useLoaderData<typeof loader>();
   const result = useActionData<any>();
   const busy = useNavigation().state !== 'idle';
+  const commercial = flowId === 'ONB-COM-OWNER';
   return (
     <main id="main" className="auth-page form-width">
-      <Link className="brand" to="/workspaces">
-        ProInspect<span>PROPERTY OPERATIONS</span>
-      </Link>
+      <Link className="brand" to="/workspaces">ProInspect<span>PROPERTY OPERATIONS</span></Link>
       <section className="panel stack">
-        <p className="eyebrow">Landlord account</p>
-        <h1>Start with the essentials.</h1>
-        <p>
-          Select Residential or Commercial for property you own and manage yourself.
-          Account creation does not start paid billing. Subscription options and eligibility
-          are handled separately after account and property setup; existing approved entitlements
-          remain unchanged.
-        </p>
+        <p className="eyebrow">Account setup · {flow.id} v{flow.version}</p>
+        <h1>{commercial ? 'Set up commercial property' : 'Set up residential property'}</h1>
+        <p>Start with your name and the account you use for property you own and manage yourself. Add property details only when you need them. Registration is free and does not start a paid plan.</p>
+        <nav className="actions" aria-label="Choose property owner onboarding">
+          <Link className={commercial ? 'button secondary' : 'button'} to={serviceId ? '/onboarding?flow=ONB-RES-OWNER&service='+encodeURIComponent(serviceId) : '/onboarding?flow=ONB-RES-OWNER'}>Residential owner</Link>
+          <Link className={commercial ? 'button' : 'button secondary'} to={serviceId ? '/onboarding?flow=ONB-COM-OWNER&service='+encodeURIComponent(serviceId) : '/onboarding?flow=ONB-COM-OWNER'}>Commercial owner</Link>
+        </nav>
         <Form method="post" className="form">
-          <input type="hidden" name="serviceId" value={serviceId ?? ''} />
-          <Field label="Landlord type" name="landlordType">
-            <select id="landlordType" name="landlordType" required defaultValue="residential">
-              <option value="residential">Residential Landlord</option>
-              <option value="commercial">Commercial Landlord</option>
-            </select>
-          </Field>
-          <p className="small">
-            Residential includes houses and apartments. Commercial includes offices, shops,
-            warehouses and other commercial premises. Each uses its appropriate portal.
-          </p>
+          <input type="hidden" name="flowId" value={flowId}/>
+          <input type="hidden" name="serviceId" value={serviceId ?? ''}/>
           <Field label="Your name" name="displayName">
-            <input id="displayName" name="displayName" required minLength={2} maxLength={100}
-              autoComplete="name" defaultValue={user.display_name} />
+            <input id="displayName" name="displayName" required minLength={2} maxLength={100} autoComplete="name" defaultValue={user.display_name}/>
           </Field>
-          <Field label="Account name" name="clientName"
-            help="Your name or the business name you use for properties you own.">
-            <input id="clientName" name="clientName" required minLength={2} maxLength={160}
-              defaultValue={user.display_name} />
+          <Field label="Account name" name="clientName" help="Use your name or the name of the entity that owns the property.">
+            <input id="clientName" name="clientName" required minLength={2} maxLength={160} defaultValue={user.display_name}/>
           </Field>
           <label className="checkbox">
-            <input type="checkbox" name="selfManaged" value="yes" required />
-            <span>I own and self-manage the properties added to this account.</span>
+            <input type="checkbox" name="selfManaged" value="yes" required/>
+            <span>I confirm I own and self-manage the properties I will add to this account.</span>
           </label>
-          <fieldset className="panel stack">
-            <legend>Which additional ProInspect services interest you?</legend>
-            <p className="small">Select any relevant areas. This does not grant access, approve a service or start paid billing.</p>
+          <details className="panel stack">
+            <summary>Interested in other ProInspect services? (optional)</summary>
+            <p className="small">Preferences do not create service entitlements, property access or a subscription.</p>
             {[
               ['residential','Residential'],['commercial','Commercial'],['strata','Strata'],
               ['co-living','Co-Living (in development)'],['construction','Construction (in development)'],
               ['leasing','Leasing'],['maintenance','Maintenance'],
             ].map(([value,label])=><label className="checkbox" key={value}><input type="checkbox" name="serviceInterests" value={value}/><span>{label}</span></label>)}
-          </fieldset>
+          </details>
           <LegalAcceptance purpose="onboarding"/>
-          <p className="small">
-            Managing properties for other owners as a professional organisation requires
-            a separate reviewed organisation setup.
-          </p>
-          <Feedback value={result} />
+          <p className="small">Manage property on behalf of another owner? <Link to={commercial ? '/organisation?flow=ONB-COM-MANAGER' : '/organisation?flow=ONB-RES-AGENCY'}>Apply for professional organisation access</Link>. Tenant and resident access is by invitation only.</p>
+          <Feedback value={result}/>
           <div className="form-footer">
             <Link to="/workspaces">Back</Link>
-            <button className="primary" disabled={busy}>
-              {busy ? 'Creating account…' : 'Create Landlord account'}
-            </button>
+            <button className="primary" disabled={busy}>{busy ? 'Creating account…' : 'Create free account'}</button>
           </div>
         </Form>
+        <p className="small">Next: Add your first authorised property or continue the service you selected. Existing-account matches require review.</p>
       </section>
     </main>
   );
