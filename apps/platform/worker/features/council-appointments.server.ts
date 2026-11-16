@@ -135,6 +135,7 @@ export async function assertCouncilInvitationVerified(env:Env,i:Record<string,an
     FROM council_appointment_reviews r
     JOIN staff_profiles sp ON sp.user_id=r.reviewed_by AND sp.active=1
       AND sp.role IN('administrator','operations_manager')
+    JOIN users reviewer ON reviewer.id=r.reviewed_by AND reviewer.active=1
     WHERE r.id=? AND r.status='approved' AND r.scheme_id=? AND r.email=?
       AND r.requested_by=? AND r.ends_at>? AND r.starts_at=? AND r.ends_at=?
       AND r.lot_id IS ? AND r.reviewed_by!=r.requested_by`,
