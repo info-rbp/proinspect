@@ -279,6 +279,12 @@ export class BookingScheduler extends DurableObject<Env> {
       const amountExGstCents = includedSubscription ? 0 : service.price_ex_gst_cents ?? 0;
       const paymentRequired = !includedSubscription && amountExGstCents > 0;
       const gstCents = paymentRequired ? Math.round(amountExGstCents / 10) : 0;
+      // The existing Checkout integration is sandbox-only; production must not
+      // reserve an uncollectable one-off paid appointment until a separately
+      // accepted live Stripe flow and legal/tax release are deployed.
+      assert(!paymentRequired || this.env.APP_ENV!=='production',503,
+        'ONE_OFF_LIVE_CHECKOUT_NOT_RELEASED',
+        'New one-off paid appointments are not yet activated. No booking or charge has been created.');
       const paymentId = paymentRequired ? uid('pay') : null;
       const legal = await legalStatements(this.env,{kind:'user',id:user.id},'booking',id,{clientId,propertyId:property.id,serviceId:service.id,startsAt:window.startsAt,priceExGstCents:includedSubscription?0:service.price_ex_gst_cents,subscriptionId:includedSubscription?.id??null,access:data.access},data.legalConsent);
       const statements = [
