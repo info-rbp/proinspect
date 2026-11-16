@@ -84,6 +84,7 @@ export default [
     route('reporting', 'routes/reporting.tsx'),
     route('reports', 'routes/reports.tsx'),
     route('reports/:reportId', 'routes/report-detail.tsx'),
+    route('reports/:reportId/annotations', 'routes/report-annotations.tsx'),
     route('work-orders/:workOrderId', 'routes/work-order-detail.tsx'),
     route('portfolio', 'routes/portfolio.tsx'),
     route('outsourcing', 'routes/agency-outsourcing.tsx'),
