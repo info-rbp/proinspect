@@ -1,4 +1,7 @@
 import { coLivingOverview, coLivingCommand, myCoLivingSpace } from './features/co-living.server';
+import { coLivingOperationsData,coLivingOperationsCommand } from './features/co-living-operations.server';
+import { experiencePreferences, saveExperiencePreferences } from './features/experience-preferences.server';
+import { amenityDirectory, amenityCommand } from './features/amenities.server';
 import { getAccountTagDirectory, changeAccountTag } from './features/account-tags.server';
 import {ownerInvitationPreview,claimOwnerInvitation} from './features/agency-owner-invitations.server';
 import {releaseReadiness,releaseCommand,requireReleaseApproval} from './features/release-governance.server';
@@ -579,6 +582,23 @@ export async function handleApi(
     }
     const feature = await featureApi(request, env, user, w, tail);
     if (feature) return feature;
+    const operationsPath = tail.match(/^properties\/([a-zA-Z0-9_-]+)\/co-living\/operations$/);
+    if(operationsPath){
+      if(method==='GET')return Response.json(await coLivingOperationsData(env,user,w,operationsPath[1]),
+        {headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'){requireOrigin(request,env);return Response.json(
+        await coLivingOperationsCommand(env,user,w,operationsPath[1],await json(request)));}
+    }
+    if(tail==='experience-preferences'){
+      if(method==='GET')return Response.json(await experiencePreferences(env,user,w),
+        {headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'){requireOrigin(request,env);return Response.json(await saveExperiencePreferences(env,user,w,await json(request)));}
+    }
+    if(tail==='amenities'){
+      if(method==='GET')return Response.json(await amenityDirectory(env,user,w),
+        {headers:{'Cache-Control':'private, no-store'}});
+      if(method==='POST'){requireOrigin(request,env);return Response.json(await amenityCommand(env,user,w,await json(request)));}
+    }
     const coLivingPath = tail.match(/^properties\/([a-zA-Z0-9_-]+)\/co-living$/);
     if (coLivingPath) {
       if(method==='GET') return Response.json(await coLivingOverview(env,user,w,coLivingPath[1]),{headers:{'Cache-Control':'private, no-store'}});
