@@ -7,7 +7,8 @@ import tempfile
 with tempfile.TemporaryDirectory(prefix='private-scan-rehearsal-') as directory:
     db=sqlite3.connect(pathlib.Path(directory)/'rehearsal.sqlite')
     db.execute('PRAGMA foreign_keys=ON')
-    files=sorted(pathlib.Path('database/migrations').glob('*.sql'))
+    # Rehearse the historical 0056 -> 0057 boundary, not any later additive migration.
+    files=sorted(f for f in pathlib.Path('database/migrations').glob('*.sql') if f.name<='0057_private_document_scanning.sql')
     assert files[-1].name=='0057_private_document_scanning.sql'
     for file in files[:-1]: db.executescript(file.read_text())
     before=db.execute("SELECT type,name,sql FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name").fetchall()
