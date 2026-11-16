@@ -60,6 +60,7 @@ CREATE TABLE council_appointment_reviews (
   ends_at TEXT NOT NULL,
   appointment_reference TEXT NOT NULL CHECK(length(appointment_reference) BETWEEN 8 AND 500),
   requested_by TEXT NOT NULL REFERENCES users(id),
+  origin_client_id TEXT REFERENCES clients(id),
   status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN('pending','approved','declined')),
   reviewed_by TEXT REFERENCES users(id),
   review_reference TEXT,
