@@ -40,6 +40,7 @@ export default [
     route('properties-for-lease/:kind/:slug/apply', '../../marketing/app/routes/rental-start.tsx'),
     route('rental-application/recover','../../marketing/app/routes/rental-recover.tsx'),
      route('rental-application/:token', '../../marketing/app/routes/rental-application.tsx'),
+    route('rental-package/:token', '../../marketing/app/routes/rental-package.tsx'),
      route('rental-recipient/verify/:token','../../marketing/app/routes/rental-recipient-verify.tsx'),
     route('properties-for-lease/commercial/:slug/apply', '../../marketing/app/routes/commercial-start.tsx'),
     route('commercial-application/recover', '../../marketing/app/routes/commercial-recover.tsx'),
