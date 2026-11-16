@@ -83,7 +83,7 @@ test('commercial Landlord signup is free and does not grant included inspection 
   await page.getByLabel('Your name', { exact: true }).fill('Commercial Test Owner');
   await page.getByLabel('Account name', { exact: true }).fill('Synthetic Commercial Ownership');
   await page.getByRole('checkbox', { name: /I own and self-manage/ }).check();
-  await page.getByRole('button', { name: 'Create Landlord account' }).click();
+  await page.getByRole('button', { name: 'Create free account' }).click();
   await expect(page).toHaveURL(/\/w\/commercial\/cli_[a-z0-9]+\/properties\?service=commercial-property-inspection$/);
   const base = new URL(page.url()).pathname.replace(/\/properties$/, '');
   const session = await page.request.get('/api/session');
