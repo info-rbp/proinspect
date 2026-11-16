@@ -64,6 +64,28 @@ export default function Overview() {
   const d = useWorkspace();
   const w = d.workspace;
   if (w.kind === 'staff') return <StaffToday data={d} />;
+  if (w.kind === 'commercial-occupant') return <>
+    <PageHeading eyebrow="Resident & Member / Commercial" title="My commercial premises"
+      description="Your invited premises, submitted issues and current access term. Only your verified commercial occupancy is shown."/>
+    <section className="grid-4 portal-summary" aria-label="Commercial occupant summary">
+      <Link to={w.href+'/occupant-premises'} className="portal-summary-link">
+        <Metric label="Premises" value={d.occupancy?1:0} detail="Verified invitation"/>
+      </Link>
+      <Link to={w.href+'/occupant-requests'} className="portal-summary-link">
+        <Metric label="Open requests" value={d.requests.filter(r=>r.status!=='closed').length} detail="My own submitted issues"/>
+      </Link>
+    </section>
+    <section className="panel stack">
+      <h2>{d.occupancy?.address ?? 'Commercial premises'}</h2>
+      <p>{d.occupancy?.premises_label}</p>
+      <div className="actions">
+        <Link className="button" to={w.href+'/occupant-requests'}>Report a premises issue</Link>
+        <Link className="button secondary" to={w.href+'/occupant-premises'}>View my access details</Link>
+      </div>
+      <p className="small">Lease terms, owner finances, residential tenancy information and documents for other people are not included in this relationship.</p>
+    </section>
+  </>;
+
   if (['landlord','property-manager','commercial','strata-manager'].includes(w.kind)) return <ClientDashboard data={d} />;
   if (w.kind === 'building-manager') return <>
     <PageHeading eyebrow="Building operations" title="Today's building work" description="Manage assigned facilities, resident moves and authorised operational records.">
