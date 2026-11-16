@@ -1,24 +1,8 @@
 import { z } from 'zod';
 import { assert,statement,now,type Env } from '../../../../packages/database/types';
-import type {Principal,Workspace,WorkspaceKind} from '../../../../packages/domain/index';
-import {portalFamily} from '../../../../packages/domain/portal-experience';
+import type {Principal,Workspace} from '../../../../packages/domain/index';
+import {portalFamily,permittedExperienceSections} from '../../../../packages/domain/portal-experience';
 
-export const EXPERIENCE_SECTIONS={
-  landlord:['overview','properties','bookings','requests','documents','co-living','finance'],
-  'property-manager':['overview','properties','bookings','requests','documents','co-living','finance'],
-  commercial:['overview','properties','bookings','requests','documents','finance'],
-  'strata-manager':['overview','properties','requests','documents','facilities','finance'],
-  'building-manager':['overview','facilities','requests','documents'],
-  tenant:['overview','my-room','requests','documents'],
-  building:['overview','requests','documents','facilities'],
-  council:['overview','requests','documents','finance'],
-  staff:['overview','properties','bookings','requests','documents','finance','facilities'],
-} as const satisfies Record<WorkspaceKind,readonly string[]>;
-type Section=(typeof EXPERIENCE_SECTIONS)[WorkspaceKind][number];
-export function permittedExperienceSections(w:Pick<Workspace,'kind'|'experienceTags'>):string[]{
-  return EXPERIENCE_SECTIONS[w.kind].filter(section=>
-    section!=='co-living'||(w.experienceTags??[]).some(t=>['co_living','student_living'].includes(t)));
-}
 export async function experiencePreferences(env:Env,user:Principal,w:Workspace){
   const family=portalFamily(w.kind);
   const row=await statement(env.DB,
