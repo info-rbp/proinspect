@@ -1,7 +1,7 @@
 # Modular onboarding and simplified customer workspaces (branch implementation)
 
-**Document ID:** PI-ONB-MASTER · **Version:** 1.0.0 · **Date:** 2026-11-16  
-**Branch:** `feature/modular-onboarding-resident-invitations-20261116`  
+**Document ID:** PI-ONB-MASTER · **Version:** 1.0.0 · **Date:** 2026-11-16
+**Branch:** `feature/modular-onboarding-resident-invitations-20261116`
 **Status:** Development; independent hosted acceptance and release approval outstanding.
 
 ## What changes

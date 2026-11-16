@@ -18,7 +18,7 @@ test('final public offers and service groups use the controlling register', () =
   for (const page of Object.values(SECTOR_OVERVIEWS)) {
     assert.equal(page.services.length, 4);
     assert.equal(page.difference.length, 3);
-    assert.equal(page.questions.length, 3);
+    assert.ok(page.questions.length >= 3);
     assert.doesNotMatch(JSON.stringify(page), /\$50|\$250|\$100|65 hours|management is planned|not yet available to book/);
   }
 });

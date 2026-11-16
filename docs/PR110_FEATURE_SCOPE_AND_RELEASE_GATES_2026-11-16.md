@@ -4,6 +4,8 @@
 **Dependent branch:** feature/registered-booking-coliving-experiences-20261116
 **Base:** feature/unified-portals-resident-invites-coliving-20261116 (draft PR #107)
 **Related draft work:** PR #109 (versioned onboarding and invitation flows); PR #89 (professional portal UI).
+**Integration note (16 November):** The combined integration includes PRs #107, #109 and #110, preserving their commits and the existing temporary-upload migration. Canonical new migration numbers are 0059 portal/co-living, 0060 occupancies/council, 0061 registered workflows/preferences and 0062 finance/annotations. The original branch scope below is historical; see `SUBSCRIPTION_WORKBOOK_RECONCILIATION_2026-11-16.md` for the reconciled source and release boundaries. PR #89 is outside this integration.
+
 **Policy:** Draft development only. No production migration, charges, real tenants or external provider activation by branch merge alone.
 
 ## Development changes committed

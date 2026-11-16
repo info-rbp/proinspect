@@ -1,7 +1,7 @@
 # ProInspect — Portal menu and Resident verification contract
 
-**Specification:** PI-NAV-MASTER · **Version:** 1.0.0 · **Date:** 2026-11-16  
-**Branch:** `feature/modular-onboarding-resident-invitations-20261116`  
+**Specification:** PI-NAV-MASTER · **Version:** 1.0.0 · **Date:** 2026-11-16
+**Branch:** `feature/modular-onboarding-resident-invitations-20261116`
 **Status:** Development; not independently accepted or deployed.
 
 ## Operating model

@@ -74,9 +74,9 @@ test('new hosted guest service commissioning is stopped without deleting histori
   const booking=load('apps/platform/app/routes/booking-intent.tsx');
   const routes=load('apps/platform/app/routes.ts');
   assert.match(api,/ACCOUNT_REQUIRED/);
-  assert.match(api,/env.APP_ENV !== 'local'/);
+  assert.match(api,/method==='POST'\)throw new AppError\(410/); // Retired in every environment, including local.
   assert.match(api,/guest\.guestReport/);
   assert.match(booking,/Sign in or register for free/);
   assert.ok(routes.includes("route('guest/book/:serviceId?'"), 'legacy redirect preserved');
-  assert.match(routes,/legacy-booking-redirect\.tsx/);
+  assert.match(routes,/retired-guest-entry\.tsx/);
 });

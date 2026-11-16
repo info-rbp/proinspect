@@ -78,7 +78,11 @@ try{
     check('backup has no new co-living table',restored.prepare("SELECT name FROM sqlite_master WHERE name='co_living_sites'").get()===undefined);
     check('backup integrity',restored.prepare('PRAGMA integrity_check').get().integrity_check==='ok');
   }finally{restored.close();}
-  check('forward D1 integrity',query('PRAGMA integrity_check')[0]?.integrity_check==='ok');
+  // D1's SQL API does not authorise integrity_check; inspect the isolated
+  // persisted local database read-only, just as for the recovery copy.
+  const forward=new DatabaseSync(dbFile(),{readOnly:true});
+  try{check('forward D1 integrity',forward.prepare('PRAGMA integrity_check').get().integrity_check==='ok');}
+  finally{forward.close();}
   evidence.passed=true;
   console.log('PASS: 0058 to 0059 local D1 migration, co-living links and separate baseline recovery');
 }catch(error){evidence.error=String(error);console.error(error);process.exitCode=1;

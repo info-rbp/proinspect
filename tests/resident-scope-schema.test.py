@@ -1,4 +1,4 @@
-"""Rehearse 0059 on an isolated D1-compatible SQLite copy without changing legacy records."""
+"""Rehearse 0060 on an isolated D1-compatible SQLite copy without changing legacy records."""
 import pathlib
 import sqlite3
 import tempfile
@@ -49,4 +49,4 @@ with tempfile.TemporaryDirectory(prefix='resident-scope-0058-') as folder:
     }
     recovery.close()
     db.close()
-print('Resident scope 0059: additive schema, preserved records, FK integrity and isolated recovery verified')
+print('Resident scope 0060: additive schema, preserved records, FK integrity and isolated recovery verified')

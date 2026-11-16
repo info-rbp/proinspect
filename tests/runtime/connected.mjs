@@ -1112,12 +1112,17 @@ try {
     'agency approval escalation reaches only the verified owner and returns the decision to the work order',
     async () => {
       const propertyId = imported.propertyIds[1];
-      const order = await first(
-        "SELECT id,version FROM work_orders WHERE property_id=? AND client_id=? AND status IN('triage','quote_required','approved','scheduled','assigned') ORDER BY created_at DESC LIMIT 1",
-        propertyId,
-        pm.id,
-      );
-      assert.ok(order, 'Expected a canonical agency work order from bulk booking.');
+      // A priced booking now waits for signed settlement; a repair approval is a
+      // separate maintenance instruction, not a way to bypass that payment gate.
+      const created = await api(pm.base + '/requests', {cookie:agency.cookie, body: {
+        propertyId, category:'maintenance', title:'Repair quote approval',
+        details:'Synthetic reported repair needing a separate owner-approved quotation.', priority:'routine',
+      }});
+      assert.equal(created.status,201,JSON.stringify(created.data));
+      const request=created.data;
+      const repair = await ok(`${staffBase}/requests/${request.id}/convert`, operator, {});
+      const order = await first('SELECT id,version FROM work_orders WHERE id=?', repair.id);
+      assert.ok(order, 'Expected the separately commissioned maintenance work order.');
       const ownerId = await userId(owner);
       const proposal = {
         version: order.version,

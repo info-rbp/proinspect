@@ -31,8 +31,8 @@ test('dedicated Student Living service is published alongside all seven programm
 test('three approved marketing prices remain unchanged, without invented entitlements', () => {
   assert.deepEqual(PUBLIC_PLANS.map(x=>x.monthlyExGst),[20,150,150]);
   const comparison = readFileSync('apps/marketing/app/components/plan-comparison.tsx','utf8');
-  assert.match(comparison,/not confirmed included entitlements/);
-  assert.match(comparison,/property-specific subscription schedule/);
+  assert.match(comparison,/Service focus — final scope by agreement/);
+  assert.match(comparison,/PLAN_SCOPE/);
   assert.doesNotMatch(comparison,/unlimited visits included/i);
 });
 

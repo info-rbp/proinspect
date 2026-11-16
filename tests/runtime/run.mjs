@@ -481,9 +481,9 @@ try {
     const twice = await api(`/api/w/staff/operations/requests/${maintenance.data.id}/convert`, { cookie: operator.cookie, body: {} });
     assert.equal(twice.data.id, converted.data.id);
   });
-  await check('ended tenancy retains its view but cannot create ordinary requests', async () => {
+  await check('ended tenancy loses active workspace access and cannot create ordinary requests', async () => {
     await run("UPDATE tenancies SET status='ended',ends_at=? WHERE id=?", new Date(Date.now() - 1000).toISOString(), tenancy.data.id);
-    assert.equal((await api(tenantBase, { cookie: tenant.cookie })).status, 200);
+    assert.equal((await api(tenantBase, { cookie: tenant.cookie })).status, 403);
     assert.equal((await api(tenantBase + '/requests', { cookie: tenant.cookie, body: { category: 'maintenance', title: 'New request blocked', details: 'This must not be accepted after the tenancy ended.', priority: 'routine' } })).status, 403);
   });
   await check('Residential and Commercial Landlord types create independent free accounts', async () => {

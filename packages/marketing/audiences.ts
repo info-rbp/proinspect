@@ -49,7 +49,7 @@ export const AUDIENCES: Record<string, Audience> = {
     name: 'Commercial property owners',
     title: 'Clearer oversight of your commercial property.',
     description: 'Commercial condition inspections, handover observations, make-good records and on-site support for Western Australian property owners.',
-    purpose: 'Reduce everyday landlord coordination through an agreed operating contact who can organise tenant requests, approved works, site inspections, lease-diary support and useful owner updates. Commercial All-Inclusive is $150 + GST per property each month under an initial 24-month term.',
+    purpose: 'Reduce everyday landlord coordination through an agreed operating contact who can organise tenant requests, approved works, site inspections, lease-diary support and useful owner updates. Commercial All-Inclusive is $150 + GST per commercial unit each month under an initial 24-month term.',
     what: [
       ['Record current condition', 'Arrange agreed commercial inspections and photographic observations.'],
       ['Prepare for tenancy changes', 'Document pre-vacate and final make-good matters against supplied instructions.'],

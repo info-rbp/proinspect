@@ -84,7 +84,7 @@ test('stage 3 editorial approval and media provenance remain explicit release co
   const plan=read('apps/marketing/app/routes/residential-support.tsx');
   assert.match(plan,/Inspection Only at \$20 \+ GST/);
   assert.match(plan,/All-Inclusive at \$150 \+ GST/);
-  assert.match(plan,/not an available checkout offer/);
+  assert.match(plan,/There is no paid checkout on this page/);
   assert.match(plan,/noindex:!RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED/);
   assert.match(read('apps/marketing/app/lib/media-approval.ts'),/rightsRecord/);
 });

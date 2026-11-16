@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { PLAN_TERM, PUBLIC_PLANS } from '../../../../packages/marketing/public-facts';
+import { PLAN_TERM, PUBLIC_PLANS, INSPECTION_ONLY_SERVICES, INSPECTION_ONLY_SCOPE, RESIDENTIAL_BILLING_UNIT, PLAN_SCOPE } from '../../../../packages/marketing/public-facts';
 
 /**
  * Explains the marketing focus of each approved-price plan.
@@ -8,7 +8,7 @@ import { PLAN_TERM, PUBLIC_PLANS } from '../../../../packages/marketing/public-f
 const planFocus: Record<string, { audience: string; focus: string[]; path: string }> = {
   'residential-inspection-only': {
     audience: 'For residential owners and agencies seeking an ongoing inspection arrangement.',
-    focus: ['Routine property condition observations and required reports', 'An organised inspection and follow-up schedule', 'Property-linked findings for authorised review'],
+    focus: [...INSPECTION_ONLY_SERVICES],
     path: '/how-we-work/inspection-plans',
   },
   'residential-all-inclusive': {
@@ -30,24 +30,25 @@ export function PlanComparison({ market = 'all' }: { market?: 'all' | 'residenti
     <div className="site-container">
       <div className="pi-section-heading">
         <p className="eyebrow">Subscription options</p>
-        <h2 id="pi-plan-comparison-heading">Choose a defined service arrangement.</h2>
-        <p>These are the advertised {market === 'residential' ? 'residential' : market === 'commercial' ? 'commercial' : 'standard'} arrangements. The service areas below illustrate each plan’s purpose; they are not confirmed included entitlements or unlimited attendance allowances.</p>
+        <h2 id="pi-plan-comparison-heading">Find the right rhythm for your property.</h2>
+        <p>Choose focused inspection support or a broader service schedule built around the work you need.</p>
       </div>
       <div className="pi-plan-grid">
         {plans.map(plan => {
           const details = planFocus[plan.id];
           return <article className="pi-plan-card" key={plan.id}>
             <h3>{plan.name}</h3>
-            <p className="pi-plan-price">${plan.monthlyExGst} <span>+ GST / property / month</span></p>
+            <p className="pi-plan-price">${plan.monthlyExGst} <span>+ GST / {plan.billingUnit} / month</span></p>
             <p>{details.audience}</p>
-            <p className="eyebrow">Typical service focus</p>
+            <p className="eyebrow">{plan.id === 'residential-inspection-only' ? 'Five included service types' : 'Service focus — final scope by agreement'}</p>
             <ul className="mkt-check-list">{details.focus.map(item => <li key={item}>{item}</li>)}</ul>
             <Link className="pi-inline-link" to={details.path}>Explore this arrangement <span aria-hidden="true">→</span></Link>
           </article>;
         })}
       </div>
-      <p className="pi-plan-disclosure">{PLAN_TERM} Specific included services, frequencies, visit allowances, exclusions, additional charges and early-exit obligations must be provided and agreed in the property-specific subscription schedule before a paid commitment. Individual PAYG prices are shown to authorised signed-in clients.</p>
-      <Link className="button secondary" to="/contact">Discuss a subscription <span aria-hidden="true">→</span></Link>
+      <p className="pi-plan-disclosure">{PLAN_TERM} {PLAN_SCOPE}</p>
+      {market !== 'commercial' && <p className="pi-plan-disclosure">{RESIDENTIAL_BILLING_UNIT} {INSPECTION_ONLY_SCOPE}</p>}
+      <Link className="button secondary" to="/contact">Discuss your plan <span aria-hidden="true">→</span></Link>
     </div>
   </section>;
 }

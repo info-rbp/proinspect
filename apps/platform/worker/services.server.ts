@@ -267,7 +267,7 @@ export async function createRequest(env: Env, user: Principal, w: Workspace, inp
     const space = w.kind === 'tenant'
       ? await statement(env.DB,
         `SELECT s.id FROM co_living_spaces s
-          JOIN co_living_occupancies own ON own.tenancy_id=? 
+          JOIN co_living_occupancies own ON own.tenancy_id=?
           JOIN co_living_spaces mine ON mine.id=own.space_id AND mine.property_id=s.property_id
           WHERE s.id=? AND s.property_id=? AND s.active=1
             AND (s.space_type='shared_area' OR s.id=own.space_id)`,
