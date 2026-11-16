@@ -115,5 +115,18 @@ export async function myCoLivingSpace(env: Env, user: Principal, w: Workspace) {
      ORDER BY s.label`,
     w.scopeId,
   ).all<{id:string;label:string}>()).results;
-  return {space,sharedAreas};
+  const terms=await statement(env.DB,
+    `SELECT rent_cents,rent_period,expected_bond_cents,utility_basis,agreement_document_id
+      FROM co_living_lease_terms WHERE tenancy_id=? AND review_status='reviewed'`,
+    w.scopeId).first();
+  const sharedInspections=(await statement(env.DB,
+    `SELECT i.id,i.inspected_at,i.public_summary,s.label AS area
+     FROM co_living_area_inspections i JOIN co_living_spaces s ON s.id=i.space_id
+     JOIN co_living_spaces mine ON mine.property_id=i.property_id
+     JOIN co_living_occupancies own ON own.space_id=mine.id
+     WHERE own.tenancy_id=? AND i.status='published' AND s.space_type='shared_area'
+     ORDER BY i.inspected_at DESC LIMIT 100`,w.scopeId).all()).results;
+  // An issued agreement ID alone is not a download grant; the existing
+  // document endpoint must authorise the tenant separately.
+  return {space,sharedAreas,terms,sharedInspections};
 }
