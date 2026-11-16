@@ -88,9 +88,9 @@ export const ONBOARDING_FLOWS = {
     steps: ['INV-CORE-01', 'INV-CORE-05', 'INV-CORE-06'],
   },
   'ONB-INV-COM': {
-    id: 'ONB-INV-COM', version: '1.0.0', family: 'resident', entry: 'invitation-only',
-    title: 'Commercial tenant contact', summary: 'Invite a contact to a verified commercial property relationship.',
-    requiredAtStart: ['recipientEmail', 'commercialTenancyId', 'inviterAuthority'],
+    id: 'ONB-INV-COM', version: '1.1.0', family: 'resident', entry: 'invitation-only',
+    title: 'Commercial premises occupant', summary: 'Invite an occupant to a verified, property-bound commercial premises relationship.',
+    requiredAtStart: ['recipientEmail', 'propertyId', 'premisesLabel', 'relationshipKind', 'authorityReference', 'inviterAuthority'],
     laterWhenRelevant: ['occupantDelegation'],
     steps: ['INV-CORE-01', 'INV-CORE-05', 'INV-CORE-06'],
   },
@@ -102,9 +102,9 @@ export const ONBOARDING_FLOWS = {
     steps: ['INV-CORE-01', 'INV-CORE-05', 'INV-CORE-06'],
   },
   'ONB-INV-COUNCIL': {
-    id: 'ONB-INV-COUNCIL', version: '1.0.0', family: 'resident', entry: 'invitation-only',
+    id: 'ONB-INV-COUNCIL', version: '1.1.0', family: 'resident', entry: 'invitation-only',
     title: 'Strata council member', summary: 'A council appointment and its term require verification.',
-    requiredAtStart: ['recipientEmail', 'schemeId', 'termEndDate', 'appointmentAuthority'],
+    requiredAtStart: ['recipientEmail', 'schemeId', 'termEndDate', 'appointmentAuthority', 'independentStaffReview'],
     laterWhenRelevant: ['appointmentEvidence'],
     steps: ['INV-CORE-01', 'INV-CORE-05', 'INV-CORE-06'],
   },
@@ -149,7 +149,7 @@ export function portalFamilyForWorkspace(kind: string): PortalFamily {
   if (kind === 'landlord' || kind === 'property-manager') return 'residential';
   if (kind === 'commercial') return 'commercial';
   if (kind === 'strata-manager' || kind === 'building-manager') return 'strata';
-  if (kind === 'tenant' || kind === 'building' || kind === 'council') return 'resident';
+  if (kind === 'tenant' || kind === 'commercial-occupant' || kind === 'building' || kind === 'council') return 'resident';
   return 'operations';
 }
 export const PORTAL_FAMILIES = {
