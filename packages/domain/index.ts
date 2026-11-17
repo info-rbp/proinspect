@@ -59,6 +59,8 @@ export interface Workspace {
   role: string;
   href: string;
   accountType?: string;
+  /** Presentation hint from the active entitlement; API authority is checked separately. */
+  professionalPortfolio?: boolean;
   experienceTags?: string[];
   landingSection?: string;
   displayDensity?: 'comfortable' | 'compact';

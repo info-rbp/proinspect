@@ -41,7 +41,7 @@ test('public marketing pages are indexable only on the canonical domain, private
     assert.equal(isPublicSitePath(draft), true);
     assert.equal(shouldIndexPublicPage(draft, 'https://proinspect.systems', 'production'), false);
   }
-  for (const privatePath of ['/signin', '/auth/complete', '/account', '/onboarding',
+  for (const privatePath of ['/signin', '/signup', '/start', '/auth/complete', '/account', '/onboarding',
     '/book/routine-inspection', '/w/landlord/abc', '/workspaces', '/client', '/api/session']) {
     assert.equal(isPublicSitePath(privatePath), false, privatePath);
     assert.equal(shouldIndexPublicPage(privatePath, 'https://proinspect.systems', 'production'), false);

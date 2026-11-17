@@ -36,7 +36,7 @@ export function effectiveExperienceLabels(workspace: Workspace): string[] {
   const identityLabel: Record<WorkspaceKind, string> = {
     landlord: 'Residential landlord',
     'property-manager': 'Property management agency',
-    commercial: workspace.accountType === 'commercial_landlord' ? 'Commercial landlord' : 'Asset management',
+    commercial: workspace.accountType === 'commercial_landlord' && !workspace.professionalPortfolio ? 'Commercial landlord' : 'Asset management',
     'strata-manager': 'Strata management',
     'building-manager': 'Building management',
     tenant: 'Tenant',

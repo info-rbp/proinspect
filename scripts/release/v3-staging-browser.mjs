@@ -73,6 +73,28 @@ try{
   const response=await page.request.get(ORIGIN+'/api/staff/open-home-checkins?listingId=lst_synthetic');
   assert.equal(response.status(),401);
  });
+ await check('sign-in and role-aware sign-up retain service and invitation context without sending mail',async()=>{
+  const token='a'.repeat(64);
+  const destination='/invitations/accept?token='+token;
+  const response=await page.goto(ORIGIN+'/signin?returnTo='+encodeURIComponent(destination),{waitUntil:'networkidle',timeout:25000});
+  assert.equal(response.status(),200);
+  assert.match(response.headers()['x-robots-tag']??'',/noindex/i);
+  await expect(page.getByRole('heading',{name:'Welcome back to ProInspect.'})).toBeVisible();
+  await page.getByRole('link',{name:'Create a free account'}).click();
+  await expect(page.getByRole('heading',{name:'Create your free account',exact:true})).toBeVisible();
+  await expect(page.locator('input[name="returnTo"]')).toHaveValue(destination);
+  await expect(page.getByLabel('Which best describes you?')).toHaveCount(0);
+  await page.goto(ORIGIN+'/signup?service=routine-inspection',{waitUntil:'networkidle',timeout:25000});
+  const choices=page.getByLabel('Which best describes you?');
+  await expect(choices).toBeVisible();
+  assert.equal(await choices.locator('optgroup').count(),4);
+  await choices.selectOption('ONB-COM-OWNER');
+  await expect(page.locator('input[name="returnTo"]')).toHaveValue('/start?service=routine-inspection');
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+2));
+  await page.screenshot({path:'artifacts/v3-hosted-signup-mobile.png',fullPage:true});
+  await page.setViewportSize({width:1440,height:900});
+  await page.screenshot({path:'artifacts/v3-hosted-signup-desktop.png',fullPage:true});
+ });
  report.status='PASS';
 }catch(e){
  report.failure=e instanceof Error?e.message:'Unknown browser failure';
