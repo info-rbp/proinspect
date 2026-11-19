@@ -18,7 +18,7 @@ Terraform has separate bootstrap and foundation states. Bootstrap owns required 
 | Boundary | Dev/staging foundation |
 |---|---|
 | Runtime | Existing React Router 8.4 routes compiled for Node 22.23.2; IAM required; zero minimum / one configured maximum instance; 1 CPU, 512 MiB; 8 request concurrency; 30s timeout |
-| Routes | `/healthz`, three existing informational pages and their assets; `/` redirects to `/about`; `/internal/proof` is an authenticated no-op |
+| Routes | `/health`, three existing informational pages and their assets; `/` redirects to `/about`; `/internal/proof` is an authenticated no-op |
 | Disabled operations | Authentication, booking, payments, customer APIs, forms and background application processing return 503/405 before dispatch |
 | Storage | Separate ordinary/restricted buckets per environment; uniform access, enforced public-access prevention, versioning, no force destroy |
 | Secrets | Empty per-environment encryption secret containers; no versions, application credentials or secret-access grants |
@@ -29,6 +29,8 @@ Terraform has separate bootstrap and foundation states. Bootstrap owns required 
 | Cost controls | Scale to zero, small instance limits, paused schedules, image cleanup for old untagged images, expiring build source, budget thresholds 50/90/100% |
 
 A configured maximum instance count is a capacity control, not a hard spending ceiling; transient excess and multiple revisions can occur. Budget notifications also do not stop billing. The alert policy is visible in Monitoring; no notification channel is configured. Default Cloud Logging retention applies. Tagged releases are retained intentionally for rollback and must be pruned after review.
+
+External health checks use `/health`; internal container probes also accept `/healthz`. Google reserves some URL paths ending in `z`, which caused the first external health check to return its frontend 404; see [Cloud Run known issues](https://docs.cloud.google.com/run/docs/known-issues#reserved-url-paths).
 
 No load balancer, CDN, Cloud Armor, DNS, VPC connector, NAT, KMS key or Cloud SQL instance is created in this proof. IAM protects the native Run endpoints. No durable business work may use Node fire-and-forget promises under request-based billing: future workers must acknowledge only after durable commit and use Tasks/outbox delivery.
 

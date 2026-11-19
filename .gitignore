@@ -16,3 +16,4 @@ artifacts/
 *.tfplan
 *.tfvars
 __pycache__/
+gha-creds-*.json

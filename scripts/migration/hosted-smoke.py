@@ -14,9 +14,9 @@ def request(path,auth=True,method='GET'):
  try:
   with urllib.request.urlopen(req,timeout=30) as r:return r.status,r.read(),r.headers
  except urllib.error.HTTPError as e:return e.code,e.read(),e.headers
-status,_,_=request('/healthz',False);assert status in (401,403),status
-status,body,_=request('/healthz');assert status==200,(stage,status)
-health=json.loads(body);assert health['source']==sha and health['operationalRoutes'] is False
+status,_,_=request('/health',False);assert status in (401,403),status
+status,body,_=request('/health');assert status==200,(stage,status)
+health=json.loads(body);assert health['source']==sha and health['environment']==stage and health['operationalRoutes'] is False
 for path in ('/about','/how-it-works','/why-proinspect'):
  status,body,headers=request(path);assert status==200 and b'ProInspect' in body and headers['X-Robots-Tag']=='noindex, nofollow'
 for path in ('/signin','/api/health','/w/staff/operations'):

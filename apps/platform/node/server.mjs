@@ -38,7 +38,7 @@ const server = createServer(async (req, res) => {
       res.writeHead(204); res.end(); return; // IAM authenticated no-op; never dispatch application jobs.
     }
     if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); res.end(); return; }
-    if (url.pathname === '/healthz') {
+    if (['/health', '/healthz'].includes(url.pathname)) {
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ ok: true, mode: 'foundation-proof', environment: process.env.FOUNDATION_ENV, source, operationalRoutes: false })); return;
     }

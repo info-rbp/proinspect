@@ -2,7 +2,11 @@ terraform {
   required_version = ">= 1.15, < 2.0"
   required_providers { google = { source = "hashicorp/google", version = "~> 7.0" } }
 }
-provider "google" { project = "proinspect-property-services" }
+provider "google" {
+  project               = "proinspect-property-services"
+  billing_project       = "proinspect-property-services"
+  user_project_override = true
+}
 locals {
   project  = "proinspect-property-services"
   region   = "australia-southeast1"

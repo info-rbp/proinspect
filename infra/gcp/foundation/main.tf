@@ -6,7 +6,11 @@ terraform {
   }
   required_providers { google = { source = "hashicorp/google", version = "~> 7.0" } }
 }
-provider "google" { project = "proinspect-property-services" }
+provider "google" {
+  project               = "proinspect-property-services"
+  billing_project       = "proinspect-property-services"
+  user_project_override = true
+}
 variable "image" {
   type        = string
   description = "Verified foundation container digest, never a mutable tag."
@@ -165,7 +169,6 @@ resource "google_cloud_scheduler_job" "proof" {
   time_zone        = "Etc/UTC"
   paused           = true
   attempt_deadline = "30s"
-  retry_config { retry_count = 0 }
   http_target {
     uri         = "${google_cloud_run_v2_service.proof[each.value.environment].uri}/internal/proof"
     http_method = "POST"

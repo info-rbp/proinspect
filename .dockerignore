@@ -8,3 +8,4 @@ artifacts
 **/.dev.vars*
 **/*.tfstate*
 **/.terraform
+gha-creds-*.json

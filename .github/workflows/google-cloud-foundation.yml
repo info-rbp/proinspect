@@ -59,7 +59,7 @@ jobs:
       - name: Verify the built container actually starts
         run: |
           docker run -d --name foundation-proof -p 127.0.0.1:18082:8080 -e FOUNDATION_ENV=dev -e BUILD_SHA=$GITHUB_SHA proinspect-foundation:$GITHUB_SHA
-          curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:18082/healthz
+          curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:18082/health
           curl --fail --output /tmp/proinspect-foundation-about.html http://127.0.0.1:18082/about
           grep -q ProInspect /tmp/proinspect-foundation-about.html
       - name: Stop synthetic container
