@@ -1,0 +1,844 @@
+{
+  "observed_utc": "2026-11-19T13:53:31.268693+00:00",
+  "project": "proinspect-property-services",
+  "region": "australia-southeast1",
+  "branch": "migration/google-cloud-foundation",
+  "protected_main": "15382bea37d05b0a9533b040e6d79591a7883442",
+  "deployed_implementation": "d0122958552302a67677144239180b5f51017bc3",
+  "implementation_commits": [
+    "7f4117187d84d49624cbf2f57ac3488d84518e3c",
+    "cba42e4fbd1150156db8b141491f7f2d92969221",
+    "d0122958552302a67677144239180b5f51017bc3"
+  ],
+  "ci": {
+    "url": "https://github.com/info-rbp/proinspect/actions/runs/44536442061",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "verify",
+        "conclusion": "success",
+        "url": "https://github.com/info-rbp/proinspect/actions/runs/44536442061/job/135603012190"
+      },
+      {
+        "name": "deploy (dev)",
+        "conclusion": "success",
+        "url": "https://github.com/info-rbp/proinspect/actions/runs/44536442061/job/135604706880"
+      },
+      {
+        "name": "deploy (staging)",
+        "conclusion": "success",
+        "url": "https://github.com/info-rbp/proinspect/actions/runs/44536442061/job/135604706982"
+      }
+    ]
+  },
+  "services": [
+    {
+      "stage": "dev",
+      "service": "proinspect-migration-dev",
+      "uri": "https://proinspect-migration-dev-kq42xqbxpq-ts.a.run.app",
+      "ready_revision": "proinspect-migration-dev-00007-5x7",
+      "image": "australia-southeast1-docker.pkg.dev/proinspect-property-services/proinspect-migration-dev/platform@sha256:f3068e9ac245c77645c639ae3b0950f20de466f242f4e12e1d5c2b527faec615",
+      "image_index_digest": "sha256:f3068e9ac245c77645c639ae3b0950f20de466f242f4e12e1d5c2b527faec615",
+      "running_image_digest": "sha256:6b55b675a2df591411fbcd8ae099641e3de766ff67bddfe911b636c3b26a7ef1",
+      "percent_traffic_on_ready_revision": 100,
+      "runtime": "pi-mig-dev-runtime@proinspect-property-services.iam.gserviceaccount.com",
+      "invokers": [
+        "serviceAccount:pi-mig-dev-deploy@proinspect-property-services.iam.gserviceaccount.com",
+        "serviceAccount:pi-mig-dev-invoker@proinspect-property-services.iam.gserviceaccount.com"
+      ],
+      "secret": "proinspect-migration-dev-data-encryption-key",
+      "version": 1,
+      "secret_version_state": "ENABLED",
+      "task_queue": "projects/proinspect-property-services/locations/australia-southeast1/queues/proinspect-migration-dev-events",
+      "task_target": "proinspect-migration-dev-kq42xqbxpq-ts.a.run.app/internal/jobs/events",
+      "task_invoker": "pi-mig-dev-invoker@proinspect-property-services.iam.gserviceaccount.com",
+      "task_dispatch_utc": "2026-11-19T13:49:52.582119Z",
+      "task_http_status": 204,
+      "hosted_checks": {
+        "environment": "dev",
+        "url": "https://proinspect-migration-dev-kq42xqbxpq-ts.a.run.app",
+        "source": "d0122958552302a67677144239180b5f51017bc3",
+        "checks": 11,
+        "passed": true,
+        "anonymousDenied": true,
+        "adapters": true,
+        "sql": false
+      }
+    },
+    {
+      "stage": "staging",
+      "service": "proinspect-migration-staging",
+      "uri": "https://proinspect-migration-staging-kq42xqbxpq-ts.a.run.app",
+      "ready_revision": "proinspect-migration-staging-00006-jtq",
+      "image": "australia-southeast1-docker.pkg.dev/proinspect-property-services/proinspect-migration-staging/platform@sha256:f3068e9ac245c77645c639ae3b0950f20de466f242f4e12e1d5c2b527faec615",
+      "image_index_digest": "sha256:f3068e9ac245c77645c639ae3b0950f20de466f242f4e12e1d5c2b527faec615",
+      "running_image_digest": "sha256:6b55b675a2df591411fbcd8ae099641e3de766ff67bddfe911b636c3b26a7ef1",
+      "percent_traffic_on_ready_revision": 100,
+      "runtime": "pi-mig-staging-runtime@proinspect-property-services.iam.gserviceaccount.com",
+      "invokers": [
+        "serviceAccount:pi-mig-staging-deploy@proinspect-property-services.iam.gserviceaccount.com",
+        "serviceAccount:pi-mig-staging-invoker@proinspect-property-services.iam.gserviceaccount.com"
+      ],
+      "secret": "proinspect-migration-staging-data-encryption-key",
+      "version": 1,
+      "secret_version_state": "ENABLED",
+      "task_queue": "projects/proinspect-property-services/locations/australia-southeast1/queues/proinspect-migration-staging-events",
+      "task_target": "proinspect-migration-staging-kq42xqbxpq-ts.a.run.app/internal/jobs/events",
+      "task_invoker": "pi-mig-staging-invoker@proinspect-property-services.iam.gserviceaccount.com",
+      "task_dispatch_utc": "2026-11-19T13:51:17.257631Z",
+      "task_http_status": 204,
+      "hosted_checks": {
+        "environment": "staging",
+        "url": "https://proinspect-migration-staging-kq42xqbxpq-ts.a.run.app",
+        "source": "d0122958552302a67677144239180b5f51017bc3",
+        "checks": 11,
+        "passed": true,
+        "anonymousDenied": true,
+        "adapters": true,
+        "sql": false
+      }
+    }
+  ],
+  "cloud_sql_instances": [],
+  "sql_budget_aud": 0,
+  "schedules": [
+    {
+      "name": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-dev-outbox",
+      "schedule": "*/2 * * * *",
+      "state": "PAUSED",
+      "timeZone": "Etc/UTC"
+    },
+    {
+      "name": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-staging-outbox",
+      "schedule": "*/2 * * * *",
+      "state": "PAUSED",
+      "timeZone": "Etc/UTC"
+    },
+    {
+      "name": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-dev-daily",
+      "schedule": "0 1 * * *",
+      "state": "PAUSED",
+      "timeZone": "Etc/UTC"
+    },
+    {
+      "name": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-staging-daily",
+      "schedule": "0 1 * * *",
+      "state": "PAUSED",
+      "timeZone": "Etc/UTC"
+    }
+  ],
+  "price_reference": {
+    "region": "australia-southeast1",
+    "currency": "AUD",
+    "before_tax": true,
+    "micro_sku": "C8A3-6946-1357",
+    "micro_per_hour": 0.02017607,
+    "ssd_sku": "DDA2-F693-0417",
+    "ssd_gib_month": 0.326085075,
+    "backup_sku": "B33D-D12C-4CAA",
+    "backup_gib_month": 0.1534518,
+    "hours": 730,
+    "ssd_gib": 10,
+    "backup_gib": 10,
+    "one_instance_estimate": 19.52,
+    "two_instances_estimate": 39.05
+  },
+  "billing_alert_aud": 40,
+  "budget_thresholds": [
+    0.5,
+    0.9,
+    1.0
+  ],
+  "schema": {
+    "baseline_sha256": "a4fe69c92e40271c114e1cccb9711c3d526fa42e519d4c9239f6f607f185fdfd",
+    "migrations": 62,
+    "tables": 318,
+    "columns": 2985,
+    "foreign_keys": 852,
+    "named_indexes": 202,
+    "domain_triggers": 471,
+    "reference_rows": 871
+  },
+  "tests": {
+    "disposable_pg_versions": [
+      "17 in GitHub Actions",
+      "18.3 locally"
+    ],
+    "postgres_transaction_groups": 10,
+    "full_schema_and_adapters": 9,
+    "node_proof_and_encryption": 2,
+    "source_statements_prepared": 1719,
+    "sqlite_domain_scenarios": 58,
+    "synthetic_operations": 825,
+    "registered_booking_retries": 6,
+    "synthetic_settlement_deliveries": 6,
+    "terraform_mock_tests": 3,
+    "existing_repo_node_tests": 365,
+    "existing_repo_python_tests": 86,
+    "original_d1_registered_journey": "passed"
+  },
+  "managed_api_registrations": [
+    "artifactregistry.googleapis.com",
+    "billingbudgets.googleapis.com",
+    "calendar-json.googleapis.com",
+    "cloudasset.googleapis.com",
+    "cloudbilling.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "cloudscheduler.googleapis.com",
+    "cloudtasks.googleapis.com",
+    "compute.googleapis.com",
+    "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "logging.googleapis.com",
+    "monitoring.googleapis.com",
+    "run.googleapis.com",
+    "secretmanager.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "sqladmin.googleapis.com",
+    "storage.googleapis.com",
+    "sts.googleapis.com"
+  ],
+  "enabled_project_apis": [
+    "analyticshub.googleapis.com",
+    "apptopology.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "backupdr.googleapis.com",
+    "bigquery.googleapis.com",
+    "bigqueryconnection.googleapis.com",
+    "bigquerydatapolicy.googleapis.com",
+    "bigquerydatatransfer.googleapis.com",
+    "bigquerymigration.googleapis.com",
+    "bigqueryreservation.googleapis.com",
+    "bigquerystorage.googleapis.com",
+    "billingbudgets.googleapis.com",
+    "calendar-json.googleapis.com",
+    "cloudapis.googleapis.com",
+    "cloudasset.googleapis.com",
+    "cloudbilling.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "cloudscheduler.googleapis.com",
+    "cloudsecuritycompliance.googleapis.com",
+    "cloudtasks.googleapis.com",
+    "cloudtrace.googleapis.com",
+    "compute.googleapis.com",
+    "containeranalysis.googleapis.com",
+    "containerregistry.googleapis.com",
+    "dataform.googleapis.com",
+    "dataplex.googleapis.com",
+    "datastore.googleapis.com",
+    "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "logging.googleapis.com",
+    "monitoring.googleapis.com",
+    "oslogin.googleapis.com",
+    "pubsub.googleapis.com",
+    "run.googleapis.com",
+    "secretmanager.googleapis.com",
+    "servicemanagement.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "serviceusage.googleapis.com",
+    "sql-component.googleapis.com",
+    "sqladmin.googleapis.com",
+    "storage-api.googleapis.com",
+    "storage-component.googleapis.com",
+    "storage.googleapis.com",
+    "sts.googleapis.com",
+    "telemetry.googleapis.com"
+  ],
+  "phase2_enabled_apis": [
+    "calendar-json.googleapis.com",
+    "cloudbilling.googleapis.com",
+    "compute.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "sqladmin.googleapis.com"
+  ],
+  "phase2_adopted_enabled_api": "storage.googleapis.com",
+  "buckets": [
+    {
+      "location": "AUSTRALIA-SOUTHEAST1",
+      "name": "proinspect-property-services-mig-dev-documents",
+      "public_access_prevention": "enforced",
+      "uniform_bucket_level_access": true
+    },
+    {
+      "location": "AUSTRALIA-SOUTHEAST1",
+      "name": "proinspect-property-services-mig-dev-restricted",
+      "public_access_prevention": "enforced",
+      "uniform_bucket_level_access": true
+    },
+    {
+      "location": "AUSTRALIA-SOUTHEAST1",
+      "name": "proinspect-property-services-mig-staging-documents",
+      "public_access_prevention": "enforced",
+      "uniform_bucket_level_access": true
+    },
+    {
+      "location": "AUSTRALIA-SOUTHEAST1",
+      "name": "proinspect-property-services-mig-staging-restricted",
+      "public_access_prevention": "enforced",
+      "uniform_bucket_level_access": true
+    },
+    {
+      "location": "AUSTRALIA-SOUTHEAST1",
+      "name": "proinspect-property-services-migration-builds",
+      "public_access_prevention": "enforced",
+      "uniform_bucket_level_access": true
+    },
+    {
+      "location": "AUSTRALIA-SOUTHEAST1",
+      "name": "proinspect-property-services-migration-tfstate",
+      "public_access_prevention": "enforced",
+      "uniform_bucket_level_access": true
+    }
+  ],
+  "synthetic_probe_storage_prefix_counts": {
+    "proinspect-property-services-mig-dev-documents": {
+      "live": {
+        "count": 0,
+        "bytes": 0
+      },
+      "including_noncurrent": {
+        "count": 8,
+        "bytes": 120
+      }
+    },
+    "proinspect-property-services-mig-dev-restricted": {
+      "live": {
+        "count": 0,
+        "bytes": 0
+      },
+      "including_noncurrent": {
+        "count": 4,
+        "bytes": 72
+      }
+    },
+    "proinspect-property-services-mig-staging-documents": {
+      "live": {
+        "count": 0,
+        "bytes": 0
+      },
+      "including_noncurrent": {
+        "count": 4,
+        "bytes": 60
+      }
+    },
+    "proinspect-property-services-mig-staging-restricted": {
+      "live": {
+        "count": 0,
+        "bytes": 0
+      },
+      "including_noncurrent": {
+        "count": 2,
+        "bytes": 36
+      }
+    }
+  },
+  "terraform": {
+    "managed_count": 74,
+    "managed_count_by_state": {
+      "bootstrap": 28,
+      "foundation": 46
+    },
+    "refresh_plans": {
+      "bootstrap": "no changes",
+      "foundation": "no changes"
+    },
+    "phase2_apply_counts": {
+      "bootstrap": {
+        "added": 6
+      },
+      "foundation": {
+        "added": 10,
+        "updated": 12,
+        "destroyed": 0
+      }
+    },
+    "managed_resources": [
+      {
+        "state": "bootstrap",
+        "address": "google_artifact_registry_repository.images[\"dev\"]",
+        "type": "google_artifact_registry_repository",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/repositories/proinspect-migration-dev"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_artifact_registry_repository.images[\"staging\"]",
+        "type": "google_artifact_registry_repository",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/repositories/proinspect-migration-staging"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_artifact_registry_repository_iam_member.builder[\"dev\"]",
+        "type": "google_artifact_registry_repository_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/repositories/proinspect-migration-dev/roles/artifactregistry.writer/serviceAccount:pi-migration-builder@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_artifact_registry_repository_iam_member.builder[\"staging\"]",
+        "type": "google_artifact_registry_repository_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/repositories/proinspect-migration-staging/roles/artifactregistry.writer/serviceAccount:pi-migration-builder@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_iam_member.builder_logs",
+        "type": "google_project_iam_member",
+        "id": "proinspect-property-services/roles/logging.logWriter/serviceAccount:pi-migration-builder@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"artifactregistry.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/artifactregistry.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"billingbudgets.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/billingbudgets.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"calendar-json.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/calendar-json.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"cloudasset.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/cloudasset.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"cloudbilling.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/cloudbilling.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"cloudbuild.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/cloudbuild.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"cloudscheduler.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/cloudscheduler.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"cloudtasks.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/cloudtasks.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"compute.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/compute.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"iam.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/iam.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"iamcredentials.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/iamcredentials.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"logging.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/logging.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"monitoring.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/monitoring.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"run.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/run.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"secretmanager.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/secretmanager.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"servicenetworking.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/servicenetworking.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"sqladmin.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/sqladmin.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"storage.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/storage.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_project_service.foundation[\"sts.googleapis.com\"]",
+        "type": "google_project_service",
+        "id": "proinspect-property-services/sts.googleapis.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_service_account.builder",
+        "type": "google_service_account",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-migration-builder@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_storage_bucket.build_source",
+        "type": "google_storage_bucket",
+        "id": "proinspect-property-services-migration-builds"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_storage_bucket.state",
+        "type": "google_storage_bucket",
+        "id": "proinspect-property-services-migration-tfstate"
+      },
+      {
+        "state": "bootstrap",
+        "address": "google_storage_bucket_iam_member.builder_source",
+        "type": "google_storage_bucket_iam_member",
+        "id": "b/proinspect-property-services-migration-builds/roles/storage.objectViewer/serviceAccount:pi-migration-builder@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_artifact_registry_repository_iam_member.deploy[\"dev\"]",
+        "type": "google_artifact_registry_repository_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/repositories/proinspect-migration-dev/roles/artifactregistry.writer/serviceAccount:pi-mig-dev-deploy@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_artifact_registry_repository_iam_member.deploy[\"staging\"]",
+        "type": "google_artifact_registry_repository_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/repositories/proinspect-migration-staging/roles/artifactregistry.writer/serviceAccount:pi-mig-staging-deploy@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_billing_budget.foundation",
+        "type": "google_billing_budget",
+        "id": "billingAccounts/0145B9-468846-983D3C/budgets/3dd6d695-8760-4816-ac92-b46e345f863d"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_run_v2_service.proof[\"dev\"]",
+        "type": "google_cloud_run_v2_service",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/services/proinspect-migration-dev"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_run_v2_service.proof[\"staging\"]",
+        "type": "google_cloud_run_v2_service",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/services/proinspect-migration-staging"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_run_v2_service_iam_member.ci_invoke[\"dev\"]",
+        "type": "google_cloud_run_v2_service_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/services/proinspect-migration-dev/roles/run.invoker/serviceAccount:pi-mig-dev-deploy@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_run_v2_service_iam_member.ci_invoke[\"staging\"]",
+        "type": "google_cloud_run_v2_service_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/services/proinspect-migration-staging/roles/run.invoker/serviceAccount:pi-mig-staging-deploy@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_run_v2_service_iam_member.deploy[\"dev\"]",
+        "type": "google_cloud_run_v2_service_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/services/proinspect-migration-dev/roles/run.developer/serviceAccount:pi-mig-dev-deploy@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_run_v2_service_iam_member.deploy[\"staging\"]",
+        "type": "google_cloud_run_v2_service_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/services/proinspect-migration-staging/roles/run.developer/serviceAccount:pi-mig-staging-deploy@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_run_v2_service_iam_member.invoke[\"dev\"]",
+        "type": "google_cloud_run_v2_service_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/services/proinspect-migration-dev/roles/run.invoker/serviceAccount:pi-mig-dev-invoker@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_run_v2_service_iam_member.invoke[\"staging\"]",
+        "type": "google_cloud_run_v2_service_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/services/proinspect-migration-staging/roles/run.invoker/serviceAccount:pi-mig-staging-invoker@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_scheduler_job.proof[\"dev-daily\"]",
+        "type": "google_cloud_scheduler_job",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-dev-daily"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_scheduler_job.proof[\"dev-outbox\"]",
+        "type": "google_cloud_scheduler_job",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-dev-outbox"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_scheduler_job.proof[\"staging-daily\"]",
+        "type": "google_cloud_scheduler_job",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-staging-daily"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_scheduler_job.proof[\"staging-outbox\"]",
+        "type": "google_cloud_scheduler_job",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-staging-outbox"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_tasks_queue.events[\"dev\"]",
+        "type": "google_cloud_tasks_queue",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/queues/proinspect-migration-dev-events"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_tasks_queue.events[\"staging\"]",
+        "type": "google_cloud_tasks_queue",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/queues/proinspect-migration-staging-events"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_tasks_queue_iam_member.runtime_enqueue[\"dev\"]",
+        "type": "google_cloud_tasks_queue_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/queues/proinspect-migration-dev-events/roles/cloudtasks.enqueuer/serviceAccount:pi-mig-dev-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_cloud_tasks_queue_iam_member.runtime_enqueue[\"staging\"]",
+        "type": "google_cloud_tasks_queue_iam_member",
+        "id": "projects/proinspect-property-services/locations/australia-southeast1/queues/proinspect-migration-staging-events/roles/cloudtasks.enqueuer/serviceAccount:pi-mig-staging-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_iam_workload_identity_pool.github",
+        "type": "google_iam_workload_identity_pool",
+        "id": "projects/proinspect-property-services/locations/global/workloadIdentityPools/proinspect-migration"
+      },
+      {
+        "state": "foundation",
+        "address": "google_iam_workload_identity_pool_provider.github",
+        "type": "google_iam_workload_identity_pool_provider",
+        "id": "projects/proinspect-property-services/locations/global/workloadIdentityPools/proinspect-migration/providers/github"
+      },
+      {
+        "state": "foundation",
+        "address": "google_monitoring_alert_policy.errors",
+        "type": "google_monitoring_alert_policy",
+        "id": "projects/proinspect-property-services/alertPolicies/15573795144135138657"
+      },
+      {
+        "state": "foundation",
+        "address": "google_secret_manager_secret.encryption[\"dev\"]",
+        "type": "google_secret_manager_secret",
+        "id": "projects/proinspect-property-services/secrets/proinspect-migration-dev-data-encryption-key"
+      },
+      {
+        "state": "foundation",
+        "address": "google_secret_manager_secret.encryption[\"staging\"]",
+        "type": "google_secret_manager_secret",
+        "id": "projects/proinspect-property-services/secrets/proinspect-migration-staging-data-encryption-key"
+      },
+      {
+        "state": "foundation",
+        "address": "google_secret_manager_secret_iam_member.runtime_key[\"dev\"]",
+        "type": "google_secret_manager_secret_iam_member",
+        "id": "projects/proinspect-property-services/secrets/proinspect-migration-dev-data-encryption-key/roles/secretmanager.secretAccessor/serviceAccount:pi-mig-dev-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_secret_manager_secret_iam_member.runtime_key[\"staging\"]",
+        "type": "google_secret_manager_secret_iam_member",
+        "id": "projects/proinspect-property-services/secrets/proinspect-migration-staging-data-encryption-key/roles/secretmanager.secretAccessor/serviceAccount:pi-mig-staging-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account.deploy[\"dev\"]",
+        "type": "google_service_account",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-dev-deploy@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account.deploy[\"staging\"]",
+        "type": "google_service_account",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-staging-deploy@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account.invoker[\"dev\"]",
+        "type": "google_service_account",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-dev-invoker@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account.invoker[\"staging\"]",
+        "type": "google_service_account",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-staging-invoker@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account.runtime[\"dev\"]",
+        "type": "google_service_account",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-dev-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account.runtime[\"staging\"]",
+        "type": "google_service_account",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-staging-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account_iam_member.act_as[\"dev\"]",
+        "type": "google_service_account_iam_member",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-dev-runtime@proinspect-property-services.iam.gserviceaccount.com/roles/iam.serviceAccountUser/serviceAccount:pi-mig-dev-deploy@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account_iam_member.act_as[\"staging\"]",
+        "type": "google_service_account_iam_member",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-staging-runtime@proinspect-property-services.iam.gserviceaccount.com/roles/iam.serviceAccountUser/serviceAccount:pi-mig-staging-deploy@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account_iam_member.federation[\"dev\"]",
+        "type": "google_service_account_iam_member",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-dev-deploy@proinspect-property-services.iam.gserviceaccount.com/roles/iam.workloadIdentityUser/principal://iam.googleapis.com/projects/101236528395/locations/global/workloadIdentityPools/proinspect-migration/subject/repo:info-rbp@235419395/proinspect@1406530255:environment:gcp-dev"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account_iam_member.federation[\"staging\"]",
+        "type": "google_service_account_iam_member",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-staging-deploy@proinspect-property-services.iam.gserviceaccount.com/roles/iam.workloadIdentityUser/principal://iam.googleapis.com/projects/101236528395/locations/global/workloadIdentityPools/proinspect-migration/subject/repo:info-rbp@235419395/proinspect@1406530255:environment:gcp-staging"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account_iam_member.runtime_task_identity[\"dev\"]",
+        "type": "google_service_account_iam_member",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-dev-invoker@proinspect-property-services.iam.gserviceaccount.com/roles/iam.serviceAccountUser/serviceAccount:pi-mig-dev-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_service_account_iam_member.runtime_task_identity[\"staging\"]",
+        "type": "google_service_account_iam_member",
+        "id": "projects/proinspect-property-services/serviceAccounts/pi-mig-staging-invoker@proinspect-property-services.iam.gserviceaccount.com/roles/iam.serviceAccountUser/serviceAccount:pi-mig-staging-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_storage_bucket.documents[\"dev-documents\"]",
+        "type": "google_storage_bucket",
+        "id": "proinspect-property-services-mig-dev-documents"
+      },
+      {
+        "state": "foundation",
+        "address": "google_storage_bucket.documents[\"dev-restricted\"]",
+        "type": "google_storage_bucket",
+        "id": "proinspect-property-services-mig-dev-restricted"
+      },
+      {
+        "state": "foundation",
+        "address": "google_storage_bucket.documents[\"staging-documents\"]",
+        "type": "google_storage_bucket",
+        "id": "proinspect-property-services-mig-staging-documents"
+      },
+      {
+        "state": "foundation",
+        "address": "google_storage_bucket.documents[\"staging-restricted\"]",
+        "type": "google_storage_bucket",
+        "id": "proinspect-property-services-mig-staging-restricted"
+      },
+      {
+        "state": "foundation",
+        "address": "google_storage_bucket_iam_member.runtime_objects[\"dev-documents\"]",
+        "type": "google_storage_bucket_iam_member",
+        "id": "b/proinspect-property-services-mig-dev-documents/roles/storage.objectUser/serviceAccount:pi-mig-dev-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_storage_bucket_iam_member.runtime_objects[\"dev-restricted\"]",
+        "type": "google_storage_bucket_iam_member",
+        "id": "b/proinspect-property-services-mig-dev-restricted/roles/storage.objectUser/serviceAccount:pi-mig-dev-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_storage_bucket_iam_member.runtime_objects[\"staging-documents\"]",
+        "type": "google_storage_bucket_iam_member",
+        "id": "b/proinspect-property-services-mig-staging-documents/roles/storage.objectUser/serviceAccount:pi-mig-staging-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      },
+      {
+        "state": "foundation",
+        "address": "google_storage_bucket_iam_member.runtime_objects[\"staging-restricted\"]",
+        "type": "google_storage_bucket_iam_member",
+        "id": "b/proinspect-property-services-mig-staging-restricted/roles/storage.objectUser/serviceAccount:pi-mig-staging-runtime@proinspect-property-services.iam.gserviceaccount.com"
+      }
+    ]
+  },
+  "google_initialized_compute_network": {
+    "name": "default",
+    "auto_mode": true,
+    "virtual_machines": 0,
+    "migration_sql_networks": 0
+  },
+  "cloudflare_read_only_comparison": {
+    "observed": "2026-11-19T13:51:32.889Z",
+    "bindings": 70,
+    "booleanFlagCount": 35,
+    "bindingsAndFlagsMatch": true,
+    "bindingResourceReferencesMatch": true,
+    "sourceMatches": true,
+    "source": "15382bea37d05b0a9533b040e6d79591a7883442",
+    "compatibilityMatches": true,
+    "deployment": "ca709ef1-c0ac-4aa2-a693-cdc8b9078de3",
+    "versions": [
+      {
+        "id": "0df4d2f8-b582-4abf-98ae-73ae6ad7c3e6",
+        "percent": 100
+      },
+      {
+        "id": "22daabdb-4879-496e-817c-b80d4534dcf6",
+        "percent": 0
+      }
+    ],
+    "trafficMatches": true,
+    "schedulesMatch": true
+  },
+  "merged_to_main": false,
+  "production_data_or_keys_copied": false,
+  "implementation_notes": [
+    "The first hosted adapter request exposed a malformed URL. The corrected Node listener is covered by a loopback HTTP regression test.",
+    "A live enqueue required the runtime to use its own OIDC task identity. Each environment received a service-account-scoped grant."
+  ],
+  "unverified": [
+    "Hosted PostgreSQL connectivity, IAM login and restore",
+    "Performance and dynamically assembled workflows outside recorded fixtures",
+    "Live scanner service, signing identity, external mail, calendar and payment providers",
+    "Customer-record migration, production retention and cutover"
+  ]
+}

@@ -1,4 +1,8 @@
-# Google Cloud foundation — 19 November 2026
+# Google Cloud migration
+
+For the current deployment, full PostgreSQL schema, service adapters and budget decision, see the [phase two delivery](PHASE2.md).
+
+## Phase one foundation record, 19 November 2026
 
 Target: `proinspect-property-services` (project number `101236528395`), Sydney `australia-southeast1`.
 Source: protected main `15382bea37d05b0a9533b040e6d79591a7883442`; migration branch only. PR #113 is already merged, superseding the prior plan's baseline. This foundation is an isolated proof, not an operational migration or a production release.
@@ -94,8 +98,8 @@ Sources: [Cloud Run](https://cloud.google.com/run/pricing), [Cloud SQL](https://
 3. `node --experimental-strip-types --test tests/migration/node-proof.test.mjs tests/migration/encryption.test.ts`; `python3 scripts/migration/postgres-local.py` uses a disposable local cluster. CI uses PostgreSQL 17.
 4. Authenticate with gcloud. `scripts/migration/terraform.py` passes a short-lived access token in memory. Initialize/plan bootstrap, inspect saved plan, apply. Bootstrap's state is migrated into its own bucket after first creation; see `infra/gcp/bootstrap/backend.tf`.
 5. Build a clean exact commit with `python3 scripts/migration/build-proof.py <sha>`. It uploads only a Git archive. Resolve the resulting Artifact Registry digest.
-6. Initialize foundation; pass `image`, `source_sha`, and `billing_account` via a local ignored tfvars file. Plan, inspect all changes, apply the saved plan. No production names or state are used.
+6. Initialize foundation; pass `image` and `billing_account` via a local ignored tfvars file. Plan, inspect all changes, apply the saved plan. No production names or state are used.
 7. GitHub workflow runs validation on branch pushes and relevant PRs. Deploy jobs require repository variable `GCP_FOUNDATION_READY=true` and environments `gcp-dev`/`gcp-staging`. Deploy is sequential, uses OIDC and exact image digests, and runs authenticated/anonymous checks. Both environments receive the same tested container artifact; it is not rebuilt during deployment. The intermediate GitHub artifact expires after one day. The infrastructure identity is not available to CI; CI cannot create SQL, grant IAM, read secrets or change buckets.
 8. Run `python3 scripts/migration/hosted-smoke.py dev <sha>` and staging equivalent with authorized identity. Anonymous requests must fail. Never attach customer tokens/records.
 
-For rollback, use `gcloud run services update proinspect-migration-dev --project=proinspect-property-services --region=australia-southeast1 --image=<previous verified digest> --update-env-vars=BUILD_SHA=<matching previous source>` (same process for staging), then rerun smoke. Pause deployment by setting `GCP_FOUNDATION_READY=false`. Do not destroy the state bucket or buckets with records. Terraform deliberately prevents accidental bucket/secret/Run deletion. Cloudflare is unaffected by any proof rollback. Any future production cutover requires a separate acceptance decision.
+For phase two images with an embedded source SHA, roll back with `gcloud run services update proinspect-migration-dev --project=proinspect-property-services --region=australia-southeast1 --image=<previous verified digest>` (same process for staging), then rerun smoke. Pause deployment by setting `GCP_FOUNDATION_READY=false`. Do not destroy the state bucket or buckets with records. Terraform deliberately prevents accidental bucket/secret/Run deletion. Cloudflare is unaffected by any proof rollback. Any future production cutover requires a separate acceptance decision.

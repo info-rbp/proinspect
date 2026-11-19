@@ -1,4 +1,6 @@
-# Foundation delivery — 19 November 2026
+# Phase one foundation delivery, 19 November 2026
+
+The [phase two delivery](PHASE2.md) records the subsequent full schema port, deployed adapters and database decision.
 
 The isolated Google Cloud foundation is deployed and verified in `proinspect-property-services`, Sydney (`australia-southeast1`). It serves three existing informational pages through the Node React Router build. Customer, authentication, booking and payment routes remain unavailable.
 
