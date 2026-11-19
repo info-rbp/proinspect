@@ -9,7 +9,11 @@ import * as build from '../build/server/index.js';
 
 if (process.env.FOUNDATION_PROOF !== 'true') throw Error('FOUNDATION_PROOF=true is required');
 if (!['dev', 'staging'].includes(process.env.FOUNDATION_ENV)) throw Error('Only dev/staging are allowed');
-const source = process.env.BUILD_SHA;
+const revisionFile = new URL('../../../REVISION', import.meta.url);
+const source = await readFile(revisionFile, 'utf8').then(value => value.trim()).catch(error => {
+  if (error.code === 'ENOENT') return process.env.BUILD_SHA;
+  throw error;
+});
 if (!/^[0-9a-f]{40}$/.test(source ?? '')) throw Error('An exact BUILD_SHA is required');
 const clientRoot = await realpath(fileURLToPath(new URL('../build/client', import.meta.url)));
 const pages = new Set(['/about', '/how-it-works', '/why-proinspect']);
@@ -22,6 +26,22 @@ const handler = createRequestListener({ build, mode: 'production', getLoadContex
   });
   return context;
 }});
+const stage = process.env.FOUNDATION_ENV;
+let cloud, application, connectionPromise;
+const withAdapters = process.env.GCP_ADAPTERS_ENABLED === 'true';
+const withSql = withAdapters && process.env.GCP_SQL_ENABLED === 'true';
+if (withAdapters) {
+  const {cloudBindings} = await import('./google/bindings.mjs');
+  const {googleApplication} = await import('./google/application.mjs');
+  cloud = cloudBindings(stage);
+  if (Buffer.from(process.env.DATA_ENCRYPTION_KEY ?? '', 'base64').length !== 32) throw Error('Invalid nonproduction key');
+  const database = async () => {
+    if (!connectionPromise) connectionPromise = import('./google/postgres.mjs').then(({connectCloudSql}) => connectCloudSql(stage))
+      .catch(error => { connectionPromise = undefined; throw error; });
+    return connectionPromise;
+  };
+  application = googleApplication({cloud, key:process.env.DATA_ENCRYPTION_KEY, source, database:withSql ? database : null});
+}
 const types = { '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.ico': 'image/x-icon' };
 const server = createServer(async (req, res) => {
   const started = Date.now();
@@ -37,13 +57,14 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/internal/proof' && req.method === 'POST') {
       res.writeHead(204); res.end(); return; // IAM authenticated no-op; never dispatch application jobs.
     }
-    if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); res.end(); return; }
-    if (['/health', '/healthz'].includes(url.pathname)) {
+    if (application && url.pathname.startsWith('/internal/')) { application.listener(req, res); return; }
+    if (!withSql && !['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); res.end(); return; }
+    if (['GET','HEAD'].includes(req.method) && ['/health', '/healthz'].includes(url.pathname)) {
       res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ ok: true, mode: 'foundation-proof', environment: process.env.FOUNDATION_ENV, source, operationalRoutes: false })); return;
+      res.end(JSON.stringify({ ok: true, mode: withSql ? 'google-application' : 'foundation-proof', environment: process.env.FOUNDATION_ENV, source, operationalRoutes: withSql, cloudAdapters: withAdapters })); return;
     }
-    if (url.pathname === '/') { res.writeHead(302, { Location: '/about' }); res.end(); return; }
-    if (pages.has(url.pathname) && !url.search) {
+    if (!withSql && url.pathname === '/') { res.writeHead(302, { Location: '/about' }); res.end(); return; }
+    if (!withSql && pages.has(url.pathname) && !url.search) {
       const nonce = randomBytes(18).toString('base64');
       req.headers['x-foundation-nonce'] = nonce;
       res.setHeader('Content-Security-Policy', `default-src 'self'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'`);
@@ -51,7 +72,7 @@ const server = createServer(async (req, res) => {
     }
     // Assets only: realpath confines symlinks and traversal to the build/public directories.
     const extension = extname(url.pathname);
-    if (types[extension] && !url.search && !/%2f|%5c/i.test(url.pathname)) {
+    if (['GET','HEAD'].includes(req.method) && types[extension] && !url.search && !/%2f|%5c/i.test(url.pathname)) {
       for (const root of [clientRoot]) {
         try {
           const path = await realpath(resolve(root, '.' + decodeURIComponent(url.pathname)));
@@ -61,6 +82,7 @@ const server = createServer(async (req, res) => {
         } catch (error) { if (!['ENOENT', 'ENOTDIR'].includes(error.code)) throw error; }
       }
     }
+    if (withSql) { application.listener(req, res); return; }
     res.writeHead(503, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ code: 'FOUNDATION_ROUTE_UNAVAILABLE' }));
   } catch {
@@ -72,4 +94,6 @@ const server = createServer(async (req, res) => {
 server.requestTimeout = 15000;
 server.headersTimeout = 10000;
 server.listen(Number(process.env.PORT || 8080), process.env.HOST || '0.0.0.0');
-process.on('SIGTERM', () => server.close(() => process.exit(0)));
+process.on('SIGTERM', () => server.close(async () => {
+  try { await (await connectionPromise)?.close(); await cloud?.close(); } finally { process.exit(0); }
+}));

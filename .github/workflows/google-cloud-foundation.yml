@@ -6,6 +6,9 @@ on:
   pull_request:
     paths:
       - 'infra/gcp/**'
+      - 'database/postgres/**'
+      - 'database/migrations/**'
+      - 'apps/platform/worker/scheduler.ts'
       - 'scripts/migration/**'
       - 'tests/migration/**'
       - 'apps/platform/node/**'
@@ -30,6 +33,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: synthetic-local-only
           POSTGRES_DB: proinspect_spike
+          POSTGRES_INITDB_ARGS: --locale=C --encoding=UTF8
         ports: ['5432:5432']
         options: >-
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
@@ -43,10 +47,19 @@ jobs:
       - run: pnpm typecheck
       - run: node scripts/migration/inventory.mjs --check
       - run: PROINSPECT_RUNTIME=node-proof pnpm --dir apps/platform exec react-router build
+      - run: node scripts/migration/build-domain.mjs
       - run: node --experimental-strip-types --test tests/migration/node-proof.test.mjs tests/migration/encryption.test.ts
       - run: node --test tests/migration/postgres.test.mjs
         env:
           SPIKE_DATABASE_URL: postgresql://postgres:synthetic-local-only@127.0.0.1:5432/proinspect_spike
+      - name: Full PostgreSQL schema and adapter parity
+        env:
+          PGPASSWORD: synthetic-local-only
+          PHASE2_DATABASE_URL: postgresql://postgres:synthetic-local-only@127.0.0.1:5432/proinspect_phase2
+        run: |
+          createdb -U postgres -h 127.0.0.1 --template=template0 --locale=C --encoding=UTF8 proinspect_phase2
+          python3 scripts/migration/postgres-schema.py --check
+          node --test tests/migration/phase2.test.mjs
       - uses: hashicorp/setup-terraform@v3
         with: { terraform_version: '1.15.8' }
       - run: |
@@ -55,7 +68,7 @@ jobs:
           terraform -chdir=infra/gcp/foundation init -backend=false -input=false
           terraform -chdir=infra/gcp/foundation validate
           terraform -chdir=infra/gcp/foundation test
-      - run: docker build -f apps/platform/node/Dockerfile -t proinspect-foundation:${{ github.sha }} .
+      - run: docker build --build-arg SOURCE_SHA=$GITHUB_SHA -f apps/platform/node/Dockerfile -t proinspect-foundation:${{ github.sha }} .
       - name: Verify the built container actually starts
         run: |
           docker run -d --name foundation-proof -p 127.0.0.1:18082:8080 -e FOUNDATION_ENV=dev -e BUILD_SHA=$GITHUB_SHA proinspect-foundation:$GITHUB_SHA
@@ -115,7 +128,7 @@ jobs:
       - name: Update only the existing isolated proof
         run: |
           gcloud run services update "proinspect-migration-$ENVIRONMENT" --project="$PROJECT" --region="$REGION" \
-            --image="$DEPLOY_IMAGE" --update-env-vars="BUILD_SHA=$GITHUB_SHA" --quiet
+            --image="$DEPLOY_IMAGE" --quiet
       - name: Resolve this environment's service audience
         run: echo "SERVICE_URL=$(gcloud run services describe proinspect-migration-$ENVIRONMENT --project=$PROJECT --region=$REGION --format='value(status.url)')" >> "$GITHUB_ENV"
       - uses: google-github-actions/auth@v3

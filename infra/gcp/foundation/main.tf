@@ -19,13 +19,6 @@ variable "image" {
     error_message = "Use the exact nonproduction Artifact Registry image digest."
   }
 }
-variable "source_sha" {
-  type = string
-  validation {
-    condition     = can(regex("^[a-f0-9]{40}$", var.source_sha))
-    error_message = "An exact tested source SHA is required."
-  }
-}
 variable "billing_account" { type = string }
 locals {
   project        = "proinspect-property-services"
@@ -34,7 +27,7 @@ locals {
   environments   = toset(["dev", "staging"])
   labels         = { application = "proinspect", purpose = "migration-foundation" }
   buckets        = { for item in setproduct(local.environments, ["documents", "restricted"]) : "${item[0]}-${item[1]}" => { environment = item[0], kind = item[1] } }
-  schedules      = { for item in setproduct(local.environments, ["outbox", "daily"]) : "${item[0]}-${item[1]}" => { environment = item[0], cron = item[1] == "outbox" ? "*/2 * * * *" : "0 1 * * *" } }
+  schedules      = { for item in setproduct(local.environments, ["outbox", "daily"]) : "${item[0]}-${item[1]}" => { environment = item[0], kind = item[1], cron = item[1] == "outbox" ? "*/2 * * * *" : "0 1 * * *" } }
 }
 resource "google_service_account" "runtime" {
   for_each     = local.environments
@@ -61,7 +54,18 @@ resource "google_cloud_run_v2_service" "proof" {
     min_instance_count = 0
     max_instance_count = 1
   }
+  depends_on = [google_secret_manager_secret_iam_member.runtime_key]
   template {
+    dynamic "vpc_access" {
+      for_each = contains(var.sql_serving, each.key) ? [true] : []
+      content {
+        egress = "PRIVATE_RANGES_ONLY"
+        network_interfaces {
+          network    = google_compute_network.postgres[0].name
+          subnetwork = google_compute_subnetwork.postgres[0].name
+        }
+      }
+    }
     service_account                  = google_service_account.runtime[each.key].email
     timeout                          = "30s"
     max_instance_request_concurrency = 8
@@ -86,8 +90,24 @@ resource "google_cloud_run_v2_service" "proof" {
         value = each.key
       }
       env {
-        name  = "BUILD_SHA"
-        value = var.source_sha
+        name  = "GCP_ADAPTERS_ENABLED"
+        value = tostring(var.adapters_enabled)
+      }
+      env {
+        name  = "GCP_SQL_ENABLED"
+        value = tostring(contains(var.sql_serving, each.key))
+      }
+      dynamic "env" {
+        for_each = var.adapters_enabled ? [1] : []
+        content {
+          name = "DATA_ENCRYPTION_KEY"
+          value_source {
+            secret_key_ref {
+              secret  = google_secret_manager_secret.encryption[each.key].secret_id
+              version = "1"
+            }
+          }
+        }
       }
       startup_probe {
         http_get { path = "/healthz" }
@@ -101,8 +121,8 @@ resource "google_cloud_run_v2_service" "proof" {
     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
     percent = 100
   }
-  # CI owns the tested image, source version and deploy-client metadata after creation.
-  lifecycle { ignore_changes = [client, client_version, template[0].containers[0].image, template[0].containers[0].env] }
+  # The image carries its tested revision. Terraform owns every runtime setting and secret reference.
+  lifecycle { ignore_changes = [client, client_version, template[0].containers[0].image] }
 }
 resource "google_storage_bucket" "documents" {
   for_each                    = local.buckets
@@ -113,6 +133,14 @@ resource "google_storage_bucket" "documents" {
   force_destroy               = false
   labels                      = merge(local.labels, { environment = each.value.environment, classification = each.value.kind })
   versioning { enabled = true }
+  lifecycle_rule {
+    condition {
+      matches_prefix             = ["migration-checks/"]
+      with_state                 = "ARCHIVED"
+      days_since_noncurrent_time = 1
+    }
+    action { type = "Delete" }
+  }
   lifecycle { prevent_destroy = true }
 }
 # Empty containers only: no copied, generated, or Terraform-managed key material.
@@ -140,7 +168,7 @@ resource "google_cloud_tasks_queue" "events" {
       host                      = trimprefix(google_cloud_run_v2_service.proof[each.key].uri, "https://")
       port                      = "443"
       uri_override_enforce_mode = "ALWAYS"
-      path_override { path = "/internal/proof" }
+      path_override { path = var.adapters_enabled ? "/internal/jobs/events" : "/internal/proof" }
       query_override { query_params = "" }
     }
     oidc_token {
@@ -170,7 +198,7 @@ resource "google_cloud_scheduler_job" "proof" {
   paused           = true
   attempt_deadline = "30s"
   http_target {
-    uri         = "${google_cloud_run_v2_service.proof[each.value.environment].uri}/internal/proof"
+    uri         = "${google_cloud_run_v2_service.proof[each.value.environment].uri}/internal/${var.adapters_enabled ? "jobs/${each.value.kind}" : "proof"}"
     http_method = "POST"
     oidc_token {
       service_account_email = google_service_account.invoker[each.value.environment].email

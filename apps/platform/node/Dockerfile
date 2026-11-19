@@ -9,14 +9,18 @@ RUN pnpm install --frozen-lockfile
 COPY apps apps
 COPY packages packages
 COPY tsconfig.json ./
-RUN PROINSPECT_RUNTIME=node-proof pnpm --dir apps/platform exec react-router build
+COPY scripts/migration/build-domain.mjs scripts/migration/build-domain.mjs
+RUN PROINSPECT_RUNTIME=node-proof pnpm --dir apps/platform exec react-router build && node scripts/migration/build-domain.mjs
 
 FROM node:22.23.2-bookworm-slim
 WORKDIR /app
+ARG SOURCE_SHA
+RUN test "$(printf %s "$SOURCE_SHA" | wc -c)" -eq 40 && printf %s "$SOURCE_SHA" > /app/REVISION
 ENV NODE_ENV=production PORT=8080 FOUNDATION_PROOF=true
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/apps/platform/build ./apps/platform/build
-COPY --from=build --chown=node:node /app/apps/platform/node/server.mjs ./apps/platform/node/server.mjs
+COPY --from=build --chown=node:node /app/apps/platform/node ./apps/platform/node
+COPY --chown=node:node database/postgres/migrations ./database/postgres/migrations
 USER node
 EXPOSE 8080
 CMD ["node", "apps/platform/node/server.mjs"]

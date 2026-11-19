@@ -1054,7 +1054,7 @@ export async function commercialLifecycleData(env: Env, l: Row) {
   const sourceDocuments = (
     await statement(
       env.DB,
-      "SELECT DISTINCT d.id,d.title,d.version FROM documents d JOIN document_grants g ON g.document_id=d.id AND g.recipient_kind='client' AND g.recipient_id=? WHERE d.property_id=? AND d.status='issued' ORDER BY d.issued_at DESC LIMIT 200",
+      "SELECT d.id,d.title,d.version FROM documents d WHERE EXISTS(SELECT 1 FROM document_grants g WHERE g.document_id=d.id AND g.recipient_kind='client' AND g.recipient_id=?) AND d.property_id=? AND d.status='issued' ORDER BY d.issued_at DESC LIMIT 200",
       l.client_id,
       l.property_id,
     ).all<Row>()

@@ -3,6 +3,7 @@ import { ServerRouter, type EntryContext, type RouterContextProvider } from 'rea
 import { runtimeContext } from '../../../packages/database/context';
 // The Node proof uses the same context instance as the compiled route loaders.
 export { runtimeContext };
+export { platformEnv } from '../../../packages/database/context';
 export default async function handleRequest(
   request: Request,
   status: number,

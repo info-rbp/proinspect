@@ -1,7 +1,7 @@
 mock_provider "google" {}
 variables {
-  image           = "australia-southeast1-docker.pkg.dev/proinspect-property-services/proinspect-migration-dev/platform@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-  source_sha      = "15382bea37d05b0a9533b040e6d79591a7883442"
+  image = "australia-southeast1-docker.pkg.dev/proinspect-property-services/proinspect-migration-dev/platform@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
   billing_account = "synthetic-billing-account"
 }
 run "isolated_capacity_and_access" {
@@ -25,5 +25,24 @@ run "isolated_capacity_and_access" {
   assert {
     condition     = google_billing_budget.foundation.amount[0].specified_amount[0].currency_code == "AUD"
     error_message = "Budget currency must match the verified billing account."
+  }
+}
+run "postgres_is_opt_in" {
+  command = plan
+  assert {
+    condition     = length(google_sql_database_instance.postgres) == 0 && length(google_compute_network.postgres) == 0
+    error_message = "Default deployment must create no SQL instance or private network."
+  }
+}
+run "approved_dev_database" {
+  command = plan
+  variables {
+    sql_environments  = ["dev"]
+    sql_allowance_aud = 20
+    migration_image   = "australia-southeast1-docker.pkg.dev/proinspect-property-services/proinspect-migration-dev/platform@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  }
+  assert {
+    condition     = alltrue([for db in google_sql_database_instance.postgres : db.settings[0].tier == "db-f1-micro" && db.settings[0].disk_autoresize_limit == 20 && !db.settings[0].ip_configuration[0].ipv4_enabled && db.deletion_protection])
+    error_message = "SQL must stay private, small, protected and disk capped."
   }
 }

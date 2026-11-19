@@ -427,6 +427,6 @@ export async function bondReviewQueue(env:Env,user:Principal,w:Workspace){
   (SELECT COUNT(*) FROM bond_transactions tx WHERE tx.bond_id=b.id AND tx.status='submitted') submitted_count,
   (SELECT COUNT(*) FROM bond_exception_cases e WHERE e.bond_id=b.id AND e.status!='resolved') open_exceptions
  FROM bonds b JOIN properties p ON p.id=b.property_id WHERE p.sector='residential'
- ORDER BY CASE WHEN next_deadline IS NULL THEN 1 ELSE 0 END,next_deadline,b.updated_at DESC LIMIT 100`).all()).results;
+ ORDER BY next_deadline ASC NULLS LAST,b.updated_at DESC LIMIT 100`).all()).results;
  return {rows,externalOnly:true,notice:'Government submission and payout evidence must be independently verified. Confidential Form 2 cases are excluded.'};
 }
