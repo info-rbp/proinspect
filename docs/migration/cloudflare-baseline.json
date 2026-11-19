@@ -1,0 +1,381 @@
+{
+  "settings": {
+    "compatibility_date": "2026-07-01",
+    "compatibility_flags": [
+      "nodejs_compat"
+    ],
+    "bindings": [
+      {
+        "name": "ACCESS_DATA_ENCRYPTION_KEY",
+        "type": "secret_text"
+      },
+      {
+        "name": "AGENCY_OWNER_INVITATIONS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "APP_ENV",
+        "type": "plain_text"
+      },
+      {
+        "name": "APP_ORIGIN",
+        "type": "plain_text"
+      },
+      {
+        "name": "BUILDING_OPERATIONS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "BUILD_SHA",
+        "type": "plain_text"
+      },
+      {
+        "name": "COMMERCIAL_OPERATIONS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "COUNCIL_GOVERNANCE_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "DATA_ENCRYPTION_KEY",
+        "type": "secret_text"
+      },
+      {
+        "name": "DB",
+        "type": "d1",
+        "id": "dd4f4bc7-cd24-433a-a9ee-d1ffbcc229ea"
+      },
+      {
+        "name": "DOCUMENTS",
+        "type": "r2_bucket",
+        "bucket_name": "proinspect-production-documents"
+      },
+      {
+        "name": "EMAIL_FROM",
+        "type": "plain_text"
+      },
+      {
+        "name": "EMAIL_PROVIDER",
+        "type": "plain_text"
+      },
+      {
+        "name": "ENCRYPTION_KEYS_JSON",
+        "type": "secret_text"
+      },
+      {
+        "name": "ENQUIRY_GATEWAY_SECRET",
+        "type": "secret_text"
+      },
+      {
+        "name": "EVENTS",
+        "type": "queue",
+        "queue_name": "proinspect-platform-events"
+      },
+      {
+        "name": "FILE_SIGNING_KEY",
+        "type": "secret_text"
+      },
+      {
+        "name": "GOOGLE_CALENDAR_BOOKINGS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "GOOGLE_CALENDAR_ENABLED",
+        "type": "plain_text",
+        "value": "true"
+      },
+      {
+        "name": "GOOGLE_CALENDAR_ID",
+        "type": "plain_text"
+      },
+      {
+        "name": "GOOGLE_CALENDAR_PRIVATE_KEY",
+        "type": "secret_text"
+      },
+      {
+        "name": "GOOGLE_CALENDAR_SERVICE_ACCOUNT_EMAIL",
+        "type": "plain_text"
+      },
+      {
+        "name": "GOOGLE_CALENDAR_TIMEZONE",
+        "type": "plain_text"
+      },
+      {
+        "name": "GUEST_BOOKINGS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "LEGAL_ACCEPTANCE_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "MARKETING_ORIGIN",
+        "type": "plain_text"
+      },
+      {
+        "name": "MARKETING_TURNSTILE_SECRET_KEY",
+        "type": "secret_text"
+      },
+      {
+        "name": "MARKETING_TURNSTILE_SITE_KEY",
+        "type": "secret_text"
+      },
+      {
+        "name": "NOTICE_LIFECYCLE_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "OPEN_HOME_REPORT_EMAIL_PROVIDER",
+        "type": "plain_text"
+      },
+      {
+        "name": "OPEN_HOME_REPORTS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "OPEN_HOME_SHEET_SYNC_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "OPERATIONS_EMAIL",
+        "type": "plain_text"
+      },
+      {
+        "name": "PAYMENT_RECONCILIATION_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "PCR_LAUNCH_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "PCR_SAMPLE_PUBLICATION_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "PLATFORM_ORIGIN",
+        "type": "plain_text"
+      },
+      {
+        "name": "PRIVATE_DOCUMENT_SCANNER",
+        "type": "service",
+        "service": "proinspect-private-document-scanner",
+        "environment": "production"
+      },
+      {
+        "name": "RENTAL_APPLICATIONS_ENABLED",
+        "type": "plain_text",
+        "value": "true"
+      },
+      {
+        "name": "RENTAL_APPS_SCRIPT_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "RENTAL_RETENTION_AUTOPURGE_ENABLED",
+        "type": "plain_text",
+        "value": "true"
+      },
+      {
+        "name": "RENTAL_SCANNER_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "RENTAL_TENANCY_HANDOVER_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "RENT_CONNECT_SANDBOX_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "RENT_PAYMENT_PLANNING_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "REPORT_HANDOFF_SIGNING_KEY",
+        "type": "secret_text"
+      },
+      {
+        "name": "REPORT_INGEST_TOKEN",
+        "type": "secret_text"
+      },
+      {
+        "name": "RESEND_API_KEY",
+        "type": "secret_text"
+      },
+      {
+        "name": "RESIDENTIAL_LIVE_BILLING_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "RESIDENTIAL_PAID_ONBOARDING_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "RESIDENTIAL_PAYMENT_GRACE_HOURS",
+        "type": "plain_text"
+      },
+      {
+        "name": "RESTRICTED_DOCUMENTS",
+        "type": "r2_bucket",
+        "bucket_name": "proinspect-platform-restricted-documents"
+      },
+      {
+        "name": "RESTRICTED_WORKFLOWS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "SCHEDULER",
+        "type": "durable_object_namespace",
+        "namespace_id": "240a25214b9e4e54b1232a4880dd82d7",
+        "class_name": "BookingScheduler"
+      },
+      {
+        "name": "SERVICE_SALE_VARIANTS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "STRIPE_API_KEY",
+        "type": "secret_text"
+      },
+      {
+        "name": "STRIPE_BILLING_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "STRIPE_CONNECT_COLLECTION_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "STRIPE_CONNECT_TRANSFERS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "STRIPE_CUSTOMER_PORTAL_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "STRIPE_GUEST_CHECKOUT_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "STRIPE_INVOICING_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "STRIPE_PAYMENTS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "STRIPE_REFUNDS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID",
+        "type": "plain_text"
+      },
+      {
+        "name": "STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET",
+        "type": "secret_text"
+      },
+      {
+        "name": "TURNSTILE_SECRET_KEY",
+        "type": "secret_text"
+      },
+      {
+        "name": "TURNSTILE_SITE_KEY",
+        "type": "secret_text"
+      },
+      {
+        "name": "WA_AGREEMENT_ESIGN_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      },
+      {
+        "name": "WA_BONDS_ENABLED",
+        "type": "plain_text",
+        "value": "false"
+      }
+    ]
+  },
+  "deployments": {
+    "deployments": [
+      {
+        "id": "ca709ef1-c0ac-4aa2-a693-cdc8b9078de3",
+        "versions": [
+          {
+            "version_id": "0df4d2f8-b582-4abf-98ae-73ae6ad7c3e6",
+            "percentage": 100
+          },
+          {
+            "version_id": "22daabdb-4879-496e-817c-b80d4534dcf6",
+            "percentage": 0
+          }
+        ],
+        "created_on": "2026-11-17T09:24:07.142362Z"
+      },
+      {
+        "id": "305e6fd6-a404-411c-b2bb-bf2f21d7b87a",
+        "versions": [
+          {
+            "version_id": "22daabdb-4879-496e-817c-b80d4534dcf6",
+            "percentage": 100
+          },
+          {
+            "version_id": "0df4d2f8-b582-4abf-98ae-73ae6ad7c3e6",
+            "percentage": 0
+          }
+        ],
+        "created_on": "2026-11-17T09:18:46.479534Z"
+      }
+    ]
+  },
+  "schedules": {
+    "schedules": [
+      {
+        "cron": "0 1 * * *",
+        "created_on": "2026-10-21T15:48:35.368288Z",
+        "modified_on": "2026-10-21T15:48:35.368288Z"
+      },
+      {
+        "cron": "*/2 * * * *",
+        "created_on": "2026-10-11T06:26:15.813341Z",
+        "modified_on": "2026-10-11T07:51:33.317855Z"
+      }
+    ]
+  },
+  "observed_date": "2026-11-19",
+  "source_sha": "15382bea37d05b0a9533b040e6d79591a7883442"
+}

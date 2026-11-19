@@ -1,0 +1,72 @@
+{
+  "observed_date": "2026-11-19",
+  "project_id": "proinspect-property-services",
+  "project_number": "101236528395",
+  "billing_enabled": true,
+  "billing_currency": "AUD",
+  "initial_checks": {
+    "services": {
+      "ok": true,
+      "resource_count": 25,
+      "blocked_reason": null
+    },
+    "run": {
+      "ok": false,
+      "resource_count": null,
+      "blocked_reason": "SERVICE_DISABLED"
+    },
+    "sql": {
+      "ok": true,
+      "resource_count": 0,
+      "blocked_reason": null
+    },
+    "buckets": {
+      "ok": true,
+      "resource_count": 0,
+      "blocked_reason": null
+    },
+    "secrets": {
+      "ok": false,
+      "resource_count": null,
+      "blocked_reason": "SERVICE_DISABLED"
+    },
+    "accounts": {
+      "ok": true,
+      "resource_count": 0,
+      "blocked_reason": null
+    },
+    "registry": {
+      "ok": false,
+      "resource_count": null,
+      "blocked_reason": "SERVICE_DISABLED"
+    },
+    "tasks": {
+      "ok": false,
+      "resource_count": null,
+      "blocked_reason": "SERVICE_DISABLED"
+    },
+    "scheduler": {
+      "ok": false,
+      "resource_count": null,
+      "blocked_reason": "SERVICE_DISABLED"
+    },
+    "networks": {
+      "ok": false,
+      "resource_count": null,
+      "blocked_reason": "SERVICE_DISABLED"
+    },
+    "pools": {
+      "ok": true,
+      "resource_count": 0,
+      "blocked_reason": null
+    }
+  },
+  "after_api_enable_before_provisioning": {
+    "run_all_regions": 0,
+    "artifact_registry_all_regions": 0,
+    "secret_manager": 0,
+    "cloud_tasks_sydney": 0,
+    "cloud_scheduler_sydney": 0
+  },
+  "scope_limit": "Metadata only. BigQuery and other unrelated products not exhaustively inventoried."
+}

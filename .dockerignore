@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/build
+**/.wrangler
+**/.react-router
+artifacts
+.env*
+**/.dev.vars*
+**/*.tfstate*
+**/.terraform

@@ -1,0 +1,106 @@
+name: Google Cloud foundation
+on:
+  push:
+    branches: [migration/google-cloud-foundation]
+  pull_request:
+    paths:
+      - 'infra/gcp/**'
+      - 'scripts/migration/**'
+      - 'tests/migration/**'
+      - 'apps/platform/node/**'
+      - 'apps/platform/vite.config.ts'
+      - 'apps/platform/app/entry.server.tsx'
+      - '.github/workflows/google-cloud-foundation.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+permissions:
+  contents: read
+concurrency:
+  group: gcp-foundation-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: synthetic-local-only
+          POSTGRES_DB: proinspect_spike
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22.23.2' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: node scripts/migration/inventory.mjs --check
+      - run: PROINSPECT_RUNTIME=node-proof pnpm --dir apps/platform exec react-router build
+      - run: node --experimental-strip-types --test tests/migration/node-proof.test.mjs tests/migration/encryption.test.ts
+      - run: node --test tests/migration/postgres.test.mjs
+        env:
+          SPIKE_DATABASE_URL: postgresql://postgres:synthetic-local-only@127.0.0.1:5432/proinspect_spike
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: '1.15.8' }
+      - run: |
+          terraform -chdir=infra/gcp/bootstrap init -backend=false -input=false
+          terraform -chdir=infra/gcp/bootstrap validate
+          terraform -chdir=infra/gcp/foundation init -backend=false -input=false
+          terraform -chdir=infra/gcp/foundation validate
+          terraform -chdir=infra/gcp/foundation test
+      - run: docker build -f apps/platform/node/Dockerfile -t proinspect-foundation:${{ github.sha }} .
+  deploy:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/migration/google-cloud-foundation' && vars.GCP_FOUNDATION_READY == 'true'
+    strategy:
+      max-parallel: 1
+      matrix: { environment: [dev, staging] }
+    environment: gcp-${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PROJECT: proinspect-property-services
+      REGION: australia-southeast1
+      ENVIRONMENT: ${{ matrix.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/101236528395/locations/global/workloadIdentityPools/proinspect-migration/providers/github
+          service_account: pi-mig-${{ matrix.environment }}-deploy@proinspect-property-services.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Build and publish the verified nonproduction image
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          IMAGE="$REGION-docker.pkg.dev/$PROJECT/proinspect-migration-$ENVIRONMENT/platform:$GITHUB_SHA"
+          docker build -f apps/platform/node/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+          DIGEST=$(gcloud artifacts docker images describe "$IMAGE" --format='value(image_summary.digest)')
+          echo "DEPLOY_IMAGE=$REGION-docker.pkg.dev/$PROJECT/proinspect-migration-$ENVIRONMENT/platform@$DIGEST" >> "$GITHUB_ENV"
+      - name: Update only the existing isolated proof
+        run: |
+          gcloud run services update "proinspect-migration-$ENVIRONMENT" --project="$PROJECT" --region="$REGION" \
+            --image="$DEPLOY_IMAGE" --update-env-vars="BUILD_SHA=$GITHUB_SHA" --quiet
+      - name: Resolve this environment's service audience
+        run: echo "SERVICE_URL=$(gcloud run services describe proinspect-migration-$ENVIRONMENT --project=$PROJECT --region=$REGION --format='value(status.url)')" >> "$GITHUB_ENV"
+      - uses: google-github-actions/auth@v3
+        id: identity
+        with:
+          workload_identity_provider: projects/101236528395/locations/global/workloadIdentityPools/proinspect-migration/providers/github
+          service_account: pi-mig-${{ matrix.environment }}-deploy@proinspect-property-services.iam.gserviceaccount.com
+          token_format: id_token
+          id_token_audience: ${{ env.SERVICE_URL }}
+      - name: Authenticated hosted smoke and anonymous rejection
+        env:
+          HOSTED_ID_TOKEN: ${{ steps.identity.outputs.id_token }}
+        run: python3 scripts/migration/hosted-smoke.py "$ENVIRONMENT" "$GITHUB_SHA"

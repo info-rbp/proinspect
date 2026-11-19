@@ -11,3 +11,7 @@ playwright-report/
 test-results/
 artifacts/
 *.log
+.terraform/
+*.tfstate*
+*.tfplan
+*.tfvars

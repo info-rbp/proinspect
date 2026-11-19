@@ -1,0 +1,10 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-f', 'apps/platform/node/Dockerfile', '--label', 'org.opencontainers.image.revision=${_SOURCE_SHA}', '-t', 'australia-southeast1-docker.pkg.dev/proinspect-property-services/proinspect-migration-dev/platform:${_SOURCE_SHA}', '.']
+images:
+  - australia-southeast1-docker.pkg.dev/proinspect-property-services/proinspect-migration-dev/platform:${_SOURCE_SHA}
+serviceAccount: projects/proinspect-property-services/serviceAccounts/pi-migration-builder@proinspect-property-services.iam.gserviceaccount.com
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_MEDIUM
+timeout: 900s

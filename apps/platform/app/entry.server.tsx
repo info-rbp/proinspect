@@ -1,6 +1,8 @@
 import { renderToReadableStream } from 'react-dom/server';
 import { ServerRouter, type EntryContext, type RouterContextProvider } from 'react-router';
 import { runtimeContext } from '../../../packages/database/context';
+// The Node proof uses the same context instance as the compiled route loaders.
+export { runtimeContext };
 export default async function handleRequest(
   request: Request,
   status: number,

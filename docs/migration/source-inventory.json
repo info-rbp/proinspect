@@ -1,0 +1,6833 @@
+{
+  "baseline": "15382bea37d05b0a9533b040e6d79591a7883442",
+  "manifests": {
+    "apps/marketing/package.json": {
+      "name": "@proinspect/marketing",
+      "private": true,
+      "type": "module",
+      "scripts": {
+        "dev": "vite --host 127.0.0.1 --port 5174",
+        "build": "react-router build",
+        "preview": "vite preview --port 5174",
+        "deploy": "wrangler deploy"
+      }
+    },
+    "apps/platform/package.json": {
+      "name": "@proinspect/platform",
+      "private": true,
+      "type": "module",
+      "scripts": {
+        "dev": "vite --host 127.0.0.1 --port 5173",
+        "build": "node ../../scripts/deploy/prepare-direct.mjs && react-router build && node ../../scripts/deploy/assert-worker-exports.mjs",
+        "preview": "vite preview --port 5173",
+        "deploy": "wrangler deploy"
+      }
+    },
+    "apps/private-document-scanner/package.json": {
+      "name": "@proinspect/private-document-scanner",
+      "private": true,
+      "type": "module",
+      "scripts": {
+        "build": "esbuild src/index.ts --bundle --format=esm --platform=browser --target=es2022 --external:cloudflare:workers --outfile=build/index.js",
+        "deploy": "wrangler deploy",
+        "types": "wrangler types"
+      }
+    },
+    "package.json": {
+      "name": "proinspect",
+      "private": true,
+      "type": "module",
+      "packageManager": "pnpm@10.17.1",
+      "engines": {
+        "node": ">=22.22.0 <23"
+      },
+      "scripts": {
+        "dev": "pnpm --filter @proinspect/platform dev",
+        "dev:marketing": "pnpm --filter @proinspect/marketing dev",
+        "build": "pnpm -r build",
+        "typecheck": "tsc --noEmit",
+        "test": "node --experimental-strip-types --test tests/*.test.ts && node --test tests/portal-acceptance-gate.test.mjs && node --test tests/portal-execution.test.mjs && node --test tests/portal-launch-evidence.test.mjs && node --test tests/handbook-register.test.mjs && node --test tests/handbook-release-readiness.test.mjs && node --test tests/stage6-market-launch-gate.test.mjs",
+        "test:schema": "python3 tests/schema.test.py && python3 tests/reporting-schema.test.py && python3 tests/release-upgrade.test.py && python3 tests/agency-schema.test.py && python3 tests/connect-sandbox-schema.test.py && python3 tests/contractor-payment-models-schema.test.py && python3 tests/rent-routing-schema.test.py && python3 tests/v4-schema.test.py && python3 tests/final-sprint-schema.test.py && python3 tests/pcr-discount-schema.test.py && python3 tests/commercial-schema.test.py && python3 tests/finance-delivery-schema.test.py && python3 tests/handbook-migration-rehearsal.test.py && python3 tests/stage1-free-account-schema.test.py && python3 tests/client-service-interests-schema.test.py && python3 tests/managed-intake-schema.test.py && python3 tests/private-scanner-schema.test.py && python3 tests/temporary-rental-schema.test.py && python3 tests/co-living-schema.test.py && python3 tests/resident-scope-schema.test.py && python3 tests/new-workflow-schema.test.py",
+        "test:pr01-d1": "node scripts/release/pr01-isolated-d1.mjs",
+        "test:integration": "node --experimental-strip-types tests/runtime/run.mjs && node --experimental-strip-types tests/runtime/connected.mjs && node --experimental-strip-types tests/runtime/communications.mjs && node --experimental-strip-types tests/runtime/open-home-resend.mjs && node --experimental-strip-types tests/runtime/rental-journey.mjs && node --experimental-strip-types tests/runtime/managed-intake.mjs && node --experimental-strip-types tests/runtime/managed-intake.mjs --documents && node --experimental-strip-types tests/runtime/managed-intake.mjs --temporary && node --experimental-strip-types tests/runtime/final-pass.mjs && node --experimental-strip-types tests/runtime/reporting.mjs && node --experimental-strip-types tests/runtime/reporting-portals.mjs && node --experimental-strip-types tests/runtime/v2.mjs && node --experimental-strip-types tests/runtime/stripe.mjs && node --experimental-strip-types tests/runtime/residential-live.mjs && node --experimental-strip-types tests/runtime/sprint.mjs && node --experimental-strip-types tests/runtime/pcr-campaign.mjs && node --experimental-strip-types tests/runtime/invoice-delivery.mjs && node --experimental-strip-types tests/runtime/commercial.mjs && node --experimental-strip-types tests/runtime/commercial-application.mjs && node tests/runtime/co-living.mjs && node tests/runtime/registered-booking.mjs",
+        "test:browser": "playwright test",
+        "local:init": "node --experimental-strip-types scripts/local-init.mjs",
+        "catalogue:sql": "node --experimental-strip-types scripts/catalogue-sql.mjs",
+        "check": "pnpm handbook:check && pnpm typecheck && pnpm test && pnpm test:schema && pnpm build",
+        "format": "prettier --write . --ignore-unknown",
+        "format:check": "prettier --check . --ignore-unknown",
+        "config:list": "node scripts/configuration.mjs",
+        "config:check": "node scripts/configuration.mjs --check",
+        "handbook:check": "node scripts/handbook-check.mjs && node scripts/stage0-check.mjs",
+        "handbook:release": "node scripts/handbook-release-readiness.mjs",
+        "test:commercial-d1": "node scripts/release/commercial-isolated-d1.mjs",
+        "test:coliving-d1": "node scripts/release/co-living-isolated-d1.mjs"
+      },
+      "dependencies": {
+        "react": "19.3.0",
+        "react-dom": "19.3.0",
+        "react-router": "8.4.0",
+        "zod": "4.6.5"
+      },
+      "devDependencies": {
+        "@cloudflare/vite-plugin": "1.62.5",
+        "@cloudflare/workers-types": "5.20261006.1",
+        "@react-router/dev": "8.4.0",
+        "@types/node": "22.20.5",
+        "@types/react": "19.3.0",
+        "@types/react-dom": "19.3.0",
+        "@tailwindcss/vite": "4.3.3",
+        "tailwindcss": "4.3.3",
+        "typescript": "5.9.3",
+        "vite": "7.3.7",
+        "wrangler": "4.147.0",
+        "prettier": "3.9.9",
+        "@playwright/test": "1.63.0",
+        "miniflare": "4.20260730.0",
+        "esbuild": "0.25.12"
+      }
+    }
+  },
+  "migrations": [
+    "database/migrations/0001_core.sql",
+    "database/migrations/0002_guards.sql",
+    "database/migrations/0003_connected_operations.sql",
+    "database/migrations/0004_enquiries_notices.sql",
+    "database/migrations/0005_account.sql",
+    "database/migrations/0006_all_inclusive_subscription.sql",
+    "database/migrations/0007_calendar_sync.sql",
+    "database/migrations/0008_guest_one_off_bookings.sql",
+    "database/migrations/0009_leasing.sql",
+    "database/migrations/0010_rental_applications.sql",
+    "database/migrations/0011_rental_application_safeguards.sql",
+    "database/migrations/0012_open_home_checkins.sql",
+    "database/migrations/0013_wa_residential_forms.sql",
+    "database/migrations/0014_wa_residential_workflows.sql",
+    "database/migrations/0015_wa_residential_entry_reminders.sql",
+    "database/migrations/0016_wa_review_requirements.sql",
+    "database/migrations/0017_wa_form_release_approval.sql",
+    "database/migrations/0018_wa_bonds.sql",
+    "database/migrations/0019_open_home_reports.sql",
+    "database/migrations/0020_reporting_engine.sql",
+    "database/migrations/0021_v2_operating_model.sql",
+    "database/migrations/0022_v2_maintenance_delivery.sql",
+    "database/migrations/0023_v2_asset_preventive_compliance.sql",
+    "database/migrations/0024_v2_sector_packs.sql",
+    "database/migrations/0025_v2_capital_enterprise.sql",
+    "database/migrations/0026_v2_review_integrity.sql",
+    "database/migrations/0027_stripe_billing.sql",
+    "database/migrations/0028_contractor_payment_choices.sql",
+    "database/migrations/0029_rental_application_completion.sql",
+    "database/migrations/0030_property_report_bridge.sql",
+    "database/migrations/0031_wa_rent_and_restricted_review.sql",
+    "database/migrations/0032_rent_connect_sandbox.sql",
+    "database/migrations/0033_wa_agreement_signing.sql",
+    "database/migrations/0034_agency_outsourcing.sql",
+    "database/migrations/0035_v4_service_requests.sql",
+    "database/migrations/0036_payment_attempts_and_reconciliation.sql",
+    "database/migrations/0037_billing_accounts_and_invoices.sql",
+    "database/migrations/0038_versioned_legal_acceptance.sql",
+    "database/migrations/0039_building_management.sql",
+    "database/migrations/0040_notice_and_council_governance.sql",
+    "database/migrations/0041_approved_service_variants.sql",
+    "database/migrations/0042_release_approval_integrity.sql",
+    "database/migrations/0043_commercial_lease_operations.sql",
+    "database/migrations/0044_agency_owner_invitations.sql",
+    "database/migrations/0045_pcr_launch_offer.sql",
+    "database/migrations/0046_pcr_discount_reservations.sql",
+    "database/migrations/0047_residential_paid_subscription_enrollments.sql",
+    "database/migrations/0048_rental_reference_checks.sql",
+    "database/migrations/0049_commercial_source_lifecycle.sql",
+    "database/migrations/0050_report_render_independent_review.sql",
+    "database/migrations/0051_invoice_delivery_reviews.sql",
+    "database/migrations/0052_rental_tenancy_handover.sql",
+    "database/migrations/0053_account_first_free_registration.sql",
+    "database/migrations/0054_client_service_interests.sql",
+    "database/migrations/0055_commercial_applications.sql",
+    "database/migrations/0056_managed_property_intake.sql",
+    "database/migrations/0057_private_document_scanning.sql",
+    "database/migrations/0058_temporary_rental_documents.sql",
+    "database/migrations/0059_portal_experience_coliving.sql",
+    "database/migrations/0060_resident_occupancies_and_council_appointments.sql",
+    "database/migrations/0061_registered_workflows_and_preferences.sql",
+    "database/migrations/0062_finance_reviews_and_photo_annotations.sql"
+  ],
+  "counts": {
+    "crypto": {
+      "files": 54,
+      "matches": 230
+    },
+    "releaseFlags": {
+      "files": 45,
+      "matches": 225
+    },
+    "d1": {
+      "files": 111,
+      "matches": 2174
+    },
+    "batches": {
+      "files": 78,
+      "matches": 346
+    },
+    "sqlite": {
+      "files": 85,
+      "matches": 980
+    },
+    "durableObjects": {
+      "files": 10,
+      "matches": 17
+    },
+    "storage": {
+      "files": 27,
+      "matches": 74
+    },
+    "queueCron": {
+      "files": 7,
+      "matches": 28
+    }
+  },
+  "evidence": {
+    "crypto": [
+      {
+        "file": "apps/marketing/app/routes/leasing-cancel.tsx",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "file": "apps/marketing/app/routes/leasing-property.tsx",
+        "lines": [
+          20,
+          35
+        ]
+      },
+      {
+        "file": "apps/marketing/app/routes/open-home-check-in.tsx",
+        "lines": [
+          33,
+          54
+        ]
+      },
+      {
+        "file": "apps/platform/app/lib/report-offline.ts",
+        "lines": [
+          161,
+          175,
+          190
+        ]
+      },
+      {
+        "file": "apps/platform/worker/api.ts",
+        "lines": [
+          328,
+          337,
+          803
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/agency-owner-invitations.server.ts",
+        "lines": [
+          15,
+          16,
+          17
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/bond-completion.server.ts",
+        "lines": [
+          77,
+          153,
+          188,
+          203
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/bonds.server.ts",
+        "lines": [
+          94,
+          150,
+          169,
+          313,
+          370,
+          396
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/building-operations.server.ts",
+        "lines": [
+          26,
+          48,
+          105
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/co-living-operations.server.ts",
+        "lines": [
+          41,
+          129,
+          147
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-application-actions.server.ts",
+        "lines": [
+          89,
+          119,
+          153,
+          246,
+          399,
+          506,
+          521,
+          565,
+          684,
+          824
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-delivery.server.ts",
+        "lines": [
+          166,
+          267,
+          333,
+          447,
+          600,
+          700
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-intake.server.ts",
+        "lines": [
+          138,
+          184,
+          223,
+          294,
+          340,
+          454,
+          459,
+          514,
+          526,
+          605,
+          630,
+          684
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-lifecycle.server.ts",
+        "lines": [
+          323,
+          422,
+          725,
+          852,
+          872,
+          942,
+          1051
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-operations.server.ts",
+        "lines": [
+          59,
+          69,
+          143,
+          197
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-privacy.server.ts",
+        "lines": [
+          31,
+          78,
+          186
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-review.server.ts",
+        "lines": [
+          89,
+          168,
+          344,
+          370,
+          428,
+          480,
+          501
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/documents.server.ts",
+        "lines": [
+          603,
+          734,
+          766,
+          789
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/enquiries.server.ts",
+        "lines": [
+          12,
+          19,
+          43,
+          44,
+          69,
+          74,
+          76,
+          88,
+          95,
+          99,
+          107
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/finance.server.ts",
+        "lines": [
+          326
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/forms.server.ts",
+        "lines": [
+          77,
+          119,
+          324,
+          349,
+          388,
+          403,
+          428,
+          528
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest-reminders.server.ts",
+        "lines": [
+          10
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest-report.server.ts",
+        "lines": [
+          9
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest-scheduler.server.ts",
+        "lines": [
+          23,
+          101
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest.server.ts",
+        "lines": [
+          25,
+          83,
+          95,
+          119,
+          131,
+          142,
+          159,
+          165,
+          204
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/leasing.server.ts",
+        "lines": [
+          41,
+          50,
+          60,
+          74,
+          86,
+          307,
+          329,
+          340,
+          347,
+          355
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/open-home-reports.server.ts",
+        "lines": [
+          193
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/open-home-sheet.server.ts",
+        "lines": [
+          8,
+          33,
+          60
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/open-home.server.ts",
+        "lines": [
+          25,
+          45,
+          63,
+          65,
+          74,
+          84,
+          127
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/portfolio.server.ts",
+        "lines": [
+          319,
+          360
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-applications.server.ts",
+        "lines": [
+          23,
+          26,
+          31,
+          34,
+          76,
+          91,
+          108,
+          127,
+          141,
+          145,
+          148,
+          172,
+          195,
+          210,
+          239,
+          316,
+          331,
+          335,
+          436
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-governance.server.ts",
+        "lines": [
+          36,
+          53,
+          77,
+          86,
+          108
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-handoff.server.ts",
+        "lines": [
+          34,
+          35
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-malware.server.ts",
+        "lines": [
+          61,
+          72
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-outcomes.server.ts",
+        "lines": [
+          27,
+          39
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-privacy.server.ts",
+        "lines": [
+          29,
+          37,
+          72,
+          113
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-review.server.ts",
+        "lines": [
+          28,
+          39,
+          41,
+          47,
+          53,
+          57,
+          76,
+          78,
+          90,
+          113,
+          122
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-script-dispatch.server.ts",
+        "lines": [
+          24,
+          26
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-temporary-documents.server.ts",
+        "lines": [
+          22,
+          25,
+          32,
+          44,
+          61,
+          111,
+          123,
+          147,
+          158,
+          161
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-tenancy-handover.server.ts",
+        "lines": [
+          19,
+          53,
+          77,
+          96,
+          137,
+          139
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/report-issue.server.ts",
+        "lines": [
+          207
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/reports.server.ts",
+        "lines": [
+          156
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/tenancies.server.ts",
+        "lines": [
+          73
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v4-service-requests.server.ts",
+        "lines": [
+          34,
+          117,
+          133,
+          170,
+          195,
+          226
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-agreement-signing.server.ts",
+        "lines": [
+          66,
+          104
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-lifecycle.server.ts",
+        "lines": [
+          72,
+          172,
+          237
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-residential.server.ts",
+        "lines": [
+          61,
+          113
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-review-gates.server.ts",
+        "lines": [
+          51
+        ]
+      },
+      {
+        "file": "apps/platform/worker/scheduler.ts",
+        "lines": [
+          347
+        ]
+      },
+      {
+        "file": "packages/auth/crypto.ts",
+        "lines": [
+          26,
+          31,
+          41
+        ]
+      },
+      {
+        "file": "packages/auth/server.ts",
+        "lines": [
+          58,
+          74
+        ]
+      },
+      {
+        "file": "packages/database/types.ts",
+        "lines": [
+          72
+        ]
+      },
+      {
+        "file": "packages/notifications/rental-package.ts",
+        "lines": [
+          6,
+          29
+        ]
+      },
+      {
+        "file": "packages/notifications/server.ts",
+        "lines": [
+          25,
+          80
+        ]
+      }
+    ],
+    "releaseFlags": [
+      {
+        "file": "apps/marketing/wrangler.jsonc",
+        "lines": [
+          18,
+          19,
+          20
+        ]
+      },
+      {
+        "file": "apps/platform/app/routes/guest-book.tsx",
+        "lines": [
+          10
+        ]
+      },
+      {
+        "file": "apps/platform/app/routes/guest-manage.tsx",
+        "lines": [
+          9
+        ]
+      },
+      {
+        "file": "apps/platform/app/routes/property.tsx",
+        "lines": [
+          21
+        ]
+      },
+      {
+        "file": "apps/platform/app/routes/stripe-subscribe.tsx",
+        "lines": [
+          16,
+          17,
+          19
+        ]
+      },
+      {
+        "file": "apps/platform/worker/api.ts",
+        "lines": [
+          232
+        ]
+      },
+      {
+        "file": "apps/platform/worker/app.ts",
+        "lines": [
+          57,
+          65
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/account.server.ts",
+        "lines": [
+          57,
+          58
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/agency-owner-invitations.server.ts",
+        "lines": [
+          12,
+          15
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/amenities.server.ts",
+        "lines": [
+          8
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/billing-accounts.server.ts",
+        "lines": [
+          51,
+          52,
+          72,
+          84,
+          103,
+          149
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/building-operations.server.ts",
+        "lines": [
+          30
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/calendar-google.server.ts",
+        "lines": [
+          14,
+          34,
+          35
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-intake.server.ts",
+        "lines": [
+          178,
+          179,
+          180
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-review.server.ts",
+        "lines": [
+          61
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-scope.server.ts",
+        "lines": [
+          13
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/contractor-payments.server.ts",
+        "lines": [
+          30,
+          32,
+          37
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/finance.server.ts",
+        "lines": [
+          360
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/forms.server.ts",
+        "lines": [
+          226
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/google-calendar.server.ts",
+        "lines": [
+          80,
+          90
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest.server.ts",
+        "lines": [
+          53
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/leasing.server.ts",
+        "lines": [
+          126,
+          202,
+          204
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/legal-acceptance.server.ts",
+        "lines": [
+          25,
+          35,
+          63
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/open-home-reports.server.ts",
+        "lines": [
+          63,
+          85,
+          155
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/open-home-sheet.server.ts",
+        "lines": [
+          7
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/operational-health.server.ts",
+        "lines": [
+          21,
+          23,
+          25,
+          27
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/release-governance.server.ts",
+        "lines": [
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rent-planning.server.ts",
+        "lines": [
+          21
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-applications.server.ts",
+        "lines": [
+          23,
+          61
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-privacy.server.ts",
+        "lines": [
+          146
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-script-dispatch.server.ts",
+        "lines": [
+          10
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-tenancy-handover.server.ts",
+        "lines": [
+          7,
+          37
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/residential-live-stripe.server.ts",
+        "lines": [
+          28
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/router.server.ts",
+        "lines": [
+          310
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/service-pricing.server.ts",
+        "lines": [
+          35
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/stripe-billing.server.ts",
+        "lines": [
+          16,
+          62
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v4-service-requests.server.ts",
+        "lines": [
+          72,
+          74,
+          81,
+          84,
+          88
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-agreement-signing.server.ts",
+        "lines": [
+          13,
+          29,
+          32
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/workspace-data.server.ts",
+        "lines": [
+          258,
+          259,
+          260
+        ]
+      },
+      {
+        "file": "apps/platform/worker/scheduler.ts",
+        "lines": [
+          62
+        ]
+      },
+      {
+        "file": "apps/platform/wrangler.jsonc",
+        "lines": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          37,
+          38,
+          39,
+          41,
+          42,
+          43,
+          114,
+          115,
+          117,
+          118,
+          119,
+          120,
+          121,
+          122,
+          123,
+          124,
+          125,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140,
+          141,
+          142,
+          143,
+          144,
+          145,
+          146,
+          147,
+          148,
+          149,
+          150,
+          151,
+          152,
+          238,
+          239,
+          241,
+          243,
+          244,
+          249,
+          250,
+          251,
+          252,
+          253,
+          254,
+          255,
+          256,
+          257,
+          258,
+          259,
+          261,
+          262,
+          263,
+          264,
+          265,
+          266,
+          267,
+          268,
+          269,
+          270,
+          271,
+          272,
+          273,
+          274,
+          275,
+          276,
+          277,
+          278,
+          279,
+          280,
+          281,
+          282,
+          283
+        ]
+      },
+      {
+        "file": "packages/authorization/server.ts",
+        "lines": [
+          107
+        ]
+      },
+      {
+        "file": "packages/database/types.ts",
+        "lines": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          25,
+          27,
+          30,
+          31,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          43,
+          44,
+          45,
+          56,
+          61,
+          81,
+          82,
+          83,
+          89,
+          91,
+          93,
+          94,
+          97,
+          102,
+          106,
+          107,
+          108,
+          109,
+          113
+        ]
+      },
+      {
+        "file": "packages/finance/connect-policy.ts",
+        "lines": [
+          3,
+          5
+        ]
+      },
+      {
+        "file": "packages/notifications/server.ts",
+        "lines": [
+          127
+        ]
+      }
+    ],
+    "d1": [
+      {
+        "file": "apps/platform/app/routes/home.tsx",
+        "lines": [
+          7
+        ]
+      },
+      {
+        "file": "apps/platform/worker/api.ts",
+        "lines": [
+          158,
+          166,
+          173,
+          188,
+          190,
+          197,
+          201,
+          236,
+          249,
+          251,
+          256,
+          258,
+          265,
+          322,
+          532,
+          542,
+          578,
+          789,
+          818,
+          820,
+          827,
+          828,
+          838
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/account-tags.server.ts",
+        "lines": [
+          10,
+          13,
+          28,
+          31,
+          32,
+          34,
+          36
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/account.server.ts",
+        "lines": [
+          10,
+          18,
+          23,
+          30,
+          32,
+          71,
+          73,
+          83,
+          96,
+          98
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/admin.server.ts",
+        "lines": [
+          29,
+          35,
+          43,
+          50,
+          56,
+          62,
+          68,
+          90,
+          98,
+          105,
+          113,
+          138,
+          146,
+          148,
+          154,
+          182,
+          190,
+          198,
+          201,
+          210,
+          235,
+          242,
+          251,
+          257,
+          259,
+          291,
+          301,
+          308,
+          318,
+          327,
+          329,
+          336,
+          345,
+          370,
+          372,
+          387,
+          394,
+          401,
+          425,
+          443,
+          451,
+          453
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/agency-outsourcing.server.ts",
+        "lines": [
+          15,
+          27,
+          30,
+          39,
+          58,
+          59,
+          60,
+          61,
+          68,
+          70,
+          74,
+          77,
+          79,
+          81,
+          89,
+          91,
+          96,
+          101,
+          103,
+          108,
+          110,
+          111,
+          115,
+          118,
+          125,
+          128,
+          130,
+          139,
+          143,
+          148,
+          152,
+          159,
+          166,
+          168,
+          176,
+          177,
+          178,
+          179,
+          186,
+          189,
+          198,
+          199,
+          200,
+          201,
+          202
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/agency-owner-invitations.server.ts",
+        "lines": [
+          13,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/amenities.server.ts",
+        "lines": [
+          18,
+          23,
+          30,
+          56,
+          63,
+          71,
+          78,
+          83,
+          92,
+          100
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/billing-accounts.server.ts",
+        "lines": [
+          19,
+          20,
+          22,
+          25,
+          26,
+          32,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          59,
+          75,
+          86,
+          87,
+          90,
+          92,
+          99,
+          105,
+          110,
+          119,
+          121,
+          122,
+          128,
+          132,
+          133,
+          139,
+          140,
+          152,
+          161,
+          173,
+          174,
+          175,
+          186,
+          187,
+          188,
+          196,
+          197,
+          198,
+          203,
+          204,
+          205,
+          212,
+          216,
+          221
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/bond-alerts.server.ts",
+        "lines": [
+          10,
+          38,
+          41,
+          56,
+          57,
+          59
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/bond-completion.server.ts",
+        "lines": [
+          46,
+          72,
+          76,
+          84,
+          87,
+          89,
+          92,
+          112,
+          122,
+          128,
+          133,
+          147,
+          151,
+          167,
+          176,
+          181,
+          186,
+          189,
+          202,
+          211,
+          216
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/bonds.server.ts",
+        "lines": [
+          39,
+          43,
+          49,
+          56,
+          63,
+          69,
+          72,
+          76,
+          85,
+          90,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          149,
+          160,
+          168,
+          170,
+          171,
+          182,
+          199,
+          206,
+          213,
+          214,
+          218,
+          220,
+          223,
+          231,
+          240,
+          245,
+          257,
+          264,
+          287,
+          290,
+          297,
+          299,
+          306,
+          309,
+          312,
+          320,
+          323,
+          332,
+          340,
+          344,
+          352,
+          353,
+          365,
+          372,
+          375,
+          379,
+          389,
+          395,
+          403,
+          408,
+          413,
+          424
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/bookings.server.ts",
+        "lines": [
+          51,
+          75,
+          83,
+          89,
+          122,
+          127,
+          140,
+          148,
+          149,
+          175,
+          179,
+          201,
+          233,
+          247,
+          260
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/building-operations.server.ts",
+        "lines": [
+          11,
+          16,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          28,
+          34,
+          35,
+          37,
+          42,
+          48,
+          51,
+          55,
+          57,
+          60,
+          65,
+          66,
+          67,
+          68,
+          71,
+          74,
+          80,
+          82,
+          85,
+          89,
+          91,
+          92,
+          94,
+          96,
+          100,
+          103,
+          104,
+          105
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/calendar-scheduling.server.ts",
+        "lines": [
+          13,
+          24,
+          31,
+          39,
+          49,
+          59,
+          83,
+          86,
+          100,
+          107
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/client-service-interests.server.ts",
+        "lines": [
+          11,
+          17,
+          32,
+          33
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/co-living-operations.server.ts",
+        "lines": [
+          14,
+          18,
+          28,
+          34,
+          43,
+          73,
+          79,
+          80,
+          93,
+          104,
+          110,
+          111,
+          114,
+          124,
+          125,
+          130,
+          137,
+          142,
+          143,
+          148,
+          158,
+          163,
+          164,
+          168
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/co-living.server.ts",
+        "lines": [
+          20,
+          25,
+          31,
+          48,
+          51,
+          57,
+          60,
+          65,
+          69,
+          72,
+          79,
+          80,
+          83,
+          94,
+          103,
+          110,
+          118,
+          122
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-application-actions.server.ts",
+        "lines": [
+          39,
+          64,
+          78,
+          83,
+          87,
+          94,
+          103,
+          109,
+          114,
+          125,
+          136,
+          146,
+          188,
+          218,
+          225,
+          237,
+          241,
+          279,
+          287,
+          293,
+          297,
+          302,
+          308,
+          315,
+          321,
+          393,
+          397,
+          435,
+          446,
+          473,
+          500,
+          548,
+          550,
+          560,
+          647,
+          671,
+          675,
+          689,
+          718,
+          725,
+          729,
+          734,
+          760,
+          762,
+          771,
+          806,
+          817,
+          821,
+          855,
+          857,
+          865,
+          870
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-delivery.server.ts",
+        "lines": [
+          59,
+          72,
+          80,
+          136,
+          143,
+          151,
+          161,
+          163,
+          178,
+          205,
+          216,
+          227,
+          229,
+          258,
+          272,
+          303,
+          321,
+          328,
+          345,
+          355,
+          361,
+          363,
+          407,
+          442,
+          444,
+          458,
+          470,
+          494,
+          533,
+          535,
+          541,
+          596,
+          598,
+          605,
+          629,
+          631,
+          664,
+          693,
+          712
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-http.server.ts",
+        "lines": [
+          68,
+          70,
+          109,
+          122
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-intake.server.ts",
+        "lines": [
+          130,
+          155,
+          230,
+          282,
+          297,
+          347,
+          353,
+          359,
+          386,
+          398,
+          405,
+          407,
+          415,
+          434,
+          446,
+          492,
+          499,
+          507,
+          509,
+          521,
+          569,
+          578,
+          589,
+          615,
+          622,
+          676,
+          692
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-lifecycle.server.ts",
+        "lines": [
+          109,
+          116,
+          127,
+          155,
+          171,
+          186,
+          199,
+          232,
+          240,
+          242,
+          269,
+          309,
+          360,
+          373,
+          413,
+          564,
+          617,
+          653,
+          670,
+          713,
+          750,
+          757,
+          772,
+          807,
+          820,
+          843,
+          865,
+          883,
+          909,
+          934,
+          973,
+          1001,
+          1012,
+          1032,
+          1056,
+          1064,
+          1072,
+          1112,
+          1120,
+          1168,
+          1182
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-operations.server.ts",
+        "lines": [
+          38,
+          49,
+          113,
+          132,
+          134,
+          176,
+          188,
+          190,
+          218,
+          236,
+          238,
+          266,
+          279,
+          289,
+          297,
+          299
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-privacy.server.ts",
+        "lines": [
+          23,
+          25,
+          61,
+          68,
+          73,
+          75,
+          123,
+          139,
+          148,
+          150,
+          160,
+          171,
+          190,
+          192,
+          203,
+          208,
+          213,
+          218,
+          222,
+          223,
+          225,
+          231,
+          237,
+          243,
+          249,
+          255,
+          264,
+          270
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-review.server.ts",
+        "lines": [
+          33,
+          47,
+          68,
+          100,
+          108,
+          116,
+          127,
+          145,
+          161,
+          163,
+          175,
+          202,
+          208,
+          210,
+          218,
+          271,
+          273,
+          298,
+          326,
+          333,
+          352,
+          377,
+          403,
+          410,
+          418,
+          453,
+          465,
+          485,
+          487,
+          496,
+          508,
+          548,
+          554,
+          577,
+          584,
+          586,
+          617,
+          626,
+          628,
+          636,
+          673,
+          675
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-scope.server.ts",
+        "lines": [
+          45,
+          60,
+          82
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/contractor-payments.server.ts",
+        "lines": [
+          54,
+          68,
+          76,
+          104,
+          106,
+          112,
+          113,
+          156,
+          160,
+          179,
+          191,
+          207,
+          238,
+          242,
+          247,
+          248,
+          250,
+          278,
+          307,
+          338,
+          348,
+          350,
+          362,
+          369,
+          370,
+          372
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/council-appointments.server.ts",
+        "lines": [
+          22,
+          27,
+          32,
+          33,
+          47,
+          56,
+          76,
+          82,
+          89,
+          101,
+          108,
+          124,
+          133,
+          147
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/documents.server.ts",
+        "lines": [
+          97,
+          117,
+          119,
+          166,
+          175,
+          179,
+          182,
+          217,
+          225,
+          247,
+          265,
+          275,
+          285,
+          307,
+          318,
+          326,
+          335,
+          350,
+          361,
+          374,
+          385,
+          387,
+          430,
+          435,
+          437,
+          454,
+          493,
+          500,
+          534,
+          536,
+          593,
+          595,
+          619,
+          666,
+          677,
+          679,
+          705,
+          719,
+          726,
+          728,
+          746,
+          785,
+          787,
+          812,
+          825,
+          827
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/enquiries.server.ts",
+        "lines": [
+          13,
+          29,
+          40,
+          43,
+          44,
+          45,
+          46,
+          49,
+          51,
+          58,
+          65,
+          70,
+          75,
+          77,
+          84,
+          86,
+          87,
+          88,
+          96,
+          97,
+          99,
+          104,
+          105,
+          106,
+          107
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/experience-preferences.server.ts",
+        "lines": [
+          8,
+          26
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/finance-reviews.server.ts",
+        "lines": [
+          25,
+          27,
+          29,
+          32,
+          45,
+          51,
+          60,
+          61,
+          66,
+          74,
+          79,
+          80,
+          82,
+          91,
+          94,
+          103,
+          104,
+          109,
+          117,
+          122,
+          123,
+          125
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/finance.server.ts",
+        "lines": [
+          44,
+          51,
+          97,
+          118,
+          145,
+          153,
+          155,
+          170,
+          189,
+          197,
+          282,
+          284,
+          296,
+          308,
+          324,
+          326,
+          352,
+          360,
+          361,
+          363,
+          389,
+          431,
+          433,
+          448,
+          475,
+          497,
+          499,
+          509
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/forms.server.ts",
+        "lines": [
+          52,
+          60,
+          110,
+          112,
+          134,
+          176,
+          195,
+          197,
+          208,
+          234,
+          242,
+          252,
+          273,
+          284,
+          308,
+          317,
+          319,
+          331,
+          352,
+          358,
+          396,
+          398,
+          420,
+          465,
+          467,
+          484,
+          493,
+          495,
+          512,
+          514,
+          515,
+          526,
+          527,
+          536,
+          543,
+          544
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest-reminders.server.ts",
+        "lines": [
+          8,
+          12,
+          14
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest-report.server.ts",
+        "lines": [
+          7,
+          12
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest-scheduler.server.ts",
+        "lines": [
+          21,
+          40,
+          41,
+          46,
+          47,
+          48,
+          49,
+          50,
+          52,
+          65,
+          68,
+          71,
+          72,
+          73,
+          74,
+          75,
+          83,
+          86,
+          97,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          112
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest.server.ts",
+        "lines": [
+          26,
+          38,
+          43,
+          47,
+          77,
+          83,
+          84,
+          87,
+          98,
+          99,
+          100,
+          101,
+          112,
+          120,
+          144,
+          157,
+          172,
+          173,
+          174,
+          175,
+          183,
+          207,
+          209,
+          210,
+          211,
+          219,
+          223
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/integrations.server.ts",
+        "lines": [
+          65,
+          67,
+          127,
+          134,
+          151,
+          172,
+          178,
+          193,
+          195,
+          219,
+          228,
+          263,
+          271
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/invitation-preview.server.ts",
+        "lines": [
+          15,
+          28
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/leasing.server.ts",
+        "lines": [
+          19,
+          26,
+          27,
+          34,
+          36,
+          37,
+          42,
+          49,
+          62,
+          65,
+          71,
+          80,
+          82,
+          83,
+          85,
+          93,
+          96,
+          107,
+          110,
+          111,
+          113,
+          121,
+          124,
+          141,
+          144,
+          173,
+          177,
+          184,
+          185,
+          186,
+          187,
+          188,
+          189,
+          194,
+          195,
+          196,
+          197,
+          227,
+          228,
+          232,
+          233,
+          236,
+          256,
+          257,
+          261,
+          262,
+          263,
+          272,
+          274,
+          276,
+          282,
+          291,
+          299,
+          301,
+          305,
+          308,
+          318,
+          322,
+          325,
+          327,
+          330,
+          339,
+          349,
+          358,
+          359,
+          360,
+          361
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/legal-acceptance.server.ts",
+        "lines": [
+          15,
+          19,
+          34,
+          44,
+          48,
+          52,
+          60,
+          61,
+          72,
+          78,
+          84,
+          89
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/managed-rental-intake.server.ts",
+        "lines": [
+          16,
+          18,
+          22,
+          28,
+          41,
+          43,
+          47
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/notice-lifecycle.server.ts",
+        "lines": [
+          13,
+          21,
+          25,
+          28,
+          29,
+          30,
+          31,
+          37,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          49
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/open-home-reports.server.ts",
+        "lines": [
+          16,
+          19,
+          36,
+          40,
+          45,
+          54,
+          59,
+          95,
+          103,
+          110,
+          113,
+          116,
+          142,
+          144,
+          156,
+          168,
+          178,
+          185
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/open-home-sheet.server.ts",
+        "lines": [
+          32,
+          34,
+          48,
+          73,
+          81
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/open-home.server.ts",
+        "lines": [
+          16,
+          27,
+          51,
+          57,
+          67,
+          70,
+          81,
+          88,
+          94,
+          108,
+          112,
+          115
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/operational-health.server.ts",
+        "lines": [
+          10,
+          31
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/owner-portfolio.server.ts",
+        "lines": [
+          24,
+          29,
+          38,
+          46
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/payment-lifecycle.server.ts",
+        "lines": [
+          11,
+          14,
+          17,
+          19,
+          20,
+          23,
+          24,
+          28,
+          38,
+          43,
+          50,
+          53,
+          59,
+          63,
+          66,
+          74,
+          77,
+          84,
+          87,
+          95,
+          100,
+          105,
+          106,
+          110,
+          111,
+          116,
+          119,
+          120,
+          123,
+          126,
+          128,
+          129,
+          133,
+          137
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/pcr-discounts.server.ts",
+        "lines": [
+          8,
+          18,
+          21,
+          26,
+          29,
+          30
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/portfolio.server.ts",
+        "lines": [
+          38,
+          45,
+          47,
+          63,
+          79,
+          91,
+          99,
+          109,
+          124,
+          148,
+          160,
+          169,
+          178,
+          214,
+          223,
+          300,
+          314,
+          345,
+          365,
+          367,
+          386,
+          395,
+          398,
+          405,
+          450,
+          479,
+          481,
+          525,
+          533,
+          548,
+          566,
+          577,
+          589,
+          613,
+          634,
+          645,
+          647,
+          676,
+          687,
+          689,
+          713,
+          733,
+          735
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/property-report-bridge.server.ts",
+        "lines": [
+          24,
+          30,
+          33,
+          34,
+          58,
+          63,
+          64,
+          67,
+          113,
+          120,
+          121,
+          123,
+          124
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/records.server.ts",
+        "lines": [
+          209,
+          244,
+          277,
+          289,
+          308,
+          340
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/refunds.server.ts",
+        "lines": [
+          13,
+          15,
+          17,
+          20,
+          23,
+          28,
+          33,
+          36,
+          41
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/release-governance.server.ts",
+        "lines": [
+          34,
+          57,
+          73,
+          80,
+          92
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rent-connect.server.ts",
+        "lines": [
+          9,
+          14,
+          28,
+          34,
+          41,
+          44
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rent-planning.server.ts",
+        "lines": [
+          28,
+          30,
+          37,
+          50,
+          54,
+          74,
+          75,
+          86,
+          95,
+          96,
+          107,
+          112,
+          114,
+          121,
+          122
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-applications.server.ts",
+        "lines": [
+          30,
+          35,
+          50,
+          79,
+          95,
+          97,
+          98,
+          105,
+          106,
+          107,
+          122,
+          124,
+          133,
+          139,
+          149,
+          170,
+          171,
+          173,
+          175,
+          185,
+          187,
+          189,
+          193,
+          194,
+          206,
+          214,
+          215,
+          234,
+          237,
+          238,
+          240,
+          243,
+          251,
+          253,
+          254,
+          255,
+          256,
+          257,
+          259,
+          280,
+          282,
+          283,
+          285,
+          293,
+          301,
+          313,
+          320,
+          322,
+          329,
+          330,
+          332,
+          333,
+          344,
+          352,
+          353,
+          355,
+          356,
+          358,
+          386,
+          391,
+          396,
+          397,
+          400,
+          410,
+          416,
+          417,
+          418,
+          419,
+          422,
+          423,
+          424,
+          425,
+          440,
+          444,
+          445
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-governance.server.ts",
+        "lines": [
+          19,
+          33,
+          34,
+          35,
+          48,
+          55,
+          56,
+          57,
+          58,
+          60,
+          76,
+          80,
+          81,
+          83,
+          84,
+          90,
+          99,
+          104
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-handoff.server.ts",
+        "lines": [
+          14,
+          20,
+          22,
+          25,
+          32
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-malware.server.ts",
+        "lines": [
+          47,
+          55,
+          57,
+          64,
+          65,
+          67,
+          68,
+          69,
+          70,
+          74
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-outcomes.server.ts",
+        "lines": [
+          14,
+          19,
+          21,
+          23,
+          36,
+          37,
+          41
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-privacy.server.ts",
+        "lines": [
+          23,
+          27,
+          34,
+          43,
+          49,
+          50,
+          52,
+          53,
+          55,
+          68,
+          70,
+          71,
+          73,
+          80,
+          88,
+          93,
+          95,
+          101,
+          105,
+          107,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          137,
+          147,
+          150
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-review.server.ts",
+        "lines": [
+          21,
+          27,
+          32,
+          36,
+          40,
+          44,
+          45,
+          50,
+          51,
+          54,
+          56,
+          59,
+          61,
+          72,
+          75,
+          87,
+          88,
+          91,
+          112,
+          114,
+          119,
+          120,
+          128,
+          129,
+          136,
+          139,
+          140,
+          141,
+          143,
+          149,
+          154,
+          155
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-scan-dispatch.server.ts",
+        "lines": [
+          19,
+          24,
+          58
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-script-dispatch.server.ts",
+        "lines": [
+          14,
+          18,
+          27,
+          34,
+          48,
+          49,
+          51,
+          53,
+          57
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-temporary-documents.server.ts",
+        "lines": [
+          18,
+          20,
+          43,
+          56,
+          58,
+          64,
+          66,
+          67,
+          75,
+          80,
+          84,
+          89,
+          94,
+          95,
+          97,
+          103,
+          105,
+          109,
+          120,
+          122,
+          123,
+          124,
+          131,
+          137,
+          138,
+          142,
+          145,
+          147,
+          153,
+          157,
+          160,
+          167,
+          170,
+          171,
+          172,
+          178,
+          179,
+          180,
+          181
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-tenancy-handover.server.ts",
+        "lines": [
+          20,
+          22,
+          26,
+          32,
+          40,
+          57,
+          63,
+          67,
+          69,
+          71,
+          73,
+          75,
+          78,
+          89,
+          93,
+          94,
+          100,
+          102,
+          110,
+          112,
+          123,
+          126,
+          130,
+          146,
+          147,
+          148,
+          149,
+          151,
+          152,
+          153,
+          164,
+          167,
+          168,
+          169,
+          170,
+          171,
+          172,
+          174,
+          175,
+          176
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/report-annotations.server.ts",
+        "lines": [
+          23,
+          28,
+          40,
+          45,
+          57,
+          58,
+          79,
+          80
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/report-evidence.server.ts",
+        "lines": [
+          16,
+          20,
+          37,
+          38,
+          39,
+          47,
+          48,
+          50,
+          51,
+          52,
+          53,
+          55,
+          65,
+          69,
+          70,
+          79
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/report-history.server.ts",
+        "lines": [
+          13,
+          26,
+          30
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/report-issue.server.ts",
+        "lines": [
+          12,
+          21,
+          23,
+          29,
+          31,
+          75,
+          76,
+          81,
+          94,
+          112,
+          118,
+          122,
+          123,
+          135,
+          137,
+          138,
+          152,
+          158,
+          161,
+          175,
+          176,
+          188,
+          192,
+          201,
+          204,
+          205,
+          215,
+          220,
+          233,
+          238,
+          239,
+          250,
+          255,
+          256,
+          260
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/reports.server.ts",
+        "lines": [
+          44,
+          49,
+          71,
+          73,
+          76,
+          81,
+          86,
+          96,
+          97,
+          99,
+          105,
+          116,
+          120,
+          128,
+          136,
+          137,
+          141,
+          144,
+          149,
+          150,
+          152,
+          158,
+          172,
+          176,
+          190,
+          194,
+          197,
+          198,
+          200,
+          202,
+          210,
+          214,
+          215,
+          224,
+          227,
+          230,
+          232,
+          233,
+          234,
+          244,
+          247,
+          248,
+          249
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/resident-commercial.server.ts",
+        "lines": [
+          37,
+          46,
+          47,
+          52,
+          68,
+          87,
+          103,
+          112,
+          118,
+          125,
+          126,
+          128,
+          140,
+          149,
+          159,
+          163,
+          164,
+          166,
+          167,
+          176,
+          192,
+          193,
+          203,
+          209,
+          210
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/residential-live-stripe.server.ts",
+        "lines": [
+          79,
+          82,
+          89,
+          97,
+          99
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/router.server.ts",
+        "lines": [
+          73,
+          157,
+          232
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/service-pricing.server.ts",
+        "lines": [
+          12,
+          24,
+          28,
+          29,
+          31,
+          37,
+          42
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/staff-property-management.server.ts",
+        "lines": [
+          36,
+          45,
+          48,
+          49,
+          61,
+          64,
+          65,
+          66,
+          67,
+          68,
+          77,
+          91,
+          97,
+          102,
+          103,
+          107,
+          108
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/stage6-launch.server.ts",
+        "lines": [
+          15,
+          19,
+          23,
+          28
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/strata.server.ts",
+        "lines": [
+          13,
+          15,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          30,
+          31,
+          32,
+          33,
+          37,
+          38,
+          39,
+          40,
+          41,
+          46,
+          48,
+          49,
+          50,
+          51,
+          63,
+          65,
+          66,
+          68,
+          71,
+          73,
+          74,
+          79,
+          81,
+          82,
+          83,
+          89,
+          90,
+          93,
+          94,
+          95,
+          101,
+          102,
+          103,
+          104,
+          109,
+          110,
+          115,
+          116,
+          117,
+          118,
+          123,
+          124,
+          127,
+          128
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/stripe-billing.server.ts",
+        "lines": [
+          64,
+          76,
+          85,
+          90,
+          96,
+          98,
+          103,
+          105,
+          110,
+          146,
+          147,
+          150,
+          165,
+          170,
+          186,
+          188,
+          191,
+          197
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/stripe-risk.server.ts",
+        "lines": [
+          23,
+          27,
+          28,
+          40,
+          41,
+          57,
+          64
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/tenancies.server.ts",
+        "lines": [
+          28,
+          50,
+          58,
+          108,
+          123,
+          138,
+          153,
+          155,
+          182,
+          194,
+          200,
+          202
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v2-business.server.ts",
+        "lines": [
+          32,
+          39,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          70,
+          83,
+          87,
+          91,
+          149,
+          172,
+          174,
+          175,
+          183,
+          185,
+          186,
+          205,
+          206,
+          226,
+          227,
+          244,
+          262,
+          263,
+          276,
+          277,
+          291,
+          302,
+          303
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v2-estates.server.ts",
+        "lines": [
+          15,
+          18,
+          23,
+          45,
+          61,
+          68,
+          77,
+          84,
+          96,
+          108,
+          116,
+          126,
+          130,
+          141,
+          144,
+          148,
+          151,
+          154,
+          165,
+          183,
+          191,
+          202,
+          220
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v2-intelligence.server.ts",
+        "lines": [
+          17,
+          48,
+          51,
+          103,
+          118,
+          127,
+          137,
+          146,
+          149,
+          167,
+          184,
+          201,
+          218,
+          229,
+          236,
+          240,
+          251
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v2-maintenance.server.ts",
+        "lines": [
+          14,
+          18,
+          24,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          63,
+          81,
+          90,
+          105,
+          118,
+          126,
+          133,
+          141,
+          151,
+          168,
+          171,
+          185,
+          202,
+          207,
+          215,
+          222,
+          227,
+          228,
+          231,
+          236,
+          243,
+          257
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v2-sectors.server.ts",
+        "lines": [
+          17,
+          32,
+          44,
+          63,
+          66,
+          87,
+          96,
+          108,
+          115,
+          123
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v4-service-requests.server.ts",
+        "lines": [
+          36,
+          55,
+          61,
+          102,
+          113,
+          115,
+          119,
+          134,
+          135,
+          136,
+          138,
+          151,
+          152,
+          153,
+          172,
+          174,
+          175,
+          177,
+          188,
+          193,
+          196,
+          205,
+          236,
+          239,
+          240,
+          241
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-agreement-signing.server.ts",
+        "lines": [
+          20,
+          23,
+          47,
+          50,
+          59,
+          61,
+          74,
+          75,
+          77,
+          79,
+          95,
+          100,
+          101,
+          105,
+          106,
+          107,
+          108,
+          111,
+          121,
+          127,
+          132,
+          134,
+          140,
+          147,
+          148,
+          149,
+          150,
+          152,
+          164,
+          171,
+          172,
+          173
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-issuance.server.ts",
+        "lines": [
+          19,
+          20,
+          22,
+          45,
+          51,
+          55,
+          56,
+          59
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-lifecycle.server.ts",
+        "lines": [
+          30,
+          47,
+          48,
+          73,
+          74,
+          76,
+          83,
+          106,
+          115,
+          116,
+          118,
+          139,
+          140,
+          153,
+          155,
+          157,
+          159,
+          179,
+          210,
+          211,
+          232,
+          238,
+          239,
+          241,
+          259,
+          268,
+          269,
+          272,
+          282
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-reminders.server.ts",
+        "lines": [
+          12,
+          34,
+          43,
+          44,
+          47
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-residential.server.ts",
+        "lines": [
+          16,
+          19,
+          28,
+          34,
+          52,
+          83,
+          99,
+          110,
+          111,
+          115,
+          143,
+          158,
+          171,
+          172,
+          175,
+          200,
+          210,
+          220,
+          221,
+          223,
+          244,
+          264,
+          268,
+          273,
+          279,
+          280,
+          283
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-review-gates.server.ts",
+        "lines": [
+          22,
+          31,
+          41,
+          54
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/workspace-data.server.ts",
+        "lines": [
+          22,
+          53,
+          62,
+          98,
+          107,
+          115,
+          125,
+          136,
+          146,
+          158,
+          168,
+          177,
+          187,
+          196,
+          203,
+          221
+        ]
+      },
+      {
+        "file": "apps/platform/worker/scheduler.ts",
+        "lines": [
+          69,
+          80,
+          155,
+          178,
+          190,
+          221,
+          237,
+          256,
+          293,
+          321,
+          334,
+          339,
+          344,
+          389,
+          395,
+          404,
+          411,
+          431
+        ]
+      },
+      {
+        "file": "apps/platform/worker/services.server.ts",
+        "lines": [
+          40,
+          53,
+          56,
+          60,
+          79,
+          98,
+          101,
+          111,
+          120,
+          128,
+          130,
+          133,
+          170,
+          189,
+          191,
+          204,
+          213,
+          224,
+          229,
+          248,
+          268,
+          276,
+          288,
+          326,
+          331,
+          336,
+          343,
+          345,
+          359,
+          387,
+          401,
+          419,
+          431,
+          437,
+          446,
+          454,
+          472,
+          481,
+          490,
+          498,
+          512,
+          549,
+          556,
+          558,
+          584,
+          602,
+          614,
+          634,
+          648,
+          669
+        ]
+      },
+      {
+        "file": "packages/auth/server.ts",
+        "lines": [
+          38,
+          56,
+          118,
+          120,
+          154,
+          168,
+          178,
+          192
+        ]
+      },
+      {
+        "file": "packages/authorization/building.ts",
+        "lines": [
+          41,
+          51
+        ]
+      },
+      {
+        "file": "packages/authorization/documents.ts",
+        "lines": [
+          56
+        ]
+      },
+      {
+        "file": "packages/authorization/server.ts",
+        "lines": [
+          34,
+          39,
+          59,
+          77,
+          96,
+          108,
+          126,
+          180,
+          197,
+          265,
+          292,
+          302,
+          327,
+          345,
+          362,
+          376,
+          381,
+          399,
+          434,
+          443,
+          487,
+          496,
+          505,
+          515,
+          527,
+          536,
+          546,
+          558,
+          576
+        ]
+      },
+      {
+        "file": "packages/authorization/subscription-booking.ts",
+        "lines": [
+          39,
+          47,
+          68,
+          72,
+          95,
+          126,
+          130,
+          134,
+          152
+        ]
+      },
+      {
+        "file": "packages/database/types.ts",
+        "lines": [
+          67,
+          133
+        ]
+      },
+      {
+        "file": "packages/notifications/notice-access.ts",
+        "lines": [
+          11
+        ]
+      },
+      {
+        "file": "packages/notifications/notices.ts",
+        "lines": [
+          9,
+          12,
+          18,
+          23,
+          28,
+          41,
+          44,
+          48,
+          50
+        ]
+      },
+      {
+        "file": "packages/notifications/rental-package.ts",
+        "lines": [
+          10,
+          12,
+          17,
+          21,
+          38,
+          39,
+          40
+        ]
+      },
+      {
+        "file": "packages/notifications/server.ts",
+        "lines": [
+          21,
+          48,
+          55,
+          62,
+          70,
+          86,
+          92,
+          98,
+          111,
+          129,
+          143,
+          145,
+          151,
+          156,
+          166,
+          173,
+          218,
+          219,
+          220,
+          222,
+          227,
+          234,
+          245,
+          255
+        ]
+      },
+      {
+        "file": "packages/operations/core.ts",
+        "lines": [
+          31,
+          34,
+          47,
+          81,
+          100,
+          124
+        ]
+      }
+    ],
+    "batches": [
+      {
+        "file": "apps/platform/worker/api.ts",
+        "lines": [
+          188,
+          249,
+          818
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/account-tags.server.ts",
+        "lines": [
+          31
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/account.server.ts",
+        "lines": [
+          71,
+          96
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/admin.server.ts",
+        "lines": [
+          146,
+          198,
+          257,
+          327,
+          370,
+          451
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/agency-outsourcing.server.ts",
+        "lines": [
+          70,
+          81,
+          96,
+          103,
+          130,
+          152,
+          176,
+          189
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/agency-owner-invitations.server.ts",
+        "lines": [
+          16,
+          19,
+          20,
+          21
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/billing-accounts.server.ts",
+        "lines": [
+          99,
+          110,
+          121,
+          132,
+          139,
+          173,
+          186,
+          196,
+          203
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/bond-alerts.server.ts",
+        "lines": [
+          56
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/bonds.server.ts",
+        "lines": [
+          63
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/bookings.server.ts",
+        "lines": [
+          201
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/building-operations.server.ts",
+        "lines": [
+          35,
+          42,
+          48,
+          57,
+          60,
+          68,
+          71,
+          74,
+          80,
+          85,
+          89,
+          92,
+          96,
+          100,
+          105
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/client-service-interests.server.ts",
+        "lines": [
+          32
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/co-living-operations.server.ts",
+        "lines": [
+          79,
+          110,
+          124,
+          142,
+          163
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/co-living.server.ts",
+        "lines": [
+          69,
+          79
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-application-actions.server.ts",
+        "lines": [
+          188,
+          237,
+          293,
+          393,
+          548,
+          671,
+          725,
+          760,
+          817,
+          855
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-delivery.server.ts",
+        "lines": [
+          161,
+          227,
+          361,
+          442,
+          533,
+          596,
+          629
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-http.server.ts",
+        "lines": [
+          68
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-intake.server.ts",
+        "lines": [
+          405,
+          499,
+          507,
+          578
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-lifecycle.server.ts",
+        "lines": [
+          242
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-operations.server.ts",
+        "lines": [
+          132,
+          188,
+          236,
+          297
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-privacy.server.ts",
+        "lines": [
+          23,
+          73,
+          148,
+          190
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-review.server.ts",
+        "lines": [
+          161,
+          208,
+          271,
+          485,
+          584,
+          626,
+          673
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/contractor-payments.server.ts",
+        "lines": [
+          112,
+          247,
+          369
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/council-appointments.server.ts",
+        "lines": [
+          32,
+          124
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/documents.server.ts",
+        "lines": [
+          117,
+          361,
+          385,
+          435,
+          534,
+          593,
+          677,
+          726,
+          785,
+          825
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/enquiries.server.ts",
+        "lines": [
+          49,
+          86,
+          96,
+          105
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/finance-reviews.server.ts",
+        "lines": [
+          60,
+          79,
+          103,
+          122
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/finance.server.ts",
+        "lines": [
+          153,
+          282,
+          326,
+          361,
+          431,
+          497
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/forms.server.ts",
+        "lines": [
+          110,
+          195,
+          317,
+          396,
+          465,
+          493,
+          514,
+          526,
+          543
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest-reminders.server.ts",
+        "lines": [
+          12
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest-scheduler.server.ts",
+        "lines": [
+          46,
+          71,
+          112
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest.server.ts",
+        "lines": [
+          87,
+          98,
+          172,
+          207
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/integrations.server.ts",
+        "lines": [
+          65,
+          193
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/leasing.server.ts",
+        "lines": [
+          93,
+          113,
+          184,
+          227,
+          256,
+          308,
+          330,
+          358
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/legal-acceptance.server.ts",
+        "lines": [
+          72,
+          84,
+          89
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/notice-lifecycle.server.ts",
+        "lines": [
+          21,
+          31,
+          39
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/open-home-reports.server.ts",
+        "lines": [
+          142
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/payment-lifecycle.server.ts",
+        "lines": [
+          19,
+          43,
+          53
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/portfolio.server.ts",
+        "lines": [
+          45,
+          124,
+          223,
+          365,
+          395,
+          479,
+          613,
+          645,
+          687,
+          733
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/property-report-bridge.server.ts",
+        "lines": [
+          33,
+          120
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/refunds.server.ts",
+        "lines": [
+          17,
+          23,
+          33,
+          36,
+          41
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/release-governance.server.ts",
+        "lines": [
+          73,
+          92
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rent-planning.server.ts",
+        "lines": [
+          74,
+          95,
+          121
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-applications.server.ts",
+        "lines": [
+          97,
+          105,
+          170,
+          193,
+          214,
+          237,
+          254,
+          280,
+          329,
+          352,
+          396,
+          416,
+          422,
+          444
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-governance.server.ts",
+        "lines": [
+          33,
+          55,
+          80
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-malware.server.ts",
+        "lines": [
+          64
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-outcomes.server.ts",
+        "lines": [
+          36
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-privacy.server.ts",
+        "lines": [
+          49,
+          70,
+          114
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-review.server.ts",
+        "lines": [
+          87,
+          129,
+          139,
+          154
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-script-dispatch.server.ts",
+        "lines": [
+          48
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-temporary-documents.server.ts",
+        "lines": [
+          122,
+          145,
+          170,
+          178
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-tenancy-handover.server.ts",
+        "lines": [
+          112,
+          146,
+          167
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/report-annotations.server.ts",
+        "lines": [
+          57,
+          79
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/report-evidence.server.ts",
+        "lines": [
+          37,
+          47,
+          69
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/report-issue.server.ts",
+        "lines": [
+          75,
+          122,
+          137,
+          175,
+          204,
+          238,
+          255
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/reports.server.ts",
+        "lines": [
+          96,
+          202,
+          214,
+          232,
+          247
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/resident-commercial.server.ts",
+        "lines": [
+          46,
+          125,
+          163,
+          192,
+          209
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/service-pricing.server.ts",
+        "lines": [
+          24,
+          29,
+          31
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/staff-property-management.server.ts",
+        "lines": [
+          48,
+          102
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/strata.server.ts",
+        "lines": [
+          17,
+          33,
+          73,
+          81,
+          93,
+          103,
+          109,
+          115,
+          123
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/stripe-billing.server.ts",
+        "lines": [
+          103,
+          105,
+          110
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/tenancies.server.ts",
+        "lines": [
+          138,
+          153,
+          200
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v2-business.server.ts",
+        "lines": [
+          39,
+          174,
+          185,
+          205,
+          226,
+          262,
+          276,
+          302
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v2-estates.server.ts",
+        "lines": [
+          15,
+          68,
+          77,
+          96,
+          108,
+          154,
+          165,
+          183,
+          202,
+          220
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v2-intelligence.server.ts",
+        "lines": [
+          17,
+          118,
+          127,
+          137,
+          149,
+          167,
+          184,
+          201,
+          218,
+          229,
+          240,
+          251
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v2-maintenance.server.ts",
+        "lines": [
+          18,
+          63,
+          81,
+          90,
+          105,
+          118,
+          126,
+          133,
+          141,
+          151,
+          171,
+          185,
+          207,
+          236,
+          243,
+          257
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v2-sectors.server.ts",
+        "lines": [
+          17,
+          66,
+          87,
+          115
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/v4-service-requests.server.ts",
+        "lines": [
+          113,
+          134,
+          151,
+          172,
+          241
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-agreement-signing.server.ts",
+        "lines": [
+          74,
+          105,
+          147,
+          171
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-issuance.server.ts",
+        "lines": [
+          19,
+          55
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-lifecycle.server.ts",
+        "lines": [
+          47,
+          73,
+          115,
+          139,
+          210,
+          238,
+          268
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-reminders.server.ts",
+        "lines": [
+          43
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-residential.server.ts",
+        "lines": [
+          110,
+          171,
+          220,
+          279
+        ]
+      },
+      {
+        "file": "apps/platform/worker/scheduler.ts",
+        "lines": [
+          431
+        ]
+      },
+      {
+        "file": "apps/platform/worker/services.server.ts",
+        "lines": [
+          98,
+          189,
+          326,
+          343,
+          512,
+          556,
+          669
+        ]
+      },
+      {
+        "file": "packages/auth/server.ts",
+        "lines": [
+          118
+        ]
+      },
+      {
+        "file": "packages/notifications/notices.ts",
+        "lines": [
+          48
+        ]
+      },
+      {
+        "file": "packages/notifications/server.ts",
+        "lines": [
+          143,
+          218
+        ]
+      }
+    ],
+    "sqlite": [
+      {
+        "file": "apps/platform/worker/api.ts",
+        "lines": [
+          237,
+          256,
+          827
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/account-tags.server.ts",
+        "lines": [
+          33
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/co-living.server.ts",
+        "lines": [
+          66
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-lifecycle.server.ts",
+        "lines": [
+          1169,
+          1183
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/forms.server.ts",
+        "lines": [
+          515
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest-reminders.server.ts",
+        "lines": [
+          14
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/leasing.server.ts",
+        "lines": [
+          82,
+          110,
+          186,
+          232,
+          261,
+          360
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-applications.server.ts",
+        "lines": [
+          173,
+          240,
+          257,
+          283,
+          330,
+          332,
+          355,
+          418
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-governance.server.ts",
+        "lines": [
+          57,
+          83
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-malware.server.ts",
+        "lines": [
+          67
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-privacy.server.ts",
+        "lines": [
+          52
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-review.server.ts",
+        "lines": [
+          114,
+          141
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-script-dispatch.server.ts",
+        "lines": [
+          49
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-temporary-documents.server.ts",
+        "lines": [
+          74,
+          84,
+          124,
+          180
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-tenancy-handover.server.ts",
+        "lines": [
+          148,
+          151,
+          171,
+          174
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/report-evidence.server.ts",
+        "lines": [
+          51,
+          53
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/router.server.ts",
+        "lines": [
+          233
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/staff-property-management.server.ts",
+        "lines": [
+          107
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-reminders.server.ts",
+        "lines": [
+          45,
+          48
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-residential.server.ts",
+        "lines": [
+          159
+        ]
+      },
+      {
+        "file": "apps/platform/worker/services.server.ts",
+        "lines": [
+          53
+        ]
+      },
+      {
+        "file": "database/migrations/0001_core.sql",
+        "lines": [
+          7,
+          11,
+          16,
+          17,
+          22,
+          28,
+          34,
+          41,
+          46,
+          52,
+          58,
+          63,
+          68,
+          74,
+          77,
+          82,
+          86,
+          90,
+          93,
+          98,
+          103,
+          108,
+          116,
+          117,
+          121,
+          131,
+          136,
+          137,
+          141,
+          142,
+          146,
+          155,
+          158,
+          167,
+          175,
+          181,
+          185,
+          194,
+          199,
+          201,
+          207,
+          211,
+          215,
+          216,
+          217,
+          218,
+          222,
+          227,
+          231,
+          232,
+          233,
+          234,
+          235,
+          241,
+          243,
+          244
+        ]
+      },
+      {
+        "file": "database/migrations/0002_guards.sql",
+        "lines": [
+          1,
+          4,
+          7,
+          12
+        ]
+      },
+      {
+        "file": "database/migrations/0003_connected_operations.sql",
+        "lines": [
+          6,
+          13,
+          21,
+          25,
+          30,
+          35,
+          39,
+          45,
+          49,
+          70,
+          74,
+          81,
+          99,
+          100,
+          101,
+          104,
+          108,
+          113,
+          118,
+          127,
+          128,
+          135,
+          140,
+          143,
+          145,
+          147,
+          149,
+          151,
+          154,
+          155,
+          158
+        ]
+      },
+      {
+        "file": "database/migrations/0004_enquiries_notices.sql",
+        "lines": [
+          9,
+          15,
+          17,
+          18,
+          26,
+          33,
+          36,
+          37
+        ]
+      },
+      {
+        "file": "database/migrations/0005_account.sql",
+        "lines": [
+          7
+        ]
+      },
+      {
+        "file": "database/migrations/0006_all_inclusive_subscription.sql",
+        "lines": [
+          30
+        ]
+      },
+      {
+        "file": "database/migrations/0007_calendar_sync.sql",
+        "lines": [
+          21
+        ]
+      },
+      {
+        "file": "database/migrations/0008_guest_one_off_bookings.sql",
+        "lines": [
+          4,
+          7,
+          12,
+          15,
+          18,
+          41,
+          54,
+          61,
+          68
+        ]
+      },
+      {
+        "file": "database/migrations/0009_leasing.sql",
+        "lines": [
+          29,
+          34,
+          35,
+          39,
+          44,
+          45,
+          49,
+          59,
+          71,
+          84,
+          97,
+          99,
+          100,
+          103
+        ]
+      },
+      {
+        "file": "database/migrations/0010_rental_applications.sql",
+        "lines": [
+          19,
+          21,
+          22,
+          23,
+          26,
+          43,
+          63,
+          68,
+          83,
+          96,
+          99,
+          101,
+          107,
+          115,
+          121,
+          134,
+          137,
+          139,
+          143
+        ]
+      },
+      {
+        "file": "database/migrations/0011_rental_application_safeguards.sql",
+        "lines": [
+          9,
+          12,
+          30,
+          34,
+          39,
+          43,
+          59,
+          69,
+          78,
+          82,
+          86,
+          92,
+          103,
+          113,
+          119
+        ]
+      },
+      {
+        "file": "database/migrations/0012_open_home_checkins.sql",
+        "lines": [
+          18,
+          23,
+          28,
+          47,
+          50,
+          54,
+          60
+        ]
+      },
+      {
+        "file": "database/migrations/0013_wa_residential_forms.sql",
+        "lines": [
+          14,
+          41,
+          49,
+          58,
+          68,
+          71,
+          73,
+          88,
+          91,
+          93,
+          103,
+          106,
+          108
+        ]
+      },
+      {
+        "file": "database/migrations/0014_wa_residential_workflows.sql",
+        "lines": [
+          22,
+          24,
+          25,
+          38,
+          40,
+          41,
+          54,
+          56,
+          57,
+          63,
+          69
+        ]
+      },
+      {
+        "file": "database/migrations/0015_wa_residential_entry_reminders.sql",
+        "lines": [
+          15,
+          17,
+          19
+        ]
+      },
+      {
+        "file": "database/migrations/0016_wa_review_requirements.sql",
+        "lines": [
+          16,
+          18,
+          20
+        ]
+      },
+      {
+        "file": "database/migrations/0017_wa_form_release_approval.sql",
+        "lines": [
+          11
+        ]
+      },
+      {
+        "file": "database/migrations/0018_wa_bonds.sql",
+        "lines": [
+          20,
+          30,
+          47,
+          60,
+          72,
+          81,
+          91,
+          99,
+          109,
+          116,
+          119,
+          120,
+          121,
+          122,
+          130,
+          141,
+          149,
+          164,
+          178,
+          190,
+          201,
+          204,
+          205,
+          206,
+          207,
+          208,
+          209,
+          210,
+          211
+        ]
+      },
+      {
+        "file": "database/migrations/0019_open_home_reports.sql",
+        "lines": [
+          13,
+          18,
+          31,
+          55,
+          58,
+          62,
+          69,
+          71
+        ]
+      },
+      {
+        "file": "database/migrations/0020_reporting_engine.sql",
+        "lines": [
+          57,
+          58,
+          66,
+          67,
+          106,
+          107,
+          108
+        ]
+      },
+      {
+        "file": "database/migrations/0021_v2_operating_model.sql",
+        "lines": [
+          8,
+          17,
+          20,
+          22,
+          28,
+          29,
+          30,
+          37,
+          41,
+          42,
+          54,
+          61,
+          67,
+          72,
+          81,
+          86,
+          100,
+          107,
+          109,
+          112,
+          115,
+          119,
+          124,
+          136,
+          138,
+          140,
+          143,
+          146,
+          157,
+          160,
+          163,
+          166,
+          174,
+          176,
+          179,
+          182,
+          192,
+          196,
+          202,
+          207,
+          217,
+          221,
+          229,
+          238,
+          244,
+          251,
+          253,
+          267,
+          269,
+          271,
+          284,
+          287,
+          289,
+          292,
+          298,
+          300
+        ]
+      },
+      {
+        "file": "database/migrations/0022_v2_maintenance_delivery.sql",
+        "lines": [
+          18,
+          24,
+          26,
+          32,
+          35,
+          42,
+          50,
+          52,
+          59,
+          62,
+          65,
+          68,
+          70,
+          72,
+          76,
+          82,
+          97,
+          100,
+          105,
+          108,
+          118,
+          126,
+          130,
+          133,
+          135,
+          138,
+          143,
+          153,
+          155,
+          168,
+          177,
+          184,
+          191,
+          201,
+          206,
+          209,
+          216,
+          218,
+          221,
+          226,
+          230,
+          233,
+          234,
+          235,
+          236,
+          238,
+          239,
+          240,
+          241,
+          242,
+          245,
+          248,
+          253,
+          257,
+          276,
+          278,
+          283,
+          300,
+          304,
+          306,
+          315,
+          317,
+          327,
+          329,
+          332,
+          334,
+          340,
+          343,
+          355,
+          357,
+          373,
+          378,
+          382,
+          385,
+          386,
+          388,
+          397,
+          399,
+          411,
+          415,
+          419,
+          428,
+          430,
+          435,
+          443
+        ]
+      },
+      {
+        "file": "database/migrations/0023_v2_asset_preventive_compliance.sql",
+        "lines": [
+          16,
+          20,
+          24,
+          35,
+          39,
+          48,
+          50,
+          68,
+          72,
+          77,
+          79,
+          94,
+          99,
+          110,
+          112,
+          121,
+          132,
+          136,
+          139,
+          145,
+          147,
+          167,
+          171,
+          179,
+          182,
+          187,
+          200,
+          204,
+          215,
+          217,
+          227,
+          233,
+          235,
+          249,
+          255,
+          257
+        ]
+      },
+      {
+        "file": "database/migrations/0024_v2_sector_packs.sql",
+        "lines": [
+          11,
+          20,
+          28,
+          36,
+          42,
+          44,
+          48,
+          50,
+          52,
+          57,
+          61,
+          63,
+          65,
+          68,
+          72,
+          76,
+          79,
+          89,
+          94,
+          96,
+          100,
+          106,
+          110,
+          113,
+          124,
+          128,
+          134,
+          138,
+          141,
+          147,
+          149
+        ]
+      },
+      {
+        "file": "database/migrations/0025_v2_capital_enterprise.sql",
+        "lines": [
+          10,
+          16,
+          21,
+          25,
+          26,
+          29,
+          30,
+          33,
+          35,
+          48,
+          53,
+          56,
+          62,
+          66,
+          71,
+          81,
+          85,
+          87,
+          91,
+          99,
+          103,
+          106,
+          108,
+          113,
+          123,
+          128,
+          130,
+          141,
+          146,
+          149,
+          152,
+          159,
+          162,
+          168,
+          170,
+          179,
+          181,
+          183,
+          194,
+          197,
+          206,
+          209,
+          211,
+          223,
+          229,
+          231
+        ]
+      },
+      {
+        "file": "database/migrations/0026_v2_review_integrity.sql",
+        "lines": [
+          6,
+          10
+        ]
+      },
+      {
+        "file": "database/migrations/0027_stripe_billing.sql",
+        "lines": [
+          17,
+          32,
+          33,
+          34
+        ]
+      },
+      {
+        "file": "database/migrations/0028_contractor_payment_choices.sql",
+        "lines": [
+          46,
+          60,
+          70,
+          71,
+          72,
+          88,
+          89,
+          90
+        ]
+      },
+      {
+        "file": "database/migrations/0029_rental_application_completion.sql",
+        "lines": [
+          21,
+          33,
+          35,
+          37,
+          71,
+          82,
+          92,
+          102,
+          114,
+          119,
+          122
+        ]
+      },
+      {
+        "file": "database/migrations/0030_property_report_bridge.sql",
+        "lines": [
+          10
+        ]
+      },
+      {
+        "file": "database/migrations/0031_wa_rent_and_restricted_review.sql",
+        "lines": [
+          18,
+          23,
+          25,
+          27,
+          39,
+          41,
+          43,
+          50,
+          52,
+          54,
+          63,
+          68,
+          70,
+          72,
+          78,
+          80,
+          82,
+          86,
+          100,
+          105
+        ]
+      },
+      {
+        "file": "database/migrations/0032_rent_connect_sandbox.sql",
+        "lines": [
+          11,
+          15,
+          17,
+          19
+        ]
+      },
+      {
+        "file": "database/migrations/0033_wa_agreement_signing.sql",
+        "lines": [
+          24,
+          26,
+          34,
+          45,
+          47,
+          50,
+          57,
+          63,
+          64,
+          65
+        ]
+      },
+      {
+        "file": "database/migrations/0034_agency_outsourcing.sql",
+        "lines": [
+          14,
+          23,
+          38,
+          46,
+          56,
+          69,
+          77
+        ]
+      },
+      {
+        "file": "database/migrations/0035_v4_service_requests.sql",
+        "lines": [
+          28,
+          38,
+          47
+        ]
+      },
+      {
+        "file": "database/migrations/0036_payment_attempts_and_reconciliation.sql",
+        "lines": [
+          24,
+          27,
+          29,
+          30,
+          43,
+          45,
+          46,
+          48,
+          59,
+          60,
+          61,
+          71,
+          88,
+          89,
+          91,
+          92,
+          94,
+          95,
+          96
+        ]
+      },
+      {
+        "file": "database/migrations/0037_billing_accounts_and_invoices.sql",
+        "lines": [
+          9,
+          10,
+          23,
+          24,
+          25,
+          26,
+          42,
+          43,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          64,
+          65,
+          67
+        ]
+      },
+      {
+        "file": "database/migrations/0038_versioned_legal_acceptance.sql",
+        "lines": [
+          21,
+          35,
+          36,
+          37,
+          38,
+          40,
+          43,
+          45,
+          46
+        ]
+      },
+      {
+        "file": "database/migrations/0039_building_management.sql",
+        "lines": [
+          11,
+          14,
+          16,
+          18,
+          19,
+          21,
+          25,
+          27,
+          29,
+          43,
+          46,
+          48,
+          50,
+          51,
+          54,
+          59,
+          60,
+          61,
+          66,
+          73,
+          75,
+          77,
+          85,
+          90,
+          92
+        ]
+      },
+      {
+        "file": "database/migrations/0040_notice_and_council_governance.sql",
+        "lines": [
+          18,
+          19,
+          20,
+          21,
+          29,
+          30,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          58,
+          59,
+          60,
+          61,
+          70,
+          74,
+          75
+        ]
+      },
+      {
+        "file": "database/migrations/0041_approved_service_variants.sql",
+        "lines": [
+          25,
+          29,
+          31,
+          33,
+          34
+        ]
+      },
+      {
+        "file": "database/migrations/0042_release_approval_integrity.sql",
+        "lines": [
+          16,
+          18,
+          19,
+          21,
+          23
+        ]
+      },
+      {
+        "file": "database/migrations/0043_commercial_lease_operations.sql",
+        "lines": [
+          8,
+          9,
+          10,
+          18,
+          19,
+          21,
+          22,
+          23,
+          28,
+          29,
+          30
+        ]
+      },
+      {
+        "file": "database/migrations/0044_agency_owner_invitations.sql",
+        "lines": [
+          10,
+          13,
+          14,
+          16,
+          18,
+          19,
+          21
+        ]
+      },
+      {
+        "file": "database/migrations/0045_pcr_launch_offer.sql",
+        "lines": [
+          13,
+          21
+        ]
+      },
+      {
+        "file": "database/migrations/0046_pcr_discount_reservations.sql",
+        "lines": [
+          23,
+          33,
+          39,
+          41,
+          62,
+          71,
+          73,
+          78,
+          81,
+          92,
+          93,
+          94
+        ]
+      },
+      {
+        "file": "database/migrations/0047_residential_paid_subscription_enrollments.sql",
+        "lines": [
+          8,
+          24,
+          31,
+          45,
+          52
+        ]
+      },
+      {
+        "file": "database/migrations/0048_rental_reference_checks.sql",
+        "lines": [
+          12,
+          18,
+          20,
+          23
+        ]
+      },
+      {
+        "file": "database/migrations/0049_commercial_source_lifecycle.sql",
+        "lines": [
+          14,
+          25,
+          37,
+          49,
+          54,
+          63,
+          66,
+          67,
+          68,
+          69,
+          71,
+          73,
+          74,
+          75,
+          76,
+          78,
+          80,
+          81,
+          82,
+          84,
+          86,
+          87,
+          89,
+          91,
+          92,
+          93,
+          94,
+          95,
+          97,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          106,
+          108,
+          109,
+          110,
+          111,
+          112,
+          114,
+          116,
+          117,
+          118,
+          119,
+          121,
+          126,
+          127,
+          128,
+          130,
+          132,
+          133,
+          135,
+          137,
+          139,
+          140,
+          144,
+          145,
+          146,
+          147,
+          152,
+          153,
+          154,
+          155,
+          157,
+          160,
+          164,
+          170,
+          172,
+          174,
+          175,
+          176,
+          177,
+          180,
+          183,
+          184,
+          192
+        ]
+      },
+      {
+        "file": "database/migrations/0050_report_render_independent_review.sql",
+        "lines": [
+          13,
+          28,
+          31,
+          33,
+          52
+        ]
+      },
+      {
+        "file": "database/migrations/0051_invoice_delivery_reviews.sql",
+        "lines": [
+          15,
+          24,
+          34,
+          36,
+          49,
+          60,
+          68,
+          70,
+          78,
+          80,
+          82,
+          90,
+          96,
+          102,
+          105,
+          107
+        ]
+      },
+      {
+        "file": "database/migrations/0052_rental_tenancy_handover.sql",
+        "lines": [
+          28,
+          39,
+          42,
+          50,
+          59,
+          72,
+          74,
+          80,
+          81,
+          82,
+          95,
+          96,
+          98,
+          103,
+          105
+        ]
+      },
+      {
+        "file": "database/migrations/0053_account_first_free_registration.sql",
+        "lines": [
+          11,
+          13,
+          18,
+          20,
+          22,
+          35,
+          38,
+          50,
+          53
+        ]
+      },
+      {
+        "file": "database/migrations/0055_commercial_applications.sql",
+        "lines": [
+          7,
+          14,
+          18,
+          20,
+          27,
+          30,
+          36,
+          43,
+          49,
+          56,
+          59,
+          62,
+          72,
+          77,
+          80,
+          83,
+          88,
+          92,
+          97,
+          102,
+          106,
+          111,
+          114,
+          117,
+          120,
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          131,
+          135,
+          138,
+          141
+        ]
+      },
+      {
+        "file": "database/migrations/0056_managed_property_intake.sql",
+        "lines": [
+          9,
+          18,
+          20
+        ]
+      },
+      {
+        "file": "database/migrations/0057_private_document_scanning.sql",
+        "lines": [
+          13,
+          19,
+          23,
+          27
+        ]
+      },
+      {
+        "file": "database/migrations/0058_temporary_rental_documents.sql",
+        "lines": [
+          10,
+          12,
+          24,
+          29,
+          33,
+          35,
+          37,
+          41,
+          45,
+          57,
+          60,
+          63
+        ]
+      },
+      {
+        "file": "database/migrations/0059_portal_experience_coliving.sql",
+        "lines": [
+          8,
+          17,
+          20,
+          33,
+          37,
+          45,
+          51,
+          56,
+          70,
+          82,
+          86
+        ]
+      },
+      {
+        "file": "database/migrations/0060_resident_occupancies_and_council_appointments.sql",
+        "lines": [
+          16,
+          27,
+          39,
+          51,
+          72
+        ]
+      },
+      {
+        "file": "database/migrations/0061_registered_workflows_and_preferences.sql",
+        "lines": [
+          9,
+          13,
+          23,
+          33,
+          48,
+          61,
+          80,
+          85,
+          89,
+          93,
+          97,
+          113,
+          126,
+          131
+        ]
+      },
+      {
+        "file": "database/migrations/0062_finance_reviews_and_photo_annotations.sql",
+        "lines": [
+          14,
+          19,
+          24,
+          40,
+          45,
+          50,
+          65,
+          70,
+          75
+        ]
+      },
+      {
+        "file": "packages/notifications/rental-package.ts",
+        "lines": [
+          39
+        ]
+      },
+      {
+        "file": "packages/notifications/server.ts",
+        "lines": [
+          220
+        ]
+      },
+      {
+        "file": "packages/operations/core.ts",
+        "lines": [
+          31
+        ]
+      }
+    ],
+    "durableObjects": [
+      {
+        "file": "apps/platform/worker/api.ts",
+        "lines": [
+          324,
+          747
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/bookings.server.ts",
+        "lines": [
+          280
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest.server.ts",
+        "lines": [
+          154
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/router.server.ts",
+        "lines": [
+          245
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/stage6-launch.server.ts",
+        "lines": [
+          29
+        ]
+      },
+      {
+        "file": "apps/platform/worker/legacy-booking-coordinator.ts",
+        "lines": [
+          1,
+          16
+        ]
+      },
+      {
+        "file": "apps/platform/worker/scheduler.ts",
+        "lines": [
+          6,
+          126
+        ]
+      },
+      {
+        "file": "apps/platform/wrangler.jsonc",
+        "lines": [
+          66,
+          175,
+          308
+        ]
+      },
+      {
+        "file": "apps/private-document-scanner/src/index.ts",
+        "lines": [
+          1,
+          6,
+          24
+        ]
+      },
+      {
+        "file": "packages/database/types.ts",
+        "lines": [
+          70
+        ]
+      }
+    ],
+    "storage": [
+      {
+        "file": "apps/platform/worker/api.ts",
+        "lines": [
+          323,
+          583
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/agency-outsourcing.server.ts",
+        "lines": [
+          50
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-application-actions.server.ts",
+        "lines": [
+          329,
+          667,
+          704,
+          749
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-delivery.server.ts",
+        "lines": [
+          87,
+          264,
+          719
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-intake.server.ts",
+        "lines": [
+          185
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/commercial-privacy.server.ts",
+        "lines": [
+          178,
+          180
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/documents.server.ts",
+        "lines": [
+          115,
+          147,
+          198,
+          383,
+          410,
+          468
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/forms.server.ts",
+        "lines": [
+          392,
+          413,
+          425
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/guest.server.ts",
+        "lines": [
+          221
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/leasing.server.ts",
+        "lines": [
+          29,
+          143,
+          146,
+          277
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/property-report-bridge.server.ts",
+        "lines": [
+          77,
+          108,
+          116,
+          126
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-applications.server.ts",
+        "lines": [
+          23,
+          76,
+          262,
+          394,
+          402,
+          421
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-privacy.server.ts",
+        "lines": [
+          110
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-review.server.ts",
+        "lines": [
+          153
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-scan-dispatch.server.ts",
+        "lines": [
+          28
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-temporary-documents.server.ts",
+        "lines": [
+          29,
+          65,
+          68,
+          79
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/rental-tenancy-handover.server.ts",
+        "lines": [
+          135
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/report-evidence.server.ts",
+        "lines": [
+          45,
+          57,
+          81
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/report-issue.server.ts",
+        "lines": [
+          44,
+          73,
+          85,
+          99,
+          120,
+          168
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/stage6-launch.server.ts",
+        "lines": [
+          28,
+          29
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-agreement-signing.server.ts",
+        "lines": [
+          60,
+          65,
+          124
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-lifecycle.server.ts",
+        "lines": [
+          207,
+          218,
+          265
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/wa-residential.server.ts",
+        "lines": [
+          271
+        ]
+      },
+      {
+        "file": "apps/platform/worker/services.server.ts",
+        "lines": [
+          577,
+          671
+        ]
+      },
+      {
+        "file": "apps/platform/wrangler.jsonc",
+        "lines": [
+          55,
+          59,
+          165,
+          168,
+          297,
+          301
+        ]
+      },
+      {
+        "file": "packages/authorization/documents.ts",
+        "lines": [
+          67
+        ]
+      },
+      {
+        "file": "packages/database/types.ts",
+        "lines": [
+          68,
+          69
+        ]
+      }
+    ],
+    "queueCron": [
+      {
+        "file": "apps/platform/worker/api.ts",
+        "lines": [
+          60,
+          325,
+          345
+        ]
+      },
+      {
+        "file": "apps/platform/worker/app.ts",
+        "lines": [
+          8,
+          51,
+          53,
+          56,
+          58,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          68,
+          75,
+          90
+        ]
+      },
+      {
+        "file": "apps/platform/worker/features/stage6-launch.server.ts",
+        "lines": [
+          29
+        ]
+      },
+      {
+        "file": "apps/platform/wrangler.jsonc",
+        "lines": [
+          82,
+          183,
+          324
+        ]
+      },
+      {
+        "file": "apps/private-document-scanner/src/index.ts",
+        "lines": [
+          35
+        ]
+      },
+      {
+        "file": "packages/database/types.ts",
+        "lines": [
+          71
+        ]
+      },
+      {
+        "file": "packages/notifications/server.ts",
+        "lines": [
+          45,
+          46,
+          53,
+          262
+        ]
+      }
+    ]
+  },
+  "sha256": {
+    "apps/marketing/app/components/brand-image.tsx": "7efe4b2087241d50fab564882b90fd6489175e36fcad30b63924b963e43eb3ee",
+    "apps/marketing/app/components/commercial-application-fields.tsx": "9a56663e8deec2036e68978944d0e4fa9254f325d07684da175850f5eec7f6e3",
+    "apps/marketing/app/components/coverage-lookup.tsx": "87f256a6aa0d2b0fe9f4bc96d80c7f93924aa7149b7dd4f127218982407e917d",
+    "apps/marketing/app/components/editorial.tsx": "34696120d0bf8e3c2ff5fa03a2d1ed22cc2ad9ce95322e389d6fa300651c7017",
+    "apps/marketing/app/components/home/HomeArrangementsSection.tsx": "e774d8a73d28616bbdf1aa854db53a91133faae11b821d02a5df6a6f3aedc353",
+    "apps/marketing/app/components/home/HomeHero.tsx": "9d2a2d0a8e2d605c41ddda6a2e02d6ce7173f1c292f07b84d233b20928cbe8f9",
+    "apps/marketing/app/components/home/HomeProcessSection.tsx": "c6e2a869b79ddc3317b002a95d1f238793604c8b7d3c7f51dbbcd73a77ac6af2",
+    "apps/marketing/app/components/home/HomeRecordSection.tsx": "1d4407fec6d1ff532ce92b52fa0f0a9e86c6b9044712311ed9e3af8b8200118d",
+    "apps/marketing/app/components/home/HomeSectorsSection.tsx": "066fb4426bd1ba303a011560e57a7023b7c951e31e8d599ee5b3ccafecae1216",
+    "apps/marketing/app/components/home/HomeServicesSection.tsx": "2abd00ac659bfa0d2b2a5fa7dbc56fd6246138d571a71c74b679a801801262f1",
+    "apps/marketing/app/components/marketing-ui.tsx": "022fa2218677426db3172b56f6088dd1136953a80d7a7bfa138067d9ccbcb739",
+    "apps/marketing/app/components/page-patterns.tsx": "cb00a3f9159aa8a3b18dafb0e8fc0fa696ee74092f9994032fa7822098818cf8",
+    "apps/marketing/app/components/plan-comparison.tsx": "06aaea826ed02712ad90889173f481f7e6f7aaf7725c4fb2a57e6da6f2597656",
+    "apps/marketing/app/components/site-chrome.tsx": "fc67fe717b97d178594582c473e576488657678e4fdf7d7542cde4bc99612de7",
+    "apps/marketing/app/entry.server.tsx": "24d5fea1e366ad26b93f54728a21640225311c189fd4b46e512e4030f1fcd52e",
+    "apps/marketing/app/lib/commercial-session.server.ts": "d9a0da2f049481669fc49111c88431afcf13ae2974600177a7fba8c0fe01fd50",
+    "apps/marketing/app/lib/media-approval.ts": "31e75268e725f3e9e10269af4cf81cb186c5ae28ec78b36d52f535aec6140711",
+    "apps/marketing/app/lib/seo.ts": "04c3e712a18f5ed65991108a66d9bfbe858040db2c67b1e6af5ae6498bdcdb84",
+    "apps/marketing/app/root.tsx": "6ab33b4d9a3ede34511501ea71b49e1e057a0c97b7dfc354c58a831170c36876",
+    "apps/marketing/app/routes.ts": "059a0648cf748c949a9beefa4181bb7f00f7c74dd53a5c40861789ef6eb30043",
+    "apps/marketing/app/routes/about.tsx": "c1157d4b60412c2dcf4aa1780e12f1dada9bf990fe925b51dc23af246d797af3",
+    "apps/marketing/app/routes/audience.tsx": "08026c40ebe72397291be47ae9d26eeff0ddf2d5b99cf2d89bfda37aab5e04b9",
+    "apps/marketing/app/routes/commercial-application.tsx": "a1e9e2c8de7cd5fcfd279f8dedbb1c7cbfbd3cfdd6d5c629616b481ede9d3e9e",
+    "apps/marketing/app/routes/commercial-recipient.tsx": "ba6af3885020354672807edd248f6764ec8bbb67eb9c44653e36a7e642bca025",
+    "apps/marketing/app/routes/commercial-recover.tsx": "c473f2a8454c37452b0016b199d97d104b06b76f90beb5b95883c1eb6dadc050",
+    "apps/marketing/app/routes/commercial-start.tsx": "8c5039211af7b81811fb73c69adcafac560c3e046c2a1baffbbafb0764b93364",
+    "apps/marketing/app/routes/contact.tsx": "14d258585a96fb18c2f02a03330f419f360363ea321b7faf3f20d0343a53a119",
+    "apps/marketing/app/routes/content.tsx": "a26d4e8e35e4e4377cf3039453fd95481d33b85cfad30b9b60a64e286fafab19",
+    "apps/marketing/app/routes/home.tsx": "236ed80281bea7c8da5294a3917ce4c61aeb2fdd4c77bb707f4e951b14bed426",
+    "apps/marketing/app/routes/information.tsx": "399ab71075fbd74d734a9ab1bd2db3ff46b6c25e6f6072d4a5defaa3be3b50fd",
+    "apps/marketing/app/routes/leasing-cancel.tsx": "0be6fd223196d5c4f79ce9b7a0f2ea30382c0197e8ee223dec05226054a0d27e",
+    "apps/marketing/app/routes/leasing-index.tsx": "f2c52b2ac2e595841e4eaf6a899c06c75364814dfddb0b67da1426d6b65fda74",
+    "apps/marketing/app/routes/leasing-property.tsx": "0cb59f659d65e4fafee070dd2e3108b54135d219f65b00dd32608075ceac367a",
+    "apps/marketing/app/routes/leasing-sector.tsx": "1aa14620d0fd07333d08c7f3b350334c81a18da740d43ba33080af7dea8dc421",
+    "apps/marketing/app/routes/open-home-check-in.tsx": "3d6328a02005dd06bc355ec6a4b5d55bb2d30763e49257fd61cb65a2472d6e29",
+    "apps/marketing/app/routes/rental-application.tsx": "bbbef5e7961b88abea7294b64f9032809530b4fba55f8a4b3d26d4024f0ad314",
+    "apps/marketing/app/routes/rental-package.tsx": "f42961316141d5b9a462f9324393f5f15489634adb3515da1af7d2c7c7e5bd9d",
+    "apps/marketing/app/routes/rental-recipient-verify.tsx": "562021233786cef8163bf335a2da290fc1bdfde4d5d9af23b27ccc636d3f0176",
+    "apps/marketing/app/routes/rental-recover.tsx": "d4fb5541ccd591d42a72a0ee8a900e4d5916d0fc81328581155e171bf29ac8b5",
+    "apps/marketing/app/routes/rental-start.tsx": "deab575cd594eaa90cf544585501ee3891dc3baa8b7049bb550585a6c1118d0a",
+    "apps/marketing/app/routes/residential-support.tsx": "c496bb213c51381493825aa7fddcfdef07b2abf95a79908de72ae57bc536ede5",
+    "apps/marketing/app/routes/resources.tsx": "931b5ccd516c8753c8835cefba1e907ff2cc81032ec28f046f0a6488682dd9f3",
+    "apps/marketing/app/routes/robots.ts": "5b7603cab28714c77c0a3c82ba806a5d845f48e21ad271d7bc17d4e3c8233f91",
+    "apps/marketing/app/routes/sector-redirect.tsx": "1812b064e365bc6d9cb5b55cdd97f1479ee3e6a7ce6bbd1989f6ee8be88beaab",
+    "apps/marketing/app/routes/sector.tsx": "c4ed0da25c82d01cec966150ffcc8d5091c01ca7fba5946a3f040d91859ffee0",
+    "apps/marketing/app/routes/service-finder.tsx": "07d1ce76af3c007dfe283f97a19a5a6d26a274a61c0c080b7a840a1591b9d04c",
+    "apps/marketing/app/routes/service-overview.tsx": "748ae46c44f788936d8689057af9be4336e28eea88099d4b89d6a93f17a04fa6",
+    "apps/marketing/app/routes/service.tsx": "e5d31690110e37cb91b598c85700279909b98f396530163c0c48f35f0113d20a",
+    "apps/marketing/app/routes/services.tsx": "e57490e859470c2ebb4d42638e72709d4d04b59fdf910cda14cf49cd273a16d4",
+    "apps/marketing/app/routes/sitemap.ts": "05ecdc86619f3ad0774da1a5101e037e4bf8c155a3283832f0e6bc804eb85dfa",
+    "apps/marketing/app/routes/tenants.tsx": "fafdfcf83b6a628705758d9ac9a3f05267f55745527ee2c54c8e2bdc744b4f3d",
+    "apps/marketing/app/routes/who-we-help.tsx": "b757892178b2c9ea2c1cf2861c2061d9c6ad5362a5ce27d085cb10667e29df27",
+    "apps/marketing/react-router.config.ts": "e7d3965d3a090bbc84174798e91de6eb5dedb786ba3e456c7f0836187868f1b5",
+    "apps/marketing/vite.config.ts": "d3ab5fba39e677854a7f798c18fea2a061e223ce8a38c2aae7eb092fa943086f",
+    "apps/marketing/worker/app.ts": "fb9e14aec03d48ce80d010badbfabc45f05a01a84e611c5e95e0fa8e09ff87a2",
+    "apps/marketing/wrangler.jsonc": "8d3cef1447b9f0b94ed81bbae0f64083195df7b350ba85be43bb6276644ff07d",
+    "apps/platform/app/components/BondWorkflowForms.tsx": "2caf1b073decc04db278f9e4c2992173f7ede324ecf749a90b927ff0e6dd4b16",
+    "apps/platform/app/components/ClientDashboard.tsx": "76e5b24789dfad0ef809b2d3be9ff6a71cb98998d3da23b7cc5acd24a02ba960",
+    "apps/platform/app/components/ClientServiceTabs.tsx": "db2e6d48a9f613626f2b8b8a93ef3d91092bc3dcddc1b546106e5d97dd1c8ff3",
+    "apps/platform/app/components/CommercialAdminForm.tsx": "a92968237f5f9c25a92581cf89e3950daddc49838cfb94dd1f50a8417ed91f09",
+    "apps/platform/app/components/CommercialLifecycle.tsx": "ea78809943ca0e8953e0e2faba49ba9d476d8ee8a96919cb5df9c590df258e39",
+    "apps/platform/app/components/InspectorFieldMode.tsx": "61d6a380477d76e7f1b31866622c2c4b337a346c394c75c4a734fd78ea6f3f72",
+    "apps/platform/app/components/LegalAcceptance.tsx": "faab1f95b5a036c67d1bed13cdf3a65140b9cac6c3b4bdfe08d44b1ba82560d1",
+    "apps/platform/app/components/OperationForm.tsx": "fbd839b801a3980398bc76116c4c169958e910fdfcdbb38c92337a01de4aef6a",
+    "apps/platform/app/components/ReportOfflineControls.tsx": "97a21c8e87771a3d79647961a8c735f14ef1ed61c3333895710cd77c71badbeb",
+    "apps/platform/app/components/TemporaryRentalDocuments.tsx": "24427ae48f824216542ef08349fc3b892f6fd123c4798b7d03d6e3d8fc0e70e1",
+    "apps/platform/app/components/Turnstile.tsx": "076b0008791828f93f53171d44c389d8d057e53df62a6c684fad5a06aa12294d",
+    "apps/platform/app/components/WaAgreementPanel.tsx": "83db5d512ed8cf884a690306bb89d104de891e84aea63e18c047c6489ddbd665",
+    "apps/platform/app/entry.server.tsx": "996b442b58c5789b7eef2245900ca0944f7c252dadd820a84ab8faa923ed36e8",
+    "apps/platform/app/lib/actions.server.ts": "8fe7f65d0749d8d60c8d272cc8ea0d8cf58e65f2e09a21e096e05770263595ef",
+    "apps/platform/app/lib/api.server.ts": "80b76d16610db08cbcdf5efaaa7dee67f3ee6c3decadaaf0b2564f6927a686fc",
+    "apps/platform/app/lib/public-routes.ts": "61038766840845a8ba25aab7e80fa3dc297e6de2131ab287593e400c2f7d42cf",
+    "apps/platform/app/lib/report-offline.ts": "384a0105702cf547791b5733ef9b2a683fc932943a02ac7e18af88eab5de1600",
+    "apps/platform/app/lib/workspace.ts": "9ecd80bcfa41dbc7acfb2008ee98ae8f7a943b723a52854981f353fdbff5b185",
+    "apps/platform/app/root.tsx": "4fde4606d33c06d61e7a41590070391604300c6c11de0e8792cf13025a5e5db9",
+    "apps/platform/app/routes.ts": "c870bd72d9d45f4ac048e6c6a779d51e657bbf4b4bb470ad13de2d83082be6b7",
+    "apps/platform/app/routes/account-services.tsx": "e9c42d3dd7b4da5f2f2175b9650d37baee98d42f11b6563bba6773f3323ccb87",
+    "apps/platform/app/routes/account-tags.tsx": "85c8a426e0d9abada22feabaf3b91b058846ae30e1cf783cfeb23406083901c0",
+    "apps/platform/app/routes/account.tsx": "b1ec937a16ae7e0108a03f5ae40ad15146745fb3d36eb0aef8658f4df9419d2e",
+    "apps/platform/app/routes/administration.tsx": "b271ea5cc8f624bfa2f82f07a7096d73750a9febc59df7d32ea5171b9e958df5",
+    "apps/platform/app/routes/agency-administration.tsx": "2af586966c5999d52f04d06eb13ce0472cc0fc5da65d7ce93f03ac9817920683",
+    "apps/platform/app/routes/agency-managed.tsx": "fbd4b72787f2a1ccef2307f33977662b7943532784f19bec9528f6900fafec0e",
+    "apps/platform/app/routes/agency-outsourcing.tsx": "f656b986be6c8d3ac4d656d40f0a25551b680da57d26a9a685de597bad51f6bc",
+    "apps/platform/app/routes/amenities.tsx": "05e915a0c9a583872f1d4f0862cc857ef78cd1dd221e360b35f4e2ae0cd4e8e0",
+    "apps/platform/app/routes/auth-complete.tsx": "a02414b3515c939371d2c3507636d7ae9d2ba625f64ca3bd71ef8e21a5942261",
+    "apps/platform/app/routes/billing.tsx": "ea15e7f58097317054bd112a699b5c9a951d333bcc4df208f719ac510df5c1de",
+    "apps/platform/app/routes/bond-review-queue.tsx": "208fc8ac9a44c727895e4b8852f1fb6e4a3a6da6085a28dda61527f54285ce37",
+    "apps/platform/app/routes/book.tsx": "a6ebd666f347c575cdcdd4b443dc9d454b150ab666bfa30edd0d62116beb70ad",
+    "apps/platform/app/routes/booking-changes.tsx": "33aa72c23319ed0435fce3522d0d914b19152b1e3965da0454f129092bf7b7ab",
+    "apps/platform/app/routes/booking-intent.tsx": "524e438c26480a7de47c9b5967d7eceb08cc83e7b833894d1bbf1033f4519857",
+    "apps/platform/app/routes/bookings.tsx": "05f92e4fa96c52194eaf2966f42f7612b7a18a35de1a7e3a3c27e361e9654705",
+    "apps/platform/app/routes/building-communications.tsx": "7bb3548a68d9548025872b07607abafba977fdf33abba56cb754da298c2a5686",
+    "apps/platform/app/routes/client-entry.tsx": "417285587048058cfab4098eb64f964002abc7833f56a09478456aaae8969801",
+    "apps/platform/app/routes/client-sector.tsx": "a929b8d24ce80feaf58cc4622f3db34b6d37ecd478812b64acb43d51774513a2",
+    "apps/platform/app/routes/co-living-directory.tsx": "56def9a4150873b6f1194e70f6c0a54afa83cc3377016b11ffcca23795438a25",
+    "apps/platform/app/routes/co-living-operations.tsx": "bd0e34002827b1a2d2f5954d130d43031c4b88b38205b83a57ac718d78513a47",
+    "apps/platform/app/routes/co-living.tsx": "9a7679dba9678e6a6343eb8a0b4ddf13649bf9718ea8d0ad5bf0f0e766cf98f8",
+    "apps/platform/app/routes/combined-properties.tsx": "e24f750587d58eec31718985fd36a4de96b36f7e180e34889cff45b21248d955",
+    "apps/platform/app/routes/commercial-application-detail.tsx": "6d9728c988f18c2d3b6b48ccf8aa79474cd4ee4e569b032f3ac399a79fbb2895",
+    "apps/platform/app/routes/commercial-applications.tsx": "3398bd8f717222e27bdc7c15d15258cf43311d056a0ed9a57c2959be67534431",
+    "apps/platform/app/routes/commercial-occupancies.tsx": "aa7b00eace373f7063742aa9f57389707cd79a95936dfb6decedd58a7766a07e",
+    "apps/platform/app/routes/commercial-operations.tsx": "bc15213273f02dda2d40be72b3a2fd2103826e2cad668e0c69b964af598dc6d5",
+    "apps/platform/app/routes/community-updates.tsx": "0f6971d874dca87825db13305f0f659e333eaaf86f77fa734c7a73743c57f713",
+    "apps/platform/app/routes/confidential-case.tsx": "1c09eba754d0712442f3d4af8a32eb0424f5f1db9d84985bd4acb15a6c06ebe8",
+    "apps/platform/app/routes/confidential.tsx": "2c4530ea2a1a683cfa28d7f8410c4b1239ba0dad83e84e734aea01613c9fcc27",
+    "apps/platform/app/routes/contractor-payments.tsx": "b254032e5e7d984c321b1eb7e7ae9ffc02cb891c36d78c0362f18e00bd40dcb7",
+    "apps/platform/app/routes/council-appointments.tsx": "5a2a8d0f28308b770da8b3f1507b91a932d219898fa3dc0432f4d89f0cff86b5",
+    "apps/platform/app/routes/document-operations.tsx": "9ff2626e2706b73f29c5f700eeeb504d36998c772b99a50a8ef701d27b41c443",
+    "apps/platform/app/routes/document-request.tsx": "8f41cec6b4e9c3b077aee6c660f978c0834852c320be1978546780d037064445",
+    "apps/platform/app/routes/documents.tsx": "ed167a9881914fb0bf35f491f01ed8e821523ded5b4147fa7863f55a8c818888",
+    "apps/platform/app/routes/enquiries.tsx": "99df65c4982075346e6ac11950757f2219ef07dd13231c50030f62875cd58081",
+    "apps/platform/app/routes/enquiry.tsx": "fdc8241e5c03d670d9399687cbde1bff23bdc23f300d360fe577a8e6412f2be6",
+    "apps/platform/app/routes/experience-settings.tsx": "eb47572cea42d1d2ea318b949c13ea31cf9474467ebd34b6931f58a297287680",
+    "apps/platform/app/routes/facilities.tsx": "2ca83a4f418fcd735030a2c67065483b97972b342899c52c14915821478b3918",
+    "apps/platform/app/routes/finance-reviews.tsx": "6a3c526cdc8e97f78589236864183319a728c26be1920d19805d4652dcb084e1",
+    "apps/platform/app/routes/finance.tsx": "f560878aa51eade64bbc8baeb79a76ad01597a90d684772b75e34e5204349ee8",
+    "apps/platform/app/routes/guest-book.tsx": "62e053f86cca4571cbd9e80e2a16f1dea069ac55e2ea8105518797caf19639b8",
+    "apps/platform/app/routes/guest-checkout-result.tsx": "d49fa932c36ebc2d52538ff15e4240d6a0f9eb902792348051c163937c74b934",
+    "apps/platform/app/routes/guest-manage.tsx": "733b6fb20c0dc420506899064be6fc3330ebba7f738d1d56aa21e334f6822be7",
+    "apps/platform/app/routes/guest-orders.tsx": "6c5460121be33539fa183e5cadea6f4d3fbcd20b154c40006ac934f1014fe30e",
+    "apps/platform/app/routes/guest-quote.tsx": "f0c0acfbf644fc6045510c8a0cf38785f09a37b62a01acd5a2762b94580fdf40",
+    "apps/platform/app/routes/guest-verify.tsx": "afd68006e6a76114b4163729a47807d4c9a91a1b1833858f5ba78c0cd642d09b",
+    "apps/platform/app/routes/home.tsx": "ba0d4ba9e3937f00d6f611b4538cbff9f44b820c9ce53281e903755170c5de38",
+    "apps/platform/app/routes/inspections.tsx": "6ecebe0b833741642e69449795d72da0036e4a4f9cdf0a797e667e0ba8134c9d",
+    "apps/platform/app/routes/integrations.tsx": "fd4829a3897714aabc9a2c8dcd03aa29e0f4c636198c3f9ae0440cc85d9189ed",
+    "apps/platform/app/routes/invitation.tsx": "cda46beff73506d6be2500dfd35088512757671d5ea17e03d34d2a68bb15939c",
+    "apps/platform/app/routes/leasing-administration.tsx": "99e4d8983266e56635fa7cf97de19b5c1aa6d6c047aaa7e2634aecf1d2367f4b",
+    "apps/platform/app/routes/legacy-booking-redirect.tsx": "2d0d329e2c1e1f2ed4362d44d04733e554196bc470e95a461be1e6c4ba030999",
+    "apps/platform/app/routes/legal-administration.tsx": "da7c24a2a542b72ae32f4ba3a87b03dfb9e9eb6b5d4129dc75d8a7d6827d453c",
+    "apps/platform/app/routes/legal-document.tsx": "71ba389bf6f0e3ed11abd96601bd607e8e5639f6a7848e44fbf2710b80f1c1f6",
+    "apps/platform/app/routes/notifications.tsx": "b417e34f6f6f079c6989fde71ddf8ee21763377be0506fb9dc551679f548fb87",
+    "apps/platform/app/routes/occupant-premises.tsx": "f2b8048e032b736f12aafbe91bee173c860e19062d1caefc776e69a457ff2da5",
+    "apps/platform/app/routes/occupant-requests.tsx": "c51a4f6c43a33854ffa26f2907ca16d5c99925de8428e8af1abc91f6fd84ca1a",
+    "apps/platform/app/routes/onboarding.tsx": "6ce6b2e1523b4e407352e7b25ec71d2f8b003a01dabbcd11d66a70f9b4a1a121",
+    "apps/platform/app/routes/open-home-checkins.tsx": "560464e19c47b668d5496c7b8311dfb6eb41df6001de554c08d2c83153e60fdd",
+    "apps/platform/app/routes/open-home-report.tsx": "93c8e867c4dcd0cea44f141b2124c3bfd9476ef0ee613723f1ee508d0f9929e1",
+    "apps/platform/app/routes/organisation.tsx": "955141017054cfc3326577948c94cce0c360ec746cef485cb50310a07b31d259",
+    "apps/platform/app/routes/overview.tsx": "c709a490904cf2328e9a3a11ff9bf21c031a94e8001b9e0854b5481410fee6d6",
+    "apps/platform/app/routes/owner-decisions.tsx": "7a23e9caca34cd4e0d9f426cc78ef34a8760b50a5274b9bfdf10a23c19933bad",
+    "apps/platform/app/routes/owner-invitation.tsx": "7e4c5d85ca732c5610fe004acaa2e4d06323977a901a36cdd3d19d3b98705719",
+    "apps/platform/app/routes/owner-invitations.tsx": "d749e00cb7e0a916b79ea4e44e75be26ab072bc042a90370854512460991a1a2",
+    "apps/platform/app/routes/portfolio.tsx": "b099401a323650301c37d4b968d85e21af1d92b9d5a4d68b0886d8be1c76547e",
+    "apps/platform/app/routes/pricing-administration.tsx": "2dbd0dfade17511a4197b4898b2ba7e059e5c6f0b7e34d1441267e96ae96ba02",
+    "apps/platform/app/routes/properties.tsx": "22b381a413f45c5851cc2a81994becda708a8fd807a4f59ac327c82558235818",
+    "apps/platform/app/routes/property.tsx": "9455b62923f7ee507b3243a3f8f01918340109f41c86d3faf9463a79aed200fa",
+    "apps/platform/app/routes/public-contact.tsx": "89c2e9591da174c84e4b3e72948dc6f39786407e4c557439393de554c41a3309",
+    "apps/platform/app/routes/public-layout.tsx": "bfe193ea7c170e89c87f213eb3f68141ff62e18f597b401d073a303fd0d26bae",
+    "apps/platform/app/routes/records.tsx": "7d631dd578c618b05d69ec8e60ca2f7958fbe2e6421b64f8349422eaf7b80b73",
+    "apps/platform/app/routes/release-readiness.tsx": "7ba4af951e1d578e4f8f02f5f6441f3c2e9c8ff01896ecbf282d4f5d2b621be9",
+    "apps/platform/app/routes/rent-routing.tsx": "78071e01f7dd1643c6b086cd520d5eb16aa94f6ceb085ed0dff6608f8385b0cd",
+    "apps/platform/app/routes/rental-application-detail.tsx": "e5daa7e8260c7bcc72ba1dd106c999845ab1f5d50462b407fd4e3f06b852173b",
+    "apps/platform/app/routes/rental-application-print.tsx": "7236a9a5a0c06bfab8e7f6bf67b1b181743c65e709ae872a251ac24cbf495f8c",
+    "apps/platform/app/routes/rental-applications.tsx": "d2be5c471e4fb5315b0ef08322ef083877519453f0478cc81fee330c4137fe6e",
+    "apps/platform/app/routes/report-annotations.tsx": "1b79e3b626b76b783db6e2c5a719553c89d3f624ac0dcc6430cf4f662f5cffbb",
+    "apps/platform/app/routes/report-detail.tsx": "f4fd5d9c3b9b8aba2fc7a856b35dd38c569ebd461aa3415609fdc78a75a9c5e9",
+    "apps/platform/app/routes/reporting.tsx": "44fc7f0e3ca237e5e237522f7bde3197e1222354cbb91cdc3d9811e09d7c136f",
+    "apps/platform/app/routes/reports.tsx": "6df0a64ed5e4363f0b7e0980c58e6b8fb2b20f4d76b75db4f96ec247aec2a7ea",
+    "apps/platform/app/routes/request-detail.tsx": "dfd54b11b730b5af1c909245a04494e43a9ccf37b50bd0f9611675c0f5ee4156",
+    "apps/platform/app/routes/requests.tsx": "6b2aa474ad7c952467b11a5df761d21a8829eed9d69fcadc88e45291adf532e1",
+    "apps/platform/app/routes/resident-invitations.tsx": "77539c885c6ad315217d9fa3d93cd1dc1ea3bd6f1305db0db65dd0c32263318e",
+    "apps/platform/app/routes/resident-room.tsx": "f8739024f3a1973ef6ab6ce9d368f83072efed0c9332dc0d9b302d2a8b2706b9",
+    "apps/platform/app/routes/retired-guest-entry.tsx": "c0e53619b227be13826980f289182b58480c6e36f9dbca551dce491d678183c7",
+    "apps/platform/app/routes/retired-guest-request.tsx": "f69f26eb3e61656ee92f4ba7092cb5f77012717b41c488c92ffe28eaa4a9e068",
+    "apps/platform/app/routes/scheme.tsx": "9fa479d31bd339a335f00471f95fe7024cc270089b0cc21a8cd64197a6335ddd",
+    "apps/platform/app/routes/schemes.tsx": "8b04ee53aa9defe5cbee686b5adb7d91a5c1e232511654267a78c0bc6ec02751",
+    "apps/platform/app/routes/services.tsx": "3946cefe0f230dbbe7ef14d6fceacd3e0957d1b54c3401e80472363f13ec137a",
+    "apps/platform/app/routes/signin.tsx": "c93fbda79cb73b398a13b4d184b8cad5cf950e5af5fbd3dd89139e7d45b3efad",
+    "apps/platform/app/routes/signout.tsx": "501d5fde977533cde11a1a797be09ed31d3f457873fc79dd70e7119d594b6bea",
+    "apps/platform/app/routes/signup.tsx": "97b4a2ef53e926c7d7514185e853aac6de4b58bbabe205c7bf63f4637225d6eb",
+    "apps/platform/app/routes/start.tsx": "511b2789c2ab9c44d6f640ac5b88ae9760f0f6a09d5e1773a868136724d8c2cd",
+    "apps/platform/app/routes/stripe-subscribe.tsx": "717f48e7ce1e04e604f2181a0dc03357fe9cdf9b4d849e3a2bde2aba1d2d2b9f",
+    "apps/platform/app/routes/subscriber-intent.tsx": "f8f30bb89810968cd49f043dc94f007b8c9f6667f8df9aedb9c627ebe79507b2",
+    "apps/platform/app/routes/team.tsx": "6a882a5a82a6121928c78c6904a94fab6c40ef72501cce85d84df0d2dd4d755c",
+    "apps/platform/app/routes/tenancies.tsx": "f8ea7cb714c5a44d0786effdaafa57fa2730bf45a8c22625e79f8c151f84504f",
+    "apps/platform/app/routes/tenancy-bonds.tsx": "ba1bd32c2cbb2537d332f0877a2665005eeb94c0c3eeb8080fda4169d38f2fb9",
+    "apps/platform/app/routes/tenancy-detail.tsx": "0df5b45a8c0210b74e370a7a3b6bd9fba011a7ba349c72bf5725f4708631a096",
+    "apps/platform/app/routes/v2-agreements.tsx": "f5c4f18b636a530126426a7683c3caa0b71ed52402d3d699e4d8916891aac13c",
+    "apps/platform/app/routes/v2-business.tsx": "26bce72fde44a4ea41690198c60f9ec04dd968b84d0753ae367394cc25d74044",
+    "apps/platform/app/routes/v2-estates.tsx": "eeb18bc632af267b05b506562ef8997ed6e3ff1a9547fe64100a8566a30853de",
+    "apps/platform/app/routes/v2-intelligence.tsx": "1b319c137a013f7564ef297152f79e5ab66c58cab21a505fd61ea972022ee8a8",
+    "apps/platform/app/routes/v2-maintenance.tsx": "06bfedb0e4aef49fbd53c4ee3985c5873802b3e75426e4cd2c7e9e1098774ea0",
+    "apps/platform/app/routes/v2-sectors.tsx": "de3291d384ee1f23a32b3826ca5273c119185860190134bcca983245a6f92699",
+    "apps/platform/app/routes/v4-request-manage.tsx": "379eb275ef403c585604d18e30786eb5990e1d8f665c07c61f8d72a5da8a6a4c",
+    "apps/platform/app/routes/v4-request-quote.tsx": "399097f5b52262cbad9af9832b8205396bc1678348f55db1a4f4e71814fa8380",
+    "apps/platform/app/routes/v4-request-verify.tsx": "1815ac45de52b7630a9a8f09fcbaa43e93adf80f94c3447d59af58b4453f52ae",
+    "apps/platform/app/routes/v4-request.tsx": "7be8898c9971c0a6f80a9304b5ded9fc06f1e430ca8028540ae1203712127e04",
+    "apps/platform/app/routes/v4-service-requests.tsx": "4b11da43c1d328b3a9676ab3cc548589e7b2f01f1f3893f2b5508429f7628fc4",
+    "apps/platform/app/routes/v4-services.tsx": "ca8caee94d6e14f5107597643ff3ba1c15b604e51b8861cfd31e81cfae683594",
+    "apps/platform/app/routes/wa-form-case.tsx": "f94c95baf7e9267e88a095a59aa00e8b8b722a88c3a7ea820f1e43afd7eec56a",
+    "apps/platform/app/routes/wa-form-queue.tsx": "3e01f2d7dbf3c5eb018a63a528c85b6756bd717cc120d753124f4ff12d2cc118",
+    "apps/platform/app/routes/wa-form-templates.tsx": "5c8c874c604cf56897132c8da8dc78f38b32721370b523e2ac47287d8424af58",
+    "apps/platform/app/routes/wa-residential-forms.tsx": "b1140b032cb1a0d4b725d09c1c381474612953eb8d5f444a7f60ad89a2cf4f01",
+    "apps/platform/app/routes/work-order-detail.tsx": "b3a4594de9a0d6a3990c8f13c597eae9b0f5fee028f64c9e5e3d9bcd48377053",
+    "apps/platform/app/routes/work-orders.tsx": "f0362e10b4f819b0bccb9b5830e9ea7c6786a170a22f82ca9960a08586c0cf33",
+    "apps/platform/app/routes/workspace.tsx": "094df3e2621858764309317c85aed88aaf041594e206eee9069b5b8496401261",
+    "apps/platform/app/routes/workspaces.tsx": "caefe22a334c488cab1a3b41323edbe5fbf2386a6f4f17de068919e40512f344",
+    "apps/platform/react-router.config.ts": "e7d3965d3a090bbc84174798e91de6eb5dedb786ba3e456c7f0836187868f1b5",
+    "apps/platform/vite.config.ts": "d3ab5fba39e677854a7f798c18fea2a061e223ce8a38c2aae7eb092fa943086f",
+    "apps/platform/worker/api.ts": "8da042cd08a0abcc5afecfd311cae8a9af3c0a24b847b4004afe5b466a629ab5",
+    "apps/platform/worker/app.ts": "c5fc8fad1866ac8503559c0cbc85e28e12b4c8802121b2edee31a48894607fbc",
+    "apps/platform/worker/features/account-tags.server.ts": "a800d4d8302ed999a202c5502e59fe7ef0f947325b0d0c8aca8fbb0c1ff6fd70",
+    "apps/platform/worker/features/account.server.ts": "da0d89c2dff439e9f086ad097b15509864fb3cbe00aa2f76de09d2c27fc7d2e0",
+    "apps/platform/worker/features/admin.server.ts": "93dc2c44738de5f280932a92b3d58895ee4daa75a6d47969b66c0cdc6ac040ab",
+    "apps/platform/worker/features/agency-outsourcing.server.ts": "d8e3fbecc8ed6707da42cc19ecc973c8bbcdd92c124529edd91332a60e3bd2e8",
+    "apps/platform/worker/features/agency-owner-invitations.server.ts": "86a0ecfa11a2acf07a4ae3529c6d464a5c5de26f564437c9388ab61fafc85f0c",
+    "apps/platform/worker/features/amenities.server.ts": "5ebd1255b2e0fb9955764374a2b3751d075a6dac4b8772475d7ca030fac4df56",
+    "apps/platform/worker/features/billing-accounts.server.ts": "afa32968a3d503bc91ad9cf33515308a371c2e61a50baf3e51d9cd5b1a59a82b",
+    "apps/platform/worker/features/bond-alerts.server.ts": "cc1de5f9f8a4a27f7885e8eacc5865fe7eb01186dbed4e80504834915e50e6fb",
+    "apps/platform/worker/features/bond-completion.server.ts": "823ce107a047977e5103b3e16639f42bf090af0b2de8383b9fbccb23887e2876",
+    "apps/platform/worker/features/bonds.server.ts": "00be8d53cfd6a6529a3b1428f897ead29a0c6cd696ac3f2f4ca46253c77bc6ba",
+    "apps/platform/worker/features/bookings.server.ts": "6dab75ff14f2a547a49e3a8bea7554d51801272d123ff13a8b69aca72843885c",
+    "apps/platform/worker/features/building-operations.server.ts": "2efe3787fa578fb85c2eaa3fea2f60bdbfe5bed9ff4005eee550aa049a30dac3",
+    "apps/platform/worker/features/calendar-google.server.ts": "392d066b580a21c26cb81b62abb41e43897e340bc4cec93054eb5a0346694318",
+    "apps/platform/worker/features/calendar-scheduling.server.ts": "58b582a65eeac707674736f4f6bd9d4a6b5e8a11e06fea1e65d91b7c9621269d",
+    "apps/platform/worker/features/client-service-interests.server.ts": "a7e1894564a096e97f76a9065d0b740745aa1c058c8a1abb760044495cc34c06",
+    "apps/platform/worker/features/co-living-operations.server.ts": "614c222b031ebb7ca5b9741393e6bb66720c2ad982c23a1371c063639def42dd",
+    "apps/platform/worker/features/co-living.server.ts": "6330c1d43d47dcd31ef29301ed5b0fb8d720e239942d78a8d67f4bacf7ec70c7",
+    "apps/platform/worker/features/commercial-application-actions.server.ts": "f2665fdeafad0f5fd994e16cdb4c2cd16b3273b374f17dd36eba20d93edf247e",
+    "apps/platform/worker/features/commercial-delivery.server.ts": "015dbba323dc18639205341a839586762eb5b236dbbd2aaefdfada5ddb32ae8c",
+    "apps/platform/worker/features/commercial-http.server.ts": "53aa70f13a7207ad15cb179023006da2921d0e63449903177a85ffbb92af5ae2",
+    "apps/platform/worker/features/commercial-intake.server.ts": "c9d7eefb29c98b0d0d76ceee5916568c19d3946fde1caf8aebc0297728629030",
+    "apps/platform/worker/features/commercial-lifecycle.server.ts": "40a01c928d1c3901e52962db61f306fb209ab316d09943cfc836001428fa7a1f",
+    "apps/platform/worker/features/commercial-operations.server.ts": "952ae0b7876944cdff39b7c04cf15ca8cf3b506d5e120b26ef0471eedef9cb82",
+    "apps/platform/worker/features/commercial-privacy.server.ts": "d22a0e75d86e1b9a5814a813c2a3acc6f2d416587d8d5ffc44e95f082815e715",
+    "apps/platform/worker/features/commercial-review.server.ts": "efcceb47445ec64bcd9a337259664a669a1bf4ede7747486e2f5e3686fbe7aa1",
+    "apps/platform/worker/features/commercial-scope.server.ts": "bbc5eb57a3ebe48c3c7754c24a20d6676917f4f23ecd9503e21383ed6ca1e932",
+    "apps/platform/worker/features/contractor-payments.server.ts": "b4cae326dea511b44db1014b7f91489ac9de1bc94ebfd8e1f9913044912ef918",
+    "apps/platform/worker/features/council-appointments.server.ts": "84ab2c9a829b353db3ec71f23628781879b78ae6bfbff8afb5fe85a99fe4c6f8",
+    "apps/platform/worker/features/documents.server.ts": "fbb8d5f4e5052142180e49c2e44ce303886180fe4f3c87f11f5e905d58ef018d",
+    "apps/platform/worker/features/enquiries.server.ts": "bf54f50d0a9639fe91522905de26bf11167d5b7746a01318748711264346d284",
+    "apps/platform/worker/features/experience-preferences.server.ts": "380c57a7ffbc2aee05ffb745ba514ec3e3f140312b2c70697c18ece57285e86a",
+    "apps/platform/worker/features/finance-reviews.server.ts": "d86b412ece033febdf7ebad210c97bef93e16bb919faf67a89b8960be77418c3",
+    "apps/platform/worker/features/finance.server.ts": "8c487a04a9068d8e616e4899486de0566c6fe3f821fe5f773e6a8cc38ab2af94",
+    "apps/platform/worker/features/forms.server.ts": "fcffe569d555f3f78d51cac1501b0245d592194d01f898cb6d91569994028c18",
+    "apps/platform/worker/features/google-calendar.server.ts": "8b39cfb79f64153c797adc4f521a57c75bf6d39647b0c974f2f8556fba954ffe",
+    "apps/platform/worker/features/guest-reminders.server.ts": "a7453aaa90e9c461d83bbfb2ea10478d44a090a3a73b772f1be2f1bcd71e094d",
+    "apps/platform/worker/features/guest-report.server.ts": "c36074b5742b25ee125999c0e9407ea525f903d0473e0fef710902566e484ca1",
+    "apps/platform/worker/features/guest-scheduler.server.ts": "628f224fbb35d42e1e0064d80f2ff8d176d959369ab1af8300dd4b158536d636",
+    "apps/platform/worker/features/guest.server.ts": "f559285782425ca6326bd4bef099d1ab6336605efebaf8591aff559816ea38db",
+    "apps/platform/worker/features/integrations.server.ts": "6687a28252bc948721b9d884a55e53fcca9e6b93a173f561af0b3268593a34c1",
+    "apps/platform/worker/features/invitation-preview.server.ts": "0c01a88e7738e5342071a3b1ff0e10af5efcd3f1402a6d30b12c665158beeced",
+    "apps/platform/worker/features/leasing.server.ts": "f25727cb5af9782ff4ddb30ed7b4dda55ac41cc19c4595332dd299326fcecbfe",
+    "apps/platform/worker/features/legal-acceptance.server.ts": "f21efaca61562da18f3c334619c84f586a58832efde8e2df4e8489ab6fa531f0",
+    "apps/platform/worker/features/managed-rental-intake.server.ts": "ee5fc14d3ffd364b6b461abd05f4aaf437235a7b30ea194d99aa8c4d8c849aa8",
+    "apps/platform/worker/features/notice-lifecycle.server.ts": "63ce1b740d83cbfcc3e9484b756c866c944f0734b2006d4e40467ee1e361fa77",
+    "apps/platform/worker/features/open-home-reports.server.ts": "ae442d25e7a67bfe48bffa517b8de1ebeca1f60acbd6d3245ba5a32c55c85ad1",
+    "apps/platform/worker/features/open-home-sheet.server.ts": "cb63bec53765b40e55629092e0f39ffd22be003c592972bdf1796b92eaaa5958",
+    "apps/platform/worker/features/open-home.server.ts": "28ca232bba3360b38ceed8bc50059d47b53fd139af803fa05d9476b73207eeb8",
+    "apps/platform/worker/features/operational-health.server.ts": "9887845f19cfa470dc1c0f5e424398b8b9b5b9fb2d197e97ee58d21165dad74d",
+    "apps/platform/worker/features/owner-portfolio.server.ts": "3a09011eb56756d71455d4cc1526b8fa9b9c5a704a663a0c67595279290c9b09",
+    "apps/platform/worker/features/payment-lifecycle.server.ts": "c5bd3045a9307ebb3a75fb784f10a57e8ba61a44c5afc4af2df48d705e3ea218",
+    "apps/platform/worker/features/pcr-discounts.server.ts": "c7c953884a7b35fa0c0168040883552d5146cf1bf41ff7bcba66f4d59b1192ad",
+    "apps/platform/worker/features/portfolio.server.ts": "a68b22e71b05ee7ab8c004606c2deae94d2ec25e97b0a77e1511e4fe697dbee5",
+    "apps/platform/worker/features/property-report-bridge.server.ts": "c83e6e46f4a43f9099702e89b332ae11808e3249f9936a6396ed58fd9a0728e1",
+    "apps/platform/worker/features/records.server.ts": "fddce860ce1e11b0748bfec72c9df2610bb7712f8047c77ae9fd0690243f347a",
+    "apps/platform/worker/features/refunds.server.ts": "a8d4846ce57c50e1e82e28afc6e02d970aacfcf48f9e3f3e4923938bb0068102",
+    "apps/platform/worker/features/release-governance.server.ts": "5cbf85218b0a3b4fdb3f4b92c2db5d1d676bb1f081eae840fe0f49083f12b173",
+    "apps/platform/worker/features/rent-connect.server.ts": "c074882945788f7b6184ae507f3634045d4bb63093e008fb32b6f1e9144d15c4",
+    "apps/platform/worker/features/rent-planning.server.ts": "fea9eea6624430ae5c19c18c3b03a7c282f6762b442e635b275b85c924e9aa30",
+    "apps/platform/worker/features/rental-applications.server.ts": "b9ddc7954cdb2b8cad3503e4b3d043db0e658985f7f831266544ce58df88b81b",
+    "apps/platform/worker/features/rental-governance.server.ts": "45129a83cee0941a9143b9ff34891f87d5cb4cabaa874538b436cd219ba5d97d",
+    "apps/platform/worker/features/rental-handoff.server.ts": "96f693df5a10ba42dab4be03a97724223f3ae66f592c8cad64002926374bc844",
+    "apps/platform/worker/features/rental-malware.server.ts": "478614abb9c6d7908c58545a86e20a7249be8cca772aefbc0a1afa086b6f468e",
+    "apps/platform/worker/features/rental-outcomes.server.ts": "47f9ee02737d1d027897357b38951a7e32deb567271806af951aef6743c9dc7b",
+    "apps/platform/worker/features/rental-privacy.server.ts": "e349275629b80063c066161d91d34bb0c6155838eace38bcd90a4419dfbd7795",
+    "apps/platform/worker/features/rental-review.server.ts": "736c4fa0ff00def072d8037855352500e842856b3ec62c25bb60e28bf31bf437",
+    "apps/platform/worker/features/rental-scan-dispatch.server.ts": "99833acb89e78ca5706cdaa18f1a09c76034b629d49cc599455857375cb28dc0",
+    "apps/platform/worker/features/rental-script-dispatch.server.ts": "c7ea8902333dfc21c9e28afd44205e3208a4a5119687b92c4d2be16db856bc9a",
+    "apps/platform/worker/features/rental-temporary-documents.server.ts": "6e7674a23803863a9409c6f564622640028d36a880f9426ac48ad2c1ce22f9de",
+    "apps/platform/worker/features/rental-tenancy-handover.server.ts": "66f96481775727d1f7fc0b4d1eab975f0df8e8414a44c32cd43323e5ef33598f",
+    "apps/platform/worker/features/report-annotations.server.ts": "66cff11d623c880da926dea9c49082265d988c83af91eff1f2e88f9c9f142c94",
+    "apps/platform/worker/features/report-evidence.server.ts": "7afff9212f2a45c431dde33bb7af867a868393bb080a17800c3a83cfd1df20bc",
+    "apps/platform/worker/features/report-history.server.ts": "4c21b3895239edc3c1d61d18bdfac954a2f72b62d54f30b2dbb34c84a0eb0ac3",
+    "apps/platform/worker/features/report-issue.server.ts": "a71e883bacebe654c0872ce0740bf8f19011febf0b0a93db783cf75c597dc458",
+    "apps/platform/worker/features/report-router.server.ts": "ed33098fb49b3fc0642a8a62ffedda96b8e9173e031bc6519fec6433f3d48639",
+    "apps/platform/worker/features/reports.server.ts": "9696998cb6f46def0ff901d6ddadebee154390618eadf4bcf061c32ea9808218",
+    "apps/platform/worker/features/resident-commercial.server.ts": "563fa2323ea0fd2805afbeb1c0c4c01c79337de1e89336df5984dca5f818b71e",
+    "apps/platform/worker/features/residential-live-stripe.server.ts": "8a63f9346f84a70624233ca9bdb1184a0efe25c73ad5dc206e4102715c3016ad",
+    "apps/platform/worker/features/router.server.ts": "28a0c6f9cd4b2d253ed6085d66f91129247ac82cdd1b12dfb61093820eca7fe3",
+    "apps/platform/worker/features/service-pricing.server.ts": "108ae07fd416ecdf11cf5b02eb8e6ae450c75e6c98556d62c85932046fcd08dc",
+    "apps/platform/worker/features/staff-property-management.server.ts": "438527796067fb383402d114e6b28ec3e0bb364c8e18003a36382fd42f509f06",
+    "apps/platform/worker/features/stage6-launch.server.ts": "ce0dfe1f676eac5ee143f838b525a4ae05e00a3dd0cfab4eb7cd8cc0fad2cefd",
+    "apps/platform/worker/features/strata.server.ts": "ac4fab808739a5af4085c32973a24aa5943b6d393b6eaee7439e06e9ff48fb79",
+    "apps/platform/worker/features/stripe-billing.server.ts": "57bf4a88a573ab4d19b3b29beef56c6d9f934e226935f439fbab4513e17e56d4",
+    "apps/platform/worker/features/stripe-client.server.ts": "1d9251dacec0de158dd927153d728b53c50e80a02368705723f2e46d5a7e776b",
+    "apps/platform/worker/features/stripe-risk.server.ts": "48efaa04bea856210139e56707f56dbafa3a195364720d72d8df587ab8298ca0",
+    "apps/platform/worker/features/tenancies.server.ts": "eb18e43c6acbbbfd8b370c3048b1ecb6dc56c22bc418417e003285867c1e89c0",
+    "apps/platform/worker/features/v2-business.server.ts": "ae613a7c107892a6c00bcd1d14996b14fa708628f1291ace9c6b22d542c908b3",
+    "apps/platform/worker/features/v2-estates.server.ts": "10614dc18e58f2f09ed8133a5e5f2a4ab341be86142a1b35e3dc96024c48f20c",
+    "apps/platform/worker/features/v2-intelligence.server.ts": "296e2571009b34c35d4faacd4e1513f9f07ab2781cb097f4ac8ca44bbd3dc8a6",
+    "apps/platform/worker/features/v2-maintenance.server.ts": "8c7cec47882f158ed5dc01a66e8d48ca4601dc27bd17e5f6f0e6fa0b349b3dd0",
+    "apps/platform/worker/features/v2-sectors.server.ts": "db6fbc3eea10c11953579cf4051df5b5bda75095cdcc94ca9c2708bde7b1df51",
+    "apps/platform/worker/features/v4-service-requests.server.ts": "b675f796e0b94626677fbd1b72b756c3862cf94bbf879d135d0f78f1a0f81307",
+    "apps/platform/worker/features/wa-agreement-signing.server.ts": "a12367873bfe4fcb99851f7f63700c6f5191202993f94cc12a7cb9ae54fb7346",
+    "apps/platform/worker/features/wa-issuance.server.ts": "c3120928de4d5bd42490f88f6266c902e9d22595dfeacbc31b114290deb3c1f8",
+    "apps/platform/worker/features/wa-lifecycle.server.ts": "2878bd3636b05cacc13a88d44fabde8904c9e2ba54d9eaebfdc60edd0eba8061",
+    "apps/platform/worker/features/wa-reminders.server.ts": "6a984910f890ac81d4a8564406b958d35ce35c8ff4857a3c6f16959857b3cb8a",
+    "apps/platform/worker/features/wa-residential.server.ts": "c25d1ac000772175258fa58e6da090be3ccd391826cea5d22760fdc09b783e9e",
+    "apps/platform/worker/features/wa-review-gates.server.ts": "540860c4389ef231510adfa265d6c931434e37a9b5a24836e7db93fcf4d0e38f",
+    "apps/platform/worker/features/workspace-data.server.ts": "559f135b820a2161670e39ad5f6cd0dfd662e9b10115e7e4b2967f1a08669117",
+    "apps/platform/worker/legacy-booking-coordinator.ts": "4a7dc84c0c1e605b03fba62e9b4c17e3b98af65d453c72e72ec07a26cd77ae56",
+    "apps/platform/worker/scheduler.ts": "f305483144b3c2fe87705205d11a68e912db2f10e72f3fb0f97295f3ed436112",
+    "apps/platform/worker/services.server.ts": "09afdfa5ff7f1a5f1f5e5b7ab87f6d9a526080f7d4fb72567c18ae29f5c24d3a",
+    "apps/platform/wrangler.jsonc": "8f5d83c5f3590a2ed22dcfa7eab1d8b10410975671c8997d8997bfd37b339135",
+    "apps/private-document-scanner/src/index.ts": "78f72df5825ca35682d554e7627d8b2bfb893dc0628e012bc4ed46efe1297d74",
+    "apps/private-document-scanner/wrangler.jsonc": "2d1a62a109e8055aaeb65835c665e47e1bf21693ab75efca4e8b8ff5f358be62",
+    "apps/residential-campaign/wrangler.jsonc": "9090ab87ecd872be96a4cd177c284dfb6c5d0f6e8f955ce71e079ff56bb0b248",
+    "database/migrations/0001_core.sql": "fe1be8d0f67fb47fb0219621ec00b888a1c6599ad0c2d60840be2a7c9ec6c0cf",
+    "database/migrations/0002_guards.sql": "325aca7382277670ae000382c75c9eefad1f2500b40ea9c19f4b2f9076e87b52",
+    "database/migrations/0003_connected_operations.sql": "2f9d4ebd5a4ae837baf65f70c71e64bdf0150343457738d4670e4363e3c16f18",
+    "database/migrations/0004_enquiries_notices.sql": "cb399042e5637ea61f612631db67016638ebc3d2e70dc56696b730eb0001f4ec",
+    "database/migrations/0005_account.sql": "943f05f8efc1e825a51c2a69067369251a86dca5be19b8eda4f21799d1d668cb",
+    "database/migrations/0006_all_inclusive_subscription.sql": "d912c72933e5decaa7070de419cbb0b0c9446442a4db7898263f0abfbf8e5579",
+    "database/migrations/0007_calendar_sync.sql": "b8fe13930ef1d8ebfcb22a1bf641d6a456075dab8990f1e0dada8b9d3822f32f",
+    "database/migrations/0008_guest_one_off_bookings.sql": "84ee3e02573a98bb054e502ccc4416bb991bb0307c6c690b0701bc657a476a3e",
+    "database/migrations/0009_leasing.sql": "a8117a5fa322976b9cd014764a51a1b801091ab4404fd42a9f87e89dbeae5482",
+    "database/migrations/0010_rental_applications.sql": "cf4e33f9f0164858b6b3f9daf0c009acdf9f015ecc6fb6ee3839dfd559d9164c",
+    "database/migrations/0011_rental_application_safeguards.sql": "23600a4803d335d1782f0d73dd23a732f782156169bad73e49bfe4b6858aa538",
+    "database/migrations/0012_open_home_checkins.sql": "8f54d19d088fd454d040892d778a0fd7d8c913a1dcba4ba222aa4a132046c396",
+    "database/migrations/0013_wa_residential_forms.sql": "292b069dd5acc401ec62fc64a18e70c434e356e604cda15b06fd6512309bc0c3",
+    "database/migrations/0014_wa_residential_workflows.sql": "f4d93a87769c581c5d8bdbb846ae0aba4b864fbade52346153bf1b2f5b920e25",
+    "database/migrations/0015_wa_residential_entry_reminders.sql": "269787fa5c6d0be58cd68c58f940f085d24ba4374f023b335ac61edce7cdfcba",
+    "database/migrations/0016_wa_review_requirements.sql": "f83f9bb6087be77798869c730329345b1bf63c5d44b638f2670cfee9f41b128f",
+    "database/migrations/0017_wa_form_release_approval.sql": "9ebdafd1f0bc1636efc9a2810c0a2b0b29d62f062295e5e2ad34081a9b69cabc",
+    "database/migrations/0018_wa_bonds.sql": "635972e4a86f7424a0665dd5a1be0104c838de79037d7e110cf5f99de5d1784d",
+    "database/migrations/0019_open_home_reports.sql": "1495d9554c38d1f4ea2db3effd1757301ae3da3c1b37664c3df17fade4136e57",
+    "database/migrations/0020_reporting_engine.sql": "93a38f1691b75ce80f3f2d071fa28c2eb8488bdd037cf2101fd6376da953cf03",
+    "database/migrations/0021_v2_operating_model.sql": "57043fcfe4e8ac11e64524144b38c3c702711a5e5995ad803f2aaed4b158540e",
+    "database/migrations/0022_v2_maintenance_delivery.sql": "90b982ab32774fa88a5092d1879f9e2a0a819a0bc8e815f488b8040eaa6d457a",
+    "database/migrations/0023_v2_asset_preventive_compliance.sql": "825e45da53ae1a02da75cf544ee0080c099a14526911a5cb6d972dbd8024486d",
+    "database/migrations/0024_v2_sector_packs.sql": "08b15eb19ccda0cc02639d15715fc7239628a130e5c538a9d1b0280d98510615",
+    "database/migrations/0025_v2_capital_enterprise.sql": "dc533a166b68629619898a8e2ebc3aa0d800967c2d984bf44a3a6840f6d42028",
+    "database/migrations/0026_v2_review_integrity.sql": "1b56d03671594880d113bea912bee8ec46e557a903b12734c8501e4fc172a51a",
+    "database/migrations/0027_stripe_billing.sql": "557bb243cb6edba6cfa116351a812d50698373ec3aaf88ebc4aff5275ea0aeb4",
+    "database/migrations/0028_contractor_payment_choices.sql": "824fe21c522e72092937b50565d0a343e26cc5b0664d4fd6f8be97548a44c121",
+    "database/migrations/0029_rental_application_completion.sql": "462154591aa46325995f4c493699a1f9d6f22c19e0944ea4f297d340a9a66d51",
+    "database/migrations/0030_property_report_bridge.sql": "4ddc3b3228ea16944b02bfce1e66185991ca8328df4c86c19bd2b76f2ebbf0b7",
+    "database/migrations/0031_wa_rent_and_restricted_review.sql": "a7c4edf32177407768a83687c63f786fcc8cf8ce6f4b93b4da6027d52ffb66ab",
+    "database/migrations/0032_rent_connect_sandbox.sql": "c1f1b52be6e1451d51852026749577a424d0a02e631bea7d4b9217f896869483",
+    "database/migrations/0033_wa_agreement_signing.sql": "f9229a03a78136aaf45bb37c8112bc734b8737158636c4858706d3f8d55d2d47",
+    "database/migrations/0034_agency_outsourcing.sql": "d08ddc1a355eeb9dc53d283eeb899dc85a6fa4ad275f83e8f4d76695df7b71a4",
+    "database/migrations/0035_v4_service_requests.sql": "61ca5323d14114fde14ca2934025098a75e2099409cb538930a1a2180334b2a6",
+    "database/migrations/0036_payment_attempts_and_reconciliation.sql": "08b9e30cc861d7b4a6478a04e90df19b1f6e4143086c3f670fb9ca5d4edb5423",
+    "database/migrations/0037_billing_accounts_and_invoices.sql": "ff66d50da8ccf2eec3964b24e358a248790467b27dff52aef088f90dc757c2d6",
+    "database/migrations/0038_versioned_legal_acceptance.sql": "e3f60b21e0020074b08fc5d04fbf1e2c3d743168372649e7e82f9033c878e25b",
+    "database/migrations/0039_building_management.sql": "201419f15a136c0212b5d438307063270596a6b7ccbcd3b39493d742df0b158f",
+    "database/migrations/0040_notice_and_council_governance.sql": "902f761003ca3b69909bd5c7e7b314beb6f150eb8ddb58813216f345a99eeee9",
+    "database/migrations/0041_approved_service_variants.sql": "a1aa5197e4dbb4baa1a66fd2ff405a374cc1df52462c8181b507e4a826659b35",
+    "database/migrations/0042_release_approval_integrity.sql": "6f0cf3bad0e3c7ce8dd2c51695e6e698ad40bc8c1a9a551c7a1f6c7fdf027b04",
+    "database/migrations/0043_commercial_lease_operations.sql": "549f33b3b1398632cd56f16af1c56d0d57e2b2a09106942245bfeab2308a270e",
+    "database/migrations/0044_agency_owner_invitations.sql": "a9c4a84dc315ba5761504266a09f554a7173112fa4053e70dca2be9a703083c9",
+    "database/migrations/0045_pcr_launch_offer.sql": "9df0295d7e0e5fb18978a849790b1f2b85c16c63918ac488f057bad51f5cad23",
+    "database/migrations/0046_pcr_discount_reservations.sql": "df543b4a922618b13ecf786fb836a226f8fe4c21c21aae158627fe0121abbeb8",
+    "database/migrations/0047_residential_paid_subscription_enrollments.sql": "70baecc79e8a5545e4cfa5d0b3254ede08d80c40dc1a8320ad4ce3c0c6e2a31a",
+    "database/migrations/0048_rental_reference_checks.sql": "6accb798dc02b5be01b6e329cd9cb90226ceb2c8cd729ecab28d286b0e00ac3d",
+    "database/migrations/0049_commercial_source_lifecycle.sql": "6b28093be2bb8dfb9e88c90c934478d80c343fa2da48e17acc41ca853948f227",
+    "database/migrations/0050_report_render_independent_review.sql": "8b4411486a7da9d1ee8e879612c2f44f4d30442bf2ec3873690d0dca1710042a",
+    "database/migrations/0051_invoice_delivery_reviews.sql": "6a5ae197a6f1377df472133162c5855a051a14a9d5f060398b4fc374a991ebc4",
+    "database/migrations/0052_rental_tenancy_handover.sql": "849642c5299a540c973ca0312898b16d1023cb3244b096efbc522db3ecfcb316",
+    "database/migrations/0053_account_first_free_registration.sql": "e9ab3053352c7f504cad0a94ae73845f92d2701972d6794acf09a8dae0357f32",
+    "database/migrations/0054_client_service_interests.sql": "81cbc606ca7312a6a64062baa03896db0f9e557f885869e2d0f5fa40362e9c6b",
+    "database/migrations/0055_commercial_applications.sql": "0bde269ed06772ed4794dee3b3abd717e3925e93ecc014ac39d882da10fc85ba",
+    "database/migrations/0056_managed_property_intake.sql": "f03986716b79e14f6ad5e135869f88304082ba1b9fd27da7e9b330bb3f84261a",
+    "database/migrations/0057_private_document_scanning.sql": "c08886073c8101d8da1410cad65b04c8e2b3d40dc6d0a09f896c1ecc99de4d0a",
+    "database/migrations/0058_temporary_rental_documents.sql": "9454d7680a06aacb3a3bd05bd12cca8d98346ccd7a417255e2b57048e6fa042d",
+    "database/migrations/0059_portal_experience_coliving.sql": "1cce7fd29dec832d5246f5b70376550da067b331f37a64d53a93fde1563f69af",
+    "database/migrations/0060_resident_occupancies_and_council_appointments.sql": "616f9a37cd5d78a9d9b9230b949efc889d942339230626aea18709c68f84a7d0",
+    "database/migrations/0061_registered_workflows_and_preferences.sql": "627a85168559f9f7cff3eeee689abffbff07b79ba0c31f6fb6e3fb229e46b221",
+    "database/migrations/0062_finance_reviews_and_photo_annotations.sql": "4f12f7890f9e58e5a8338621014e0e9916ffeaa9fb260996f680d9b4612faffe",
+    "packages/api-contracts/index.ts": "9f7989793cf5ef224cf7e9917e50159203f52016ae783fac99bb66615277cd90",
+    "packages/auth/crypto.ts": "5f061db1d14b14e1ccc7242edae4efbd518fc9e14874831f2ab344a72a943c1d",
+    "packages/auth/server.ts": "d7ca75700adeb76a0a95585a0448ebc3108d7d065db53802a765a9c303bd7ce7",
+    "packages/authorization/building.ts": "92ab2d849bb2b8923358bdae9235de0b0b29faf1e2c46b9894db12c8915dd258",
+    "packages/authorization/documents.ts": "cbbc7bd6026608441b7df619d93691eb7268a3f76a011069c4bb7bc38516adec",
+    "packages/authorization/server.ts": "442073b8b1a99038f182c01586e010b4c58cd29c4160c14aed6de438b4051962",
+    "packages/authorization/subscription-booking.ts": "6e0820e4aa401fa92c9d81574939bd438662a01c6f7c6e85645379683ff32e27",
+    "packages/commercial/calculations.ts": "abea852559f98686bc099d5512c05e355ae7451ec3e4eccd6522d15fc401fdca",
+    "packages/database/context.ts": "8595d4ce9b4701a196dc1c498321340168d18f99e61621c0b2ac9527b1b45fd0",
+    "packages/database/types.ts": "bd7cfda98ff0bd9d6101ce89bc838f0ccdfd029b8053e344e7cdb9e158ec459f",
+    "packages/domain/booking-intent.ts": "110233dec5155bec8059afd33d53f9fd7f2839b5d1740f2cae4ad4782b90a2c3",
+    "packages/domain/client-navigation.ts": "a9905395c2dd4dbc514fe0455527cf6a5ebe03cc3a69732ff52a8f462f93a53d",
+    "packages/domain/index.ts": "69db9b5a90d5f031e63a97202c2cdf30a99082921d866c2cbfe65f86a4934e04",
+    "packages/domain/portal-experience.ts": "9e710454b0a0b1441c7b7e8a0237c87ceea699175d4022ba6b7ad9b9b3920b9c",
+    "packages/domain/portal-navigation.ts": "963b581dccab198ca5416ff77c0abe2ac3fe2b048aec97b2f44b685b46fa18aa",
+    "packages/domain/virtual.d.ts": "caa0df3fceaf7f5cf0e823f57c84b239f905b5ea5d44d4121b767dae637cf09d",
+    "packages/finance/connect-policy.ts": "3ed797a84475f8a0545488d182cb316fea2a63b094a657ee2869b5f82df5aa5c",
+    "packages/finance/export.ts": "fc2ae73ed3ed26015ab8e772b01e5ee55094de91b06042cf1f61fad5b536a0d8",
+    "packages/finance/friday-billing.ts": "6064fbbf070c42f985c42ea611cc388169af71808f108d0a87e9bfa1a2f76797",
+    "packages/finance/invoice-observation.ts": "2aa03dd0b1800267f1d97d1174a4cd886bf6ba61703c2ab4337effff7ce45e0f",
+    "packages/finance/invoice-review.ts": "54919033dc08bcc376f7d780b6e0330c292c935762728aa2554589b9bf6b408c",
+    "packages/finance/pcr-discount.ts": "6dd9b9aae6f2b4a8ecca33fdd8b14330a9088e6cfe1b97bee99d643674cd1e6b",
+    "packages/finance/rent-routing.ts": "87d3a771332215d177b8492ec05fd2f3d711f998512af2c81e6ea70fcdb001a2",
+    "packages/finance/stripe-sandbox-policy.ts": "e8109ddad720b52e1fa56ec8a62cc1f1039e55bfafb07981083d2ceb4443dfca",
+    "packages/guest-booking/index.ts": "ce761550882f5d21100541ec704575fe370f83760991bbc9f46ea6f4c5349e0e",
+    "packages/http-bodies.ts": "cbbe60369300aaf73618a11426826947ff32438e5faf4ffcf76d204ebd298eff",
+    "packages/legal-policy.ts": "c44cbb1c7325382ddda1303b3174a1126d352435b3c54181d5619846ac9bdd06",
+    "packages/marketing/audiences.ts": "bca7aa1b76458ab1622852c39dde44266fafffc7d9df1ad31a94558b6133cf7e",
+    "packages/marketing/commercial-application.ts": "ff068c247025d3ece46ae211fb1e075174ac48332421ca6976c35e8a0e7101fa",
+    "packages/marketing/content.ts": "e13c6e0d8bdd1a087f477be36e1cf73ca00f5102c9b0ac7bf63d496b3e18162c",
+    "packages/marketing/contractual-service-scopes.ts": "a3eca65a47d22628f67441393afa1ff43c4356b83cf75c23b59238df4a6df226",
+    "packages/marketing/enquiry.ts": "dbd5aa55a4ecdb33bd39c379fda93f79b8a0e0dcfc53bc332c6ae87886de8686",
+    "packages/marketing/form18.ts": "6cb03c67549f455d078ff7fe0a56e2c27a4e78cd5f0ca62785959baf569674e6",
+    "packages/marketing/leasing-operations.ts": "64c89c7ceffaa28f244a8f10183cebda225f4e69b3b001ec60e292e4e0702dcd",
+    "packages/marketing/leasing.ts": "7d78d10f70a12457aac161a5a573123df181807ef28d6ecf355e68d3f441905b",
+    "packages/marketing/legal-drafts.ts": "075ee5c956912a6fdff638fcde4151de20ce7050d732ad992da0caf3f889592d",
+    "packages/marketing/managed-rental-policy-v1.ts": "d4798c20e2369c63b8c526c3cae2a944eaadfa0ff456d3786fbdb83fedc9b2e1",
+    "packages/marketing/managed-rental-policy.ts": "a135b8641ac050b419052a504623f9a7cff6d3d41c4b2e54fb5d813001bf9a4f",
+    "packages/marketing/open-home-report.ts": "3e3c1a6976ac30131ef015e0625bc90c7e647e93e3505085dd6e23a0f79d34de",
+    "packages/marketing/open-home.ts": "358067a3c44d95e681cbc42ab5a1ef311e538c89dbb5d7fbd5a139b3a8bf5e65",
+    "packages/marketing/pcr-campaign.ts": "339e472b9e5de80abe35d16bdf0b1afca5e306a2d3af19a6220642c1f2f725c1",
+    "packages/marketing/pricing-publication.ts": "9e20fcd5b33c0938c24bb3f3c81db67e67fce31b400ec2350d04f0dfcca0e5f2",
+    "packages/marketing/private-scan.ts": "84046301492db4e4a9b5a7842c1305a20ec6a3d2bea8b761ff56d85f2e2b4480",
+    "packages/marketing/public-catalogue.ts": "b93777a5462a2a86d44ef0b80f7707ba3a8fdde57b5219dd08854d0c71e6f518",
+    "packages/marketing/public-facts.ts": "69d474fbda6bff10459a318070dadbc1407dc5a882097ebb84a168cdaa972c28",
+    "packages/marketing/public-navigation.ts": "7c8408d49e76a84c1c3ab008d48f95aea1a2c7f1859123c6191d49a5a304d1c8",
+    "packages/marketing/publication-register.ts": "4bf7b1c1c499bff73997c0deb5d8e534256df1aa5aded160a28bf2bf91a7140a",
+    "packages/marketing/related-services.ts": "25df23f12ca7a50a200fe7065f20fdd2799d876cfa2955cb015e2953e98b9db0",
+    "packages/marketing/rental-governance.ts": "debe5f49be24cba7b0a3e051a9ae7c6be375860c58515d6db230e08633f12a03",
+    "packages/marketing/rental-repeaters.ts": "f98fd8092c75d1135ecec92b1f3d8ecff6a9e4ddc459c50d93b4c0ba8265aefe",
+    "packages/marketing/rental-retention.ts": "948d144c4537dad7894e8f6e256e8933ce164870dc734f2d21abb15a5c028da1",
+    "packages/marketing/rental-tenancy-handover.ts": "774261c48a88812eabd500c99c877b1369b55b0f6ac2e61aaab3935d890d6618",
+    "packages/marketing/sector-overviews.ts": "7bc6017e909a96385284e76493c4c12cdec5fe630ca2a69eee84e3e61ce72ede",
+    "packages/marketing/sector-programmes.ts": "9982883775c72ac6cb20af7d1591baec9f6b9f8c4f023a2e963e271e595d4307",
+    "packages/marketing/service-areas.ts": "dfab23bc321e31cbef762ccc2f20bf6658b82a7d3a13e7329c6c9cdc09a1b0e5",
+    "packages/marketing/service-editorial.ts": "059052788f0609f75612fad18b83ee8e2f0da9d0c9739f5482bd4d970e7fe0b8",
+    "packages/marketing/service-scopes.ts": "9b1d15430ffe75432d16de6a4638a18e0d675b96369ab6b9269e7668977fbb74",
+    "packages/marketing/temporary-rental-policy.ts": "d1b7c47b46f9055d97b5dfb37d4e913fb91b52e889edebdf80770eb5d7ff5346",
+    "packages/notifications/notice-access.ts": "a227a6ab3338cf23c36f0abac0174593ed62cc8fe05a7d8e5eb7c75bbd606c59",
+    "packages/notifications/notices.ts": "50b4540cfbb4afebc5c1ce74329f91a6f825753a21fcef05f3d206cf8fd57015",
+    "packages/notifications/rental-package.ts": "4d371d148c354e392fbf2daef638b628a1384b620b24d7a4e0ed1ba1e81e3954",
+    "packages/notifications/server.ts": "b3112ab8c005ac775b878cfeca47185f384a09eb6a8c8d162c5fd76765f97b43",
+    "packages/onboarding/entry.ts": "d7448d1181442932125be9c7a7dc759865daf30b85b6beba8848b7dc61ceef88",
+    "packages/onboarding/registry.ts": "ae6262e85bc7591299033e098d22e8f267bf6c87172a28eb89f5c1d5c53c2237",
+    "packages/operations/core.ts": "7f355a381d2b081b0412ce7744564115dc154c6a310661f6b28076c7a36d32d3",
+    "packages/operations/operational-health.ts": "ea16bbee46d510717897385a84cb44e5828757f76c678e05fcfbddc19acf1fb4",
+    "packages/operations/provider-readiness.ts": "2b0910e577d6102b86dcc60a37af328f373f324054c4181f09c086c2537cfbed",
+    "packages/operations/stage6-launch.ts": "c9bf462d51c022264196fabee0427a8132a9b1a363538c00086bb245e7a363b9",
+    "packages/report-engine/adapter.ts": "e7b3e1f3da66d06b784fe30d6cc83f9d676888cced1f1118b9bc315a7ab4b92c",
+    "packages/report-engine/comparison.ts": "2743cd3add2a97b159409b7f968d52e2e8b7fcf6377931e7a5bf13afc7860612",
+    "packages/report-engine/parity.ts": "e59c43b3e7bef8435b9eac93040f35c18cfe8dfb80bad75615215a03ec2ccc66",
+    "packages/report-engine/pdf.ts": "40bd24255fb10c36c2ae17da53a25e5d56e1b67771dca05943fc1c4111dd952b",
+    "packages/report-engine/policy.ts": "b25b61c1ac93d95d1454992ebe6c04b857a2d2d56956ca0825070cf59b745f69",
+    "packages/report-engine/report-tool-catalogue.ts": "809950bb81787bce29e2601799713e6273f380ef439c726c2c291a2629c6547e",
+    "packages/report-engine/upstream/inspectionPolicy.ts": "690c486066242af22c80a01b6010f2a3b4788178cb320df2b2cb0b7790fa6b7d",
+    "packages/report-engine/upstream/platform.ts": "1c2b41c573e54e82c3704e80673cb6efe2ebdadd592869458f27ce142ebe0cdc",
+    "packages/report-engine/upstream/reportModel.ts": "277c4cfc8fcc4bda689535c8215de4cf51b759512259480876c52334d6d512ad",
+    "packages/report-engine/upstream/reportOperations.ts": "8a71b2953cff6216e0af7de7545e77f5e979e5e147c4b625ae37e997dcc5b3e9",
+    "packages/security/canonical.ts": "d28132975e50ebb81436e13eb0670f3ffb554b1180e35f5ca40be87544c9dfd7",
+    "packages/service-catalogue/index.ts": "5ace7a2b89c30c11238cf38c1d9f8e3f9df2253e4d727f04c5f0f90ed695845c",
+    "packages/ui/Turnstile.tsx": "db7f7a7663ca37c470c9e47c9f7c935f08f2fe0c43c0426ddba78e8883af814e",
+    "packages/ui/components.tsx": "73ded214d32542cea59da7e5c43d730e0b784f1ac6dac15adb503cd067cf2b8e",
+    "packages/v2/catalogue.ts": "d2966eba62589f2a0861438e9b1bcf232ce30da8b9efa41a3ee32d40873c2f0f",
+    "packages/v2/pricing.ts": "f0fd68c5e6f7e0127c052c966bbd0cc6dd142371eb11f8ddd8e07c53fb9cef14",
+    "packages/v2/sectors.ts": "05287bbf93ed66a35e61f6e7466b4522ef3a0a523b937cc190cbd224feb6c5ee",
+    "packages/v4/catalogue.ts": "afe8a685513423af4ceb71cae2377c8b759f569179d9bc602e58b16725a35233",
+    "packages/v4/workflows.ts": "8a2ae172c10dd09b7d5aa7c528488f95faa44abf859d3783088170ebf2f24a7a",
+    "packages/validation/index.ts": "789c47cd0a2fa778d6ca7fad2ce3a01967de52b9ab08dd03991d16e65c90c2d9",
+    "packages/validation/wa-bonds.ts": "192efcaf36f4cf7420c0e34e4feab68e160c411fc26a624302da694794d69136",
+    "packages/wa-residential/docusign-sandbox.ts": "c2848c571183394bbcde6d14c52fd6675b5a2fa02498172ac5bb5961c99dd422",
+    "packages/wa-residential/form-specifications.ts": "918ca25b6b6a6dcd871a96c4739ddcb01bbcccb9813c8ced801b2402d1d19a9d",
+    "packages/wa-residential/form1aa-official-map.ts": "512d8bca5ec2cb67480bfbce1029d1b75c77e1607571f37a07dd47232c7a26d3",
+    "packages/wa-residential/form1aa.ts": "c07e94f09fd2f2c70532edd62e78cd6f927f34fd011a9515ee502b52a5650221",
+    "packages/wa-residential/forms.ts": "45c928925d2e93700ced6f8a9317a8b85d52c92580f22ba2c10671b16367f42c",
+    "packages/wa-residential/rollout.ts": "243858faa6552d19d881205dfe1f366e39993304ef1e1a90e80d8e895323bb47",
+    "packages/wa-residential/rules.ts": "21c223d8f85b94a83f1ed36d9b9e3210804e0f6fb5b34cc1b6ea48c8da112ed0"
+  }
+}
