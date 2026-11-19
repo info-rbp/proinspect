@@ -9,7 +9,7 @@ Source: protected main `15382bea37d05b0a9533b040e6d79591a7883442`; migration bra
 
 `cloudflare-baseline.json` records the read-only live inspection: 70 binding names/types, boolean flag values, deployment IDs/traffic and schedules. Secret values and nonboolean configuration values were not retrieved into this record. Deployment `ca709ef1-c0ac-4aa2-a693-cdc8b9078de3` sends 100% to Worker version `0df4d2f8-b582-4abf-98ae-73ae6ad7c3e6`. Existing D1, R2, Durable Object, scanner, payment settings and DNS remain untouched. No customer queries, object listing, database export, or secret access was needed.
 
-Google access was renewed interactively. The project is active, billing enabled, billing currency AUD. Initial metadata inventory found no SQL instances, buckets, service accounts, or workload identity pools; several required APIs were disabled. After enabling foundation APIs, Run services, registries, secrets and Sydney Tasks/Scheduler lists were empty. The project was not assumed globally empty: other enabled products such as BigQuery were not exhaustively inventoried. No existing resource is imported or replaced.
+Google access was renewed interactively. The project is active, billing enabled, billing currency AUD. Initial metadata inventory found no SQL instances, buckets, service accounts, or workload identity pools; several required APIs were disabled. After enabling foundation APIs, Run services, registries, secrets and Sydney Tasks/Scheduler lists were empty. A subsequent cross-project-type Cloud Asset inventory returned only service registrations, project/billing metadata, and the new foundation resources (including a Google-created default Compute service account with no project role). The asset index can lag and covers supported asset types; it is not proof that every external dependency is absent. No existing resource is imported or replaced.
 
 ## Implemented architecture
 
@@ -22,7 +22,7 @@ Terraform has separate bootstrap and foundation states. Bootstrap owns required 
 | Disabled operations | Authentication, booking, payments, customer APIs, forms and background application processing return 503/405 before dispatch |
 | Storage | Separate ordinary/restricted buckets per environment; uniform access, enforced public-access prevention, versioning, no force destroy |
 | Secrets | Empty per-environment encryption secret containers; no versions, application credentials or secret-access grants |
-| Background | Separate queues: one concurrent dispatch, one dispatch/second, three attempts/300-second retry window; schedules retain UTC `*/2 * * * *` and `0 1 * * *`, paused, targeting only no-op proof |
+| Background | Separate queues: one concurrent dispatch, one dispatch/second, three attempts with bounded backoff; schedules retain UTC `*/2 * * * *` and `0 1 * * *`, paused, targeting only no-op proof |
 | Identity | Runtime accounts have no project roles; deploy accounts can update/invoke only their existing service, act as only their runtime account and write only their image repository |
 | CI trust | GitHub OIDC, immutable repository/owner IDs, exact migration branch, exact workflow and push events; environment subject binds dev/staging independently; no stored Google key |
 | Logs | Structured event/status/duration only; no path, query, payload or credentials. Google-managed request logs remain platform metadata; use synthetic requests only |

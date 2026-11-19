@@ -68,5 +68,13 @@
     "cloud_tasks_sydney": 0,
     "cloud_scheduler_sydney": 0
   },
-  "scope_limit": "Metadata only. BigQuery and other unrelated products not exhaustively inventoried."
+  "scope_limit": "Cloud Asset supports indexed resource types and may lag; no resource contents or customer records read.",
+  "cloud_asset_types_after_bootstrap": {
+    "serviceusage.googleapis.com/Service": 35,
+    "artifactregistry.googleapis.com/Repository": 2,
+    "iam.googleapis.com/ServiceAccount": 2,
+    "storage.googleapis.com/Bucket": 2,
+    "cloudbilling.googleapis.com/ProjectBillingInfo": 1,
+    "cloudresourcemanager.googleapis.com/Project": 1
+  }
 }

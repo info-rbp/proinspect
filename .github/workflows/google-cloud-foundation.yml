@@ -2,6 +2,7 @@ name: Google Cloud foundation
 on:
   push:
     branches: [migration/google-cloud-foundation]
+    paths-ignore: ['docs/**']
   pull_request:
     paths:
       - 'infra/gcp/**'
@@ -55,6 +56,15 @@ jobs:
           terraform -chdir=infra/gcp/foundation validate
           terraform -chdir=infra/gcp/foundation test
       - run: docker build -f apps/platform/node/Dockerfile -t proinspect-foundation:${{ github.sha }} .
+      - name: Verify the built container actually starts
+        run: |
+          docker run -d --name foundation-proof -p 127.0.0.1:18082:8080 -e FOUNDATION_ENV=dev -e BUILD_SHA=$GITHUB_SHA proinspect-foundation:$GITHUB_SHA
+          curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:18082/healthz
+          curl --fail --output /tmp/proinspect-foundation-about.html http://127.0.0.1:18082/about
+          grep -q ProInspect /tmp/proinspect-foundation-about.html
+      - name: Stop synthetic container
+        if: always()
+        run: docker rm -f foundation-proof || true
   deploy:
     needs: verify
     if: github.event_name == 'push' && github.ref == 'refs/heads/migration/google-cloud-foundation' && vars.GCP_FOUNDATION_READY == 'true'

@@ -129,13 +129,28 @@ resource "google_cloud_tasks_queue" "events" {
   for_each = local.environments
   name     = "proinspect-migration-${each.key}-events"
   location = local.region
+  http_target {
+    http_method = "POST"
+    uri_override {
+      scheme                    = "HTTPS"
+      host                      = trimprefix(google_cloud_run_v2_service.proof[each.key].uri, "https://")
+      port                      = "443"
+      uri_override_enforce_mode = "ALWAYS"
+      path_override { path = "/internal/proof" }
+      query_override { query_params = "" }
+    }
+    oidc_token {
+      service_account_email = google_service_account.invoker[each.key].email
+      audience              = google_cloud_run_v2_service.proof[each.key].uri
+    }
+  }
   rate_limits {
     max_dispatches_per_second = 1
     max_concurrent_dispatches = 1
   }
   retry_config {
     max_attempts       = 3
-    max_retry_duration = "300s"
+    max_retry_duration = "0s"
     min_backoff        = "10s"
     max_backoff        = "60s"
     max_doublings      = 2

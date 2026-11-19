@@ -7,7 +7,7 @@ locals {
   project  = "proinspect-property-services"
   region   = "australia-southeast1"
   labels   = { application = "proinspect", purpose = "migration-foundation", environment = "nonproduction" }
-  services = toset(["run.googleapis.com", "artifactregistry.googleapis.com", "cloudbuild.googleapis.com", "cloudtasks.googleapis.com", "cloudscheduler.googleapis.com", "secretmanager.googleapis.com", "iam.googleapis.com", "iamcredentials.googleapis.com", "sts.googleapis.com", "logging.googleapis.com", "monitoring.googleapis.com", "billingbudgets.googleapis.com"])
+  services = toset(["run.googleapis.com", "artifactregistry.googleapis.com", "cloudbuild.googleapis.com", "cloudtasks.googleapis.com", "cloudscheduler.googleapis.com", "secretmanager.googleapis.com", "iam.googleapis.com", "iamcredentials.googleapis.com", "sts.googleapis.com", "logging.googleapis.com", "monitoring.googleapis.com", "billingbudgets.googleapis.com", "cloudasset.googleapis.com"])
 }
 resource "google_project_service" "foundation" {
   for_each           = local.services
