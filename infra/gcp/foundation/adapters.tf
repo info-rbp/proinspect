@@ -22,3 +22,11 @@ resource "google_cloud_tasks_queue_iam_member" "runtime_enqueue" {
   role     = "roles/cloudtasks.enqueuer"
   member   = "serviceAccount:${google_service_account.runtime[each.key].email}"
 }
+
+# Cloud Tasks authorizes the enqueuer against the OIDC identity set on the queue.
+resource "google_service_account_iam_member" "runtime_task_identity" {
+  for_each           = local.environments
+  service_account_id = google_service_account.invoker[each.key].name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.runtime[each.key].email}"
+}

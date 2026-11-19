@@ -1,5 +1,6 @@
 import {createRequestListener} from '@remix-run/node-fetch-server';
 import {platform, reserveBookingRequest} from '../../build/google/domain.mjs';
+import stagingFlags from '../../build/google/staging-flags.json' with {type:'json'};
 import {checkBindings, eventIdValid} from './bindings.mjs';
 
 function execution() {
@@ -10,7 +11,8 @@ function execution() {
   };
 }
 export function applicationEnv(db, cloud, key, source) {
-  const env = {APP_ENV:'staging', APP_ORIGIN:cloud.APP_ORIGIN, BUILD_SHA:source, DB:db, DATA_ENCRYPTION_KEY:key,
+  const env = {...stagingFlags, APP_ENV:'staging', APP_ORIGIN:cloud.APP_ORIGIN, MARKETING_ORIGIN:cloud.APP_ORIGIN,
+    BUILD_SHA:source, DB:db, DATA_ENCRYPTION_KEY:key,
     DOCUMENTS:cloud.DOCUMENTS, RESTRICTED_DOCUMENTS:cloud.RESTRICTED_DOCUMENTS, EVENTS:cloud.EVENTS};
   if (process.env.GCP_PRIVATE_SCANNER_ENABLED === 'true') env.PRIVATE_DOCUMENT_SCANNER = cloud.privateScanner;
   env.SCHEDULER = {

@@ -1,5 +1,7 @@
 // Bundle the same Worker entry and reuse the exact runtimeContext from the React Router build.
 import {build} from 'esbuild';
+import {readFile, writeFile} from 'node:fs/promises';
+import ts from 'typescript';
 const compiled = '../server/index.js';
 await build({
   entryPoints: ['apps/platform/node/domain-entry.ts'], bundle:true, platform:'node', format:'esm',
@@ -14,3 +16,11 @@ await build({
     builder.onResolve({filter:/^platform:built-context$/}, () => ({path:compiled,external:true}));
   }}]
 });
+// Carry only the checked-in staging boolean gates into either Google environment.
+// Provider credentials, identifiers and Cloudflare origins never enter this binding.
+const wranglerPath = 'apps/platform/wrangler.jsonc';
+const {config, error} = ts.parseConfigFileTextToJson(wranglerPath, await readFile(wranglerPath, 'utf8'));
+if (error) throw Error('Cannot read staged release gates from the platform configuration');
+const gates = Object.fromEntries(Object.entries(config.env.staging.vars)
+  .filter(([name, value]) => /_(ENABLED|READY|APPROVED)$/.test(name) && ['true','false'].includes(value)));
+await writeFile('apps/platform/build/google/staging-flags.json', JSON.stringify(gates));

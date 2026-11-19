@@ -7,6 +7,17 @@ import {documentBucket} from './storage.mjs';
 const project = 'proinspect-property-services', region = 'australia-southeast1';
 const stages = new Set(['dev','staging']);
 export const eventIdValid = id => typeof id === 'string' && /^[\w:.-]{1,250}$/.test(id);
+export function privateScannerBinding(origin, authorization, send = fetch) {
+  return {async fetch(input, init) {
+    const request = new Request(input, init);
+    const health = request.url === 'https://private-scanner/health' && request.method === 'GET';
+    const scan = request.url === 'https://private-scanner/scan' && request.method === 'POST';
+    if (!health && !scan) throw Error('Invalid scanner target');
+    const outbound = new Request(origin + (health ? '/health' : '/scan'), request);
+    outbound.headers.set('Authorization', await authorization());
+    return send(outbound, {redirect:'error'});
+  }};
+}
 export function cloudBindings(stage) {
   if (!stages.has(stage)) throw Error('Invalid cloud environment');
   const storage = new Storage({projectId:project});
@@ -31,14 +42,10 @@ export function cloudBindings(stage) {
     }},
     async checkQueue() { await enqueue({probe: 'migration-adapter-v1'}); },
     // Enable this binding only with a separately released scanner and its public verification key.
-    privateScanner: { async fetch(input, init) {
-      if (String(input) !== 'https://private-scanner/scan' || init?.method !== 'POST') throw Error('Invalid scanner target');
+    privateScanner: privateScannerBinding(scannerUrl, async () => {
       const client = await auth.getIdTokenClient(scannerUrl);
-      const headers = new Headers(init.headers);
-      const identityHeaders = await client.getRequestHeaders();
-      headers.set('Authorization', identityHeaders.get('Authorization'));
-      return fetch(scannerUrl + '/scan', {...init, headers, redirect:'error'});
-    }},
+      return (await client.getRequestHeaders()).get('Authorization');
+    }),
     async close() { await tasks.close(); }
   };
 }
@@ -84,8 +91,10 @@ export async function checkBindings(bindings, key) {
     operation = 'task';
     await bindings.checkQueue();
   } catch (error) {
+    const permission = /\b(?:iam\.serviceAccounts|cloudtasks\.tasks|serviceusage\.services)\.[A-Za-z]+\b/
+      .exec(String(error?.details ?? error?.message ?? ''))?.[0];
     console.error(JSON.stringify({severity:'ERROR', event:'migration.adapter.failed', operation,
-      status:Number.isInteger(error?.code) ? error.code : null}));
+      status:Number.isInteger(error?.code) ? error.code : null, permission}));
     throw error;
   }
 }

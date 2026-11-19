@@ -143,7 +143,7 @@ resource "google_storage_bucket" "documents" {
   }
   lifecycle { prevent_destroy = true }
 }
-# Empty containers only: no copied, generated, or Terraform-managed key material.
+# Terraform owns secret metadata. Synthetic key versions are initialized directly in Secret Manager.
 resource "google_secret_manager_secret" "encryption" {
   for_each  = local.environments
   secret_id = "proinspect-migration-${each.key}-data-encryption-key"

@@ -8,7 +8,8 @@ import pg from 'pg';
 import {applyMigrations} from '../../apps/platform/node/google/migrations.mjs';
 import {createDatabase,poolOptions} from '../../apps/platform/node/google/postgres.mjs';
 import {postgresQuery} from '../../apps/platform/node/google/sql.mjs';
-import {googleApplication} from '../../apps/platform/node/google/application.mjs';
+import {applicationEnv, googleApplication} from '../../apps/platform/node/google/application.mjs';
+import {privateScannerBinding} from '../../apps/platform/node/google/bindings.mjs';
 import {sourceQueries} from './source-queries.mjs';
 
 const url = new URL(process.env.PHASE2_DATABASE_URL);
@@ -154,6 +155,34 @@ test('Node invokes original React Router, API, scheduler and queue handlers with
   assert.equal((await request('/internal/jobs/events',{method:'POST',body:'{}'})).status,400);
 });
 
+test('Google applies staging release gates and preserves both signed scanner transport paths',async()=>{
+  const {default:ts} = await import('typescript');
+  const file = 'apps/platform/wrangler.jsonc';
+  const {config} = ts.parseConfigFileTextToJson(file, readFileSync(file,'utf8'));
+  const env = applicationEnv(db,{APP_ORIGIN:'https://stage.invalid'},'synthetic','f'.repeat(40));
+  for (const [name,value] of Object.entries(config.env.staging.vars)) {
+    if (value === 'true' || value === 'false') assert.equal(env[name], value, name);
+  }
+  assert.equal(env.STRIPE_ACCOUNT_ID, undefined);
+  assert.equal(env.PRIVATE_DOCUMENT_SCANNER, undefined);
+  const origin = 'https://scanner.invalid';
+  const seen = [];
+  const binding = privateScannerBinding(origin, async ()=>'Bearer synthetic', async (request,options)=>{
+    seen.push([request.url,request.method,request.headers.get('Authorization'),
+      request.headers.get('X-ProInspect-Scan-Nonce'),await request.text(),options.redirect]);
+    return new Response('synthetic-signed-reply');
+  });
+  const headers = {'X-ProInspect-Scan-Nonce':'synthetic-nonce'};
+  await binding.fetch('https://private-scanner/health',{headers});
+  const response = await binding.fetch('https://private-scanner/scan',{method:'POST',headers,body:'synthetic'});
+  assert.equal(await response.text(),'synthetic-signed-reply');
+  assert.deepEqual(seen,[
+    [origin+'/health','GET','Bearer synthetic','synthetic-nonce','','error'],
+    [origin+'/scan','POST','Bearer synthetic','synthetic-nonce','synthetic','error']
+  ]);
+  await assert.rejects(binding.fetch('https://elsewhere.invalid/health'));
+});
+
 test('PostgreSQL batches roll back stale writes and preserve null-safe and parameter semantics',async()=>{
   const sql=(text,...args)=>db.prepare(text).bind(...args);
   const id='pi_fixture';
@@ -174,7 +203,6 @@ test('the registered-owner booking and signed settlement journey runs on real Po
   const isolated=new pg.Pool({...poolOptions,connectionString:url.href.replace(url.pathname,'/'+name)});
   try {
     await applyMigrations(isolated);
-    const {applicationEnv}=await import('../../apps/platform/node/google/application.mjs');
     const {platform}=await import('../../apps/platform/build/google/domain.mjs');
     const {registeredBookingJourney,secret}=await import('../runtime/registered-booking-journey.mjs');
     const env=applicationEnv(createDatabase(isolated),{APP_ORIGIN:'http://localhost'},Buffer.alloc(32,9).toString('base64'),'3'.repeat(40));
