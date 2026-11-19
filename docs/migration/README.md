@@ -3,6 +3,8 @@
 Target: `proinspect-property-services` (project number `101236528395`), Sydney `australia-southeast1`.
 Source: protected main `15382bea37d05b0a9533b040e6d79591a7883442`; migration branch only. PR #113 is already merged, superseding the prior plan's baseline. This foundation is an isolated proof, not an operational migration or a production release.
 
+See the [delivery report](DELIVERY.md) for deployed services, exact references, completed checks and remaining migration work.
+
 ## Verified source and production baseline
 
 `source-inventory.json` is generated from the exact Git commit by `node scripts/migration/inventory.mjs`. It includes every application/package manifest, 62 migration names, file SHA-256 hashes, and file/line references for D1, SQL dialect, storage, scheduling, crypto, and flags. `--check` verifies reproducibility. It finds 111 D1-dependent files (2,174 matching lines), 78 files with batches (346 matching lines), and 85 files with SQLite-specific patterns (980 matching lines). These are static pattern counts, not distinct SQL statements or a completeness proof for runtime behavior.

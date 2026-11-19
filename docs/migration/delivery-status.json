@@ -1,0 +1,329 @@
+{
+  "recorded_at_utc": "2026-11-19T12:15:15.435273+00:00",
+  "status": "isolated_foundation_deployed_and_verified",
+  "project_id": "proinspect-property-services",
+  "project_number": "101236528395",
+  "region": "australia-southeast1",
+  "repository": "info-rbp/proinspect",
+  "branch": "migration/google-cloud-foundation",
+  "protected_main_base_and_final_observed": "15382bea37d05b0a9533b040e6d79591a7883442",
+  "deployed_implementation_commit": "a0d6ba05a3ff2365777c9e3e4d2fa5d284b6c9fd",
+  "documentation_note": "A documentation-only handover commit follows this tested implementation; no merge or production release.",
+  "ci": {
+    "id": 44521118781,
+    "source": "a0d6ba05a3ff2365777c9e3e4d2fa5d284b6c9fd",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/info-rbp/proinspect/actions/runs/44521118781",
+    "created_at": "2026-11-19T12:08:29Z",
+    "updated_at": "2026-11-19T12:13:47Z"
+  },
+  "github_setup": {
+    "dev": {
+      "name": "gcp-dev",
+      "id": 27853000204,
+      "deployment_branch_policy": {
+        "protected_branches": false,
+        "custom_branch_policies": true
+      },
+      "branch_policies": [
+        {
+          "id": 67407051,
+          "name": "migration/google-cloud-foundation",
+          "type": "branch"
+        }
+      ]
+    },
+    "staging": {
+      "name": "gcp-staging",
+      "id": 27853016378,
+      "deployment_branch_policy": {
+        "protected_branches": false,
+        "custom_branch_policies": true
+      },
+      "branch_policies": [
+        {
+          "id": 67407091,
+          "name": "migration/google-cloud-foundation",
+          "type": "branch"
+        }
+      ]
+    },
+    "ready_variable": {
+      "name": "GCP_FOUNDATION_READY",
+      "value": "true"
+    }
+  },
+  "services": [
+    {
+      "environment": "dev",
+      "service": "proinspect-migration-dev",
+      "url": "https://proinspect-migration-dev-kq42xqbxpq-ts.a.run.app",
+      "ready_revision": "proinspect-migration-dev-00003-2l8",
+      "image": "australia-southeast1-docker.pkg.dev/proinspect-property-services/proinspect-migration-dev/platform@sha256:11d5d49eecfbd50de303a1801a6ab7aaecd96492937681d1abe39452727bab9c",
+      "source": "a0d6ba05a3ff2365777c9e3e4d2fa5d284b6c9fd",
+      "runtime_identity": "pi-mig-dev-runtime@proinspect-property-services.iam.gserviceaccount.com",
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "proinspect-migration-dev-00003-2l8"
+        }
+      ]
+    },
+    {
+      "environment": "staging",
+      "service": "proinspect-migration-staging",
+      "url": "https://proinspect-migration-staging-kq42xqbxpq-ts.a.run.app",
+      "ready_revision": "proinspect-migration-staging-00003-hpx",
+      "image": "australia-southeast1-docker.pkg.dev/proinspect-property-services/proinspect-migration-staging/platform@sha256:11d5d49eecfbd50de303a1801a6ab7aaecd96492937681d1abe39452727bab9c",
+      "source": "a0d6ba05a3ff2365777c9e3e4d2fa5d284b6c9fd",
+      "runtime_identity": "pi-mig-staging-runtime@proinspect-property-services.iam.gserviceaccount.com",
+      "traffic": [
+        {
+          "latestRevision": true,
+          "percent": 100,
+          "revisionName": "proinspect-migration-staging-00003-hpx"
+        }
+      ]
+    }
+  ],
+  "terraform": {
+    "managed_resources": 58,
+    "bootstrap_plan": "no_changes",
+    "foundation_plan": "no_changes",
+    "state_bucket": "proinspect-property-services-migration-tfstate",
+    "state_prefixes": [
+      "bootstrap",
+      "foundation"
+    ],
+    "exact_resource_ids": "provisioned-resources.json"
+  },
+  "resource_counts": {
+    "services": 38,
+    "assets": 70,
+    "run": 2,
+    "sql": 0,
+    "buckets": 6,
+    "secrets": 2,
+    "accounts": 8,
+    "registry": 2,
+    "tasks": 2,
+    "scheduler": 4,
+    "pools": 1
+  },
+  "sql_instances_created": 0,
+  "schedules": [
+    {
+      "name": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-dev-outbox",
+      "schedule": "*/2 * * * *",
+      "state": "PAUSED",
+      "timeZone": "Etc/UTC"
+    },
+    {
+      "name": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-staging-outbox",
+      "schedule": "*/2 * * * *",
+      "state": "PAUSED",
+      "timeZone": "Etc/UTC"
+    },
+    {
+      "name": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-dev-daily",
+      "schedule": "0 1 * * *",
+      "state": "PAUSED",
+      "timeZone": "Etc/UTC"
+    },
+    {
+      "name": "projects/proinspect-property-services/locations/australia-southeast1/jobs/proinspect-migration-staging-daily",
+      "schedule": "0 1 * * *",
+      "state": "PAUSED",
+      "timeZone": "Etc/UTC"
+    }
+  ],
+  "access_checks": {
+    "private_buckets": 6,
+    "runtime_project_roles": [],
+    "public_invoker_grants": false,
+    "secret_versions": 0
+  },
+  "initial_google_cloud_build": {
+    "finishTime": "2026-11-19T11:43:50.765848Z",
+    "id": "b55cf627-4c20-4f54-95c9-17ac239097c2",
+    "results": {
+      "images": [
+        {
+          "artifactRegistryPackage": "projects/proinspect-property-services/locations/australia-southeast1/repositories/proinspect-migration-dev/packages/platform/versions/sha256:ecf204f0b4ad68cb86c82252097baf3d4e31edabec1d7709d8ded2f7253932c6",
+          "digest": "sha256:ecf204f0b4ad68cb86c82252097baf3d4e31edabec1d7709d8ded2f7253932c6",
+          "name": "australia-southeast1-docker.pkg.dev/proinspect-property-services/proinspect-migration-dev/platform:e528df09237ca9680eae75c80a919350ed26e345",
+          "pushTiming": {
+            "endTime": "2026-11-19T11:43:50.562035877Z",
+            "startTime": "2026-11-19T11:43:07.184890196Z"
+          }
+        }
+      ]
+    },
+    "status": "SUCCESS"
+  },
+  "validation": {
+    "existing_repository_check": {
+      "command": "pnpm check",
+      "passed": true,
+      "node_tests": 365,
+      "python_tests": 86,
+      "includes": "typecheck, handbook checks, Cloudflare platform/marketing/scanner builds",
+      "scope_note": "Ran on the initial foundation implementation; subsequent server health, CI and Terraform fixes were validated by final CI."
+    },
+    "final_ci_checks": [
+      "locked dependency install",
+      "typecheck",
+      "exact-source inventory reproducibility",
+      "Node React Router build",
+      "Node route isolation and encryption fixture: 2 passed",
+      "PostgreSQL 17 transaction spike: 10 passed",
+      "Terraform validation for both states",
+      "Terraform mocked guardrail test: 1 passed, 5 assertions",
+      "build and start exact container",
+      "sequential dev/staging digest deployments",
+      "20 hosted checks including anonymous rejection"
+    ],
+    "local_postgres": {
+      "version_major": 18,
+      "test_groups_passed": 10,
+      "data": "synthetic disposable loopback cluster; removed after test"
+    },
+    "hosted": [
+      {
+        "environment": "dev",
+        "url": "https://proinspect-migration-dev-kq42xqbxpq-ts.a.run.app",
+        "source": "a0d6ba05a3ff2365777c9e3e4d2fa5d284b6c9fd",
+        "checks": 10,
+        "passed": true,
+        "anonymousDenied": true
+      },
+      {
+        "environment": "staging",
+        "url": "https://proinspect-migration-staging-kq42xqbxpq-ts.a.run.app",
+        "source": "a0d6ba05a3ff2365777c9e3e4d2fa5d284b6c9fd",
+        "checks": 10,
+        "passed": true,
+        "anonymousDenied": true
+      }
+    ],
+    "background_delivery_evidence": [
+      {
+        "httpRequest": {
+          "status": 204,
+          "userAgent": "Google-Cloud-Tasks"
+        },
+        "resource": {
+          "labels": {
+            "service_name": "proinspect-migration-staging"
+          }
+        },
+        "timestamp": "2026-11-19T11:51:17.451179Z"
+      },
+      {
+        "httpRequest": {
+          "status": 204,
+          "userAgent": "Google-Cloud-Scheduler"
+        },
+        "resource": {
+          "labels": {
+            "service_name": "proinspect-migration-staging"
+          }
+        },
+        "timestamp": "2026-11-19T11:51:15.217507Z"
+      },
+      {
+        "httpRequest": {
+          "status": 204,
+          "userAgent": "Google-Cloud-Scheduler"
+        },
+        "resource": {
+          "labels": {
+            "service_name": "proinspect-migration-dev"
+          }
+        },
+        "timestamp": "2026-11-19T11:51:09.136252Z"
+      },
+      {
+        "httpRequest": {
+          "status": 204,
+          "userAgent": "Google-Cloud-Tasks"
+        },
+        "resource": {
+          "labels": {
+            "service_name": "proinspect-migration-dev"
+          }
+        },
+        "timestamp": "2026-11-19T11:49:53.665983Z"
+      }
+    ],
+    "background_note": "One harmless task and one manual daily Scheduler dispatch per environment returned 204. Daily schedules were briefly resumed for their manual check, then paused; all four schedules are paused."
+  },
+  "cloudflare_final_read_only_verification": {
+    "checked_at": "2026-11-19T12:06:48.789Z",
+    "source": "15382bea37d05b0a9533b040e6d79591a7883442",
+    "deployment_id": "ca709ef1-c0ac-4aa2-a693-cdc8b9078de3",
+    "traffic": [
+      {
+        "version_id": "0df4d2f8-b582-4abf-98ae-73ae6ad7c3e6",
+        "percentage": 100
+      },
+      {
+        "version_id": "22daabdb-4879-496e-817c-b80d4534dcf6",
+        "percentage": 0
+      }
+    ],
+    "binding_names_types_unchanged": 70,
+    "boolean_flags_unchanged": true
+  },
+  "cost_controls": {
+    "budget_currency": "AUD",
+    "monthly_budget_alert": 40,
+    "thresholds": [
+      0.5,
+      0.9,
+      1.0
+    ],
+    "hard_spending_cap": false,
+    "min_instances_per_environment": 0,
+    "configured_max_instances_per_environment": 1,
+    "cpu_per_instance": 1,
+    "memory_mib_per_instance": 512,
+    "request_concurrency": 8,
+    "task_dispatches_per_second": 1,
+    "task_concurrency": 1,
+    "task_max_attempts": 3,
+    "low_traffic_monthly_planning_usd": "1-8 before tax, discounts, shared free tiers and AUD conversion",
+    "cloud_sql_planned_only_extra_monthly_usd": "15-30 provisional; Sydney AUD SKU quote and opt-in required",
+    "costed_design": "README.md#costed-design"
+  },
+  "resolved_issues": [
+    "Initial Google user credentials needed renewal; user renewed access.",
+    "Initial Scheduler regional tenant race and billing API quota attribution were corrected; all planned resources were applied.",
+    "External healthz path returned Google frontend 404; external smoke now uses health, internal probes retain healthz.",
+    "Run 44518237179: startup connection reset; bounded retry added to container check.",
+    "Runs 44518681262 and 44519126047: GitHub immutable OIDC subject mismatch / IAM propagation; exact environment subjects corrected without broadening permissions. Run 44519996327 passed both deployments.",
+    "Cloud Run deployment-client metadata produced a harmless Terraform diff; those two tool-owned metadata fields are now ignored."
+  ],
+  "remaining_work_before_operational_migration": [
+    "Port all 62 migrations and domain SQL; test complete booking/finance/authorization workflows. The spike uses simplified source-derived transactions, not the production functions.",
+    "Implement PostgreSQL, Cloud Storage, Tasks/outbox and scheduler adapters, private scanner and external integration paths.",
+    "Provision Cloud SQL only after capacity, private network, backup/restore, price and opt-in review; no instance was created.",
+    "Audit every encryption/signing contract and design secure key continuity; the fixture covers the existing v1 AES-GCM envelope only.",
+    "Complete operational parity, load, recovery and cutover acceptance. This proof deliberately blocks customer, authentication and payment routes.",
+    "Monitoring error policy has no notification channel. Budget warnings are not a spending cap. Dev/staging share a project but have separate services, identities, buckets, queues and empty secret containers."
+  ],
+  "unchanged_by_this_work": [
+    "Cloudflare production configuration and traffic",
+    "DNS",
+    "active payment settings",
+    "release flags",
+    "production encryption code and keys",
+    "customer records",
+    "protected main"
+  ],
+  "production_data_or_secrets_copied": false,
+  "merged": false,
+  "production_cutover": false
+}
