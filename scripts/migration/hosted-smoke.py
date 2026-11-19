@@ -50,6 +50,8 @@ assert request('/internal/proof',method='POST')[0] == 204
 if adapters:
     status, body, _ = request('/internal/adapters/check',method='POST')
     assert status == 200, ('adapter round trip', stage, status)
-    assert all(value is True for value in json.loads(body).values())
+    expected = {'storage', 'restrictedStorage', 'multipart', 'secret', 'taskSubmitted'}
+    results = json.loads(body)
+    assert set(results) == expected and all(results[name] is True for name in expected)
 print(json.dumps({'environment':stage,'url':base,'source':sha,'checks':10+int(adapters),
                   'passed':True,'anonymousDenied':True,'adapters':adapters,'sql':sql}))

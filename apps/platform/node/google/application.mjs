@@ -31,7 +31,7 @@ export function googleApplication({cloud, key, source, database}) {
       if (request.method !== 'POST') return new Response(null,{status:405});
       if (path === '/internal/adapters/check') {
         await checkBindings(cloud, key);
-        return Response.json({storage:true, restrictedStorage:true, secret:true, taskSubmitted:true});
+        return Response.json({storage:true, restrictedStorage:true, multipart:true, secret:true, taskSubmitted:true});
       }
       if (path === '/internal/jobs/events') {
         const text = await request.text();
@@ -62,12 +62,20 @@ export function googleApplication({cloud, key, source, database}) {
       return new Response(null,{status:404});
     }
     if (!database) return new Response(null,{status:503});
+    // Google IAM protects this service, but does not supply a Cloudflare client address.
+    if (request.headers.has('CF-Connecting-IP')) {
+      const headers = new Headers(request.headers);
+      headers.delete('CF-Connecting-IP');
+      request = new Request(request, {headers});
+    }
     const ctx=execution();
     const response=await platform.fetch(request, await env(), ctx);
     await ctx.drain();
-    response.headers.set('X-Robots-Tag','noindex, nofollow');
-    return response;
+    const headers = new Headers(response.headers);
+    headers.set('X-Robots-Tag','noindex, nofollow');
+    return new Response(response.body, {status:response.status, statusText:response.statusText, headers});
   }
-  return {handle, listener:createRequestListener(handle, {host:new URL(cloud.APP_ORIGIN).host, protocol:'https',
+  const origin = new URL(cloud.APP_ORIGIN);
+  return {handle, listener:createRequestListener(handle, {host:origin.host, protocol:origin.protocol,
     onError() { console.error(JSON.stringify({severity:'ERROR',event:'google.application.error'})); return new Response(null,{status:503}); }})};
 }

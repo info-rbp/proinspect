@@ -2,6 +2,8 @@ import {after,before,test} from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
+import {createServer} from 'node:http';
+import {once} from 'node:events';
 import pg from 'pg';
 import {applyMigrations} from '../../apps/platform/node/google/migrations.mjs';
 import {createDatabase,poolOptions} from '../../apps/platform/node/google/postgres.mjs';
@@ -131,7 +133,16 @@ test('real SQLite domain fixtures produce equivalent PostgreSQL decisions and qu
 test('Node invokes original React Router, API, scheduler and queue handlers with the PostgreSQL adapter',async()=>{
   const key = Buffer.alloc(32, 17).toString('base64');
   const cloud={APP_ORIGIN:'https://test.invalid',EVENTS:{async send(){throw Error('Unexpected synthetic mail');}}};
-  const {handle}=googleApplication({cloud,key,source:'f'.repeat(40),database:async()=>({db})});
+  const {handle,listener}=googleApplication({cloud,key,source:'f'.repeat(40),database:async()=>({db})});
+  const server = createServer(listener).listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  try {
+    const base = 'http://127.0.0.1:' + server.address().port;
+    const delivered = await fetch(base+'/internal/jobs/events', {method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify({probe:'migration-adapter-v1'})});
+    assert.equal(delivered.status, 204);
+    assert.equal((await fetch(base+'/api/catalogue')).status, 200);
+  } finally { await new Promise(resolve => server.close(resolve)); }
   const request=(path,options)=>handle(new Request(cloud.APP_ORIGIN+path,options));
   assert.equal((await request('/about')).status,200);
   const catalogue=await request('/api/catalogue');

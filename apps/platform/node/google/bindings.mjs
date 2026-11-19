@@ -43,30 +43,49 @@ export function cloudBindings(stage) {
   };
 }
 
-// Only fixed, synthetic bytes and generated object names are used by the hosted adapter check.
-export async function checkBindings(bindings, key) {
-  if (Buffer.from(key ?? '', 'base64').length !== 32) throw Error('Missing environment key');
-  for (const bucket of [bindings.DOCUMENTS, bindings.RESTRICTED_DOCUMENTS]) {
-    const name = 'migration-checks/' + randomUUID();
-    try {
-      await bucket.put(name, 'proinspect adapter', {customMetadata:{purpose:'migration-check'}});
-      const object = await bucket.get(name);
-      if (object?.customMetadata.purpose !== 'migration-check' || await object.text() !== 'proinspect adapter') {
-        throw Error('Storage verification failed');
-      }
-    } finally { await bucket.delete(name); }
-    if (await bucket.head(name)) throw Error('Storage cleanup failed');
-  }
+async function checkBucket(bucket) {
   const name = 'migration-checks/' + randomUUID();
-  const upload = await bindings.DOCUMENTS.createMultipartUpload(name, {httpMetadata:{contentType:'application/pdf'}});
+  try {
+    await bucket.put(name, 'proinspect adapter', {customMetadata:{purpose:'migration-check'}});
+    const object = await bucket.get(name);
+    if (object?.customMetadata.purpose !== 'migration-check' || await object.text() !== 'proinspect adapter') {
+      throw Error('Storage verification failed');
+    }
+  } finally { await bucket.delete(name); }
+  if (await bucket.head(name)) throw Error('Storage cleanup failed');
+}
+
+async function checkMultipart(bucket) {
+  const name = 'migration-checks/' + randomUUID();
+  const upload = await bucket.createMultipartUpload(name, {httpMetadata:{contentType:'application/pdf'}});
   try {
     const a = await upload.uploadPart(1, Buffer.from('%PDF-'));
     const b = await upload.uploadPart(2, Buffer.from('adapter'));
     const completed = await upload.complete([a,b]);
-    if (completed.size !== 12 || (await (await bindings.DOCUMENTS.get(name)).text()) !== '%PDF-adapter') {
+    if (completed.size !== 12 || (await (await bucket.get(name)).text()) !== '%PDF-adapter') {
       throw Error('Multipart verification failed');
     }
   } catch (error) { await upload.abort(); throw error; }
-  finally { await bindings.DOCUMENTS.delete(name); }
-  await bindings.checkQueue();
+  finally { await bucket.delete(name); }
+}
+
+// Limit diagnostic output to a fixed operation name and numeric SDK status. Object names,
+// request data, provider errors and keys never enter application logs.
+export async function checkBindings(bindings, key) {
+  let operation = 'secret';
+  try {
+    if (Buffer.from(key ?? '', 'base64').length !== 32) throw Error('Missing environment key');
+    operation = 'storage';
+    await checkBucket(bindings.DOCUMENTS);
+    operation = 'restrictedStorage';
+    await checkBucket(bindings.RESTRICTED_DOCUMENTS);
+    operation = 'multipart';
+    await checkMultipart(bindings.DOCUMENTS);
+    operation = 'task';
+    await bindings.checkQueue();
+  } catch (error) {
+    console.error(JSON.stringify({severity:'ERROR', event:'migration.adapter.failed', operation,
+      status:Number.isInteger(error?.code) ? error.code : null}));
+    throw error;
+  }
 }
