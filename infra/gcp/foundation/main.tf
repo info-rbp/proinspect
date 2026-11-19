@@ -101,8 +101,8 @@ resource "google_cloud_run_v2_service" "proof" {
     type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
     percent = 100
   }
-  # CI owns the tested image and source version after initial creation.
-  lifecycle { ignore_changes = [template[0].containers[0].image, template[0].containers[0].env] }
+  # CI owns the tested image, source version and deploy-client metadata after creation.
+  lifecycle { ignore_changes = [client, client_version, template[0].containers[0].image, template[0].containers[0].env] }
 }
 resource "google_storage_bucket" "documents" {
   for_each                    = local.buckets
