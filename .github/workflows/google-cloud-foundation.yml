@@ -59,9 +59,19 @@ jobs:
       - name: Verify the built container actually starts
         run: |
           docker run -d --name foundation-proof -p 127.0.0.1:18082:8080 -e FOUNDATION_ENV=dev -e BUILD_SHA=$GITHUB_SHA proinspect-foundation:$GITHUB_SHA
-          curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:18082/health
+          curl --fail --retry 20 --retry-all-errors --retry-delay 1 --retry-max-time 30 http://127.0.0.1:18082/health
           curl --fail --output /tmp/proinspect-foundation-about.html http://127.0.0.1:18082/about
           grep -q ProInspect /tmp/proinspect-foundation-about.html
+      - name: Retain the exact tested image for both environments
+        run: docker save proinspect-foundation:$GITHUB_SHA | gzip > /tmp/proinspect-foundation-image.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: foundation-image
+          path: /tmp/proinspect-foundation-image.tar.gz
+          retention-days: 1
+      - name: Diagnose synthetic container failure
+        if: failure()
+        run: docker logs --tail 20 foundation-proof || true
       - name: Stop synthetic container
         if: always()
         run: docker rm -f foundation-proof || true
@@ -88,12 +98,17 @@ jobs:
           workload_identity_provider: projects/101236528395/locations/global/workloadIdentityPools/proinspect-migration/providers/github
           service_account: pi-mig-${{ matrix.environment }}-deploy@proinspect-property-services.iam.gserviceaccount.com
       - uses: google-github-actions/setup-gcloud@v3
-      - name: Build and publish the verified nonproduction image
+      - uses: actions/download-artifact@v4
+        with:
+          name: foundation-image
+          path: /tmp/foundation-image
+      - name: Publish the exact tested nonproduction image
         run: |
           set -euo pipefail
           gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
           IMAGE="$REGION-docker.pkg.dev/$PROJECT/proinspect-migration-$ENVIRONMENT/platform:$GITHUB_SHA"
-          docker build -f apps/platform/node/Dockerfile -t "$IMAGE" .
+          docker load --input /tmp/foundation-image/proinspect-foundation-image.tar.gz
+          docker tag proinspect-foundation:$GITHUB_SHA "$IMAGE"
           docker push "$IMAGE"
           DIGEST=$(gcloud artifacts docker images describe "$IMAGE" --format='value(image_summary.digest)')
           echo "DEPLOY_IMAGE=$REGION-docker.pkg.dev/$PROJECT/proinspect-migration-$ENVIRONMENT/platform@$DIGEST" >> "$GITHUB_ENV"
