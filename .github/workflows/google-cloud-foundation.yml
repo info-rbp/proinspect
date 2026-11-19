@@ -125,6 +125,7 @@ jobs:
           service_account: pi-mig-${{ matrix.environment }}-deploy@proinspect-property-services.iam.gserviceaccount.com
           token_format: id_token
           id_token_audience: ${{ env.SERVICE_URL }}
+          id_token_include_email: true
       - name: Authenticated hosted smoke and anonymous rejection
         env:
           HOSTED_ID_TOKEN: ${{ steps.identity.outputs.id_token }}

@@ -227,7 +227,7 @@ resource "google_service_account_iam_member" "federation" {
   for_each           = local.environments
   service_account_id = google_service_account.deploy[each.key].name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/subject/repo:info-rbp/proinspect:environment:gcp-${each.key}"
+  member             = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/subject/repo:info-rbp@235419395/proinspect@1406530255:environment:gcp-${each.key}"
 }
 resource "google_monitoring_alert_policy" "errors" {
   display_name = "ProInspect migration proof 5xx"

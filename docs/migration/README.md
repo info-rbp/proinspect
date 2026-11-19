@@ -24,7 +24,7 @@ Terraform has separate bootstrap and foundation states. Bootstrap owns required 
 | Secrets | Empty per-environment encryption secret containers; no versions, application credentials or secret-access grants |
 | Background | Separate queues: one concurrent dispatch, one dispatch/second, three attempts with bounded backoff; schedules retain UTC `*/2 * * * *` and `0 1 * * *`, paused, targeting only no-op proof |
 | Identity | Runtime accounts have no project roles; deploy accounts can update/invoke only their existing service, act as only their runtime account and write only their image repository |
-| CI trust | GitHub OIDC, immutable repository/owner IDs, exact migration branch, exact workflow and push events; environment subject binds dev/staging independently; no stored Google key |
+| CI trust | GitHub OIDC, immutable repository/owner IDs, exact migration branch, exact workflow and push events; verified immutable GitHub subject prefix (`repo:info-rbp@235419395/proinspect@1406530255`) binds dev/staging independently; no stored Google key |
 | Logs | Structured event/status/duration only; no path, query, payload or credentials. Google-managed request logs remain platform metadata; use synthetic requests only |
 | Cost controls | Scale to zero, small instance limits, paused schedules, image cleanup for old untagged images, expiring build source, budget thresholds 50/90/100% |
 
