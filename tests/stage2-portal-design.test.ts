@@ -42,7 +42,9 @@ test('specialist navigation is grouped and searchable without privilege changes'
 test('Staff action centre derives real scoped work from workspace data, not synthetic metrics', () => {
   for (const label of ["Today's work", 'Bookings due', 'Reports to review', 'Open work', 'Exceptions', 'Recent activity'])
     assert.ok(overview.includes(label), 'Missing Staff section: '+label);
-  assert.match(overview, /function StaffToday\(\{ data \}: \{ data: WorkspaceData \}\)/);
+  assert.match(overview, /function StaffToday\(\{ data, reports \}: \{ data: WorkspaceData; reports: StaffReport\[\] \}\)/);
+  assert.match(overview, /if \(params.kind !== 'staff'\) return \{ staffReports: \[\] as StaffReport\[\] \}/);
+  assert.match(overview, /reports\.filter\(r => r\.status === 'submitted'\)/);
   assert.match(overview, /data\.workOrders\.filter/);
   assert.match(overview, /data\.bookings\.filter/);
   assert.match(overview, /data\.approvals\.filter/);
