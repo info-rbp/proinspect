@@ -1,10 +1,18 @@
-import { Link } from 'react-router';
+import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
+import { loadApi } from '../lib/api.server';
 import { ClientDashboard } from '../components/ClientDashboard';
 import { useWorkspace, type WorkspaceData, type RecordRow } from '../lib/workspace';
 import { PageHeading, Metric, Badge, EmptyState } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
-/** Staff-specific action centre. Counts are derived from the authorised workspace response. */
-function StaffToday({ data }: { data: WorkspaceData }) {
+type StaffReport = { status: string; id: string; work_order_reference?: string };
+export async function loader({ request, context, params }: LoaderFunctionArgs) {
+  if (params.kind !== 'staff') return { staffReports: [] as StaffReport[] };
+  const result = await loadApi(request, context,
+    '/api/w/staff/' + encodeURIComponent(String(params.scopeId)) + '/reports') as { reports?: StaffReport[] };
+  return { staffReports: result.reports ?? [] };
+}
+/** Staff-specific action centre. Counts are derived from the authorised workspace and report registers. */
+function StaffToday({ data, reports }: { data: WorkspaceData; reports: StaffReport[] }) {
   const base = data.workspace.href;
   const localDay = (value: Date) => new Intl.DateTimeFormat('en-AU', {
     timeZone: 'Australia/Perth', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -14,7 +22,7 @@ function StaffToday({ data }: { data: WorkspaceData }) {
     ['confirmed', 'scheduled'].includes(b.status) &&
     Number.isFinite(Date.parse(String(b.starts_at ?? ''))) &&
     localDay(new Date(b.starts_at)) === today);
-  const reviewOrders = data.workOrders.filter(o => ['report_pending', 'under_review', 'awaiting_review'].includes(o.status));
+  const reviewReports = reports.filter(r => r.status === 'submitted');
   const openOrders = data.workOrders.filter(o => !['completed', 'cancelled', 'closed'].includes(o.status));
   const exceptions = data.payments.filter(p => ['failed', 'payment_required'].includes(p.status)).length
     + data.approvals.filter(a => a.status === 'pending').length;
@@ -28,7 +36,7 @@ function StaffToday({ data }: { data: WorkspaceData }) {
     </PageHeading>
     <section className="grid-4 portal-summary" aria-label="Staff work summary">
       <Link className="portal-summary-link" to={base+'/bookings'}><Metric label="Bookings due" value={dueBookings.length} detail="Scheduled for today" /></Link>
-      <Link className="portal-summary-link" to={base+'/reports'}><Metric label="Reports to review" value={reviewOrders.length} detail="Awaiting review" /></Link>
+      <Link className="portal-summary-link" to={base+'/reports'}><Metric label="Reports to review" value={reviewReports.length} detail="Submitted for review" /></Link>
       <Link className="portal-summary-link" to={base+'/work-orders'}><Metric label="Open work" value={openOrders.length} detail="Active work orders" /></Link>
       <Link className="portal-summary-link" to={base+'/finance'}><Metric label="Exceptions" value={exceptions} detail="Financial and approval items" /></Link>
     </section>
@@ -63,7 +71,8 @@ function StaffToday({ data }: { data: WorkspaceData }) {
 export default function Overview() {
   const d = useWorkspace();
   const w = d.workspace;
-  if (w.kind === 'staff') return <StaffToday data={d} />;
+  const { staffReports } = useLoaderData<typeof loader>();
+  if (w.kind === 'staff') return <StaffToday data={d} reports={staffReports} />;
   if (w.kind === 'commercial-occupant') return <>
     <PageHeading eyebrow="Resident & Member / Commercial" title="My commercial premises"
       description="Your invited premises, submitted issues and current access term. Only your verified commercial occupancy is shown."/>

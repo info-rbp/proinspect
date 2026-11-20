@@ -29,7 +29,16 @@ test('Staff Today prioritises work and keeps specialist routes searchable', asyn
     await expect(nav.getByRole('link', { name: 'Browse all records' })).toBeVisible();
     await expect(nav.getByRole('link', { name: 'Booking changes' })).toHaveCount(0);
     await page.setViewportSize({width: 390, height: 844});
-    await expect(page.getByRole('button', {name: 'Open navigation'})).toBeVisible();
+    const toggle = page.getByRole('button', {name: 'Open navigation'});
+    await expect(toggle).toBeVisible();
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(nav.getByRole('button', {name: 'Close menu'})).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await toggle.click();
+    await page.getByRole('button', {name: 'Close navigation'}).click({position: {x: 385, y: 80}});
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(true);
   } finally { await context.close(); }
 });

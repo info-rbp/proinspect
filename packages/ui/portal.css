@@ -159,3 +159,41 @@
 .app-shell[data-density='compact'] .record-row{padding-block:0.42rem;}
 .app-shell[data-density='compact'] .table-wrap td,
 .app-shell[data-density='compact'] .table-wrap th{padding-block:0.48rem;}
+
+/* PR #89 reconciled with newer portal families: accessible mobile drawer and focus. */
+.app-shell .pi-sidebar-scrim,
+.app-shell .pi-mobile-menu-close { display: none; }
+@media (max-width: 800px) {
+  .app-shell .pi-sidebar-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 59;
+    width: 100vw;
+    height: 100dvh;
+    padding: 0;
+    border: 0;
+    background: rgb(10 27 44 / 58%);
+    cursor: pointer;
+  }
+  .app-shell .sidebar.open { z-index: 60; box-shadow: none; }
+  .app-shell .sidebar.open .pi-mobile-menu-close {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    min-height: 44px;
+    padding: .55rem .8rem;
+    margin: .65rem .6rem 0;
+    border: 1px solid #8fb0bf;
+    border-radius: 6px;
+    background: #29475a;
+    color: #fff;
+    font: inherit;
+    font-size: .82rem;
+    cursor: pointer;
+  }
+  .app-shell .pi-mobile-menu-close:focus-visible {
+    outline: 3px solid #d4e8e8;
+    outline-offset: 3px;
+  }
+}

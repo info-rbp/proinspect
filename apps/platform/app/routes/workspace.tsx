@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ClientServiceTabs } from '../components/ClientServiceTabs';
 import {
   Form,
@@ -27,6 +27,8 @@ export default function WorkspaceLayout() {
   const [open, setOpen] = useState(false),
     [toolSearch, setToolSearch] = useState(''),
     pending = useNavigation().state !== 'idle';
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const items: string[][] = [['', 'Overview', '']];
   items.push(['records', 'Browse all records', '']);
   const customer = ['landlord', 'property-manager', 'commercial', 'strata-manager'].includes(
@@ -141,6 +143,27 @@ export default function WorkspaceLayout() {
   ]);
   const secondary = items.filter(([path]) => !primaryPaths.includes(path));
   const pathname = useLocation().pathname;
+  const currentSection = [...primary, ...secondary]
+    .filter(([path]) => pathname === w.href + (path ? '/' + path : '') ||
+      (Boolean(path) && pathname.startsWith(w.href + '/' + path + '/')))
+    .sort(([left], [right]) => right.length - left.length)[0]?.[1] ?? 'Workspace';
+  useEffect(() => {
+    setOpen(false);
+    setToolSearch('');
+  }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', onEscape);
+    return () => document.removeEventListener('keydown', onEscape);
+  }, [open]);
   const toolGroups = MORE_TOOL_GROUPS;
   const searchText = toolSearch.trim().toLocaleLowerCase();
   const groupedTools = toolGroups.map(group => ({
@@ -155,10 +178,14 @@ export default function WorkspaceLayout() {
   return (
     <div className="app-shell" data-density={w.displayDensity ?? 'comfortable'}>
       {pending && <div className="loading-line" role="progressbar" aria-label="Loading page" />}
-      <aside className={`sidebar ${open ? 'open' : ''}`} aria-label="Workspace navigation">
+      {open && <button type="button" className="pi-sidebar-scrim" aria-label="Close navigation"
+        onClick={() => { setOpen(false); toggleRef.current?.focus(); }} />}
+      <aside id="portal-sidebar" className={`sidebar ${open ? 'open' : ''}`} aria-label="Workspace navigation">
         <Link className="brand inverse" to="/workspaces">
           ProInspect<span>PROPERTY OPERATIONS</span>
         </Link>
+        {open && <button ref={closeRef} type="button" className="pi-mobile-menu-close"
+          onClick={() => { setOpen(false); toggleRef.current?.focus(); }}>Close menu</button>}
         <div className="workspace-label">{PORTAL_FAMILIES[portalFamily(w.kind)].name} · {effectiveExperienceLabels(w).join(' · ')}</div>
         <nav className="side-nav">
           {primary.map(([path, label]) => (
@@ -197,25 +224,18 @@ export default function WorkspaceLayout() {
           <Link to={w.href+'/experience-settings'}>My portal preferences</Link>
           <Link to="/account">Account &amp; sign-in security</Link>
           <Link to="/workspaces">My ProInspect / Switch workspace →</Link>
-          {open && (
-            <button
-              className="button secondary"
-              onClick={() => setOpen(false)}
-              style={{ marginTop: 20 }}
-            >
-              Close menu
-            </button>
-          )}
         </div>
       </aside>
       <div className="app-main">
         <header className="topbar">
           <div className="actions">
             <button
+              ref={toggleRef}
               className="mobile-toggle"
               type="button"
               aria-label="Open navigation"
               aria-expanded={open}
+              aria-controls="portal-sidebar"
               onClick={() => setOpen(!open)}
             >
               <span aria-hidden="true">☰</span>
@@ -235,8 +255,12 @@ export default function WorkspaceLayout() {
             </Form>
           </div>
         </header>
-        <main id="main" className="content">
-          <nav className="portal-breadcrumb" aria-label="Breadcrumb"><Link to="/workspaces">Workspaces</Link><span aria-hidden="true">/</span><span>{PORTAL_FAMILIES[portalFamily(w.kind)].name}</span></nav>
+        <main id="main" className="content" tabIndex={-1}>
+          <nav className="portal-breadcrumb" aria-label="Breadcrumb">
+            <Link to="/workspaces">Workspaces</Link><span aria-hidden="true">/</span>
+            <Link to={w.href}>{PORTAL_FAMILIES[portalFamily(w.kind)].name}</Link>
+            <span aria-hidden="true">/</span><span aria-current="page">{currentSection}</span>
+          </nav>
           <ClientServiceTabs data={data} />
           <Outlet context={data} />
         </main>
