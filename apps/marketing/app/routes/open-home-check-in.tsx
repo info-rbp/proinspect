@@ -141,7 +141,7 @@ export default function OpenHomeCheckIn(){
           </option>)}
          </select>
          {property&&<div className="openhome-property-notice"><strong>{property.address}</strong>
-          <span>Inspection on behalf of {chosen?.agentName??sessions.find(s=>s.listingId===listingId)?.agentName}</span>
+          <span>Inspection facilitated by ProInspect for the responsible party.</span>
          </div>}
          {chosen&&!chosen.acceptingCheckIn&&<p className="openhome-hint" role="status">Arrival check-in opens 30 minutes before the session and closes 45 minutes after it ends.</p>}
          <div className="openhome-step-label"><span>02</span> Your contact details</div>

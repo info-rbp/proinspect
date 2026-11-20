@@ -15,9 +15,7 @@ test('leasing is marketing-only, with separated residential/commercial public ro
  assert.ok(site.includes('cancel'));
 });
 test('property claims distinguish ProInspect from leasing representatives',()=>{
- assert.match(handoffDisclaimer,/on behalf of/i);
- assert.match(handoffDisclaimer,/not the leasing agent/i);
- assert.match(handoffDisclaimer,/not.*landlord|landlord.*not/i);
+ assert.equal(handoffDisclaimer,"ProInspect conducts the advertised open inspection on this representative's behalf. All rental terms and applications are managed by the responsible party.");
  assert.equal(propertyUrl('residential','sample-unit'),'/properties-for-lease/residential/sample-unit');
  assert.equal(displayPrice(65000,'week'),'$650 / week');
 });
@@ -60,7 +58,7 @@ test('public listing CTAs enforce the exact applicant release gate and avoid unu
  assert.deepEqual(listingApplicationAction({...base,applicationMode:'external',applicationUrl:'https://example.test/approved',rentalReady:false}),{type:'external',href:'https://example.test/approved'});
  assert.deepEqual(listingApplicationAction({...base,applicationMode:'external',applicationUrl:'javascript:alert(1)',rentalReady:false}),{type:'interest',href:'#leasing-enquiry'});
  const page=text('apps/marketing/app/routes/leasing-property.tsx');
- assert.match(page,/releaseFeatureReady\(env,'rental'\)/);
+ assert.match(page,/rentalListingReady\(env,result.listing.slug\)/);
  assert.match(page,/leasing-gallery--single/);
  assert.match(page,/id="leasing-enquiry"/);
  assert.match(page,/id="leasing-application"/);
@@ -68,6 +66,7 @@ test('public listing CTAs enforce the exact applicant release gate and avoid unu
  assert.match(page,/Start or resume application/);
  assert.match(text('packages\/ui\/leasing.css'),/leasing-gallery--single img:first-child/);
  const server=text('apps/platform/worker/features/rental-applications.server.ts');
+ assert.match(server,/await rentalStartPage\(env,slug\)/);
  assert.match(server,/enabled:rentalEnabled\(env\)&&await releaseFeatureReady\(env,'rental'\)/);
 });
 
@@ -98,9 +97,9 @@ test('Perth inspection time conversion rejects malformed or rollover values',asy
 test('per-property readiness fails closed on provider release flags and independent approval',async()=>{
  const {residentialApplicationReadiness}=await import('../packages/marketing/leasing-operations.ts');
  const base={listingKind:'residential',listingStatus:'published',applicationMode:'proinspect',authorityReference:'AUTH-123',recipientVerifiedAt:'2026-11-01T00:00:00Z',approvalState:'approved',noticeMode:'not_used',noticeCount:0,retentionConfigured:true,
- scannerConfigured:true,handoffConfigured:true,intakeReleaseApproved:true,scannerReleaseApproved:true,handoffReleaseApproved:true};
+ managedPropertyApproved:true,scannerConfigured:true,handoffConfigured:true,intakeReleaseApproved:true,scannerReleaseApproved:true,handoffReleaseApproved:true};
  assert.equal(residentialApplicationReadiness(base).technicalReady,true);
- for(const field of ['retentionConfigured','scannerConfigured','handoffConfigured','intakeReleaseApproved','scannerReleaseApproved','handoffReleaseApproved'] as const){
+ for(const field of ['managedPropertyApproved','retentionConfigured','scannerConfigured','handoffConfigured','intakeReleaseApproved','scannerReleaseApproved','handoffReleaseApproved'] as const){
   const result=residentialApplicationReadiness({...base,[field]:false});
   assert.equal(result.technicalReady,false);
   assert.equal(result.checks.some(x=>!x.passed),true);

@@ -1,7 +1,9 @@
 import {runtimeContext} from '../../../../packages/database/context';
 import type {Env} from '../../../../packages/database/types';
 import {currentLegalDocument} from '../../../platform/worker/features/legal-acceptance.server';
+import {managedPrivacyDocument} from '../../../platform/worker/features/managed-rental-intake.server';
 import { ENGAGEMENTS } from '../../../../packages/marketing/content';
+import { CoverageLookup } from '../components/coverage-lookup';
 import { PUBLIC_LEGAL_DRAFTS, PUBLIC_LEGAL_APPROVAL, type PublicLegalKey } from '../../../../packages/marketing/legal-drafts';
 import {
   Link,
@@ -16,89 +18,49 @@ import { MarketingPageHero, MarketingSectionTitle, MarketingEditorialBlocks } fr
 
 const pages: Record<string, { title: string; intro: string; sections: Array<[string, string]> }> = {
   'how-it-works': {
-    title: 'A practical path from instruction to property record.',
-    intro: 'Start with one service or discuss a recurring arrangement.',
+    title: 'From first instruction to a dependable property routine.',
+    intro: 'Start with one task or build an ongoing property routine. We help you choose the right service and agree the details before work begins.',
     sections: [
-      [
-        '1. Choose the outcome',
-        'Explore the service catalogue or discuss the property task you need help with.',
-      ],
-      [
-        '2. Set up your account and property',
-        'Verify your email, establish the appropriate relationship and select the property.',
-      ],
-      [
-        '3. Confirm the work',
-        'Agree the service, access arrangements, price and appointment before the work proceeds.',
-      ],
-      [
-        '4. Keep the result',
-        'Issued reports and documents are made available through the authorised property account.',
-      ],
-      [
-        'Ongoing arrangements',
-        'Inspection plans, standard support and outsourced operations need a defined scope, responsibilities and agreed commercial terms. Talk to ProInspect about the workload rather than assuming a package covers every task.',
-      ],
+      ['1. Identify the right service', 'Tell us about the property, location and outcome. Choose a specific inspection or discuss the workload you would like us to take on.'],
+      ['2. Confirm who can authorise the work', 'Confirm your authorised contact, access arrangements and who can approve work or receive reports.'],
+      ['3. Review the scope and price', 'Review the individual price or quote. For a plan, confirm included work, allowances, extras and the full terms before accepting.'],
+      ['4. Mobilise the property or portfolio', 'Share the records and contacts we need. We agree the visit or recurring schedule and confirm property access.'],
+      ['5. Deliver the task and retain a record', 'We complete the agreed work and issue useful records to your authorised property account.'],
+      ['6. Review next steps', 'Review the outcome and approve any further work or expenditure. Ongoing services follow your agreed schedule.'],
     ],
   },
   'client-experience': {
-    title: 'Your property work does not disappear into email.',
-    intro:
-      'One account connects you to the properties and relationships you are authorised to manage.',
+    title: 'A connected view of the work behind your property.',
+    intro: 'Find the task, the result and the next step in the context of your property.',
     sections: [
-      [
-        'A record for the property',
-        'Bookings, requests, work orders and issued reports belong to the same property context.',
-      ],
-      [
-        'Access follows your role',
-        'A private landlord, tenant and operations employee do not see the same information. Access is checked for each relationship and document.',
-      ],
-      [
-        'Reports when they are ready',
-        'Email tells you an issued report is available. Your account remains its secure point of access.',
-      ],
-      [
-        'A workspace for each relationship',
-        'Self-managing landlords, property managers, strata managers, tenants, residents and council members use different authorised workspaces. Organisation review, invitations and effective membership dates determine access. Hosted availability is confirmed during release, not by this preview.',
-      ],
+      ['Start with your property', 'Open the property or organisation you are authorised to use. Your verified role determines what you can see and do.'],
+      ['Arrange or review an instruction', 'Choose the task and confirm the scope, price and access. Your booking confirmation tells you when the appointment is agreed.'],
+      ['See the documented outcome', 'Review dated photographs, condition findings, attendance notes or handover actions, depending on the service.'],
+      ['Follow up a task', 'See what needs attention, ask about next steps and approve further work when required.'],
+      ['Permission follows responsibility', 'Owners, managers and invited residents see the information appropriate to their verified relationship. Private records stay within that scope.'],
+      ['An ongoing service relationship', 'Use an agreed service and reporting routine to keep property tasks in view. Available tools follow your account permissions.'],
     ],
   },
   'why-proinspect': {
-    title: 'Practical work, connected records.',
-    intro: 'Choose one service or discuss ongoing property support.',
+    title: 'Practical attendance backed by a clear next action.',
+    intro: 'ProInspect connects inspections, property operations and building services so clients can spend less time chasing activity and more time making informed decisions.',
     sections: [
-      [
-        'A clear operational boundary',
-        'Confirm the instruction, access and reporting output before work starts.',
-      ],
-      [
-        'Property and scheme context',
-        'Keep bookings, requests and issued records connected instead of scattered across separate email conversations.',
-      ],
-      [
-        'Different roles, appropriate access',
-        'Self-managing landlords, professional managers, residents, tenants and council members have different permissions.',
-      ],
-      [
-        'Evidence rather than unsupported claims',
-        'Ask about the intended report and service scope. Testimonials, performance figures and credentials will only be published after verification.',
-      ],
+      ['Work shaped around the property', 'From a single rental to a shared building, we shape the work around occupancy, facilities and your team.'],
+      ['One-off work and operational continuity', 'Book one inspection or delegate a recurring workload, with practical attendance and clear records in either case.'],
+      ['Reports that support decisions', 'See what happened, what remains outstanding and who needs to decide through useful reports and action records.'],
+      ['Clear responsibilities', 'Agree who instructs, who approves costs and who follows up, so the next step has an owner.'],
+      ['A practical partner for different teams', 'Self-managing landlords, agencies, asset managers, strata councils, shared-accommodation operators and project teams can obtain the type of service appropriate to their role.'],
+      ['Defined fees rather than assumptions', 'Compare our monthly plans, sign in for individual service prices or request a tailored quote. Scope and extras are agreed before you commit.'],
     ],
   },
   'areas-we-service': {
-    title: 'Confirm service availability for your location.',
-    intro:
-      'ProInspect is focused on property work in Western Australia. Coverage and attendance depend on the location, service and agreed scope.',
+    title: 'Where ProInspect provides property services.',
+    intro: 'Our standard scheduled service area covers approved suburbs in Perth and Peel. For other Western Australian locations, send an enquiry and we will assess coverage, travel and the work required.',
     sections: [
-      [
-        'Tell us the general location',
-        'Include the suburb or locality in your enquiry. Do not send access codes or confidential tenancy information.',
-      ],
-      [
-        'Confirm before booking',
-        'A location appearing in a guide does not establish a service-area or urgent-response commitment. Availability is confirmed with the appointment or quotation.',
-      ],
+      ['Search using suburb and postcode', 'Search both details to check our Perth and Peel service reference. We confirm access and availability before booking.'],
+      ['Some locations require individual confirmation', 'Islands, postal-only entries and locations with travel or access constraints need individual confirmation.'],
+      ['Outside Perth and Peel', 'Send the location, task and preferred timing. We will review availability and travel costs.'],
+      ['Before confirming any service', 'We confirm the scope, access, availability and cost. Urgent requests still require confirmation; this is not an emergency service.'],
     ],
   },
   about: {
@@ -141,15 +103,15 @@ const pages: Record<string, { title: string; intro: string; sections: Array<[str
   resources: {
     title: 'Property knowledge, built from real work.',
     intro:
-      'Guides, comparisons and case studies will be published as reviewed content becomes available.',
+      'Find practical guidance on choosing an inspection, preparing for attendance and understanding the resulting record.',
     sections: [
       [
         'Start with the service',
         'Each service page explains its purpose and how to discuss the scope.',
       ],
       [
-        'No invented evidence',
-        'We will not publish unverified case studies, performance statistics or customer testimonials. Operational examples must be reviewed and de-identified before publication.',
+        'Useful comparisons',
+        'Compare routine inspections with incoming PCRs, pre-vacate visits with final inspections, and one-off services with ongoing support.',
       ],
     ],
   },
@@ -159,7 +121,8 @@ export async function loader({ params,context }: LoaderFunctionArgs) {
   const key = params.page ?? '';
   if (Object.prototype.hasOwnProperty.call(PUBLIC_LEGAL_DRAFTS,key)) {
     const legalKey = key as PublicLegalKey;
-    const approved=await currentLegalDocument(context.get(runtimeContext).env as Env,key);
+    const env=context.get(runtimeContext).env as Env;
+    const approved=(key==='privacy'?await managedPrivacyDocument(env):null)??await currentLegalDocument(env,key);
     if(approved)return {title:approved.title,intro:approved.body.intro,sections:approved.body.sections as Array<[string,string]>,path:'/'+key,legalApproved:true,version:approved.version_label,effectiveAt:approved.effective_at};
     return {
       ...PUBLIC_LEGAL_DRAFTS[legalKey],
@@ -212,9 +175,10 @@ export default function Information() {
             title={legal ? (p.legalApproved?'Approved document version':'Review the proposed contents.') : how ? 'Simple steps. Agreed responsibilities.' : why ? 'What matters in a property service.' : client ? 'Property work with context.' : serviceArea ? 'Check your location before arranging attendance.' : 'The practical approach behind the work.'}
             description={legal
               ? (p.legalApproved?'Version '+p.version+'; effective '+p.effectiveAt+'. Accepted historical versions are retained separately.':'The final policy or contract will take effect only after its actual operator, commitments, applicable disclosures and publication date have been approved.')
-              : 'We describe our service boundaries clearly and only make commitments once the instruction is confirmed.'}
+              : how ? 'Different engagements need different onboarding steps, approvals and reporting.' : client ? 'See how instructions, records and next actions stay associated with the property.' : why ? 'The outcome matters: a documented task, a clear next action and appropriate oversight.' : serviceArea ? 'Enter a suburb and postcode to review the local service reference.' : 'Find the right support and agree the scope before attendance.'}
           />
           <MarketingEditorialBlocks sections={p.sections} numbered={how} />
+          {serviceArea && <CoverageLookup />}
         </div>
       </section>
 

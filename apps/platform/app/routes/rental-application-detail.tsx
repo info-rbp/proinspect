@@ -1,3 +1,5 @@
+import {TemporaryRentalDocuments} from '../components/TemporaryRentalDocuments';
+import { repeaterSummary } from '../../../../packages/marketing/rental-repeaters';
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { loadApi } from '../lib/api.server';
 import { useWorkspace } from '../lib/workspace';
@@ -11,8 +13,8 @@ export async function loader({request,context,params}:LoaderFunctionArgs){
 export default function RentalApplicationDetail(){
  const d=useLoaderData<typeof loader>(),w=useWorkspace().workspace,role=useWorkspace().user.staffRole;
  const a=d.application,base='/api/staff/rental-applications/'+a.id;
- const next:Record<string,string[]>={submitted:['information_requested','ready_for_handoff'],
-  information_requested:['ready_for_handoff'],ready_for_handoff:[],forwarded:[]};
+ const next:Record<string,string[]>={submitted:d.managedIntake?['information_requested']:['information_requested','ready_for_handoff'],
+  information_requested:d.managedIntake?[]:['ready_for_handoff'],ready_for_handoff:[],forwarded:[]};
  return <><PageHeading title={a.reference} eyebrow="Restricted residential application"
  description={'Property: '+a.property+' · Leasing representative: '+a.leasingRepresentative}/>
  <div className="actions"><Link to={w.href+'/rental-applications'}>← Application queue</Link><Link className="button secondary" to={w.href+'/rental-applications/'+a.id+'/print'}>Print / Save as PDF</Link><Badge status={a.status}/></div>
@@ -22,6 +24,7 @@ export default function RentalApplicationDetail(){
     <h3>Applicant {person.ordinal}: {person.answers.identity?.fullName}</h3><p className="small">{person.role} · <Badge status={person.state}/> · Declared: {person.declaredAt?new Date(person.declaredAt).toLocaleString('en-AU'):'Not declared'}</p>
     {ANSWER_STEPS.map((step:AnswerStep)=><details key={step} className="panel" style={{boxShadow:'none'}}><summary style={{fontWeight:700,cursor:'pointer'}}>{step.replaceAll('_',' ')} — Application details</summary>
      <dl className="detail-grid" style={{marginTop:'1rem'}}>{FIELDS[step].map(field=><div key={field.key}><dt className="small">{field.label}</dt><dd style={{marginLeft:0,overflowWrap:'anywhere'}}>{person.answers[step]?.[field.key]||'—'}</dd></div>)}</dl>
+     <dl>{(['additionalHistory','additionalReferences'] as const).flatMap(key=>repeaterSummary(key,person.answers[step]?.[key])).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
     </details>)}
    </article>)}
   </Panel>
@@ -47,11 +50,11 @@ export default function RentalApplicationDetail(){
     </OperationForm>}
    </section>)}
   </Panel>
-  <Panel title="Secure supporting documents" description="Uploaded files are quarantined until independently checked. Only approved files may accompany an authorised handoff.">
+  <Panel title="Secure supporting documents" description={d.detailsOnly?"Document uploads are disabled for this intake mode.":"Private malware scanning must clear each file before download. Staff review is recorded separately; no document is forwarded automatically."}>
    {d.documents.length===0?<p>No documents attached.</p>:d.documents.map((doc:any)=><article className="record-row" key={doc.id}><div><strong>{doc.filename}</strong>
     <p className="small">Applicant record: {doc.applicant_id} · {doc.category} · {(doc.size_bytes/1048576).toFixed(2)} MB</p><Badge status={doc.review_status}/> <span className="small">Scanner result: {doc.scan_status}</span>
     <div className="actions">
-     {doc.review_status==='released'&&<a className="button secondary small" href={base+'/documents/'+doc.id+'/download'}>Download approved file</a>}
+     {doc.scan_status==='clean'&&(doc.review_status==='released'||d.scannedDocuments&&doc.review_status==='quarantined')&&<a className="button secondary small" href={base+'/documents/'+doc.id+'/download'}>Download security-cleared file</a>}
      {doc.scan_status==='pending'&&<p className="small">Awaiting an independently verified private malware scan; download and release are blocked.</p>}
     </div>
     {doc.review_status==='quarantined'&&role==='administrator'&&<OperationForm endpoint={base+'/documents/'+doc.id+'/review'} label="Record security review">
@@ -60,6 +63,7 @@ export default function RentalApplicationDetail(){
      </OperationForm>}
    </div></article>)}
   </Panel>
+  {d.temporaryUploads&&<TemporaryRentalDocuments applicationId={a.id} documents={d.temporaryDocuments??[]} packages={d.temporaryPackages??[]} administrator={role==='administrator'} submitted={a.status==='submitted'}/>}
   <Panel title="Application activity"><div className="stack">{d.history.map((e:any)=><div className="record-row" key={e.id}><div><strong>{e.kind.replaceAll('_',' ')}</strong><p className="small">{new Date(e.created_at).toLocaleString('en-AU')}</p></div></div>)}</div></Panel>
  </div><aside className="stack">
   <Panel title="Decision-making boundary"><p>ProInspect is administering this application on behalf of the authorised landlord or leasing agency. ProInspect does not determine applicant suitability, offer a tenancy or execute the tenancy agreement through this workflow.</p>
@@ -69,10 +73,10 @@ export default function RentalApplicationDetail(){
    <h3>Tenancy database notice — Application details Attachment A</h3>
    {d.notice.mode==='configured'?d.notice.entries.map((n:any,i:number)=><div key={i}><strong>{n.name}</strong><p>Operator contact: {n.operatorContact}</p><p>How to request information: {n.accessInstructions}</p></div>):<p>The responsible representative declared that no tenancy database is used for this application.</p>}
   </Panel>
-  <Panel title="Agency email handoff — Google Apps Script"><p>The signed, recipient-bound Google Apps Script handoff adapter is implemented but requires independent activation and provider acceptance. A staged record is not evidence that an email was delivered.</p>
+  {!d.managedIntake&&<Panel title="Agency email handoff — Google Apps Script"><p>The signed, recipient-bound Google Apps Script handoff adapter is implemented but requires independent activation and provider acceptance. A staged record is not evidence that an email was delivered.</p>
    {d.handoffs?.length>0?d.handoffs.map((h:any)=><div className="record-row" key={h.id}><div><strong>Submission handoff: {h.status.replaceAll('_',' ')}</strong><p className="small">Staged {new Date(h.staged_at).toLocaleString('en-AU')} · {h.format_version}</p></div></div>):<p className="small">No handoff staged. Review uploaded documents and move the application to ready for handoff when appropriate.</p>}
    <p className="small">Applicant documents are never attached or made public. A delivery receipt establishes provider acceptance, not successful delivery to an inbox.</p>
-  </Panel>
+  </Panel>}
   {a.status==='decision_recorded'&&d.outcome&&<Panel title="Agency decision and tenancy handover">
    <p><strong>Recorded agency decision: {d.outcome.outcome==='successful'?'Successful':'Unsuccessful'}</strong></p>
    <p className="small">Source reference: {d.outcome.authority_reference} · Recorded {new Intl.DateTimeFormat('en-AU',{dateStyle:'medium',timeZone:'Australia/Perth'}).format(new Date(d.outcome.recorded_at))}</p>
@@ -138,6 +142,6 @@ export default function RentalApplicationDetail(){
    <Select name="status" label="Next state" options={choices(next[a.status])}/>
    <TextArea name="note" label="Processing or handoff reference"/>
   </OperationForm>
-   <p className="small">Moving to ready for handoff stages an immutable application summary. Sending requires the independently released, signed Apps Script transport and a valid provider acceptance receipt; do not assume an email was delivered to an inbox.</p></Panel>}
+   <p className="small">{d.managedIntake?'Request only information necessary to review this application. This intake remains in the private ProInspect staff queue.':'Moving to ready for handoff stages an immutable application summary. Sending requires the independently released, signed Apps Script transport and a valid provider acceptance receipt; do not assume an email was delivered to an inbox.'}</p></Panel>}
  </aside></div></>;
 }

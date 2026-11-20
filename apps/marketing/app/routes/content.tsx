@@ -39,7 +39,7 @@ export function loader({ params, request }: LoaderFunctionArgs) {
   };
 }
 export const meta: MetaFunction<typeof loader> = ({ loaderData: d }) =>
-  d ? seo(d.title, d.intro, d.path) : [];
+  d ? seo(d.title, d.intro, d.path, { type: d.kind === 'family' ? 'CollectionPage' : 'WebPage', breadcrumbs: d.kind === 'family' ? [{ name: 'Services', path: '/services' }, { name: d.title, path: d.path }] : d.kind === 'guide' ? [{ name: 'Resources', path: '/resources' }, { name: d.title, path: d.path }] : [{ name: 'How we work', path: '/how-it-works' }, { name: d.title, path: d.path }] }) : [];
 
 export default function Content() {
   const d = useLoaderData<typeof loader>();
@@ -102,6 +102,23 @@ export default function Content() {
         </section>
       )}
 
+      {family && (d.slug === 'documents' || d.slug === 'operations') && <section className="section mkt-section">
+        <div className="site-container">
+          <MarketingSectionTitle eyebrow="What can be arranged" title={d.slug === 'documents' ? 'Documentation for informed property decisions.' : 'Ongoing support built around your workload.'}
+            description="Examples of tailored services; the accepted instruction confirms deliverables, allowances and charges." />
+          <div className="mkt-editorial-grid">{(d.slug === 'documents' ? [
+            ['Tenancy and condition records', 'Incoming and outgoing records, inventory information, handover checklists and photographic documentation for authorised recipients.'],
+            ['Administrative records', 'Approved property correspondence, meeting action notes, work summaries, contractor and inspection registers.'],
+            ['Commercial and building documentation', 'Make-good observation summaries, completion evidence, issue registers, defect lists and common-property records.'],
+          ] : [
+            ['Residential support', 'Inspection planning, maintenance requests and tenancy administration through an agreed residential subscription or tailored arrangement.'],
+            ['Commercial operations', 'Occupant enquiries, lease diary support, contractor coordination, inspections and owner reporting.'],
+            ['Buildings and shared accommodation', 'Cleaning, waste, grounds, minor works, room turnover and resident arrivals under a scheduled programme.'],
+            ['Construction and handover', 'Progress observations, milestones, defect follow-up and project coordination.'],
+          ]).map(([title, copy]) => <article key={title} className="mkt-editorial-panel"><h3>{title}</h3><p>{copy}</p></article>)}</div>
+          <p className="mkt-section-footnote">Discuss an individual <Link to="/contact">custom scope</Link> or explore <Link to="/residential-property-support">residential plans</Link> and <Link to="/commercial">commercial operations</Link>.</p>
+        </div>
+      </section>}
       {guide && d.services.length > 0 && (
         <section className="section mkt-section mkt-stone">
           <div className="site-container">

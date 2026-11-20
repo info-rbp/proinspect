@@ -1,4 +1,5 @@
 import { documentScope } from '../../../../packages/authorization/documents';
+import { interestsForWorkspace } from './client-service-interests.server';
 import { noticeMemberPredicate } from '../../../../packages/notifications/notice-access';
 import { statement, now, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
@@ -59,7 +60,11 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
       ? (
           await statement(
             env.DB,
-            `SELECT b.id,b.reference,b.property_id,b.starts_at,b.ends_at,b.status,b.price_ex_gst_cents,b.version,s.name AS service_name,p.address FROM bookings b JOIN work_orders wo ON wo.booking_id=b.id JOIN services s ON s.id=b.service_id JOIN properties p ON p.id=b.property_id WHERE ${orderSql} ORDER BY b.starts_at DESC LIMIT 300`,
+            `SELECT b.id,b.reference,b.property_id,b.starts_at,b.ends_at,b.status,b.price_ex_gst_cents,b.version,s.name AS service_name,p.address,pay.status AS payment_status,pay.id AS payment_id
+              FROM bookings b JOIN work_orders wo ON wo.booking_id=b.id
+              JOIN services s ON s.id=b.service_id JOIN properties p ON p.id=b.property_id
+              LEFT JOIN registered_booking_payment_links l ON l.booking_id=b.id
+              LEFT JOIN payments pay ON pay.id=l.payment_id WHERE ${orderSql} ORDER BY b.starts_at DESC LIMIT 300`,
             ...orderArgs,
           ).all()
         ).results
@@ -222,6 +227,7 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
     env,
     w.kind === 'staff' && ['administrator', 'operations_manager'].includes(user.staffRole ?? ''),
   );
+  const serviceInterests = await interestsForWorkspace(env,user,w);
   const subscriptionBookingServices =
     booksServices(w)
       ? await subscriptionBookingCoverage(env, w.scopeId, properties, services)
@@ -243,11 +249,13 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
     staff,
     services,
     subscriptionBookingServices,
+    serviceInterests,
     professionalPortfolioApproved,
     approvals,
     payments,
     plans,
     documentRequests,
+    amenitiesEnabled: env.STRATA_AMENITIES_ENABLED === 'true',
     councilGovernanceEnabled: env.COUNCIL_GOVERNANCE_ENABLED === 'true',
     restrictedEnabled: env.RESTRICTED_WORKFLOWS_ENABLED === 'true',
   };

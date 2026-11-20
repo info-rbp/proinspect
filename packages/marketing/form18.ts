@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { parseRepeater } from './rental-repeaters.ts';
 
 /** ProInspect intake categories informed by optional WA Form 18; they are not a prescribed form. */
 export const FORM18_STEPS = [
@@ -16,7 +17,7 @@ export type Form18Field={
  key:string; label:string; kind?:'text'|'email'|'tel'|'date'|'number'|'textarea'|'select';
  options?:readonly string[]; required?:boolean; hint?:string; section?:string;
 };
-export const TENANCY_PREFERENCE_KEYS:string[]=['preferredStartDate','leaseTermPreference','totalOccupants','petsProposed','petDetails'];
+export const TENANCY_PREFERENCE_KEYS:string[]=['preferredStartDate','leaseTermPreference','totalOccupants','adultOccupants','minorOccupants','petsProposed','petDetails'];
 export const FIELDS:Record<AnswerStep,Form18Field[]>={
  identity:[
   {key:'fullName',label:'Full legal name',required:true},
@@ -30,12 +31,16 @@ export const FIELDS:Record<AnswerStep,Form18Field[]>={
   {key:'preferredStartDate',label:'Preferred tenancy start date',kind:'date',section:'Proposed tenancy — primary applicant only',hint:'A preferred start date, subject to agreement.'},
   {key:'leaseTermPreference',label:'Preferred lease duration',kind:'select',options:['6 months','12 months','24 months','Flexible','Other']},
   {key:'totalOccupants',label:'Total intended occupants (including children)',kind:'number',hint:'Number only; do not provide children’s personal details.'},
+  {key:'adultOccupants',label:'Adult occupants (optional)',kind:'number',hint:'If providing a breakdown, complete both counts. Invite adults only, not children.'},
+  {key:'minorOccupants',label:'Occupants under 18 (optional)',kind:'number',hint:'Count only. Do not submit children’s identity or financial documents.'},
+  {key:'contactPreference',label:'Preferred contact method',kind:'select',options:['Email','Telephone','Either']},
   {key:'petsProposed',label:'Are pets proposed? (assistance animals excluded)',kind:'select',options:['Yes','No','Not sure'],hint:'Assistance animals are not pets.'},
   {key:'petDetails',label:'Proposed pets — type and number',kind:'textarea',hint:'Complete this only when pets are proposed.'},
  ],
  rental:[
   {key:'hasRentalHistory',label:'Have you previously rented?',kind:'select',required:true,options:['Yes','No']},
-  {key:'previousAddress',label:'Previous rental address',section:'Previous rental history'},
+  {key:'noHistoryReason',label:'No rental history — context or alternative evidence',kind:'textarea',hint:'For example, living with family or first tenancy. Describe relevant alternative evidence; do not include unnecessary sensitive details.'},
+  {key:'previousAddress',label:'Current or previous rental address',section:'Rental history'},
   {key:'rentAmount',label:'Rent paid (AUD)',kind:'number'},
   {key:'rentPeriod',label:'Rent payment frequency',kind:'select',options:['Week','Fortnight','Month']},
   {key:'rentPaidTo',label:'Previous property manager or lessor'},
@@ -46,7 +51,7 @@ export const FIELDS:Record<AnswerStep,Form18Field[]>={
   {key:'reasonLeaving',label:'Reason for leaving',kind:'textarea'},
  ],
  employment:[
-  {key:'employmentType',label:'Current employment situation',kind:'select',required:true,options:['Employed','Self-employed','Student','Other income','Not currently employed']},
+  {key:'employmentType',label:'Current employment situation',kind:'select',required:true,options:['Employed','Self-employed','Student','Retired','Unemployed','Other','Other income','Not currently employed']},
   {key:'occupation',label:'Occupation',section:'Employment information'},
   {key:'employer',label:'Employer or business name'},
   {key:'employerAddress',label:'Employer address'},
@@ -59,6 +64,7 @@ export const FIELDS:Record<AnswerStep,Form18Field[]>={
   {key:'otherIncome',label:'Income from other sources (AUD)',kind:'number'},
   {key:'otherIncomePeriod',label:'Other income frequency',kind:'select',options:['Week','Fortnight','Month']},
   {key:'incomeExplanation',label:'Further information about your income (optional)',kind:'textarea'},
+  {key:'selfEmploymentEvidence',label:'Self-employment — available evidence or accountant details',kind:'textarea',hint:'Describe evidence only. Accountant contact requires separate permission; upload requested files through the private document step.'},
  ],
  references:[
   {key:'reference1Name',label:'Reference 1 — name',section:'Personal reference 1'},
@@ -85,7 +91,7 @@ export const FIELDS:Record<AnswerStep,Form18Field[]>={
 };
 export const ANSWER_STEPS:['identity','rental','employment','references']=['identity','rental','employment','references'];
 /** Schema identity, not an assertion that Form 18 is compulsory or prescribed. */
-export const FORM18_VERSION='proinspect-rental-application-v2';
+export const FORM18_VERSION='proinspect-rental-application-v3';
 export const APPLICATION_MODES=['unavailable','external','proinspect'] as const;
 export type ApplicationMode=(typeof APPLICATION_MODES)[number];
 export const noticeEntry=z.object({
@@ -95,6 +101,7 @@ export const noticeEntry=z.object({
 });
 export const applicationSettingsSchema=z.object({
  applicationMode:z.enum(APPLICATION_MODES),
+ managedByProInspect:z.boolean().default(false),
  applicationUrl:z.string().trim().max(1000).optional().default(''),
  applicationAuthorityReference:z.string().trim().max(200).optional().default(''),
  applicationRecipientEmail:z.string().trim().email().max(254).or(z.literal('')).optional().default(''),
@@ -103,6 +110,7 @@ export const applicationSettingsSchema=z.object({
 }).superRefine((d,ctx)=>{
  if(d.applicationMode==='external'&&!safeUrl(d.applicationUrl))ctx.addIssue({code:'custom',message:'An approved HTTPS application link is required.',path:['applicationUrl']});
  if(d.applicationMode==='proinspect'){
+  if(!d.managedByProInspect)ctx.addIssue({code:'custom',message:'Confirm that ProInspect directly manages this property before selecting native intake.',path:['managedByProInspect']});
   if(d.applicationUrl.trim())ctx.addIssue({code:'custom',message:'Remove the agency application URL before activating a ProInspect-hosted form.',path:['applicationUrl']});
   if(d.applicationAuthorityReference.length<5)ctx.addIssue({code:'custom',message:'Record the signed application-handling authority.',path:['applicationAuthorityReference']});
   if(!d.applicationRecipientEmail)ctx.addIssue({code:'custom',message:'Name an authorised recipient for applications.',path:['applicationRecipientEmail']});
@@ -119,6 +127,7 @@ export const startApplicationSchema=z.object({
 export const inviteApplicantSchema=z.object({
  name:z.string().trim().min(2).max(120),
  email:z.string().trim().email().max(254).transform(x=>x.toLowerCase()),
+ adultConfirmed:z.literal(true),
 });
 export const documentCategorySchema=z.enum(['identity','income','rental_history','other']);
 export function cleanSection(section:AnswerStep,raw:Record<string,unknown>){
@@ -140,7 +149,18 @@ export function cleanSection(section:AnswerStep,raw:Record<string,unknown>){
   if(values.totalOccupants&&(!/^[1-9]\d?$/.test(values.totalOccupants)||Number(values.totalOccupants)>20))throw Error('OCCUPANTS_INVALID');
   if(values.petsProposed==='Yes'&&!values.petDetails)throw Error('PET_DETAILS_REQUIRED');
   if(values.petsProposed!=='Yes')values.petDetails='';
+  if(values.adultOccupants||values.minorOccupants){
+   if(!/^[1-9]\d?$/.test(values.adultOccupants)||!/^\d{1,2}$/.test(values.minorOccupants)||
+    Number(values.adultOccupants)+Number(values.minorOccupants)!==Number(values.totalOccupants))throw Error('HOUSEHOLD_COUNTS_INVALID');
+  }
  }
+ if(section==='rental'){
+  if(values.hasRentalHistory==='No'&&!values.noHistoryReason)throw Error('NO_HISTORY_REASON_REQUIRED');
+  values.additionalHistory=values.hasRentalHistory==='Yes'?JSON.stringify(parseRepeater('additionalHistory',raw.additionalHistory)):'[]';
+  if(values.rentedFrom&&values.rentedTo&&values.rentedTo<values.rentedFrom)throw Error('RENTAL_DATES_INVALID');
+ }
+ if(section==='references')values.additionalReferences=JSON.stringify(parseRepeater('additionalReferences',raw.additionalReferences));
+ if(section==='employment'&&values.netIncome&&!values.netIncomePeriod)throw Error('INCOME_PERIOD_REQUIRED');
  if(section==='rental'&&values.hasRentalHistory==='Yes'&&(!values.previousAddress||!values.rentPaidTo))throw Error('RENTAL_HISTORY_INCOMPLETE');
  if(section==='employment'&&['Employed','Self-employed'].includes(values.employmentType)&&(!values.occupation||!values.employer))throw Error('EMPLOYMENT_INCOMPLETE');
  return values;

@@ -1,5 +1,6 @@
 import { SERVICE_SEEDS } from '../service-catalogue/index.ts';
 import { SERVICE_SCOPE_DETAILS } from './service-scopes.ts';
+import { AUDIENCES } from './audiences.ts';
 /**
  * Version-controlled evidence register. "pending" is never a publication approval.
  * Keep customer information, consent forms and licensed assets outside this public source tree.
@@ -18,8 +19,13 @@ export type PublicationRecord = {
 const record = (id: string, category: PublicationRecord['category'], subject: string, notes: string): PublicationRecord =>
   ({ id, category, subject, status: 'pending', reviewer: null, approvedAt: null, evidenceReference: null, notes });
 export const PUBLICATION_REGISTER: readonly PublicationRecord[] = [
-  record('COPY-HOME', 'copy', '/', 'Approve homepage positioning, service boundaries and guest/subscriber CTA statements.'),
+  record('COPY-HOME', 'copy', '/', 'Approve homepage positioning, service boundaries and registered booking and separately elected plan statements.'),
   record('COPY-SECTORS', 'copy', '/sectors/*', 'Verify role boundaries; ProInspect is not represented as the leasing agent or property manager.'),
+  record('COPY-WHO-WE-HELP', 'copy', '/who-we-help', 'Approve six audience journeys, role descriptions and conversion destinations.'),
+  ...Object.keys(AUDIENCES).map(slug => record('COPY-AUDIENCE-' + slug, 'copy', '/who-we-help/' + slug, 'Verify sector-specific claims, authority boundaries and linked services.')),
+  record('COPY-SERVICE-FINDER', 'copy', '/service-finder', 'Approve service-to-customer-need mappings and all visible boundary statements.'),
+  record('COPY-RESIDENTIAL-SUPPORT', 'copy', '/residential-property-support', 'Subscription decision workbook 16 November 2026 confirms residential $20/$150 per whole property or separately leased room and commercial $150 per unit, plus GST monthly; 24 months then monthly with 60 days written notice. Five Inspection Only service types confirmed. Detailed quotas, All-Inclusive matrices, extras, early-exit terms and checkout acceptance remain open.'),
+  record('COPY-LEASING', 'copy', '/properties-for-lease', 'Confirm agency inspection-only role, consent text, application handoff and lawful approved listing data.'),
   record('COPY-ENGAGEMENT', 'copy', '/how-we-work/*', 'Approve commercial engagement-model claims and scope.'),
   ...SERVICE_SEEDS.map(s => record('SERVICE-' + s.id, 'service', '/services/' + s.id,
     'Review indicative inclusions, exclusions and deliverables; confirm against accepted service specifications.')),
@@ -32,6 +38,8 @@ export const PUBLICATION_REGISTER: readonly PublicationRecord[] = [
   record('LEGAL-TERMS', 'legal', '/terms', 'Final service, booking, cancellation and consumer provisions plus effective date required.'),
   record('A11Y-MANUAL', 'accessibility', 'Public website', 'WCAG 2.2 AA manual keyboard, zoom, screen-reader and responsive checks.'),
   record('SEO-RELEASE', 'seo', 'Public website', 'Verify title, canonical, sitemap, metadata, links, robots and published approval states.'),
+  record('SEO-STRUCTURED-DATA', 'seo', 'Public metadata', 'Validate WebPage, Service and BreadcrumbList data against visible copy. Never add unsupported ratings, prices or postal addresses.'),
+  record('SEO-SITEMAP', 'seo', '/sitemap.xml', 'Confirm only indexable approved canonical pages appear in live sitemap; exclude protected, leasing and draft plan URLs.'),
 ] as const;
 export function publicationRecord(id: string) { return PUBLICATION_REGISTER.find(r => r.id === id) ?? null; }
 export function isPublicationApproved(record: PublicationRecord): boolean {

@@ -1,4 +1,4 @@
-name: Eight-portal acceptance gate unit checks
+name: Nine-portal acceptance gate unit checks
 on:
   pull_request:
     paths:

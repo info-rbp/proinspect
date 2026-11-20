@@ -13,7 +13,7 @@ test('the public home, every service and all content routes are part of the one 
   const routes = source('apps/platform/app/routes.ts');
   assert.match(routes, /layout\('routes\/public-layout\.tsx'/);
   assert.match(routes, /index\('\.\.\/\.\.\/marketing\/app\/routes\/home\.tsx'\)/);
-  for (const file of ['home', 'services', 'service', 'sector', 'content', 'resources', 'information'])
+  for (const file of ['home', 'services', 'service', 'sector-redirect', 'content', 'resources', 'information'])
     assert.ok(routes.includes(`../../marketing/app/routes/${file}.tsx`), file);
   assert.match(routes, /route\('contact', 'routes\/public-contact\.tsx'\)/);
   assert.match(routes, /route\('signin', 'routes\/signin\.tsx'\)/);
@@ -27,20 +27,22 @@ test('the public home, every service and all content routes are part of the one 
 
 test('public marketing pages are indexable only on the canonical domain, private pages never are', () => {
   for (const publicPath of ['/', '/services', '/contact', '/services/routine-inspection',
-    '/sectors/strata-building', '/how-it-works', '/resources', '/resources/pre-vacate-vs-final',
+    '/student-living', '/how-it-works', '/resources', '/resources/pre-vacate-vs-final',
     '/why-proinspect', '/sitemap.xml', '/robots.txt']) {
     assert.equal(isPublicSitePath(publicPath), true, publicPath);
     assert.equal(shouldIndexPublicPage(publicPath, 'https://proinspect.systems', 'production'), true);
     assert.equal(shouldIndexPublicPage(publicPath, 'https://some-preview.workers.dev', 'production'), false);
     assert.equal(shouldIndexPublicPage(publicPath, 'https://proinspect.systems', 'local'), false);
   }
+  assert.equal(isPublicSitePath('/sectors/strata-building'), true);
+  assert.equal(shouldIndexPublicPage('/sectors/strata-building', 'https://proinspect.systems', 'production'), false);
   // The drafts are public pages but must never be indexed until formally approved.
   for (const draft of ['/privacy', '/terms']) {
     assert.equal(isPublicSitePath(draft), true);
     assert.equal(shouldIndexPublicPage(draft, 'https://proinspect.systems', 'production'), false);
   }
-  for (const privatePath of ['/signin', '/auth/complete', '/account', '/onboarding',
-    '/book/routine-inspection', '/w/landlord/abc', '/workspaces', '/api/session']) {
+  for (const privatePath of ['/signin', '/signup', '/start', '/auth/complete', '/account', '/onboarding',
+    '/book/routine-inspection', '/w/landlord/abc', '/workspaces', '/client', '/api/session']) {
     assert.equal(isPublicSitePath(privatePath), false, privatePath);
     assert.equal(shouldIndexPublicPage(privatePath, 'https://proinspect.systems', 'production'), false);
   }
@@ -61,8 +63,9 @@ test('the deployed Worker has one origin for marketing, booking, sign-in and con
   assert.match(publicLayout, /appOrigin: ''/);
   assert.match(publicLayout, /<MarketingHeader appOrigin=\{appOrigin\}/);
   const chrome = source('apps/marketing/app/components/site-chrome.tsx');
-  assert.match(chrome, /appOrigin \+ '\/book'/);
-  assert.match(chrome, /appOrigin \+ '\/signin'/);
+  assert.match(chrome, /PUBLIC_NAVIGATION/);
+  assert.match(chrome, /to="\/client"/);
+  assert.match(chrome, /to="\/contact"/);
 });
 
 test('the original contact form uses a signed in-process receiver instead of a second Worker', () => {

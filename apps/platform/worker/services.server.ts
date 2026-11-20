@@ -1,4 +1,5 @@
 import { legalStatements } from './features/legal-acceptance.server';
+import { serviceInterestTableReady } from './features/client-service-interests.server';
 import { calendarSchedulingEnabled, calendarSyncStatement } from './features/calendar-scheduling.server';
 import { activity, projection } from '../../../packages/operations/core';
 import type { Env } from '../../../packages/database/types';
@@ -92,6 +93,8 @@ export async function onboard(env: Env, user: Principal, input: unknown) {
   const clientId = `cli_${(await digest(`${salt}:${user.id}`)).slice(0, 32)}`;
   const membershipId = `mem_${clientId.slice(4)}`;
   const legal = await legalStatements(env,{kind:'user',id:user.id},'onboarding',clientId,{clientId,clientName:data.clientName,landlordType:data.landlordType},data.legalConsent);
+  const interests=[...new Set([residential?'residential':'commercial',...data.serviceInterests])];
+  assert(await serviceInterestTableReady(env),503,'ONBOARDING_MIGRATION_PENDING','Account preferences are not configured.');
   await env.DB.batch([
     ...legal,
     statement(
@@ -121,6 +124,8 @@ export async function onboard(env: Env, user: Principal, input: unknown) {
       workspaceKind,
       now(),
     ),
+    // Requested sectors are preferences, never entitlement, property authority or billing instructions.
+    ...interests.map(area=>statement(env.DB,'INSERT INTO client_service_interests(client_id,service_area,requested_by,requested_at,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(client_id,service_area) DO NOTHING',clientId,area,user.id,now(),now())),
     // A verified account starts without Stripe customer, plan or payment obligation.
     statement(env.DB,`INSERT INTO account_subscription_preferences(client_id,account_state,subscription_intent,updated_at)
       VALUES(?,'verified','none',?) ON CONFLICT(client_id) DO NOTHING`,
@@ -258,13 +263,30 @@ export async function createRequest(env: Env, user: Principal, w: Workspace, inp
     propertyId = data.propertyId;
     clientId = w.scopeId;
   }
+  if (data.spaceId) {
+    const space = w.kind === 'tenant'
+      ? await statement(env.DB,
+        `SELECT s.id FROM co_living_spaces s
+          JOIN co_living_occupancies own ON own.tenancy_id=?
+          JOIN co_living_spaces mine ON mine.id=own.space_id AND mine.property_id=s.property_id
+          WHERE s.id=? AND s.property_id=? AND s.active=1
+            AND (s.space_type='shared_area' OR s.id=own.space_id)`,
+        tenancyId,data.spaceId,propertyId,
+      ).first()
+      : await statement(env.DB,
+        'SELECT id FROM co_living_spaces WHERE id=? AND property_id=? AND active=1',
+        data.spaceId,propertyId,
+      ).first();
+    assert(space,404,'CO_LIVING_SPACE_NOT_FOUND',
+      'Choose your own assigned room or bed, or an authorised shared area.');
+  }
   const id = uid('req'),
     reference = `REQ-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
     time = now();
   const statements = [
     statement(
       env.DB,
-      `INSERT INTO requests(id,reference,client_id,property_id,tenancy_id,created_by,source,category,title,details,priority,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,'submitted',?,?)`,
+      `INSERT INTO requests(id,reference,client_id,property_id,tenancy_id,created_by,source,category,title,details,priority,co_living_space_id,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,'submitted',?,?)`,
       id,
       reference,
       clientId,
@@ -276,6 +298,7 @@ export async function createRequest(env: Env, user: Principal, w: Workspace, inp
       data.title,
       data.details,
       data.priority,
+      data.spaceId ?? null,
       time,
       time,
     ),
@@ -374,6 +397,22 @@ export async function updateWorkOrder(
     'INVALID_TRANSITION',
     'This status change is not available.',
   );
+  if(order.booking_id){
+    const linkedPayment=await statement(env.DB,
+      `SELECT p.status,p.provider,p.checkout_session_id FROM registered_booking_payment_links l
+        JOIN payments p ON p.id=l.payment_id WHERE l.booking_id=?`,order.booking_id,
+    ).first<{status:string;provider:string;checkout_session_id:string|null}>();
+    if(linkedPayment&&next!==order.status&&next!=='cancelled'){
+      assert(linkedPayment.status==='paid'&&linkedPayment.provider==='stripe'&&
+        Boolean(linkedPayment.checkout_session_id),409,'REGISTERED_PAYMENT_NOT_VERIFIED',
+        'The one-off booking cannot proceed until a provider-signed payment is settled.');
+    }
+    if(linkedPayment&&next==='cancelled'){
+      assert(linkedPayment.status!=='paid'&&!linkedPayment.checkout_session_id,409,
+        'PAYMENT_CANCELLATION_REVIEW',
+        'A payment or open Checkout requires a separate financial cancellation/reconciliation review.');
+    }
+  }
   if (next === 'approved')
     assert(
       await statement(

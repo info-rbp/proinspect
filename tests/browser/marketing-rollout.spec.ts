@@ -1,11 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { SERVICE_SEEDS, FAMILIES } from '../../packages/service-catalogue/index';
 import { ENGAGEMENTS, GUIDES } from '../../packages/marketing/content';
+import { AUDIENCES } from '../../packages/marketing/audiences';
 
 const publicRoutes = [
-  '/', '/services', '/sectors/residential', '/sectors/commercial', '/sectors/strata-building',
+  '/', '/services', '/service-finder', '/who-we-help', '/residential-property-support', '/residential', '/commercial', '/strata', '/co-living', '/student-living', '/construction', '/maintenance',
   '/how-it-works', '/client-experience', '/about', '/contact', '/why-proinspect',
   '/areas-we-service', '/resources', '/privacy', '/terms',
+  ...Object.keys(AUDIENCES).map((audience) => '/who-we-help/' + audience),
   ...Object.keys(FAMILIES).map((family) => '/services/category/' + family),
   ...Object.keys(ENGAGEMENTS).map((model) => '/how-we-work/' + model),
   ...Object.keys(GUIDES).map((guide) => '/resources/' + guide),
@@ -23,7 +25,7 @@ test('every public marketing route uses shared navigation, typography, footer an
     expect(html, path).toContain('mkt-site-footer');
     expect(html, path).toContain('id="main"');
     expect(html, path).toMatch(/<h1[\s>]/);
-    if (path === '/') expect(html).toContain('mkt-home-hero');
+    if (['/', '/who-we-help', '/about', '/contact', '/residential', '/commercial', '/strata', '/co-living', '/student-living', '/construction', '/maintenance'].includes(path)) expect(html).toContain('pi-editorial-hero');
     else if (path.startsWith('/services/') && !path.startsWith('/services/category/')) {
       expect(html, path).toContain('mkt-detail-hero');
     } else expect(html, path).toContain('mkt-page-hero');
@@ -32,9 +34,9 @@ test('every public marketing route uses shared navigation, typography, footer an
 
 test('all public page families use the shared responsive layout without horizontal overflow', async ({ page }) => {
   const representatives = [
-    '/', '/services', '/services/category/documents', '/services/category/inspections',
+    '/', '/services', '/service-finder', '/who-we-help', '/who-we-help/private-landlords', '/residential-property-support', '/services/category/documents', '/services/category/inspections',
     '/services/routine-inspection', '/services/commercial-property-inspection',
-    '/sectors/commercial', '/sectors/strata-building', '/how-it-works',
+    '/commercial', '/strata', '/student-living', '/how-it-works',
     '/how-we-work/inspection-plans', '/resources', '/resources/routine-inspection-vs-pcr',
     '/why-proinspect', '/client-experience', '/about', '/areas-we-service', '/contact', '/privacy',
   ];
@@ -51,7 +53,7 @@ test('all public page families use the shared responsive layout without horizont
 
 test('marketing contact form preserves scoped service request and signed submission elements', async ({ page }) => {
   await page.goto('/contact?service=routine-inspection');
-  await expect(page.getByRole('heading', { name: 'Tell us what the property needs.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Let’s talk about your property.' })).toBeVisible();
   await expect(page.getByRole('form', { name: 'Property enquiry' })).toBeVisible();
   await expect(page.getByLabel('Service (optional)')).toHaveValue('routine-inspection');
   await expect(page.getByRole('checkbox', { name: /agree to ProInspect/i })).toBeVisible();
@@ -60,11 +62,11 @@ test('marketing contact form preserves scoped service request and signed submiss
 
 test('category and engagement navigation use canonical URLs rather than obsolete filters', async ({ page }) => {
   await page.goto('/');
-  const category = page.locator('.mkt-family-card').first();
-  await expect(category).toHaveAttribute('href', '/services/category/inspections');
-  const model = page.locator('.mkt-engagement-card').first().getByRole('link');
-  await expect(model).toHaveAttribute('href', '/how-we-work/pay-as-you-go');
+  const category = page.getByRole('link', { name: 'Browse the detailed service catalogue' });
+  await expect(category).toHaveAttribute('href', '/services');
+  await expect(page.getByRole('link', { name: /Discover the ProInspect approach/ })).toHaveAttribute('href', '/about');
+  await expect(page.locator('.pi-process-list li')).toHaveCount(3);
   await category.click();
-  await expect(page).toHaveURL(/\/services\/category\/inspections$/);
-  await expect(page.locator('.mkt-catalogue-card').first()).toBeVisible();
+  await expect(page).toHaveURL(/\/services$/);
+  await expect(page.locator('.mkt-family-card').first()).toBeVisible();
 });

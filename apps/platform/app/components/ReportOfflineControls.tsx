@@ -2,7 +2,7 @@ import {useState,type ChangeEvent} from 'react';
 import {useWorkspace} from '../lib/workspace';
 import {
   saveOfflineDraft,restoreOfflineDraft,removeOfflineDraft,queueOfflinePhoto,
-  syncOfflineDraft,syncOfflinePhotos,purgeOfflineWorkspace,type OfflineScope
+  syncOfflineDraft,syncOfflinePhotos,purgeOfflineWorkspace,inspectOfflineRecovery,type OfflineScope,type OfflineRecoveryStatus
 } from '../lib/report-offline';
 import type {ReportDraft} from '../../../../packages/report-engine/adapter';
 
@@ -15,6 +15,7 @@ export function ReportOfflineControls(props:{
  const [status,setStatus]=useState('');
  const [busy,setBusy]=useState(false);
  const [target,setTarget]=useState('');
+ const [recovery,setRecovery]=useState<OfflineRecoveryStatus|null>(null);
  const scope:OfflineScope={userId:d.user.id,kind:d.workspace.kind,scopeId:d.workspace.scopeId,reportId:props.reportId};
  const base='/api/w/'+encodeURIComponent(scope.kind)+'/'+encodeURIComponent(scope.scopeId);
  const ready=phrase.length>=12&&!busy;
@@ -46,6 +47,7 @@ export function ReportOfflineControls(props:{
    if(!ready)throw new Error('Enter a device passphrase of at least 12 characters.');
    const [areaId,componentId='']=defaultTarget.split('|');
    await queueOfflinePhoto(scope,phrase,file,areaId,componentId);
+   setRecovery(await inspectOfflineRecovery(scope));
    setStatus('JPEG evidence saved encrypted on this device. Synchronise before submitting the report.');
   });
  }
@@ -70,10 +72,15 @@ export function ReportOfflineControls(props:{
    <div className="actions">
      <button type="button" disabled={!ready} className="button secondary small" onClick={()=>action(async()=>{
        await saveOfflineDraft(scope,phrase,{revision:props.revision,content:props.draft,operationId:'offline_'+crypto.randomUUID().replaceAll('-','')});
+       setRecovery(await inspectOfflineRecovery(scope));
        setStatus('Draft saved encrypted in this browser.');
      })}>Save encrypted copy</button>
      <button type="button" disabled={!ready} className="button secondary small" onClick={()=>action(restore)}>Restore offline copy</button>
      <button type="button" disabled={!ready} className="button secondary small" onClick={()=>action(synchronise)}>Synchronise</button>
+     <button type="button" disabled={busy} className="button secondary small" onClick={()=>action(async()=>{
+       setRecovery(await inspectOfflineRecovery(scope));
+       setStatus('Encrypted recovery inventory checked for this account, report and browser.');
+     })}>Check encrypted recovery queue</button>
    </div>
    <label>Offline photo location
     <select value={defaultTarget} onChange={e=>setTarget(e.target.value)}>
@@ -84,8 +91,9 @@ export function ReportOfflineControls(props:{
      <input type="file" accept="image/jpeg" disabled={!ready} onChange={queueFile}/>
    </label>
    <div className="actions"><button type="button" className="button secondary small" disabled={busy}
-     onClick={()=>action(async()=>{await purgeOfflineWorkspace(scope);setStatus('This report’s encrypted local draft and queued photos were removed from this browser.');})}>
+     onClick={()=>action(async()=>{await purgeOfflineWorkspace(scope);setRecovery(await inspectOfflineRecovery(scope));setStatus('This report’s encrypted local draft and queued photos were removed from this browser.');})}>
      Remove local copies</button></div>
+   {recovery&&<p className="small" role="status">This browser has {recovery.hasDraft?'one encrypted draft':'no encrypted draft'} and {recovery.pendingPhotoCount} queued encrypted photo(s) for this report.{recovery.draftSavedAt?' Draft saved at '+recovery.draftSavedAt+'.':''} This inventory does not prove server delivery or successful decryption.</p>}
    {status&&<p role="status" className="small">{status}</p>}
    <p className="small muted">Do not rely on a shared or unmanaged device for sensitive inspection evidence. Always confirm successful synchronisation before review or report issue.</p>
  </section>;

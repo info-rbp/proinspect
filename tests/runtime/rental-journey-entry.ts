@@ -1,9 +1,19 @@
+import {dispatchTemporaryDocumentRetention,temporarySecurityDownload,reviewTemporaryDocument,stageTemporaryPackage,temporaryPackageAccess,controlTemporaryPackage} from '../../apps/platform/worker/features/rental-temporary-documents.server';
+import {deliverEvent} from '../../packages/notifications/server';
 /**
  * Isolated integration test entrypoint. This file is NEVER imported by
  * production routing, and its synthetic endpoints are unavailable online.
  */
-import { publicListing } from '../../apps/platform/worker/features/leasing.server';
-import { rentalStartPage, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental } from '../../apps/platform/worker/features/rental-applications.server';
+import { publicListing,publicListings,staffLeasing } from '../../apps/platform/worker/features/leasing.server';
+import { publicOpenHomeSessions } from '../../apps/platform/worker/features/open-home.server';
+import { issueRecipientChallenge,verifyRecipient,approveRentalListing } from '../../apps/platform/worker/features/rental-governance.server';
+import { rentalStartPage, rentalListingReady, startRental, rentalPage, saveRentalSection, finishRentalApplicant, submitRental,changeRentalEmail,inviteRentalApplicant,withdrawRental,uploadRentalDocument,deleteRentalDocument } from '../../apps/platform/worker/features/rental-applications.server';
+import {dispatchRentalScans} from '../../apps/platform/worker/features/rental-scan-dispatch.server';
+import {acceptRentalScan} from '../../apps/platform/worker/features/rental-malware.server';
+import {rentalDocumentDownload,reviewRentalDocument} from '../../apps/platform/worker/features/rental-review.server';
+import {dispatchRentalRetention} from '../../apps/platform/worker/features/rental-privacy.server';
+import {releaseFeatureReady} from '../../apps/platform/worker/features/release-governance.server';
+import {managedPrivacyDocument} from '../../apps/platform/worker/features/managed-rental-intake.server';
 import { updateRentalStatus } from '../../apps/platform/worker/features/rental-review.server';
 import { dispatchRentalHandoffs } from '../../apps/platform/worker/features/rental-script-dispatch.server';
 import { recordRentalOutcome } from '../../apps/platform/worker/features/rental-outcomes.server';
@@ -14,30 +24,87 @@ import type { Principal } from '../../packages/domain/index';
 export default {
  async fetch(request:Request,env:Env){
   const url=new URL(request.url);
-  if(env.APP_ENV!=='local')return new Response('Not available',{status:404});
+  if(env.APP_ENV!=='local'&&(env as Env&{ISOLATED_MANAGED_INTAKE?:string}).ISOLATED_MANAGED_INTAKE!=='true')return new Response('Not available',{status:404});
   const path=url.pathname;
   try{
+   const administrator={id:'usr_rental_synthetic_admin',staffRole:'administrator'} as Principal;
+   if(path==='/__test/temporary-retention'){await dispatchTemporaryDocumentRetention(env);return Response.json({completed:true});}
+   if(path==='/__test/temporary-security'&&request.method==='POST'){const d=await request.json() as {applicationId:string;documentId:string;acknowledged:boolean};return await temporarySecurityDownload(env,administrator,d.applicationId,d.documentId,d.acknowledged);}
+   if(path==='/__test/temporary-review'&&request.method==='POST'){const d=await request.json() as {applicationId:string;documentId:string;input:unknown;nonAdmin?:boolean};return Response.json(await reviewTemporaryDocument(env,d.nonAdmin?{...administrator,staffRole:'operations_manager'}:administrator,d.applicationId,d.documentId,d.input));}
+   if(path==='/__test/package-control'&&request.method==='POST'){const d=await request.json() as {applicationId:string;id:string;action:'retry'|'revoke'};return Response.json(await controlTemporaryPackage(env,administrator,d.applicationId,d.id,d.action));}
+   if(path==='/__test/temporary-package'&&request.method==='POST'){const d=await request.json() as {applicationId:string};return Response.json(await stageTemporaryPackage(env,administrator,d.applicationId,{confirmAuthority:true,confirmRecipients:true,confirmSecurityReview:true}));}
+   if(path==='/__test/mail'&&request.method==='POST'){const d=await request.json() as {eventId:string};await deliverEvent(env,d.eventId);return Response.json({completed:true});}
+   if(path==='/__test/package-access'){const value=await temporaryPackageAccess(env,url.searchParams.get('token')??'',url.searchParams.get('document')??undefined);return value instanceof Response?value:Response.json(value);}
+   if(path==='/__test/upload'&&request.method==='POST'){
+    const form=await request.formData();return Response.json(await uploadRentalDocument(env,String(form.get('token')),form));
+   }
+   if(path==='/__test/delete-document'&&request.method==='POST'){
+    const d=await request.json() as {token:string;documentId:string};return Response.json(await deleteRentalDocument(env,d.token,d.documentId));
+   }
+   if(path==='/__test/scan-dispatch'&&request.method==='POST'){await dispatchRentalScans(env);return Response.json({completed:true});}
+   if(path==='/__test/legacy-scan'&&request.method==='POST')return Response.json(await acceptRentalScan(env,request));
+   if(path==='/__test/document-download')return await rentalDocumentDownload(env,administrator,url.searchParams.get('app')??'',url.searchParams.get('doc')??'');
+   if(path==='/__test/document-review'&&request.method==='POST'){
+    const d=await request.json() as {applicationId:string;documentId:string};
+    return Response.json(await reviewRentalDocument(env,administrator,d.applicationId,d.documentId,{status:'released',note:'Synthetic authorised review of an already scanned clean document.'}));
+   }
+   if(path==='/__test/management-tag'&&request.method==='POST'){
+    const d=await request.json() as {listingId:string;input:unknown};
+    return Response.json(await staffLeasing(env,administrator,new Request(request.url,{method:'POST',body:JSON.stringify(d.input)}),d.listingId+'/management'));
+   }
+   if(path==='/__test/upload-blocked'&&request.method==='POST'){
+    const d=await request.json() as {token:string};
+    return Response.json(await uploadRentalDocument(env,d.token,new FormData()));
+   }
+   if(path==='/__test/retention'&&request.method==='POST'){await dispatchRentalRetention(env);return Response.json({completed:true});}
+   if(path==='/__test/release-state')return Response.json({rental:await releaseFeatureReady(env,'rental'),scanner:await releaseFeatureReady(env,'rental_scanner'),handoff:await releaseFeatureReady(env,'rental_script'),commercial:await releaseFeatureReady(env,'commercial_applications'),privacy:await managedPrivacyDocument(env)});
+   if(path==='/__test/application-settings'&&request.method==='POST'){
+    const d=await request.json() as {listingId:string;input:unknown};
+    const settingsRequest=new Request(request.url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d.input)});
+    return Response.json(await staffLeasing(env,administrator,settingsRequest,d.listingId+'/application-settings'));
+   }
+   if(path==='/__test/recipient-challenge'&&request.method==='POST'){
+    const d=await request.json() as {listingId:string;version:number};
+    return Response.json(await issueRecipientChallenge(env,administrator,d.listingId,{version:d.version}));
+   }
+   if(path==='/__test/recipient-verify'&&request.method==='POST'){
+    const d=await request.json() as {token:string};
+    return Response.json(await verifyRecipient(env,d.token));
+   }
+   if(path==='/__test/approve-listing'&&request.method==='POST'){
+    const d=await request.json() as {listingId:string;input:unknown};
+    return Response.json(await approveRentalListing(env,administrator,d.listingId,d.input));
+   }
    if(path==='/__test/listing'){
     return Response.json(await publicListing(env,'residential',url.searchParams.get('slug')??''));
    }
+   if(path==='/__test/listings')return Response.json(await publicListings(env));
+   if(path==='/__test/public-sessions')return Response.json(await publicOpenHomeSessions(env));
    if(path==='/__test/start-page'){
     return Response.json(await rentalStartPage(env,url.searchParams.get('slug')??''));
    }
+   if(path==='/__test/listing-ready')return Response.json({ready:await rentalListingReady(env,url.searchParams.get('slug')??'')});
    if(path==='/__test/start'&&request.method==='POST'){
-    const d=await request.json() as {listingId:string;name:string;email:string;consent:boolean};
-    return Response.json(await startRental(env,request,d.listingId,{name:d.name,email:d.email,consent:d.consent}));
+    const d=await request.json() as {listingId:string;name:string;email:string;consent:boolean;turnstile?:string};
+    return Response.json(await startRental(env,request,d.listingId,{name:d.name,email:d.email,consent:d.consent},d.turnstile));
    }
    if(path==='/__test/page'&&request.method==='POST'){
     const d=await request.json() as {token:string};
     return Response.json(await rentalPage(env,d.token));
    }
+   if(path==='/__test/change-email'&&request.method==='POST'){
+    const d=await request.json() as {token:string;email:string;version:number};
+    return Response.json(await changeRentalEmail(env,d.token,{email:d.email,version:d.version}));
+   }
+   if(path==='/__test/invite'&&request.method==='POST'){const d=await request.json() as {token:string;name:string;email:string};return Response.json(await inviteRentalApplicant(env,d.token,{name:d.name,email:d.email,adultConfirmed:true}));}
+   if(path==='/__test/withdraw'&&request.method==='POST'){const d=await request.json() as {token:string};return Response.json(await withdrawRental(env,d.token));}
    if(path==='/__test/section'&&request.method==='POST'){
     const d=await request.json() as {token:string;section:'identity'|'rental'|'employment'|'references';raw:Record<string,unknown>;version:number};
     return Response.json(await saveRentalSection(env,d.token,d.section,d.raw,d.version));
    }
    if(path==='/__test/complete'&&request.method==='POST'){
-    const d=await request.json() as {token:string;version:number};
-    return Response.json(await finishRentalApplicant(env,d.token,{accurate:true,shareWithRepresentative:true,notAnAgreement:true,noticeAcknowledged:true,referenceConsent:false},d.version));
+    const d=await request.json() as {token:string;version:number;temporaryEvidenceConsent?:boolean};
+    return Response.json(await finishRentalApplicant(env,d.token,{accurate:true,shareWithRepresentative:true,notAnAgreement:true,noticeAcknowledged:true,referenceConsent:false,temporaryEvidenceConsent:d.temporaryEvidenceConsent!==false},d.version));
    }
    if(path==='/__test/submit'&&request.method==='POST'){
     const d=await request.json() as {token:string};

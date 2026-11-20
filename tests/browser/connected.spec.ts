@@ -134,7 +134,9 @@ test('tenant evidence, reviewed PCR and cost approval connect to the self-managi
       owner.page.getByText('The wall mark was present before this tenancy began.'),
     ).toBeVisible();
     await owner.page.getByRole('button', { name: 'Acknowledge response' }).click();
-    await saved(owner.page);
+    // Acknowledgement replaces this form, so verify the persisted result rather than its removed status.
+    await expect(owner.page.getByText('acknowledged', { exact: true })).toBeVisible();
+    await expect(owner.page.getByRole('button', { name: 'Acknowledge response' })).toHaveCount(0);
     const request = await post(tenant.context, tenantApi + '/requests', {
       title: 'Browser fan repair',
       details: 'The bathroom fan no longer operates.',
@@ -239,7 +241,7 @@ test('professional portfolio import, recurring plan and commercial workspace are
     );
     await visit(commercial.page, commercialWorkspace.href + '/portfolio', 'Portfolio operations');
     await expect(
-      commercial.page.getByRole('banner').getByText('Commercial Property Portal', { exact: true }),
+      commercial.page.getByRole('banner').getByText('Commercial', { exact: true }),
     ).toBeVisible();
     const response = await commercial.context.request.get(
       `/api/w/landlord/${commercialWorkspace.clientId}`,
@@ -280,12 +282,17 @@ test('resident report reaches strata operations and council sees only its decisi
       [resident, 'resident'],
       [council, 'council_member'],
     ] as const) {
-      const invitation = await post(manager.context, firm.api + '/team/invite', {
+      const proposal = await post(manager.context, firm.api + '/team/invite', {
         email: who.email,
         role,
         schemeId,
-        ...(role === 'council_member' ? { endsAt: future() } : {}),
+        ...(role === 'council_member'
+          ? { endsAt: future(), appointmentReference:'Synthetic browser council appointment minutes' } : {}),
       });
+      const invitation=role==='council_member'
+        ? await post(operator.context,'/api/w/staff/operations/council-appointments/'+proposal.reviewId+'/review',{
+            decision:'approved',reviewReference:'Independently verified browser council minutes'})
+        : proposal;
       await post(who.context, '/api/invitations/accept', {
         token: new URL(invitation.localInvitationUrl).searchParams.get('token'),
       });

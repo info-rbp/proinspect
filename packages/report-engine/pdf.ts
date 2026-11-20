@@ -11,7 +11,9 @@ export interface ReportPdfComponent {
 export interface ReportPdfInput {
  title:string;context:string;version:string;summary:string;
  areas:Array<{name:string;components:ReportPdfComponent[];overviewPhotoIds:string[]}>;
- photos:ReadonlyMap<string,{bytes:Uint8Array;caption:string}>;
+ photos:ReadonlyMap<string,{bytes:Uint8Array;caption:string;
+  sourceSha256?:string;
+  annotations?:ReadonlyArray<{x:number;y:number;label:string}>}>;
 }
 export class ReportPdfError extends Error {
  readonly code:string;
@@ -128,14 +130,52 @@ export async function renderReportPdf(input:ReportPdfInput):Promise<Uint8Array>{
   imageBytes+=photo.bytes.length;
   if(used.size>35||imageBytes>15*1024*1024)throw new ReportPdfError('PDF_IMAGE_LIMIT','Evidence exceeds the bounded rendering limit. Split or optimise the report.');
   const dim=jpgSize(photo.bytes),imageId=reserve(),data=photo.bytes;
+  // Optional source provenance is checked against the immutable original JPEG.
+  if(photo.sourceSha256){
+    if(!/^[a-f0-9]{64}$/.test(photo.sourceSha256))
+      throw new ReportPdfError('PDF_SOURCE_HASH','Evidence provenance hash is invalid.');
+    const evidenceBytes=Uint8Array.from(photo.bytes);
+    const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',evidenceBytes.buffer as ArrayBuffer));
+    const actual=Array.from(digest,b=>b.toString(16).padStart(2,'0')).join('');
+    if(actual!==photo.sourceSha256)throw new ReportPdfError('PDF_SOURCE_CHANGED',
+      'Approved photograph differs from its recorded original; rendering stopped.');
+  }
+  const annotations=photo.annotations??[];
+  if(annotations.length>12)throw new ReportPdfError('PDF_ANNOTATION_LIMIT',
+    'A photograph cannot have more than twelve numbered observations.');
+  for(const a of annotations){
+    if(!Number.isFinite(a.x)||!Number.isFinite(a.y)||a.x<0||a.x>1||a.y<0||a.y>1||
+       typeof a.label!=='string'||a.label.trim().length<2||a.label.length>120)
+       throw new ReportPdfError('PDF_ANNOTATION_INVALID','A numbered photo observation is invalid.');
+    textBytes(a.label);
+  }
   set(imageId,concat([bytes(`<< /Type /XObject /Subtype /Image /Width ${dim.w} /Height ${dim.h} /ColorSpace /${dim.gray?'DeviceGray':'DeviceRGB'} /BitsPerComponent 8 /Filter /DCTDecode /Length ${data.length} >>\nstream\n`),data,bytes('\nendstream')]));
   const captions=wrapReportText(photo.caption,available,10);
   if(captions.length>12)throw new ReportPdfError('PDF_CAPTION_LIMIT','An evidence caption is too long for the photographic page.');
   const top=height-110-captions.length*14,scale=Math.min(available/dim.w,(top-76)/dim.h),w=dim.w*scale,h=dim.h*scale;
+  const imageLeft=(width-w)/2,imageBottom=76+(top-76-h)/2;
   const body=[`BT /F2 14 Tf ${margin} ${height-54} Td (PHOTOGRAPHIC EVIDENCE ${used.size}) Tj ET`,
    ...captions.map((c,i)=>`BT /F1 10 Tf ${margin} ${height-78-i*14} Td (${pdfLiteral(c)}) Tj ET`),
    `q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} ${((width-w)/2).toFixed(2)} ${(76+(top-76-h)/2).toFixed(2)} cm /Img Do Q`];
+  // Vector markers overlay only the generated PDF; the original photo bytes
+  // remain unmodified, addressable and independently hash-verifiable.
+  annotations.forEach((a,index)=>{
+    const x=imageLeft+a.x*w,y=imageBottom+(1-a.y)*h;
+    body.push(`q 0.86 0.16 0.12 RG 1.6 w ${(x-7).toFixed(2)} ${(y-7).toFixed(2)} 14 14 re S Q`);
+    body.push(`BT /F2 8 Tf ${(x-2.7).toFixed(2)} ${(y-2.8).toFixed(2)} Td (${index+1}) Tj ET`);
+  });
   specs.push({body:body.join('\n'),imageId});
+  if(annotations.length){
+    const legend=[
+      `BT /F2 14 Tf ${margin} ${height-54} Td (PHOTOGRAPH ${used.size} - REVIEWED ANNOTATIONS) Tj ET`,
+      `BT /F1 9 Tf ${margin} ${height-76} Td (Original JPEG unchanged; numbered markers are PDF overlays.) Tj ET`];
+    let yy=height-106;
+    annotations.forEach((a,index)=>wrapReportText((index+1)+'. '+a.label,available,10).forEach(line=>{
+      legend.push(`BT /F1 10 Tf ${margin} ${yy.toFixed(2)} Td (${pdfLiteral(line)}) Tj ET`);
+      yy-=15;
+    }));
+    specs.push({body:legend.join('\n')});
+  }
  }
  const pageIds:number[]=[];
  for(const [index,spec] of specs.entries()){

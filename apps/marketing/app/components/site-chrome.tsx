@@ -1,28 +1,21 @@
 import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router';
-
-const sectors = [
-  { path: '/sectors/residential', label: 'Residential', detail: 'Self-managing owners and property managers' },
-  { path: '/sectors/commercial', label: 'Commercial', detail: 'Owners, property and asset managers' },
-  { path: '/sectors/strata-building', label: 'Strata & buildings', detail: 'Strata managers and building operators' },
-];
+import { PUBLIC_NAVIGATION } from '../../../../packages/marketing/public-navigation';
 
 export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
   const { pathname } = useLocation();
   const mobileMenu = useRef<HTMLDetailsElement>(null);
-  const audienceMenu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     if (mobileMenu.current) mobileMenu.current.open = false;
-    if (audienceMenu.current) audienceMenu.current.open = false;
   }, [pathname]);
   useEffect(() => {
     function closeOutside(event: PointerEvent) {
-      for (const menu of [mobileMenu.current, audienceMenu.current])
+      for (const menu of [mobileMenu.current])
         if (menu?.open && !menu.contains(event.target as Node)) menu.open = false;
     }
     function closeEscape(event: KeyboardEvent) {
       if (event.key !== 'Escape') return;
-      for (const menu of [mobileMenu.current, audienceMenu.current]) {
+      for (const menu of [mobileMenu.current]) {
         if (!menu?.open) continue;
         menu.open = false;
         menu.querySelector('summary')?.focus();
@@ -39,44 +32,21 @@ export function MarketingHeader({ appOrigin = '' }: { appOrigin?: string }) {
     <div className="mkt-header-wrap">
       <div className="site-container">
         <header className="site-header mkt-site-header">
-          <Link className="brand mkt-brand" to="/" aria-label="ProInspect homepage">
+          <Link className="brand mkt-brand" to="/" aria-label="ProInspect home" aria-current={pathname === '/' ? 'page' : undefined}>
             ProInspect<span>PROPERTY SERVICES</span>
           </Link>
           <nav className="site-links mkt-site-links" aria-label="Primary navigation">
-            <Link to="/services" aria-current={pathname.startsWith('/services') ? 'page' : undefined}>Services</Link>
-            <details className="mkt-nav-dropdown" ref={audienceMenu}>
-              <summary>Who we help</summary>
-              <div className="mkt-nav-popover">
-                <p className="mkt-nav-caption">Support for every property setting</p>
-                {sectors.map((sector) => (
-                  <Link key={sector.path} to={sector.path} className="mkt-nav-sector">
-                    <strong>{sector.label}</strong>
-                    <small>{sector.detail}</small>
-                  </Link>
-                ))}
-              </div>
-            </details>
-            <Link to="/how-it-works" aria-current={pathname.startsWith('/how-') ? 'page' : undefined}>How we work</Link>
-            <Link to="/why-proinspect" aria-current={pathname === '/why-proinspect' ? 'page' : undefined}>Why ProInspect</Link>
-            <Link to="/properties-for-lease" aria-current={pathname.startsWith('/properties-for-lease') ? 'page' : undefined}>Leasing</Link>
-            <Link to="/resources" aria-current={pathname.startsWith('/resources') ? 'page' : undefined}>Resources</Link>
+            {PUBLIC_NAVIGATION.filter(item => !['/client','/contact'].includes(item.href)).map(item =>
+              <Link key={item.href} to={item.href} aria-current={pathname === item.href ? 'page' : undefined}>{item.label}</Link>)}
           </nav>
           <div className="mkt-header-actions">
-            <a className="mkt-signin" href={appOrigin + '/signin'}>Sign in</a>
-            <a className="button mkt-header-book" href={appOrigin + '/book'}>Book a service <span aria-hidden="true">→</span></a>
+            <Link className="button mkt-header-book" to="/client">Sign Up / Sign In</Link>
+            <Link className="mkt-signin" to="/contact">Contact Us</Link>
           </div>
           <details className="marketing-menu" ref={mobileMenu}>
             <summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span>Menu</span></summary>
             <nav aria-label="Mobile site navigation">
-              <Link to="/services">Services</Link>
-              <p className="mkt-nav-caption">Who we help</p>
-              {sectors.map((sector) => <Link key={sector.path} to={sector.path}>{sector.label}</Link>)}
-              <Link to="/how-it-works">How we work</Link>
-              <Link to="/why-proinspect">Why ProInspect</Link>
-              <Link to="/properties-for-lease">Leasing</Link>
-              <Link to="/resources">Resources</Link>
-              <Link to="/contact">Contact</Link>
-              <a href={appOrigin + '/signin'}>Sign in</a>
+              {PUBLIC_NAVIGATION.map(item => <Link key={item.href} to={item.href} aria-current={pathname === item.href ? 'page' : undefined}>{item.label}</Link>)}
             </nav>
           </details>
         </header>
@@ -92,34 +62,39 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
         <div className="mkt-footer-top">
           <div className="mkt-footer-intro">
             <Link className="brand inverse" to="/">ProInspect<span>PROPERTY SERVICES</span></Link>
-            <p>On-the-ground property inspections, attendance and operational support. Documented work with a connected property record.</p>
+            <p>Inspections, outsourced property operations and building care for residential, commercial, shared accommodation and construction clients across Perth and Peel.</p>
             <Link className="mkt-footer-contact" to="/contact">Talk to ProInspect <span aria-hidden="true">↗</span></Link>
           </div>
           <div className="mkt-footer-group">
-            <h3>Explore</h3>
-            <Link to="/services">All services</Link>
-            <Link to="/properties-for-lease">Properties for lease</Link>
-            <Link to="/services/category/inspections">Inspections</Link>
+            <h3>Services</h3>
+            <Link to="/services">Individual services</Link>
+            <Link to="/service-finder">Find a service</Link>
+            <Link to="/how-we-work/outsourced-operations">Ongoing operations</Link>
+            <Link to="/services/category/inspections">Inspections &amp; reports</Link>
             <Link to="/services/category/maintenance">Maintenance &amp; works</Link>
-            <Link to="/how-it-works">How we work</Link>
-            <Link to="/client-experience">The client experience</Link>
+            <Link to="/services/category/access">Contractor access</Link>
           </div>
           <div className="mkt-footer-group">
             <h3>Who we help</h3>
-            {sectors.map((sector) => <Link key={sector.path} to={sector.path}>{sector.label}</Link>)}
-            <Link to="/areas-we-service">Service areas</Link>
+            {PUBLIC_NAVIGATION.filter(item => ['residential','commercial','strata','co-living','student-living','construction'].includes(item.href.slice(1))).map(item => <Link key={item.href} to={item.href}>{item.label}</Link>)}
+            <Link to="/who-we-help">All customer types</Link>
+            <Link to="/residential-property-support">Residential support options</Link>
+            <Link to="/student-living">Student Living</Link>
           </div>
           <div className="mkt-footer-group">
             <h3>ProInspect</h3>
-            <Link to="/why-proinspect">Why ProInspect</Link>
-            <Link to="/resources">Guides &amp; resources</Link>
+            <Link to="/how-it-works">How it works</Link>
+            <Link to="/client-experience">Client experience</Link>
+            <Link to="/properties-for-lease">Properties for lease</Link>
+            <Link to="/tenants">Tenant support</Link>
+            <Link to="/resources">Resources</Link>
             <Link to="/about">About</Link>
             <Link to="/contact">Contact</Link>
-            <a href={appOrigin + '/signin'}>Sign in</a>
+            <a href={appOrigin + '/client'}>Sign in</a>
           </div>
         </div>
         <div className="mkt-footer-bottom">
-          <span>© {new Date().getFullYear()} ProInspect Property Services · Western Australia</span>
+          <span>© {new Date().getFullYear()} ProInspect Property Services Pty Ltd · ABN 52 703 550 609 · ACN 703 550 609</span>
           <div><Link to="/privacy">Privacy</Link><Link to="/website-terms">Website terms</Link><Link to="/platform-terms">Platform terms</Link><Link to="/terms">Service terms</Link><Link to="/booking-policy">Booking &amp; refunds</Link><Link to="/service-scopes">Service scopes</Link><Link to="/subscription-terms">Plans</Link></div>
         </div>
       </div>

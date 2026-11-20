@@ -14,6 +14,7 @@ import {
 import { email, addressKey } from '../../../../packages/validation/index';
 import { seal, unseal, digest, randomToken } from '../../../../packages/auth/crypto';
 import { mailEvent } from '../../../../packages/notifications/server';
+import { proposeCouncilAppointment, assertCouncilInvitationVerified } from './council-appointments.server';
 import {
   shortText,
   reference,
@@ -428,6 +429,8 @@ export async function inviteMember(env: Env, user: Principal, w: Workspace, inpu
       schemeId: recordId.optional(),
       lotId: recordId.optional(),
       endsAt: isoDate.optional(),
+      startsAt: isoDate.optional(),
+      appointmentReference: z.string().trim().min(8).max(500).optional(),
     })
     .parse(input);
   if (d.schemeId) {
@@ -463,6 +466,14 @@ export async function inviteMember(env: Env, user: Principal, w: Workspace, inpu
     );
   }
   if (d.endsAt) assert(d.endsAt > now(), 422, 'TERM_INVALID', 'Choose a future end date.');
+  if (d.role === 'council_member') {
+    assert(d.schemeId && d.endsAt && d.appointmentReference, 422,
+      'COUNCIL_APPOINTMENT_REQUIRED', 'Council membership requires scheme, term and appointment evidence reference.');
+    return proposeCouncilAppointment(env,user,w,{
+      email:d.email,schemeId:d.schemeId,lotId:d.lotId,
+      endsAt:d.endsAt,startsAt:d.startsAt,appointmentReference:d.appointmentReference,
+    });
+  }
   const token = randomToken(),
     url = `${env.APP_ORIGIN}/invitations/accept?token=${token}`;
   await env.DB.batch([
@@ -549,6 +560,7 @@ export async function acceptPortalInvitation(env: Env, user: Principal, token: s
     'INVITATION_EXPIRED',
     'The relationship term has ended.',
   );
+  if (i.role === 'council_member') await assertCouncilInvitationVerified(env,i,user);
   const statements = [
     statement(
       env.DB,
@@ -581,7 +593,7 @@ export async function acceptPortalInvitation(env: Env, user: Principal, token: s
         i.scheme_id,
         i.lot_id,
         i.role,
-        now(),
+        i.role === 'council_member' ? i.starts_at : now(),
         i.ends_at,
         i.created_by,
       ),

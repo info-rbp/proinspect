@@ -1,8 +1,10 @@
+import { isApprovedStagingPreview } from '../deploy/staging-preview.mjs';
 /** Non-mutating HTTP smoke tests against the dedicated V3 staging Worker only. */
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 const ORIGIN='https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev';
-if(process.env.GITHUB_REF!=='refs/heads/version-3-enhancements')
+const pr01Preview=isApprovedStagingPreview(process.env);
+if(process.env.GITHUB_REF!=='refs/heads/version-3-enhancements'&&!pr01Preview)
  throw new Error('Staging smoke must run on version-3-enhancements.');
 const source=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const results=[];
@@ -35,12 +37,15 @@ try{
  if(sourceCheck&&sourceCheck!==source)throw new Error('Hosted Worker source not exact workflow commit.');
  await inspect('/',200,true);
  await inspect('/services',200,true);
+ for(const sector of ['residential','commercial','strata','co-living','construction','leasing','maintenance'])
+  await inspect('/'+sector,200,true);
  await inspect('/properties-for-lease',200,true);
  await inspect('/open-home/check-in',200,true);
  await inspect('/api/public/open-home/sessions',200);
  await inspect('/api/public/leasing',200);
  await inspect('/api/catalogue',200);
  await inspect('/signin',200,true);
+ await inspect('/signup',200,true);
  await inspect('/privacy',200,true);
  await inspect('/terms',200,true);
  await inspect('/api/guest/report?token='+('f'.repeat(64)),404);

@@ -1,0 +1,300 @@
+import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
+import { loadApi } from '../lib/api.server';
+import { useWorkspace } from '../lib/workspace';
+import { PageHeading } from '../../../../packages/ui/components';
+import {
+  CommercialAdminForm,
+  ReviewRecord,
+  adminText as get,
+} from '../components/CommercialAdminForm';
+export async function loader({ request, context }: LoaderFunctionArgs) {
+  return loadApi(request, context, '/api/staff/commercial-applications');
+}
+export default function CommercialApplications() {
+  const d = useLoaderData<typeof loader>(),
+    w = useWorkspace().workspace,
+    base = '/api/staff/commercial-applications';
+  return (
+    <>
+      <PageHeading
+        title="Commercial leasing applications"
+        eyebrow="Separate commercial intake"
+        description="Entity-adaptive applications, private evidence and authorised handoff. This workflow does not execute leases, collect payments or activate general commercial operations."
+      />
+      <Link to={w.href + '/leasing'}>Return to leasing administration</Link>
+      {!d.schemaReady ? (
+        <section className="panel">
+          <h2>Commercial application preparation is not installed</h2>
+          <p>
+            The additive migration requires rehearsal and approval before applying it to an existing
+            database. Intake is disabled. No new database is needed.
+          </p>
+        </section>
+      ) : (
+        <>
+          <p className="notice">
+            {d.enabled
+              ? 'Intake is configured; every listing, provider and source-specific acceptance gate is still checked.'
+              : 'Commercial intake is disabled. Preparing or approving a flow does not activate it.'}
+          </p>
+          {d.canConfigure && (
+            <section className="panel stack">
+              <h2>Prepare a listing-specific flow</h2>
+              <p>
+                Use signed authority and the actual approved collection/provider/retention
+                disclosures. A separate reviewer must approve the exact configuration after
+                recipient verification.
+              </p>
+              <CommercialAdminForm
+                endpoint={base + '/flows'}
+                label="Prepare flow and request mailbox verification"
+                build={(f) => ({
+                  listingId: get(f, 'listingId'),
+                  managedByProInspect: f.get('managedByProInspect') === 'on',
+                  authorityReference: get(f, 'authorityReference'),
+                  recipient: get(f, 'recipient'),
+                  privacyVersion: get(f, 'privacyVersion'),
+                  collectionNotice: get(f, 'collectionNotice'),
+                  providerDisclosure: get(f, 'providerDisclosure'),
+                  guarantee: get(f, 'guarantee'),
+                  securityRequirements: get(f, 'securityRequirements'),
+                  requiredPersonalEvidence: f.getAll('requiredPersonalEvidence').map(String),
+                  retention: {
+                    draft: Number(get(f, 'draftDays')),
+                    submitted: Number(get(f, 'submittedDays')),
+                    withdrawn: Number(get(f, 'withdrawnDays')),
+                  },
+                })}
+              >
+                <label>
+                  Commercial listing
+                  <select name="listingId" required>
+                    <option value="">Choose property</option>
+                    {d.listings.map((l: any) => (
+                      <option value={l.id} key={l.id}>
+                        {l.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="check">
+                  <input type="checkbox" name="managedByProInspect" required />
+                  ProInspect directly manages this property and has authority to administer its applications.
+                </label>
+                <label>
+                  Signed application-processing authority reference
+                  <input name="authorityReference" required minLength={8} maxLength={240} />
+                </label>
+                <label>
+                  Authorised recipient mailbox
+                  <input type="email" name="recipient" required />
+                </label>
+                <label>
+                  Approved privacy policy version
+                  <input name="privacyVersion" required />
+                </label>
+                <label>
+                  Exact purpose-specific collection notice
+                  <textarea
+                    name="collectionNotice"
+                    minLength={100}
+                    maxLength={5000}
+                    rows={6}
+                    required
+                  />
+                </label>
+                <label>
+                  Actual providers, processing locations and disclosures
+                  <textarea
+                    name="providerDisclosure"
+                    minLength={30}
+                    maxLength={5000}
+                    rows={4}
+                    required
+                  />
+                </label>
+                <div className="grid-3">
+                  {[
+                    ['draftDays', 'Approved draft retention (days)'],
+                    ['submittedDays', 'Approved submitted retention (days)'],
+                    ['withdrawnDays', 'Approved withdrawn retention (days)'],
+                  ].map(([name, label]) => (
+                    <label key={name}>
+                      {label}
+                      <input type="number" name={name} min={1} max={3650} required />
+                    </label>
+                  ))}
+                </div>
+                <label>
+                  Guarantee requirement
+                  <select name="guarantee">
+                    <option value="none">Not applicable</option>
+                    <option value="optional">Optional</option>
+                    <option value="required">Required</option>
+                  </select>
+                </label>
+                <label>
+                  Approved security requirements
+                  <textarea name="securityRequirements" required minLength={5} maxLength={1200} />
+                </label>
+                <p>Request personal evidence only where justified and authorised:</p>
+                <label className="check">
+                  <input type="checkbox" name="requiredPersonalEvidence" value="identity" />
+                  Identity evidence from each required participant
+                </label>
+                <label className="check">
+                  <input type="checkbox" name="requiredPersonalEvidence" value="guarantee" />
+                  Guarantee assessment evidence from proposed guarantors
+                </label>
+              </CommercialAdminForm>
+            </section>
+          )}
+          {d.canConfigure && (
+            <section className="panel stack">
+              <h2>Flow reviews</h2>
+              {d.flows.length === 0 ? (
+                <p>No commercial intake flow has been prepared.</p>
+              ) : (
+                d.flows.map((flow: any) => (
+                  <details className="panel" key={flow.id}>
+                    <summary>
+                      {flow.title} · version {flow.version} · {flow.status}
+                    </summary>
+                    <p>
+                      Recipient: {flow.recipient_verified_at ? 'Verified' : 'Awaiting verification'}
+                    </p>
+                    <ReviewRecord value={flow.config} />
+                    {flow.status === 'draft' && (
+                      <CommercialAdminForm
+                        endpoint={base + '/flows/' + flow.id + '/approve'}
+                        label="Record independent authority review"
+                        build={(f) => ({
+                          configHash: flow.config_sha256,
+                          reference: get(f, 'reference'),
+                          authorityVerified: f.has('authorityVerified'),
+                          privacyAndRetentionApproved: f.has('privacyAndRetentionApproved'),
+                          providerProcessingApproved: f.has('providerProcessingApproved'),
+                        })}
+                      >
+                        <label>
+                          Review evidence reference
+                          <input name="reference" required minLength={8} />
+                        </label>
+                        {[
+                          ['authorityVerified', 'I verified the signed authority and recipient.'],
+                          [
+                            'privacyAndRetentionApproved',
+                            'I verified the exact approved notice and retention policy.',
+                          ],
+                          [
+                            'providerProcessingApproved',
+                            'I verified provider processing, scanner and handoff acceptance.',
+                          ],
+                        ].map(([name, label]) => (
+                          <label className="check" key={name}>
+                            <input type="checkbox" name={name} required />
+                            {label}
+                          </label>
+                        ))}
+                      </CommercialAdminForm>
+                    )}
+                    {flow.status === 'approved' && (
+                      <CommercialAdminForm
+                        endpoint={base + '/flows/' + flow.id + '/revoke'}
+                        label="Revoke this flow"
+                        build={(f) => ({ reference: get(f, 'reference') })}
+                      >
+                        <label>
+                          Revocation reference
+                          <input name="reference" required minLength={8} />
+                        </label>
+                      </CommercialAdminForm>
+                    )}
+                  </details>
+                ))
+              )}
+            </section>
+          )}
+          {d.canReview && (
+            <section className="panel stack">
+              <h2>Commercial review queue</h2>
+              {d.applications.length === 0 ? (
+                <p>No commercial applications are recorded.</p>
+              ) : (
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Reference</th>
+                        <th>Property</th>
+                        <th>State</th>
+                        <th>Submitted</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {d.applications.map((a: any) => (
+                        <tr key={a.id}>
+                          <td>
+                            <Link to={w.href + '/commercial-applications/' + a.id}>
+                              {a.reference}
+                            </Link>
+                          </td>
+                          <td>{a.title}</td>
+                          <td>{a.status.replaceAll('_', ' ')}</td>
+                          <td>{a.submitted_at || 'Private draft / evidence review'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          )}
+          {d.canConfigure && (
+            <section className="panel stack">
+              <h2>Separate commercial permissions</h2>
+              <p>
+                Access to residential applications does not grant access here. Only an administrator
+                can grant these permissions.
+              </p>
+              <CommercialAdminForm
+                endpoint={base + '/permissions'}
+                label="Record commercial permission grant"
+                build={(f) => ({
+                  userId: get(f, 'userId'),
+                  configure: f.has('configure'),
+                  review: f.has('review'),
+                  reference: get(f, 'reference'),
+                })}
+              >
+                <label>
+                  Verified staff member
+                  <select name="userId" required>
+                    <option value="">Choose staff member</option>
+                    {d.staff?.map((u: any) => (
+                      <option key={u.id} value={u.id}>
+                        {u.display_name || u.email}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="check">
+                  <input type="checkbox" name="configure" />
+                  Configure and approve listing flows
+                </label>
+                <label className="check">
+                  <input type="checkbox" name="review" />
+                  Review commercial applications and private evidence
+                </label>
+                <label>
+                  Authority reference
+                  <input name="reference" required minLength={8} />
+                </label>
+              </CommercialAdminForm>
+            </section>
+          )}
+        </>
+      )}
+    </>
+  );
+}

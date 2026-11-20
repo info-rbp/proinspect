@@ -472,6 +472,10 @@ export async function recordPayment(
     .object({ version, status: z.enum(['paid', 'failed', 'refunded', 'waived']), reference })
     .parse(input);
   assert(p.version === d.version, 409, 'STALE_VERSION', 'Payment record has changed.');
+  const registeredOneOff=await statement(env.DB,
+    'SELECT booking_id FROM registered_booking_payment_links WHERE payment_id=?',id).first();
+  assert(!registeredOneOff,409,'SIGNED_CHECKOUT_REQUIRED',
+    'A registered one-off service payment may settle only from its verified Stripe Checkout event.');
   assert(
     p.provider === 'manual',
     409,

@@ -1,0 +1,31 @@
+{
+  "kind": "existing-hosted-staging-d1",
+  "databaseId": "e66b8ebc-637d-4737-8d47-b0fbec3c082c",
+  "migration": {
+    "name": "0054_client_service_interests.sql",
+    "sha256": "81cbc606ca7312a6a64062baa03896db0f9e557f885869e2d0f5fa40362e9c6b"
+  },
+  "productionTouched": false,
+  "productionAccepted": false,
+  "passed": true,
+  "checks": [
+    "0054 recorded after 53-migration baseline",
+    "pre-existing synthetic account preserved",
+    "existing user and client counts preserved",
+    "no subscriptions or entitlements created",
+    "foreign keys valid",
+    "service preference round trip",
+    "invalid area rejected",
+    "unknown account rejected",
+    "unknown user rejected",
+    "duplicate preference rejected",
+    "preference grants no billing",
+    "foreign keys valid after rejected writes"
+  ],
+  "ownerAuthorisedExistingStaging": true,
+  "independentReviewWaivedByOwner": true,
+  "sourceHeadAtRehearsal": "26dafc09e27cb36884030ba37aebe0197975933f",
+  "stagingBackupSha256": "5b48990ca70b5823864e0a27f61a3a019319f3789e9d923937332a16f634d01f",
+  "stagingBackupRestoredLocally": true,
+  "syntheticRecordsRemoved": true
+}

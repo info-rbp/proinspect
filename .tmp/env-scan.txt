@@ -1,0 +1,877 @@
+--- root files ---
+./.figma/README.md
+./.github/release-migration-baseline.json
+./.github/v2-migration-baseline.json
+./.gitignore
+./.node-version
+./.prettierignore
+./.prettierrc.json
+./README.md
+./config/environment.json
+./config/final-sprint-migration-baseline.json
+./config/handbook-migration-baseline.json
+./config/handbook-tasks.json
+./config/handbook-traceability.json
+./config/pcr-migration-baseline.json
+./docs/AGENCY_OUTSOURCING.md
+./docs/ARCHITECTURE.md
+./docs/AUTHORIZATION.md
+./docs/BUILD_STATUS.md
+./docs/COMMUNICATIONS.md
+./docs/CONNECTED_WORKFLOWS.md
+./docs/CONTRACTOR_PAYMENT_MODELS_2026-10-26.md
+./docs/DEPLOYMENT.md
+./docs/DOMAIN_MODEL.md
+./docs/EIGHT_PORTAL_ACCEPTANCE.md
+./docs/FINAL_PRODUCT_COMPLETION_PRODUCTION_SPRINT_2026-11-08.md
+./docs/FINAL_SPRINT_EXECUTION_2026-10-26.md
+./docs/GITHUB_CONFIGURATION.md
+./docs/GOOGLE_CALENDAR_DIAGNOSTIC.md
+./docs/INTEGRATIONS.md
+./docs/LANDLORD_SUBSCRIPTION_BOOKING.md
+./docs/LANDLORD_TENANT_DELIVERY_PLAN.md
+./docs/LANDLORD_TENANT_STATUS_AUDIT_2026-10-19.md
+./docs/LAUNCH_SCOPE.md
+./docs/LEASING.md
+./docs/LEASING_GAP_IMPLEMENTATION_2026-11-08.md
+./docs/LEGAL_FRAMEWORK_ACCEPTANCE_2026.md
+./docs/MARKETING_CONTENT_PUBLICATION_REGISTER.md
+./docs/MARKETING_RELEASE_REVIEW.md
+./docs/OPEN_HOME_CHECKIN.md
+./docs/OPEN_HOME_NEXT_DAY_REPORTS.md
+./docs/PCR_CAMPAIGN_COMPLETION_2026-10-27.md
+./docs/PORTALS.md
+./docs/PORTAL_ACCEPTANCE_EXECUTION_2026-10-25.md
+./docs/PORTAL_TESTING.md
+./docs/PROPERTY_REPORT_TOOL_BRIDGE.md
+./docs/RELEASE_RECONCILIATION_2026-10-22.md
+./docs/RENTAL_APPLICATION_PRIORITIES_1_TO_5.md
+./docs/RENTAL_APPS_SCRIPT_HANDOFF.md
+./docs/RENTAL_TENANCY_REFERENCE_CHECKS_2026-11-07.md
+./docs/RENT_CONNECT_SANDBOX_2026-10-26.md
+./docs/REPORTING_DELIVERY_2026-10-25.md
+./docs/REPORTING_INTEGRATION_STATUS.md
+./docs/REPORT_TOOL_INTEGRATION.md
+./docs/REPORT_UPSTREAM_SYNC.md
+./docs/SCOPE_REVIEW.md
+./docs/SPRINT_PAYMENT_SAFEGUARDS_2026-10-27.md
+./docs/SPRINT_RECOVERY_2026-10-27.md
+./docs/STAGE1_ACCOUNT_FIRST_LIVE_STRIPE_2026-11-08.md
+./docs/STAGE2_LIVE_ACCEPTANCE.md
+./docs/STAGE3_MARKETING_SEO_RELEASE_2026-11-08.md
+./docs/STAGE3_PUBLICATION_COPY_AND_APPROVAL_REGISTER_2026-11-08.md
+./docs/STAGE3_SEO_ACQUISITION_PLAN_2026-11-08.md
+./docs/STAGE4_ENGINEERING_DELIVERY_AND_ACCEPTANCE_2026-11-08.md
+./docs/STAGE5_INTEGRATION_RELIABILITY_AND_ACCEPTANCE_2026-11-09.md
+./docs/STAGE6_MARKET_LAUNCH_AND_ACCEPTANCE_2026-11-09.md
+./docs/STRIPE_ACTIVATION_2026-10-22.md
+./docs/STRIPE_SANDBOX_IMPLEMENTATION_STATUS_20261025.md
+./docs/STRIPE_STAGING_IMPLEMENTATION.md
+./docs/UNIFIED_SITE.md
+./docs/V2_ASSET_PREVENTIVE_COMPLIANCE.md
+./docs/V2_BRANCH_RECONCILIATION.md
+./docs/V2_BUSINESS_FOUNDATION.md
+./docs/V2_CAPITAL_ENTERPRISE.md
+./docs/V2_MAINTENANCE_DELIVERY.md
+./docs/V2_RELEASE_FREEZE.md
+./docs/V2_SECTOR_ROLLOUTS.md
+./docs/V3_INTEGRATION_REGISTER.md
+./docs/V3_MIGRATION_LEDGER.md
+./docs/V3_PRODUCTION_CUTOVER.md
+./docs/WA_BOND_MANAGEMENT.md
+./docs/WA_FORMS_RENT_CONNECT_SPEC_2026-10-25.md
+./docs/WA_FORMS_SIGNING_IMPLEMENTATION.md
+./docs/WA_FORM_1AA_PROVIDER_AND_PDF_ACCEPTANCE.md
+./docs/WA_RESIDENTIAL_FORMS_IMPLEMENTATION.md
+./docs/WA_STATUTORY_32_FORM_ROLLOUT.md
+./docs/WS00_BASELINE_SCOPE_GOVERNANCE_2026-10-27.md
+./docs/residential-subscription-commercial-terms-draft.md
+./package.json
+./packages/http-bodies.ts
+./packages/legal-policy.ts
+./playwright.config.ts
+./pnpm-lock.yaml
+./pnpm-workspace.yaml
+./scripts/catalogue-sql.mjs
+./scripts/configuration.mjs
+./scripts/handbook-check.mjs
+./scripts/handbook-release-readiness.mjs
+./scripts/local-init.mjs
+./scripts/schema-statements.py
+./scripts/stage0-check.mjs
+./scripts/stage6-market-launch-gate.mjs
+./scripts/sync-report-engine.mjs
+./tests/agency-schema.test.py
+./tests/apps-script.test.ts
+./tests/architecture.test.ts
+./tests/bonds.test.ts
+./tests/booking-intent.test.ts
+./tests/calendar-scheduling.test.ts
+./tests/canonical-origin.test.ts
+./tests/cloudflare-connect.test.ts
+./tests/commercial-calculations.test.ts
+./tests/commercial-schema.test.py
+./tests/communications.test.ts
+./tests/connect-policy.test.ts
+./tests/connect-sandbox-schema.test.py
+./tests/contractor-payment-models-schema.test.py
+./tests/contractor-payment-models.test.ts
+./tests/csp-nonce.test.ts
+./tests/deployment.test.ts
+./tests/direct-cloudflare.test.ts
+./tests/domain.test.ts
+./tests/final-review.test.ts
+./tests/final-sprint-schema.test.py
+./tests/finance-delivery-schema.test.py
+./tests/form18.test.ts
+./tests/google-calendar.test.ts
+./tests/handbook-migration-rehearsal.test.py
+./tests/handbook-register.test.mjs
+./tests/handbook-release-readiness.test.mjs
+./tests/invoice-observation.test.ts
+./tests/invoice-stage4.test.ts
+./tests/leasing.test.ts
+./tests/legal-framework.test.ts
+./tests/marketing-publication-register.test.ts
+./tests/marketing-readiness.test.ts
+./tests/marketing-stage3.test.ts
+./tests/open-home.test.ts
+./tests/operation-form.test.ts
+./tests/pcr-discount-schema.test.py
+./tests/pcr-discount.test.ts
+./tests/pcr-launch.test.ts
+./tests/perth-fixture-date.test.ts
+./tests/portal-acceptance-gate.test.mjs
+./tests/portal-cloudflare.test.ts
+./tests/portal-execution.test.mjs
+./tests/portal-launch-evidence.test.mjs
+./tests/provider-readiness.test.ts
+./tests/release-readiness.test.ts
+./tests/release-upgrade.test.py
+./tests/rent-routing-schema.test.py
+./tests/rent-routing.test.ts
+./tests/rental-delivery-synthetic.test.ts
+./tests/rental-framework.test.ts
+./tests/rental-tenancy-handover.test.ts
+./tests/report-contract.test.ts
+./tests/report-history.test.ts
+./tests/report-offline.test.ts
+./tests/report-parity-stage4.test.ts
+./tests/report-pdf.test.ts
+./tests/report-tool-catalogue.test.ts
+./tests/reporting-schema.test.py
+./tests/residential-agency-savings.test.ts
+./tests/residential-campaign.test.ts
+./tests/residential-live-billing.test.ts
+./tests/schema.test.py
+./tests/stage1-free-account-schema.test.py
+./tests/stage2-portal-design.test.ts
+./tests/stage5-operational-health.test.ts
+./tests/stage6-launch.test.ts
+./tests/stage6-market-launch-gate.test.mjs
+./tests/stripe-sandbox-policy.test.ts
+./tests/stripe-sandbox.test.ts
+./tests/unified-site.test.ts
+./tests/v2-business.test.ts
+./tests/v2-final.test.ts
+./tests/v4-catalogue.test.ts
+./tests/v4-schema.test.py
+./tests/wa-agreement-signing.test.ts
+./tests/wa-form1aa-provider.test.ts
+./tests/wa-forms-rollout.test.ts
+./tests/wa-residential-rules.test.ts
+./tsconfig.json
+--- manifests and docs ---
+
+### README.md
+# ProInspect
+
+A clean Cloudflare-native rebuild: one identity, one relationship-aware property graph, one operational engine and purpose-built workspaces.
+
+The repository now contains the original booking-to-report workflow plus connected Landlord, Tenant, Property Manager, Commercial, Strata Manager, Building, Council and Staff operations. Access follows approved relationships, not a public role selector. See [BUILD_STATUS.md](docs/BUILD_STATUS.md) for implemented behaviour and explicit remaining limits.
+
+**Cloudflare Workers Builds deploys `apps/platform` directly from `main` to the existing `proinspect-platform` Worker.** GitHub Actions remains verification-only. The first live deployment provisions new resources but does not migrate historical data or attach DNS.
+
+## Applications
+
+- apps/marketing: canonical public service content and route modules, reused by the deployed platform SSR router (not a separate deployed website).
+- apps/platform: the single deployed Worker, public marketing homepage, sign-in, all workspaces and operational API.
+- packages: shared domain, authorization, encryption, catalogue and design system.
+- database/migrations: numbered relational D1 migrations.
+
+Target domain: proinspect.systems for both marketing and all customer accounts. The existing Worker.dev alias is usable until that custom hostname is attached.
+
+## Start locally
+
+Use Node 22.22+ within the Node 22 line and the pinned package manager.
+
+```sh
+corepack enable
+pnpm install --frozen-lockfile
+pnpm local:init
+pnpm dev
+# Another terminal:
+pnpm dev:marketing
+```
+
+`pnpm local:init --test-fixtures` creates synthetic test data only. It cannot be applied remotely and is not approved pricing or real staff provisioning. Local secrets are generated into ignored .dev.vars files.
+
+## Verify
+
+```sh
+pnpm check
+pnpm test:integration
+pnpm exec playwright install --with-deps chromium
+pnpm local:init --test-fixtures
+pnpm test:browser
+```
+
+CI builds both Workers, tests local D1/R2/Durable Object workflows, checks upload dry-runs and exercises the browser journey. Reports and screenshots are retained in verification artifacts.
+
+## Deploy
+
+Use Cloudflare's existing Git connection to `main`, not a GitHub Actions connection workflow. The platform build is `CLOUDFLARE_ENV=connected pnpm --dir apps/platform build`; deploy is `pnpm --dir apps/platform exec wrangler deploy`. The connected environment is **production**, with automatic D1/R2/Queue provisioning. [Deployment instructions](docs/DEPLOYMENT.md) cover initial database migrations and runtime secrets.
+
+## Authoritative contracts
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Domain model](docs/DOMAIN_MODEL.md)
+- [Authorization](docs/AUTHORIZATION.md)
+- [Portal definitions](docs/PORTALS.md)
+- [Launch sequence](docs/LAUNCH_SCOPE.md)
+- [Implemented and outstanding capabilities](docs/BUILD_STATUS.md)
+
+The old repositories are references only. No Firebase/Firestore, Express, Google Calendar or GCP deployment runtime was brought into this rebuild. Historical import and hosted release remain separate approval steps. [Connected workflows](docs/CONNECTED_WORKFLOWS.md) and [integration contracts](docs/INTEGRATIONS.md) explain the new cross-portal behaviour.
+
+## Scope review and environment configuration
+
+Read [the scope review](docs/SCOPE_REVIEW.md) for implemented workflows and deliberate remaining gaps. [GitHub configuration](docs/GITHUB_CONFIGURATION.md) lists the exact core and optional secrets, public settings, Worker targets and external integration properties. `pnpm config:list` is safe offline; `pnpm config:check` validates supplied process variables without printing values or contacting providers. Runtime secrets must be configured on the Cloudflare Worker; GitHub-only secrets are not passed to Cloudflare Builds.
+## Google Admin portal testing aliases
+
+Eight owner-created `@proinspect.systems` email aliases can be prepared as isolated test Landlord, Property Manager, Strata Manager, Tenant, Resident, Council, Commercial and Staff accounts using the explicit one-time SQL and verification instructions in [Portal testing](docs/PORTAL_TESTING.md). This source addition does **not** auto-provision live D1 or bypass verified email sign-in. There is no Cloudflare Actions connection workflow.
+
+
+For the one-time GitHub API-powered live D1 test-account setup (not a Worker deploy), see [Portal testing](docs/PORTAL_TESTING.md). GitHub Actions consumes the Cloudflare API key securely without showing the value or requiring a separate Cloudflare browser login.
+### package.json
+{
+  "name": "proinspect",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=22.22.0 <23"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @proinspect/platform dev",
+    "dev:marketing": "pnpm --filter @proinspect/marketing dev",
+    "build": "pnpm -r build",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts && node --test tests/portal-acceptance-gate.test.mjs && node --test tests/portal-execution.test.mjs && node --test tests/portal-launch-evidence.test.mjs && node --test tests/handbook-register.test.mjs && node --test tests/handbook-release-readiness.test.mjs && node --test tests/stage6-market-launch-gate.test.mjs",
+    "test:schema": "python3 tests/schema.test.py && python3 tests/reporting-schema.test.py && python3 tests/release-upgrade.test.py && python3 tests/agency-schema.test.py && python3 tests/connect-sandbox-schema.test.py && python3 tests/contractor-payment-models-schema.test.py && python3 tests/rent-routing-schema.test.py && python3 tests/v4-schema.test.py && python3 tests/final-sprint-schema.test.py && python3 tests/pcr-discount-schema.test.py && python3 tests/commercial-schema.test.py && python3 tests/finance-delivery-schema.test.py && python3 tests/handbook-migration-rehearsal.test.py && python3 tests/stage1-free-account-schema.test.py",
+    "test:integration": "node --experimental-strip-types tests/runtime/run.mjs && node --experimental-strip-types tests/runtime/connected.mjs && node --experimental-strip-types tests/runtime/communications.mjs && node --experimental-strip-types tests/runtime/open-home-resend.mjs && node --experimental-strip-types tests/runtime/rental-journey.mjs && node --experimental-strip-types tests/runtime/final-pass.mjs && node --experimental-strip-types tests/runtime/reporting.mjs && node --experimental-strip-types tests/runtime/reporting-portals.mjs && node --experimental-strip-types tests/runtime/v2.mjs && node --experimental-strip-types tests/runtime/stripe.mjs && node --experimental-strip-types tests/runtime/residential-live.mjs && node --experimental-strip-types tests/runtime/sprint.mjs && node --experimental-strip-types tests/runtime/pcr-campaign.mjs && node --experimental-strip-types tests/runtime/invoice-delivery.mjs && node --experimental-strip-types tests/runtime/commercial.mjs",
+    "test:browser": "playwright test",
+    "local:init": "node --experimental-strip-types scripts/local-init.mjs",
+    "catalogue:sql": "node --experimental-strip-types scripts/catalogue-sql.mjs",
+    "check": "pnpm handbook:check && pnpm typecheck && pnpm test && pnpm test:schema && pnpm build",
+    "format": "prettier --write . --ignore-unknown",
+    "format:check": "prettier --check . --ignore-unknown",
+    "config:list": "node scripts/configuration.mjs",
+    "config:check": "node scripts/configuration.mjs --check",
+    "handbook:check": "node scripts/handbook-check.mjs && node scripts/stage0-check.mjs",
+    "handbook:release": "node scripts/handbook-release-readiness.mjs"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router": "8.4.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.62.5",
+    "@cloudflare/workers-types": "5.20261006.1",
+    "@react-router/dev": "8.4.0",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@tailwindcss/vite": "4.3.3",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "7.3.7",
+    "wrangler": "4.147.0",
+    "prettier": "3.9.9",
+    "@playwright/test": "1.63.0",
+    "miniflare": "4.20260730.0",
+    "esbuild": "0.25.12"
+  }
+}
+
+### pnpm-workspace.yaml
+packages:
+  - apps/*
+  - packages/*
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+
+### pnpm-lock.yaml
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      react:
+        specifier: 19.3.0
+        version: 19.3.0
+      react-dom:
+        specifier: 19.3.0
+        version: 19.3.0(react@19.3.0)
+      react-router:
+        specifier: 8.4.0
+        version: 8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@cloudflare/vite-plugin':
+        specifier: 1.62.5
+        version: 1.62.5(@types/node@22.20.5)(vite@7.3.7(@types/node@22.20.5)(jiti@2.7.0)(lightningcss@1.32.0))(wrangler@4.147.0(@cloudflare/workers-types@5.20261006.1)(@types/node@22.20.5))
+      '@cloudflare/workers-types':
+        specifier: 5.20261006.1
+        version: 5.20261006.1
+      '@playwright/test':
+        specifier: 1.63.0
+        version: 1.63.0
+      '@react-router/dev':
+        specifier: 8.4.0
+        version: 8.4.0(react-router@8.4.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@5.9.3)(vite@7.3.7(@types/node@22.20.5)(jiti@2.7.0)(lightningcss@1.32.0))(wrangler@4.147.0(@cloudflare/workers-types@5.20261006.1)(@types/node@22.20.5))
+      '@tailwindcss/vite':
+        specifier: 4.3.3
+        version: 4.3.3(vite@7.3.7(@types/node@22.20.5)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      esbuild:
+        specifier: 0.25.12
+        version: 0.25.12
+      miniflare:
+        specifier: 4.20260730.0
+        version: 4.20260730.0
+      prettier:
+        specifier: 3.9.9
+        version: 3.9.9
+      tailwindcss:
+        specifier: 4.3.3
+        version: 4.3.3
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vite:
+        specifier: 7.3.7
+        version: 7.3.7(@types/node@22.20.5)(jiti@2.7.0)(lightningcss@1.32.0)
+      wrangler:
+        specifier: 4.147.0
+        version: 4.147.0(@cloudflare/workers-types@5.20261006.1)(@types/node@22.20.5)
+
+  apps/marketing: {}
+
+  apps/platform: {}
+
+packages:
+
+  '@babel/code-frame@7.29.7':
+    resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/compat-data@7.29.7':
+    resolution: {integrity: sha512-locTkQyKvwIEgBzVrn8693ebc97F2U8ZHjbXwDXJ5Fn2TCpNwTlKcaKLkdHop5c/icOFE7qt7Q9JC5hnKNa6Gg==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/core@7.29.7':
+    resolution: {integrity: sha512-RgHBCvtjbOK2gXSNBNIkNoEc9qoVEtau3hj8gEqKQuL3HZAibKarWFEI3Lfm6EYKkLalOh8eSrj9b+ch9H/VBA==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/generator@7.29.8':
+    resolution: {integrity: sha512-gZbepsdh3WDtgZKWL+vTPh71LSBrm/Y4/QDZBVCcYfmeTEEuoOYwlSy+G1StfJg+/Zy550u/3TATbm7qDbbMtg==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/helper-compilation-targets@7.29.7':
+    resolution: {integrity: sha512-wem6WaBj4NaVYVdNhLPPVacES6ZJ+KBBfSkTMD3YZxbP3rm3Di85tJU5ljaUNhaOynt+Aj0xruhYuzQBt8n71g==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/helper-globals@7.29.7':
+    resolution: {integrity: sha512-3nQVUAtvkKH9zahfWgw96Jc/uFOmjACE1kQz82E2lqWmHBgjzbNlsC22nuQTfahmWeQtTq5nQ/4Nnd2A1wj4zA==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/helper-module-imports@7.29.7':
+    resolution: {integrity: sha512-ejHwrQQYcm9xnTivShn2IDOlIzInN34AXskvq9QicvCtEzq1Vzclu/tKF8Jq1Cg8JG2GL6/EmjgsCT7lXepE3g==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/helper-module-transforms@7.29.7':
+    resolution: {integrity: sha512-UPUVSyXbOh627KiCIGQSgwWzGeBKLkaJ9PJEdrngIwMSzxLR4jS4+f1f1jb7VzBbg8nFLaYotvVPFCTqdrmTAg==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0
+
+  '@babel/helper-string-parser@7.29.7':
+    resolution: {integrity: sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/helper-validator-identifier@7.29.7':
+    resolution: {integrity: sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/helper-validator-option@7.29.7':
+    resolution: {integrity: sha512-N9ZErrD+yW5geCDtBqnOoxmR8+tNKiGuxKlDpuJxfsqpa2dFcexaziGAE/qoHLiDDreVNMupxGmSoNlyvsA3gw==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/helpers@7.29.7':
+    resolution: {integrity: sha512-1k2lAGRMfHTcwuNYcCNUmaUffmQv8KWMfh2iJUUeRlwlwH4FdNG7mfPI10NPfLHJFThE4Tyr4mv7kTNZOiPuBg==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/parser@7.29.9':
+    resolution: {integrity: sha512-CjXrNHTnvqBVqHgdBysY3vk2T8tpJHb5/RMeHJBTyVa9xgugCB0CJTx/3oO8RV2QRQP391RWpB7D6hLjm8V9uA==}
+    engines: {node: '>=6.0.0'}
+    hasBin: true
+
+  '@babel/template@7.29.7':
+    resolution: {integrity: sha512-puq+Gf35oI24FeN11LkoUQFqv9uwNeWpxXZi/Ji3rRIoKAzKnxRaZ+Gkj0vKS9ZCiTESfng1N9LyOyXvo+m+Gg==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/traverse@7.29.8':
+    resolution: {integrity: sha512-I5z7H3bf/41ktsNVLtpN0wAa336HkqIHQ5BuPLEhTkt1jVSyZpeNKIzTgEWmlxjdg81R0IgUCcaE+Ok3NvrfZg==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/types@7.29.8':
+    resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
+    engines: {node: '>=6.9.0'}
+
+  '@cloudflare/kv-asset-handler@0.5.0':
+    resolution: {integrity: sha512-jxQYkj8dSIzc0cD6cMMNdOc1UVjqSqu8BZdor5s8cGjW2I8BjODt/kWPVdY+u9zj3ms75Q5qaZgnxUad83+eAg==}
+    engines: {node: '>=22.0.0'}
+
+  '@cloudflare/unenv-preset@2.16.2':
+    resolution: {integrity: sha512-JBP1+Z7ZSNG/d4mRP+y8VC5dka3tZVMLEZRvS+rzQ4DGV1EoxRFQckcJTTkXbHSQiTj0DtNI01Zwb/V2fX0mvQ==}
+    peerDependencies:
+      unenv: 2.0.0-rc.24
+      workerd: '>1.20260305.0 <2.0.0-0'
+    peerDependenciesMeta:
+      workerd:
+        optional: true
+
+  '@cloudflare/vite-plugin@1.62.5':
+    resolution: {integrity: sha512-qJJonL8EvKuSPfrwSMiDEPp+klxTU08pan1bgm/jc3LrYe9Hp4XUkIGAcQdgv7P9OZbe6AU+51iMUtQOt85J2w==}
+    hasBin: true
+    peerDependencies:
+      vite: ^6.1.0 || ^7.0.0 || ^8.0.0
+      wrangler: ^4.147.0
+
+  '@cloudflare/workerd-darwin-64@1.20260730.1':
+    resolution: {integrity: sha512-+MBHmPaiTe2KajryW0T24rZvWFxb41hD3d8anNzQqHzft6vSEb18+sp0znSwxgij7ApPhSM1+vhkNg4f3YMguA==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@cloudflare/workerd-darwin-64@1.20261001.1':
+    resolution: {integrity: sha512-4cgSgDf28JSw/P5Dj5GCS59hzVqS5XnmGAWNkvYHLI6ODU9idGaMMNEuhJXDkEG/lsABmlVlnCgsdh2VbKWepw==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@cloudflare/workerd-darwin-arm64@1.20260730.1':
+    resolution: {integrity: sha512-SBHKntPkKvNPgaCrTe99xC1CAl8ygJDzlYfK0LbuJ1muKadIw35WnhO0wu894fKBtllsVQdNzDLee+cm0ppLSQ==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@cloudflare/workerd-darwin-arm64@1.20261001.1':
+    resolution: {integrity: sha512-8ulAWruEVouNmEIsQsy9WSSCS9zkLu93W2MTwp5esiFyoPp05BNSVFIFsYSPi1pkFmBBd7fsnwMpbLkaJLaVPQ==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@cloudflare/workerd-linux-64@1.20260730.1':
+    resolution: {integrity: sha512-ouyPOSMbiKPeSwUJUvxtMcxGAXs2J4aPE4T5ABIYX5ClcQx5j5bbHTmnqOQEY8sAuLTPjH7dY+iB6UI5ISlwwA==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [linux]
+
+  '@cloudflare/workerd-linux-64@1.20261001.1':
+    resolution: {integrity: sha512-kZbTZJGrhsMOdqZ2BIybjaBRLZjYsRLWj7mcNw/6Y3hodOhp5MrNzcz4iWGwNVWwyIV+7Pl+/LX5VcgnRqdHOg==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [linux]
+
+  '@cloudflare/workerd-linux-arm64@1.20260730.1':
+    resolution: {integrity: sha512-YQ+Mi78U3TPdgBPtwq+Sm6rJU+Ihl2y0pjYtuuKkdmUbYzL7oLR6Xqq9wljhasnuCFICssDJaqhMep5WizYoEQ==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@cloudflare/workerd-linux-arm64@1.20261001.1':
+    resolution: {integrity: sha512-oOk3Zj6k/8oP0FJgZBWDn7+BqbsqIMEMaV95pulHPVbwVu4wYoLfQq2hp0vkbCNsCFLqZb7cqixXdrwD54ZIow==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@cloudflare/workerd-windows-64@1.20260730.1':
+    resolution: {integrity: sha512-27fAN+vUECW1oYVc1KOcHYpkL8COM2Uxtxql7TL595kxbjoqS5yckw7NLz7bTf2pALFCZWjqXDjZGJ/xbG4ZKQ==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [win32]
+
+  '@cloudflare/workerd-windows-64@1.20261001.1':
+    resolution: {integrity: sha512-uRxm5W4VyBkoSaoP1BfOuH0873tE+vxsknF4sab6/5YIRvIAufChq3QDp+zlAn67PuGPGcn7W8QraA0t4ucmOQ==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [win32]
+
+  '@cloudflare/workers-types@5.20261006.1':
+    resolution: {integrity: sha512-5OclwQK1d8f5LCPvOlyldC3ryKLUa4nLXegcgPZeUxAPudczQ9xujJDdpS2Tenp7JqbBLW3OgGciHJmuc7QShg==}
+
+  '@cspotcode/source-map-support@0.8.1':
+    resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
+    engines: {node: '>=12'}
+
+  '@emnapi/runtime@1.11.3':
+    resolution: {integrity: sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==}
+
+  '@esbuild/aix-ppc64@0.25.12':
+    resolution: {integrity: sha512-Hhmwd6CInZ3dwpuGTF8fJG6yoWmsToE+vYgD4nytZVxcu1ulHpUQRAB1UJ8+N1Am3Mz4+xOByoQoSZf4D+CpkA==}
+    engines: {node: '>=18'}
+    cpu: [ppc64]
+    os: [aix]
+
+  '@esbuild/aix-ppc64@0.28.1':
+    resolution: {integrity: sha512-Svl7tq8k/08+p6CXPpRjQ1fKX+1odH/BQbb48fV6fj3CWHhsoIOoY87w1oHXm0qEpkIK3ZfVgp0hed3XBXzXMQ==}
+--- env references (names/locations only) ---
+./docs/PORTAL_TESTING.md:31:2. Check the `users`, `clients`, `client_entitlements`, `scheme_memberships`, `services` and `d1_migrations` tables exist. The source database migrations `0001_core.sql` through `0005_account.sql` **must already be applied**. An empty database must be migrated first; Cloudflare creating a D1 binding does not create application tables. If using Wrangler's migration command, the local `env.connected` config may need the **real D1 UUID** (not a placeholder) because a binding auto-provisioned during Cloudflare Builds is not necessarily resolvable by remote Wrangler subcommands.
+./docs/DEPLOYMENT.md:24:Wrangler 4.147 supports automatic provisioning of D1, R2 and Queues when IDs or bucket names are omitted. The named `env.connected` bindings request these resources directly as part of `wrangler deploy`:
+./docs/DEPLOYMENT.md:28:- `RESTRICTED_DOCUMENTS`: reuse the **existing** private R2 bucket `proinspect-platform-restricted-documents` by explicitly setting `bucket_name` in `env.connected`.
+./tests/stripe-sandbox.test.ts:13: for(const needle of ["env.APP_ENV", "env.STRIPE_BILLING_ENABLED", "env.STRIPE_TAX_READY", "env.STRIPE_ACCOUNT_ID===SANDBOX_ACCOUNT"])
+./tests/stripe-sandbox.test.ts:18: assert.equal(cfg.env.staging.vars.STRIPE_BILLING_ENABLED,'false');
+./tests/stripe-sandbox.test.ts:19: assert.equal(cfg.env.staging.vars.STRIPE_GUEST_CHECKOUT_ENABLED,'false');
+./tests/stripe-sandbox.test.ts:20: assert.equal(cfg.env.staging.vars.STRIPE_TAX_READY,'false');
+./tests/stripe-sandbox.test.ts:21: assert.equal(cfg.env.connected.vars.STRIPE_BILLING_ENABLED,'false');
+./scripts/stage6-market-launch-gate.mjs:69: const input=process.argv[2],sha=process.argv[3]||process.env.EXPECTED_SOURCE_SHA;
+./scripts/stage6-market-launch-gate.mjs:74:    {protectedReview:process.env.PROINSPECT_PROTECTED_LAUNCH_REVIEW==='true'});
+./playwright.config.ts:12:    launchOptions: process.env.PROINSPECT_CHROMIUM
+./playwright.config.ts:13:      ? { executablePath: process.env.PROINSPECT_CHROMIUM }
+./playwright.config.ts:23:      reuseExistingServer: !process.env.CI,
+./apps/marketing/app/root.tsx:25:  return { appOrigin: env.PLATFORM_ORIGIN || 'https://app.proinspect.systems' };
+./tests/cloudflare-connect.test.ts:7:  assert.equal(platform.env.connected.name, 'proinspect-platform');
+./tests/cloudflare-connect.test.ts:8:  assert.notEqual(platform.env.connected.vars.APP_ENV, 'staging');
+./tests/cloudflare-connect.test.ts:9:  assert.equal(platform.env.connected.d1_databases[0].database_id, undefined);
+./tests/deployment.test.ts:15:  const live = config.env.connected;
+./scripts/portal-testing/stage2-live-readonly.mjs:7:const origin = process.env.PROINSPECT_ORIGIN ||
+./scripts/portal-testing/stage2-live-readonly.mjs:9:const account = process.env.CLOUDFLARE_ACCOUNT_ID ||
+./scripts/portal-testing/stage2-live-readonly.mjs:12:const token = process.env.CLOUDFLARE_API_TOKEN;
+./scripts/portal-testing/stage2-live-readonly.mjs:100:  if (process.env.GITHUB_TOKEN) repoHeaders.Authorization =
+./scripts/portal-testing/stage2-live-readonly.mjs:101:    'Bearer ' + process.env.GITHUB_TOKEN;
+./tests/stage5-operational-health.test.ts:23: for(const o of [cfg.observability,cfg.env.connected.observability]){
+./scripts/portal-testing/verify-launch-evidence.mjs:80:  const decision=judgeLaunch(evidence,sha,{protectedReview:process.env.PROINSPECT_PROTECTED_REVIEW_APPROVED==='true'});
+./scripts/portal-testing/acceptance-gate.mjs:112:      process.argv[3] || process.env.EXPECTED_SOURCE_SHA);
+./scripts/portal-testing/provision-cloudflare.mjs:23:  if (!env.CLOUDFLARE_API_TOKEN) throw new Error('GitHub secret CLOUDFLARE_API_TOKEN is unavailable to this job.');
+./scripts/portal-testing/provision-cloudflare.mjs:24:  if (!/^[a-f0-9]{32}$/.test(env.CLOUDFLARE_ACCOUNT_ID ?? ''))
+./scripts/portal-testing/provision-cloudflare.mjs:26:  if (env.GITHUB_REPOSITORY !== 'info-rbp/proinspect' || env.GITHUB_REF !== 'refs/heads/main')
+./scripts/portal-testing/provision-cloudflare.mjs:28:  return {accountId:env.CLOUDFLARE_ACCOUNT_ID, token:env.CLOUDFLARE_API_TOKEN};
+./scripts/portal-testing/provision-cloudflare.mjs:100:export async function livePreflight(env=process.env, fetcher=fetch) {
+./scripts/portal-testing/provision-cloudflare.mjs:114:export async function liveVerify(env=process.env, fetcher=fetch) {
+./tests/unified-site.test.ts:51:  const connected = directConfiguration(wrangler, {appOrigin: 'https://proinspect.systems'}).env.connected;
+./scripts/portal-testing/hosted-case-exercise.mjs:24:  if (!process.stdin.isTTY || process.env.CI)
+./tests/direct-cloudflare.test.ts:10:  assert.equal(result.env.connected.name, 'proinspect-platform');
+./tests/direct-cloudflare.test.ts:11:  assert.equal(result.env.connected.vars.APP_ENV, 'production');
+./tests/direct-cloudflare.test.ts:12:  assert.equal(result.env.connected.vars.APP_ORIGIN, 'https://proinspect-platform.example.workers.dev');
+./tests/direct-cloudflare.test.ts:13:  assert.equal(result.env.connected.vars.BUILD_SHA, 'a'.repeat(40));
+./tests/direct-cloudflare.test.ts:14:  assert.equal(result.env.connected.d1_databases[0].database_id, undefined);
+./tests/direct-cloudflare.test.ts:21:  const bad = config(); bad.env.connected.vars.APP_ENV = 'local';
+./tests/direct-cloudflare.test.ts:25:  const live = directConfiguration(config()).env.connected;
+./tests/direct-cloudflare.test.ts:48:  missingHistory.env.connected.migrations = [{ tag: 'v1', new_sqlite_classes: ['BookingScheduler'] }];
+./tests/direct-cloudflare.test.ts:51:  destructive.env.connected.migrations.push({tag:'delete-legacy',deleted_classes:['BookingCoordinator']});
+./tests/direct-cloudflare.test.ts:56:  const live = directConfiguration(config()).env.connected;
+./tests/direct-cloudflare.test.ts:66:  delete missing.env.connected.r2_buckets[1].bucket_name;
+./tests/direct-cloudflare.test.ts:69:  renamed.env.connected.r2_buckets[1].bucket_name = 'some-new-bucket';
+./tests/direct-cloudflare.test.ts:72:  shared.env.connected.r2_buckets[0].bucket_name = 'proinspect-platform-restricted-documents';
+./scripts/portal-testing/hosted-auth-exercise.mjs:44:  if (!process.stdin.isTTY || process.env.CI) throw new Error('Requires an interactive authorised mailbox holder; CI cannot redeem real login links');
+./scripts/portal-testing/isolated-scenario-coverage.mjs:47:    const sha = process.env.GITHUB_SHA || readFileSync('artifacts/source-sha.txt', 'utf8').trim();
+./scripts/configuration.mjs:143:    const result = checkConfiguration(process.env, {
+./tests/rental-framework.test.ts:34: assert.equal(JSON.parse(read('apps/platform/wrangler.jsonc')).env.connected.vars.RENTAL_APPLICATIONS_ENABLED,'false');
+./apps/marketing/app/routes/open-home-check-in.tsx:32:  siteKey:env.MARKETING_TURNSTILE_SITE_KEY??'',
+./apps/marketing/app/routes/open-home-check-in.tsx:33:  ready:Boolean(env.DATA_ENCRYPTION_KEY&&
+./apps/marketing/app/routes/open-home-check-in.tsx:34:    (env.APP_ENV==='local'||(env.MARKETING_TURNSTILE_SITE_KEY&&env.MARKETING_TURNSTILE_SECRET_KEY))),
+./apps/marketing/app/routes/open-home-check-in.tsx:54:  const clientKey=await digest(env.DATA_ENCRYPTION_KEY+':checkin-source:'+
+./scripts/deploy/prepare-direct.mjs:51:export function prepareDirectBuild(env = process.env) {
+./scripts/deploy/prepare-direct.mjs:52:  if (env.WORKERS_CI !== '1') return false;
+./scripts/deploy/prepare-direct.mjs:53:  if (env.WORKERS_CI_BRANCH && env.WORKERS_CI_BRANCH !== 'main')
+./scripts/deploy/prepare-direct.mjs:56:    appOrigin: env.PROINSPECT_APP_ORIGIN,
+./scripts/deploy/prepare-direct.mjs:57:    sha: env.WORKERS_CI_COMMIT_SHA,
+./tests/open-home.test.ts:78: assert.ok(wrangler.env.connected.triggers.crons.includes('0 1 * * *'));
+./tests/open-home.test.ts:80: assert.equal(wrangler.env.connected.vars.OPEN_HOME_REPORTS_ENABLED,'false');
+./tests/open-home.test.ts:82: assert.equal(wrangler.env.connected.vars.OPEN_HOME_REPORT_EMAIL_PROVIDER,'resend');
+./tests/open-home.test.ts:83: assert.equal(wrangler.env.connected.vars.EMAIL_PROVIDER,'resend');
+./tests/open-home.test.ts:84: assert.equal(wrangler.env.connected.vars.EMAIL_FROM,'info@proinspect.systems');
+./scripts/operations/verify-subscription-migration-0006.mjs:11:const token = process.env.CLOUDFLARE_API_TOKEN;
+./scripts/operations/verify-subscription-migration-0006.mjs:13:if (process.env.GITHUB_REPOSITORY !== 'info-rbp/proinspect' ||
+./scripts/operations/verify-subscription-migration-0006.mjs:14:    process.env.GITHUB_REF !== 'refs/heads/main')
+./scripts/operations/verify-subscription-migration-0006.mjs:55:if (![originCommit, process.env.GITHUB_SHA].includes(deployedSHA))
+./tests/contractor-payment-models.test.ts:51: assert.equal(c.env.connected.vars.CONTRACTOR_PAYMENTS_ENABLED,undefined);
+./scripts/handbook-release-readiness.mjs:45: const sourceSha=process.env.PROINSPECT_RELEASE_SHA||process.argv[2]||'';
+./apps/marketing/app/routes/leasing-property.tsx:19: return data({result,requestKey:crypto.randomUUID(),siteKey:env.MARKETING_TURNSTILE_SITE_KEY??'',rentalReady:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&result.listing.rental_approval_state==='approved'&&Boolean(result.listing.rental_recipient_verified_at),ready:Boolean(env.DATA_ENCRYPTION_KEY&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SECRET_KEY&&env.MARKETING_TURNSTILE_SITE_KEY))},{headers:{'Cache-Control':'no-store'}});
+./apps/marketing/app/routes/leasing-property.tsx:34:  const clientKey=await digest(env.DATA_ENCRYPTION_KEY+':lease-source:'+(request.headers.get('CF-Connecting-IP')??'unknown'));
+./tests/release-readiness.test.ts:14: for(const key of ['APP_ORIGIN','MARKETING_ORIGIN','PLATFORM_ORIGIN'])assert.equal(config.env.connected.vars[key],'https://proinspect.systems');
+./apps/marketing/app/routes/leasing-cancel.tsx:13:  const key=await digest(env.DATA_ENCRYPTION_KEY+':cancel:'+(request.headers.get('CF-Connecting-IP')??'unknown'));
+./scripts/sync-report-engine.mjs:15:const token=process.env.GH_TOKEN||process.env.GITHUB_TOKEN;
+./scripts/sync-report-engine.mjs:17:const sha=process.env.REPORT_UPSTREAM_SHA||await (async()=>{
+./scripts/sync-report-engine.mjs:77:execFileSync('gh',['pr','create','--repo',process.env.GITHUB_REPOSITORY||'info-rbp/proinspect',
+./scripts/sync-report-engine.mjs:80:  {stdio:'inherit',env:{...process.env,GH_TOKEN:token}});
+./apps/marketing/app/routes/robots.ts:6:    env.APP_ENV === 'production' && new URL(request.url).origin === 'https://proinspect.systems'
+./packages/marketing/rental-retention.ts:14: const raw=env[key[stage]];
+./tests/form18.test.ts:74: assert.equal(JSON.parse(wrapper).env.connected.vars.RENTAL_APPLICATIONS_ENABLED,'false');
+./tests/form18.test.ts:101: const vars=JSON.parse(read('apps/platform/wrangler.jsonc')).env.connected.vars;
+./apps/marketing/app/routes/contact.tsx:17: siteKey:env.MARKETING_TURNSTILE_SITE_KEY,ready:Boolean(env.ENQUIRY_GATEWAY_SECRET&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SITE_KEY)),local:env.APP_ENV==='local'},
+./apps/marketing/app/routes/contact.tsx:25: const url=new URL(request.url),local=env.APP_ENV==='local'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname);
+./apps/marketing/app/routes/contact.tsx:26: if(request.headers.get('Origin')!==(local?url.origin:env.APP_ORIGIN))return fail('Reload the contact page before submitting.',403);
+./apps/marketing/app/routes/contact.tsx:27: if(!env.ENQUIRY_GATEWAY_SECRET||env.ENQUIRY_GATEWAY_SECRET.length<32)return fail('The enquiry service is not configured yet.',503);
+./apps/marketing/app/routes/contact.tsx:34: const target=env.PLATFORM_ORIGIN||env.APP_ORIGIN||'http://localhost:5173',host=new URL(target);
+./apps/marketing/app/routes/contact.tsx:37:  const body=JSON.stringify({input:parsed.data,origin:env.MARKETING_ORIGIN||env.APP_ORIGIN,
+./apps/marketing/app/routes/contact.tsx:38:    clientKey:await digest(`${env.ENQUIRY_GATEWAY_SECRET}:ip:${request.headers.get('CF-Connecting-IP')||'local'}`),turnstile:form.get('turnstile')||undefined});
+./apps/marketing/app/routes/contact.tsx:41:  const response=await deliver(`${target}/api/public/enquiries`,{method:'POST',headers:{'Content-Type':'application/json','X-Enquiry-Time':timestamp,'X-Enquiry-Signature':await signEnquiry(env.ENQUIRY_GATEWAY_SECRET,timestamp,body)},body,redirect:'manual',signal:AbortSignal.timeout(15000)});
+./scripts/release/v3-staging-d1-verify.mjs:4:const token=process.env.CLOUDFLARE_API_TOKEN;
+./scripts/release/v3-staging-d1-verify.mjs:5:const account=process.env.CLOUDFLARE_ACCOUNT_ID;
+./scripts/release/v3-staging-d1-verify.mjs:6:if(!token||!/^[a-f0-9]{32}$/.test(account??'')||process.env.GITHUB_REF!=='refs/heads/version-3-enhancements')
+./tests/runtime/rental-journey-entry.ts:17:  if(env.APP_ENV!=='local')return new Response('Not available',{status:404});
+./scripts/release/v3-staging-browser.mjs:12:if(process.env.GITHUB_REF!=='refs/heads/version-3-enhancements')
+./tests/runtime/entry.ts:8:    if((env.APP_ENV==='local'||env.BUILD_SHA==='isolated-live-test-fixture') && new URL(request.url).pathname==='/__test__/residential-coverage'){
+./tests/runtime/entry.ts:12:    if(env.APP_ENV==='local' && new URL(request.url).pathname==='/__test__/guest-disabled')
+./tests/runtime/entry.ts:14:    if(env.APP_ENV==='local' && new URL(request.url).pathname==='/__test__/bond-deadlines/dispatch')
+./apps/marketing/app/routes/rental-recover.tsx:11: return data({siteKey:env.MARKETING_TURNSTILE_SITE_KEY??''},{headers});
+./scripts/release/v3-staging-assert.mjs:16:requireSafe(process.env.GITHUB_REF==='refs/heads/version-3-enhancements','wrong GitHub branch');
+./scripts/release/v3-staging-assert.mjs:17:requireSafe(!process.env.CLOUDFLARE_ENV,'Build must use the stage-only top-level config, not connected env');
+./tests/runtime/sprint-entry.ts:8: if(env.APP_ENV==='local'&&url.pathname==='/__test__/release-check'){
+./tests/runtime/sprint-entry.ts:11: if(env.APP_ENV==='local'&&url.pathname.startsWith('/__test__/legal/')){
+./scripts/release/v3-staging-resources.mjs:20:const account=process.env.CLOUDFLARE_ACCOUNT_ID;
+./scripts/release/v3-staging-resources.mjs:21:const token=process.env.CLOUDFLARE_API_TOKEN;
+./scripts/release/v3-staging-resources.mjs:22:if(process.env.V3_STAGING_PROVISION!=='1')
+./scripts/release/v3-staging-resources.mjs:26:const ref=process.env.GITHUB_REF;
+./scripts/release/v3-staging-smoke.mjs:5:if(process.env.GITHUB_REF!=='refs/heads/version-3-enhancements')
+./scripts/release/v3-production-recovery-readonly.mjs:9:const account=process.env.CLOUDFLARE_ACCOUNT_ID;
+./scripts/release/v3-production-recovery-readonly.mjs:10:const token=process.env.CLOUDFLARE_API_TOKEN;
+./scripts/release/v3-production-recovery-readonly.mjs:15:if(process.env.GITHUB_REF!=='refs/heads/version-3-enhancements'||
+./apps/marketing/worker/app.ts:6:  import.meta.env.MODE,
+./apps/marketing/worker/app.ts:14:        environment: env.APP_ENV,
+./apps/marketing/worker/app.ts:15:        source: env.BUILD_SHA,
+./apps/marketing/worker/app.ts:25:    if (env.APP_ENV !== 'production') headers.set('X-Robots-Tag', 'noindex, nofollow');
+./.github/workflows/hosted-portal-acceptance-review.yml:43:            const expected=process.env.EXPECTED_SHA;
+./.github/workflows/hosted-portal-acceptance-review.yml:44:            if(!/^[0-9a-f]{40}$/.test(expected)||expected!==process.env.GITHUB_SHA) throw Error("NO GO: expected SHA is not exact checked-out main");
+./.github/workflows/stage6-protected-release-review.yml:47:            const sha=process.env.EXPECTED_SHA;
+./.github/workflows/stage6-protected-release-review.yml:48:            if(!/^[a-f0-9]{40}$/.test(sha)||sha!==process.env.GITHUB_SHA)
+./.github/workflows/stage6-protected-release-review.yml:65:            const run=process.env.PORTAL_REVIEW_RUN;
+./.github/workflows/stage6-protected-release-review.yml:68:              {headers:{Authorization:"Bearer "+process.env.GH_TOKEN,
+./.github/workflows/stage6-protected-release-review.yml:72:            if(record.conclusion!=="success"||record.head_sha!==process.env.EXPECTED_SHA||
+./.github/workflows/stage6-protected-release-review.yml:92:            const expected="https://github.com/info-rbp/proinspect/actions/runs/"+process.env.PORTAL_REVIEW_RUN;
+./packages/operations/core.ts:31:  return statement(env.DB, 'INSERT INTO mutation_guards(changed_rows) VALUES(changes())');
+./packages/operations/core.ts:34:  return statement(env.DB, 'DELETE FROM mutation_guards');
+./packages/operations/core.ts:47:    env.DB,
+./packages/operations/core.ts:81:    env.DB,
+./packages/operations/core.ts:100:    env.DB,
+./packages/operations/core.ts:124:    env.DB,
+./packages/operations/provider-readiness.ts:10: const present=(name:string)=>typeof env[name]==='string'&&String(env[name]).trim().length>0;
+./packages/operations/provider-readiness.ts:15: if(present('STRIPE_ACCOUNT_ID')&&env.STRIPE_ACCOUNT_ID!=='acct_1USumhEv62nbUZok')stripe.invalid.push('STRIPE_ACCOUNT_ID');
+./packages/operations/provider-readiness.ts:16: if(present('STRIPE_SECRET_KEY')&&!isSandboxApiKey(env.STRIPE_SECRET_KEY))stripe.invalid.push('STRIPE_SECRET_KEY');
+./packages/operations/provider-readiness.ts:17: if(present('STRIPE_WEBHOOK_SECRET')&&!isStripeWebhookSecret(env.STRIPE_WEBHOOK_SECRET))stripe.invalid.push('STRIPE_WEBHOOK_SECRET');
+./packages/operations/provider-readiness.ts:19: if(env.APP_ENV==='production'){stripe.state='sandbox_only';stripe.note='The new billing adapter intentionally refuses production execution. A reviewed production policy and live acceptance are still required.';}
+./packages/operations/provider-readiness.ts:21: if(present('STRIPE_BILLING_PORTAL_CONFIGURATION_ID')&&!isBillingPortalConfigurationId(env.STRIPE_BILLING_PORTAL_CONFIGURATION_ID)){portal.invalid.push('STRIPE_BILLING_PORTAL_CONFIGURATION_ID');portal.state='configuration_missing';}
+./packages/operations/provider-readiness.ts:22: if(env.APP_ENV==='production')portal.state='sandbox_only';
+./packages/operations/provider-readiness.ts:26: if(present('STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID')&&env.STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID!=='acct_1USumSEynzcud8MV')live.invalid.push('STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID');
+./packages/operations/provider-readiness.ts:27: if(present('STRIPE_RESIDENTIAL_LIVE_KEY')&&!/^rk_live_[A-Za-z0-9_]{16,}$/.test(String(env.STRIPE_RESIDENTIAL_LIVE_KEY)))live.invalid.push('STRIPE_RESIDENTIAL_LIVE_KEY');
+./packages/operations/provider-readiness.ts:28: if(present('STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET')&&!/^whsec_[A-Za-z0-9_]{16,}$/.test(String(env.STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET)))live.invalid.push('STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET');
+./packages/operations/provider-readiness.ts:29: if(present('RESIDENTIAL_APPROVED_TAX_CODE')&&(!/^txcd_[0-9]{8}$/.test(String(env.RESIDENTIAL_APPROVED_TAX_CODE))||env.RESIDENTIAL_APPROVED_TAX_CODE==='txcd_10203001'))live.invalid.push('RESIDENTIAL_APPROVED_TAX_CODE');
+./packages/operations/provider-readiness.ts:32: if(env.EMAIL_PROVIDER!=='resend'){email.invalid.push('EMAIL_PROVIDER');email.state='configuration_missing';}
+./packages/operations/provider-readiness.ts:36:  if(present(prefix+'_ENDPOINT'))try{const u=new URL(String(env[prefix+'_ENDPOINT']));if(u.protocol!=='https:'||u.username||u.password||u.hostname!==env[prefix+'_ALLOWED_HOST'])throw Error();}catch{item.invalid.push(prefix+'_ENDPOINT');item.state='configuration_missing';}
+./packages/auth/server.ts:10:    env.APP_ENV === 'local' &&
+./packages/auth/server.ts:16:  const expected = isLocal(request, env) ? new URL(request.url).origin : env.APP_ORIGIN;
+./packages/auth/server.ts:38:    env.DB,
+./packages/auth/server.ts:56:    env.DB,
+./packages/auth/server.ts:58:    await digest(`${env.DATA_ENCRYPTION_KEY}:rate:${key}`),
+./packages/auth/server.ts:74:    env.DATA_ENCRYPTION_KEY,
+./packages/auth/server.ts:81:      env.TURNSTILE_SECRET_KEY && data.turnstile,
+./packages/auth/server.ts:89:      body: new URLSearchParams({ secret: env.TURNSTILE_SECRET_KEY, response: data.turnstile }),
+./packages/auth/server.ts:94:      verified.success && verified.hostname === new URL(env.APP_ORIGIN).hostname,
+./packages/auth/server.ts:100:      env.EMAIL_PROVIDER === 'resend' && env.RESEND_API_KEY && env.EMAIL_FROM,
+./packages/auth/server.ts:110:  if (env.APP_ENV === 'staging' && data.email !== env.EMAIL_SINK?.toLowerCase()) return generic;
+./packages/auth/server.ts:116:  const origin = isLocal(request, env) ? new URL(request.url).origin : env.APP_ORIGIN;
+./packages/auth/server.ts:118:  await env.DB.batch([
+./packages/auth/server.ts:120:      env.DB,
+./packages/auth/server.ts:154:    env.DB,
+./packages/auth/server.ts:168:    env.DB,
+./packages/auth/server.ts:178:    env.DB,
+./packages/auth/server.ts:192:      env.DB,
+./packages/authorization/subscription-booking.ts:39:  const rows = await statement(env.DB,
+./packages/authorization/subscription-booking.ts:47:      env.DB,
+./packages/authorization/subscription-booking.ts:68: const enrolled=await statement(env.DB,
+./packages/authorization/subscription-booking.ts:72: const covered=await statement(env.DB,`
+./packages/authorization/subscription-booking.ts:91: const rawGrace=Number(env.RESIDENTIAL_PAYMENT_GRACE_HOURS ?? '72');
+./packages/authorization/subscription-booking.ts:95: const recovery=await statement(env.DB,`
+./packages/authorization/subscription-booking.ts:126:  const enrolled=await statement(env.DB,
+./packages/authorization/subscription-booking.ts:130:  const active=await statement(env.DB,
+./packages/authorization/subscription-booking.ts:134:  const rows=await statement(env.DB,
+./packages/authorization/subscription-booking.ts:152:    const link=await statement(env.DB,
+./apps/platform/worker/api.ts:144:    env.DB,
+./apps/platform/worker/api.ts:160:  await env.DB.batch([
+./apps/platform/worker/api.ts:162:      env.DB,
+./apps/platform/worker/api.ts:170:      env.DB,
+./apps/platform/worker/api.ts:185:      href: `${env.APP_ORIGIN}/invitations/accept?token=${token}`,
+./apps/platform/worker/api.ts:201:  const pendingTenancyCondition=env.RENTAL_TENANCY_HANDOVER_ENABLED==='true'
+./apps/platform/worker/api.ts:205:    env.DB,
+./apps/platform/worker/api.ts:218:  await env.DB.batch([
+./apps/platform/worker/api.ts:220:      env.DB,
+./apps/platform/worker/api.ts:225:    statement(env.DB, 'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+./apps/platform/worker/api.ts:227:      env.DB,
+./apps/platform/worker/api.ts:234:    statement(env.DB, 'DELETE FROM mutation_guards'),
+./apps/platform/worker/api.ts:288:        environment: env.APP_ENV,
+./apps/platform/worker/api.ts:289:        source: env.BUILD_SHA ?? 'development',
+./apps/platform/worker/api.ts:291:          database: Boolean(env.DB),
+./apps/platform/worker/api.ts:292:          documents: Boolean(env.DOCUMENTS),
+./apps/platform/worker/api.ts:293:          scheduler: Boolean(env.SCHEDULER),
+./apps/platform/worker/api.ts:294:          queue: Boolean(env.EVENTS),
+./apps/platform/worker/api.ts:297:          env.DATA_ENCRYPTION_KEY && (env.APP_ENV === 'local' || env.RESEND_API_KEY),
+./apps/platform/worker/api.ts:306:      return Response.json(await cancelLead(env,request,cancel[1],await digest(env.DATA_ENCRYPTION_KEY+':cancel:'+(request.headers.get('CF-Connecting-IP')??'unknown'))));
+./apps/platform/worker/api.ts:481:            env.DB,
+./apps/platform/worker/api.ts:491:            env.DB,
+./apps/platform/worker/api.ts:519:        env.DB,
+./apps/platform/worker/api.ts:524:      const object = await env.DOCUMENTS.get(doc.object_key);
+./apps/platform/worker/api.ts:619:      return env.SCHEDULER.get(env.SCHEDULER.idFromName('default')).fetch(
+./apps/platform/worker/api.ts:661:        env.DB,
+./apps/platform/worker/api.ts:675:        await unseal(env.DATA_ENCRYPTION_KEY, `booking:${order.booking_id}`, encrypted.envelope),
+./apps/platform/worker/api.ts:690:      await env.DB.batch([
+./apps/platform/worker/api.ts:692:          env.DB,
+./apps/platform/worker/api.ts:699:        statement(env.DB, 'INSERT INTO mutation_guards(changed_rows) VALUES(changes())'),
+./apps/platform/worker/api.ts:700:        statement(env.DB, 'DELETE FROM mutation_guards'),
+./apps/platform/worker/api.ts:710:            env.DB,
+./packages/authorization/server.ts:32:    env.DB,
+./packages/authorization/server.ts:45:    env.DB,
+./packages/authorization/server.ts:59:    env.DB,
+./packages/authorization/server.ts:70:  if (env.BUILDING_OPERATIONS_ENABLED === 'true') {
+./packages/authorization/server.ts:71:    const assigned = await statement(env.DB, `SELECT DISTINCT b.id,b.name,s.name AS scheme_name
+./packages/authorization/server.ts:133:    env.DB,
+./packages/authorization/server.ts:150:    env.DB,
+./packages/authorization/server.ts:218:      env.DB,
+./packages/authorization/server.ts:245:    env.DB,
+./packages/authorization/server.ts:255:    env.DB,
+./packages/authorization/server.ts:280:  const s = await statement(env.DB, 'SELECT * FROM strata_schemes WHERE id=?', schemeId).first<
+./packages/authorization/server.ts:298:      env.DB,
+./packages/authorization/server.ts:315:    env.DB,
+./packages/authorization/server.ts:329:      : (await statement(env.DB, 'SELECT * FROM strata_schemes ORDER BY name LIMIT 300').all())
+./packages/authorization/server.ts:334:        env.DB,
+./packages/authorization/server.ts:352:  const order = await statement(env.DB, 'SELECT * FROM work_orders WHERE id=?', id).first<
+./packages/authorization/server.ts:387:  const r = await statement(env.DB, 'SELECT * FROM requests WHERE id=?', id).first<
+./packages/authorization/server.ts:396:          env.DB,
+./packages/authorization/server.ts:440:  const d = await statement(env.DB, 'SELECT * FROM documents WHERE id=?', documentId).first<
+./packages/authorization/server.ts:449:      env.DB,
+./packages/authorization/server.ts:458:      env.DB,
+./packages/authorization/server.ts:468:            env.DB,
+./packages/authorization/server.ts:480:      env.DB,
+./packages/authorization/server.ts:489:        env.DB,
+./packages/authorization/server.ts:499:              env.DB,
+./packages/authorization/server.ts:511:        env.DB,
+./packages/authorization/server.ts:529:        env.DB,
+./packages/notifications/notices.ts:9:  await statement(env.DB,`UPDATE notice_dispatch_jobs SET status='cancelled',lease_token=NULL,lease_until=NULL
+./packages/notifications/notices.ts:12:  const jobs = (await statement(env.DB,`SELECT j.notice_id FROM notice_dispatch_jobs j JOIN building_notices n ON n.id=j.notice_id
+./packages/notifications/notices.ts:18:    const claim = await statement(env.DB,`UPDATE notice_dispatch_jobs SET status='processing',lease_token=?,lease_until=?
+./packages/notifications/notices.ts:23:      const recipients = (await statement(env.DB,`SELECT DISTINCT u.id,u.email FROM building_notices n
+./packages/notifications/notices.ts:28:      const batch: D1PreparedStatement[] = [statement(env.DB,`UPDATE notice_dispatch_jobs SET cursor_user_id=?,status=?,
+./packages/notifications/notices.ts:39:              href: `${env.APP_ORIGIN}/workspaces`,noticeAccess: { noticeId: job.notice_id, userId: user.id },
+./packages/notifications/notices.ts:41:        batch.push(statement(env.DB,`INSERT INTO notifications(id,user_id,title,message,href,created_at)
+./packages/notifications/notices.ts:44:        batch.push(statement(env.DB,`INSERT INTO notice_deliveries(notice_id,user_id,notification_id,outbox_id,created_at)
+./packages/notifications/notices.ts:48:      await env.DB.batch(batch);
+./packages/notifications/notices.ts:50:      await statement(env.DB,`UPDATE notice_dispatch_jobs SET status=?,attempts=attempts+1,last_error='DISPATCH_FAILED',
+./packages/authorization/documents.ts:56:    env.DB,
+./packages/authorization/documents.ts:67:  const object = await env.DOCUMENTS.get(doc.object_key);
+./apps/platform/worker/app.ts:22:const handle = createRequestHandler(() => import('virtual:react-router/server-build'),import.meta.env.MODE);
+./apps/platform/worker/app.ts:25:    const canonical = canonicalPageRedirect(request, env.APP_ORIGIN, env.APP_ENV);
+./apps/platform/worker/app.ts:40:    if (response.ok && shouldIndexPublicPage(requestUrl.pathname, requestUrl.origin, env.APP_ENV))
+./apps/platform/worker/app.ts:45:    if (env.APP_ENV !== 'local') {
+./apps/platform/worker/app.ts:55:    if (env.OPEN_HOME_REPORTS_ENABLED === 'true' && _event.cron === '0 1 * * *') {
+./apps/platform/worker/app.ts:63:    if (env.WA_BONDS_ENABLED === 'true') ctx.waitUntil(dispatchBondAlerts(env).then(() => dispatchOutbox(env)));
+./apps/platform/worker/app.ts:72:    if (env.APP_ENV === 'production' && shouldRunCalendarReleaseProbe(new Date(_event.scheduledTime))) {
+./packages/notifications/notice-access.ts:11:  return statement(env.DB,`SELECT DISTINCT u.id,u.email FROM building_notices n
+./packages/authorization/building.ts:41:  return (await statement(env.DB, `SELECT b.*,s.name AS scheme_name FROM scheme_buildings b JOIN strata_schemes s ON s.id=b.scheme_id WHERE ${s.sql} ORDER BY s.name,b.name LIMIT 80`, ...s.values).all<AuthorisedBuilding>()).results;
+./packages/authorization/building.ts:51:  const b = await statement(env.DB, `SELECT b.*,s.name AS scheme_name FROM scheme_buildings b JOIN strata_schemes s ON s.id=b.scheme_id WHERE b.id=? AND (${s.sql})`, id, ...s.values).first<AuthorisedBuilding>();
+./apps/platform/worker/features/report-history.server.ts:13: const rows=(await statement(env.DB,`SELECT r.id,r.property_id,r.scheme_id,r.tenancy_id,r.approved_version_id,r.created_at,r.report_type,r.inspector_id,r.reviewer_id
+./apps/platform/worker/features/report-history.server.ts:26:  const version=await statement(env.DB,'SELECT content_json FROM report_versions WHERE id=?',versionId).first<{content_json:string}>();
+./apps/platform/worker/features/report-history.server.ts:30: const draft=currentSource?null:await statement(env.DB,'SELECT content_json FROM report_drafts WHERE report_id=?',current.id).first<{content_json:string}>();
+./packages/notifications/server.ts:18:    env.DB,
+./packages/notifications/server.ts:22:    await seal(env.DATA_ENCRYPTION_KEY, `outbox:${id}`, payload),
+./packages/notifications/server.ts:43:  if (!env.EVENTS) return;
+./packages/notifications/server.ts:45:    env.DB,
+./packages/notifications/server.ts:50:    await env.EVENTS.send({ eventId: row.id });
+./packages/notifications/server.ts:52:      env.DB,
+./packages/notifications/server.ts:59:    env.DB,
+./packages/notifications/server.ts:67:    env.DB,
+./packages/notifications/server.ts:77:      env.DATA_ENCRYPTION_KEY,
+./packages/notifications/server.ts:83:        env.DB,
+./packages/notifications/server.ts:89:          env.DB,
+./packages/notifications/server.ts:102:        env.DB,
+./packages/notifications/server.ts:118:      if (env.OPEN_HOME_REPORTS_ENABLED !== 'true' || !current) {
+./packages/notifications/server.ts:120:          env.DB,
+./packages/notifications/server.ts:134:        await env.DB.batch([
+./packages/notifications/server.ts:136:            env.DB,
+./packages/notifications/server.ts:142:            env.DB,
+./packages/notifications/server.ts:147:            env.DB,
+./packages/notifications/server.ts:155:    if (env.EMAIL_PROVIDER === 'local' && env.APP_ENV === 'local') {
+./packages/notifications/server.ts:157:        env.DB,
+./packages/notifications/server.ts:164:        env.DB,
+./packages/notifications/server.ts:172:        env.OPEN_HOME_REPORT_EMAIL_PROVIDER !== 'resend')
+./packages/notifications/server.ts:174:    if (env.EMAIL_PROVIDER !== 'resend' || !env.RESEND_API_KEY || !env.EMAIL_FROM)
+./packages/notifications/server.ts:178:      env.APP_ENV === 'staging' &&
+./packages/notifications/server.ts:179:      (!env.EMAIL_SINK || payload.to.toLowerCase() !== env.EMAIL_SINK.toLowerCase()) &&
+./packages/notifications/server.ts:183:    const to = env.APP_ENV === 'staging' ? env.EMAIL_SINK : payload.to;
+./packages/notifications/server.ts:188:        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+./packages/notifications/server.ts:193:        from: env.EMAIL_FROM,
+./packages/notifications/server.ts:195:        subject: env.APP_ENV === 'staging' ? `[STAGING] ${payload.subject}` : payload.subject,
+./packages/notifications/server.ts:205:      env.DB,
+./packages/notifications/server.ts:212:      env.DB,
+./packages/notifications/server.ts:223:      env.DB,
+./packages/notifications/server.ts:233:        env.DB,
+./apps/platform/worker/features/residential-live-stripe.server.ts:14: return env.APP_ENV === 'production';
+./apps/platform/worker/features/residential-live-stripe.server.ts:19: assert(env.STRIPE_RESIDENTIAL_LIVE_ACCOUNT_ID === LIVE_RESIDENTIAL_ACCOUNT, 503,
+./apps/platform/worker/features/residential-live-stripe.server.ts:21: assert(/^rk_live_[A-Za-z0-9_]{16,}$/.test(env.STRIPE_RESIDENTIAL_LIVE_KEY ?? ''), 503,
+./apps/platform/worker/features/residential-live-stripe.server.ts:23: assert(/^whsec_[A-Za-z0-9_]{16,}$/.test(env.STRIPE_RESIDENTIAL_LIVE_WEBHOOK_SECRET ?? ''), 503,
+./apps/platform/worker/features/residential-live-stripe.server.ts:28: assert(env.RESIDENTIAL_LIVE_BILLING_ENABLED==='true',503,'RESIDENTIAL_LIVE_DISABLED','New live residential signups remain disabled until approved release.');
+./apps/platform/worker/features/residential-live-stripe.server.ts:29: assert(/^txcd_[0-9]{8}$/.test(env.RESIDENTIAL_APPROVED_TAX_CODE ?? '') &&
+./apps/platform/worker/features/residential-live-stripe.server.ts:30:  env.RESIDENTIAL_APPROVED_TAX_CODE !== 'txcd_10203001', 503,
+./apps/platform/worker/features/residential-live-stripe.server.ts:42:  headers: { Authorization: 'Bearer ' + env.STRIPE_RESIDENTIAL_LIVE_KEY,
+./apps/platform/worker/features/residential-live-stripe.server.ts:74:  product.default_price === LIVE_RESIDENTIAL_PRICE && product.tax_code === env.RESIDENTIAL_APPROVED_TAX_CODE,
+./apps/platform/worker/features/residential-live-stripe.server.ts:79: const c = await statement(env.DB, "SELECT id,name FROM clients WHERE id=? AND status='active'", clientId)
+./apps/platform/worker/features/residential-live-stripe.server.ts:82: const old = await statement(env.DB, 'SELECT stripe_account_id,mode,stripe_customer_id FROM billing_accounts WHERE client_id=?', clientId)
+./apps/platform/worker/features/residential-live-stripe.server.ts:89: await statement(env.DB, "INSERT INTO billing_accounts(client_id,stripe_account_id,mode,created_by,created_at,updated_at) VALUES(?,?,'live',?,?,?) ON CONFLICT(client_id) DO NOTHING",
+./apps/platform/worker/features/residential-live-stripe.server.ts:97: await statement(env.DB, "UPDATE billing_accounts SET stripe_customer_id=?,updated_at=? WHERE client_id=? AND mode='live' AND stripe_account_id=? AND (stripe_customer_id IS NULL OR stripe_customer_id=?)",
+./apps/platform/worker/features/residential-live-stripe.server.ts:99: const saved = await statement(env.DB, "SELECT stripe_customer_id FROM billing_accounts WHERE client_id=? AND mode='live'", clientId)
+./apps/platform/worker/features/rent-planning.server.ts:21: assert(env.RENT_PAYMENT_PLANNING_ENABLED==='true',503,'RENT_PLANNING_DISABLED',
+./apps/platform/worker/features/rent-planning.server.ts:28: const property=await statement(env.DB,"SELECT sector FROM properties WHERE id=?",t.property_id).first<{sector:string}>();
+./apps/platform/worker/features/rent-planning.server.ts:30: const management=await statement(env.DB,
+./apps/platform/worker/features/rent-planning.server.ts:37: const p=await statement(env.DB,'SELECT * FROM rent_route_plans WHERE id=?',id).first<Record<string,any>>();
+./apps/platform/worker/features/rent-planning.server.ts:50: const plans=(await statement(env.DB,'SELECT id,tenancy_id,manager_mode,route,currency,amount_cents,frequency,status,policy_version,created_at FROM rent_route_plans WHERE tenancy_id=? ORDER BY created_at DESC,id DESC LIMIT 20',tenancyId).all<Record<string,any>>()).results;
+./apps/platform/worker/features/rent-planning.server.ts:54:  const rows=(await statement(env.DB,`SELECT e.id,e.kind,e.amount_cents,e.effective_at,e.source,e.external_reference,e.created_at,
+./apps/platform/worker/features/rent-planning.server.ts:74: await env.DB.batch([
+./apps/platform/worker/features/rent-planning.server.ts:75:  statement(env.DB,'INSERT INTO rent_route_plans(id,tenancy_id,property_id,manager_mode,route,amount_cents,frequency,policy_version,created_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
+./apps/platform/worker/features/rent-planning.server.ts:86: const recent=await statement(env.DB,'SELECT id FROM rent_route_plans WHERE tenancy_id=? ORDER BY created_at DESC,id DESC LIMIT 1',plan.tenancy_id).first<{id:string}>();
+./apps/platform/worker/features/rent-planning.server.ts:95: await env.DB.batch([
+./apps/platform/worker/features/rent-planning.server.ts:96:  statement(env.DB,'INSERT INTO rent_external_money_records(id,plan_id,kind,amount_cents,source,external_reference,effective_at,recorded_by,created_at) VALUES(?,?,?,?,?,?,?,?,?)',
+./apps/platform/worker/features/rent-planning.server.ts:107: const e=await statement(env.DB,'SELECT * FROM rent_external_money_records WHERE id=? AND plan_id=?',recordIdValue,planId).first<Record<string,any>>();
+./apps/platform/worker/features/rent-planning.server.ts:112:  const received=await statement(env.DB,`SELECT COALESCE(SUM(e2.amount_cents),0) n FROM rent_external_money_records e2
+./apps/platform/worker/features/rent-planning.server.ts:114:  const disbursed=await statement(env.DB,`SELECT COALESCE(SUM(e2.amount_cents),0) n FROM rent_external_money_records e2
+./apps/platform/worker/features/rent-planning.server.ts:121: await env.DB.batch([
+./apps/platform/worker/features/rent-planning.server.ts:122:  statement(env.DB,'INSERT INTO rent_external_verifications(id,record_id,reviewed_by,evidence_kind,external_evidence_reference,reviewed_at) VALUES(?,?,?,?,?,?)',
+./apps/platform/worker/features/report-evidence.server.ts:16: const sha=await digest(bytes),previous=await statement(env.DB,'SELECT id,status FROM report_evidence WHERE report_id=? AND sha256=?',reportId,sha).first<{id:string;status:string}>();
+./apps/platform/worker/features/report-evidence.server.ts:20: const draft=await statement(env.DB,'SELECT content_json,revision FROM report_drafts WHERE report_id=?',reportId).first<{content_json:string,revision:number}>();

@@ -40,6 +40,7 @@ test('negotiated residential prices and limits are not applied to the service ca
  const s=readFileSync('packages/service-catalogue/index.ts','utf8');
  assert.match(s,/price_ex_gst_cents: null/);
  const p=PUBLIC_LEGAL_DRAFTS['subscription-terms'].sections.map(x=>x[1]).join(' ');
- assert.match(p,/two routine inspections/);
- assert.match(p,/quarterly Routine Inspections/);
+ assert.match(p,/No historic inspection counts/);
+ assert.match(p,/24-month term/);
+ assert.match(p,/60 days written/);
 });

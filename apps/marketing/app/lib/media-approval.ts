@@ -6,8 +6,9 @@
  * A photograph is publishable only after the business supplies the asset,
  * confirms rights/consent and reviews the specific use and alt text.
  *
- * This deliberately ships with NO approved photo assets. Until review,
- * original non-photographic illustrations continue to render as fallback.
+ * This registry deliberately contains no approved customer photo assets.
+ * Generic generated brand scenery is managed separately in brand-image.tsx.
+ * It is never used as a photograph of a listed or customer property.
  *
  * When adding assets, use a build-managed public path starting /marketing-media/
  * in BOTH application builds, and keep a record in docs/MARKETING_RELEASE_REVIEW.md.

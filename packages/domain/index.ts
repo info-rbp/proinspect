@@ -9,42 +9,47 @@ export const CLIENT_TYPES = [
 export type ClientType = (typeof CLIENT_TYPES)[number];
 export const WORKSPACES = {
   landlord: {
-    name: 'Landlord Portal',
+    name: 'Residential Portal',
     purpose: 'Self-manage your residential properties',
     scope: 'client',
   },
   'property-manager': {
-    name: 'Property Manager Portal',
+    name: 'Residential Portal',
     purpose: 'Operate your managed portfolio',
     scope: 'client',
   },
   'strata-manager': {
-    name: 'Strata Manager Portal',
+    name: 'Strata Portal',
     purpose: 'Coordinate your schemes and buildings',
     scope: 'client',
   },
   commercial: {
-    name: 'Commercial Property Portal',
+    name: 'Commercial Portal',
     purpose: 'Oversee commercial property operations',
     scope: 'client',
   },
+  'commercial-occupant': {
+    name: 'Resident & Member Portal',
+    purpose: 'Access only your invited commercial premises and requests',
+    scope: 'occupancy',
+  },
   tenant: {
-    name: 'Tenant Portal',
+    name: 'Resident Portal',
     purpose: 'Manage your tenancy requests and documents',
     scope: 'tenancy',
   },
   building: {
-    name: 'Building Portal',
+    name: 'Resident Portal',
     purpose: 'Stay connected to your building',
     scope: 'scheme',
   },
   council: {
-    name: 'Strata Council Portal',
+    name: 'Resident Portal',
     purpose: 'Review issues and operational decisions',
     scope: 'scheme',
   },
-  'building-manager': { name: 'Building Management', purpose: 'Operate assigned buildings and facilities', scope: 'building' },
-  staff: { name: 'Staff / Admin', purpose: 'Deliver ProInspect services', scope: 'staff' },
+  'building-manager': { name: 'Strata Portal', purpose: 'Operate assigned buildings and facilities', scope: 'building' },
+  staff: { name: 'ProInspect Operations', purpose: 'Deliver ProInspect services', scope: 'staff' },
 } as const;
 export type WorkspaceKind = keyof typeof WORKSPACES;
 export interface Workspace {
@@ -53,6 +58,12 @@ export interface Workspace {
   name: string;
   role: string;
   href: string;
+  accountType?: string;
+  /** Presentation hint from the active entitlement; API authority is checked separately. */
+  professionalPortfolio?: boolean;
+  experienceTags?: string[];
+  landingSection?: string;
+  displayDensity?: 'comfortable' | 'compact';
 }
 export interface User {
   id: string;

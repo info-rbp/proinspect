@@ -65,7 +65,7 @@ export function verifyFiles(evidence, cwd = process.cwd()) {
 }
 export function judgeLaunch(evidence, expectedSha, { cwd=process.cwd(), protectedReview=false, now=Date.now() } = {}) {
   const schema=assess(evidence,expectedSha,now);
-  if(!schema.acceptedForProduction)throw new Error(`NO GO: ${schema.counts.criteriaPassed}/12 criteria, ${schema.counts.casesPassed}/12 cases, ${schema.counts.identitiesPassed}/8 identity proofs`);
+  if(!schema.acceptedForProduction)throw new Error(`NO GO: ${schema.counts.criteriaPassed}/12 criteria, ${schema.counts.casesPassed}/12 cases, ${schema.counts.identitiesPassed}/${ROLES.length} identity proofs`);
   if(!protectedReview)throw new Error('NO GO: independently protected production-acceptance environment approval required');
   const identityRefs=new Set(ROLES.map(role=>evidence.identities[role].identityRef));
   if(identityRefs.has(evidence.releaseReview.reviewerRef))throw new Error('NO GO: release reviewer must be independent from tested identities');
@@ -78,10 +78,10 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   if(!input||!/^[a-f0-9]{40}$/.test(sha||''))throw new Error('Usage: verify-launch-evidence.mjs evidence.json <deployed-40-char-sha>');
   const evidence=JSON.parse(readFileSync(input,'utf8'));
   const decision=judgeLaunch(evidence,sha,{protectedReview:process.env.PROINSPECT_PROTECTED_REVIEW_APPROVED==='true'});
-  mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/eight-portal-launch-decision.json',JSON.stringify(decision,null,2)+'\n');
+  mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/nine-portal-launch-decision.json',JSON.stringify(decision,null,2)+'\n');
   console.log('GO: independently reviewed and bound acceptance evidence:',decision.validatedEvidenceFiles,'files');
  }catch(error){
-  mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/eight-portal-launch-decision.json',JSON.stringify({acceptedForProduction:false,reason:String(error.message||error)},null,2)+'\n');
+  mkdirSync('artifacts',{recursive:true});writeFileSync('artifacts/nine-portal-launch-decision.json',JSON.stringify({acceptedForProduction:false,reason:String(error.message||error)},null,2)+'\n');
   console.error('NO GO:',error.message);process.exitCode=1;
  }
 }

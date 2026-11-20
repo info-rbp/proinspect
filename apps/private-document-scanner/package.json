@@ -1,0 +1,10 @@
+{
+  "name": "@proinspect/private-document-scanner",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --format=esm --platform=browser --target=es2022 --external:cloudflare:workers --outfile=build/index.js",
+    "deploy": "wrangler deploy",
+    "types": "wrangler types"
+  }
+}

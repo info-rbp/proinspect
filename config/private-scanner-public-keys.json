@@ -1,0 +1,30 @@
+{
+  "staging": {
+    "worker": "proinspect-private-document-scanner-staging",
+    "tag": "1f94a186651a4b2884ee113722ba24d1",
+    "publicJwk": {
+      "kty": "EC",
+      "key_ops": [
+        "verify"
+      ],
+      "ext": true,
+      "crv": "P-256",
+      "x": "KkEklA2HBWursZhH58tqSLwGStES8i1d8uM-vAkDtMI",
+      "y": "30GG_yTkQpsDoA04kfL-CO3iI7vk33EEk2Hb05_2QwM"
+    }
+  },
+  "production": {
+    "worker": "proinspect-private-document-scanner",
+    "tag": "e84f0ab5f64c4669b334fdaea0531696",
+    "publicJwk": {
+      "kty": "EC",
+      "key_ops": [
+        "verify"
+      ],
+      "ext": true,
+      "crv": "P-256",
+      "x": "6u2WpYGi0H1eLUaZGiRXkSi3iL7QsxTDEwYgDDBew7g",
+      "y": "MezdHRCAocL-uJkncfvZpyBfg1LflYLGfrIrlWi8pU8"
+    }
+  }
+}

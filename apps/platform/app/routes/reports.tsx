@@ -2,6 +2,7 @@ import {data,redirect,Form,Link,useLoaderData,useNavigation,useActionData,useSea
 import {loadApi,callApi} from '../lib/api.server';
 import {useWorkspace} from '../lib/workspace';
 import {PageHeading,Badge,EmptyState} from '../../../../packages/ui/components';
+import {REPORT_TEMPLATE_PARITY,reportTemplateParitySummary} from '../../../../packages/report-engine/parity';
 export async function loader({request,context,params}:LoaderFunctionArgs) {
  return loadApi(request,context,`/api/w/${params.kind}/${params.scopeId}/reports`);
 }
@@ -43,6 +44,21 @@ export default function ReportsRegister(){
     </label>
     <button className="primary" disabled={nav.state!=='idle'||!orders.length}>Create report</button>
    </Form>
+  </section>}
+  {isStaff&&<section className="panel stack-sm" aria-label="Report template parity">
+   <h2>Retained report template coverage</h2>
+   <p className="small muted">{reportTemplateParitySummary().routedServices} of {reportTemplateParitySummary().totalServices} services have a Report Tool template mapping across {reportTemplateParitySummary().retainedTemplates} retained templates. Template selection is not proof of layout, photo, Unicode or PDF fidelity. Independent sample-by-sample review is still required.</p>
+   <details><summary>Inspect all retained template mappings</summary>
+    <div className="table-scroll"><table>
+     <thead><tr><th scope="col">Retained template</th><th scope="col">Mapped services</th><th scope="col">Native report families</th><th scope="col">Fidelity status</th></tr></thead>
+     <tbody>{REPORT_TEMPLATE_PARITY.map(item=><tr key={item.template}>
+      <th scope="row">{item.template}</th>
+      <td>{item.serviceIds.length?item.serviceIds.join(', '):'Not mapped to a current service'}</td>
+      <td>{item.nativeFamilies.join(', ')||'Not assigned'}</td>
+      <td>Requires visual acceptance</td>
+     </tr>)}</tbody>
+    </table></div>
+   </details>
   </section>}
   <section className="panel">
    <h2>{isStaff?'Reporting register':'Available reports'}</h2>

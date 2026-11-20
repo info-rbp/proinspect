@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { propertyManagementTag,managedApplicationListing } from './managed-rental-intake.server';
 import { assert, now, statement, uid, type Env } from '../../../../packages/database/types';
-import { digest, seal, randomToken } from '../../../../packages/auth/crypto';
+import { digest, seal, unseal, randomToken } from '../../../../packages/auth/crypto';
 import { mailEvent } from '../../../../packages/notifications/server';
 import { operationsWrite } from '../../../../packages/authorization/server';
 import { rentalApprovalInput } from '../../../../packages/marketing/rental-governance';
@@ -10,7 +11,7 @@ function administrator(user:Principal){
  operationsWrite(user);
  assert(user.staffRole==='administrator',403,'RENTAL_APPROVAL_ADMIN','An administrator must approve rental application processing.');
 }
-type Listing={id:string;version:number;kind:string;application_mode:string;application_url:string|null;
+type Listing={id:string;version:number;kind:string;property_id:string;instructed_by_client_id:string;application_mode:string;application_url:string|null;
  application_authority_reference:string|null;application_recipient_email:string|null;
  tenancy_database_notice_mode:string;tenancy_database_notice_json:string;
  rental_approval_state:string;rental_approval_version:number;rental_recipient_verified_at:string|null};
@@ -84,7 +85,7 @@ export async function approveRentalListing(env:Env,user:Principal,id:string,inpu
    approvalId,id,revision,d.authorityDocumentReference,
    await seal(env.DATA_ENCRYPTION_KEY,'rental-approval:'+approvalId,{authorityAttestation:d.authorityAttestation,
     signedInstructionReference:row.application_authority_reference,recipient:row.application_recipient_email,
-    notice:row.tenancy_database_notice_json,confirmed:{authority:d.confirmAuthority,notice:d.confirmNotice,recipient:d.confirmRecipient}}),
+    notice:row.tenancy_database_notice_json,management:{propertyId:row.property_id,clientId:row.instructed_by_client_id},confirmed:{authority:d.confirmAuthority,directManagement:d.confirmDirectManagement,notice:d.confirmNotice,recipient:d.confirmRecipient}}),
    d.privacyNoticeVersion,challenge.id,user.id,t),
   statement(env.DB,'DELETE FROM mutation_guards'),
  ]);
@@ -92,4 +93,19 @@ export async function approveRentalListing(env:Env,user:Principal,id:string,inpu
 }
 export function listingApproved(row:{rental_approval_state?:string;rental_recipient_verified_at?:string|null}){
  return row.rental_approval_state==='approved'&&Boolean(row.rental_recipient_verified_at);
+}
+/** Management authority is explicitly attested; ownership or an inspection booking cannot imply it. */
+export async function managedRentalListingApproved(env:Env,listingId:string){
+ const listing=await statement(env.DB,'SELECT property_id FROM leasing_listings WHERE id=?',listingId).first<{property_id:string}>();
+ if(!listing)return false;
+ const tag=await propertyManagementTag(env,listing.property_id);
+ if(!tag||tag.provider!=='proinspect')return false;
+ if(await managedApplicationListing(env,listingId))return true;
+ const row=await statement(env.DB,"SELECT a.id,a.authority_attestation_envelope,l.property_id,l.instructed_by_client_id FROM rental_listing_approvals a JOIN leasing_listings l ON l.id=a.listing_id AND l.rental_approval_version=a.approval_version WHERE l.id=? AND l.rental_approval_state='approved' AND l.application_mode='proinspect' AND l.application_url IS NULL",listingId)
+  .first<{id:string;authority_attestation_envelope:string;property_id:string;instructed_by_client_id:string}>();
+ if(!row)return false;
+ try{
+  const value=await unseal<{confirmed?:{directManagement?:boolean};management?:{propertyId:string;clientId:string}}>(env.DATA_ENCRYPTION_KEY,'rental-approval:'+row.id,row.authority_attestation_envelope);
+  return value.confirmed?.directManagement===true&&value.management?.propertyId===row.property_id&&value.management?.clientId===row.instructed_by_client_id;
+ }catch{return false;}
 }

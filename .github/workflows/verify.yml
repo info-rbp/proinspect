@@ -10,15 +10,52 @@ concurrency:
   group: verify-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  private-scanner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Build the pinned private ClamAV image
+        run: docker build -t proinspect-private-scanner apps/private-document-scanner/container
+      - name: Exercise real clean, EICAR and fail-closed scans
+        run: |
+          set -euo pipefail
+          docker run -d --name private-scanner --memory=4g --cpus=1 -p 127.0.0.1:18080:8080 proinspect-private-scanner
+          mkdir -p artifacts
+          python3 scripts/release/private-scanner-smoke.py | tee artifacts/private-scanner-engine.json
+          docker exec private-scanner python3 -c 'import os; s=dict(p.split(":",1) for p in open("/proc/1/status") if ":" in p); assert all(int(s[k].strip(),16)==0 for k in ["CapInh","CapPrm","CapEff","CapBnd","CapAmb"]); assert s["NoNewPrivs"].strip()=="1"; assert not os.listdir("/dev/shm/clamav")'
+      - name: Diagnose synthetic engine startup only
+        if: failure()
+        run: |
+          docker logs --tail 30 private-scanner || true
+          docker exec private-scanner sh -c 'ps; ls -l /run/clamav /dev/shm/clamav; clamconf -n; timeout 15 clamd --foreground=true --config-file=/etc/clamav/clamd.conf' || true
+      - name: Stop the synthetic private engine
+        if: always()
+        run: docker rm -f private-scanner || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: private-scanner-engine
+          path: artifacts/private-scanner-engine.json
+          retention-days: 7
   verify:
+    needs: private-scanner
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Require successful real antivirus acceptance
+        if: needs.private-scanner.result != 'success'
+        run: exit 1
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Capture exact source and repository-only acceptance status
@@ -36,6 +73,14 @@ jobs:
         run: |
           pnpm --dir apps/marketing exec wrangler deploy --dry-run
           pnpm --dir apps/platform exec wrangler deploy --dry-run
+      - name: Rehearse 0054 in a clean local Cloudflare D1 database
+        run: pnpm test:pr01-d1
+      - name: Rehearse additive commercial 0055 and isolated backup recovery
+        run: pnpm test:commercial-d1
+      - name: Rehearse co-living 0059 on isolated local D1 and verify pre-migration recovery
+        run: pnpm test:coliving-d1
+      - name: Verify existing staging preview isolation
+        run: node --test tests/staging-preview.test.mjs
       - name: Prepare isolated browser test data
         run: |
           pnpm local:init --test-fixtures
@@ -43,6 +88,7 @@ jobs:
       - name: Browser acceptance and responsive screenshots
         run: |
           pnpm test:browser
+          node scripts/release/temporary-rental-browser.mjs
           node scripts/portal-testing/isolated-scenario-coverage.mjs
       - uses: actions/upload-artifact@v4
         if: always()
@@ -51,4 +97,54 @@ jobs:
           path: |
             artifacts/
             playwright-report/
+          retention-days: 7
+  staging-preview:
+    if: github.repository == 'info-rbp/proinspect' && ((github.event_name == 'workflow_dispatch' && contains(fromJSON('["refs/heads/feat/pr01-account-driven-client-portal","refs/heads/feat/public-site-services-refresh","refs/heads/feat/public-content-final-alignment","refs/heads/feat/residential-application-readiness","refs/heads/feat/commercial-dynamic-application","refs/heads/feat/managed-property-application-routing","refs/heads/feat/private-managed-document-scanning","refs/heads/fix/managed-rental-application-availability","refs/heads/feat/temporary-rental-document-delivery","refs/heads/integrate/public-offering-portals-20261116","refs/heads/feat/auth-onboarding-portal-routing"]'), github.ref)) || (github.event_name == 'pull_request' && contains(fromJSON('["feat/pr01-account-driven-client-portal","feat/public-site-services-refresh","feat/public-content-final-alignment","feat/residential-application-readiness","feat/commercial-dynamic-application","feat/managed-property-application-routing","feat/private-managed-document-scanning","fix/managed-rental-application-availability","feat/temporary-rental-document-delivery","integrate/public-offering-portals-20261116","feat/auth-onboarding-portal-routing"]'), github.event.pull_request.head.ref) && github.event.pull_request.head.repo.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: pr01-existing-v3-staging
+      cancel-in-progress: false
+    env:
+      WORKERS_CI: '0'
+      PR01_STAGING_PREVIEW: '1'
+      CLOUDFLARE_ENV: ''
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: 8ca23ac6d2cc906d4dd13b8da5ea2b25
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Verify staging boundaries and record the exact source
+        run: |
+          node --test tests/staging-preview.test.mjs
+          mkdir -p artifacts
+          git rev-parse HEAD > artifacts/pr01-staging-source-sha.txt
+      - name: Build and validate existing staging resource bindings
+        run: node scripts/deploy/staging-preview.mjs build
+      - name: Deploy only to the existing shared staging Worker
+        run: node scripts/deploy/staging-preview.mjs deploy
+      - name: Check hosted public and private boundaries
+        run: node scripts/release/v3-staging-smoke.mjs
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Check hosted navigation, hydration and responsive layout
+        run: node scripts/release/v3-staging-browser.mjs
+      - name: Review public service pages and capture desktop and mobile layouts
+        if: github.head_ref == 'integrate/public-offering-portals-20261116' || github.head_ref == 'feat/public-site-services-refresh' || github.head_ref == 'feat/public-content-final-alignment' || github.ref == 'refs/heads/feat/public-site-services-refresh' || github.ref == 'refs/heads/feat/public-content-final-alignment'
+        env:
+          PUBLIC_SITE_REVIEW_ORIGIN: https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev
+        run: node scripts/release/public-site-review.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr01-existing-staging-preview
+          path: artifacts/
           retention-days: 7

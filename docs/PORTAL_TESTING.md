@@ -1,5 +1,11 @@
 # Google Admin email aliases: ProInspect portal testing
 
+## Stage 6 update — ninth workspace acceptance is outstanding
+
+The historical approved Google Admin alias list below contains **eight** test identities. The application has **nine** workspace kinds: the ninth is professional **Building Manager** (`building-manager`), which is not the same as a resident's `building` workspace. Stage 6 now requires nine separately authenticated hosted journeys and a valid Building Manager independent denial test.
+
+`building-manager-testing@proinspect.systems` is a **proposed** additional test alias only. It has **not** been confirmed by the mailbox owner, provisioned in D1, emailed a sign-in link or approved for any real building assignment. The one-time eight-alias provisioning scripts are deliberately unchanged. To add the ninth tester, obtain mailbox-owner approval and an independently approved, synthetic, source-linked `building_manager_assignments` record under migration 0039. Do not set `verified_at`, create sessions, infer professional authority from resident membership, or add the new alias to an automatic production seed. Review `docs/STAGE6_MARKET_LAUNCH_AND_ACCEPTANCE_2026-11-09.md` before any production acceptance.
+
 ## Requested identity assignments
 
 One email sign-in screen at `/signin` on the existing `proinspect-platform` Worker. After a one-time email link and explicit confirmation of the **same alias**, the application reads `users` and its active scoped memberships from D1. Email aliases can route to one Google inbox while remaining **distinct ProInspect identities**; do not assume that Google aliases are independent Google Workspace user accounts.

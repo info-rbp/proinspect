@@ -1,3 +1,4 @@
+import { PLAN_TERM, PLAN_SCOPE, PRIVATE_SERVICE_PRICING, INSPECTION_ONLY_SERVICES, INSPECTION_ONLY_SCOPE, RESIDENTIAL_BILLING_UNIT, MAINTENANCE_APPROVAL } from './public-facts.ts';
 /** Editorial draft; no invented prices, credentials, turnaround promises or testimonials. */
 export const SERVICE_FOCUS: Record<string, [string, string, string]> = {
   'routine-inspection': [
@@ -116,165 +117,120 @@ export const SERVICE_FOCUS: Record<string, [string, string, string]> = {
     'A scoped proposal first; a request is not an appointment confirmation.',
   ],
 };
-export const ENGAGEMENTS: Record<
-  string,
-  { title: string; intro: string; sections: [string, string][] }
-> = {
+export const ENGAGEMENTS: Record<string,{ title: string; intro: string; sections: [string,string][] }> = {
   'pay-as-you-go': {
-    title: 'One-off property services',
-    intro: 'Arrange an inspection or attendance without assuming an ongoing commitment.',
-    sections: [
-      [
-        'Choose the task',
-        'Confirm the property, service scope, price, access and appointment before work starts.',
-      ],
-      [
-        'Keep the outcome',
-        'Issued records stay in the authorised property account; follow-up is a separate instruction.',
-      ],
+    title:'One-off property services',
+    intro:'Commission an individual inspection, attendance or defined piece of property work without subscribing.',
+    sections:[
+      ['1. Identify the outcome','Choose a service and provide the property type, suburb, timing, and whether you need an inspection record, access visit or practical follow-up. Individual service prices are available in authorised accounts; tailored requirements are quoted.'],
+      ['2. Approve the instruction','Review what is included, expected deliverables, lawful entry and access arrangements, GST and any approved extras. Only the confirmed appointment or accepted quotation authorises the work.'],
+      ['3. We attend or coordinate','The assigned team undertakes the defined task and reports exceptions through the agreed contact; we do not assume wider maintenance or management authority.'],
+      ['4. Receive and act on the outcome','The dated inspection or attendance record is issued to authorised recipients. New repairs, return visits or specialist assessment are separate approved instructions.'],
     ],
   },
   'inspection-plans': {
-    title: 'Inspection planning',
-    intro: 'Organise recurring needs across a property or portfolio.',
-    sections: [
-      [
-        'Plan before booking',
-        'Record the service and due date. An authorised person confirms each booking and access arrangement.',
-      ],
-      [
-        'No surprise appointments',
-        'A plan is not an automatically scheduled visit or tenancy entry notice. A successful matching booking advances the occurrence.',
-      ],
+    title:'Residential Inspection Only',
+    intro:'Keep condition and tenant communication on track for $20 + GST a month per whole property or separately leased room.',
+    sections:[
+      ['Five included service types', INSPECTION_ONLY_SERVICES.join('; ') + '.'],
+      ['A clear inspection rhythm', INSPECTION_ONLY_SCOPE],
+      ['The right unit for your property', RESIDENTIAL_BILLING_UNIT],
+      ['Know your terms', PLAN_TERM + ' Your schedule confirms the detailed scope and any early-exit terms before you join. Account registration is free; subscribing is a separate choice.'],
     ],
   },
   'standard-support': {
-    title: 'Ongoing operational support',
-    intro: 'Discuss a defined workload and responsibilities.',
-    sections: [
-      [
-        'Agree the arrangement',
-        'Define properties, tasks, instructions, reporting and commercial terms.',
-      ],
-      [
-        'Retain control',
-        'Your workspace connects requests, decisions and resulting documents. Support does not mean an unlimited subscription.',
-      ],
+    title:'All-Inclusive operational support',
+    intro:'Take everyday coordination off your list. Residential All-Inclusive is $150 + GST a month per whole property or separately leased room; Commercial All-Inclusive is $150 + GST per commercial unit a month.',
+    sections:[
+      ['Residential support', 'Build a service schedule around inspections, tenant enquiries, administration, access and vacate support.'],
+      ['Commercial support', 'Coordinate site records, occupant requests, lease diary tasks, contractor access and owner updates. Inspection frequency and allowances are agreed for each unit.'],
+      ['Your agreed service schedule', PLAN_SCOPE + ' ' + MAINTENANCE_APPROVAL],
+      ['Get started', PLAN_TERM + ' Tell us about your property and workload. We will confirm the responsibilities, included work and costs before you accept.'],
     ],
   },
   'outsourced-operations': {
-    title: 'Outsourced property operations',
-    intro: 'Arrange on-the-ground work while retaining your management responsibilities.',
-    sections: [
-      [
-        'Define the boundary',
-        'Agree who instructs, coordinates access, reviews reports and approves additional work.',
-      ],
-      [
-        'One operational record',
-        'Inspections, attendance and reporting share the property or scheme context. Capacity and coverage are confirmed before engagement.',
-      ],
+    title:'Outsourced property operations',
+    intro:'Combine administration, attendance and building care around your portfolio, facility or accommodation operating model while retaining the appropriate legal and financial authorities.',
+    sections:[
+      ['Initial consultation','Identify your sites or portfolio, the problems to solve, estimated workload, service locations and appropriate decision-maker.'],
+      ['Operational discovery and handover','Map active tenancies or occupants, building facilities, contractors, existing records, instructions, access constraints, known issues and current responsibilities.'],
+      ['Document the responsibility matrix','Agree the tasks ProInspect coordinates, the person who approves spending, who communicates with residents, reporting cadence, service boundaries and any professional appointments.'],
+      ['Commence the programme','Confirm onboarding, service standards, staff and contractor access, scheduled activities and nominated escalation routes.'],
+      ['Maintain accountability','Issue agreed property-linked updates, log open items and request approvals before non-included expenditure, specialist works or scope changes.'],
     ],
   },
 };
-export const GUIDES: Record<
-  string,
-  { title: string; intro: string; sections: [string, string][]; services: string[] }
-> = {
+export const GUIDES: Record<string,{ title: string; intro: string; sections: [string,string][]; services: string[] }> = {
   'routine-inspection-vs-pcr': {
-    title: 'Routine inspection or Property Condition Report?',
-    intro: 'Choose around the purpose of the record.',
-    sections: [
-      ['Routine visit', 'Observe current visible condition and matters needing follow-up.'],
-      ['Incoming record', 'A PCR focuses on an incoming record for later reference.'],
-      [
-        'Before you choose',
-        'Explain the tenancy stage and the decision the record needs to support.',
-      ],
+    title:'Routine inspection or Property Condition Report?',
+    intro:'Compare the purpose, timing and evidence before commissioning the next residential inspection.',
+    sections:[
+      ['Start with the tenancy stage','A Property Condition Report (PCR) records the incoming condition of a property when a tenancy begins. A routine inspection takes a later point-in-time look at presentation, visible condition and matters requiring review.'],
+      ['What an incoming PCR records','For a WA residential tenancy PCR, the applicable prescribed Form 1 and its required content must be used. Room-by-room fixture, fitting, inventory and relevant photograph information provides a reference for the tenancy. Statutory issue and response duties remain with the responsible lessor or manager.'],
+      ['What a routine inspection records','An agreed attendance documents accessible areas, the visible condition at the date of inspection, maintenance observations and suitable photographs. Routine entry must follow the applicable notice and frequency requirements.'],
+      ['What the client receives','A PCR creates an incoming record for later comparison; a routine visit provides an observation and issue-follow-up record. Neither is a technical building safety certification.'],
+      ['How to decide','Choose a PCR for tenancy commencement, a routine inspection for periodic oversight, or separately agree a targeted revisit for a previously recorded issue. Provide the tenancy stage and earlier records to obtain the right service.'],
     ],
-    services: ['routine-inspection', 'property-condition-report'],
+    services:['routine-inspection','property-condition-report'],
   },
   'pre-vacate-vs-final': {
-    title: 'Pre-vacate or final inspection?',
-    intro: 'An early review and outgoing handover serve different purposes.',
-    sections: [
-      ['Before vacating', 'Identify apparent matters while there is time to consider follow-up.'],
-      [
-        'Final handover',
-        'Record outgoing condition using supplied incoming records where relevant.',
-      ],
-      [
-        'Separate the decision',
-        'Inspection observations do not by themselves decide liability or deductions.',
-      ],
+    title:'Pre-vacate or final inspection?',
+    intro:'An early condition review and final outgoing record support different tenancy decisions.',
+    sections:[
+      ['Before the resident leaves','A pre-vacate attendance can identify visible cleaning, maintenance and presentation matters while the resident still has time to consider them. It is preparatory and does not finally determine liability.'],
+      ['At outgoing handover','A final inspection records visible property condition at the agreed exit stage. Where reliable incoming records and documented changes are available, observations may be compared item by item.'],
+      ['What to prepare','Provide lawful access instructions, the tenancy end stage, incoming report, relevant permitted inventory and any earlier condition or maintenance records.'],
+      ['Separate evidence from decisions','A difference between two records does not itself prove damage liability, a particular bond deduction or breach. The authorised parties and statutory process resolve those matters.'],
+      ['Which service to request','Book pre-vacate for early observations, final inspection for outgoing condition evidence, and separately approve any later defect follow-up or contractor coordination.'],
     ],
-    services: ['pre-vacate-inspection', 'final-exit-inspection'],
+    services:['pre-vacate-inspection','final-exit-inspection'],
   },
   'verify-completed-works': {
-    title: 'Checking completed contractor work',
-    intro: 'Start with the original instruction and the outcome requiring verification.',
-    sections: [
-      ['Provide the scope', 'Identify the task, location and earlier issue report.'],
-      [
-        'Record what is visible',
-        'Document visible results and apparent outstanding items. Concealed systems may need a specialist.',
-      ],
-      [
-        'Close the loop',
-        'Keep follow-up with the request and work order. Additional work still needs a separate instruction.',
-      ],
+    title:'Checking completed contractor work',
+    intro:'Keep the approved works instruction, visible completion evidence and outstanding tasks in one review process.',
+    sections:[
+      ['Begin with the work instruction','Identify the original issue, approved contractor scope, locations, required result and any agreed completion notice. A photograph without its instruction may not explain whether the right work was performed.'],
+      ['Select the observation scope','A Completed Works Inspection documents visible outcomes of named work. Defect or Rectification Inspection follows nominated items against a prior list. Specialist testing requires the relevant qualified provider.'],
+      ['Capture comparable evidence','Record the work area, apparent completion, relevant photographs and any obvious outstanding matters. Use earlier images and contractor descriptions where available.'],
+      ['Escalate unresolved matters','The client or authorised manager decides whether an item requires contractor return, further inspection, technical certification or another approval. A visual check does not authorise payment or warrant workmanship.'],
+      ['Close with a traceable record','Keep the issued record with the original request, work order, authorised correspondence and any separately instructed reinspection.'],
     ],
-    services: ['completed-works-inspection', 'defect-rectification-inspection'],
+    services:['completed-works-inspection','defect-rectification-inspection'],
   },
   'access-or-supervision': {
-    title: 'Contractor access or supervision?',
-    intro: 'Letting someone in differs from an agreed supervision attendance.',
-    sections: [
-      [
-        'Access attendance',
-        'Provide authorised access at the agreed time and record the handover.',
-      ],
-      [
-        'Supervision attendance',
-        'Agree duration, observations, reporting expectations and limits.',
-      ],
-      ['Keep authority clear', 'Specify areas and who can authorise changes.'],
+    title:'Contractor access or supervision?',
+    intro:'Distinguish a short authorised entry task from an agreed period of operational works observation.',
+    sections:[
+      ['Access-only attendance','For access support, confirm the contractor, lawful entry permission, permitted areas and arrival window. ProInspect can facilitate agreed entry and document the handover or access exception.'],
+      ['Operational works observation','An agreed longer attendance may record arrival, progress, visible activity and operational exceptions, with a designated escalation contact and time limit.'],
+      ['Decide who controls the work','The appointed contractor, builder or professional remains responsible for technical work and safety obligations. Operational observation does not make ProInspect the licensed supervisor or principal contractor.'],
+      ['Plan additional time and charges','Confirm whether the visitor needs a key handover, continuous attendance, follow-up photographs or completion inspection. These are distinct tasks unless included in an accepted scope.'],
+      ['Select the right service','Choose Contractor Access Attendance for entry, Contractor Supervision Attendance for defined operational presence, or a Completed Works Inspection to record apparent finished work.'],
     ],
-    services: ['contractor-access-attendance', 'contractor-supervision-attendance'],
+    services:['contractor-access-attendance','contractor-supervision-attendance'],
   },
   'self-managed-property-workflow': {
-    title: 'A workflow for self-managing landlords',
-    intro: 'Keep tenancy requests, inspections and reports connected.',
-    sections: [
-      [
-        'Your relationship',
-        'The Landlord Portal is for private residential landlords managing their own rentals. Agencies have a separate workspace.',
-      ],
-      ['Work from the property', 'Review the need, then arrange the relevant service.'],
-      [
-        'Appropriate visibility',
-        'A tenant sees their tenancy information, not all owner and contractor records.',
-      ],
+    title:'A workflow for self-managing landlords',
+    intro:'Follow a structured property lifecycle while retaining decisions and oversight of your residential tenancy.',
+    sections:[
+      ['Before a tenancy starts','Prepare approved listing information, lawful inspection access, applicant handling, incoming condition records and key handover. The landlord or appointed licensed representative retains applicant and lease decisions.'],
+      ['During the tenancy','Maintain a diary for lawful routine inspections, tenant requests, repairs, contractor access and the required notices. Use property-linked records rather than scattered messages.'],
+      ['When maintenance is reported','Describe the problem, location and safe access requirements. Obtain approved quotes where relevant, instruct qualified trades where needed, then retain completion evidence and outstanding items.'],
+      ['Before and after vacate','Consider an early pre-vacate check, document final condition against available incoming records, manage authorised key returns and use the applicable bond process.'],
+      ['Choose individual work or a plan','Request PAYG services when needed, compare Residential Inspection Only ($20 + GST/month) with Residential All-Inclusive ($150 + GST/month), each per whole property or separately leased room, and obtain the exact service entitlements and 24-month conditions before enrolling.'],
     ],
-    services: ['routine-inspection', 'maintenance-attendance'],
+    services:['routine-inspection','maintenance-attendance'],
   },
   'building-issue-routing': {
-    title: 'Reporting a building issue',
-    intro: 'Identify the location and let the authorised manager review the route.',
-    sections: [
-      [
-        'Describe the location',
-        'Select inside a lot, shared area or uncertain, and add relevant observations.',
-      ],
-      [
-        'Separate relationships',
-        'A tenant may also be a resident; private tenancy and shared building matters follow different access rules.',
-      ],
-      [
-        'Uncertain cases',
-        'Request triage. Location selection does not determine legal boundaries or liability. Immediate danger needs immediate assistance rather than a portal response.',
-      ],
+    title:'Reporting a building issue',
+    intro:'A useful description and the right recipient help building problems reach the authorised decision-maker.',
+    sections:[
+      ['Describe exactly where it occurs','Identify the building, level, room, lot or shared space, issue type, observations and when it was noticed. Do not include private access codes in a general enquiry.'],
+      ['Determine the appropriate recipient','Private tenancy concerns generally go to the responsible landlord or property manager; shared areas go through the authorised strata or building channel. Occupying a lot does not confer authority to instruct works on common property.'],
+      ['Record and triage','Provide clear photographs where safe and permitted. A report may need an inspection, specialist assessment, quoted repair, or action by the responsible manager. Location alone does not determine legal boundaries or liability.'],
+      ['Urgent hazards need the correct pathway','Follow the manager’s emergency directions and contact emergency services where there is immediate danger. Public enquiries are not a monitored emergency-response channel.'],
+      ['Keep an issue record','Track the reported concern, approval, assigned contractor, visible completion and remaining actions using the relevant property or scheme record.'],
     ],
-    services: ['common-property-inspection', 'maintenance-attendance'],
+    services:['common-property-inspection','maintenance-attendance'],
   },
 };

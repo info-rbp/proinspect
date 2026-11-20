@@ -16,10 +16,10 @@ export async function loader({context,params}:LoaderFunctionArgs){
  if(!published)throw new Response('Property not found',{status:404});
  // Public listing data only. Never reveal an unpublished listing through an application URL.
  const l=published.listing;
- const unavailable={listing:{id:l.id,slug:l.slug,title:l.title,address:l.display_address,suburb:l.suburb,agentName:l.agent_name},
-  enabled:false,siteKey:'',unavailable:true};
+ const unavailable={listing:{id:l.id,slug:l.slug,title:l.title,address:l.display_address,suburb:l.suburb},
+  enabled:false,detailsOnly:false,temporaryUploads:false,siteKey:'',unavailable:true,collectionNotice:null};
  const headers={'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'};
- if(l.application_mode!=='proinspect'||l.rental_approval_state!=='approved'||!l.rental_recipient_verified_at)
+ if(l.application_mode!=='proinspect')
   return data(unavailable,{headers});
  try{
   const page=await rentalStartPage(env,slug);
@@ -39,8 +39,7 @@ export async function action({request,context,params}:ActionFunctionArgs){
  if(f.get('website'))return fail('Submission not accepted.');
  try{
   const published=await publicListing(env,'residential',params.slug??'');
-  if(!published||published.listing.application_mode!=='proinspect'||
-   published.listing.rental_approval_state!=='approved'||!published.listing.rental_recipient_verified_at)
+  if(!published||published.listing.application_mode!=='proinspect')
    return fail('Online applications are not currently available for this property.',409);
   const page=await rentalStartPage(env,params.slug??'');
   if(!page.enabled)return fail('Online applications are not currently available for this property.',409);
@@ -54,18 +53,18 @@ export async function action({request,context,params}:ActionFunctionArgs){
  }
 }
 export default function RentalStart(){
- const {listing,enabled,siteKey,unavailable}=useLoaderData<typeof loader>();
+ const {listing,enabled,siteKey,unavailable,detailsOnly,temporaryUploads,collectionNotice}=useLoaderData<typeof loader>();
  const result=useActionData<typeof action>() as {success?:boolean;error?:string}|undefined;
  return <div className="rental-shell"><div className="site-container">
   <nav className="rental-breadcrumb" aria-label="Breadcrumb"><Link to="/properties-for-lease/residential">Residential properties</Link><span aria-hidden="true"> / </span><Link to={'/properties-for-lease/residential/'+listing.slug}>Property details</Link></nav>
-  <div className="rental-intro"><p className="eyebrow">Private residential application</p><h1>{unavailable?'Applications are not yet open':'Apply for '+listing.title}</h1><p>{unavailable?'Online rental applications for '+listing.title+' are not currently available. You can still view the property and register your interest.':'Complete your application in your own time. Each adult applicant can complete their section privately, and supporting documents can be added securely.'}</p></div>
+  <div className="rental-intro"><p className="eyebrow">Private residential application</p><h1>{unavailable?'Applications are not yet open':'Apply for '+listing.title}</h1><p>{unavailable?'Online rental applications for '+listing.title+' are not currently available. You can still view the property and register your interest.':detailsOnly?'Complete your application details privately. No document uploads are required for this intake.':'Complete your application in your own time. Each adult applicant can complete their section privately, and supporting documents can be added securely.'}</p></div>
   <div className="rental-start-grid"><section className="rental-paper">
     {unavailable?<div role="status" className="notice warning rental-unavailable">
       <h2>Online applications not yet available</h2>
       <p>This property is not currently accepting ProInspect-hosted rental applications. You can register your interest on the public property listing while the landlord's application arrangements are finalised.</p>
       <Link className="button" to={'/properties-for-lease/residential/'+listing.slug+'#leasing-enquiry'}>Register your interest</Link>
      </div>:result?.success?<div role="status" className="rental-success"><h2>Check your email</h2><p>We have sent a private application link to the address you entered, if delivery is available. Open it to start or resume your application.</p><p>Do not forward the link: it allows access to your own answers and documents.</p></div>:<>
-      <h2>Start or resume an application</h2><p className="rental-muted">An email link allows you to save progress. No ProInspect portal account is required.</p>
+      <h2>Start or resume an application</h2>{collectionNotice&&<div className="rental-notice"><h3>Collection notice — {collectionNotice.version}</h3><p>{collectionNotice.purpose}</p><p>Recipient: {collectionNotice.recipient}. Privacy contact: {collectionNotice.privacyContact}.</p><p>Retention: draft {collectionNotice.retention.draft} days; submitted {collectionNotice.retention.submitted} days; withdrawn {collectionNotice.retention.withdrawn} days, subject to approved holds and policy obligations.</p><p>{collectionNotice.providers} <Link to={collectionNotice.policyUrl}>Read the identified privacy policy</Link>.</p></div>}<p className="rental-muted">An email link allows you to save progress. No ProInspect portal account is required.</p>
       <Form method="post" reloadDocument className="rental-form">
        <div className="rental-field"><label htmlFor="rental-name">Your full name <span aria-hidden="true">*</span></label><input id="rental-name" name="name" autoComplete="name" maxLength={120} minLength={2} required/></div>
        <div className="rental-field"><label htmlFor="rental-email">Your email address <span aria-hidden="true">*</span></label><input id="rental-email" name="email" type="email" autoComplete="email" maxLength={254} required/><small>We'll send a secure application link. Each co-applicant receives their own.</small></div>
@@ -77,8 +76,9 @@ export default function RentalStart(){
       </Form>
     </>}
   </section>
-  <aside className="rental-side"><div className="rental-property-panel"><p className="eyebrow">Property you're applying for</p><h3>{listing.title}</h3><p>{listing.address}, {listing.suburb} WA</p><p>Application administered by ProInspect on behalf of <strong>{listing.agentName}</strong>.</p></div>
-  <div className="rental-property-panel"><h3>How it works</h3><ol><li>Receive your private application link.</li><li>Complete your rental application details in short sections.</li><li>Invite other adult applicants if needed.</li><li>Upload supporting evidence securely.</li><li>Review and submit as a household.</li></ol><p className="rental-muted">This application is not a tenancy agreement or an offer. The landlord or authorised leasing representative makes leasing decisions.</p></div></aside>
+  <aside className="rental-side"><div className="rental-property-panel"><p className="eyebrow">Property you're applying for</p><h3>{listing.title}</h3><p>{listing.address}, {listing.suburb} WA</p><p>Secure applications for properties directly managed by ProInspect.</p></div>
+  {temporaryUploads&&<div className="rental-property-panel"><h3>Private supporting documents</h3><p>Temporary document uploads are available. Files are encrypted and quarantined for manual antivirus review before sharing with the verified landlord, with ProInspect copied. Private document access ends seven days after successful sending. Unsent uploads expire after 14 days.</p></div>}
+  <div className="rental-property-panel"><h3>How it works</h3><ol><li>Receive your private application link.</li><li>Complete your rental application details in short sections.</li><li>Invite other adult applicants if needed.</li><li>{detailsOnly?'Continue without document uploads.':'Upload supporting evidence securely.'}</li><li>Review and submit as a household.</li></ol><p className="rental-muted">This application is not a tenancy agreement or an offer. The landlord or authorised leasing representative makes leasing decisions.</p></div></aside>
   </div>
  </div></div>;
 }

@@ -9,9 +9,15 @@
   ],
   "observability": {
     "enabled": true,
+    "redact_query_string": true,
     "logs": {
       "enabled": true,
-      "invocation_logs": false
+      "invocation_logs": false,
+      "head_sampling_rate": 0.1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
     }
   },
   "vars": {
@@ -20,6 +26,9 @@
     "EMAIL_PROVIDER": "local",
     "MARKETING_ORIGIN": "http://localhost:5173",
     "GUEST_BOOKINGS_ENABLED": "true",
+    "COMMERCIAL_APPLICATIONS_ENABLED": "false",
+    "COMMERCIAL_APPLICATION_SCANNER_ENABLED": "false",
+    "COMMERCIAL_APPLICATION_HANDOFF_ENABLED": "false",
     "RENTAL_APPLICATIONS_ENABLED": "true",
     "RENTAL_TENANCY_HANDOVER_ENABLED": "false",
     "RENTAL_RETENTION_DRAFT_DAYS": "30",
@@ -92,6 +101,7 @@
   "env": {
     "connected": {
       "name": "proinspect-platform",
+      "services": [{"binding":"PRIVATE_DOCUMENT_SCANNER","service":"proinspect-private-document-scanner"}],
       "workers_dev": true,
       "preview_urls": false,
       "vars": {
@@ -105,9 +115,12 @@
         "GOOGLE_CALENDAR_BOOKINGS_ENABLED": "false",
         "PLATFORM_ORIGIN": "https://proinspect.systems",
         "GUEST_BOOKINGS_ENABLED": "false",
-        "RENTAL_APPLICATIONS_ENABLED": "false",
-    "RENTAL_TENANCY_HANDOVER_ENABLED": "false",
-        "RENTAL_RETENTION_AUTOPURGE_ENABLED": "false",
+        "COMMERCIAL_APPLICATIONS_ENABLED": "false",
+    "COMMERCIAL_APPLICATION_SCANNER_ENABLED": "false",
+    "COMMERCIAL_APPLICATION_HANDOFF_ENABLED": "false",
+    "RENTAL_APPLICATIONS_ENABLED": "true",
+        "RENTAL_TENANCY_HANDOVER_ENABLED": "false",
+        "RENTAL_RETENTION_AUTOPURGE_ENABLED": "true",
         "OPEN_HOME_SHEET_SYNC_ENABLED": "false",
         "OPEN_HOME_REPORTS_ENABLED": "false",
         "OPEN_HOME_REPORT_EMAIL_PROVIDER": "resend",
@@ -199,10 +212,24 @@
           "*/2 * * * *",
           "0 1 * * *"
         ]
+      },
+      "observability": {
+        "enabled": true,
+        "redact_query_string": true,
+        "logs": {
+          "enabled": true,
+          "invocation_logs": false,
+          "head_sampling_rate": 0.1
+        },
+        "traces": {
+          "enabled": true,
+          "head_sampling_rate": 0.01
+        }
       }
     },
     "staging": {
       "name": "proinspect-v3-staging",
+      "services": [{"binding":"PRIVATE_DOCUMENT_SCANNER","service":"proinspect-private-document-scanner-staging"}],
       "workers_dev": true,
       "preview_urls": false,
       "vars": {
@@ -222,8 +249,11 @@
         "RESTRICTED_WORKFLOWS_ENABLED": "false",
         "GOOGLE_CALENDAR_BOOKINGS_ENABLED": "false",
         "GUEST_BOOKINGS_ENABLED": "false",
-        "RENTAL_APPLICATIONS_ENABLED": "false",
-    "RENTAL_TENANCY_HANDOVER_ENABLED": "false",
+        "COMMERCIAL_APPLICATIONS_ENABLED": "false",
+    "COMMERCIAL_APPLICATION_SCANNER_ENABLED": "false",
+    "COMMERCIAL_APPLICATION_HANDOFF_ENABLED": "false",
+    "RENTAL_APPLICATIONS_ENABLED": "false",
+        "RENTAL_TENANCY_HANDOVER_ENABLED": "false",
         "RENTAL_RETENTION_AUTOPURGE_ENABLED": "false",
         "OPEN_HOME_SHEET_SYNC_ENABLED": "false",
         "OPEN_HOME_REPORTS_ENABLED": "false",
@@ -258,6 +288,7 @@
         {
           "binding": "DB",
           "database_name": "proinspect-v3-staging-data",
+          "database_id": "e66b8ebc-637d-4737-8d47-b0fbec3c082c",
           "migrations_dir": "../../database/migrations"
         }
       ],

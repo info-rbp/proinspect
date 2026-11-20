@@ -75,6 +75,13 @@ export default function Property() {
           )}
       </PageHeading>
       <div className="stack">
+        {p.sector==='residential' && ['landlord','property-manager','staff'].includes(d.workspace.kind) &&
+          (d.workspace.kind!=='staff' || ['administrator','operations_manager'].includes(d.user.staffRole??'')) &&
+          <section className="panel stack">
+            <h2>Co-living rooms & shared areas</h2>
+            <p>For separately let rooms or beds, configure one residential property with private occupancies and common spaces. Every resident is invited to their own tenancy.</p>
+            <Link className="button secondary" to={d.workspace.href+'/properties/'+encodeURIComponent(p.id)+'/co-living'}>Manage co-living</Link>
+          </section>}
         {staff&&<section className="panel stack" id="staff-property-operations" aria-label="Staff property operations">
           <div className="panel-header"><h2>Manage property</h2></div>
           <p className="small">Canonical property records, leasing, tenancy, bookings and approvals remain separate authorised workflows.</p>

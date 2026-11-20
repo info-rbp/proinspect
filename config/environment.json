@@ -126,6 +126,27 @@
       ],
       "group": "residential-live",
       "format": "signing-key"
+    },
+    "COMMERCIAL_SCANNER_TOKEN": {
+      "targets": [
+        "platform"
+      ],
+      "group": "commercial-application-security",
+      "format": "signing-key"
+    },
+    "COMMERCIAL_SCANNER_WEBHOOK_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "commercial-application-security",
+      "format": "signing-key"
+    },
+    "COMMERCIAL_HANDOFF_SECRET": {
+      "targets": [
+        "platform"
+      ],
+      "group": "commercial-application-security",
+      "format": "signing-key"
     }
   },
   "variables": {
@@ -404,6 +425,11 @@
       "group": "release",
       "default": "false"
     },
+    "STRATA_AMENITIES_ENABLED": {
+      "targets": ["platform"],
+      "group": "release",
+      "default": "false"
+    },
     "BUILDING_OPERATIONS_ENABLED": {
       "targets": [
         "platform"
@@ -553,6 +579,76 @@
       ],
       "group": "release",
       "default": "false"
+    },
+    "COMMERCIAL_APPLICATIONS_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "COMMERCIAL_APPLICATION_SCANNER_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "COMMERCIAL_APPLICATION_HANDOFF_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "release",
+      "default": "false"
+    },
+    "COMMERCIAL_SCANNER_ENDPOINT": {
+      "targets": [
+        "platform"
+      ],
+      "group": "commercial-application-security",
+      "default": ""
+    },
+    "COMMERCIAL_SCANNER_ALLOWED_HOST": {
+      "targets": [
+        "platform"
+      ],
+      "group": "commercial-application-security",
+      "default": ""
+    },
+    "COMMERCIAL_HANDOFF_ENDPOINT": {
+      "targets": [
+        "platform"
+      ],
+      "group": "commercial-application-security",
+      "default": ""
+    },
+    "COMMERCIAL_HANDOFF_ALLOWED_HOST": {
+      "targets": [
+        "platform"
+      ],
+      "group": "commercial-application-security",
+      "default": ""
+    },
+    "COMMERCIAL_RETENTION_DRAFT_DAYS": {
+      "targets": [
+        "platform"
+      ],
+      "group": "commercial-application-privacy",
+      "default": ""
+    },
+    "COMMERCIAL_RETENTION_SUBMITTED_DAYS": {
+      "targets": [
+        "platform"
+      ],
+      "group": "commercial-application-privacy",
+      "default": ""
+    },
+    "COMMERCIAL_RETENTION_WITHDRAWN_DAYS": {
+      "targets": [
+        "platform"
+      ],
+      "group": "commercial-application-privacy",
+      "default": ""
     }
   },
   "generated": [
@@ -573,7 +669,8 @@
     "EMAIL",
     "EVENTS",
     "RESTRICTED_DOCUMENTS",
-    "SCHEDULER"
+    "SCHEDULER",
+    "PRIVATE_DOCUMENT_SCANNER"
   ],
   "externalOnly": {
     "PROINSPECT_WEBHOOK_SECRET": "Apps Script property; same value as SHEETS_WEBHOOK_SECRET for that environment",

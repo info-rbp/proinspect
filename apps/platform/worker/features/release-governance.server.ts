@@ -1,5 +1,8 @@
 import { z } from 'zod';
+import { managedIntakeRelease } from './managed-rental-intake.server';
 import {providerReadiness} from '../../../../packages/operations/provider-readiness';
+import {operationalHealth} from './operational-health.server';
+import {stage6LaunchData} from './stage6-launch.server';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal } from '../../../../packages/domain/index';
 import { administrator } from '../../../../packages/authorization/server';
@@ -8,6 +11,7 @@ import { recordId, isoDate, reference, activity, guard, clearGuard } from '../..
 export const RELEASE_FEATURES = {
   v4: 'V4_SERVICE_REQUESTS_ENABLED', contractor: 'CONTRACTOR_PAYMENTS_ENABLED', contractor_collection: 'STRIPE_CONNECT_COLLECTION_ENABLED', contractor_transfer: 'STRIPE_CONNECT_TRANSFERS_ENABLED',
   guest: 'GUEST_BOOKINGS_ENABLED', pcr_launch: 'PCR_LAUNCH_ENABLED', pcr_discount: 'PCR_DISCOUNT_REDEMPTION_ENABLED', pcr_sample: 'PCR_SAMPLE_PUBLICATION_ENABLED', calendar: 'GOOGLE_CALENDAR_BOOKINGS_ENABLED',
+  commercial_applications: 'COMMERCIAL_APPLICATIONS_ENABLED', commercial_application_scanner: 'COMMERCIAL_APPLICATION_SCANNER_ENABLED', commercial_application_handoff: 'COMMERCIAL_APPLICATION_HANDOFF_ENABLED',
   rental: 'RENTAL_APPLICATIONS_ENABLED', rental_handover: 'RENTAL_TENANCY_HANDOVER_ENABLED', rental_scanner: 'RENTAL_SCANNER_ENABLED',
   rental_script: 'RENTAL_APPS_SCRIPT_ENABLED', open_home: 'OPEN_HOME_REPORTS_ENABLED',
   bonds: 'WA_BONDS_ENABLED', restricted: 'RESTRICTED_WORKFLOWS_ENABLED',
@@ -24,6 +28,8 @@ function configured(env: Env, feature: ReleaseFeature) {
   return (env as unknown as Record<string, unknown>)[RELEASE_FEATURES[feature]] === 'true';
 }
 async function activeApproval(env: Env, feature: ReleaseFeature) {
+  // The owner's release is limited to tagged residential intake and its private scanner.
+  if(feature==='rental'||feature==='rental_scanner'){const release=await managedIntakeRelease(env);if(release&&(feature==='rental'||release.intake_mode==='scanned_documents'&&env.PRIVATE_DOCUMENT_SCANNER))return {id:release.id};}
   if (!env.BUILD_SHA || !/^[a-f0-9]{40}$/.test(env.BUILD_SHA)) return null;
   return statement(env.DB, `SELECT a.id FROM feature_release_approvals a
     JOIN users u ON u.id=a.reviewed_by AND u.active=1 AND u.verified_at IS NOT NULL
@@ -33,6 +39,7 @@ async function activeApproval(env: Env, feature: ReleaseFeature) {
     feature, env.APP_ENV, env.BUILD_SHA, now()).first<{ id: string }>();
 }
 export async function releaseFeatureReady(env:Env,feature:ReleaseFeature){
+ if(feature==='rental_scanner'&&(await managedIntakeRelease(env))?.intake_mode==='scanned_documents'&&env.PRIVATE_DOCUMENT_SCANNER)return true;
  if(!configured(env,feature))return false;
  return env.APP_ENV==='local'||Boolean(await activeApproval(env,feature));
 }
@@ -48,8 +55,11 @@ export async function releaseReadiness(env: Env, user: Principal) {
   const features = await Promise.all((Object.keys(RELEASE_FEATURES) as ReleaseFeature[]).map(async name =>
     ({ name, configured: configured(env, name), approval: env.APP_ENV === 'local' ? null : await activeApproval(env, name) })));
   const records = (await statement(env.DB, 'SELECT * FROM feature_release_approvals ORDER BY requested_at DESC LIMIT 200').all()).results;
-  return { environment: env.APP_ENV, source: env.BUILD_SHA ?? null, features, records, providers: providerReadiness(env as unknown as Record<string,unknown>),
-    notice: 'This record does not switch flags, validate legal advice or replace the separately protected hosted-acceptance evidence bundle.' };
+  const providers=providerReadiness(env as unknown as Record<string,unknown>);
+  const operations=await operationalHealth(env);
+  return {environment:env.APP_ENV,source:env.BUILD_SHA??null,features,records,providers,operations,
+    launch:await stage6LaunchData(env,features,providers,operations),
+    notice:'This record does not switch flags, validate legal advice or replace the separately protected hosted-acceptance evidence bundle.'};
 }
 export async function releaseCommand(env: Env, user: Principal, command: string, input: unknown) {
   administrator(user);

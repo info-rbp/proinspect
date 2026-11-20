@@ -60,6 +60,10 @@ The default app origin is the confirmed `https://proinspect-platform.delicate-dr
 
 Real authentication requires at least the `DATA_ENCRYPTION_KEY`, `RESEND_API_KEY`, `TURNSTILE_SECRET_KEY`, and an approved sender; privileged user administration remains controlled. Optional Stripe, Report Tool and Sheets integrations require their own real-provider acceptance. No secrets or credentials are written to GitHub source.
 
+## Stage 6 controlled release (9 November 2026)
+
+The deployed Worker may be production-available without a general market-launch **GO**. Staff administrators now have a read-only Stage 6 eight-gate `NO_GO` preflight in **Release acceptance**. The separate GitHub `Stage 6 market launch independent acceptance` workflow requires independently protected review, the exact canonical deployed Worker SHA, all nine hosted portal identities, real source-bound commercial/legal/provider and recovery proofs, and no unresolved critical/high defects. That review **never** toggles Cloudflare feature flags. See `docs/STAGE6_MARKET_LAUNCH_AND_ACCEPTANCE_2026-11-09.md`.
+
 ## Verify deployment
 
 Inspect the Cloudflare deployment log: Worker `proinspect-platform`, `APP_ENV=production`, real D1/R2/Queue bindings and no references to `local`. After schema initialization, confirm `/api/health` shows all bindings and `/api/catalogue` returns the configured services. Then verify sign-in and an actual authorised booking/document workflow on the selected public URL. A successful build does not by itself establish correct runtime configuration, database schema or user acceptance.

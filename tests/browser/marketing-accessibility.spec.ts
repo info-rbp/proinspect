@@ -4,6 +4,9 @@ import { mkdirSync } from 'node:fs';
 const reviewRoutes = [
   ['home', '/'],
   ['services', '/services'],
+  ['finder', '/service-finder'],
+  ['private-landlords', '/who-we-help/private-landlords'],
+  ['residential-plan', '/residential-property-support'],
   ['inspection', '/services/routine-inspection'],
   ['residential', '/sectors/residential'],
   ['resources', '/resources'],
@@ -24,16 +27,16 @@ test('public marketing keyboard access preserves skip-link, responsive navigatio
   await page.keyboard.press('Enter');
   await expect(menu).toHaveAttribute('open', '');
   const links = page.getByRole('navigation', { name: 'Mobile site navigation' });
-  await expect(links.getByRole('link', { name: 'Services', exact: true })).toBeVisible();
-  await links.getByRole('link', { name: 'Resources' }).click();
-  await expect(page).toHaveURL(/\/resources$/);
+  await expect(links.getByRole('link', { name: 'Residential', exact: true })).toBeVisible();
+  await links.getByRole('link', { name: 'Residential' }).click();
+  await expect(page).toHaveURL(/\/residential$/);
   await expect(menu).not.toHaveAttribute('open', '');
 });
 
 test('public marketing reflows at narrow and wide desktop viewports', async ({ page }) => {
   for (const width of [320, 390, 768, 1100, 1440]) {
     await page.setViewportSize({ width, height: 900 });
-    for (const path of ['/', '/services', '/services/routine-inspection', '/contact']) {
+    for (const path of ['/', '/services', '/service-finder', '/who-we-help', '/services/routine-inspection', '/contact']) {
       await page.goto(path);
       const metrics = await page.evaluate(() => ({
         scroll: document.documentElement.scrollWidth,
@@ -67,9 +70,10 @@ test('draft legal content is visible but not presented as approved or indexable'
   }
 });
 
-test('public imagery remains labelled as illustration until genuinely approved local assets exist', async ({ page }) => {
+test('brand imagery is local, caption-free and separate from genuine customer records', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('.mkt-art-illustration-note').first()).toBeVisible();
+  await expect(page.locator('.mkt-art-illustration-note')).toHaveCount(0);
+  await expect(page.locator('.pi-editorial-hero-image img')).toBeVisible();
   expect(await page.locator('img[src*="/api/"],img[src*="/w/"],img[src*="r2"]').count()).toBe(0);
   await page.goto('/services/routine-inspection');
   await expect(page.getByText('ILLUSTRATIVE EXAMPLE', { exact: true })).toBeVisible();

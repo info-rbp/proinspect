@@ -1,9 +1,10 @@
 import { type Env,assert,AppError } from '../../../../packages/database/types';
 import type {Principal,Workspace} from '../../../../packages/domain/index';
-import {listReports,reportDetail,createReport,saveReport,assignReviewer,submitReport,reviewReport} from './reports.server';
+import {listReports,reportDetail,preflightReport,createReport,saveReport,assignReviewer,submitReport,reviewReport} from './reports.server';
 import {uploadReportEvidence,reviewReportEvidence,downloadReportEvidence} from './report-evidence.server';
 import {renderApprovedReport,downloadRenderedReportForReview,reviewRenderedReport,reopenRejectedRender,issueApprovedReport,respondToIssuedReport,extractMaintenanceCandidates,resolveReportResponse,createMaintenanceRequest} from './report-issue.server';
 import {readJson} from '../../../../packages/operations/core';
+import {reportAnnotations,reportAnnotationCommand} from './report-annotations.server';
 import {reportHistory} from './report-history.server';
 async function payload(request:Request,large=false){
  if(!large)return readJson(request);
@@ -18,6 +19,8 @@ export async function reportRoutes(request:Request,env:Env,user:Principal,w:Work
  if(method==='GET'){
   if(!id)return ok(await listReports(env,user,w));
   if(id && !action)return ok(await reportDetail(env,user,w,id));
+  if(id && action==='preflight' && !child) return ok(await preflightReport(env,user,w,id,new URL(request.url).searchParams.get('revision')));
+  if(id && action==='annotations' && !child) return ok(await reportAnnotations(env,user,w,id));
   if(id && action==='rendered-pdf')return downloadRenderedReportForReview(env,user,w,id);
   if(id && action==='history')return ok(await reportHistory(env,user,w,id,new URL(request.url).searchParams.get('baselineReportId')??undefined));
   if(id&&action==='evidence'&&child&&subaction==='download')return downloadReportEvidence(env,user,w,id,child);
@@ -25,6 +28,7 @@ export async function reportRoutes(request:Request,env:Env,user:Principal,w:Work
  if(method!=='POST')return null;
  if(id==='create'&&!action)return ok(await createReport(env,user,w,await payload(request)));
  if(!id)return null;
+ if(action==='annotations'&&!child)return ok(await reportAnnotationCommand(env,user,w,id,await payload(request)));
  if(action==='save'||action==='sync')return ok(await saveReport(env,user,w,id,await payload(request,true)));
  if(action==='reviewer')return ok(await assignReviewer(env,user,w,id,await payload(request)));
  if(action==='submit')return ok(await submitReport(env,user,w,id,await payload(request)));

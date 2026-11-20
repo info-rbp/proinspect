@@ -61,8 +61,26 @@ try{
   assert.equal((await api('/api/w/landlord/'+clientId+'/reports/'+reportId+'/save',owner,{revision:1,content:{}})).status,404);
  });
  let draft=(await ok(base,inspector)).draft.content;
+ await check('preflight is read-only, revision-bound and inaccessible across workspaces',async()=>{
+  const before=await first('SELECT revision,status FROM inspection_reports WHERE id=?',reportId);
+  const result=await ok(base+'/preflight?revision=1',inspector);
+  assert.equal(result.reportId,reportId);
+  assert.equal(result.revision,1);
+  assert.equal(result.basis,'saved_draft');
+  assert.equal(result.status,'blocked');
+  assert.ok(result.issues.some(issue=>issue.code==='ATTENDANCE_SUMMARY_REQUIRED'));
+  assert.deepEqual(await first('SELECT revision,status FROM inspection_reports WHERE id=?',reportId),before);
+  assert.equal((await api(base+'/preflight?revision=2',inspector)).status,409);
+  assert.equal((await api(base+'/preflight?revision=garbage',inspector)).status,409);
+  assert.equal((await api(base+'/preflight',reviewer)).status,404);
+  assert.equal((await api('/api/w/landlord/'+clientId+'/reports/'+reportId+'/preflight',owner)).status,404);
+  assert.equal((await api(base+'/preflight',null)).status,401);
+ });
  await check('QC blocks missing attendance summary and draft can be saved with optimistic revision',async()=>{
   const u=await ok(base+'/reviewer',ops,{reviewerId:reviewer.id});assert.equal(u.reviewerId,reviewer.id);
+  const checked=await ok(base+'/preflight?revision=2',inspector);
+  assert.equal(checked.revision,2);
+  assert.ok(checked.issues.some(issue=>issue.code==='ATTENDANCE_SUMMARY_REQUIRED'), 'reviewer assignment must not invalidate saved-draft preflight');
   assert.equal((await api(base+'/submit',inspector,{revision:2})).status,409);
   draft.summary='Attended the caf\u00e9 and recorded Jos\u00e9\u2019s visible findings.';
   draft.areas[0].components[0].conditionCategory='intact';
@@ -204,6 +222,30 @@ try{
   const completed=await ok(staffBase+'/work-orders/work_report',ops,{status:'completed',version:o.version});
   assert.equal(completed.status,'completed');
   assert.equal((await first('SELECT status FROM bookings WHERE id=?','booking_report')).status,'completed');
+ });
+ await check('a report overlay editor cannot approve their own changes to another author’s draft',async()=>{
+  const stamp=new Date().toISOString();
+  await run("INSERT INTO work_orders(id,reference,client_id,property_id,title,status,assigned_staff_id,created_at,updated_at) VALUES('work_annotation','WO-ANNOTATION',?,'report_property','Annotation isolation fixture','assigned',?,?,?)",clientId,inspector.id,stamp,stamp);
+  const report=await ok(staffBase+'/reports/create',inspector,{workOrderId:'work_annotation',reportType:'maintenance'});
+  const endpoint=staffBase+'/reports/'+report.id;
+  await ok(endpoint+'/reviewer',ops,{reviewerId:reviewer.id});
+  const form=new FormData();form.set('areaId','area_general');form.set('componentId','component_general');
+  form.set('file',new File([readFileSync('tests/fixtures/report-photo.jpg')],'synthetic.jpg',{type:'image/jpeg'}));
+  const evidence=await ok(endpoint+'/evidence',inspector,form);
+  await ok(endpoint+'/evidence/'+evidence.id+'/review',ops,{decision:'accepted'});
+  const original=await first('SELECT sha256,object_key FROM report_evidence WHERE id=?',evidence.id);
+  const annotation={action:'save',evidenceId:evidence.id,sourceSha256:original.sha256,
+    annotations:[{x:0.2,y:0.3,label:'Synthetic observation'}],sourceReference:'SYNTHETIC-OVERLAY-REFERENCE'};
+  await ok(endpoint+'/annotations',inspector,annotation);
+  await ok(endpoint+'/annotations',ops,{...annotation,annotations:[{x:0.3,y:0.4,label:'Edited synthetic observation'}]});
+  const decision={action:'review',evidenceId:evidence.id,decision:'accepted',sourceReference:'SYNTHETIC-OVERLAY-REVIEW'};
+  assert.equal((await api(endpoint+'/annotations',ops,decision)).status,403);
+  assert.equal((await first('SELECT review_status FROM report_photo_annotations WHERE evidence_id=?',evidence.id)).review_status,'draft');
+  await ok(endpoint+'/annotations',reviewer,decision);
+  assert.equal((await first('SELECT review_status FROM report_photo_annotations WHERE evidence_id=?',evidence.id)).review_status,'accepted');
+  assert.deepEqual(await first('SELECT sha256,object_key FROM report_evidence WHERE id=?',evidence.id),original);
+  assert.equal((await api(endpoint+'/annotations',inspector,annotation)).status,409);
+  assert.equal((await api('/api/w/landlord/'+clientId+'/reports/'+report.id+'/annotations',owner)).status,404);
  });
  writeFileSync('artifacts/reporting-results.json',JSON.stringify({checks:checks.length,passed:checks,deployed:false},null,2));
  console.log(checks.length+' native reporting Worker acceptance checks passed.');

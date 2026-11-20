@@ -1,33 +1,212 @@
-import { Link, useLoaderData, useSearchParams, type LoaderFunctionArgs } from 'react-router';
+import {
+  Link,
+  useLoaderData,
+  useSearchParams,
+  useLocation,
+  type LoaderFunctionArgs,
+} from 'react-router';
 import { runtimeContext } from '../../../../packages/database/context';
 import type { Env } from '../../../../packages/database/types';
 import { publicListings } from '../../../platform/worker/features/leasing.server';
-import { displayPrice,propertyUrl,handoffDisclaimer } from '../../../../packages/marketing/leasing';
+import {
+  displayPrice,
+  propertyUrl,
+  handoffDisclaimer,
+} from '../../../../packages/marketing/leasing';
 import { seo } from '../lib/seo';
+import { EditorialHero } from '../components/editorial';
 import '../../../../packages/ui/leasing.css';
-export const meta=()=>seo('Properties for Lease','Explore residential and commercial properties with open inspections conducted by ProInspect on behalf of the responsible leasing representative.','/properties-for-lease');
-export async function loader({context}:LoaderFunctionArgs){
- const env=context.get(runtimeContext).env as Env;
- return {listings:await publicListings(env)};
+export const meta = () =>
+  seo(
+    'Properties for Lease & Open Homes — Western Australia',
+    'Browse available residential and commercial properties, register for an open home and follow the property’s rental application instructions.',
+    '/leasing',
+    { noindex: true },
+  );
+export async function loader({ context }: LoaderFunctionArgs) {
+  const env = context.get(runtimeContext).env as Env;
+  return { listings: await publicListings(env) };
 }
-export default function LeasingIndex(){
- const {listings}=useLoaderData<typeof loader>();
- const [params,setParams]=useSearchParams();
- const kind=params.get('type')??'',q=(params.get('q')??'').trim().toLowerCase();
- const items=listings.filter((x:any)=>(!kind||x.kind===kind)&&(!q||String(x.suburb+' '+x.display_address+' '+x.title).toLowerCase().includes(q)));
- return <>
- <header className="service-hero"><div className="site-container"><p className="eyebrow">Open for inspections</p><h1>Properties for lease.</h1><p>Explore residential and commercial properties where ProInspect conducts inspections on behalf of the responsible leasing representative.</p><p className="leasing-role-note">{handoffDisclaimer}</p>
- <nav className="pill-links" aria-label="Lease categories"><Link to="/properties-for-lease">All properties</Link><Link to="/properties-for-lease/residential">Residential leasing</Link><Link to="/properties-for-lease/commercial">Commercial leasing</Link></nav></div></header>
- <section className="section"><div className="site-container">
- <form className="leasing-filters" method="get"><label>Find a suburb or address<input aria-label="Search property location" name="q" placeholder="Suburb, property or postcode" defaultValue={params.get('q')??''}/></label><label>Property type<select name="type" defaultValue={kind}><option value="">All types</option><option value="residential">Residential</option><option value="commercial">Commercial</option></select></label><button className="button">Search properties</button></form>
- <div className="section-heading"><div><p className="eyebrow">Current opportunities</p><h2>{items.length} {items.length===1?'property':'properties'} available</h2></div></div>
- {items.length===0?<div className="panel"><h2>No properties currently match.</h2><p>We only display approved, published leasing opportunities. Check back as new inspection sessions become available.</p><Link to="/properties-for-lease">Clear filters →</Link></div>:
- <div className="grid-3">{items.map((x:any)=><article className="service-card leasing-card" key={x.id}>
- <div className="leasing-image"><img src={`/api/public/leasing/photos/${x.id}/cover`} alt={`Exterior or marketing photograph for ${x.title}`} loading="lazy"/></div>
- <p className="eyebrow">{x.kind==='commercial'?'Commercial':'Residential'} · {x.suburb}</p><h3>{x.title}</h3><p>{x.display_address}</p>
- <p className="leasing-price">{displayPrice(x.price_cents,x.price_period)}</p>
- <p className="small leasing-card-facts">{x.kind==='residential'?[x.bedrooms!=null?`${x.bedrooms} ${x.bedrooms===1?'bed':'beds'}`:'',x.bathrooms!=null?`${x.bathrooms} ${x.bathrooms===1?'bath':'baths'}`:'',x.parking!=null?`${x.parking} ${x.parking===1?'car bay':'car bays'}`:''].filter(Boolean).join(' · '):x.area_sqm!=null?`${x.area_sqm.toLocaleString()} m²`:'Commercial property'}</p>
- <p className="small">Inspection conducted by ProInspect on behalf of {x.agent_name}.</p>
- <Link className="button secondary leasing-card-action" to={propertyUrl(x.kind,x.slug)}>View property and inspections</Link></article>)}</div>}
- </div></section></>;
+export default function LeasingIndex() {
+  const { listings } = useLoaderData<typeof loader>();
+  const [params] = useSearchParams();
+  const { pathname } = useLocation();
+  const kind = params.get('type') ?? '',
+    q = (params.get('q') ?? '').trim().toLowerCase();
+  const items = listings.filter(
+    (x: any) =>
+      (!kind || x.kind === kind) &&
+      (!q ||
+        String(x.suburb + ' ' + x.postcode + ' ' + x.display_address + ' ' + x.title)
+          .toLowerCase()
+          .includes(q)),
+  );
+  return (
+    <>
+      <EditorialHero
+        eyebrow="Leasing"
+        title="Find a place for your next chapter."
+        intro="Explore current properties, register for an advertised open home and find the right application pathway. Your next step starts with a closer look."
+        image="leasing"
+        primary={{ label: 'View available properties', to: '#available-properties' }}
+        secondary={{ label: 'Tenant information', to: '/tenants' }}
+      />
+      <section
+        className="mkt-section pi-editorial-section pi-leasing-results"
+        id="available-properties"
+      >
+        <div className="site-container">
+          <div className="pi-section-heading">
+            <p className="eyebrow">Current opportunities</p>
+            <h2>Properties for lease.</h2>
+            <p>
+              Browse published residential and commercial opportunities. Choose a property to see
+              its photos, inspection sessions and application information.
+            </p>
+          </div>
+          <form className="leasing-filters" method="get">
+            <label>
+              Find a suburb or address
+              <input
+                aria-label="Search property location"
+                name="q"
+                placeholder="Suburb, property or postcode"
+                defaultValue={params.get('q') ?? ''}
+              />
+            </label>
+            <label>
+              Property type
+              <select name="type" defaultValue={kind}>
+                <option value="">All types</option>
+                <option value="residential">Residential</option>
+                <option value="commercial">Commercial</option>
+              </select>
+            </label>
+            <button className="button">Search properties</button>
+          </form>
+          <p className="pi-results-count" role="status">
+            {items.length} {items.length === 1 ? 'property' : 'properties'} available
+            {q || kind ? ' matching your search' : ''}
+          </p>
+          {items.length === 0 ? (
+            <div className="panel pi-leasing-empty">
+              <h3>No properties currently match.</h3>
+              <p>
+                Try another suburb or property type. Only approved, published listings appear here.
+              </p>
+              <Link className="pi-inline-link" to={pathname}>
+                View all properties <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="pi-listing-grid">
+              {items.map((property: any) => (
+                <article className="leasing-card pi-listing-card" key={property.id}>
+                  <Link
+                    className="leasing-image"
+                    to={propertyUrl(property.kind, property.slug)}
+                    aria-label={'View ' + property.title}
+                  >
+                    <img
+                      src={`/api/public/leasing/photos/${property.id}/cover`}
+                      alt={property.title}
+                      loading="lazy"
+                      width={900}
+                      height={600}
+                    />
+                  </Link>
+                  <div className="pi-listing-body">
+                    <p className="eyebrow">
+                      {property.kind === 'commercial' ? 'Commercial' : 'Residential'} ·{' '}
+                      {property.suburb}
+                    </p>
+                    <h3>
+                      <Link to={propertyUrl(property.kind, property.slug)}>{property.title}</Link>
+                    </h3>
+                    <p className="leasing-price">
+                      {displayPrice(property.price_cents, property.price_period)}
+                    </p>
+                    <p className="leasing-card-facts">
+                      {property.kind === 'residential'
+                        ? [
+                            property.bedrooms != null
+                              ? `${property.bedrooms} ${property.bedrooms === 1 ? 'bed' : 'beds'}`
+                              : '',
+                            property.bathrooms != null
+                              ? `${property.bathrooms} ${property.bathrooms === 1 ? 'bath' : 'baths'}`
+                              : '',
+                            property.parking != null
+                              ? `${property.parking} ${property.parking === 1 ? 'car bay' : 'car bays'}`
+                              : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')
+                        : property.area_sqm != null
+                          ? `${property.area_sqm.toLocaleString()} m²`
+                          : 'Commercial property'}
+                    </p>
+                    <p className="small">Inspections facilitated by ProInspect</p>
+                    <Link className="pi-inline-link" to={propertyUrl(property.kind, property.slug)}>
+                      View property, inspections &amp; applications{' '}
+                      <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+      <section className="mkt-section pi-editorial-section pi-neutral">
+        <div className="site-container">
+          <div className="pi-section-heading">
+            <p className="eyebrow">Your next steps</p>
+            <h2>Browse. Visit. Apply.</h2>
+            <p>
+              Find the property that suits you and follow its advertised inspection and application
+              options.
+            </p>
+          </div>
+          <ol className="pi-process-list">
+            <li>
+              <span className="pi-step-number">01</span>
+              <h3>Explore current properties</h3>
+              <p>
+                Review residential or commercial property details, available photos and advertised
+                inspection sessions.
+              </p>
+            </li>
+            <li>
+              <span className="pi-step-number">02</span>
+              <h3>Register for a viewing</h3>
+              <p>
+                Register for an advertised open home on the property page. If no session is listed,
+                register your interest and check back for inspection information.
+              </p>
+            </li>
+            <li>
+              <span className="pi-step-number">03</span>
+              <h3>Follow the application pathway</h3>
+              <p>
+                When applications are open, use the property’s secure application option or approved
+                provider link. The responsible landlord or agent sets the requirements and makes the
+                decision.
+              </p>
+            </li>
+          </ol>
+          <div className="pi-leasing-note">
+            <p>{handoffDisclaimer}</p>
+            <p>
+              Inspection registrations and rental applications are separate steps. The authorised
+              landlord or agency remains responsible for rental terms, application requirements and
+              decisions.
+            </p>
+            <Link className="pi-inline-link" to="/open-home/check-in">
+              Attending today? Open home check-in <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+    </>
+  );
 }

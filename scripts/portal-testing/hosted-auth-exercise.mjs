@@ -12,9 +12,10 @@ const denial = {
   commercial:'/api/w/landlord/cli_pi_test_landlord',
   strata_manager:'/api/w/landlord/cli_pi_test_landlord',
   tenant:'/api/w/landlord/cli_pi_test_landlord',
-  building:'/api/w/strata-council/scheme_pi_test',
+  building:'/api/w/council/scheme_pi_test',
+  building_manager:'/api/w/tenant/tnc_pi_test_landlord',
   council:'/api/w/building/scheme_pi_test',
-  staff:'/api/w/strata-council/scheme_pi_test',
+  staff:'/api/w/council/scheme_pi_test',
 };
 export const UNRELATED_API = Object.freeze(denial);
 export function identityObservation({ role, sourceSha, session, negativeStatus, beforeStatus, afterStatus,

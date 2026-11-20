@@ -1,38 +1,30 @@
 import { expect, test } from '@playwright/test';
-
-test('premium public homepage shows key sections and destinations without impacting authentication', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Real property work.');
-  await expect(page.getByRole('heading', { name: 'What can we help you with?' })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Explore inspections/i })).toHaveCount(0);
-  await expect(page.locator('.mkt-family-card')).toHaveCount(6);
-  await expect(page.locator('.mkt-sector-card')).toHaveCount(3);
-  await expect(page.locator('.mkt-featured-card')).toHaveCount(6);
-  await expect(page.locator('.mkt-engagement-card')).toHaveCount(4);
-  await expect(page.getByText(/Illustrative report design/)).toBeVisible();
-  await page.locator('.mkt-featured-card').filter({ hasText: 'Routine Inspection' }).getByRole('link').click();
-  await expect(page).toHaveURL(/\/services\/routine-inspection$/);
-  await expect(page.getByRole('heading', { name: 'What is a Routine Inspection?' })).toBeVisible();
-  await expect(page.getByText('ILLUSTRATIVE EXAMPLE', { exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Arrange this service' }).first()).toHaveAttribute('href', '/book/routine-inspection');
+test('homepage presents a high-level overview and Client Portal entry',async({page})=>{
+ await page.goto('/');
+ await expect(page.getByRole('heading',{level:1})).toContainText('Your property. Our practical support.');
+ await expect(page.locator('.pi-property-card')).toHaveCount(8);
+ await expect(page.locator('.pi-property-card img')).toHaveCount(8);
+ await expect(page.locator('.pi-editorial-copy').getByRole('link',{name:'Discuss ongoing support'})).toHaveAttribute('href','/contact');
+ const firstService=page.locator('.pi-property-card').first().getByRole('link',{name:'Explore residential',exact:true});
+ await expect(firstService).toHaveAttribute('href','/residential');
 });
-
-test('marketing homepage and service page remain usable at mobile widths', async ({ browser }) => {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, baseURL: 'http://127.0.0.1:5173' });
-  try {
-    const page = await context.newPage();
-    for (const route of ['/', '/services/routine-inspection']) {
-      await page.goto(route);
-      await expect(page.locator('body')).toHaveClass(/site/);
-      await expect(page.locator('.marketing-menu summary')).toBeVisible();
-      await expect(page.getByRole('link', { name: 'Book a service' }).first()).toBeVisible();
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
-    }
-    await page.locator('.marketing-menu summary').click();
-    await expect(page.getByRole('navigation', { name: 'Mobile site navigation' })).toBeVisible();
-    await page.getByRole('navigation', { name: 'Mobile site navigation' }).getByRole('link', { name: 'Services', exact: true }).click();
-    await expect(page).toHaveURL(/\/services$/);
-  } finally {
-    await context.close();
-  }
+test('public navigation exposes all thirteen destinations at desktop width',async({page})=>{
+ await page.setViewportSize({width:1600,height:900});
+ await page.goto('/');
+ const nav=page.getByRole('navigation',{name:'Primary navigation'});
+ for(const label of ['Residential','Commercial','Strata','Co-Living','Student Living','Construction','Leasing','Tenants','Maintenance','About Us','Who We Help'])
+  await expect(nav.getByRole('link',{name:label,exact:true})).toBeVisible();
+ await expect(page.locator('.mkt-header-actions').getByRole('link',{name:'Sign Up / Sign In'})).toHaveAttribute('href','/client');
+ await expect(page.locator('.mkt-header-actions').getByRole('link',{name:'Contact Us'})).toHaveAttribute('href','/contact');
+});
+test('mobile header contains all destinations without horizontal overflow',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto('/');
+ await expect(page.locator('.marketing-menu summary')).toBeVisible();
+ await page.locator('.marketing-menu summary').click();
+ const menu=page.getByRole('navigation',{name:'Mobile site navigation'});
+ for(const name of ['Residential','Commercial','Strata','Co-Living','Student Living','Construction','Leasing','Tenants','Maintenance','About Us','Who We Help','Sign Up / Sign In','Contact Us'])
+  await expect(menu.getByRole('link',{name,exact:true})).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2)).toBe(true);
+ await menu.getByRole('link',{name:'Residential'}).click();
+ await expect(page).toHaveURL(/\/residential$/);
 });

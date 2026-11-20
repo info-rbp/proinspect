@@ -18,7 +18,8 @@ export const meta = () => [
   { name: 'robots', content: 'noindex,nofollow' },
 ];
 export function loader({ request }: LoaderFunctionArgs) {
-  return { token: new URL(request.url).searchParams.get('token') ?? '' };
+  const token = new URL(request.url).searchParams.get('token') ?? '';
+  return { token: /^[a-f0-9]{64}$/.test(token) ? token : '' };
 }
 export async function action({ request, context }: ActionFunctionArgs) {
   try {
@@ -49,8 +50,14 @@ export default function Complete() {
         <h1>Confirm it is you.</h1>
         <p>
           Enter the email address that received this link, then confirm. Opening the link alone does
-          not sign you in.
+          not sign you in. We will connect you to your authorised portal or guide you through
+          account setup.
         </p>
+        {!token && (
+          <p className="notice warning" role="alert">
+            This sign-in link is incomplete or invalid. Request a new link below.
+          </p>
+        )}
         <Form method="post" className="form">
           <input type="hidden" name="token" value={token} />
           <Field label="Email address" name="email">

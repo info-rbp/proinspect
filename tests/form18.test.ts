@@ -6,7 +6,7 @@ import { FIELDS, FORM18_STEPS, ANSWER_STEPS, FORM18_VERSION, applicationSettings
  cleanSection, stepComplete, allDetailsComplete,initialAnswers,tenancyPreferencesComplete,TENANCY_PREFERENCE_KEYS } from '../packages/marketing/form18.ts';
 const example={identity:{fullName:'Example Applicant',email:'example@example.test',mobile:'0412345678',dateOfBirth:'1994-05-12',
  currentAddress:'12 Sample Street Perth 6000',idType:'Passport',totalOccupants:'2',petsProposed:'No'},
- rental:{hasRentalHistory:'No'},employment:{employmentType:'Student'},references:{}};
+ rental:{hasRentalHistory:'No',noHistoryReason:'First tenancy, previously living with family.'},employment:{employmentType:'Student'},references:{}};
 test('digital Form 18 follows the uploaded form sections for each applicant',()=>{
  assert.deepEqual(FORM18_STEPS.map(x=>x.id),['identity','rental','employment','references','documents','review']);
  assert.ok(FORM18_VERSION.startsWith('proinspect-rental-application-'));
@@ -48,16 +48,18 @@ test('external applications require HTTPS, internal applications require client 
  const external={applicationMode:'external',applicationUrl:'https://agency.example/property-1'};
  assert.equal(applicationSettingsSchema.safeParse(external).success,true);
  assert.equal(applicationSettingsSchema.safeParse({...external,applicationUrl:'http://agency.example'}).success,false);
- const internal={applicationMode:'proinspect',applicationAuthorityReference:'SIGNED-123',applicationRecipientEmail:'agent@example.test',
+ const internal={applicationMode:'proinspect',managedByProInspect:true,applicationAuthorityReference:'SIGNED-123',applicationRecipientEmail:'agent@example.test',
   tenancyDatabaseNoticeMode:'not_used',tenancyDatabaseNotices:[]};
  assert.equal(applicationSettingsSchema.safeParse(internal).success,true);
+ assert.equal(applicationSettingsSchema.safeParse({...internal,managedByProInspect:false}).success,false);
+ assert.equal(applicationSettingsSchema.safeParse({...internal,managedByProInspect:undefined}).success,false);
  assert.equal(applicationSettingsSchema.safeParse({...internal,applicationAuthorityReference:''}).success,false);
  assert.equal(applicationSettingsSchema.safeParse({...internal,tenancyDatabaseNoticeMode:'unconfigured'}).success,false);
  assert.equal(applicationSettingsSchema.safeParse({...internal,tenancyDatabaseNoticeMode:'configured'}).success,false);
  assert.equal(applicationSettingsSchema.safeParse({...internal,tenancyDatabaseNoticeMode:'configured',
   tenancyDatabaseNotices:[{name:'Database',operatorContact:'Operator helpline',accessInstructions:'Contact the operator'}]}).success,true);
 });
-test('applicant access is separate from public listing, restricted R2 is used, production remains disabled',()=>{
+test('applicant access is separate from public listing, restricted R2 is used, production intake still requires source and management authorization',()=>{
  const read=(p:string)=>readFileSync(p,'utf8');
  const server=read('apps/platform/worker/features/rental-applications.server.ts');
  const migration=read('database/migrations/0010_rental_applications.sql');
@@ -71,7 +73,9 @@ test('applicant access is separate from public listing, restricted R2 is used, p
  assert.match(migration,/IMMUTABLE/);
  assert.match(read('apps/platform/worker/features/rental-review.server.ts'),/r\.status!=='draft'/);
  assert.match(read('apps/platform/worker/features/rental-review.server.ts'),/DOCUMENT_QUARANTINED/);
- assert.equal(JSON.parse(wrapper).env.connected.vars.RENTAL_APPLICATIONS_ENABLED,'false');
+ assert.equal(JSON.parse(wrapper).env.connected.vars.RENTAL_APPLICATIONS_ENABLED,'true');
+ assert.match(server,/managedApplicationListing/);
+ assert.match(server,/DOCUMENT_UPLOADS_DISABLED/);
 });
 
 test('policy-controlled retention requires explicit bounded periods, not guessed statutory days',()=>{
@@ -94,7 +98,7 @@ test('handoff is staged for future Google Apps Script and cannot falsely claim e
  assert.match(sql,/AGENCY_EMAIL_DELIVERY_NOT_CONFIRMED/);
  assert.match(sql,/TRUSTED_CLEAN_SCAN_REQUIRED/);
 });
-test('privacy requests and erasure have explicit staff approval, retention holds and no automatic live purge',()=>{
+test('privacy requests and erasure have explicit staff approval, retention holds and policy-controlled erasure',()=>{
  const read=(p:string)=>readFileSync(p,'utf8');
  const privacy=read('apps/platform/worker/features/rental-privacy.server.ts');
  const scanner=read('apps/platform/worker/features/rental-malware.server.ts');
@@ -105,6 +109,6 @@ test('privacy requests and erasure have explicit staff approval, retention holds
  assert.match(privacy,/rental_application_purge_permits/);
  assert.match(scanner,/crypto\.subtle\.verify/);
  assert.match(scanner,/RENTAL_SCANNER_WEBHOOK_SECRET/);
- assert.equal(vars.RENTAL_APPLICATIONS_ENABLED,'false');
- assert.equal(vars.RENTAL_RETENTION_AUTOPURGE_ENABLED,'false');
+ assert.equal(vars.RENTAL_APPLICATIONS_ENABLED,'true');
+ assert.equal(vars.RENTAL_RETENTION_AUTOPURGE_ENABLED,'true');
 });
