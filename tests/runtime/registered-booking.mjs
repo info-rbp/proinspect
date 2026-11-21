@@ -36,9 +36,11 @@ async function login(email){
   assert.equal(result.status,200,JSON.stringify(result.data));
   return {email,cookie:result.cookie.split(';')[0],id:(await sql('SELECT id FROM users WHERE email=?',email).first()).id};
 }
-async function event(session,id='evt_registered_payment_1',secretValue=secret){
-  const item={id,type:'checkout.session.async_payment_succeeded',
+function paymentEvent(session,id='evt_registered_payment_1'){
+  return {id,type:'checkout.session.async_payment_succeeded',
     created:Math.floor(Date.now()/1000),livemode:false,data:{object:session}};
+}
+async function deliver(item,secretValue=secret){
   const raw=JSON.stringify(item),stamp=Math.floor(Date.now()/1000);
   const mac=createHmac('sha256',secretValue).update(stamp+'.'+raw).digest('hex');
   const r=await mf.dispatchFetch('http://localhost/api/webhooks/stripe',{method:'POST',
@@ -100,15 +102,20 @@ try{
     payment_status:'paid',payment_intent:'pi_registered_synthetic_1',status:'complete',
     client_reference_id:attemptId,
     metadata:{payment_id:pay.id,client_id:account,payment_attempt_id:attemptId}};
-  const wrong=await event({...session,amount_total:1},'evt_registered_invalid_amount');
+  const wrong=await deliver(paymentEvent({...session,amount_total:1},'evt_registered_invalid_amount'));
   assert.equal(wrong.status,409,JSON.stringify(wrong.data));
   assert.equal((await sql('SELECT status FROM payments WHERE id=?',pay.id).first()).status,'payment_required');
-  assert.equal((await event(session,'evt_registered_invalid_signature','whsec_wrong_secret')).status,400);
-  const settled=await event(session);
+  assert.equal((await deliver(paymentEvent(session,'evt_registered_invalid_signature'),'whsec_wrong_secret')).status,400);
+  const confirmed=paymentEvent(session);
+  const settled=await deliver(confirmed);
   assert.equal(settled.status,200,JSON.stringify(settled.data));
   assert.equal((await sql('SELECT status,provider FROM payments WHERE id=?',pay.id).first()).status,'paid');
   assert.equal((await sql('SELECT status FROM work_orders WHERE id=?',made.data.workOrderId).first()).status,'scheduled');
-  assert.equal((await event(session)).status,200,'signed replay must not duplicate settlement');
+  const replay=await deliver(confirmed);
+  assert.equal(replay.status,200,JSON.stringify(replay.data));
+  assert.equal(replay.data.replayed,true);
+  const changed=await deliver({...confirmed,created:confirmed.created+1});
+  assert.equal(changed.status,409,'Reusing an event ID with a changed payload must be denied');
   assert.equal((await sql('SELECT COUNT(*) AS n FROM payment_events WHERE payment_id=? AND to_status=\'paid\'',pay.id).first()).n,1);
   assert.deepEqual((await db.prepare('PRAGMA foreign_key_check').all()).results,[]);
   console.log('PASS: synthetic owner booking, price, single payment obligation, scope denial, signed event and replay');
