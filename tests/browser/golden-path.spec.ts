@@ -41,11 +41,12 @@ test('new Landlord registration is free and can consider a subscription later', 
   await expect(page).toHaveURL(/\/workspaces\?service=routine-inspection$/);
   await page.getByRole('link',{name:'Residential owner'}).click();
   await expect(page).toHaveURL(/\/onboarding\?flow=ONB-RES-OWNER&service=routine-inspection$/);
-  await expect(page.getByRole('heading',{name:'Set up residential property'})).toBeVisible();
-  await page.getByLabel('Your name', { exact: true }).fill('Jordan Example');
-  await page.getByLabel('Account name', { exact: true }).fill('Example Self Managed');
+  await expect(page.getByRole('heading',{name:"Welcome. Let's set up your property."})).toBeVisible();
+  await page.getByLabel('Your full name', { exact: true }).fill('Jordan Example');
+  await page.getByText('Does a business or entity own the property?').click();
+  await page.getByLabel('Owning entity / account name').fill('Example Self Managed');
   await page.getByRole('checkbox', { name: /I own and self-manage/ }).check();
-  await page.getByRole('button', { name: 'Create free account' }).click();
+  await page.getByRole('button', { name: 'Continue to add your property' }).click();
   await expect(page).toHaveURL(/\/properties\?service=routine-inspection$/);
   const base = new URL(page.url()).pathname.replace(/\/properties$/, '');
   await page.getByLabel('Street address, including unit if applicable')
