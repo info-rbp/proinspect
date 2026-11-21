@@ -152,7 +152,7 @@ export const SECTOR_OVERVIEWS = {
     name: 'Maintenance', headline: 'Property care that follows the issue through.',
     summary: 'Maintenance attendance, approved contractor coordination, preventative care and follow-up for Residential rental properties and shared accommodation.',
     description: 'Turn reported issues into an approved plan and a documented outcome. We help obtain quotes, arrange contractors and access, and follow through on completed work. Choose one task or build a recurring care routine.',
-    audience: 'For owners, agencies, strata and building teams. Tenants should use their property’s nominated reporting process and the responsible manager’s urgent-maintenance instructions.',
+    audience: 'For private Residential landlords, authorised property management agencies and Co-Living operators. Tenants should use their property’s nominated reporting process and their responsible manager’s urgent-maintenance instructions.',
     outcome: 'Notice the issue. Agree the work. Keep the outcome in view.',
     services: [
       ['Understand the issue', 'Record the location, visible conditions and access requirements to help identify the right next step.'],

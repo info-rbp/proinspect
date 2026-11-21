@@ -66,7 +66,7 @@ export function EditorialSteps(){
   {title:'Keep a useful record',copy:'Follow the instructed work and review issued documents in your authorised property workspace.',image:'leasing'},
  ];
  return <section className="mkt-section pi-editorial-section pi-neutral"><div className="site-container">
-  <div className="pi-section-heading"><p className="eyebrow">A straightforward process</p><h2>Designed With You In Mind.</h2></div>
+  <div className="pi-section-heading"><p className="eyebrow">A straightforward process</p><h2>Design With You In Mind.</h2></div>
   <ol className="pi-process-list pi-process-illustrated">{steps.map((item,i)=><li key={item.title}>
    <BrandImage name={item.image}/><span className="pi-step-number">0{i+1}</span><h3>{item.title}</h3><p>{item.copy}</p></li>)}</ol>
  </div></section>;
