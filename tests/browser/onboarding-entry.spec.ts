@@ -264,6 +264,12 @@ test('one-off inspection entry remains free and adds a property without creating
   await page.getByRole('button', { name: 'Add property' }).click();
   await expect(page).toHaveURL(new RegExp(base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/book/property-condition-report\\?property=prop_'));
   const account = await (await page.request.get('/api/account')).json();
-  expect(account.propertyPlans).toEqual([]);
+  expect(account.propertyPlans).toHaveLength(1);
+  expect(account.propertyPlans[0]).toMatchObject({
+    subscription_intent: 'none',
+    subscription_status: 'none',
+    stripe_subscription_recorded: 0,
+    grandfathered: 0,
+  });
   expect(account.billingAvailable).toBe(false);
 });
