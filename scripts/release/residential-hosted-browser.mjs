@@ -52,6 +52,17 @@ try {
     assert.deepEqual(errors, [], 'Hosted browser errors');
     await page.close();
   }
+  const signIn = await browser.newPage();
+  const health = await (await signIn.request.get(origin + '/api/health')).json();
+  assert.equal(health.environment,'staging');
+  if (process.env.GITHUB_SHA) assert.equal(health.source,process.env.GITHUB_SHA);
+  assert.equal(health.authenticationConfigured,true);
+  await signIn.goto(origin+'/signin?returnTo=%2Fworkspaces');
+  await signIn.getByRole('button',{name:'Continue with staging email'}).click();
+  await signIn.waitForURL(url=>url.hostname==='delicate-dream-e4c9.cloudflareaccess.com');
+  await signIn.locator('input[type=email]').first().waitFor({state:'visible'});
+  evidence.signIn = { provider:'Cloudflare Access one-time PIN', emailChallengeVisible:true, accountSessionVerified:false };
+  await signIn.close();
   evidence.passed = true;
   console.log(
     'Hosted staging public browser checks passed at 320/390/1440px. Authenticated/provider acceptance remains separate.',

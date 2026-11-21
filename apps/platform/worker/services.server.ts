@@ -526,6 +526,10 @@ export async function issueReport(
 ) {
   assert(w.kind === 'staff', 403, 'STAFF_REQUIRED', 'Only authorised staff may issue reports.');
   const order = await workOrderAccess(env, user, w, workOrderId, true);
+  operationsWrite(user);
+  assert(order.assigned_staff_id !== user.id,403,'REPORT_INDEPENDENT_REVIEW','The assigned inspector cannot issue the final report.');
+  const managed = await statement(env.DB,'SELECT id FROM inspection_reports WHERE work_order_id=?',workOrderId).first();
+  assert(!managed,409,'USE_REPORT_REVIEW','Complete review and issue the approved version in the report workspace.');
   const file = form.get('file');
   assert(file instanceof File, 422, 'FILE_REQUIRED', 'Choose a PDF report.');
   assert(

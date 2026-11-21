@@ -29,7 +29,7 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
         context,
         `/api/w/${params.kind}/${params.scopeId}/work-orders/${params.workOrderId}`,
       )
-    : { order: null };
+    : { order: null, caseRecords: null };
 }
 export async function action(args: ActionFunctionArgs) {
   const f = await args.request.formData();
@@ -98,10 +98,21 @@ function AccessInstructions({ path }: { path: string }) {
 export default function WorkOrders() {
   const d = useWorkspace();
   const detail = useLoaderData<typeof loader>();
-  const [search]=useSearchParams(),propertyId=search.get('propertyId');
-  const orders = detail.order ? [detail.order] : propertyId?d.workOrders.filter(o=>o.property_id===propertyId):d.workOrders;
+  const [search] = useSearchParams(),
+    propertyId = search.get('propertyId');
+  const orders = detail.order
+    ? [detail.order]
+    : propertyId
+      ? d.workOrders.filter((o) => o.property_id === propertyId)
+      : d.workOrders;
   const result = useActionData<any>();
   const busy = useNavigation().state !== 'idle';
+  const caseRecords = detail.caseRecords as {
+    booking: { reference: string; status: string; starts_at: string } | null;
+    report: { id: string; status: string; updated_at: string } | null;
+    finance: { kind: string; status: string; recorded_at: string }[] | null;
+  } | null;
+  const manager = ['administrator', 'operations_manager'].includes(d.user.staffRole ?? '');
   const writable = d.workspace.kind === 'staff' && d.user.staffRole !== 'read_only';
   return (
     <>
@@ -112,7 +123,14 @@ export default function WorkOrders() {
       />
       <div className="stack">
         <Feedback value={result} />
-        {propertyId&&<p><Link to={d.workspace.href+'/properties/'+encodeURIComponent(propertyId)}>Return to selected property</Link> · {orders.length} work orders</p>}
+        {propertyId && (
+          <p>
+            <Link to={d.workspace.href + '/properties/' + encodeURIComponent(propertyId)}>
+              Return to selected property
+            </Link>{' '}
+            · {orders.length} work orders
+          </p>
+        )}
         {orders.length ? (
           orders.map((o) => (
             <article key={o.id} id={o.id} className="panel">
@@ -126,6 +144,49 @@ export default function WorkOrders() {
                 </div>
                 <Badge status={o.status} />
               </div>
+              {caseRecords && (
+                <section className="stack" aria-label="Related work order records">
+                  <h3>Related records</h3>
+                  <div className="actions">
+                    {o.request_id && manager && (
+                      <Link to={d.workspace.href + '/requests/' + o.request_id}>
+                        Original maintenance request
+                      </Link>
+                    )}
+                    {caseRecords.booking && (
+                      <Link
+                        to={
+                          d.workspace.href +
+                          '/records/bookings?q=' +
+                          encodeURIComponent(caseRecords.booking.reference)
+                        }
+                      >
+                        Booking {caseRecords.booking.reference} ·{' '}
+                        {statusLabel(caseRecords.booking.status)}
+                      </Link>
+                    )}
+                    {caseRecords.report ? (
+                      <Link to={d.workspace.href + '/reports/' + caseRecords.report.id}>
+                        Inspection report · {statusLabel(caseRecords.report.status)}
+                      </Link>
+                    ) : (
+                      <span>Inspection report pending</span>
+                    )}
+                  </div>
+                  {caseRecords.finance && caseRecords.finance.length > 0 && (
+                    <ul>
+                      {caseRecords.finance.map((entry, index) => (
+                        <li key={index}>
+                          {entry.kind} · {statusLabel(entry.status)} ·{' '}
+                          {new Date(entry.recorded_at).toLocaleDateString('en-AU', {
+                            timeZone: 'Australia/Perth',
+                          })}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              )}
               {writable ? (
                 <details>
                   <summary>Manage this work order</summary>
@@ -172,39 +233,41 @@ export default function WorkOrders() {
                           path={`/api/w/staff/operations/work-orders/${o.id}/access`}
                         />
                       )}
-                      <Form method="post" encType="multipart/form-data" className="form">
-                        <input type="hidden" name="intent" value="report" />
-                        <input type="hidden" name="workOrderId" value={o.id} />
-                        <h3>Issue the service report</h3>
-                        <p className="small">
-                          The PDF will be issued to the commissioning client. Tenant sharing is a
-                          separate authorised action.
-                        </p>
-                        <Field label="Report title" name={`report-title-${o.id}`}>
-                          <input
-                            id={`report-title-${o.id}`}
-                            name="title"
-                            required
-                            defaultValue={o.title}
-                          />
-                        </Field>
-                        <Field
-                          label="Final PDF report"
-                          name={`file-${o.id}`}
-                          help="PDF only. Maximum 10 MB."
-                        >
-                          <input
-                            id={`file-${o.id}`}
-                            name="file"
-                            type="file"
-                            accept="application/pdf"
-                            required
-                          />
-                        </Field>
-                        <button className="button secondary" disabled={busy}>
-                          Upload and issue report
-                        </button>
-                      </Form>
+                      {manager && o.assigned_staff_id !== d.user.id && !caseRecords?.report && (
+                        <Form method="post" encType="multipart/form-data" className="form">
+                          <input type="hidden" name="intent" value="report" />
+                          <input type="hidden" name="workOrderId" value={o.id} />
+                          <h3>Issue the service report</h3>
+                          <p className="small">
+                            The PDF will be issued to the commissioning client. Tenant sharing is a
+                            separate authorised action.
+                          </p>
+                          <Field label="Report title" name={`report-title-${o.id}`}>
+                            <input
+                              id={`report-title-${o.id}`}
+                              name="title"
+                              required
+                              defaultValue={o.title}
+                            />
+                          </Field>
+                          <Field
+                            label="Final PDF report"
+                            name={`file-${o.id}`}
+                            help="PDF only. Maximum 10 MB."
+                          >
+                            <input
+                              id={`file-${o.id}`}
+                              name="file"
+                              type="file"
+                              accept="application/pdf"
+                              required
+                            />
+                          </Field>
+                          <button className="button secondary" disabled={busy}>
+                            Upload and issue report
+                          </button>
+                        </Form>
+                      )}
                     </div>
                   </div>
                   {['administrator', 'operations_manager'].includes(d.user.staffRole ?? '') &&

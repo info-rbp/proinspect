@@ -1,3 +1,4 @@
+import { stagingAccess } from '../../../packages/auth/staging-access';
 import { guardResidentialMutation } from './features/residential-policy.server';
 import {temporarySecurityDownload,reviewTemporaryDocument,stageTemporaryPackage,temporaryPackageAccess,controlTemporaryPackage} from './features/rental-temporary-documents.server';
 
@@ -327,7 +328,7 @@ export async function handleApi(
           queue: Boolean(env.EVENTS),
         },
         authenticationConfigured: Boolean(
-          env.DATA_ENCRYPTION_KEY && (env.APP_ENV === 'local' || env.RESEND_API_KEY),
+          env.DATA_ENCRYPTION_KEY && (env.APP_ENV === 'local' || stagingAccess(request,env) || env.RESEND_API_KEY),
         ),
       });
     if (path==='/api/public/leasing' && method==='GET') return Response.json({listings:await publicListings(env,url.searchParams.get('kind')??undefined)});

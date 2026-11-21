@@ -428,7 +428,10 @@ try {
   const form = new FormData();
   form.set('title', 'Routine inspection test report');
   form.set('file', new File([report], 'report.pdf', { type: 'application/pdf' }));
-  const uploaded = await api(`/api/w/staff/operations/work-orders/${woId}/report`, { cookie: inspector.cookie, body: form });
+  await check('an assigned inspector cannot issue a final PDF directly', async () => {
+    assert.equal((await api(`/api/w/staff/operations/work-orders/${woId}/report`, {cookie:inspector.cookie,body:form})).status,403);
+  });
+  const uploaded = await api(`/api/w/staff/operations/work-orders/${woId}/report`, { cookie: operator.cookie, body: form });
   assert.equal(uploaded.status, 201, JSON.stringify(uploaded.data));
   await check('issued PDF is downloadable only by an authorised recipient', async () => {
     const read = await api(`/api/documents/${uploaded.data.id}/download`, { cookie: owner.cookie });
@@ -437,7 +440,7 @@ try {
     assert.equal((await api(`/api/documents/${uploaded.data.id}/download`, { cookie: outsider.cookie })).status, 404);
   });
   await check('report upload retry does not duplicate the record', async () => {
-    const retry = await api(`/api/w/staff/operations/work-orders/${woId}/report`, { cookie: inspector.cookie, body: form });
+    const retry = await api(`/api/w/staff/operations/work-orders/${woId}/report`, { cookie: operator.cookie, body: form });
     assert.equal(retry.status, 201);
     assert.equal(retry.data.id, uploaded.data.id);
     assert.equal((await first('SELECT count(*) AS n FROM documents WHERE work_order_id=?', woId)).n, 1);

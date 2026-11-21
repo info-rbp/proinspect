@@ -311,7 +311,23 @@ export async function orderDetail(env: Env, user: Principal, w: Workspace, id: s
         ).first<Record<string, any>>()
       : null;
   const resident = w.kind === 'building';
+  let caseRecords = null;
+  if (w.kind === 'staff') {
+    const manager = user.staffRole === 'administrator' || user.staffRole === 'operations_manager';
+    const report = await statement(env.DB,
+      'SELECT id,status,updated_at FROM inspection_reports WHERE work_order_id=? AND (?=1 OR inspector_id=? OR reviewer_id=?)',
+      id, manager ? 1 : 0, user.id, user.id).first<{id:string;status:string;updated_at:string}>();
+    const financial = manager || user.staffRole === 'read_only';
+    const finance = financial ? await statement(env.DB,
+      `SELECT 'Cost approval' AS kind,status,COALESCE(decided_at,created_at) AS recorded_at FROM approvals WHERE work_order_id=?
+       UNION ALL SELECT 'Payment',status,created_at FROM payments WHERE work_order_id=? ORDER BY recorded_at DESC`,
+      id,id).all<{kind:string;status:string;recorded_at:string}>() : null;
+    const booking = o.booking_id ? await statement(env.DB,
+      'SELECT reference,status,starts_at FROM bookings WHERE id=?',o.booking_id).first<{reference:string;status:string;starts_at:string}>() : null;
+    caseRecords = { booking, report, finance: finance?.results ?? null };
+  }
   return {
+    caseRecords,
     order: {
       id: o.id,
       reference: o.reference,

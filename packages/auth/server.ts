@@ -46,8 +46,14 @@ export async function requireUser(request: Request, env: Env) {
   assert(user, 401, 'AUTH_REQUIRED', 'Sign in to continue.');
   return user;
 }
-export function sessionCookie(request: Request, env: Env, token: string, clear = false) {
-  return `${cookieName(request, env)}=${clear ? '' : token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${clear ? 0 : 86400}${isLocal(request, env) ? '' : '; Secure'}`;
+export function sessionCookie(
+  request: Request,
+  env: Env,
+  token: string,
+  clear = false,
+  maxAge = 86400,
+) {
+  return `${cookieName(request, env)}=${clear ? '' : token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${clear ? 0 : maxAge}${isLocal(request, env) ? '' : '; Secure'}`;
 }
 async function rateLimit(env: Env, key: string, limit: number) {
   const expires = new Date(Date.now() + 900000).toISOString();
@@ -168,7 +174,12 @@ export async function completeSignIn(
   return { cookie, returnTo: safeReturnTo(record.return_to) };
 }
 
-export async function createVerifiedSession(request: Request, env: Env, email: string, expiresAt = Date.now() + 86400000) {
+export async function createVerifiedSession(
+  request: Request,
+  env: Env,
+  email: string,
+  expiresAt = Date.now() + 86400000,
+) {
   const user = await statement(
     env.DB,
     `INSERT INTO users(id,email,created_at,verified_at) VALUES(?,?,?,?) ON CONFLICT(email) DO UPDATE SET verified_at=COALESCE(users.verified_at,excluded.verified_at) RETURNING id,active`,
@@ -187,7 +198,13 @@ export async function createVerifiedSession(request: Request, env: Env, email: s
     new Date(expiresAt).toISOString(),
     now(),
   ).run();
-  return sessionCookie(request, env, token);
+  return sessionCookie(
+    request,
+    env,
+    token,
+    false,
+    Math.max(0, Math.min(86400, Math.floor((expiresAt - Date.now()) / 1000))),
+  );
 }
 export async function signOut(request: Request, env: Env) {
   requireOrigin(request, env);

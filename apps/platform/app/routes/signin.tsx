@@ -171,7 +171,7 @@ export default function SignIn() {
           </p>
           <p className="auth-foot">
             An account does not start a subscription. Professional management access requires
-            review. Tenants receive an invitation to their property.
+            review. Tenant access is invitation-only and limited to the invited tenancy.
           </p>
           <p className="auth-foot">
             Have an invitation? Open the original link and use the email it was sent to. Looking for

@@ -2,6 +2,22 @@
 
 Use the exact preview SHA reported by `/api/health` and the delivery PR. Record date, browser/device, account role, route, expected result, observed result and screenshot for each issue. Mark each item **Pass / Fail / Blocked**; a disabled provider is Blocked, not Pass. Use synthetic data and no real payment details. This review does not authorise a main merge or Phase 6.
 
+## Sign in to the staging preview
+
+Open [ProInspect staging sign-in](https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev/signin?returnTo=%2Fworkspaces) in a private browser window. Choose **Continue with staging email**. Enter one of the approved test aliases below, retrieve the one-time code from its mailbox, then choose **Continue to ProInspect** on the staging site. Use a separate private browser session for each identity or sign out of both ProInspect and Cloudflare before changing identities. Keep the code in your browser.
+
+| Test alias | Scope to expect after sign-in |
+| --- | --- |
+| `landlord-testing@proinspect.systems` | TEST ProInspect Self-Managed Landlord and its residential property |
+| `property-manager-testing@proinspect.systems` | TEST ProInspect Property Management and its separate agency-managed property |
+| `tenant-testing@proinspect.systems` | The TEST tenancy at the landlord’s property |
+| `staff-testing@proinspect.systems` | Staff Operations using the documented test administrator |
+
+- [ ] Record the staging source revision from [staging health](https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev/api/health), browser, viewport and test alias.
+- [ ] Confirm the correct alias is displayed after email verification. Open its workspace and record the first page. Sign out and revisit a private page to confirm it requests sign-in.
+- [ ] Open the agency’s test property link in the landlord session and the landlord’s finance page in the tenant session. Each must deny access without showing the other account’s data.
+- [ ] Record the receipt of the code, the confirmation and the workspace separately. Redact email codes, cookies and personal information from screenshots.
+
 ## Public review (available after successful preview deployment)
 
 - [ ] At 320px, 390px, desktop and keyboard-only: header contains Residential, Co-Living, Leasing, Tenants, Maintenance, About Us, Who We Help, Sign Up / Sign In, Contact Us; mobile menu opens, closes with Escape and keeps focus usable.
@@ -11,9 +27,9 @@ Use the exact preview SHA reported by `/api/health` and the delivery PR. Record 
 - [ ] `/commercial`, `/strata`, `/construction`, commercial service/listing/application URLs and `.data` equivalents are unavailable for acquisition. `/student-living` redirects to Co-Living. Header, footer, finder and sitemap offer no retired product signup.
 - [ ] Contact categories and Who We Help reflect the Residential audience. Draft legal documents visibly remain drafts and do not claim legal approval.
 
-## Account review (blocked until staging sign-in/security providers are commissioned)
+## Account and property journeys
 
-Use separately verified synthetic owner A, owner B, agency, tenant, inspector, operations reviewer and read-only accounts. Do not grant all roles to one account and treat that as permission testing.
+Use the four approved staging aliases above. A second owner, assigned inspector, separate reviewer and read-only user require separate authorised identities for hosted testing. Do not grant all roles to one account and treat that as permission testing.
 
 - [ ] Owner A signs in, creates a free account and adds a property. No Stripe customer/charge, subscription or included-service entitlement appears automatically.
 - [ ] Dashboard properties, open work, upcoming visits and pending decisions reflect actual authorised records. A visit in the past is not automatically reported as completed.

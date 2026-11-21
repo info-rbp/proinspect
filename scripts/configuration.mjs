@@ -28,6 +28,8 @@ export function checkConfiguration(
     const value = input[name];
     if (enabled.has(rule.group) && !value) missing.push(name);
     if (!value) continue;
+    if (name === 'STAGING_ACCESS_AUD' && (environment !== 'staging' || !/^[a-f0-9]{64}$/.test(value)))
+      invalid.push({name,reason:'Use the audience of the dedicated staging sign-in application.'});
     if (
       rule.format === 'base64-32' &&
       (!/^[A-Za-z0-9+/]{43}=$/.test(value) || Buffer.from(value, 'base64').length !== 32)
