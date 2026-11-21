@@ -14,9 +14,9 @@ export function MarketingHeader({appOrigin=''}:{appOrigin?:string}){
   <Link className="brand mkt-brand" to="/" aria-label="ProInspect home" aria-current={pathname==='/'?'page':undefined}>ProInspect<span>PROPERTY SERVICES</span></Link>
   <nav className="site-links mkt-site-links" aria-label="Primary navigation">{PUBLIC_NAVIGATION.filter(item=>item.href!=='/client').map(item=>
    <Link key={item.href} to={item.href} aria-current={pathname===item.href?'page':undefined}>{item.label}</Link>)}</nav>
-  <div className="mkt-header-actions"><Link className="button mkt-header-book" to="/client">Sign Up / Sign In</Link></div>
+  <div className="mkt-header-actions"><Link className="button mkt-header-book" to="/contact">Sign Up / Sign In</Link></div>
   <details className="marketing-menu" ref={mobileMenu}><summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span>Menu</span></summary>
-   <nav aria-label="Mobile site navigation">{PUBLIC_NAVIGATION.map(item=><Link key={item.href} to={item.href} aria-current={pathname===item.href?'page':undefined}>{item.label}</Link>)}</nav>
+   <nav aria-label="Mobile site navigation">{PUBLIC_NAVIGATION.map(item=><Link key={item.href} to={item.href === "/client" ? "/contact" : item.href} aria-current={pathname===item.href?'page':undefined}>{item.label}</Link>)}</nav>
   </details>
  </header></div></div>
 }
@@ -28,7 +28,7 @@ export function MarketingFooter({appOrigin=''}:{appOrigin?:string}){
    </div>
    <div className="pi-footer-actions"><Link className="mkt-footer-contact" to="/contact">Contact ProInspect <span aria-hidden="true">↗</span></Link>
     <Link to="/help-centre">Help Centre</Link><Link to="/residential/services">Residential Services</Link>
-    <Link to="/client">Sign Up / Sign In</Link></div>
+    <a href="https://proinspect.systems/client">Client Portal / Sign In</a></div>
   </div>
   <div className="mkt-footer-bottom pi-footer-legal">
    <span>© {new Date().getFullYear()} ProInspect Property Services Pty Ltd · ABN 52 703 550 609 · ACN 703 550 609</span>

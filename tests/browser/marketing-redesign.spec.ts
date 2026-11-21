@@ -14,8 +14,9 @@ test('public navigation exposes all nine destinations at desktop width',async({p
  const nav=page.getByRole('navigation',{name:'Primary navigation'});
  for(const label of ['Residential','Co-Living','Leasing','Tenants','Maintenance','About Us','Who We Help','Contact'])
   await expect(nav.getByRole('link',{name:label,exact:true})).toBeVisible();
- await expect(page.locator('.mkt-header-actions').getByRole('link',{name:'Sign Up / Sign In'})).toHaveAttribute('href','/client');
+ await expect(page.locator('.mkt-header-actions').getByRole('link',{name:'Sign Up / Sign In'})).toHaveAttribute('href','/contact');
  await expect(nav.getByRole('link',{name:'Contact',exact:true})).toHaveAttribute('href','/contact');
+ await expect(page.locator('.pi-footer-actions').getByRole('link',{name:'Client Portal / Sign In'})).toHaveAttribute('href','https://proinspect.systems/client');
 });
 test('mobile header contains all destinations without horizontal overflow',async({page})=>{
  await page.setViewportSize({width:390,height:844});await page.goto('/');
@@ -24,6 +25,7 @@ test('mobile header contains all destinations without horizontal overflow',async
  const menu=page.getByRole('navigation',{name:'Mobile site navigation'});
  for(const name of ['Residential','Co-Living','Leasing','Tenants','Maintenance','About Us','Who We Help','Contact','Sign Up / Sign In'])
   await expect(menu.getByRole('link',{name,exact:true})).toBeVisible();
+ await expect(menu.getByRole('link',{name:'Sign Up / Sign In'})).toHaveAttribute('href','/contact');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2)).toBe(true);
  await menu.getByRole('link',{name:'Residential'}).click();
  await expect(page).toHaveURL(/\/residential$/);

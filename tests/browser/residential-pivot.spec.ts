@@ -65,6 +65,7 @@ for (const width of [320, 390, 1440])
           .getByRole('link')
           .allTextContents(),
       ).toEqual(labels);
+      await expect(page.getByRole('navigation', {name: 'Mobile site navigation'}).getByRole('link', {name: 'Sign Up / Sign In'})).toHaveAttribute('href','/contact');
       await page.keyboard.press('Escape');
       await expect(
         page.getByRole('navigation', { name: 'Mobile site navigation' }),
