@@ -31,7 +31,7 @@ export function EditorialHero({
         <div className="pi-editorial-hero-grid">
           <div className="pi-editorial-copy">
             <p className="eyebrow">{eyebrow}</p>
-            <h1>{title}</h1>
+            <h1>{title.includes('\n') ? title.split('\n').map((line, i) => <span key={line}>{i > 0 && <br />}{line}</span>) : title}</h1>
             <p className="pi-editorial-intro">{intro}</p>
             {(primary || secondary) && (
               <div className="actions">
@@ -59,38 +59,17 @@ export function EditorialHero({
   );
 }
 
-export function EditorialSteps() {
-  const steps = [
-    [
-      'Tell us what you need',
-      'Choose a service or share the property type, suburb and outcome you have in mind.',
-    ],
-    [
-      'Agree the details',
-      'Confirm suitability, scope, price and access arrangements before the work proceeds.',
-    ],
-    [
-      'Keep a useful record',
-      'Review the resulting observations and issued documents through the authorised property account.',
-    ],
-  ];
-  return (
-    <section className="mkt-section pi-editorial-section pi-neutral">
-      <div className="site-container">
-        <div className="pi-section-heading">
-          <p className="eyebrow">A straightforward process</p>
-          <h2>Clear from the first conversation.</h2>
-        </div>
-        <ol className="pi-process-list">
-          {steps.map(([title, copy], index) => (
-            <li key={title}>
-              <span className="pi-step-number">0{index + 1}</span>
-              <h3>{title}</h3>
-              <p>{copy}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
+export function EditorialSteps(){
+ const steps:[
+  {title:string;copy:string;image:'residential'|'leasing'|'maintenance'}
+ ]=[
+  {title:'Tell us what you need',copy:'Choose an inspection, maintenance visit or other property task, or tell us the outcome you have in mind.',image:'residential'},
+  {title:'Agree the details',copy:'Confirm the authorised contact, service scope, lawful access, price and an available appointment where offered.',image:'maintenance'},
+  {title:'Keep a useful record',copy:'Follow the instructed work and review issued documents in your authorised property workspace.',image:'leasing'},
+ ];
+ return <section className="mkt-section pi-editorial-section pi-neutral"><div className="site-container">
+  <div className="pi-section-heading"><p className="eyebrow">A straightforward process</p><h2>Designed With You In Mind.</h2></div>
+  <ol className="pi-process-list pi-process-illustrated">{steps.map((item,i)=><li key={item.title}>
+   <BrandImage name={item.image}/><span className="pi-step-number">0{i+1}</span><h3>{item.title}</h3><p>{item.copy}</p></li>)}</ol>
+ </div></section>;
 }
