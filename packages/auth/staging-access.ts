@@ -4,8 +4,8 @@ import { email as emailSchema } from '../validation/index';
 import { createVerifiedSession, requireOrigin } from './server';
 
 const origin = 'https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev';
-const issuer = 'https://delicate-dream-e4c9.cloudflareaccess.com';
-const keys = createRemoteJWKSet(new URL('/cdn-cgi/access/certs', issuer));
+export const STAGING_ACCESS_ISSUER = 'https://delicate-dream-e4c9.cloudflareaccess.com';
+const keys = createRemoteJWKSet(new URL('/cdn-cgi/access/certs', STAGING_ACCESS_ISSUER));
 
 export function stagingAccess(request: Request, env: Env) {
   return (
@@ -22,7 +22,7 @@ export async function verifyStagingIdentity(request: Request, env: Env) {
   assert(token, 403, 'ACCESS_REQUIRED', 'Verify your staging email with Cloudflare to continue.');
   try {
     const { payload } = await jwtVerify(token, keys, {
-      issuer,
+      issuer: STAGING_ACCESS_ISSUER,
       audience: env.STAGING_ACCESS_AUD,
       algorithms: ['RS256'],
       requiredClaims: ['exp', 'iat', 'sub', 'email'],
