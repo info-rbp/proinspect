@@ -12,8 +12,12 @@ test('public industry pages lead into one secure Client Portal entry',async({pag
  await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Residential'}).click();
  await expect(page).toHaveURL(origin+'/residential');
  await page.locator('.mkt-header-actions').getByRole('link',{name:'Sign Up / Sign In'}).click();
- await expect(page).toHaveURL(origin+'/client');
- await page.getByRole('link',{name:'Sign in with email'}).click();
+ await expect(page).toHaveURL(origin+'/contact');
+ await expect(page.getByRole('link',{name:'Client Portal / Sign In'})).toHaveAttribute('href','https://proinspect.systems/client');
+ // A local navigation to the authenticated entry avoids crossing into production in CI.
+ await page.goto('/client');
+ await expect(page.getByRole('heading',{name:'One secure account. The right workspace for you.'})).toBeVisible();
+ await page.getByRole('link',{name:'Sign in with email'}).first().click();
  await expect(page).toHaveURL(origin+'/signin');
  await expect(page.getByRole('heading',{name:'Welcome back to ProInspect.'})).toBeVisible();
  await page.getByRole('link',{name:'Create a free account'}).click();
