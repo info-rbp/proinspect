@@ -31,6 +31,14 @@ export default function Billing(){
 <PageHeading title={staff?"Billing and reconciliation":"Property plans and invoices"} description={staff?"Service revenue, invoices and financial exceptions.":"Review your property subscription, paid invoices and written cancellation notices."}/>
 {!staff&&d.portalEnabled&&<Panel title="Secure billing self-service"><OperationForm endpoint={api+'/billing/portal'} label="Open billing portal" result={r=>r.url?<a className="button" href={r.url} rel="noreferrer">Continue to Stripe billing</a>:null}/></Panel>}
 <Panel title="Property subscriptions">{d.subscriptions.map((s:any)=><p key={s.id}>{s.address ?? s.property_id}: <Badge status={s.status}/></p>)}<p>Subscription financial status and included service entitlements are separate records.</p></Panel>
+{staff && <Panel title="Written cancellation notices">
+ {d.cancellationNotices?.length ? d.cancellationNotices.map((n:any)=><article className="stack" key={n.billing_link_id}>
+   <h3>{n.address}</h3><p>Received {new Date(n.received_at).toLocaleDateString('en-AU',{timeZone:'Australia/Perth'})} · Earliest ordinary end {new Date(n.earliest_end_at).toLocaleDateString('en-AU',{timeZone:'Australia/Perth'})}</p>
+   <p>{n.reason}</p><Badge status={n.status}/>
+   {n.reviewed_at && <p>Last verified {new Date(n.reviewed_at).toLocaleString('en-AU',{timeZone:'Australia/Perth'})}</p>}
+   {d.sandboxNoticeReview && n.status!=='withdrawn' && <OperationForm endpoint={api+'/billing/cancellation-review'} defaults={{billingLinkId:n.billing_link_id}} label="Verify existing schedule in Stripe sandbox" />}
+ </article>) : <p>No written cancellation notices received.</p>}
+ </Panel>}
 <Panel title="Invoice observations and exceptions">
  <p>Review the invoice records visible to your authorised workspace. {observed.length} invoice observation(s) returned; {flagged.length} require attention based on provider status, matching or arithmetic. This dashboard is capped at 100 recent records, so neither this view nor its export is a full bank or payout reconciliation.</p>
  <div className="actions">

@@ -52,7 +52,10 @@ export async function billingDashboard(env:Env,user:Principal,w:Workspace){
  invoiceContactSchemaAvailable?statement(env.DB,"SELECT id,client_id,email,status,approved_by FROM billing_invoice_contacts ORDER BY created_at DESC LIMIT 100").all():Promise.resolve({results:[]}),
  invoiceContactSchemaAvailable?statement(env.DB,"SELECT statement_id,stripe_invoice_id,status,recipient_email FROM billing_invoice_dispatches ORDER BY created_at DESC LIMIT 100").all():Promise.resolve({results:[]})
  ]);
- return {accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,
+ const cancellationNotices=staff?(await statement(env.DB,`SELECT n.billing_link_id,n.received_at,n.earliest_end_at,n.reason,n.status,n.reviewed_at,n.provider_reference,p.address
+  FROM residential_cancellation_notices n JOIN stripe_billing_links b ON b.id=n.billing_link_id JOIN properties p ON p.id=b.property_id
+  ORDER BY (n.status='pending_review') DESC,n.received_at DESC LIMIT 100`).all()).results:[];
+ return {cancellationNotices, sandboxNoticeReview:staff && ['staging','local'].includes(env.APP_ENV) && env.STRIPE_BILLING_ENABLED==='true',accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,
   contacts:contacts.results,dispatches:dispatches.results,invoiceContactSchemaAvailable:!!invoiceContactSchemaAvailable,
   portalEnabled:!subscriptions.results.some((s:any)=>s.plan_version)&&(env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true'||(env.APP_ENV==='production'&&w.kind==='landlord'&&accounts.results.some((a:any)=>a.mode==='live'))),
   invoicesEnabled:env.STRIPE_INVOICING_ENABLED==='true',refundsEnabled:env.STRIPE_REFUNDS_ENABLED==='true'};

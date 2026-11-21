@@ -1,4 +1,4 @@
-import { requestResidentialCancellation } from './residential-cancellation.server';
+import { reconcileResidentialNotice, requestResidentialCancellation } from './residential-cancellation.server';
 import { commercialLedgerExport } from './commercial-lifecycle.server';
 import * as buildingOps from './building-operations.server';
 import * as commercialOps from './commercial-operations.server';
@@ -80,6 +80,7 @@ export async function featureApi(
   }
   const body = () => readJson(request),
     ok = (value: unknown) => Response.json(value);
+  if(tail==='billing/cancellation-review' && method==='POST'){requireOrigin(request,env);return ok(await reconcileResidentialNotice(env,user,w,await body()));}
   if(tail==='billing/cancellation-notice' && method==='POST'){requireOrigin(request,env);return ok(await requestResidentialCancellation(env,user,w,await body()));}
   if(area==='reports')return reportRoutes(request,env,user,w,tail);
   const staff = () => {

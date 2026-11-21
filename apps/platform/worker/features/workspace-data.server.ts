@@ -48,10 +48,13 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
     orderArgs = [w.scopeId];
   }
   const resident = w.kind === 'building';
+  const reportField = w.kind === 'staff'
+    ? ',EXISTS(SELECT 1 FROM inspection_reports ir WHERE ir.work_order_id=wo.id) AS has_managed_report'
+    : '';
   const orders = (
     await statement(
       env.DB,
-      `SELECT wo.id,wo.reference,wo.property_id,wo.scheme_id,wo.booking_id,wo.request_id,wo.contractor_id,${resident ? 'wo.public_summary' : 'wo.title'} AS title,wo.status,wo.priority,${resident ? 'NULL' : 'wo.assigned_staff_id'} AS assigned_staff_id,wo.version,wo.created_at,wo.updated_at,wo.scheduled_at,wo.resident_visible,wo.public_summary,p.address,p.suburb FROM work_orders wo LEFT JOIN properties p ON p.id=wo.property_id WHERE ${orderSql} ORDER BY wo.updated_at DESC LIMIT 300`,
+      `SELECT wo.id,wo.reference,wo.property_id,wo.scheme_id,wo.booking_id,wo.request_id,wo.contractor_id,${resident ? 'wo.public_summary' : 'wo.title'} AS title,wo.status,wo.priority,${resident ? 'NULL' : 'wo.assigned_staff_id'} AS assigned_staff_id,wo.version,wo.created_at,wo.updated_at,wo.scheduled_at,wo.resident_visible,wo.public_summary,p.address,p.suburb${reportField} FROM work_orders wo LEFT JOIN properties p ON p.id=wo.property_id WHERE ${orderSql} ORDER BY wo.updated_at DESC LIMIT 300`,
       ...orderArgs,
     ).all()
   ).results;

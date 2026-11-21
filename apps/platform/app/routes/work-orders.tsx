@@ -108,6 +108,7 @@ export default function WorkOrders() {
   const result = useActionData<any>();
   const busy = useNavigation().state !== 'idle';
   const caseRecords = detail.caseRecords as {
+    events: { action: string; created_at: string }[];
     booking: { reference: string; status: string; starts_at: string } | null;
     report: { id: string; status: string; updated_at: string } | null;
     finance: { kind: string; status: string; recorded_at: string }[] | null;
@@ -173,6 +174,21 @@ export default function WorkOrders() {
                       <span>Inspection report pending</span>
                     )}
                   </div>
+                  {caseRecords.events.length > 0 && (
+                    <details>
+                      <summary>Work and report history</summary>
+                      <ol>
+                        {caseRecords.events.map((event, index) => (
+                          <li key={index}>
+                            {event.action.split('.').map(statusLabel).join(' · ')} ·{' '}
+                            {new Date(event.created_at).toLocaleString('en-AU', {
+                              timeZone: 'Australia/Perth',
+                            })}
+                          </li>
+                        ))}
+                      </ol>
+                    </details>
+                  )}
                   {caseRecords.finance && caseRecords.finance.length > 0 && (
                     <ul>
                       {caseRecords.finance.map((entry, index) => (
@@ -233,7 +249,7 @@ export default function WorkOrders() {
                           path={`/api/w/staff/operations/work-orders/${o.id}/access`}
                         />
                       )}
-                      {manager && o.assigned_staff_id !== d.user.id && !caseRecords?.report && (
+                      {manager && o.assigned_staff_id !== d.user.id && !o.has_managed_report && !caseRecords?.report && (
                         <Form method="post" encType="multipart/form-data" className="form">
                           <input type="hidden" name="intent" value="report" />
                           <input type="hidden" name="workOrderId" value={o.id} />

@@ -516,6 +516,18 @@ export async function updateWorkOrder(
   await env.DB.batch(updates);
   return { id, status: next };
 }
+export async function directReportIssueOrder(env: Env, user: Principal, w: Workspace, workOrderId: string) {
+  assert(w.kind === 'staff', 403, 'STAFF_REQUIRED', 'Only authorised staff may issue reports.');
+  const order = await workOrderAccess(env, user, w, workOrderId, true);
+  operationsWrite(user);
+  assert(order.assigned_staff_id !== user.id, 403, 'REPORT_INDEPENDENT_REVIEW',
+    'The assigned inspector cannot issue the final report.');
+  const managed = await statement(env.DB,
+    'SELECT id FROM inspection_reports WHERE work_order_id=?', workOrderId).first();
+  assert(!managed, 409, 'USE_REPORT_REVIEW',
+    'Complete review and issue the approved version in the report workspace.');
+  return order;
+}
 export async function issueReport(
   env: Env,
   user: Principal,
@@ -524,12 +536,7 @@ export async function issueReport(
   form: FormData,
   options?: { handoffId: string },
 ) {
-  assert(w.kind === 'staff', 403, 'STAFF_REQUIRED', 'Only authorised staff may issue reports.');
-  const order = await workOrderAccess(env, user, w, workOrderId, true);
-  operationsWrite(user);
-  assert(order.assigned_staff_id !== user.id,403,'REPORT_INDEPENDENT_REVIEW','The assigned inspector cannot issue the final report.');
-  const managed = await statement(env.DB,'SELECT id FROM inspection_reports WHERE work_order_id=?',workOrderId).first();
-  assert(!managed,409,'USE_REPORT_REVIEW','Complete review and issue the approved version in the report workspace.');
+  const order = await directReportIssueOrder(env, user, w, workOrderId);
   const file = form.get('file');
   assert(file instanceof File, 422, 'FILE_REQUIRED', 'Choose a PDF report.');
   assert(
@@ -590,7 +597,11 @@ export async function issueReport(
     const statements = [
       statement(
         env.DB,
-        `INSERT INTO documents(id,property_id,scheme_id,booking_id,work_order_id,request_id,title,category,object_key,content_type,size,sha256,status,created_by,created_at,issued_at,source_report_id) VALUES(?,?,?,?,?,?,?,'service_report',?,'application/pdf',?,?,'issued',?,?,?,?)`,
+        `INSERT INTO documents(id,property_id,scheme_id,booking_id,work_order_id,request_id,title,category,object_key,content_type,size,sha256,status,created_by,created_at,issued_at,source_report_id) SELECT ?,?,?,?,?,?,?,'service_report',?,'application/pdf',?,?,'issued',?,?,?,?
+         FROM work_orders wo WHERE wo.id=? AND wo.client_id=? AND wo.property_id IS ? AND wo.assigned_staff_id IS NOT ?
+         AND NOT EXISTS (SELECT 1 FROM inspection_reports ir WHERE ir.work_order_id=wo.id)
+         AND EXISTS (SELECT 1 FROM staff_profiles s JOIN users u ON u.id=s.user_id
+           WHERE s.user_id=? AND s.active=1 AND u.active=1 AND s.role IN ('administrator','operations_manager'))`,
         id,
         order.property_id,
         order.scheme_id,
@@ -605,7 +616,14 @@ export async function issueReport(
         time,
         time,
         options?.handoffId ?? null,
+        workOrderId,
+        order.client_id,
+        order.property_id,
+        user.id,
+        user.id,
       ),
+      changedExactlyOne(env),
+      clearMutationGuard(env),
       statement(
         env.DB,
         `INSERT INTO document_grants(document_id,recipient_kind,recipient_id,created_by,created_at) VALUES(?,'client',?,?,?)`,

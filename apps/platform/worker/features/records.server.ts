@@ -324,7 +324,12 @@ export async function orderDetail(env: Env, user: Principal, w: Workspace, id: s
       id,id).all<{kind:string;status:string;recorded_at:string}>() : null;
     const booking = o.booking_id ? await statement(env.DB,
       'SELECT reference,status,starts_at FROM bookings WHERE id=?',o.booking_id).first<{reference:string;status:string;starts_at:string}>() : null;
-    caseRecords = { booking, report, finance: finance?.results ?? null };
+    const events = await statement(env.DB,`SELECT action,created_at FROM audit_events
+      WHERE (entity_type='work_order' AND entity_id=? AND action='work_order.updated')
+        OR (entity_type='inspection_report' AND entity_id=? AND action IN
+        ('report.created','report.reviewer_assigned','report.submitted','report.reviewed','report.rendered','report.render_reviewed','report.version_issued'))
+      ORDER BY created_at DESC,id DESC LIMIT 30`,id,report?.id ?? '').all<{action:string;created_at:string}>();
+    caseRecords = { booking, report, finance: finance?.results ?? null, events:events.results };
   }
   return {
     caseRecords,

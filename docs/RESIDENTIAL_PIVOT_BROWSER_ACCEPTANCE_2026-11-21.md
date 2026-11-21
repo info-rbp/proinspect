@@ -4,18 +4,19 @@ Use the exact preview SHA reported by `/api/health` and the delivery PR. Record 
 
 ## Sign in to the staging preview
 
-Open [ProInspect staging sign-in](https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev/signin?returnTo=%2Fworkspaces) in a private browser window. Choose **Continue with staging email**. Enter one of the approved test aliases below, retrieve the one-time code from its mailbox, then choose **Continue to ProInspect** on the staging site. Use a separate private browser session for each identity or sign out of both ProInspect and Cloudflare before changing identities. Keep the code in your browser.
+Open [ProInspect staging sign-in](https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev/signin?returnTo=%2Fworkspaces) in a private browser window. Choose **Continue with staging email**, enter the nominated address and retrieve its one-time code. Confirm the displayed address on the staging site and choose **Continue to ProInspect**. Use separate private sessions for different identities. Keep codes and cookies out of screenshots.
 
-| Test alias | Scope to expect after sign-in |
+| Nominated email role | Workspace and synthetic records |
 | --- | --- |
-| `landlord-testing@proinspect.systems` | TEST ProInspect Self-Managed Landlord and its residential property |
-| `property-manager-testing@proinspect.systems` | TEST ProInspect Property Management and its separate agency-managed property |
-| `tenant-testing@proinspect.systems` | The TEST tenancy at the landlord’s property |
-| `staff-testing@proinspect.systems` | Staff Operations using the documented test administrator |
+| Administrator | Staff Operations, including Today, work orders, report review and billing |
+| Client | Two choices in My ProInspect. The landlord owns 11001 ProInspect Test Street. The agency manages 11002 ProInspect Test Street. |
+| Resident | A tenancy at 11001 ProInspect Test Street, Test room A and the shared kitchen |
+
+Use **Staging practice visit** for the booking and rescheduling journey. It has a zero test price and creates a synthetic appointment. The normal Residential services retain their catalogue rates or quote requirements. The leasing page includes **Staging sample rental**. Use synthetic contact details throughout.
 
 - [ ] Record the staging source revision from [staging health](https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev/api/health), browser, viewport and test alias.
 - [ ] Confirm the correct alias is displayed after email verification. Open its workspace and record the first page. Sign out and revisit a private page to confirm it requests sign-in.
-- [ ] Open the agency’s test property link in the landlord session and the landlord’s finance page in the tenant session. Each must deny access without showing the other account’s data.
+- [ ] In the landlord workspace, try the agency property through that landlord workspace’s property URL. Then try the landlord’s finance page in the separate resident session. Both must deny access. The client can intentionally switch to its own agency workspace in My ProInspect.
 - [ ] Record the receipt of the code, the confirmation and the workspace separately. Redact email codes, cookies and personal information from screenshots.
 
 ## Public review (available after successful preview deployment)
@@ -29,7 +30,7 @@ Open [ProInspect staging sign-in](https://proinspect-v3-staging.delicate-dream-e
 
 ## Account and property journeys
 
-Use the four approved staging aliases above. A second owner, assigned inspector, separate reviewer and read-only user require separate authorised identities for hosted testing. Do not grant all roles to one account and treat that as permission testing.
+Use the three nominated staging accounts above. A second owner, assigned inspector, separate reviewer and read-only user require separate authorised identities for hosted testing. Do not grant all roles to one account and treat that as permission testing.
 
 - [ ] Owner A signs in, creates a free account and adds a property. No Stripe customer/charge, subscription or included-service entitlement appears automatically.
 - [ ] Dashboard properties, open work, upcoming visits and pending decisions reflect actual authorised records. A visit in the past is not automatically reported as completed.
@@ -60,7 +61,7 @@ Use the four approved staging aliases above. A second owner, assigned inspector,
 - [ ] Wrong customer, amount, price, quantity, currency, signature and duplicate/out-of-order events do not create incorrect entitlements or duplicate money.
 - [ ] Failed renewal, recovery, refund, dispute and cancellation reconcile in the property ledger and Staff exception view.
 - [ ] Written notice returns a persistent receipt and earliest ordinary end date; retry retains the same receipt. The UI says pending review, not cancelled. Immediate weekly-end self-cancellation is unavailable for the 24-month contract.
-- [ ] Provider cancellation is scheduled only after independently approved contract/exception review. Verify the actual provider end date and final invoice; this is not implemented acceptance yet.
+- [ ] Use an independently reviewed Stripe sandbox subscription to reconcile a written notice in Staff billing. Check the permissible end date, the date observed at Stripe and the final invoice. Scheduling at Stripe and the final charge require separate provider and legal acceptance.
 
 ## Release decision
 

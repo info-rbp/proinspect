@@ -20,6 +20,7 @@ const price = 'price_1UVkM6Ev62nbUZoknG7CA5P5',
   account = 'acct_1USumhEv62nbUZok';
 const providerCalls = [],
   sessions = new Map();
+let observedSubscription;
 const mf = new Miniflare({
   modules: true,
   scriptPath: 'artifacts/weekly-billing-worker.mjs',
@@ -51,6 +52,10 @@ const mf = new Miniflare({
       });
     if (url.pathname === '/v1/products/prod_synthetic')
       return Response.json({ tax_code: 'txcd_20030000' });
+    if (url.pathname === '/v1/subscriptions/sub_weekly_synthetic') {
+      assert.equal(request.method, 'GET');
+      return Response.json(observedSubscription);
+    }
     if (url.pathname === '/v1/customers')
       return Response.json({ id: 'cus_weekly_synthetic', livemode: false });
     if (url.pathname === '/v1/checkout/sessions' && form) {
@@ -257,6 +262,62 @@ try {
   });
   assert.equal(notice.status, 200, JSON.stringify(notice.data));
   assert.equal(notice.data.status, 'pending_review');
+  await api(base + '/billing/cancellation-notice', {
+    cookie: owner.cookie,
+    body: { billingLinkId: contract.billing_link_id, reason: 'Retry of notice' },
+  });
+  assert.equal(
+    (
+      await sql(
+        "SELECT COUNT(*) n FROM audit_events WHERE action='subscription.cancellation_notice_received'",
+      ).first()
+    ).n,
+    1,
+  );
+  const ops = await login('review-ops@weekly.example');
+  await sql(
+    "INSERT INTO staff_profiles(user_id,role) SELECT id,'operations_manager' FROM users WHERE email=?",
+    ops.email,
+  ).run();
+  const verify = '/api/w/staff/operations/billing/cancellation-review';
+  const command = { billingLinkId: contract.billing_link_id };
+  assert.equal((await api(verify, { cookie: other.cookie, body: command })).status, 403);
+  const overview = await api('/api/w/staff/operations/billing', { cookie: ops.cookie });
+  assert.equal(overview.status, 200, JSON.stringify(overview.data));
+  assert.ok(
+    overview.data.cancellationNotices.some(
+      (n) => n.billing_link_id === contract.billing_link_id && n.status === 'pending_review',
+    ),
+  );
+  observedSubscription = {
+    id: 'sub_weekly_synthetic',
+    customer: 'cus_weekly_synthetic',
+    livemode: false,
+    status: 'active',
+    cancel_at: null,
+    metadata: { billing_link_id: contract.billing_link_id },
+    items: { data: [{ price: { id: price }, quantity: 1 }], has_more: false },
+  };
+  assert.equal((await api(verify, { cookie: ops.cookie, body: command })).status, 409);
+  observedSubscription.cancel_at =
+    Math.ceil(Date.parse(notice.data.earliest_end_at) / 1000) - 86400;
+  assert.equal((await api(verify, { cookie: ops.cookie, body: command })).status, 409);
+  observedSubscription.cancel_at += 2 * 86400;
+  observedSubscription.customer = 'cus_another_property';
+  assert.equal((await api(verify, { cookie: ops.cookie, body: command })).status, 409);
+  observedSubscription.customer = 'cus_weekly_synthetic';
+  const verified = await api(verify, { cookie: ops.cookie, body: command });
+  assert.equal(verified.status, 200, JSON.stringify(verified.data));
+  assert.equal(verified.data.status, 'provider_scheduled');
+  assert.deepEqual((await api(verify, { cookie: ops.cookie, body: command })).data, verified.data);
+  assert.equal(
+    (
+      await sql(
+        "SELECT COUNT(*) n FROM audit_events WHERE action='subscription.cancellation_verified_in_sandbox'",
+      ).first()
+    ).n,
+    1,
+  );
   console.log(
     'PASS: synthetic weekly Checkout, mandatory consent, exact price/tax/quantity, per-property immutable 24/60 contract, duplicate replay and no unverified start. No real provider calls.',
   );

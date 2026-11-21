@@ -68,17 +68,17 @@ export default function Integrations() {
           ))}
         </Panel>
         <Panel
-          title="Report Tool authoring"
-          description="Launch creates a signed, expiring handoff for this work order. Manual report upload remains available."
+          title="Issue an externally prepared report"
+          description="An independent Staff manager can issue the final PDF to the commissioning client through the configured external tool."
         >
-          {d.workOrders
-            .filter((o) => !['completed', 'cancelled'].includes(o.status))
+          {i.configured.reportTool && d.workOrders
+            .filter((o) => !o.scheme_id && !o.has_managed_report && o.assigned_staff_id !== d.user.id && !['completed', 'cancelled'].includes(o.status))
             .map((o) => (
               <details key={o.id}>
                 <summary>{o.title}</summary>
                 <OperationForm
                   endpoint={`${api}/work-orders/${o.id}/report-handoff`}
-                  label="Create report-authoring handoff"
+                  label="Open final report handoff"
                   result={(r) => (
                     <a className="button secondary" href={r.url} target="_blank" rel="noreferrer">
                       Open Report Tool
