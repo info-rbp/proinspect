@@ -123,7 +123,7 @@ export default function ServiceOverview() {
             <li key={title}><span className="pi-step-number">0{i+1}</span><h3>{title}</h3><p>{copy}</p></li>)}</ol>
         </div>
       </section>}
-      {(page.key === 'residential' || page.key === 'commercial') && <PlanComparison market={page.key} />}
+      {page.key === 'commercial' && <PlanComparison market={page.key} />}
       <section className="mkt-section pi-editorial-section">
         <div className="site-container pi-faq-layout">
           <div>
