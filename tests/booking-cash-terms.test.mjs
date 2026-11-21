@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {PRIMARY_INSPECTIONS,INSPECTION_SOURCE_PRICES,orderBookingServices,
-  cashInvoiceDueAt,cashInvoicePeriod,cashPeriodIsClosed,bookingIntakeSchema} from '../packages/booking/inspection-checkout.ts';
+  cashInvoiceDueAt,cashInvoicePeriod,cashPeriodIsClosed,cashInvoiceDueForServicePeriod,bookingIntakeSchema} from '../packages/booking/inspection-checkout.ts';
 test('three canonical core inspections are first in required order',()=>{
  const input=[{id:'z-service',name:'ZZZ'},{id:'routine-inspection',name:'Routine'},
  {id:'final-exit-inspection',name:'Final'},{id:'property-condition-report',name:'PCR'}];
@@ -25,4 +25,11 @@ test('inspection intake validates usable operational details',()=>{
  const valid={contactPhone:'0400 111 222',reason:'Entry inspection',occupancyStatus:'vacant'};
  assert.equal(bookingIntakeSchema.parse(valid).occupancyStatus,'vacant');
  assert.equal(bookingIntakeSchema.safeParse({...valid,contactPhone:''}).success,false);
+});
+test('end-of-month credit due dates follow the service period, not delayed issue month',()=>{
+ assert.equal(cashInvoiceDueForServicePeriod('eom_7','2026-11','2026-12-01T02:00:00Z'),
+  '2026-12-07T15:59:59.000Z');
+ assert.throws(()=>cashInvoiceDueForServicePeriod('eom_7','2026-11','2026-12-08T00:00:00Z'));
+ assert.equal(cashInvoiceDueForServicePeriod('net_7','booking:bkg_1','2026-11-21T04:00:00Z'),
+  '2026-11-28T04:00:00.000Z');
 });

@@ -476,6 +476,10 @@ export async function recordPayment(
     'SELECT booking_id FROM registered_booking_payment_links WHERE payment_id=?',id).first();
   assert(!registeredOneOff,409,'SIGNED_CHECKOUT_REQUIRED',
     'A registered one-off service payment may settle only from its verified Stripe Checkout event.');
+  const cashInvoiceCredit=await statement(env.DB,
+    'SELECT booking_id FROM cash_booking_charges WHERE payment_id=?',id).first();
+  assert(!cashInvoiceCredit,409,'INVOICE_SETTLEMENT_REQUIRED',
+    'Cash Client credit charges require authorised invoice issuance and verified reconciliation.');
   assert(
     p.provider === 'manual',
     409,

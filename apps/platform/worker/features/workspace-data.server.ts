@@ -63,11 +63,12 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
       ? (
           await statement(
             env.DB,
-            `SELECT b.id,b.reference,b.property_id,b.starts_at,b.ends_at,b.status,b.price_ex_gst_cents,b.version,s.name AS service_name,p.address,pay.status AS payment_status,pay.id AS payment_id
+            `SELECT b.id,b.reference,b.property_id,b.starts_at,b.ends_at,b.status,b.price_ex_gst_cents,b.version,s.name AS service_name,p.address,pay.status AS payment_status,pay.id AS payment_id,cc.term_code AS cash_payment_term
               FROM bookings b JOIN work_orders wo ON wo.booking_id=b.id
               JOIN services s ON s.id=b.service_id JOIN properties p ON p.id=b.property_id
               LEFT JOIN registered_booking_payment_links l ON l.booking_id=b.id
-              LEFT JOIN payments pay ON pay.id=l.payment_id WHERE ${orderSql} ORDER BY b.starts_at DESC LIMIT 300`,
+              LEFT JOIN cash_booking_charges cc ON cc.booking_id=b.id
+              LEFT JOIN payments pay ON pay.id=COALESCE(l.payment_id,cc.payment_id) WHERE ${orderSql} ORDER BY b.starts_at DESC LIMIT 300`,
             ...orderArgs,
           ).all()
         ).results
@@ -169,7 +170,7 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
       ? (
           await statement(
             env.DB,
-            `SELECT p.* FROM payments p JOIN work_orders wo ON wo.id=p.work_order_id WHERE ${orderSql} ORDER BY p.created_at DESC LIMIT 200`,
+            `SELECT p.*,CASE WHEN EXISTS(SELECT 1 FROM cash_booking_charges cc WHERE cc.payment_id=p.id) THEN 1 ELSE 0 END AS cash_invoice_credit FROM payments p JOIN work_orders wo ON wo.id=p.work_order_id WHERE ${orderSql} ORDER BY p.created_at DESC LIMIT 200`,
             ...orderArgs,
           ).all()
         ).results

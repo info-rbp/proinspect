@@ -29,6 +29,14 @@ export default function Billing(){
  }
  return <>
 <PageHeading title={staff?"Billing and reconciliation":"Property plans and invoices"} description={staff?"Service revenue, invoices and financial exceptions.":"Review your property subscription, paid invoices and written cancellation notices."}/>
+{!staff&&d.customerCashTerms&&<Panel title="One-off inspection payment terms">
+ <p>{d.customerCashTerms.termCode==='upon_booking'
+  ? 'Pay-as-you-go services require payment upon booking.'
+  : d.customerCashTerms.termCode==='net_7'
+   ? 'Approved Cash Client terms: seven calendar days from the date an invoice is issued after service completion.'
+   : 'Approved Cash Client terms: month-end invoicing, due on the seventh of the following month.'}</p>
+ <p className="small">Only bookings not covered by an eligible subscription have a separate service charge. Your property-specific subscription benefits are checked when you book.</p>
+</Panel>}
 {!staff&&d.portalEnabled&&<Panel title="Secure billing self-service"><OperationForm endpoint={api+'/billing/portal'} label="Open billing portal" result={r=>r.url?<a className="button" href={r.url} rel="noreferrer">Continue to Stripe billing</a>:null}/></Panel>}
 <Panel title="Property subscriptions">{d.subscriptions.map((s:any)=><p key={s.id}>{s.address ?? s.property_id}: <Badge status={s.status}/></p>)}<p>Subscription financial status and included service entitlements are separate records.</p></Panel>
 {staff && <Panel title="Written cancellation notices">
