@@ -8,8 +8,8 @@ const groups = (items: ReadonlyArray<readonly [string, string]>) => items.map(([
 const coverage: [string, string] = ['Where do you work?', SERVICE_COVERAGE + ' ' + PRIVATE_SERVICE_PRICING];
 export const SECTOR_OVERVIEWS = {
   residential: {
-    name: 'Residential', headline: 'Practical support for every stage of your rental property.',
-    summary: 'Residential inspections, outsourced property operations and practical building services for self-managing landlords and property managers across Perth and Peel.',
+    name: 'Residential', headline: 'Innovative Support for Every Stage of Your Rental',
+    summary: 'Property inspections, tenancy support, maintenance coordination and connected records for Residential landlords and agencies in Western Australia.',
     description: 'Keep control of your rental while we take care of the practical detail. Choose a single inspection, ongoing inspection support or a wider programme covering tenant enquiries, maintenance and property attendance.',
     audience: 'For self-managing landlords and property managers who need dependable support on the ground.',
     outcome: 'Less coordination. Better records. More time for the decisions that matter.',
@@ -79,7 +79,7 @@ export const SECTOR_OVERVIEWS = {
   },
   'co-living': {
     name: 'Co-Living', headline: 'Shared living, supported from room to common space.',
-    summary: 'Tailored Co-Living and Student Living support: room and common-area inspections, resident administration, turnover coordination and practical property care.',
+    summary: 'From room inspections and resident turnovers to shared-space care, we help Co-Living owners and operators keep their properties organised.',
     description: 'Shared homes need care at room level and across the spaces everyone uses. We help with condition records, resident arrivals, room turnovers and communal care, giving operators a clearer view of what is ready and what needs attention.',
     audience: 'For shared-accommodation owners, Co-Living operators, Student Living providers and authorised accommodation managers.',
     outcome: 'A more consistent property experience for operators and residents.',
@@ -150,7 +150,7 @@ export const SECTOR_OVERVIEWS = {
   },
   maintenance: {
     name: 'Maintenance', headline: 'Property care that follows the issue through.',
-    summary: 'Maintenance coordination, preventative care, safe minor works and specialist-contractor follow-up for residential, commercial and shared buildings.',
+    summary: 'Maintenance attendance, approved contractor coordination, preventative care and follow-up for Residential rental properties and shared accommodation.',
     description: 'Turn reported issues into an approved plan and a documented outcome. We help obtain quotes, arrange contractors and access, and follow through on completed work. Choose one task or build a recurring care routine.',
     audience: 'For owners, agencies, strata and building teams. Tenants should use their property’s nominated reporting process and the responsible manager’s urgent-maintenance instructions.',
     outcome: 'Notice the issue. Agree the work. Keep the outcome in view.',

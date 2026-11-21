@@ -9,7 +9,7 @@ import { Field } from '../../../../packages/ui/components';
 import { Turnstile } from '../../../../packages/ui/Turnstile';
 import { seo } from '../lib/seo';
 import { EditorialHero } from '../components/editorial';
-export const meta=()=>seo('Contact Us — Property Inspections & Support in WA','Talk to ProInspect about Residential property inspections, maintenance attendance and portfolio support in Western Australia.','/contact');
+export const meta=()=>seo('Contact ProInspect — Property Inspections & Support in WA','Talk to ProInspect about Residential property inspections, maintenance attendance and portfolio support in Western Australia.','/contact');
 export function loader({request,context}:LoaderFunctionArgs) {
  const env=context.get(runtimeContext).env as Record<string,string>;
  const url=new URL(request.url),requested=url.searchParams.get('service')??'';
@@ -55,7 +55,7 @@ export default function Contact() {
  const field=(name:string)=>({'aria-invalid':!!result?.fields?.[name],'aria-describedby':result?.fields?.[name]?`${name}-error`:undefined});
  const error=(name:string)=>result?.fields?.[name]?.length?<p className="error-text" id={`${name}-error`}>{result.fields[name].join(' ')}</p>:null;
  return <>
-  <EditorialHero eyebrow="Contact Us" title="Let’s talk about your property." intro="A single inspection, a growing portfolio or a building that needs practical support. Tell us what you have in mind and we’ll help clarify the next step." image="maintenance" />
+  <EditorialHero eyebrow="Contact" title="Let’s talk about your property." intro="Need an inspection, maintenance support or help with a Residential property? Tell us what you need and we will confirm the appropriate next step." image="maintenance" />
   <section className="section mkt-section mkt-contact-section"><div className="site-container contact-grid mkt-contact-grid">
    <article className="panel mkt-contact-form-panel">
     {result?.reference?<div role="status" className="stack"><h2>Your enquiry has been received.</h2><p>Reference <strong>{result.reference}</strong></p><p>ProInspect will review your requirements and contact you using the details supplied. This is not a confirmed booking or an account registration.</p><Link className="button" to="/services">Explore services</Link></div>:<>

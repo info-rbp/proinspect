@@ -1,161 +1,64 @@
-import { Link } from 'react-router';
-import { EditorialHero, EditorialSteps } from '../components/editorial';
-import { BrandImage } from '../components/brand-image';
-import { MarketingCta } from '../components/marketing-ui';
-import { seo } from '../lib/seo';
+import {Link} from 'react-router';
+import {EditorialHero} from '../components/editorial';
+import {BrandImage} from '../components/brand-image';
+import {IllustrativeReport} from '../components/marketing-ui';
+import {seo} from '../lib/seo';
 
-export const meta = () =>
-  seo(
-    'About Us — Property Services in Western Australia',
-    'ProInspect Property Services Pty Ltd connects inspections, outsourced property operations and building services across Perth and Peel, Western Australia.',
-    '/about',
-    { breadcrumbs: [{ name: 'About Us', path: '/about' }] },
-  );
-
-export default function About() {
-  return (
-    <>
-      <EditorialHero
-        eyebrow="About Us"
-        title="Property work, with the detail taken care of."
-        intro="Inspections, outsourced property operations and building services, connected by clear records. ProInspect helps owners, managers and operators take care of the practical detail across Perth and Peel."
-        image="commercial"
-        primary={{ label: 'Talk to ProInspect', to: '/contact' }}
-        secondary={{ label: 'Explore our services', to: '/services' }}
-      />
-      <section className="mkt-section pi-editorial-section">
-        <div className="site-container pi-introduction">
-          <div>
-            <p className="eyebrow">Our purpose</p>
-            <h2>Make looking after property easier to manage.</h2>
-          </div>
-          <div>
-            <p>
-              Owning or managing property involves more than making decisions from a desk. Someone
-              needs to attend the site, notice the detail, arrange access and leave a record that is
-              useful to the next person.
-            </p>
-            <p>
-              That is where ProInspect fits. ProInspect Property Services Pty Ltd
-              (ABN 52 703 550 609; ACN 703 550 609) supports self-managing landlords,
-              professional agencies, commercial owners, strata and building teams, Co-Living
-              and Student Living operators, and construction project teams.
-            </p>
-            <p>
-              Choose one task, an inspection subscription or a tailored operational scope.
-              We connect physical attendance, administration and property care with the records
-              your authorised team needs. We work across approved Perth and Peel suburbs, with other WA locations considered by request.
-            </p>
-          </div>
-        </div>
-      </section>
-      <section className="mkt-section pi-editorial-section pi-neutral">
-        <div className="site-container pi-difference">
-          <div className="pi-difference-image">
-            <BrandImage name="strata" />
-          </div>
-          <div>
-            <p className="eyebrow">What makes the difference</p>
-            <h2>A practical presence. A connected approach.</h2>
-            <div className="pi-difference-item">
-              <h3>Useful work on the ground</h3>
-              <p>
-                Inspections create factual condition records. Outsourced operations cover agreed
-                administration, leasing support, access and follow-up. Building services bring
-                presentation, cleaning, grounds, safe minor works and specialist coordination together.
-              </p>
-            </div>
-            <div className="pi-difference-item">
-              <h3>Information with context</h3>
-              <p>
-                Bookings, requests and issued records sit within the relevant property relationship.
-                The people entitled to see the result can find it through their authorised account.
-              </p>
-            </div>
-            <div className="pi-difference-item">
-              <h3>Clear expectations</h3>
-              <p>
-                We agree scope, responsibilities, access and commercial terms before proceeding.
-                Your appointed managers, specialists and decision-makers retain their own
-                responsibilities.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="mkt-section pi-editorial-section">
-        <div className="site-container">
-          <div className="pi-section-heading">
-            <p className="eyebrow">Built around real property needs</p>
-            <h2>One task today. Room to support what comes next.</h2>
-            <p>
-              Start with an individual inspection or discuss a recurring operational requirement.
-              Support should fit the work, the property and the people involved.
-            </p>
-          </div>
-          <div className="pi-about-links">
-            <article>
-              <h3>Homes and portfolios</h3>
-              <p>
-                From incoming inspections to tenant enquiries, maintenance and vacates,
-                give your property a clear routine while you stay in control.
-              </p>
-              <Link className="pi-inline-link" to="/residential">
-                Residential services <span aria-hidden="true">↗</span>
-              </Link>
-            </article>
-            <article>
-              <h3>Workplaces and shared buildings</h3>
-              <p>
-                Keep workplaces and shared buildings running through practical attendance,
-                building care and contractor coordination. Tailor support for Co-Living,
-                Student Living or your next construction project.
-              </p>
-              <Link className="pi-inline-link" to="/who-we-help">
-                Who we help <span aria-hidden="true">↗</span>
-              </Link>
-            </article>
-            <article>
-              <h3>People finding or living in a home</h3>
-              <p>
-                Published leasing opportunities, open-home registration and guidance to the right
-                tenant support channel.
-              </p>
-              <Link className="pi-inline-link" to="/tenants">
-                Tenant support <span aria-hidden="true">↗</span>
-              </Link>
-            </article>
-          </div>
-        </div>
-      </section>
-      <section className="mkt-section pi-editorial-section pi-neutral">
-        <div className="site-container">
-          <div className="pi-section-heading">
-            <p className="eyebrow">How our service model connects</p>
-            <h2>Three ways to take practical property work off your desk.</h2>
-            <p>ProInspect Property Services Pty Ltd is a Western Australian property services company offering individual site work, agreed outsourced operations and ongoing building care.</p>
-          </div>
-          <div className="mkt-editorial-grid">
-            <article className="mkt-editorial-panel"><h3>Individual inspections and attendance</h3>
-              <p>Arrange a defined property condition record, access appointment, maintenance observation or completion check. The client approves the task and receives the agreed evidence.</p>
-              <Link className="pi-inline-link" to="/services">Browse individual services <span aria-hidden="true">→</span></Link>
-            </article>
-            <article className="mkt-editorial-panel"><h3>Outsourced property operations</h3>
-              <p>Commission an agreed mix of tenancy administration, inspections, contractor coordination, owner reporting and ongoing follow-up. Each role and approval threshold is identified during onboarding.</p>
-              <Link className="pi-inline-link" to="/how-we-work/outsourced-operations">Explore outsourcing <span aria-hidden="true">→</span></Link>
-            </article>
-            <article className="mkt-editorial-panel"><h3>Building and accommodation care</h3>
-              <p>Scope building presentation, cleaning, waste, grounds, safe minor work, room turnovers and shared-living support. Specialist certification and regulated appointments remain with the responsible providers.</p>
-              <Link className="pi-inline-link" to="/co-living">Explore shared accommodation <span aria-hidden="true">→</span></Link>
-            </article>
-          </div>
-        </div>
-      </section>
-      <EditorialSteps />
-      <MarketingCta
-        title="Tell us what looking after your property involves."
-        description="Share the property type, general location and the support you need. We’ll clarify suitability, availability and the next step."
-      />
-    </>
-  );
-}
+export const meta=()=>seo('About ProInspect — Residential Property Services in WA',
+ 'Learn how ProInspect supports private landlords, property management agencies and Co-Living owners with inspections, maintenance and connected property records.','/about',
+ {breadcrumbs:[{name:'About Us',path:'/about'}]});
+const audiences=[
+ {name:'Private landlords',description:'Support for landlords who manage their own rentals: condition reports, routine inspections, maintenance attendance and practical help across the tenancy.',href:'/who-we-help/private-landlords',action:'Support for private landlords'},
+ {name:'Residential property management agencies',description:'Extra property-inspection and on-site capacity for authorised agency teams, with reports and follow-up linked to the relevant instruction.',href:'/who-we-help/property-management-agencies',action:'Support for agencies'},
+ {name:'Co-Living owners and operators',description:'Room and shared-space inspections, resident turnovers and agreed property care for accommodation managed room by room.',href:'/co-living',action:'Co-Living solutions'},
+ {name:'Tenants and prospective renters',description:'Find advertised rentals, register for an open home and use authorised tenant channels to follow inspections and requests.',href:'/tenants',action:'Tenant information'},
+];
+export default function About(){return <>
+ <EditorialHero eyebrow="About Us" title="Property Support. Designed Around You."
+  intro="ProInspect Property Services combines practical inspections, on-the-ground attendance and connected property records to help owners and managers keep Residential properties moving."
+  image="residential" primary={{label:'See What We Offer',to:'/residential/services'}}
+  secondary={{label:'Get Started Today',to:'/client'}}/>
+ <section className="mkt-section pi-editorial-section"><div className="site-container pi-introduction">
+  <div><p className="eyebrow">Our purpose</p><h2>Less time chasing tasks. More clarity over your property.</h2></div>
+  <div><p>Rental property ownership and management involve inspections, access arrangements, tenant enquiries, maintenance and documentation. Our role is to make the practical work easier to organise and easier to follow up.</p>
+  <p>ProInspect Property Services Pty Ltd (ABN 52 703 550 609; ACN 703 550 609) is a Western Australian property-services business. We work across approved Perth and Peel suburbs, with other Western Australian locations assessed by request.</p>
+  <p>Choose an individual service or discuss an agreed programme. The responsible landlord, property manager or other authorised representative retains the decisions and legal responsibilities associated with their property.</p></div>
+ </div></section>
+ <section id="who-we-help" className="mkt-section pi-editorial-section pi-neutral"><div className="site-container">
+  <div className="pi-section-heading"><p className="eyebrow">Who We Help</p><h2>Support for the people behind the property.</h2>
+  <p>We work with private landlords, professional residential agencies and shared-accommodation operators. We also provide the right information pathways for tenants and prospective renters.</p></div>
+  <div className="mkt-editorial-grid">{audiences.map(person=><article className="mkt-editorial-panel" key={person.name}>
+   <h3>{person.name}</h3><p>{person.description}</p>
+   <Link to={person.href} className="pi-inline-link">{person.action} <span aria-hidden="true">↗</span></Link></article>)}</div>
+ </div></section>
+ <section className="mkt-section pi-editorial-section"><div className="site-container pi-residential-feature">
+  <div className="pi-residential-feature-image"><IllustrativeReport compact/></div>
+  <div className="pi-residential-feature-content"><p className="eyebrow">What makes us different</p><h2>Real work. A connected record.</h2>
+   <p>Services and records are connected to the property, not scattered across separate conversations. Authorised customers can review bookings, requests and issued reports using their appropriate ProInspect workspace.</p>
+   <p>For inspections, our reporting tools help record relevant observations and evidence. Completed reports follow review and issue controls before they become available to authorised recipients.</p>
+   <Link to="/example-reports" className="button secondary">View Example Inspection Reports <span aria-hidden="true">→</span></Link>
+   <p className="pi-residential-note">The report illustration is synthetic, not an issued report.</p>
+  </div>
+ </div></section>
+ <section className="mkt-section pi-editorial-section pi-neutral"><div className="site-container">
+  <div className="pi-section-heading"><p className="eyebrow">Our approach</p><h2>Practical support when it matters.</h2></div>
+  <div className="mkt-editorial-grid">
+   <article className="mkt-editorial-panel"><h3>Inspections with purpose</h3><p>Incoming condition reports, Routine Inspections, pre-vacate visits and final reports give the responsible person useful property information.</p><Link className="pi-inline-link" to="/residential/services/property-inspections">Explore inspections <span aria-hidden="true">↗</span></Link></article>
+   <article className="mkt-editorial-panel"><h3>Maintenance and access</h3><p>Attend to agreed property tasks, coordinate approved contractors and keep visibility over instructed follow-up.</p><Link className="pi-inline-link" to="/maintenance">Explore maintenance <span aria-hidden="true">↗</span></Link></article>
+   <article className="mkt-editorial-panel"><h3>Flexible engagement</h3><p>Start with an individual service or review a Residential subscription separately. Registration alone never activates a new paid subscription.</p><Link className="pi-inline-link" to="/residential/subscriptions">Review subscriptions <span aria-hidden="true">↗</span></Link></article>
+   <article className="mkt-editorial-panel"><h3>Clear authority</h3><p>Instructions, property access, approvals and document recipients follow the agreed responsibilities. We support your work rather than assuming every regulated management function.</p><Link className="pi-inline-link" to="/help-centre">Visit Help Centre <span aria-hidden="true">↗</span></Link></article>
+  </div>
+ </div></section>
+ <section className="mkt-section pi-editorial-section"><div className="site-container pi-residential-feature pi-residential-feature-reverse">
+  <div className="pi-residential-feature-image"><BrandImage name="co-living"/></div>
+  <div className="pi-residential-feature-content"><p className="eyebrow">Supporting shared homes</p><h2>From a single rental to Co-Living.</h2>
+   <p>Different property arrangements need different inspection and care routines. We can support whole-property rentals or discuss tailored room turnover and shared-area services for Co-Living operators.</p>
+   <Link to="/co-living" className="pi-inline-link">Explore Our Co-Living Solutions <span aria-hidden="true">↗</span></Link>
+  </div>
+ </div></section>
+ <section className="mkt-final-cta"><div className="site-container mkt-cta-inner"><div>
+  <p className="eyebrow">Get started</p><h2>Let’s make property work easier.</h2>
+  <p>Create a free account, explore Residential services or contact us about an agreed property workload.</p>
+ </div><div className="actions"><Link className="button mkt-button-light" to="/client">Sign Up Today <span aria-hidden="true">→</span></Link>
+ <Link className="button mkt-button-outline-light" to="/contact">Contact</Link></div></div></section>
+</>}

@@ -17,7 +17,7 @@ export function isPublicSitePath(pathname: string): boolean {
 
 /** Never index the Worker preview alias or pages containing customer data. */
 export function shouldIndexPublicPage(pathname: string, requestOrigin: string, appEnv: string): boolean {
-  if (retiredPublicPath(pathname) || pathname === '/student-living') return false;
+  if (retiredPublicPath(pathname) || pathname === '/student-living' || pathname === '/who-we-help') return false;
   // Canonical sector redirects remain routable but must not be indexed as distinct pages.
   if (/^\/sectors\/(?:residential|commercial|strata-building)$/.test(pathname)) return false;
   // Do not publicly index unapproved leasing/visitor flows in V3.
