@@ -13,7 +13,19 @@ export const meta=()=>seo('Contact ProInspect — Property Inspections & Support
 export function loader({request,context}:LoaderFunctionArgs) {
  const env=context.get(runtimeContext).env as Record<string,string>;
  const url=new URL(request.url),requested=url.searchParams.get('service')??'';
- return data({requestKey:crypto.randomUUID(),serviceId:SERVICES.some(s=>s.id===requested)?requested:'',
+ const requestedTopic=url.searchParams.get('topic')??'';
+ const topics:Record<string,string>={
+  'open-homes':'I would like to discuss scheduled Open Home support for my Residential property.',
+  'private-viewings':'I would like to discuss a private property viewing and availability.',
+  'tenancy-agreements':'I would like to discuss authorised Residential tenancy agreement documentation support.',
+  'incidents':'I would like to discuss incident documentation or specialist follow-up at a rental property.',
+  'access':'I would like to discuss authorised access, keys and property attendance.',
+  'vacate':'I would like to discuss vacate support and outgoing property inspection arrangements.',
+  'bond':'I would like to discuss bond-related records and administrative support.',
+  'bond-disputes':'I would like to discuss the factual records needed for a bond-related enquiry.'
+ };
+ const initialMessage=topics[requestedTopic]??'';
+ return data({requestKey:crypto.randomUUID(),serviceId:SERVICES.some(s=>s.id===requested)?requested:'',initialMessage,
  siteKey:env.MARKETING_TURNSTILE_SITE_KEY,ready:Boolean(env.ENQUIRY_GATEWAY_SECRET&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SITE_KEY)),local:env.APP_ENV==='local'},
  {headers:{'Cache-Control':'no-store'}});
 }
@@ -70,7 +82,7 @@ export default function Contact() {
       <Field label="What would you like to discuss?" name="category"><select name="category" defaultValue={settings.serviceId?'service':'portfolio'}><option value="service">An individual property service</option><option value="portfolio">Portfolio or outsourced operations</option><option value="residential">Residential support</option><option value="co-living">Co-Living support</option><option value="maintenance">Maintenance or property care</option><option value="subscription">Subscription enquiry</option><option value="other">Another requirement</option></select></Field>
       <Field label="Service (optional)" name="serviceId"><select name="serviceId" defaultValue={settings.serviceId}><option value="">Help me choose</option>{SERVICES.filter(s=>s.sectors.includes('residential')).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>{error('serviceId')}
       <div className="grid-2"><Field label="Suburb or locality (optional)" name="suburb"><input name="suburb" maxLength={100} autoComplete="address-level2"/></Field><Field label="Postcode (optional)" name="postcode"><input name="postcode" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} autoComplete="postal-code" {...field('postcode')}/></Field></div>{error('postcode')}
-      <Field label="How can ProInspect help?" name="message"><textarea name="message" required minLength={15} maxLength={4000} rows={6} {...field('message')}/></Field>{error('message')}
+      <Field label="How can ProInspect help?" name="message"><textarea name="message" required minLength={15} maxLength={4000} rows={6} defaultValue={settings.initialMessage} {...field('message')}/></Field>{error('message')}
       <label className="check"><input type="checkbox" name="consent" value="yes" required/>I agree to ProInspect using these details to respond to this enquiry. This does not subscribe me to marketing.</label>{error('consent')}
       <p className="small"><Link to="/privacy">Privacy information</Link>. This form is not monitored as an emergency service.</p>
       <Turnstile key={result?.attempt||'initial'} siteKey={settings.siteKey} action="enquiry"/>
