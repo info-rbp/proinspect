@@ -1290,3 +1290,43 @@ summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+
+/* Residential account entry: progressive, accessible, keyboard-first choices. */
+.signup-steps {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0 0;
+  padding-left: 1.4rem;
+}
+.signup-steps li { padding-left: .35rem; }
+.signup-steps li strong, .signup-steps li span { display: block; }
+.signup-steps li span { color: var(--muted); font-size: .86rem; }
+.signup-choice-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.signup-choice-fieldset legend { color: var(--ink); font-weight: 700; padding: 0 0 .35rem; }
+.signup-choice-fieldset > p { margin-bottom: .8rem; }
+.signup-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.signup-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  min-height: 106px;
+  padding: .8rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+}
+.signup-choice:has(input:checked) { background: var(--teal-light); border-color: var(--teal); }
+.signup-choice:focus-within { outline: 2px solid #0c9395; outline-offset: 2px; }
+.signup-choice input { flex-shrink: 0; margin-top: .25rem; accent-color: var(--teal); }
+.signup-choice-copy { min-width: 0; display: grid; gap: .3rem; line-height: 1.35; }
+.signup-choice-copy strong { font-size: .87rem; color: var(--ink); }
+.signup-choice-copy > span { color: var(--muted); font-size: .77rem; }
+.signup-progress { display: flex; flex-wrap: wrap; gap: .6rem; list-style: none; padding: 0; margin: .3rem 0 1.2rem; }
+.signup-progress li { border: 1px solid var(--border); border-radius: 100px; padding: .3rem .7rem; font-size: .79rem; }
+.signup-progress [aria-current="step"] { background: var(--teal-light); color: var(--ink); border-color: var(--teal); font-weight: 700; }
+.signup-optional-entity { padding: .8rem 1rem; background: var(--canvas); border-radius: 10px; }
+.signup-optional-entity summary { cursor: pointer; font-weight: 600; }
+.signup-optional-entity .field { margin-top: 1rem; }
+@media (max-width: 800px) { .signup-choice-grid { grid-template-columns: 1fr; } .signup-choice { min-height: 0; } }
