@@ -7,8 +7,8 @@ const labels = [
   'Maintenance',
   'About Us',
   'Who We Help',
+  'Contact',
   'Sign Up / Sign In',
-  'Contact Us',
 ];
 for (const width of [320, 390, 1440])
   test(`Residential public journeys at ${width}px`, async ({ page }) => {
@@ -75,7 +75,7 @@ for (const width of [320, 390, 1440])
           .getByRole('navigation', { name: 'Primary navigation' })
           .getByRole('link')
           .allTextContents(),
-      ).toEqual(labels.slice(0, 7));
+      ).toEqual(labels.slice(0, 8));
     }
     await page.screenshot({ path: `artifacts/residential-pivot-${width}.png`, fullPage: true });
   });

@@ -16,7 +16,7 @@ test('homepage advertises one property subscription and terms',async({page})=>{
   await expect(plan).toContainText('$50');await expect(plan).toContainText('$55 including GST per property per week');
   await expect(page.locator('.pi-plan-disclosure').first()).toContainText('24');
   await expect(page.locator('.pi-plan-disclosure').first()).toContainText('60');
-  await expect(page.locator('.pi-property-card')).toHaveCount(4);
+  await expect(page.locator('.pi-home-property-grid .pi-property-card')).toHaveCount(2);
 });
 test('old sector links have appropriate permanent responses and stay outside the sitemap',async({request})=>{
   const home=await request.get('/sectors/residential',{maxRedirects:0});
