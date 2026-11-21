@@ -29,6 +29,14 @@ export default function Billing(){
  }
  return <>
 <PageHeading title={staff?"Billing and reconciliation":"Property plans and invoices"} description={staff?"Service revenue, invoices and financial exceptions.":"Review your property subscription, paid invoices and written cancellation notices."}/>
+{!staff&&d.customerCashTerms&&<Panel title="One-off inspection payment terms">
+ <p>{d.customerCashTerms.termCode==='upon_booking'
+  ? 'Pay-as-you-go services require payment upon booking.'
+  : d.customerCashTerms.termCode==='net_7'
+   ? 'Approved Cash Client terms: seven calendar days from the date an invoice is issued after service completion.'
+   : 'Approved Cash Client terms: month-end invoicing, due on the seventh of the following month.'}</p>
+ <p className="small">Only bookings not covered by an eligible subscription have a separate service charge. Your property-specific subscription benefits are checked when you book.</p>
+</Panel>}
 {!staff&&d.portalEnabled&&<Panel title="Secure billing self-service"><OperationForm endpoint={api+'/billing/portal'} label="Open billing portal" result={r=>r.url?<a className="button" href={r.url} rel="noreferrer">Continue to Stripe billing</a>:null}/></Panel>}
 <Panel title="Property subscriptions">{d.subscriptions.map((s:any)=><p key={s.id}>{s.address ?? s.property_id}: <Badge status={s.status}/></p>)}<p>Subscription financial status and included service entitlements are separate records.</p></Panel>
 {staff && <Panel title="Written cancellation notices">
@@ -67,7 +75,47 @@ export default function Billing(){
  {!d.subscriptions.some((s:any)=>s.plan_version)&&<p>No new weekly subscription contract is recorded for this account.</p>}
 </Panel>}
 <Panel title="Invoices">{d.invoices.map((i:any)=><div className="record-row" key={i.stripe_invoice_id}><div><strong>{i.stripe_invoice_id}</strong><p>{money(i.total_cents)} total / {money(i.paid_cents)} paid / {money(i.remaining_cents)} remaining</p><small>{i.reconciliation}</small></div><Badge status={i.status}/></div>)}{!d.invoices.length&&<p>No invoices recorded for this workspace.</p>}</Panel>
-{staff&&<><Panel title="Payment exceptions">{d.exceptions.map((e:any)=><div key={e.id} className="stack"><p>{e.code} / {e.payment_id??'Unmatched provider object'}</p><OperationForm endpoint={`${api}/billing/reconciliation/${e.id}`} label="Record verified resolution"><Input name="reference" label="Investigation and resolution evidence (at least 8 characters)"/></OperationForm></div>)}</Panel>
+{staff&&<><Panel title="Cash Clients — payment terms & credit">
+ <p>Free accounts default to payment upon booking. Deferred payment terms are available only after a separate Staff reviewer approves the request. Subscription-covered bookings never incur a second inspection charge.</p>
+ <div className="stack">
+  {(d.cashClients||[]).map((c:any)=><div className="record-row" key={c.id}>
+   <div><strong>{c.name}</strong><p className="small">{c.id} · {c.term_code==='upon_booking'?'Pay upon booking':c.term_code==='net_7'?'7 calendar days':'7 days end of month'} · Unsettled: {money(c.outstanding_cents??0)}</p></div>
+   <span className="small muted">Credit limit: {c.credit_limit_cents===null?'Not set':money(c.credit_limit_cents)}</span>
+  </div>)}
+ </div>
+ <h3>Propose Cash Client payment terms</h3>
+ <OperationForm endpoint={api+'/billing/cash-terms/request'} label="Submit for independent approval">
+  <Select name="clientId" label="Customer" options={(d.cashClients||[]).map((c:any)=>({value:c.id,label:c.name+' ('+c.id+')'}))}/>
+  <Select name="termCode" label="Payment terms" options={[
+   {value:'upon_booking',label:'Payment upon booking'},
+   {value:'net_7',label:'7 calendar days from invoice issue'},
+   {value:'eom_7',label:'7 days end of month'}]}/>
+  <Input name="creditLimitCents" type="number" label="Maximum unsettled credit (AUD cents, optional)" required={false}/>
+  <Input name="reason" label="Commercial approval reason (at least 8 characters)"/>
+ </OperationForm>
+ {(d.cashTermRequests||[]).map((r:any)=><div className="record-row" key={r.id}>
+  <div><strong>{r.client_name}</strong><p>{r.term_code} · <Badge status={r.status}/> · Requested by {r.requested_by_name}</p><p className="small">{r.reason}</p></div>
+  {r.status==='pending'&&<div className="stack">
+   <OperationForm endpoint={api+'/billing/cash-terms/approve'} label="Approve terms"><input type="hidden" name="requestId" value={r.id}/><Input name="reviewReference" label="Independent approval evidence"/></OperationForm>
+   <OperationForm endpoint={api+'/billing/cash-terms/decline'} label="Decline terms"><input type="hidden" name="requestId" value={r.id}/><Input name="reviewReference" label="Reason for decline"/></OperationForm>
+  </div>}
+ </div>)}
+</Panel>
+<Panel title="Cash Client invoices — preparation">
+ <p>Only completed services enter the invoice queue. Preparing a batch does not send a tax invoice or mark it paid; an independently reconciled Stripe invoice delivery is required for issuance.</p>
+ <OperationForm endpoint={api+'/billing/cash-invoices/prepare'} label="Prepare invoice batch">
+  <Select name="clientId" label="Customer" options={(d.cashClients||[]).map((c:any)=>({value:c.id,label:c.name}))}/>
+  <Select name="termCode" label="Approved terms" options={[{value:'net_7',label:'7 days'},{value:'eom_7',label:'7 days end of month'}]}/>
+  <Input name="period" label="Completed booking ID (7-day) or closed YYYY-MM month (EOM)" />
+ </OperationForm>
+ {(d.cashCharges||[]).map((c:any)=><div className="record-row" key={c.booking_id}>
+  <div><strong>{c.reference} · {c.address}</strong><p>{c.client_name} · {c.term_code} · {c.period??'Awaiting service'} · {money(c.amount_ex_gst_cents+c.gst_cents)}</p></div><Badge status={c.status}/>
+ </div>)}
+ {(d.cashInvoiceBatches||[]).map((i:any)=><div className="record-row" key={i.id}>
+  <div><strong>{i.client_name} · {i.id}</strong><p>{i.period} · {money(i.total_cents)} · Provider invoice: {i.provider_invoice_id??'Not issued'}</p></div><Badge status={i.status}/>
+ </div>)}
+</Panel>
+<Panel title="Payment exceptions">{d.exceptions.map((e:any)=><div key={e.id} className="stack"><p>{e.code} / {e.payment_id??'Unmatched provider object'}</p><OperationForm endpoint={`${api}/billing/reconciliation/${e.id}`} label="Record verified resolution"><Input name="reference" label="Investigation and resolution evidence (at least 8 characters)"/></OperationForm></div>)}</Panel>
 <Panel title="Request a refund"><OperationForm endpoint={api+'/billing/refunds/request'} label="Request independent review"><Input name="paymentId" label="Settled payment ID"/><Input name="amountCents" type="number" label="Refund amount (AUD cents)"/><Input name="reason" label="Authorised refund reason and supporting reference"/></OperationForm></Panel>
 {d.refunds.map((r:any)=><Panel key={r.id} title={`${r.description} - ${money(r.amount_cents)}`} description={`Refund ${r.id}: ${r.status}`}>{r.status==='requested'&&<><OperationForm endpoint={`${api}/billing/refunds/${r.id}/approve`} label="Approve refund"><Input name="reference" label="Independent review reference"/></OperationForm><OperationForm endpoint={`${api}/billing/refunds/${r.id}/reject`} label="Reject refund"><Input name="reference" label="Reason for rejection"/></OperationForm></>}{r.status==='approved'&&<OperationForm endpoint={`${api}/billing/refunds/${r.id}/execute`} label="Submit approved sandbox refund"><Input name="reference" label="Execution review reference"/></OperationForm>}</Panel>)}
 <Panel title="Independently authorised invoice delivery">

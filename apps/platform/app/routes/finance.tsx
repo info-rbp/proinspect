@@ -103,6 +103,7 @@ export default function Finance() {
                 </div>
                 {!staff &&
                   w.role !== 'viewer' &&
+                  !p.cash_invoice_credit &&
                   ['pending', 'payment_required', 'failed'].includes(p.status) && (
                     <OperationForm
                       endpoint={`${api}/payments/${p.id}/checkout`}
@@ -116,7 +117,8 @@ export default function Finance() {
                       }
                     ><LegalAcceptance purpose="payment"/></OperationForm>
                   )}
-                {staffWrite && p.provider === 'manual' && (
+                {p.cash_invoice_credit === 1 && <p className="small">Approved account invoice terms apply. The invoice follows completed work; this is not an upfront card payment.</p>}
+                {staffWrite && !p.cash_invoice_credit && p.provider === 'manual' && (
                   <OperationForm
                     endpoint={`${api}/payments/${p.id}/record`}
                     defaults={{ version: p.version }}

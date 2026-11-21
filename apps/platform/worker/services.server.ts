@@ -1,4 +1,5 @@
 import { requireResidentialSector } from './features/residential-policy.server';
+import { cashInvoicePeriod } from '../../../packages/booking/inspection-checkout';
 import { legalStatements } from './features/legal-acceptance.server';
 import { serviceInterestTableReady } from './features/client-service-interests.server';
 import { calendarSchedulingEnabled, calendarSyncStatement } from './features/calendar-scheduling.server';
@@ -470,15 +471,23 @@ export async function updateWorkOrder(
       to: next,
     }),
   ];
-  if (order.booking_id && ['completed', 'cancelled'].includes(next))
+  if (order.booking_id && ['completed', 'cancelled'].includes(next)) {
     updates.push(
-      statement(
-        env.DB,
-        'UPDATE bookings SET status=?,version=version+1 WHERE id=?',
-        next,
-        order.booking_id,
-      ),
+      statement(env.DB,'UPDATE bookings SET status=?,version=version+1 WHERE id=?',next,order.booking_id),
     );
+    // Credit bookings are payable by invoice after completed service; no
+    // Stripe card payment is needed to begin work with approved account terms.
+    if (next === 'completed') {
+      const credit = await statement(env.DB,
+        "SELECT term_code FROM cash_booking_charges WHERE booking_id=? AND status='awaiting_service'",order.booking_id)
+        .first<{term_code:'net_7'|'eom_7'}>();
+      if (credit) updates.push(statement(env.DB,
+        "UPDATE cash_booking_charges SET status='ready_to_invoice',completed_at=?,period=? WHERE booking_id=? AND status='awaiting_service'",
+        time,cashInvoicePeriod(time,credit.term_code),order.booking_id));
+    } else updates.push(statement(env.DB,
+      "UPDATE cash_booking_charges SET status='cancelled' WHERE booking_id=? AND status='awaiting_service'",
+      order.booking_id));
+  }
   if (order.request_id && next === 'completed')
     updates.push(
       statement(

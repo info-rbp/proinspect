@@ -16,6 +16,7 @@ import { useWorkspace } from '../lib/workspace';
 import { submitAction } from '../lib/actions.server';
 import { PageHeading, Field, Feedback, EmptyState } from '../../../../packages/ui/components';
 import { money } from '../../../../packages/domain/index';
+import { orderBookingServices, inspectionIntakeKind, CASH_PAYMENT_TERM_LABELS, type CashPaymentTerm } from '../../../../packages/booking/inspection-checkout';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
   const propertyId = new URL(request.url).searchParams.get('property') ?? new URL(request.url).searchParams.get('propertyId');
   const selected = propertyId
@@ -25,10 +26,17 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
         `/api/w/${params.kind}/${params.scopeId}/properties/${encodeURIComponent(propertyId)}`,
       )
     : null;
-  return { requestKey: crypto.randomUUID(), selectedProperty: selected?.property ?? null };
+  const terms = ['landlord','property-manager','commercial','strata-manager'].includes(String(params.kind))
+    ? await loadApi(request,context,`/api/w/${params.kind}/${params.scopeId}/cash-terms`)
+    : null;
+  return { requestKey: crypto.randomUUID(), selectedProperty: selected?.property ?? null,
+    paymentTerms: (terms?.termCode ?? 'upon_booking') as CashPaymentTerm };
 }
 export async function action(args: ActionFunctionArgs) {
   const f = await args.request.formData();
+  const text=(name:string)=>String(f.get(name)??'').trim();
+  const optional=(name:string)=>text(name)||undefined;
+  const quantity=(name:string)=>text(name)===''?undefined:Number(text(name));
   return submitAction(
     args,
     'bookings',
@@ -38,6 +46,23 @@ export async function action(args: ActionFunctionArgs) {
       serviceId: f.get('serviceId'),
       startsAt: f.get('startsAt'),
       requestKey: f.get('requestKey'),
+      intake: {
+        contactPhone: text('contactPhone'),
+        reason: text('reason'),
+        occupancyStatus: text('occupancyStatus'),
+        accessContactName: optional('accessContactName'),
+        accessContactPhone: optional('accessContactPhone'),
+        petsAndSafety: optional('petsAndSafety'),
+        siteNotes: optional('siteNotes'),
+        bedrooms: quantity('bedrooms'),
+        bathrooms: quantity('bathrooms'),
+        furnished: optional('furnished'),
+        tenancyCommencesOn: optional('tenancyCommencesOn'),
+        vacateDate: optional('vacateDate'),
+        keysReturned: optional('keysReturned'),
+        originalPcrAvailable: optional('originalPcrAvailable'),
+        areasOfConcern: optional('areasOfConcern'),
+      },
       recurringPlanId: f.get('recurringPlanId') || undefined,
       planDue: f.get('planDue') || undefined,
       access: {
@@ -53,7 +78,7 @@ export default function Book() {
   const d = useWorkspace();
   const { serviceId: requestedService } = useParams();
   const [search] = useSearchParams();
-  const { requestKey, selectedProperty } = useLoaderData<typeof loader>();
+  const { requestKey, selectedProperty, paymentTerms } = useLoaderData<typeof loader>();
   const properties =
     selectedProperty && !d.properties.some((p) => p.id === selectedProperty.id)
       ? [selectedProperty, ...d.properties]
@@ -73,6 +98,7 @@ export default function Book() {
   const [method, setMethod] = useState('owner');
   const service = d.services.find((s) => s.id === serviceId);
   const property = properties.find((p) => p.id === propertyId);
+  const inspectionKind = inspectionIntakeKind(serviceId);
   const included = Boolean(d.subscriptionBookingServices?.[propertyId]?.includes(serviceId));
   const directBooking = included ||
     (service?.booking_mode === 'instant' && service.price_ex_gst_cents !== null);
@@ -153,7 +179,10 @@ export default function Book() {
                   Review payment and secure checkout
                 </Link>
               </>
-            : <p>Once your report is issued, it will appear under Documents &amp; reports in your account.</p>}
+            : <>
+                {result.result.invoiceAfterService && <p><strong>Approved invoice terms: {CASH_PAYMENT_TERM_LABELS[result.result.paymentTerms as CashPaymentTerm] ?? 'Invoice after service'}.</strong> Your service is booked. Invoicing follows completion.</p>}
+                <p>Once your report is issued, it will appear under Documents &amp; reports in your account.</p>
+              </>}
           <div className="actions">
             <Link className="button" to={`${d.workspace.href}/bookings`}>
               View bookings
@@ -170,16 +199,16 @@ export default function Book() {
       <PageHeading
         eyebrow="Book a ProInspect service"
         title="Arrange your next property visit."
-        description="Select your property and service, confirm access, then choose an available appointment."
+        description="Select your property, tell us what is needed, choose a time and review your payment or subscription coverage."
       />
       <div className="step-track">
         <strong>01 Property</strong>
         <span>→</span>
         <strong>02 Service</strong>
         <span>→</span>
-        <strong>03 Access</strong>
+        <strong>03 Inspection details</strong>
         <span>→</span>
-        <strong>04 Appointment</strong>
+        <strong>04 Appointment &amp; payment</strong>
       </div>
       <Form method="post" className="detail-grid" aria-busy={!interactive}>
         <input type="hidden" name="recurringPlanId" value={search.get('plan') || ''} />
@@ -216,8 +245,8 @@ export default function Book() {
                 onChange={(e) => setServiceId(e.target.value)}
               >
                 <option value="">Choose a service</option>
-                {d.services
-                  .filter((s) => s.sectors.includes(property?.sector ?? 'residential'))
+                {orderBookingServices(d.services
+                  .filter((s) => s.sectors.includes(property?.sector ?? 'residential')))
                   .map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
@@ -249,6 +278,47 @@ export default function Book() {
             )}
           </section>
           <section className="panel form">
+            <h2>Inspection details</h2>
+            <p className="small">Tell our inspector what is needed. Existing property details are already linked to this booking.</p>
+            <Field label="Contact phone" name="contactPhone">
+              <input name="contactPhone" id="contactPhone" type="tel" autoComplete="tel" required maxLength={40} disabled={!interactive} placeholder="Mobile number for inspection coordination" />
+            </Field>
+            <Field label="Reason for inspection" name="reason">
+              <select id="reason" name="reason" required disabled={!interactive} defaultValue="">
+                <option value="">Choose a reason</option>
+                {inspectionKind==='pcr' && <><option value="New tenancy">New tenancy commencing</option><option value="Incoming condition record">Incoming condition record</option></>}
+                {inspectionKind==='exit' && <><option value="Tenancy ending">Tenancy ending</option><option value="Vacant possession inspection">Vacant possession inspection</option></>}
+                {inspectionKind==='routine' && <><option value="Scheduled routine inspection">Scheduled routine inspection</option><option value="Property condition follow-up">Property condition follow-up</option></>}
+                <option value="Other property inspection">Other inspection requirement</option>
+              </select>
+            </Field>
+            <Field label="Current occupancy" name="occupancyStatus">
+              <select id="occupancyStatus" name="occupancyStatus" required disabled={!interactive} defaultValue="unknown">
+                <option value="unknown">To be confirmed</option>
+                <option value="vacant">Vacant</option><option value="tenanted">Tenanted</option><option value="occupied_other">Otherwise occupied</option>
+              </select>
+            </Field>
+            {inspectionKind==='pcr' && <div className="stack">
+              <Field label="Tenancy commencement date (if known)" name="tenancyCommencesOn"><input id="tenancyCommencesOn" name="tenancyCommencesOn" type="date" disabled={!interactive}/></Field>
+              <div className="grid-2">
+                <Field label="Bedrooms" name="bedrooms"><input id="bedrooms" name="bedrooms" type="number" min="0" max="100" disabled={!interactive}/></Field>
+                <Field label="Bathrooms" name="bathrooms"><input id="bathrooms" name="bathrooms" type="number" min="0" max="100" disabled={!interactive}/></Field>
+              </div>
+              <Field label="Furnishing" name="furnished"><select id="furnished" name="furnished" defaultValue="unknown" disabled={!interactive}><option value="unknown">Not confirmed</option><option value="yes">Furnished</option><option value="no">Unfurnished</option></select></Field>
+            </div>}
+            {inspectionKind==='exit' && <div className="stack">
+              <Field label="Expected vacate date (if known)" name="vacateDate"><input id="vacateDate" name="vacateDate" type="date" disabled={!interactive}/></Field>
+              <Field label="Have the keys been returned?" name="keysReturned"><select id="keysReturned" name="keysReturned" disabled={!interactive} defaultValue="unknown"><option value="unknown">Not confirmed</option><option value="yes">Yes</option><option value="no">No</option><option value="not_applicable">Not applicable</option></select></Field>
+              <Field label="Original incoming PCR available?" name="originalPcrAvailable"><select id="originalPcrAvailable" name="originalPcrAvailable" disabled={!interactive} defaultValue="unknown"><option value="unknown">Not confirmed</option><option value="yes">Yes</option><option value="no">No</option></select></Field>
+            </div>}
+            <Field label="Specific areas or items to inspect (optional)" name="areasOfConcern">
+              <textarea id="areasOfConcern" name="areasOfConcern" maxLength={1500} rows={3} disabled={!interactive} placeholder="Areas of concern, existing issues or comparison requirements"/>
+            </Field>
+            <Field label="Pets, hazards or safety requirements (optional)" name="petsAndSafety">
+              <textarea id="petsAndSafety" name="petsAndSafety" maxLength={1000} rows={2} disabled={!interactive} placeholder="Pets, construction work, site hazards or other preparation notes"/>
+            </Field>
+          </section>
+          <section className="panel form">
             <h2>Access arrangements</h2>
             <Field label="How will access be provided?" name="accessMethod">
               <select
@@ -265,6 +335,10 @@ export default function Book() {
                 <option value="other">Other arrangement</option>
               </select>
             </Field>
+            <div className="grid-2">
+              <Field label="Access contact (optional)" name="accessContactName"><input id="accessContactName" name="accessContactName" maxLength={120} disabled={!interactive}/></Field>
+              <Field label="Access contact phone (optional)" name="accessContactPhone"><input id="accessContactPhone" name="accessContactPhone" type="tel" maxLength={40} disabled={!interactive}/></Field>
+            </div>
             <Field
               label="Access instructions"
               name="instructions"
@@ -287,6 +361,9 @@ export default function Book() {
                 </span>
               </label>
             )}
+            <Field label="Additional preparation details (optional)" name="siteNotes">
+              <textarea id="siteNotes" name="siteNotes" maxLength={2000} rows={3} disabled={!interactive} placeholder="Any final information our staff should know before attending"/>
+            </Field>
           </section>
           <section className="panel form">
             <h2>Appointment</h2>
@@ -349,9 +426,11 @@ export default function Book() {
                 </strong>
               </div>
               {!included && service.price_ex_gst_cents !== null && service.price_ex_gst_cents > 0 &&
-                <p className="notice warning">
-                  A one-off payment is required before work begins. Confirming this form records the
-                  booking and payment obligation; it does not charge your card.
+                <p className="notice">
+                  <strong>{CASH_PAYMENT_TERM_LABELS[paymentTerms]}</strong>.
+                  {paymentTerms==='upon_booking'
+                    ? ' This service requires a verified online payment. Checkout must be enabled before an upfront-paid booking can be confirmed.'
+                    : ' Your approved account terms allow direct appointment booking. The invoice is prepared after the service.'}
                 </p>}
               <p className="small">
                 Your selected appointment is checked again when you confirm. A slot is not reserved
