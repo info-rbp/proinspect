@@ -90,7 +90,7 @@ export function cashPeriodIsClosed(period: string, currentAt: string): boolean {
 /** Month-end terms follow the service-completion month, not the month a delayed invoice is issued. */
 export function cashInvoiceDueForServicePeriod(term: 'net_7'|'eom_7',period:string,issuedAt:string):string {
  if(term==='net_7') return cashInvoiceDueAt(issuedAt,'net_7')!;
- const m=/^(\\d{4})-(0[1-9]|1[0-2])$/.exec(period);
+ const m=/^(\d{4})-(0[1-9]|1[0-2])$/.exec(period);
  if(!m)throw new Error('Valid service completion month required');
  const due=new Date(Date.UTC(Number(m[1]),Number(m[2]),7,15,59,59));
  const issued=new Date(issuedAt);
