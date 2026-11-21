@@ -18,7 +18,8 @@ test('public industry pages lead into one secure Client Portal entry',async({pag
  await expect(page.getByRole('heading',{name:'Welcome back to ProInspect.'})).toBeVisible();
  await page.getByRole('link',{name:'Create a free account'}).click();
  await expect(page).toHaveURL(/\/signup\?returnTo=/);
- await expect(page.getByLabel('Which best describes you?')).toBeVisible();
+ await expect(page.getByRole('group',{name:'What brings you to ProInspect?'})).toBeVisible();
+ await expect(page.getByRole('radio',{name:/I own a residential property/})).toBeVisible();
 });
 test('legacy public routes and secure contact flow remain available',async({request,page})=>{
  for(const path of ['/services/category/inspections','/resources','/why-proinspect','/privacy','/contact']){
