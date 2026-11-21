@@ -83,12 +83,12 @@ try{
   await page.getByRole('link',{name:'Create a free account'}).click();
   await expect(page.getByRole('heading',{name:'Create your free account',exact:true})).toBeVisible();
   await expect(page.locator('input[name="returnTo"]')).toHaveValue(destination);
-  await expect(page.getByLabel('Which best describes you?')).toHaveCount(0);
+  await expect(page.getByRole('group',{name:'What brings you to ProInspect?'})).toHaveCount(0);
   await page.goto(ORIGIN+'/signup?service=routine-inspection',{waitUntil:'networkidle',timeout:25000});
-  const choices=page.getByLabel('Which best describes you?');
+  const choices=page.getByRole('group',{name:'What brings you to ProInspect?'});
   await expect(choices).toBeVisible();
-  assert.equal(await choices.locator('optgroup').count(),4);
-  await choices.selectOption('ONB-COM-OWNER');
+  assert.equal(await choices.getByRole('radio').count(),4);
+  await choices.getByRole('radio',{name:/I own a residential property/}).check();
   await expect(page.locator('input[name="returnTo"]')).toHaveValue('/start?service=routine-inspection');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+2));
   await page.screenshot({path:'artifacts/v3-hosted-signup-mobile.png',fullPage:true});
