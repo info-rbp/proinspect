@@ -154,7 +154,7 @@ export default function SignIn() {
             {settings.signup ? (
               <>
                 Already registered?{' '}
-                <Link to={'/signin?returnTo=' + encodeURIComponent(settings.returnTo)}>
+                <Link reloadDocument to={'/signin?returnTo=' + encodeURIComponent(settings.returnTo)}>
                   Sign in with your existing email
                 </Link>
                 .
@@ -162,7 +162,7 @@ export default function SignIn() {
             ) : (
               <>
                 New to ProInspect?{' '}
-                <Link to={'/signup?returnTo=' + encodeURIComponent(settings.returnTo)}>
+                <Link reloadDocument to={'/signup?returnTo=' + encodeURIComponent(settings.returnTo)}>
                   Create a free account
                 </Link>
                 .

@@ -162,6 +162,7 @@ test('invitation survives sign-up and opens only the invited tenancy after accep
     await page.goto(path);
     await expect(page).toHaveURL(/\/signin\?returnTo=/);
     await page.getByRole('link', { name: 'Create a free account' }).click();
+    await expect(page.getByRole('heading', { name: 'Create your free account', exact: true })).toBeVisible();
     await expect(page.getByLabel('Which best describes you?')).toHaveCount(0);
     await verifyEmail(page, address);
     await expect(page).toHaveURL(origin + path);
