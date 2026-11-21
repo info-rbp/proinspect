@@ -67,6 +67,11 @@ class CashBookingSchemaTests(unittest.TestCase):
         conn.execute("""INSERT INTO cash_invoice_batches
         (id,client_id,term_code,period,subtotal_cents,gst_cents,total_cents,status,prepared_by,created_at)
         VALUES('cin_2','cli_cash','net_7','booking:bkg_b',10000,1000,11000,'prepared','reviewer','2026-11-21')""")
+        for booking_id,payment_id in [('bkg_a','pay_a'),('bkg_b','pay_b')]:
+            conn.execute("""INSERT INTO cash_booking_charges
+            (booking_id,payment_id,client_id,term_code,amount_ex_gst_cents,gst_cents,status,created_at)
+            VALUES(?,?, 'cli_cash','net_7',10000,1000,'ready_to_invoice','2026-11-21')""",
+            (booking_id,payment_id))
         conn.execute("INSERT INTO cash_invoice_items VALUES('bkg_a','cin_1')")
         with self.assertRaises(sqlite3.IntegrityError):
             conn.execute("INSERT INTO cash_invoice_items VALUES('bkg_a','cin_2')")
