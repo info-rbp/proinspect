@@ -339,7 +339,7 @@ export class BookingScheduler extends DurableObject<Env> {
         ...(paymentId ? [
           statement(this.env.DB,
             `INSERT INTO payments(id,client_id,property_id,work_order_id,description,amount_ex_gst_cents,gst_cents,total_cents,status,created_at,updated_at)
-             VALUES(?,?,?,?,?,?,?,?,?,?)`,
+             VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
             paymentId,clientId,property.id,woId,service.name,amountExGstCents,gstCents,
             amountExGstCents+gstCents,paymentRequired?'payment_required':'pending',time,time),
           ...(paymentRequired ? [statement(this.env.DB,
