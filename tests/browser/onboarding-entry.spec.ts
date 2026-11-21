@@ -36,17 +36,20 @@ test('sign-up keeps service intent, creates a free residential account and prese
   await expect(
     page.getByRole('heading', { name: 'Create your free account', exact: true }),
   ).toBeVisible();
-  await page.getByLabel('Which best describes you?').selectOption('ONB-RES-OWNER');
+  await expect(page.getByRole('group', { name: 'What brings you to ProInspect?' })).toBeVisible();
+  await page.getByRole('radio', { name: /I own a residential property/ }).check();
   await verifyEmail(page, email());
   await expect(page).toHaveURL(/\/onboarding\?flow=ONB-RES-OWNER&service=routine-inspection$/);
   expect((await session(page.context())).workspaces).toHaveLength(0);
   await expect(
     page.getByRole('link', { name: 'Apply for professional organisation access' }),
   ).toHaveAttribute('href', '/organisation?flow=ONB-RES-AGENCY&service=routine-inspection');
-  await page.getByLabel('Your name', { exact: true }).fill('Synthetic Owner');
-  await page.getByLabel('Account name', { exact: true }).fill('Synthetic Self Managed');
+  await expect(page.getByRole('heading', { name: "Welcome. Let's set up your property." })).toBeVisible();
+  await page.getByLabel('Your full name', { exact: true }).fill('Synthetic Owner');
+  await page.getByText('Does a business or entity own the property?').click();
+  await page.getByLabel('Owning entity / account name').fill('Synthetic Self Managed');
   await page.getByRole('checkbox', { name: /I own and self-manage/ }).check();
-  await page.getByRole('button', { name: 'Create free account', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue to add your property', exact: true }).click();
   await expect(page).toHaveURL(
     /\/w\/landlord\/cli_[a-z0-9]+\/properties\?service=routine-inspection$/,
   );
@@ -118,10 +121,11 @@ test('Resident sign-up gives invitation help and never creates an owner or resid
   page,
 }) => {
   await page.goto('/signup?flow=ONB-INV-CORE');
+  await expect(page.getByRole('radio', { name: /I am a tenant or resident/ })).toBeChecked();
   await verifyEmail(page, email());
   await expect(page.getByRole('heading', { name: 'Connect to your invitation' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Get help with access' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Create free account' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Continue to add your property' })).toHaveCount(0);
   expect((await session(page.context())).workspaces).toHaveLength(0);
   await page.goto('/start?flow=ONB-STAFF');
   await expect(page.getByRole('heading', { name: 'How will you use ProInspect?' })).toBeVisible();
@@ -163,7 +167,7 @@ test('invitation survives sign-up and opens only the invited tenancy after accep
     await expect(page).toHaveURL(/\/signin\?returnTo=/);
     await page.getByRole('link', { name: 'Create a free account' }).click();
     await expect(page.getByRole('heading', { name: 'Create your free account', exact: true })).toBeVisible();
-    await expect(page.getByLabel('Which best describes you?')).toHaveCount(0);
+    await expect(page.getByRole('group', { name: 'What brings you to ProInspect?' })).toHaveCount(0);
     await verifyEmail(page, address);
     await expect(page).toHaveURL(origin + path);
     await expect(
@@ -241,4 +245,25 @@ test('registration rejects forged roles and incomplete sign-in links provide rec
     'href',
     '/signin',
   );
+});
+
+test('one-off inspection entry remains free and adds a property without creating paid coverage', async ({ page }) => {
+  await page.goto('/signup?service=property-condition-report');
+  await page.getByRole('radio', { name: /I need a one-off inspection/ }).check();
+  await verifyEmail(page, email());
+  await expect(page).toHaveURL(/\/onboarding\?flow=ONB-RES-OWNER&service=property-condition-report$/);
+  await page.getByLabel('Your full name', { exact: true }).fill('Synthetic Inspection Owner');
+  await page.getByRole('checkbox', { name: /I own and self-manage/ }).check();
+  await page.getByRole('button', { name: 'Continue to add your property' }).click();
+  await expect(page).toHaveURL(/\/w\/landlord\/cli_[a-z0-9]+\/properties\?service=property-condition-report$/);
+  const base = new URL(page.url()).pathname.replace('/properties', '');
+  await page.getByLabel('Street address, including unit if applicable').fill('47 Synthetic New Street');
+  await page.getByLabel('Suburb').fill('Perth');
+  await page.getByLabel('WA postcode').fill('6000');
+  await page.getByRole('checkbox', { name: /I own and self-manage this residential rental property/ }).check();
+  await page.getByRole('button', { name: 'Add property' }).click();
+  await expect(page).toHaveURL(new RegExp(base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/book/property-condition-report\\?property=prop_'));
+  const account = await (await page.request.get('/api/account')).json();
+  expect(account.propertyPlans).toEqual([]);
+  expect(account.billingAvailable).toBe(false);
 });
