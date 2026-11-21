@@ -29,9 +29,14 @@ test('logo returns home and all service overviews have working images, FAQs and 
     if (!['residential','co-living','maintenance'].includes(slug)) continue;
     await page.goto('/' + slug);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(content.headline);
+    const action = slug === 'residential'
+      ? { name: 'See Our Services', href: '/residential/services' }
+      : slug === 'co-living'
+        ? { name: 'Explore Co-Living Support', href: '#service-options' }
+        : { name: 'Explore Maintenance Support', href: '#service-options' };
     await expect(
-      page.locator('.pi-editorial-copy').getByRole('link', { name: 'Discuss your requirements' }),
-    ).toHaveAttribute('href', '/contact');
+      page.locator('.pi-editorial-copy').getByRole('link', { name: action.name }),
+    ).toHaveAttribute('href', action.href);
     const image = page.locator('.pi-editorial-hero-image img');
     await expect(image).toBeVisible();
     await expect
@@ -93,9 +98,10 @@ test('new pages reflow at narrow sizes and include canonical metadata and tenant
     }
   }
   const sitemap = await (await request.get('/sitemap.xml')).text();
-  for (const path of paths.filter((path) => path !== '/leasing'))
+  for (const path of paths.filter((path) => !['/leasing','/who-we-help'].includes(path)))
     expect(sitemap).toContain('https://proinspect.systems' + path + '</loc>');
   expect(sitemap).not.toContain('https://proinspect.systems/leasing</loc>');
+  expect(sitemap).not.toContain('https://proinspect.systems/who-we-help</loc>');
   await page.goto('/tenants');
   await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
     'href',
@@ -112,7 +118,7 @@ test('Leasing goes directly to the catalogue while preserving check-in and appli
   page,
 }) => {
   await page.goto('/leasing');
-  await expect(page.getByRole('heading', { name: 'Properties for lease.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Current Properties Available.' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Search properties' })).toBeVisible();
   await page.getByLabel('Search property location').fill('no-match-synthetic-location');
   await page.getByRole('button', { name: 'Search properties' }).click();
