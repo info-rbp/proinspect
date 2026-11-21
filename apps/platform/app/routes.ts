@@ -7,6 +7,11 @@ export default [
   layout('routes/public-layout.tsx', [
     index('../../marketing/app/routes/home.tsx'),
     route('services', '../../marketing/app/routes/services.tsx'),
+    route('residential/services', '../../marketing/app/routes/residential-services.tsx'),
+    route('residential/services/:category', '../../marketing/app/routes/residential-service-category.tsx'),
+    route('residential/subscriptions', '../../marketing/app/routes/residential-subscriptions.tsx'),
+    route('help-centre', '../../marketing/app/routes/help-centre.tsx'),
+    route('example-reports', '../../marketing/app/routes/example-reports.tsx'),
     route('residential', '../../marketing/app/routes/service-overview.tsx', { id: 'sector-overview-residential' }),
     route('commercial', '../../marketing/app/routes/service-overview.tsx', { id: 'sector-overview-commercial' }),
     route('strata', '../../marketing/app/routes/service-overview.tsx', { id: 'sector-overview-strata' }),

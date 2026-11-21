@@ -20,7 +20,7 @@ export default function Tenants() {
         intro="Looking for a home, preparing for an inspection or reporting a property issue? Find the right next step and understand how ProInspect can assist."
         image="leasing"
         primary={{ label: 'Browse properties for lease', to: '/leasing' }}
-        secondary={{ label: 'Sign Up/Sign In to access', to: '/client' }}
+        secondary={{ label: 'Open Your Tenant Account', to: '/client' }}
       />
       <section className="mkt-section pi-editorial-section">
         <div className="site-container">
@@ -109,7 +109,7 @@ export default function Tenants() {
                 or someone else’s records.
               </p>
               <Link className="pi-inline-link" to="/client">
-                Sign Up/Sign In to access <span aria-hidden="true">→</span>
+                Open your tenant workspace <span aria-hidden="true">→</span>
               </Link>
             </article>
           </div>
@@ -121,6 +121,7 @@ export default function Tenants() {
             <p className="eyebrow">Helpful answers</p>
             <h2>Know what happens next.</h2>
           </div>
+          <p><Link className="pi-inline-link" to="/help-centre">More answers in the Help Centre <span aria-hidden="true">↗</span></Link></p>
           <MarketingFaq
             questions={[
               [
@@ -154,7 +155,7 @@ export default function Tenants() {
             </p>
           </div>
           <Link className="button mkt-button-light" to="/contact">
-            Contact Us <span aria-hidden="true">→</span>
+            Contact <span aria-hidden="true">→</span>
           </Link>
         </div>
       </section>

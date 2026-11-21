@@ -9,7 +9,13 @@ test('leasing is marketing-only, with separated residential/commercial public ro
  const layout=text('apps/platform/app/routes/public-layout.tsx');
  assert.ok(layout.includes('MarketingHeader'));
  const chrome=text('apps/marketing/app/components/site-chrome.tsx');
- assert.ok(chrome.includes('to="/properties-for-lease"'));
+ assert.ok(chrome.includes('PUBLIC_NAVIGATION'));
+ const publicNav=text('packages/marketing/public-navigation.ts');
+ assert.ok(publicNav.includes("href:'/leasing'"));
+ const home=text('apps/marketing/app/routes/home.tsx');
+ assert.ok(home.includes('to="/leasing"'));
+ assert.ok(home.includes('Properties Available'));
+
  const site=text('apps/platform/app/lib/public-routes.ts');
  assert.ok(site.includes('properties-for-lease'));
  assert.ok(site.includes('cancel'));
