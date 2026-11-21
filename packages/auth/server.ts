@@ -164,6 +164,11 @@ export async function completeSignIn(
     'INVALID_LINK',
     'The sign-in link is invalid or has expired. Request a new link.',
   );
+  const cookie = await createVerifiedSession(request, env, email);
+  return { cookie, returnTo: safeReturnTo(record.return_to) };
+}
+
+export async function createVerifiedSession(request: Request, env: Env, email: string, expiresAt = Date.now() + 86400000) {
   const user = await statement(
     env.DB,
     `INSERT INTO users(id,email,created_at,verified_at) VALUES(?,?,?,?) ON CONFLICT(email) DO UPDATE SET verified_at=COALESCE(users.verified_at,excluded.verified_at) RETURNING id,active`,
@@ -179,10 +184,10 @@ export async function completeSignIn(
     'INSERT INTO sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)',
     await digest(token),
     user.id,
-    new Date(Date.now() + 86400000).toISOString(),
+    new Date(expiresAt).toISOString(),
     now(),
   ).run();
-  return { cookie: sessionCookie(request, env, token), returnTo: safeReturnTo(record.return_to) };
+  return sessionCookie(request, env, token);
 }
 export async function signOut(request: Request, env: Env) {
   requireOrigin(request, env);

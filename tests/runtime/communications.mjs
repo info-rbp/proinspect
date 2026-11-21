@@ -73,35 +73,32 @@ try {
  await run("INSERT INTO strata_lots(id,scheme_id,lot_number,building_id) VALUES('lot_test','sc_test','1','b_test')");
  for(const [who,role] of [[resident,'resident'],[owner,'owner'],[council,'council_member']])await run('INSERT INTO scheme_memberships(id,scheme_id,lot_id,user_id,role,starts_at,approved_by) VALUES(?,?,?,?,?,?,?)','m_'+who.id,'sc_test','lot_test',who.id,role,past,staff.id);
  const schemeApi=staffApi+'/schemes/sc_test',residentApi='/api/w/building/sc_test',councilApi='/api/w/council/sc_test';
- let scheduled;
- await check('future notice remains hidden and queues nothing before publication time',async()=>{
- scheduled=await ok(schemeApi+'/notices',staff,{title:'Scheduled water shutdown',body:'Synthetic building works notice.',audience:'residents',startsAt:future,lotId:'lot_test'});await dispatch();assert.equal((await first('SELECT COUNT(*) AS c FROM notice_deliveries WHERE notice_id=?',scheduled.id)).c,0);assert.equal((await ok(residentApi+'/schemes/sc_test',resident)).notices.length,0);assert.ok((await ok(schemeApi,staff)).notices.some(n=>n.id===scheduled.id));
+ await run("INSERT INTO building_notices(id,scheme_id,title,body,audience,starts_at,created_by) VALUES('notice_history','sc_test','Historical council notice','Historical meeting record','council',?,?)",past,staff.id);
+ await run("INSERT INTO notice_dispatch_jobs(notice_id,status,available_at) VALUES('notice_history','pending',?)",past);
+ await check('historical council notices stay within their authorised audience',async()=>{
+   assert.ok((await ok(councilApi+'/schemes/sc_test',council)).notices.some(n=>n.id==='notice_history'));
+   assert.ok(!(await ok(residentApi+'/schemes/sc_test',resident)).notices.some(n=>n.id==='notice_history'));
+   assert.equal((await api(councilApi+'/schemes/sc_test',outsider)).status,403);
  });
- await run('UPDATE building_notices SET starts_at=? WHERE id=?',past,scheduled.id);await run('UPDATE notice_dispatch_jobs SET available_at=? WHERE notice_id=?',past,scheduled.id);
- await check('due notice fans out only to the correct membership once under competing dispatches',async()=>{
- await Promise.all([dispatch(),dispatch()]);await dispatch();const rows=(await db.prepare('SELECT * FROM notice_deliveries WHERE notice_id=?').bind(scheduled.id).all()).results;assert.equal(rows.length,1);assert.equal(rows[0].user_id,resident.id);assert.equal((await first('SELECT COUNT(*) AS c FROM notifications WHERE id=?',rows[0].notification_id)).c,1);
+ await check('staff cannot publish or retry a retired building notice',async()=>{
+   for (const path of [schemeApi+'/notices',schemeApi+'/notices/notice_history/retry']) {
+     const denied=await api(path,staff,{title:'New notice',body:'A new announcement',audience:'residents'});
+     assert.equal(denied.status,410); assert.equal(denied.data.code,'SECTOR_RETIRED');
+   }
  });
- await check('revoked membership suppresses pending email and removes portal alert visibility',async()=>{
- await run('UPDATE scheme_memberships SET ends_at=? WHERE user_id=?',new Date(Date.now()-3600000).toISOString(),resident.id);const delivery=await first('SELECT outbox_id FROM notice_deliveries WHERE notice_id=?',scheduled.id);await deliver(delivery.outbox_id);assert.equal((await first('SELECT status FROM notice_deliveries WHERE notice_id=?',scheduled.id)).status,'suppressed');assert.equal(mail.filter(m=>m.key===delivery.outbox_id).length,0);
- });
- await run('UPDATE scheme_memberships SET ends_at=NULL WHERE user_id=?',resident.id);
- await check('one person with resident and council roles must switch workspace for council notices',async()=>{
- await run('INSERT INTO scheme_memberships(id,scheme_id,lot_id,user_id,role,starts_at,approved_by) VALUES(?,?,?,?,?,?,?)','extra-council','sc_test','lot_test',resident.id,'council_member',past,staff.id);
- const n=await ok(schemeApi+'/notices',staff,{title:'Council-only review',body:'Only council members should see this content.',audience:'council'});
- assert.equal((await ok(residentApi+'/schemes/sc_test',resident)).notices.some(x=>x.id===n.id),false);assert.equal((await ok(councilApi+'/schemes/sc_test',resident)).notices.some(x=>x.id===n.id),true);
- });
- await check('withdrawal prevents queued delivery and rejects stale withdrawal',async()=>{
- const n=await ok(schemeApi+'/notices',staff,{title:'Withdraw before delivery',body:'This should never be emailed to a resident.',audience:'residents'});await dispatch();await ok(schemeApi+`/notices/${n.id}/withdraw`,staff,{version:1});assert.equal((await api(schemeApi+`/notices/${n.id}/withdraw`,staff,{version:1})).status,409);const event=await first('SELECT outbox_id FROM notice_deliveries WHERE notice_id=?',n.id);await deliver(event.outbox_id);assert.equal((await first('SELECT status FROM notice_deliveries WHERE notice_id=?',n.id)).status,'suppressed');assert.equal((await ok(residentApi+'/schemes/sc_test',resident)).notices.some(x=>x.id===n.id),false);
- });
- await check('bounded notice fan-out resumes to completion without duplicating multi-role users',async()=>{
- for(let i=0;i<31;i++){const id='usr_fanout_'+String(i).padStart(3,'0');await run('INSERT INTO users(id,email,created_at,verified_at) VALUES(?,?,?,?)',id,`fanout-${i}@example.test`,past,past);await run('INSERT INTO scheme_memberships(id,scheme_id,user_id,role,starts_at,approved_by) VALUES(?,?,?,?,?,?)','m_'+id,'sc_test',id,'resident',past,staff.id);}
- const n=await ok(schemeApi+'/notices',staff,{title:'Whole building update',body:'One publication across the whole building.',audience:'all_members'});await dispatch();await dispatch();await dispatch();assert.equal((await first('SELECT COUNT(*) AS c FROM notice_deliveries WHERE notice_id=?',n.id)).c,34);assert.equal((await first('SELECT status FROM notice_dispatch_jobs WHERE notice_id=?',n.id)).status,'completed');
- });
- await check('provider failure is retried with the same message key and no premature sent status',async()=>{
- const n=await ok(schemeApi+'/notices',staff,{title:'Retry delivery',body:'Provider retry uses a stable identifier.',audience:'owners'});await dispatch();const event=await first('SELECT outbox_id FROM notice_deliveries WHERE notice_id=?',n.id);failMail=true;assert.equal((await deliver(event.outbox_id)).status,503);assert.equal((await first('SELECT status FROM notice_deliveries WHERE notice_id=?',n.id)).status,'queued');failMail=false;await run('UPDATE outbox_events SET available_at=? WHERE id=?',past,event.outbox_id);await deliver(event.outbox_id);assert.equal((await first('SELECT status FROM notice_deliveries WHERE notice_id=?',n.id)).status,'sent');
- });
- await check('exhausted deliveries can be retried but suppression and sent receipts remain final',async()=>{
- const n=await ok(schemeApi+'/notices',staff,{title:'Manual delivery recovery',body:'Only failed deliveries may be requeued.',audience:'owners'});await dispatch();const event=await first('SELECT outbox_id FROM notice_deliveries WHERE notice_id=?',n.id);await run('UPDATE outbox_events SET attempts=5 WHERE id=?',event.outbox_id);failMail=true;await deliver(event.outbox_id);failMail=false;assert.equal((await first('SELECT status FROM notice_deliveries WHERE notice_id=?',n.id)).status,'failed');await ok(schemeApi+`/notices/${n.id}/retry`,staff,{});await deliver(event.outbox_id);assert.equal((await first('SELECT status FROM notice_deliveries WHERE notice_id=?',n.id)).status,'sent');assert.equal((await api(schemeApi+`/notices/${n.id}/retry`,staff,{})).status,409);assert.equal((await api(schemeApi+`/notices/${scheduled.id}/retry`,staff,{})).status,409);
+ await check('due historical jobs and previously queued mail cannot fan out or send',async()=>{
+   await Promise.all([dispatch(),dispatch()]);
+   assert.equal((await first("SELECT status FROM notice_dispatch_jobs WHERE notice_id='notice_history'")).status,'cancelled');
+   assert.equal((await first('SELECT COUNT(*) AS n FROM notice_deliveries')).n,0);
+   for (const kind of ['building.notice_available','commercial.occupant_invited']) {
+     const event='old_'+kind;
+     await run("INSERT INTO outbox_events(id,kind,envelope,available_at,created_at) VALUES(?,?,?,?,?)",event,kind,await seal(key,'outbox:'+event,{to:resident.email}),past,past);
+     if(kind==='building.notice_available') await run("INSERT INTO notice_deliveries(notice_id,user_id,notification_id,outbox_id,created_at) VALUES('notice_history',?,'ntf_old',?,?)",resident.id,event,past);
+     await deliver(event);await deliver(event);
+     assert.equal((await first('SELECT error_code FROM outbox_events WHERE id=?',event)).error_code,'SECTOR_RETIRED');
+     assert.equal(mail.filter(m=>m.key===event).length,0);
+   }
+   assert.equal((await first("SELECT status FROM notice_deliveries WHERE notice_id='notice_history'")).status,'suppressed');
  });
  const hosted=new Miniflare({modules:true,scriptPath:'artifacts/communications-worker.mjs',compatibilityDate:'2026-07-01',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'hosted-security'},r2Buckets:{DOCUMENTS:'docs',RESTRICTED_DOCUMENTS:'private'},durableObjects:{SCHEDULER:{className:'BookingScheduler',useSQLite:true}},bindings:{APP_ENV:'staging',APP_ORIGIN:'https://platform.example.test',MARKETING_ORIGIN:'https://marketing.example.test',DATA_ENCRYPTION_KEY:key,ENQUIRY_GATEWAY_SECRET:gateway,MARKETING_TURNSTILE_SECRET_KEY:'synthetic-turnstile'},outboundService:async request=>{
  assert.equal(new URL(request.url).origin,'https://challenges.cloudflare.com');const form=new URLSearchParams(await request.text()),token=form.get('response');return Response.json({success:token!=='expired',hostname:token==='wrong-host'?'attacker.example':'marketing.example.test',action:token==='wrong-action'?'login':'enquiry'});

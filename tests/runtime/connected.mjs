@@ -228,49 +228,26 @@ try {
     )
   ).propertyId;
   const tenant = await makeTenant(owner, base, propertyId, 'tenant@tests.example');
-  await check('commercial occupant invite is property-bound, email-verified, request-scoped and revocable', async () => {
-    const commercialManager = await login('commercial-occupancy-manager@tests.example');
-    const commercialOwner=await ok('/api/onboarding',commercialManager,{
-      displayName:'Commercial verification owner',clientName:'Commercial occupant fixture',landlordType:'commercial'
-    },201);
-    const commercialBase=`/api/w/commercial/${commercialOwner.clientId}`;
-    const property=await ok(commercialBase+'/properties',commercialManager,{
-      address:'71 Occupancy Verification Court',suburb:'Perth',postcode:'6000',
-      propertyType:'Office',selfManaged:true,
-    },201);
-    const recipient=await login('commercial-occupant@tests.example');
-    const invitation=await ok(commercialBase+'/commercial-occupancies/invite',commercialManager,{
-      propertyId:property.propertyId,email:recipient.email,premisesLabel:'Suite 3',
-      relationshipKind:'employee',authorityReference:'Approved premises access agreement',
-    },201);
-    const token=new URL(invitation.localInvitationUrl).searchParams.get('token');
-    assert.equal((await api('/api/invitations/preview?token='+token,{cookie:outsider.cookie})).status,404);
-    assert.equal((await ok('/api/invitations/preview?token='+token,recipient)).flow_id,'ONB-INV-COM');
-    assert.equal((await api('/api/invitations/accept',{cookie:outsider.cookie,body:{token}})).status,400);
-    const accepted=await ok('/api/invitations/accept',recipient,{token});
-    assert.equal(accepted.occupancyId,invitation.occupancyId);
-    assert.equal((await api('/api/invitations/accept',{cookie:recipient.cookie,body:{token}})).status,400);
-    const occupantBase=`/api/w/commercial-occupant/${invitation.occupancyId}`;
-    const scoped=await ok(occupantBase,recipient);
-    assert.equal(scoped.occupancy.premises_label,'Suite 3');
-    assert.deepEqual(scoped.bookings,[]);
-    assert.deepEqual(scoped.tenancies,[]);
-    assert.deepEqual(scoped.documents,[]);
-    assert.equal((await api(commercialBase,{cookie:recipient.cookie})).status,403);
-    assert.equal((await api(occupantBase+'/bookings',{cookie:recipient.cookie})).status,404);
-    const request=await ok(occupantBase+'/occupant-requests',recipient,{
-      title:'Premises access issue',details:'The approved rear access door is not opening with our current access pass.',
-    },201);
-    const manager=await ok(commercialBase+'/commercial-occupancies',commercialManager);
-    assert.ok(manager.requests.some(r=>r.id===request.id));
-    await ok(commercialBase+'/commercial-occupant-requests/'+request.id+'/review',commercialManager,{
-      status:'closed',managerResponse:'Property manager has arranged a replacement access pass.',
-    });
-    const updated=await ok(occupantBase+'/occupant-requests',recipient);
-    assert.equal(updated.requests.find(r=>r.id===request.id).status,'closed');
-    await ok(commercialBase+'/commercial-occupancies/'+invitation.occupancyId+'/end',commercialManager,{});
-    assert.equal((await api(occupantBase,{cookie:recipient.cookie})).status,403);
-    assert.ok(!(await ok('/api/session',recipient)).workspaces.some(w=>w.kind==='commercial-occupant'));
+  // Existing records are seeded directly, so no retired acquisition path is needed.
+  const historic = '2020-01-01T00:00:00.000Z';
+  const legacyManager = await login('commercial-manager@tests.example');
+  const legacyTenant = await login('historical-tenant@tests.example');
+  const managerId = await userId(legacyManager);
+  const legacyBase = '/api/w/commercial/legacy_client';
+  await run("INSERT INTO clients(id,name,client_type,created_at) VALUES('legacy_client','Archived office','commercial_landlord',?)", historic);
+  await run("INSERT INTO client_memberships(id,client_id,user_id,role,created_at) VALUES('legacy_member','legacy_client',?,'owner',?)",managerId,historic);
+  await run("INSERT INTO client_entitlements(client_id,workspace_kind,created_at) VALUES('legacy_client','commercial',?)",historic);
+  await run("INSERT INTO properties(id,address,suburb,postcode,address_key,sector,created_at) VALUES('legacy_property','11 Office Street','Perth','6000','legacy-office','commercial',?)",historic);
+  await run("INSERT INTO client_property_links(id,client_id,property_id,role,starts_at) VALUES('legacy_link','legacy_client','legacy_property','landlord',?)",historic);
+  await run("INSERT INTO tenancies(id,property_id,status,starts_at) VALUES('legacy_tenancy','legacy_property','active',?)",historic);
+  await run("INSERT INTO tenancy_memberships(id,tenancy_id,user_id,starts_at) VALUES('legacy_tenant_member','legacy_tenancy',?,?)",await userId(legacyTenant),historic);
+  await check('historical commercial workspace is scoped and cannot invite new occupants', async () => {
+    assert.equal((await api(legacyBase,{cookie:legacyManager.cookie})).status,200);
+    assert.equal((await api(legacyBase,{cookie:outsider.cookie})).status,403);
+    const denied = await api(legacyBase+'/commercial-occupancies/invite',{cookie:legacyManager.cookie,body:{propertyId:'legacy_property',email:outsider.email}});
+    assert.equal(denied.status,410);
+    assert.equal(denied.data.code,'SECTOR_RETIRED');
+    assert.equal((await first('SELECT count(*) AS n FROM commercial_occupant_invitations')).n,0);
   });
 
   await check('WA residential form catalogue, private draft, review, delivery evidence and commercial denial', async () => {
@@ -278,25 +255,15 @@ try {
     assert.ok(defs.definitions.some(f => f.code === 'WA_FORM_25'));
     assert.ok(!defs.definitions.some(f => f.code === 'WA_FORM_19'));
     assert.ok(!defs.definitions.some(f => f.code === 'WA_FORM_2'));
-    const commercial = await ok('/api/onboarding', owner, {
-      displayName:'Test Owner',clientName:'Commercial Fixture',landlordType:'commercial'
-    },201);
-    assert.equal((await api(`/api/w/commercial/${commercial.clientId}/tenancies/${tenant.tenancyId}/wa-forms`,
-      {cookie:owner.cookie})).status,403);
-    const commercialBase=`/api/w/commercial/${commercial.clientId}`;
-    const commercialProperty=await ok(commercialBase+'/properties',owner,{
-      address:'987 Commercial Forms Isolation Avenue',suburb:'Perth',postcode:'6000',
-      propertyType:'Office',selfManaged:true
-    },201);
-    const commercialTenant=await makeTenant(owner,commercialBase,commercialProperty.propertyId,
-      'commercial-forms-tenant@tests.example');
+    assert.equal((await api(legacyBase+'/tenancies/'+tenant.tenancyId+'/wa-forms',{cookie:legacyManager.cookie})).status,403);
+    const commercialTenant = {...legacyTenant,base:'/api/w/tenant/legacy_tenancy',tenancyId:'legacy_tenancy'};
     assert.equal((await api(
       `${commercialTenant.base}/tenancies/${commercialTenant.tenancyId}/wa-forms`,
       {cookie:commercialTenant.cookie})).status,403);
     assert.equal((await api(`${commercialTenant.base}/wa-forms`,{
       cookie:commercialTenant.cookie,body:{tenancyId:commercialTenant.tenancyId,
        formCode:'WA_FORM_25',answers:{animal:'Dog',arrangements:'Indoor'}}
-    })).status,403);
+    })).status,410);
     assert.equal((await api(`${commercialTenant.base}/confidential`,
       {cookie:commercialTenant.cookie})).status,403);
     assert.equal((await api(`${commercialTenant.base}/confidential`,{
@@ -1226,335 +1193,16 @@ try {
     },
   );
 
-  const commercialUser = await login('commercial@tests.example'),
-    commercial = await organisation(commercialUser, 'commercial', 'Example Commercial', operator);
-  await check('new commercial account starts without any paid plan or new portal roles', async () => {
-    const sub = await first('SELECT plan_code,status,allowance_json FROM subscriptions WHERE client_id=?', commercial.id);
-    assert.equal(sub, null);
-    const w = (await ok('/api/session', commercialUser)).workspaces;
-    assert.deepEqual(w.map(x => x.kind), ['commercial']);
+  await check('retired professional acquisitions cannot create an application or workspace', async () => {
+    const before=await first('SELECT COUNT(*) AS n FROM organisation_applications');
+    for (const kind of ['commercial','strata-manager']) {
+      const denied=await api('/api/organisation-applications',{cookie:outsider.cookie,body:{kind,name:'Retired firm',businessReference:'Synthetic authority'}});
+      assert.equal(denied.status,410);
+      assert.equal(denied.data.code,'SECTOR_RETIRED');
+    }
+    assert.deepEqual(await first('SELECT COUNT(*) AS n FROM organisation_applications'),before);
+    assert.deepEqual((await ok('/api/session',outsider)).workspaces,[]);
   });
-  await check(
-    'commercial property operations remain separate from residential self-management',
-    async () => {
-      const p = await ok(
-        commercial.base + '/properties',
-        commercialUser,
-        {
-          address: '50 Commercial Street',
-          suburb: 'Perth',
-          postcode: '6000',
-          ownerName: 'Commercial Owner',
-          authorityReference: 'Commercial agreement',
-        },
-        201,
-      );
-      assert.equal(
-        (await first('SELECT sector FROM properties WHERE id=?', p.propertyId)).sector,
-        'commercial',
-      );
-      assert.equal(
-        (await api(`/api/w/landlord/${commercial.id}`, { cookie: commercialUser.cookie })).status,
-        403,
-      );
-    },
-  );
-  const strataUser = await login('strata@tests.example'),
-    strataOrg = await organisation(strataUser, 'strata-manager', 'Example Strata Firm', operator),
-    expires = new Date(Date.now() + 365 * 86400000).toISOString();
-  let scheme, lot, council, resident;
-  await check(
-    'strata scheme onboarding distinguishes the management firm from the strata company',
-    async () => {
-      scheme = await ok(strataOrg.base + '/schemes', strataUser, {
-        name: 'Connected Apartments',
-        schemeNumber: 'SP-TEST-200',
-        address: '80 Strata Street',
-        suburb: 'Perth',
-        postcode: '6000',
-        authorityReference: 'Scheme management contract',
-        validUntil: expires,
-      });
-      assert.equal(
-        (await first('SELECT client_type FROM clients WHERE id=?', strataOrg.id)).client_type,
-        'other',
-      );
-      lot = await ok(`${staffBase}/schemes/${scheme.id}/structure`, operator, {
-        kind: 'lot',
-        name: '23',
-        buildingId: scheme.buildingId,
-        propertyId,
-      });
-      const singleDigit = await ok(`${strataOrg.base}/schemes/${scheme.id}/structure`, strataUser, {
-        kind: 'lot',
-        name: '1',
-        buildingId: scheme.buildingId,
-      });
-      assert.equal((await first('SELECT lot_number FROM strata_lots WHERE id=?',singleDigit.id)).lot_number,'1');
-      const invalidArea=await api(`${strataOrg.base}/schemes/${scheme.id}/structure`,strataUser,{kind:'area',name:'A',buildingId:scheme.buildingId});
-      assert.notEqual(invalidArea.status,200);
-      await ok(`${strataOrg.base}/schemes/${scheme.id}/structure`, strataUser, {
-        kind: 'area',
-        name: 'Basement',
-        buildingId: scheme.buildingId,
-      });
-    },
-  );
-  await check(
-    'one person has independent tenancy, resident and council relationships',
-    async () => {
-      await invited(
-        tenant,
-        (
-          await ok(strataOrg.base + '/team/invite', strataUser, {
-            email: tenant.email,
-            schemeId: scheme.id,
-            lotId: lot.id,
-            role: 'resident',
-          })
-        ).localInvitationUrl,
-      );
-      resident = { ...tenant, base: `/api/w/building/${scheme.id}` };
-      council = await login('council@tests.example');
-      const councilProposal = await ok(strataOrg.base + '/team/invite', strataUser, {
-        email: council.email, schemeId: scheme.id, role: 'council_member',
-        endsAt: expires, appointmentReference: 'Synthetic council election minutes 2026-11',
-      });
-      assert.equal(councilProposal.pendingReview,true);
-      assert.equal((await api('/api/w/council/'+scheme.id,{cookie:council.cookie})).status,403);
-      const councilApproval=await ok(
-        staffBase+'/council-appointments/'+councilProposal.reviewId+'/review',
-        operator,{decision:'approved',reviewReference:'Independently verified synthetic election minutes'}
-      );
-      await invited(council,councilApproval.localInvitationUrl);
-      const invalidCouncil=await api(strataOrg.base+'/team/invite',{
-        cookie:strataUser.cookie,body:{
-          email:'unverified-council@tests.example',schemeId:scheme.id,
-          role:'council_member',endsAt:expires,
-        },
-      });
-      assert.equal(invalidCouncil.status,422);
-      const selfProposed=await ok(staffBase+'/team/invite',operator,{
-        email:'staff-proposed-council@tests.example',schemeId:scheme.id,
-        role:'council_member',endsAt:expires,
-        appointmentReference:'Independent council appointment test reference',
-      });
-      const selfReview=await api(staffBase+'/council-appointments/'+selfProposed.reviewId+'/review',{
-        cookie:operator.cookie,body:{decision:'approved',reviewReference:'Cannot independently approve this request'},
-      });
-      assert.equal(selfReview.status,403);
-      const declined=await ok(staffBase+'/council-appointments/'+selfProposed.reviewId+'/review',admin,{
-        decision:'declined',reviewReference:'Independent review found no verified appointment',
-      });
-      assert.equal(declined.status,'declined');
-      assert.equal(declined.localInvitationUrl,undefined);
-      council.base = `/api/w/council/${scheme.id}`;
-      const ws = (await ok('/api/session', tenant)).workspaces;
-      assert.ok(ws.some((w) => w.kind === 'tenant') && ws.some((w) => w.kind === 'building'));
-      assert.ok(!JSON.stringify(await ok(resident.base, resident)).includes('response_envelope'));
-    },
-  );
-  await check(
-    'eight independent portal identities remain isolated across every unrelated workspace and scheme',
-    async () => {
-      const buildingOnly = await login('resident-only@tests.example');
-      const invite = await ok(`${strataOrg.base}/team/invite`, strataUser, {
-        email: buildingOnly.email, schemeId: scheme.id, lotId: lot.id, role: 'resident',
-      });
-      await invited(buildingOnly, invite.localInvitationUrl);
-      const roles = [
-        { name: 'landlord', actor: owner, href: base },
-        { name: 'property-manager', actor: agency, href: pm.base },
-        { name: 'commercial', actor: commercialUser, href: commercial.base },
-        { name: 'strata-manager', actor: strataUser, href: strataOrg.base },
-        { name: 'tenant', actor: tenant, href: tenant.base },
-        { name: 'building', actor: buildingOnly, href: `/api/w/building/${scheme.id}` },
-        { name: 'council', actor: council, href: council.base },
-        { name: 'staff', actor: operator, href: staffBase },
-      ];
-      for (const { name, actor, href } of roles) {
-        assert.equal((await api(href, { cookie: actor.cookie })).status, 200, `${name} own scope`);
-        for (const other of roles) {
-          if (other.href === href || (name === 'tenant' && other.name === 'building')) continue;
-          assert.equal(
-            (await api(other.href, { cookie: actor.cookie })).status, 403,
-            `${name} cannot open ${other.name}`,
-          );
-        }
-      }
-      assert.deepEqual(
-        (await ok('/api/session', buildingOnly)).workspaces.map(w => w.kind),
-        ['building'],
-        'Resident cannot inherit council/tenancy authority',
-      );
-      const independent = await ok(`${strataOrg.base}/schemes`, strataUser, {
-        name: 'Separate Scheme Isolation Fixture', schemeNumber: 'SP-TEST-201',
-        address: '81 Independent Strata Street', suburb: 'Perth', postcode: '6000',
-        authorityReference: 'Independent synthetic management agreement', validUntil: expires,
-      });
-      assert.equal((await api(`${strataOrg.base}/schemes/${independent.id}`, {cookie: strataUser.cookie})).status, 200);
-      for (const actor of [tenant, buildingOnly, council]) {
-        for (const kind of ['building', 'council'])
-          assert.equal((await api(`/api/w/${kind}/${independent.id}`, {cookie: actor.cookie})).status, 403);
-      }
-    },
-  );
-  let issue, buildingWo;
-  await check(
-    'resident inside-lot maintenance routes to tenancy while common-property issue routes to the scheme',
-    async () => {
-      const inside = await ok(`${resident.base}/schemes/${scheme.id}/requests`, resident, {
-        title: 'Inside-lot issue',
-        details: 'The kitchen tap is leaking inside the lot.',
-        locationKind: 'lot',
-        lotId: lot.id,
-      });
-      assert.equal(inside.routedTo, 'tenancy');
-      issue = await ok(`${resident.base}/schemes/${scheme.id}/requests`, resident, {
-        title: 'Basement leak',
-        details: 'Water is leaking in the common-property basement.',
-        locationKind: 'common',
-      });
-      assert.equal(issue.routedTo, 'building');
-      buildingWo = (await ok(`${strataOrg.base}/requests/${issue.id}/dispatch`, strataUser, {})).id;
-      assert.equal(
-        (await ok(`${strataOrg.base}/requests/${issue.id}/dispatch`, strataUser, {})).id,
-        buildingWo,
-      );
-    },
-  );
-  await check(
-    'scheme authority escalation collects council advice but requires an authorised recorded outcome',
-    async () => {
-      const o = await first('SELECT version FROM work_orders WHERE id=?', buildingWo),
-        a = await ok(`${strataOrg.base}/work-orders/${buildingWo}/proposals`, strataUser, {
-          version: o.version,
-          amountCents: 125000,
-          summary: 'Repair basement waterproofing',
-          reference: 'Contractor quote register',
-          requestKey: requestKey(),
-        });
-      assert.equal(a.decisionScope, 'council');
-      await ok(`${council.base}/approvals/${a.id}/response`, council, {
-        response: 'support',
-        comment: 'Recommendation recorded.',
-      });
-      assert.equal(
-        (await first('SELECT status FROM approvals WHERE id=?', a.id)).status,
-        'pending',
-      );
-      assert.equal(
-        (
-          await api(`${council.base}/approvals/${a.id}/decision`, {
-            cookie: council.cookie,
-            body: { version: 1, decision: 'approved' },
-          })
-        ).status,
-        403,
-      );
-      await ok(`${staffBase}/approvals/${a.id}/decision`, operator, {
-        version: 1,
-        decision: 'approved',
-        reference: 'Authorised council outcome evidence 2026-10',
-      });
-    },
-  );
-  await check(
-    'resident visibility excludes financial details, tenancy documents and other requesters identities',
-    async () => {
-      const o = await first('SELECT version FROM work_orders WHERE id=?', buildingWo);
-      await ok(`${strataOrg.base}/work-orders/${buildingWo}/public`, strataUser, {
-        version: o.version,
-        residentVisible: true,
-        summary: 'Contractor investigating the basement leak.',
-      });
-      const view = await ok(resident.base, resident);
-      assert.equal(view.payments.length, 0);
-      assert.equal(view.approvals.length, 0);
-      assert.ok(
-        view.workOrders.some((o) => o.title === 'Contractor investigating the basement leak.'),
-      );
-      assert.equal((await ok(strataOrg.base, strataUser)).tenancies.length, 0);
-      assert.equal(
-        (
-          await api(`${strataOrg.base}/tenancies/${tenant.tenancyId}`, {
-            cookie: strataUser.cookie,
-          })
-        ).status,
-        403,
-      );
-    },
-  );
-  await check(
-    'building notices are filtered by audience and lot and do not leak council-only content',
-    async () => {
-      await ok(`${strataOrg.base}/schemes/${scheme.id}/notices`, strataUser, {
-        title: 'Council briefing',
-        body: 'Council-only operational briefing.',
-        audience: 'council',
-      });
-      await ok(`${strataOrg.base}/schemes/${scheme.id}/notices`, strataUser, {
-        title: 'Lot 23 access',
-        body: 'Authorised access arrangements for your lot.',
-        audience: 'residents',
-        lotId: lot.id,
-      });
-      const visible = await ok(`${resident.base}/schemes/${scheme.id}`, resident);
-      assert.equal(visible.notices.length, 1);
-      assert.equal(visible.notices[0].title, 'Lot 23 access');
-      assert.equal(visible.members.length, 0);
-    },
-  );
-
-  await check(
-    'one tenant resident and council member sees independent notices and loses only expired council access',
-    async () => {
-      const extra = await ok(`${strataOrg.base}/team/invite`, strataUser, {
-        email: tenant.email,schemeId: scheme.id,role: 'council_member',
-        endsAt: expires,appointmentReference: 'Synthetic council co-option resolution',
-      });
-      assert.equal(extra.pendingReview,true);
-      const reviewed=await ok(
-        staffBase+'/council-appointments/'+extra.reviewId+'/review',
-        operator,{decision:'approved',reviewReference:'Independently verified synthetic co-option resolution'}
-      );
-      await invited(tenant, reviewed.localInvitationUrl);
-      const kinds = (await ok('/api/session', tenant)).workspaces.map((w) => w.kind);
-      for (const kind of ['tenant', 'building', 'council'])
-        assert.ok(kinds.includes(kind), `Expected independent ${kind} workspace`);
-      const buildingView = await ok(`${resident.base}/schemes/${scheme.id}`, tenant);
-      const councilView = await ok(`/api/w/council/${scheme.id}/schemes/${scheme.id}`, tenant);
-      assert.ok(buildingView.notices.some((n) => n.title === 'Lot 23 access'));
-      assert.ok(!buildingView.notices.some((n) => n.title === 'Council briefing'));
-      assert.ok(councilView.notices.some((n) => n.title === 'Council briefing'));
-      const member = await first(
-        "SELECT id FROM scheme_memberships WHERE user_id=? AND scheme_id=? AND role='council_member' AND ends_at>?",
-        await userId(tenant),
-        scheme.id,
-        new Date().toISOString(),
-      );
-      assert.ok(member);
-      await ok(`${strataOrg.base}/schemes/${scheme.id}/members/${member.id}/end`, strataUser, {});
-      assert.equal((await api(`/api/w/council/${scheme.id}`, { cookie: tenant.cookie })).status, 403);
-      assert.equal((await api(resident.base, { cookie: tenant.cookie })).status, 200);
-      assert.equal((await api(tenant.base, { cookie: tenant.cookie })).status, 200);
-      assert.ok(!(await ok('/api/session', tenant)).workspaces.some((w) => w.kind === 'council'));
-    },
-  );
-
-  await check(
-    'council term revocation removes the workspace without changing the person account',
-    async () => {
-      const m = await first(
-        "SELECT id FROM scheme_memberships WHERE user_id=? AND scheme_id=? AND role='council_member'",
-        await userId(council),
-        scheme.id,
-      );
-      await ok(`${strataOrg.base}/schemes/${scheme.id}/members/${m.id}/end`, strataUser, {});
-      assert.equal((await api(council.base, { cookie: council.cookie })).status, 403);
-      assert.equal((await ok('/api/session', council)).user.active, undefined);
-    },
-  );
   await check(
     'confidential evidence is encrypted and only the applicant and case-granted reviewer can read it',
     async () => {
@@ -1692,51 +1340,20 @@ try {
     async () => {
       for (const path of [
         pm.base,
-        strataOrg.base,
+        legacyBase,
         staffBase + '/admin',
         staffBase + '/integrations',
-        `${resident.base}/schemes/${scheme.id}`,
+        `/api/w/building/archived_scheme/schemes/archived_scheme`,
       ])
         assert.equal((await api(path, { cookie: outsider.cookie })).status, 403);
       const view = await ok(staffBase + '/admin', operator);
-      assert.ok(view.applications.length >= 3);
+      assert.ok(view.applications.some(a => a.client_id === pm.id));
       assert.ok(!JSON.stringify(view).includes('CONFIDENTIAL SYNTHETIC CONTENT'));
       assert.equal((await sql.prepare('PRAGMA foreign_key_check').all()).results.length, 0);
     },
   );
-  await check('all customer portals book their own unpriced subscription services with Staff-visible Work Orders', async () => {
-    const commercialProperty = await first(
-      "SELECT id FROM properties WHERE address='50 Commercial Street' AND sector='commercial'",
-    );
-    const strataBuilding = await first(
-      'SELECT property_id FROM scheme_buildings WHERE scheme_id=?',
-      scheme.id,
-    );
-    assert.ok(commercialProperty?.id);
-    assert.ok(strataBuilding?.property_id);
-    const scenarios = [
-      {
-        kind: 'property-manager',
-        actor: agency,
-        client: pm,
-        propertyId: imported.propertyIds[0],
-        serviceId: 'property-condition-report',
-      },
-      {
-        kind: 'commercial',
-        actor: commercialUser,
-        client: commercial,
-        propertyId: commercialProperty.id,
-        serviceId: 'commercial-property-inspection',
-      },
-      {
-        kind: 'strata-manager',
-        actor: strataUser,
-        client: strataOrg,
-        propertyId: strataBuilding.property_id,
-        serviceId: 'common-property-inspection',
-      },
-    ];
+  await check('residential agency books an included service with a Staff-visible work order', async () => {
+    const scenarios = [{kind:'property-manager',actor:agency,client:pm,propertyId:imported.propertyIds[0],serviceId:'property-condition-report'}];
     // Preserve the older included-booking regression tests using explicitly
     // approved synthetic historical property-level coverage; a newly registered
     // account never receives this plan or grant automatically.
@@ -1786,8 +1403,7 @@ try {
       assert.equal(snapshot.bookingBasis, 'subscription_included', scenario.kind);
       assert.equal(snapshot.subscription.planCode, 'all_inclusive', scenario.kind);
       assert.ok(snapshot.subscription.id, scenario.kind);
-      if (scenario.kind === 'strata-manager')
-        assert.equal(row.scheme_id, scheme.id);
+      assert.equal(row.scheme_id, null);
       const workOrder = await first(
         'SELECT booking_id,client_id,status,scheme_id FROM work_orders WHERE id=?',
         booked.workOrderId,

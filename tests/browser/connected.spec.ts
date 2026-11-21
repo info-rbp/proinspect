@@ -194,7 +194,7 @@ test('tenant evidence, reviewed PCR and cost approval connect to the self-managi
   }
 });
 
-test('professional portfolio import, recurring plan and commercial workspace are usable', async ({
+test('agency imports a portfolio, manages a recurring plan and keeps the portfolio private', async ({
   browser,
 }) => {
   const agency = await person(browser, 'agency'),
@@ -234,20 +234,8 @@ test('professional portfolio import, recurring plan and commercial workspace are
     });
     await visit(agency.page, pm.href + '/team', 'Team and portfolio access');
     await expect(agency.page.getByText('Browser Owner', { exact: false })).toBeVisible();
-    const commercialWorkspace = await organisation(
-      commercial.context,
-      'commercial',
-      operator.context,
-    );
-    await visit(commercial.page, commercialWorkspace.href + '/portfolio', 'Portfolio operations');
-    await expect(
-      commercial.page.getByRole('banner').getByText('Commercial', { exact: true }),
-    ).toBeVisible();
-    const response = await commercial.context.request.get(
-      `/api/w/landlord/${commercialWorkspace.clientId}`,
-    );
-    expect(response.status()).toBe(403);
-    expect((await agency.context.request.get(commercialWorkspace.api)).status()).toBe(403);
+    const rejected = await commercial.context.request.post('/api/organisation-applications',{headers:{Origin:origin},data:{kind:'commercial',name:'Closed acquisition',businessReference:'Synthetic agreement'}});
+    expect(rejected.status()).toBe(410);
     expect((await commercial.context.request.get(pm.api)).status()).toBe(403);
   } finally {
     await agency.context.close();
@@ -256,122 +244,16 @@ test('professional portfolio import, recurring plan and commercial workspace are
   }
 });
 
-test('resident report reaches strata operations and council sees only its decision workflow', async ({
-  browser,
-}) => {
-  const manager = await person(browser, 'strata'),
-    resident = await person(browser, 'resident');
-  const council = await person(browser, 'council'),
-    operator = await person(browser, 'staff', 'staff@proinspect.test');
+test('retired scheme acquisition gives no property or council access',async({browser})=>{
+  const resident=await person(browser,'archived-scheme');
   try {
-    const firm = await organisation(manager.context, 'strata-manager', operator.context);
-    await visit(manager.page, firm.href + '/schemes', 'Schemes and buildings');
-    const setup = panel(manager.page, 'Set up a managed scheme'),
-      name = `Browser Apartments ${id()}`;
-    await setup.getByLabel('Scheme name').fill(name);
-    await setup.getByLabel('Scheme number').fill(`SP-BROWSER-${id()}`);
-    await setup.getByLabel('Primary building address').fill(`${id()} Building Street`);
-    await setup.getByLabel('Suburb', { exact: true }).fill('Perth');
-    await setup.getByLabel('Postcode', { exact: true }).fill('6000');
-    await setup.getByLabel('Management authority reference').fill('Browser scheme contract');
-    await setup.getByLabel('Management authority expires').fill(future().slice(0, 16));
-    await setup.getByRole('button', { name: 'Create scheme' }).click();
-    await expect(manager.page.getByRole('heading', { level: 1 })).toHaveText(name);
-    const schemeId = new URL(manager.page.url()).pathname.split('/').pop()!;
-    for (const [who, role] of [
-      [resident, 'resident'],
-      [council, 'council_member'],
-    ] as const) {
-      const proposal = await post(manager.context, firm.api + '/team/invite', {
-        email: who.email,
-        role,
-        schemeId,
-        ...(role === 'council_member'
-          ? { endsAt: future(), appointmentReference:'Synthetic browser council appointment minutes' } : {}),
-      });
-      const invitation=role==='council_member'
-        ? await post(operator.context,'/api/w/staff/operations/council-appointments/'+proposal.reviewId+'/review',{
-            decision:'approved',reviewReference:'Independently verified browser council minutes'})
-        : proposal;
-      await post(who.context, '/api/invitations/accept', {
-        token: new URL(invitation.localInvitationUrl).searchParams.get('token'),
-      });
-    }
-    const notice = panel(manager.page, 'Publish a targeted notice');
-    await notice.getByLabel('Notice title').fill('Browser council-only briefing');
-    await notice
-      .getByLabel('Message', { exact: true })
-      .fill('A private council briefing about operational proposals.');
-    await notice.getByLabel('Audience', { exact: true }).selectOption('council');
-    await notice.getByRole('button', { name: 'Publish notice' }).click();
-    await saved(manager.page);
-    const residentHref = `/w/building/${schemeId}`,
-      councilHref = `/w/council/${schemeId}`;
-    expect((await resident.context.request.get(`/api/w/council/${schemeId}`)).status()).toBe(403);
-    expect((await council.context.request.get(`/api/w/building/${schemeId}`)).status()).toBe(403);
-    expect((await resident.context.request.get(`${firm.api}/schemes/${schemeId}`)).status()).toBe(403);
-    await visit(resident.page, `${residentHref}/schemes/${schemeId}`, name);
-    await expect(resident.page.getByText('Browser council-only briefing')).toHaveCount(0);
-    await resident.page.getByLabel('Where is the issue?').selectOption('common');
-    await resident.page.getByLabel('Issue summary').fill('Browser basement leak');
-    await resident.page
-      .getByLabel('What happened?')
-      .fill('Water is collecting beside the basement door.');
-    await resident.page.getByLabel('Request type').selectOption('maintenance');
-    await resident.page.getByLabel('Urgency').selectOption('urgent');
-    await resident.page.getByRole('button', { name: 'Submit issue' }).click();
-    await saved(resident.page);
-    const requests = (await get(manager.context, firm.api)).requests;
-    const request = requests.find((x: any) => x.title === 'Browser basement leak');
-    expect(request).toBeTruthy();
-    await visit(manager.page, `${firm.href}/requests/${request.id}`, 'Browser basement leak');
-    await manager.page.getByRole('button', { name: 'Request operational attendance' }).click();
-    await saved(manager.page);
-    const order = (await get(manager.context, firm.api)).workOrders.find(
-      (x: any) => x.request_id === request.id,
-    );
-    await post(manager.context, `${firm.api}/work-orders/${order.id}/proposals`, {
-      version: order.version,
-      summary: 'Browser drainage proposal',
-      amountCents: 750000,
-      reference: 'Browser works quote',
-      requestKey: randomUUID(),
-    });
-    await visit(council.page, councilHref + '/finance', 'Decisions and oversight');
-    const proposal = panel(council.page, 'Browser drainage proposal');
-    await proposal.getByLabel('Recommendation', { exact: true }).selectOption('support');
-    await proposal.getByRole('button', { name: 'Record recommendation' }).click();
-    await saved(council.page);
-    await expect(proposal.locator('.badge')).toHaveText(/pending/i);
-    await expect(
-      council.page.getByRole('button', { name: /Record authorised council outcome/ }),
-    ).toHaveCount(0);
-    await council.page.screenshot({
-      path: 'artifacts/screenshots/council-decision.png',
-      fullPage: true,
-    });
-    await visit(manager.page, `${firm.href}/schemes/${schemeId}`, name);
-    await manager.page.screenshot({
-      path: 'artifacts/screenshots/strata-scheme.png',
-      fullPage: true,
-    });
-    await resident.page.setViewportSize({ width: 390, height: 844 });
-    await resident.page.screenshot({
-      path: 'artifacts/screenshots/building-mobile.png',
-      fullPage: true,
-    });
-    expect(
-      await resident.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2),
-    ).toBe(true);
-  } finally {
-    await manager.context.close();
-    await resident.context.close();
-    await council.context.close();
-    await operator.context.close();
-  }
+    await resident.page.goto('/workspaces');
+    await expect(resident.page.getByRole('link',{name:'Strata management',exact:true})).toHaveCount(0);
+    const response=await resident.context.request.post('/api/organisation-applications',{headers:{Origin:origin},data:{kind:'strata-manager',name:'Synthetic scheme firm',businessReference:'Reviewed fixture'}});
+    expect(response.status()).toBe(410);
+    expect((await resident.context.request.get('/api/w/council/historical')).status()).toBe(403);
+  } finally {await resident.context.close();}
 });
-
-
 
 test('WA Residential Forms Centre creates an authorised pet request without exposing commercial or confidential forms',async({browser})=>{
  const landlord=await person(browser,'wa-landlord');

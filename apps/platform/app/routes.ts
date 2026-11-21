@@ -68,6 +68,7 @@ export default [
   route('signin', 'routes/signin.tsx'),
   route('signup', 'routes/signup.tsx'),
   route('start', 'routes/start.tsx'),
+  route('auth/staging', 'routes/staging-signin.tsx'),
   route('auth/complete', 'routes/auth-complete.tsx'),
   route('signout', 'routes/signout.tsx'),
   route('account', 'routes/account.tsx'),

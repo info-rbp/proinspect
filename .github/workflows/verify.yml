@@ -89,7 +89,7 @@ jobs:
         run: |
           pnpm test:browser
           node scripts/release/temporary-rental-browser.mjs
-          node scripts/portal-testing/isolated-scenario-coverage.mjs
+          node scripts/portal-testing/isolated-scenario-coverage.mjs --residential
       - uses: actions/upload-artifact@v4
         if: always()
         with:

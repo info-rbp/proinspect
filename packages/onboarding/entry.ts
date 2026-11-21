@@ -38,7 +38,7 @@ export function authDestination(value: unknown): string {
   const target = safeReturnTo(value);
   // A sign-in link must not return to another authentication form or sign-out.
   const pathname = target.split('?')[0].replace(/\.data$/, '').replace(/\/+$/, '');
-  return ['/signin', '/signup', '/auth/complete', '/signout'].includes(pathname) ? '/start' : target;
+  return ['/signin', '/signup', '/auth/complete', '/auth/staging', '/signout'].includes(pathname) ? '/start' : target;
 }
 export function workspaceEntryPath(workspace: Workspace, service?: unknown): string {
   const intent = bookingIntent(service);

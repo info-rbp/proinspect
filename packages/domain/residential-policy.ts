@@ -41,7 +41,7 @@ export function retiredPublicPath(path: string): boolean {
     /^\/who-we-help\/(?:commercial[^/]*|strata[^/]*|building[^/]*|construction[^/]*|developers[^/]*)(?:\/|$)/.test(
       normal,
     ) ||
-    /^\/services\/(?:COM-\d+|commercial-[^/]+|common-property-inspection|building-management-attendance|building-handover-attendance|urgent-building-attendance)$/.test(
+    /^\/(?:book|services)\/(?:COM-\d+|commercial-[^/]+|common-property-inspection|building-management-attendance|building-handover-attendance|urgent-building-attendance)$/.test(
       normal,
     )
   );

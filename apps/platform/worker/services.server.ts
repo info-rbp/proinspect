@@ -95,6 +95,7 @@ export async function onboard(env: Env, user: Principal, input: unknown) {
   const clientId = `cli_${(await digest(`${salt}:${user.id}`)).slice(0, 32)}`;
   const membershipId = `mem_${clientId.slice(4)}`;
   const legal = await legalStatements(env,{kind:'user',id:user.id},'onboarding',clientId,{clientId,clientName:data.clientName,landlordType:data.landlordType},data.legalConsent);
+  assert(!data.serviceInterests.some(area=>['commercial','strata','construction'].includes(area)),410,'SECTOR_RETIRED','Choose a current Residential service area.');
   const interests=[...new Set([residential?'residential':'commercial',...data.serviceInterests])];
   assert(await serviceInterestTableReady(env),503,'ONBOARDING_MIGRATION_PENDING','Account preferences are not configured.');
   await env.DB.batch([

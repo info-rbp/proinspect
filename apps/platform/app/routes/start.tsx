@@ -68,7 +68,7 @@ export default function Start() {
         ) : (
           <>
             <div className="stack">
-              {['Residential', 'Commercial', 'Strata', 'Resident'].map((family) => (
+              {['Residential', 'Resident'].map((family) => (
                 <section key={family} className="stack-sm">
                   <h2>{family}</h2>
                   <p>

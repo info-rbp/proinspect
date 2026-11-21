@@ -143,10 +143,7 @@ export default function Onboarding() {
             </p>
             {[
               ['residential', 'Residential'],
-              ['commercial', 'Commercial'],
-              ['strata', 'Strata'],
-              ['co-living', 'Co-living and student living'],
-              ['construction', 'Construction support'],
+              ['co-living', 'Co-Living'],
               ['leasing', 'Leasing'],
               ['maintenance', 'Maintenance'],
             ].map(([value, label]) => (

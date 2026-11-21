@@ -71,6 +71,7 @@ export interface Env {
   EVENTS: Queue<{ eventId: string }>;
   DATA_ENCRYPTION_KEY: string;
   TURNSTILE_SECRET_KEY?: string;
+  STAGING_ACCESS_AUD?: string;
   TURNSTILE_SITE_KEY?: string;
   EMAIL_PROVIDER?: 'resend' | 'local';
   RESEND_API_KEY?: string;

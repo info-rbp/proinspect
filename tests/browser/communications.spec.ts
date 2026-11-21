@@ -37,20 +37,11 @@ test('public enquiry reaches authorised Staff triage and a recorded email reply'
  await p.screenshot({path:'artifacts/screenshots/staff-enquiry.png',fullPage:true});
  }finally{await staff.close();}
 });
-test('scheduled building notice is visible to its manager, hidden from residents, and withdrawable',async({browser})=>{
- const staff=await browser.newContext({baseURL:origin}),manager=await browser.newContext({baseURL:origin}),resident=await browser.newContext({baseURL:origin});
- try{
- const suffix=randomUUID().slice(0,8);await login(staff,'communications-staff@proinspect.test');await login(manager,`manager-${suffix}@proinspect.test`);await login(resident,`resident-${suffix}@proinspect.test`);
- const application=await post(manager,'/api/organisation-applications',{kind:'strata-manager',name:`Notice Manager ${suffix}`,businessReference:'Synthetic reviewed authority'});
- const approved=await post(staff,`/api/w/staff/operations/organisation-applications/${application.id}/review`,{decision:'approved',reference:'Synthetic browser verification'});
- const root=`/api/w/strata-manager/${approved.clientId}`;
- const scheme=await post(manager,root+'/schemes',{name:`Notice Building ${suffix}`,schemeNumber:`NOTICE-${suffix}`,address:`${suffix} Example Street`,suburb:'Perth',postcode:'6000',authorityReference:'Synthetic management engagement',validUntil:new Date(Date.now()+180*86400000).toISOString()});
- const invitation=await post(manager,root+'/team/invite',{email:`resident-${suffix}@proinspect.test`,role:'resident',schemeId:scheme.id});
- await post(resident,'/api/invitations/accept',{token:new URL(invitation.localInvitationUrl).searchParams.get('token')});
- await post(manager,`${root}/schemes/${scheme.id}/notices`,{title:'Planned lift servicing',body:'The lift is scheduled for servicing at a later date.',audience:'residents',startsAt:new Date(Date.now()+86400000).toISOString()});
- const p=await manager.newPage();await p.goto(`/w/strata-manager/${approved.clientId}/schemes/${scheme.id}`);await expect(p.getByRole('heading',{name:'Planned lift servicing',exact:true})).toBeVisible();await expect(p.getByText('Scheduled',{exact:true})).toBeVisible();
- const r=await resident.newPage();await r.goto(`/w/building/${scheme.id}/schemes/${scheme.id}`);await expect(r.getByText('Planned lift servicing')).toHaveCount(0);
- await p.getByText('Withdraw notice',{exact:true}).click();await p.getByRole('button',{name:'Confirm withdrawal'}).click();await expect(p.getByText('Withdrawn',{exact:true})).toBeVisible();
- await p.screenshot({path:'artifacts/screenshots/scheduled-notice.png',fullPage:true});await r.reload();await expect(r.getByText('Planned lift servicing')).toHaveCount(0);
- }finally{await staff.close();await manager.close();await resident.close();}
+test('Staff cannot create a building broadcast from the retired scheme workflow',async({page})=>{
+  await login(page.context(),'communications-staff@proinspect.test');
+  const response=await page.request.post('/api/w/staff/operations/schemes/historical/notices',{headers:{Origin:origin},data:{title:'Synthetic notice',body:'A synthetic building notice',audience:'residents'}});
+  expect(response.status()).toBe(410);
+  expect((await response.json()).code).toBe('SECTOR_RETIRED');
+  await page.goto('/w/staff/operations/enquiries');
+  await expect(page.getByRole('heading',{level:1})).toBeVisible();
 });

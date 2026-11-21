@@ -26,6 +26,7 @@ test('logo returns home and all service overviews have working images, FAQs and 
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   for (const [slug, content] of Object.entries(SECTOR_OVERVIEWS)) {
+    if (!['residential','co-living','maintenance'].includes(slug)) continue;
     await page.goto('/' + slug);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(content.headline);
     await expect(
@@ -54,11 +55,7 @@ test('new pages reflow at narrow sizes and include canonical metadata and tenant
 }) => {
   const paths = [
     '/residential',
-    '/commercial',
-    '/strata',
     '/co-living',
-    '/student-living',
-    '/construction',
     '/maintenance',
     '/leasing',
     '/about',

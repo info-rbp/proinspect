@@ -17,7 +17,7 @@ export default function Workspaces() {
   const data = useLoaderData<typeof loader>();
   const workspaces = data.workspaces as Workspace[];
   const groups = groupWorkspaces(workspaces);
-  const hasOwner = (kind: 'landlord' | 'commercial') => workspaces.some((w) => w.kind === kind);
+  const hasOwner = workspaces.some((w) => w.kind === 'landlord');
   const ownerLink = (flow: string) =>
     '/onboarding?flow=' +
     flow +
@@ -97,31 +97,24 @@ export default function Workspaces() {
             </p>
           </section>
         )}
-        {(!hasOwner('landlord') || !hasOwner('commercial')) && (
+        {!hasOwner && (
           <section className="panel stack">
             <h2>Own and self-manage property?</h2>
             <p>
-              Choose the sector for your free account. A subscription or paid service is a separate
+              Create a free account for your residential property. A subscription or paid service is a separate
               decision.
             </p>
             <div className="actions">
-              {!hasOwner('landlord') && (
                 <Link className="button" to={ownerLink('ONB-RES-OWNER')}>
                   Residential owner
                 </Link>
-              )}
-              {!hasOwner('commercial') && (
-                <Link className="button secondary" to={ownerLink('ONB-COM-OWNER')}>
-                  Commercial owner
-                </Link>
-              )}
             </div>
           </section>
         )}
         <section className="panel stack">
           <h2>Represent a property management organisation?</h2>
           <p>
-            Apply for professional access to Residential, Commercial or Strata. Your assignments and
+            Apply to manage residential properties for an agency. Your assignments and
             authority are verified before activation.
           </p>
           <div className="actions">
@@ -130,18 +123,6 @@ export default function Workspaces() {
               to={withService('/organisation?flow=ONB-RES-AGENCY', data.serviceId)}
             >
               Residential management
-            </Link>
-            <Link
-              className="button secondary"
-              to={withService('/organisation?flow=ONB-COM-MANAGER', data.serviceId)}
-            >
-              Commercial management
-            </Link>
-            <Link
-              className="button secondary"
-              to={withService('/organisation?flow=ONB-STR-MANAGER', data.serviceId)}
-            >
-              Strata management
             </Link>
           </div>
         </section>

@@ -2,7 +2,6 @@ import {rentalPackageMailAllowed,rentalPackageSentStatements} from './rental-pac
 import type { Env } from '../database/types';
 import { statement, now, uid } from '../database/types';
 import { seal, unseal } from '../auth/crypto';
-import { noticeRecipient } from './notice-access';
 export interface MailJob {
   to: string;
   cc?: string[];
@@ -76,6 +75,13 @@ export async function deliverEvent(env: Env, eventId: string) {
   ).first<{ id: string; envelope: string; attempts: number; kind: string }>();
   if (!row) return;
   try {
+    if (row.kind === 'building.notice_available' || row.kind.startsWith('commercial.')) {
+      await env.DB.batch([
+        statement(env.DB, "UPDATE outbox_events SET status='failed',error_code='SECTOR_RETIRED',lease_token=NULL,lease_until=NULL WHERE id=? AND lease_token=?",row.id,lease),
+        statement(env.DB, "UPDATE notice_deliveries SET status='suppressed' WHERE outbox_id=?",row.id),
+      ]);
+      return;
+    }
     const payload = await unseal<MailJob>(
       env.DATA_ENCRYPTION_KEY,
       `outbox:${row.id}`,
@@ -130,34 +136,6 @@ export async function deliverEvent(env: Env, eventId: string) {
           "UPDATE outbox_events SET status='failed',error_code='REPORT_RECIPIENT_SUPPRESSED',lease_token=NULL,lease_until=NULL WHERE id=? AND lease_token=?",
           row.id, lease,
         ).run();
-        return;
-      }
-    }
-    if (payload.noticeAccess) {
-      const recipient = await noticeRecipient(
-        env,
-        payload.noticeAccess.noticeId,
-        payload.noticeAccess.userId,
-      );
-      if (!recipient || recipient.email.toLowerCase() !== payload.to.toLowerCase()) {
-        await env.DB.batch([
-          statement(
-            env.DB,
-            "UPDATE outbox_events SET status='failed',error_code='NOTICE_SUPPRESSED',lease_token=NULL,lease_until=NULL WHERE id=? AND lease_token=?",
-            row.id,
-            lease,
-          ),
-          statement(
-            env.DB,
-            "UPDATE notice_deliveries SET status='suppressed' WHERE outbox_id=?",
-            row.id,
-          ),
-          statement(
-            env.DB,
-            'DELETE FROM notifications WHERE id IN(SELECT notification_id FROM notice_deliveries WHERE outbox_id=?)',
-            row.id,
-          ),
-        ]);
         return;
       }
     }

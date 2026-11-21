@@ -22,6 +22,7 @@ jobs:
       - run: pnpm check
       - name: Residential security, contracts and isolated R2 recovery
         run: |
+          node tests/runtime/staging-signin.mjs
           node --experimental-strip-types tests/runtime/residential-pivot.mjs
           node --experimental-strip-types tests/runtime/weekly-billing.mjs
           node --experimental-strip-types tests/runtime/stripe.mjs
