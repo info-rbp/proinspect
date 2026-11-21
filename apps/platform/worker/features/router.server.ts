@@ -95,6 +95,10 @@ export async function featureApi(
     if(tail==='commercial-leases')return ok(await commercialOps.commercialData(env,user,w));
     if(tail==='owner-invitations')return ok(await ownerInvites.ownerInvitationList(env,user,w));
     if(tail==='billing')return ok(await billingAccounts.billingDashboard(env,user,w));
+    if(tail==='cash-terms'){
+      assert(['landlord','property-manager','commercial','strata-manager'].includes(w.kind),403,'BOOKING_FORBIDDEN','Choose a customer booking workspace.');
+      return ok(await cashTerms.effectiveCashTerms(env,w.scopeId));
+    }
     if(area==='work-orders'&&id&&action==='booking-intake'&&parts.length===3)
       return ok(await cashTerms.staffBookingIntake(env,user,w,id));
     if(area==='schemes'&&id&&action==='notices'&&child&&parts[4]==='history')return ok(await noticeLifecycle.noticeHistory(env,user,w,id,child));

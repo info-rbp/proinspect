@@ -87,7 +87,7 @@ export function OperationForm({
   );
 }
 const numberFields = new Set([
-  'version', 'dueDays',
+  'version', 'dueDays', 'creditLimitCents',
   'sourceAmountCents', 'reviewBasisPoints', 'indexNumerator', 'indexDenominator',
   'floorCents', 'capCents', 'quotedCents',
   'amountCents',
