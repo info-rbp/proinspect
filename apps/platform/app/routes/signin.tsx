@@ -194,7 +194,7 @@ export default function SignIn() {
           </p>
           <p className="auth-foot">
             Registration is free and never starts a subscription. Property management access requires
-            approval, and tenant access requires a verified invitation.
+            approval. Tenant and resident access is invitation-only and requires a verified invitation.
           </p>
           <p className="auth-foot">
             Have an invitation? Open the original link and use the email it was sent to. Looking for
