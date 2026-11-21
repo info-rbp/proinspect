@@ -55,7 +55,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     method: 'POST',
     body: {
       displayName: form.get('displayName'),
-      clientName: form.get('clientName'),
+      clientName: String(form.get('clientName') || '').trim() || String(form.get('displayName') || '').trim(),
       landlordType,
       serviceInterests: form.getAll('serviceInterests'),
       legalConsent: form.get('legalConsent'),
@@ -82,32 +82,22 @@ export default function Onboarding() {
         ProInspect<span>PROPERTY OPERATIONS</span>
       </Link>
       <section className="panel stack">
-        <p className="eyebrow">Free owner account · Your details</p>
-        <h1>{commercial ? 'Set up commercial property' : 'Set up residential property'}</h1>
+        <p className="eyebrow">Free account · Step 2 of 3</p>
+        <h1>Welcome. Let's set up your property.</h1>
         <p>
-          {commercial
-            ? 'Arrange inspections, property reports and operational support for the commercial premises you own and self-manage.'
-            : 'Arrange inspections, property reports, leasing and maintenance support for your self-managed homes, including co-living and student accommodation.'}{' '}
-          Start with your name and account, then add your property. Registration is free and does
-          not start a paid plan.
+          Tell us your name and confirm that you own and self-manage the residential properties
+          you will add. Your free account is created first; you can add a property and book
+          inspections next. No subscription, payment method or invoice is created by registration.
         </p>
-        <nav className="actions" aria-label="Choose property owner onboarding">
-          <Link
-            className={commercial ? 'button secondary' : 'button'}
-            to={
-              serviceId
-                ? '/onboarding?flow=ONB-RES-OWNER&service=' + encodeURIComponent(serviceId)
-                : '/onboarding?flow=ONB-RES-OWNER'
-            }
-          >
-            Residential owner
-          </Link>
-
-        </nav>
+        <ol className="signup-progress" aria-label="Registration progress">
+          <li>1. Email verified</li>
+          <li aria-current="step">2. Your details</li>
+          <li>3. Add property</li>
+        </ol>
         <Form method="post" className="form">
           <input type="hidden" name="flowId" value={flowId} />
           <input type="hidden" name="serviceId" value={serviceId ?? ''} />
-          <Field label="Your name" name="displayName">
+          <Field label="Your full name" name="displayName">
             <input
               id="displayName"
               name="displayName"
@@ -118,41 +108,18 @@ export default function Onboarding() {
               defaultValue={user.display_name}
             />
           </Field>
-          <Field
-            label="Account name"
-            name="clientName"
-            help="Use your name or the name of the entity that owns the property."
-          >
-            <input
-              id="clientName"
-              name="clientName"
-              required
-              minLength={2}
-              maxLength={160}
-              defaultValue={user.display_name}
-            />
-          </Field>
+          <details className="signup-optional-entity">
+            <summary>Does a business or entity own the property? (optional)</summary>
+            <Field label="Owning entity / account name" name="clientName"
+              help="Leave blank to use your personal name. This does not verify company or property ownership.">
+              <input id="clientName" name="clientName" minLength={2} maxLength={160}
+                autoComplete="organization" />
+            </Field>
+          </details>
           <label className="checkbox">
             <input type="checkbox" name="selfManaged" value="yes" required />
             <span>I confirm I own and self-manage the properties I will add to this account.</span>
           </label>
-          <details className="panel stack">
-            <summary>Interested in other ProInspect services? (optional)</summary>
-            <p className="small">
-              Preferences do not create service entitlements, property access or a subscription.
-            </p>
-            {[
-              ['residential', 'Residential'],
-              ['co-living', 'Co-Living'],
-              ['leasing', 'Leasing'],
-              ['maintenance', 'Maintenance'],
-            ].map(([value, label]) => (
-              <label className="checkbox" key={value}>
-                <input type="checkbox" name="serviceInterests" value={value} />
-                <span>{label}</span>
-              </label>
-            ))}
-          </details>
           <LegalAcceptance purpose="onboarding" />
           <p className="small">
             Manage property on behalf of another owner?{' '}
@@ -173,14 +140,14 @@ export default function Onboarding() {
           <div className="form-footer">
             <Link to="/workspaces">Back</Link>
             <button className="primary" disabled={busy}>
-              {busy ? 'Creating account…' : 'Create free account'}
+              {busy ? 'Creating account…' : 'Continue to add your property'}
             </button>
           </div>
         </Form>
         <p className="small">
-          Next: Add your first authorised property or continue the service you selected. We check
-          existing property matches before linking access. Separate rooms, shared areas and service
-          scope are configured when relevant; preferences do not activate paid services.
+          Next you can add your first property and choose a service, or finish later. Existing
+          property matches are reviewed before access is linked. Adding a property does not
+          start a paid plan; tenancy and Co-Living details can be entered when needed.
         </p>
       </section>
     </main>
