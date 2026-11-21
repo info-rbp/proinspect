@@ -15,11 +15,11 @@ export interface MenuProfile {
 export const PORTAL_MENU_PROFILES: Record<WorkspaceKind, MenuProfile> = {
   landlord: {
     tag: 'NAV-RES-OWNER', version: '1.1.0', label: 'Residential owner',
-    primary: ['', 'properties', 'requests', 'tenancies', 'reports', 'billing'],
+    primary: ['', 'properties', 'bookings', 'requests', 'tenancies', 'reports', 'billing'],
   },
   'property-manager': {
     tag: 'NAV-RES-AGENCY', version: '1.1.0', label: 'Residential property manager',
-    primary: ['', 'properties', 'portfolio', 'tenancies', 'work-orders', 'reports', 'finance'],
+    primary: ['', 'properties', 'bookings', 'tenancies', 'requests', 'reports', 'finance'],
   },
   commercial: {
     tag: 'NAV-COM-MANAGER', version: '1.1.0', label: 'Commercial owner / manager',

@@ -187,7 +187,7 @@ try {
         cookie: account.cookie, body: { area: 'maintenance', requested: true },
       })).status, 403);
     }
-    for (const area of ['maintenance', 'co-living', 'construction']) {
+    for (const area of ['maintenance', 'co-living']) {
       const response = await api(serviceInterestsPath, {
         cookie: owner.cookie, body: { area, requested: true },
       });
@@ -198,7 +198,7 @@ try {
     assert.equal((await api(serviceInterestsPath, {
       cookie: owner.cookie, body: { area: 'maintenance', requested: true },
     })).status, 200);
-    assert.equal((await first("SELECT COUNT(*) AS count FROM client_service_interests WHERE client_id=? AND service_area IN ('maintenance','co-living','construction')", clientId)).count, 3);
+    assert.equal((await first("SELECT COUNT(*) AS count FROM client_service_interests WHERE client_id=? AND service_area IN ('maintenance','co-living','construction')", clientId)).count, 2);
     const otherPreferences = await api('/api/client-accounts/' + outsiderClient + '/service-interests', {
       cookie: outsider.cookie,
     });
@@ -215,7 +215,7 @@ try {
       headers: { Origin: 'https://evil.example' },
     })).status, 403);
     assert.deepEqual(await first(financialCounts), before);
-    for (const area of ['maintenance', 'co-living', 'construction']) {
+    for (const area of ['maintenance', 'co-living']) {
       assert.equal((await api(serviceInterestsPath, {
         cookie: owner.cookie, body: { area, requested: false },
       })).status, 200);
@@ -229,20 +229,20 @@ try {
         await run("UPDATE client_memberships SET role=? WHERE id='pr01_membership_regression'", role);
         assert.equal((await api(serviceInterestsPath, { cookie: operator.cookie })).status, 200);
         assert.equal((await api(serviceInterestsPath, {
-          cookie: operator.cookie, body: { area: 'commercial', requested: true },
+          cookie: operator.cookie, body: { area: 'maintenance', requested: true },
         })).status, 403);
       }
       await run("UPDATE client_memberships SET role='admin' WHERE id='pr01_membership_regression'");
       assert.equal((await api(serviceInterestsPath, {
-        cookie: operator.cookie, body: { area: 'commercial', requested: true },
+        cookie: operator.cookie, body: { area: 'maintenance', requested: true },
       })).status, 200);
       await run("UPDATE client_memberships SET active=0 WHERE id='pr01_membership_regression'");
       assert.equal((await api(serviceInterestsPath, { cookie: operator.cookie })).status, 403);
       assert.equal((await api(serviceInterestsPath, {
-        cookie: operator.cookie, body: { area: 'commercial', requested: false },
+        cookie: operator.cookie, body: { area: 'maintenance', requested: false },
       })).status, 403);
       assert.equal((await api(serviceInterestsPath, {
-        cookie: owner.cookie, body: { area: 'commercial', requested: false },
+        cookie: owner.cookie, body: { area: 'maintenance', requested: false },
       })).status, 200);
     } finally {
       await run("DELETE FROM client_memberships WHERE id='pr01_membership_regression'");
@@ -486,129 +486,25 @@ try {
     assert.equal((await api(tenantBase, { cookie: tenant.cookie })).status, 403);
     assert.equal((await api(tenantBase + '/requests', { cookie: tenant.cookie, body: { category: 'maintenance', title: 'New request blocked', details: 'This must not be accepted after the tenancy ended.', priority: 'routine' } })).status, 403);
   });
-  await check('Residential and Commercial Landlord types create independent free accounts', async () => {
-    const wrongType = await api('/api/onboarding', {
-      cookie: outsider.cookie,
-      body: { displayName: 'No Staff Grant', clientName: 'Unauthorised Staff', landlordType: 'staff' },
-    });
-    assert.equal(wrongType.status, 422);
-    const commercialInput = {
-      displayName: 'Test Commercial Owner',
-      clientName: 'Self Managed Commercial Premises',
-      landlordType: 'commercial',
-    };
-    const signup = await api('/api/onboarding', { cookie: owner.cookie, body: commercialInput });
-    assert.equal(signup.status, 201, JSON.stringify(signup.data));
-    assert.equal(signup.data.workspaceKind, 'commercial');
-    assert.equal(signup.data.landlordType, 'commercial');
-    assert.notEqual(signup.data.clientId, clientId);
-    const repeated = await api('/api/onboarding', { cookie: owner.cookie, body: commercialInput });
-    assert.equal(repeated.status, 201);
-    assert.equal(repeated.data.clientId, signup.data.clientId);
-    const state = await first('SELECT client_type FROM clients WHERE id=?', signup.data.clientId);
-    assert.equal(state.client_type, 'commercial_landlord');
-    const subscription = await first('SELECT status,plan_code,allowance_json FROM subscriptions WHERE client_id=?', signup.data.clientId);
-    assert.equal(subscription, null, 'Commercial registration is also free without automatic all-inclusive entitlements');
-    const ws = (await api('/api/session', { cookie: owner.cookie })).data.workspaces;
-    assert.ok(ws.some(w => w.kind === 'landlord' && w.scopeId === clientId));
-    assert.ok(ws.some(w => w.kind === 'commercial' && w.scopeId === signup.data.clientId));
-    assert.equal(ws.filter(w => w.scopeId === signup.data.clientId).length, 1);
-    assert.equal((await api(`/api/w/landlord/${signup.data.clientId}`, { cookie: owner.cookie })).status, 403);
-    assert.equal((await api(`/api/w/commercial/${signup.data.clientId}`, { cookie: outsider.cookie })).status, 403);
-    assert.equal((await api(`/api/w/landlord/${clientId}`, { cookie: outsider.cookie })).status, 403);
-    assert.equal((await api(`/api/w/commercial/${signup.data.clientId}/properties`, {
-      cookie: owner.cookie,
-      body: { address: '90 Synthetic Office Street', suburb: 'Perth', postcode: '6000', propertyType: 'House', selfManaged: true },
-    })).status, 422);
-    assert.equal((await api(base + '/properties', {
-      cookie: owner.cookie,
-      body: { address: '91 Synthetic House Street', suburb: 'Perth', postcode: '6000', propertyType: 'Office', selfManaged: true },
-    })).status, 422);
-    const commBase = `/api/w/commercial/${signup.data.clientId}`;
-    const initialWorkspace = (await api(commBase, { cookie: owner.cookie })).data;
-    assert.equal(initialWorkspace.professionalPortfolioApproved, false);
-    // Direct commercial Landlord signup cannot self-authorise portfolio
-    // management for another owner's properties.
-    const thirdParty = await api(commBase + '/properties', {
-      cookie: owner.cookie,
-      body: {
-        address: 'Third Party Management Street',
-        suburb: 'Perth',
-        postcode: '6000',
-        propertyType: 'Office',
-        ownerName: 'Unaffiliated Owner',
-        authorityReference: 'Unreviewed claim',
-      },
-    });
-    assert.equal(thirdParty.status, 403);
-    assert.equal((await api(commBase + '/imports/preview', {
-      cookie: owner.cookie,
-      body: {
-        csv: 'address,suburb,postcode,ownerName\\n98 Unreviewed Street,Perth,6000,Unaffiliated Owner',
-        authorityReference: 'Unreviewed claim',
-      },
-    })).status, 403);
-    const added = await api(commBase + '/properties', {
-      cookie: owner.cookie,
-      body: {
-        address: '90 Synthetic Office Street',
-        suburb: 'Perth',
-        postcode: '6000',
-        propertyType: 'Office',
-        selfManaged: true,
-      },
-    });
-    assert.equal(added.status, 201, JSON.stringify(added.data));
-    const p = await first('SELECT sector,property_type FROM properties WHERE id=?', added.data.propertyId);
-    assert.equal(p.sector, 'commercial');
-    assert.equal(p.property_type, 'Office');
-    const rel = await first('SELECT mode FROM property_management_relationships WHERE property_id=?', added.data.propertyId);
-    assert.equal(rel.mode, 'commercial_managed');
-    assert.equal((await first('SELECT name FROM portfolio_owners WHERE property_id=?', added.data.propertyId)).name, 'Test Commercial Owner');
-    const sectorDenied = await api(`${commBase}/availability?service=property-condition-report&date=${date}&property=${added.data.propertyId}`, {
-      cookie: owner.cookie,
-    });
-    assert.equal(sectorDenied.status, 422);
-    const service = await first('SELECT booking_mode,price_ex_gst_cents FROM services WHERE id=?', 'commercial-property-inspection');
-    assert.equal(service.booking_mode, 'request');
-    assert.equal(service.price_ex_gst_cents, null);
-    const freeCommercial = (await api(commBase, { cookie: owner.cookie })).data;
-    assert.deepEqual(freeCommercial.subscriptionBookingServices[added.data.propertyId]??[],[]);
-    // Represent an existing, independently approved legacy commercial customer
-    // for downstream behaviour and tenant separation tests; not signup behavior.
-    await run(`INSERT INTO subscriptions(id,client_id,property_id,plan_code,status,allowance_json,created_at)
-      VALUES(?,?,NULL,'all_inclusive','active','{"includedServiceIds":["*"]}',?)`,
-      'sub_inclusive_'+signup.data.clientId,signup.data.clientId,new Date().toISOString());
-    await run("INSERT INTO legacy_included_property_grants(client_id,property_id,granted_at) VALUES(?,?,?)",
-      signup.data.clientId,added.data.propertyId,new Date().toISOString());
-    const covered = (await api(commBase, { cookie: owner.cookie })).data;
-    assert.ok(covered.subscriptionBookingServices[added.data.propertyId].includes('commercial-property-inspection'));
-    assert.ok(!covered.subscriptionBookingServices[added.data.propertyId].includes('property-condition-report'));
-    const open = await api(`${commBase}/availability?service=commercial-property-inspection&date=${date}&property=${added.data.propertyId}`, {
-      cookie: owner.cookie,
-    });
-    assert.equal(open.status, 200, JSON.stringify(open.data));
-    assert.ok(open.data.slots.length);
-    const booked = await api(commBase + '/bookings', {
-      cookie: owner.cookie,
-      body: {
-        propertyId: added.data.propertyId,
-        serviceId: 'commercial-property-inspection',
-        startsAt: open.data.slots[0].start,
-        requestKey: randomBytes(16).toString('hex'),
-        access: { method: 'owner', instructions: 'Synthetic commercial owner visit', noticeConfirmed: true },
-      },
-    });
-    assert.equal(booked.status, 201, JSON.stringify(booked.data));
-    const record = await first('SELECT client_id,price_ex_gst_cents,snapshot_json FROM bookings WHERE id=?', booked.data.id);
-    assert.equal(record.client_id, signup.data.clientId);
-    assert.equal(record.price_ex_gst_cents, 0);
-    const snap = JSON.parse(record.snapshot_json);
-    assert.equal(snap.bookingBasis, 'subscription_included');
-    assert.equal(snap.subscription.planCode, 'all_inclusive');
-    assert.equal((await first('SELECT booking_id FROM work_orders WHERE id=?', booked.data.workOrderId)).booking_id, booked.data.id);
-    assert.equal((await first('SELECT COUNT(*) AS n FROM payments WHERE work_order_id=?', booked.data.workOrderId)).n, 0);
-    assert.ok((await api('/api/w/staff/operations', { cookie: operator.cookie })).data.workOrders.some(o => o.booking_id === booked.data.id));
+  await check('retired acquisition is denied while existing owner history stays scoped', async () => {
+    const before = (await first('SELECT COUNT(*) n FROM clients')).n;
+    for (const landlordType of ['commercial','strata-building','staff']) {
+      assert.equal((await api('/api/onboarding', {cookie:owner.cookie,
+        body:{displayName:'Retired Owner',clientName:'Retired Account',landlordType}})).status,410);
+    }
+    assert.equal((await first('SELECT COUNT(*) n FROM clients')).n,before);
+    assert.equal((await api(serviceInterestsPath,{cookie:owner.cookie,body:{area:'construction',requested:true}})).status,410);
+    // Pre-pivot historical membership: never provision it through acquisition APIs.
+    const user = await first('SELECT id FROM users WHERE email=?','owner@example.test');
+    const ownerUser = user ?? await first('SELECT user_id AS id FROM client_memberships WHERE client_id=?',clientId);
+    await run("INSERT INTO clients(id,name,client_type,created_at) VALUES('cli_retired_history','Archived commercial owner','commercial_landlord','2026-01-01')");
+    await run("INSERT INTO client_memberships(id,client_id,user_id,role,created_at) VALUES('cm_retired_history','cli_retired_history',?,'owner','2026-01-01')",ownerUser.id);
+    await run("INSERT INTO client_entitlements(client_id,workspace_kind,created_at) VALUES('cli_retired_history','commercial','2026-01-01')");
+    const commBase='/api/w/commercial/cli_retired_history';
+    assert.equal((await api(commBase,{cookie:owner.cookie})).status,200);
+    assert.equal((await api(commBase,{cookie:outsider.cookie})).status,403);
+    assert.equal((await api(commBase+'/properties',{cookie:owner.cookie,body:{address:'New retired property'}})).status,410);
+    assert.equal((await api(commBase+'/bookings',{cookie:owner.cookie,body:{serviceId:'commercial-property-inspection'}})).status,410);
   });
   await check('all new anonymous guest service requests are retired while historical references remain readable', async () => {
     const denied=await api('/api/guest/requests',{body:{name:'New guest'}});

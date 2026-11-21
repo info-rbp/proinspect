@@ -22,12 +22,12 @@ export const SECTOR_OVERVIEWS = {
     difference: [
       ['Condition records you can act on', 'Incoming PCRs, routine inspections and exit reports show what has changed and what needs attention.'],
       ['More capacity, with you in control', 'Delegate agreed inspections, administration and attendance while keeping tenancy and expenditure decisions with your authorised team.'],
-      ['Two ways to plan ahead', 'Inspection Only is $20 + GST a month; All-Inclusive is $150 + GST a month. Both are priced per whole property or separately leased room. Compare the scope below.'],
+      ['One Residential subscription', 'All Inclusive is AUD $50 + GST per week per property, with an initial 24-month term and 60 days’ written cancellation notice.'],
     ],
     questions: [
       ['Can I request just one inspection?', 'Yes. Choose an individual service or ask for a tailored combination. Sign in for service prices or contact us for a quote.'],
-      ['How are rooms and shared areas priced?', 'A residential plan applies to a whole property when leased as a whole, or to each separately leased room. Shared-area work is agreed separately so the same task is not charged twice.'],
-      ['What does my plan include?', 'Inspection Only has five service types, shown below. All-Inclusive follows your agreed service schedule. Visit limits, extras and any early-exit terms are confirmed before you join.'],
+      ['How are rooms and shared areas priced?', 'The Residential subscription is per property, never per room. Co-Living operating agreements have a separately quoted site-specific scope.'],
+      ['What does my plan include?', 'All Inclusive follows your agreed service schedule. Visit limits, extras and any early-exit terms are confirmed before you join.'],
       coverage,
     ],
   },
@@ -96,7 +96,7 @@ export const SECTOR_OVERVIEWS = {
     ],
     availability: 'Choose a single room turnover or an agreed recurring programme. Private-room access and resident records stay limited to the relevant authorised relationships.',
     questions: [
-      ['Can I use a residential plan for separately leased rooms?', 'Residential plans are priced per separately leased room, or per whole property where it is leased as a whole. We confirm your occupancy model and scope first; shared-area tasks are separately agreed to avoid duplicate charges.'],
+      ['Can I use a residential plan for separately leased rooms?', 'The Residential subscription is AUD $50 + GST per week per property. Rooms do not create additional subscriptions. End-to-end Co-Living operations require a separate site-specific agreement and quote.'],
       ['Can you support arrivals and turnovers?', 'Yes. Agree the room records, keys, cleaning, maintenance and communication you need. Rental and resident decisions remain with the responsible operator.'],
       coverage,
     ],

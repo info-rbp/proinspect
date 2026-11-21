@@ -17,7 +17,7 @@ import { submitAction } from '../lib/actions.server';
 import { PageHeading, Field, Feedback, EmptyState } from '../../../../packages/ui/components';
 import { money } from '../../../../packages/domain/index';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
-  const propertyId = new URL(request.url).searchParams.get('property');
+  const propertyId = new URL(request.url).searchParams.get('property') ?? new URL(request.url).searchParams.get('propertyId');
   const selected = propertyId
     ? await loadApi(
         request,

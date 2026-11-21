@@ -1,3 +1,4 @@
+import { requireResidentialSector } from './residential-policy.server';
 import { z } from 'zod';
 import { propertyManagementTag } from './managed-rental-intake.server';
 import { assert, statement, now, uid, type Env } from '../../../../packages/database/types';
@@ -469,6 +470,7 @@ export async function beginCommercial(
   input: unknown,
   security?: string,
 ) {
+  requireResidentialSector('commercial');
   const flow = await commercialFlow(env, flowId),
     config = await flowConfig(env, flow);
   const d = z

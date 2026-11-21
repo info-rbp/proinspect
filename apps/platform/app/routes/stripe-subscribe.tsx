@@ -1,3 +1,4 @@
+import { PLAN_TERM, PLAN_SCOPE } from '../../../../packages/marketing/public-facts';
 import {LegalAcceptance} from '../components/LegalAcceptance';
 import { data, Form, redirect, useActionData, useLoaderData, Link, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router';
 import { loadApi, callApi } from '../lib/api.server';
@@ -40,15 +41,13 @@ export default function StripeSubscribe() {
   const error = useActionData<typeof action>();
   const weekly = kind === 'landlord';
   return <main className="auth-page"><section className="panel stack">
-    <h1>Residential Property Support Subscription</h1>
+    <h1>Residential All Inclusive Subscription</h1>
     <p>{property?.address}</p>
     {isGrandfathered && <p role="status">This property retains its existing approved included services.
       No subscription purchase is necessary or allowed for this property.</p>}
-    <p>{weekly ? '$50 + GST ($55 including 10% Australian GST) per residential property per week' : '$250 per property per month excluding applicable GST'}.</p>
-    {friday
-      ? <p>All subscription renewals are scheduled for Fridays at 9:00 am Perth time. The first weekly payment is scheduled for the next eligible Friday, after registration. No subscription-covered services become available until your first weekly invoice is paid and verified. If a payment fails later, a configurable grace period applies to previously paid customers.</p>
-      : <p>Test environment. No live charges occur in this flow.</p>}
-    {live ? <p>Cancellation is effective at the end of the paid weekly period. There is no automatic partial-week refund, except where law requires or an approved exception applies. Stripe will retry failed payments automatically according to the approved recovery settings.</p> : null}
+    <p>AUD $50 + GST ($55 including GST) per property per week. No per-room subscription.</p>
+    <p>{PLAN_TERM}</p><p>{PLAN_SCOPE}</p>
+    <p>Coverage starts only after the signed payment event is reconciled for this property. Written cancellation notice is recorded for review against your initial term and notice period; submitting notice does not itself cancel Stripe billing.</p>
     {enabled ? <Form method="post"><LegalAcceptance purpose="subscription"/><button className="button">{live ? 'Continue to Stripe subscription billing' : 'Open Stripe test Checkout'}</button></Form>
       : !isGrandfathered && <p role="status">Residential subscription Checkout remains unavailable until the approved Stripe tax code, Australian GST registration, current legal terms, live webhook, restricted credentials and independent release acceptance are complete. Your account and property remain free to use for eligible non-subscription services.</p>}
     {error && 'error' in error && <p role="alert">{error.error}</p>}

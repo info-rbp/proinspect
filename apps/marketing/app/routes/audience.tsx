@@ -10,7 +10,7 @@ export function loader({params}:LoaderFunctionArgs) {
   const slug = params.audience ?? '';
   const audience = AUDIENCES[slug];
   if (!audience) throw new Response('Audience not found',{status:404});
-  return { slug, ...audience, services: SERVICE_SEEDS.filter(s=>audience.serviceIds.includes(s.id)) };
+  return { slug, ...audience, services: SERVICE_SEEDS.filter(s => s.sectors.includes('residential')).filter(s=>audience.serviceIds.includes(s.id)) };
 }
 export const meta:MetaFunction<typeof loader> = ({loaderData:d}) => d ? seo(
   d.name + ' — Property inspections and support WA',d.description,'/who-we-help/'+d.slug,

@@ -1,0 +1,58 @@
+name: Residential pivot isolated preview
+on:
+  push:
+    branches: [implementation/residential-only-pivot-20261121]
+permissions:
+  contents: read
+concurrency:
+  group: pr01-existing-v3-staging
+  cancel-in-progress: false
+jobs:
+  verify-preview:
+    if: github.repository == 'info-rbp/proinspect'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - name: Residential security, contracts and isolated R2 recovery
+        run: |
+          node --experimental-strip-types tests/runtime/residential-pivot.mjs
+          node --experimental-strip-types tests/runtime/weekly-billing.mjs
+          node --experimental-strip-types tests/runtime/stripe.mjs
+          node --experimental-strip-types tests/runtime/run.mjs
+      - name: Co-Living tenant privacy and signed subscription lifecycle regression
+        run: |
+          node --experimental-strip-types tests/runtime/co-living.mjs
+          node --experimental-strip-types tests/runtime/residential-live.mjs
+      - name: Rehearse additive migration and synthetic database recovery
+        run: |
+          python3 scripts/release/residential-recovery.py
+          node scripts/release/residential-isolated-d1.mjs
+      - name: Responsive browser acceptance
+        run: |
+          pnpm local:init --test-fixtures
+          pnpm exec playwright install --with-deps chromium
+          pnpm exec playwright test tests/browser/residential-pivot.spec.ts tests/browser/booking-hydration.spec.ts tests/browser/reporting.spec.ts tests/browser/open-home.spec.ts tests/browser/report-offline-recovery.spec.ts tests/browser/stage2-portals.spec.ts
+      - name: Verify staging isolation, apply additive staging migrations and deploy preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 8ca23ac6d2cc906d4dd13b8da5ea2b25
+          WORKERS_CI: '0'
+          CI: 'true'
+        run: node scripts/deploy/residential-preview.mjs
+      - name: Verify hosted public browser journeys
+        run: node scripts/release/residential-hosted-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: residential-pivot-preview-evidence
+          path: |
+            artifacts/
+            playwright-report/
+          retention-days: 14

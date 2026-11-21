@@ -31,7 +31,7 @@ export default function Bookings() {
                 <th>Property</th>
                 <th>Appointment</th>
                 <th>Price ex GST</th>
-                <th>Status</th>
+                <th>Status</th><th>Next step</th>
               </tr>
             </thead>
             <tbody>
@@ -50,7 +50,7 @@ export default function Bookings() {
                       <p><Link to={d.workspace.href+'/finance?payment='+encodeURIComponent(b.payment_id)}>
                         Review payment
                       </Link></p>}
-                  </td>
+                  </td><td>{b.status==='confirmed' && b.starts_at>new Date().toISOString() ? <Link to={d.workspace.href+'/booking-changes?booking='+encodeURIComponent(b.id)}>Change or cancel</Link> : <Link to={d.workspace.href+'/work-orders?propertyId='+encodeURIComponent(b.property_id)}>View progress</Link>}</td>
                 </tr>
               ))}
             </tbody>

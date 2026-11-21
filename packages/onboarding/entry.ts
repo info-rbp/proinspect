@@ -4,7 +4,7 @@ import { bookingIntent } from '../domain/booking-intent.ts';
 import { getOnboardingFlow } from './registry.ts';
 
 /** These choices describe a journey. Only server-returned memberships grant access. */
-export const ENTRY_CHOICES = [
+const ALL_ENTRY_CHOICES = [
   { id: 'ONB-RES-OWNER', label: 'Residential owner', family: 'Residential' },
   { id: 'ONB-RES-AGENCY', label: 'Residential property manager', family: 'Residential' },
   { id: 'ONB-COM-OWNER', label: 'Commercial owner', family: 'Commercial' },
@@ -13,11 +13,12 @@ export const ENTRY_CHOICES = [
   { id: 'ONB-STR-BUILDING', label: 'Invited building or facilities manager', family: 'Strata' },
   {
     id: 'ONB-INV-CORE',
-    label: 'Tenant, occupant, lot owner or council member',
+    label: 'Invited residential tenant',
     family: 'Resident',
   },
 ] as const;
-export type EntryFlow = (typeof ENTRY_CHOICES)[number]['id'];
+export const ENTRY_CHOICES = ALL_ENTRY_CHOICES.filter(choice => ['ONB-RES-OWNER','ONB-RES-AGENCY','ONB-INV-CORE'].includes(choice.id));
+export type EntryFlow = (typeof ALL_ENTRY_CHOICES)[number]['id'];
 export function entryFlow(value: unknown): EntryFlow | null {
   return ENTRY_CHOICES.find((choice) => choice.id === value)?.id ?? null;
 }
@@ -43,7 +44,7 @@ export function workspaceEntryPath(workspace: Workspace, service?: unknown): str
   const intent = bookingIntent(service);
   if (
     intent &&
-    ['landlord', 'property-manager', 'commercial', 'strata-manager'].includes(workspace.kind)
+    ['landlord', 'property-manager'].includes(workspace.kind)
   )
     return workspace.href + '/book/' + encodeURIComponent(intent);
   return (

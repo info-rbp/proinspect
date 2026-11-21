@@ -18,7 +18,7 @@ import { Field, Feedback } from '../../../../packages/ui/components';
 
 type OwnerTag = 'ONB-RES-OWNER' | 'ONB-COM-OWNER';
 function ownerTag(value: unknown): OwnerTag {
-  return value === 'ONB-COM-OWNER' ? value : 'ONB-RES-OWNER';
+  return 'ONB-RES-OWNER';
 }
 export const meta = () => [
   { title: 'Set up your free property account | ProInspect' },
@@ -102,16 +102,7 @@ export default function Onboarding() {
           >
             Residential owner
           </Link>
-          <Link
-            className={commercial ? 'button' : 'button secondary'}
-            to={
-              serviceId
-                ? '/onboarding?flow=ONB-COM-OWNER&service=' + encodeURIComponent(serviceId)
-                : '/onboarding?flow=ONB-COM-OWNER'
-            }
-          >
-            Commercial owner
-          </Link>
+
         </nav>
         <Form method="post" className="form">
           <input type="hidden" name="flowId" value={flowId} />

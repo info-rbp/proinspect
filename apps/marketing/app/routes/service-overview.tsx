@@ -1,3 +1,4 @@
+import { residentialPublicResponse } from '../../../../packages/domain/residential-policy';
 import { Link, useLoaderData, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
 import {
   SECTOR_OVERVIEWS,
@@ -13,6 +14,7 @@ import { SECTOR_PROGRAMMES } from '../../../../packages/marketing/sector-program
 import { seo } from '../lib/seo';
 
 export function loader({ request }: LoaderFunctionArgs) {
+  const retired = residentialPublicResponse(request); if (retired) throw retired;
   const key = new URL(request.url).pathname.replace(/\.data$/, '').slice(1) as SectorKey;
   if (!Object.prototype.hasOwnProperty.call(SECTOR_OVERVIEWS, key))
     throw new Response('Not found', { status: 404 });

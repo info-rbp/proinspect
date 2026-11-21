@@ -14,7 +14,7 @@ export async function publicOpenHomeSessions(env:Env,at=new Date()){
  const after=new Date(at.getTime()-3*3600000).toISOString();
  const before=new Date(at.getTime()+7*86400000).toISOString();
  const rows=(await statement(env.DB,
-  "SELECT s.id,s.listing_id,l.property_id,l.kind,l.slug,l.title,l.display_address,l.suburb,l.postcode,l.agent_name,s.starts_at,s.ends_at FROM leasing_sessions s JOIN leasing_listings l ON l.id=s.listing_id WHERE l.status='published' AND s.status='scheduled' AND s.ends_at>=? AND s.starts_at<=? ORDER BY s.starts_at,l.display_address LIMIT 150",
+  "SELECT s.id,s.listing_id,l.property_id,l.kind,l.slug,l.title,l.display_address,l.suburb,l.postcode,l.agent_name,s.starts_at,s.ends_at FROM leasing_sessions s JOIN leasing_listings l ON l.id=s.listing_id WHERE l.kind='residential' AND l.status='published' AND s.status='scheduled' AND s.ends_at>=? AND s.starts_at<=? ORDER BY s.starts_at,l.display_address LIMIT 150",
   after,before).all<SessionRow>()).results;
  return rows.map(s=>({id:s.id,listingId:s.listing_id,kind:s.kind,slug:s.slug,
   title:s.title,address:s.display_address,suburb:s.suburb,postcode:s.postcode,
@@ -57,7 +57,7 @@ export async function recordOpenHomeCheckIn(env:Env,request:Request,args:{input:
  const session=await statement(env.DB,
   "SELECT s.id,s.listing_id,l.property_id,l.kind,l.slug,l.title,l.display_address,l.suburb,l.postcode,l.agent_name,s.starts_at,s.ends_at FROM leasing_sessions s JOIN leasing_listings l ON l.id=s.listing_id WHERE s.id=? AND s.listing_id=? AND s.status='scheduled' AND l.status='published'",
   d.sessionId,d.listingId).first<SessionRow>();
- assert(session,404,'CHECK_IN_SESSION_UNAVAILABLE','This inspection is unavailable. Select another property.');
+ assert(session?.kind==='residential',404,'CHECK_IN_SESSION_UNAVAILABLE','This inspection is unavailable. Select another property.');
  assert(isOpenHomeCheckInAvailable(session),409,'CHECK_IN_WINDOW_CLOSED',
   'Check-in opens 30 minutes before the inspection and closes 45 minutes after it ends.');
  const emailHash=await digest(env.DATA_ENCRYPTION_KEY+':leasing-email:'+d.email);

@@ -146,7 +146,7 @@ export default function About() {
             </article>
             <article className="mkt-editorial-panel"><h3>Building and accommodation care</h3>
               <p>Scope building presentation, cleaning, waste, grounds, safe minor work, room turnovers and shared-living support. Specialist certification and regulated appointments remain with the responsible providers.</p>
-              <Link className="pi-inline-link" to="/strata">Explore building services <span aria-hidden="true">→</span></Link>
+              <Link className="pi-inline-link" to="/co-living">Explore shared accommodation <span aria-hidden="true">→</span></Link>
             </article>
           </div>
         </div>

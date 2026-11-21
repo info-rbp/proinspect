@@ -81,6 +81,14 @@ try {
   });
   const future=Math.floor(Date.now()/1000)+7*86400;
   const invoiceLine={price:{id:'price_1UVkM6Ev62nbUZoknG7CA5P5'},quantity:1,period:{end:future}};
+  await check('wrong weekly amount or multiple invoice lines cannot grant property coverage',async()=>{
+    for(const [suffix,amount,lines] of [['amount',1,[invoiceLine]],['lines',5500,[invoiceLine,invoiceLine]]]){
+      const paid={id:'in_wrong_'+suffix,subscription:s.id,customer:s.customer,currency:'aud',status:'paid',paid:true,
+        amount_paid:amount,amount_remaining:0,created:499,lines:{data:lines}};
+      assert.equal((await webhook(event('invoice.paid',paid,suffix==='amount'?360:361))).status,200);
+      assert.equal(await coverage(),false);
+    }
+  });
   await check('verified paid invoice activates only the enrolled property',async()=>{
     const paid={id:'in_stripe_paid',subscription:s.id,customer:s.customer,currency:'aud',status:'paid',paid:true,
       amount_paid:5500,amount_remaining:0,created:501,lines:{data:[invoiceLine]}};

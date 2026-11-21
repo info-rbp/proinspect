@@ -17,7 +17,7 @@ const familyImages: Record<string, BrandImageKey> = {
 export const meta = () =>
   seo(
     'Individual Property Services and Ongoing Support — WA',
-    'Browse 23 defined inspection and attendance services alongside recurring residential, commercial, building, shared-living and construction programmes.',
+    'Browse Residential inspections, attendance, maintenance and shared-living support.',
     '/services',
   );
 
@@ -63,14 +63,10 @@ export default function Services() {
       </section>
       <section className="section mkt-section mkt-stone"><div className="site-container">
         <MarketingSectionTitle eyebrow="Ongoing property services" title="Need a recurring property programme?"
-          description="The 23 standard service pages explain individual inspections and attendances. Broader operations, tenancy administration, cleaning, property care and project support are scoped as recurring programmes." />
+          description="Residential service pages explain individual inspections and attendances. Broader operations, tenancy administration, cleaning, property care and project support are scoped as recurring programmes." />
         <div className="mkt-engagement-grid">{[
-          ['Residential subscriptions', '/residential-property-support', 'Inspection Only and All-Inclusive residential arrangements.'],
-          ['Commercial operations', '/commercial', 'One Commercial All-Inclusive subscription and tailored asset support.'],
-          ['Building management', '/strata', 'Building care, cleaning, waste, grounds and contractor coordination.'],
-          ['Student Living', '/student-living', 'Room turnovers, resident arrivals, communal care and operator support.'],
+          ['Residential subscriptions', '/residential-property-support', 'All Inclusive at AUD $50 + GST per week per property.'],
           ['Co-Living', '/co-living', 'Shared accommodation turnover, maintenance and resident support.'],
-          ['Construction', '/construction', 'Progress records, issue follow-up and handover administration.'],
         ].map(([title, to, description]) => <article className="mkt-engagement-card" key={to}>
           <h3>{title}</h3><p>{description}</p>
           <Link className="mkt-text-link" to={to}>Explore support <span aria-hidden="true">→</span></Link>

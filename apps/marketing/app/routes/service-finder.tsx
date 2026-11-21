@@ -44,13 +44,13 @@ const choices:Record<Sector,Choice[]>={
     {value:'programme',label:'I need recurring project support',explanation:'Define contractor coordination, reporting and handover.',ids:[]},
   ],
   ongoing: [
-    {value:'residential',label:'Residential inspection or operational subscription',explanation:'Compare residential plans and tailored portfolio support.',ids:[]},
+    {value:'residential',label:'Residential inspection or operational subscription',explanation:'Explore the Residential All Inclusive Subscription and tailored portfolio support.',ids:[]},
     {value:'commercial',label:'Commercial outsourced operations',explanation:'Explore Commercial All-Inclusive and delegated operations.',ids:[]},
     {value:'building',label:'Building management, grounds or cleaning',explanation:'Request a building programme including routine care and reporting.',ids:[]},
   ],
 };
 export const meta=()=>seo('Find the Right Property Inspection or Attendance',
-  'Choose inspections or ongoing property operations for residential, commercial, strata, Co-Living, Student Living and construction settings in WA.',
+  'Choose inspections or ongoing property operations for Residential and Co-Living settings in WA.',
   '/service-finder',{breadcrumbs:[{name:'Services',path:'/services'},{name:'Service finder',path:'/service-finder'}]});
 export default function ServiceFinder(){
   const {appOrigin}=useOutletContext<{appOrigin:string}>();
@@ -59,9 +59,9 @@ export default function ServiceFinder(){
   useEffect(()=>{setInteractive(true);},[]);
   const [sector,setSector]=useState<Sector>('residential');
   const [task,setTask]=useState('incoming');
-  const options=choices[sector];
+  const options=choices[sector].filter(c => sector !== 'ongoing' || c.value === 'residential');
   const choice=options.find(x=>x.value===task)??options[0];
-  const matches=useMemo(()=>SERVICE_SEEDS.filter(service=>choice.ids.includes(service.id)),[choice]);
+  const matches=useMemo(()=>SERVICE_SEEDS.filter(service=>service.sectors.includes('residential') && choice.ids.includes(service.id)),[choice]);
   function changeSector(next:Sector){setSector(next);setTask(choices[next][0].value);}
   return <>
     <MarketingPageHero eyebrow="Find a service" title="Tell us what the property needs."
@@ -74,11 +74,7 @@ export default function ServiceFinder(){
         <select className="mkt-finder-select" id="service-finder-sector" disabled={!interactive} value={sector}
           onChange={e=>changeSector(e.target.value as Sector)}>
           <option value="residential">Residential rental property</option>
-          <option value="commercial">Commercial property</option>
-          <option value="strata-building">Strata or shared building</option>
           <option value="co-living">Co-Living property</option>
-          <option value="student-living">Student accommodation</option>
-          <option value="construction">Construction project</option>
           <option value="ongoing">Ongoing property operations</option>
         </select>
         <p className="eyebrow">Step 2 of 2</p><h2>What needs to happen?</h2>

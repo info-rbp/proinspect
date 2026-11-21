@@ -1,3 +1,4 @@
+import { RETIRED_WORKSPACES } from '../../../../packages/domain/residential-policy';
 import { useEffect, useRef, useState } from 'react';
 import { ClientServiceTabs } from '../components/ClientServiceTabs';
 import {
@@ -130,7 +131,13 @@ export default function WorkspaceLayout() {
     items.push(['community','Community & building updates','']);
   if(data.amenitiesEnabled && ['strata-manager','building'].includes(w.kind))
     items.push(['amenities','Shared amenity requests','']);
-  // Keep specialist routes and deep links intact while showing a concise first-level menu.
+  // Historical deep links remain authorised reads; new retired-sector actions are blocked server-side.
+  const retiredTools = new Set(['council-appointments','schemes','commercial-leases','facilities','building-communications','market-packs']);
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (retiredTools.has(items[i][0]) || (RETIRED_WORKSPACES.has(w.kind) &&
+      !['','records','reports','documents','billing','finance','bookings','work-orders'].includes(items[i][0]))) items.splice(i, 1);
+  }
+
   const navigationProfile = getNavigationProfile(w.kind);
   const primaryPaths = [...navigationProfile.primary,
     ...(w.kind === 'landlord' && (w.experienceTags ?? []).some(tag => ['co_living','student_living'].includes(tag)) ? ['co-living'] : []),

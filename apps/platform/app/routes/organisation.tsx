@@ -15,11 +15,9 @@ import { bookingIntent } from '../../../../packages/domain/booking-intent';
 import { PageHeading, Badge, Field, Feedback } from '../../../../packages/ui/components';
 import { Panel } from '../components/OperationForm';
 
-type ProfessionalTag = 'ONB-RES-AGENCY' | 'ONB-COM-MANAGER' | 'ONB-STR-MANAGER';
+type ProfessionalTag = 'ONB-RES-AGENCY';
 const categories: Record<ProfessionalTag, { kind: string; label: string }> = {
   'ONB-RES-AGENCY': { kind: 'property-manager', label: 'Residential management' },
-  'ONB-COM-MANAGER': { kind: 'commercial', label: 'Commercial management' },
-  'ONB-STR-MANAGER': { kind: 'strata-manager', label: 'Strata management' },
 };
 function professionalTag(value: unknown): ProfessionalTag {
   return typeof value === 'string' && Object.prototype.hasOwnProperty.call(categories, value)

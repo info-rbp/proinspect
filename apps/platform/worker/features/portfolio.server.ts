@@ -1,3 +1,4 @@
+import { requireResidentialSector } from './residential-policy.server';
 import { z } from 'zod';
 import { statement, assert, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
@@ -34,6 +35,7 @@ export async function applyOrganisation(env: Env, user: Principal, input: unknow
       businessReference: reference,
     })
     .parse(input);
+  requireResidentialSector(d.kind === 'property-manager' ? 'residential' : d.kind);
   const existing = await statement(
     env.DB,
     "SELECT id FROM organisation_applications WHERE user_id=? AND workspace_kind=? AND status='pending'",

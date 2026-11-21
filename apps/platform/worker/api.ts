@@ -1,3 +1,4 @@
+import { guardResidentialMutation } from './features/residential-policy.server';
 import {temporarySecurityDownload,reviewTemporaryDocument,stageTemporaryPackage,temporaryPackageAccess,controlTemporaryPackage} from './features/rental-temporary-documents.server';
 
 import { coLivingOverview, coLivingCommand, myCoLivingSpace } from './features/co-living.server';
@@ -278,6 +279,7 @@ export async function handleApi(
       method = request.method;
     if (path === '/api/v4/catalogue' && method === 'GET') return Response.json(await v4.publicCatalogue(env,url.searchParams.get('sector')??undefined),{headers:{'Cache-Control':'private, no-store'}});
     const v4Item=path.match(/^\/api\/v4\/catalogue\/((?:RES|COM)-\d{3})$/);
+    if(v4Item?.[1].startsWith('COM-'))throw new AppError(410,'SECTOR_RETIRED','This service is retired.');
     if(v4Item && method==='GET')return Response.json(await v4.publicService(env,v4Item[1]),{headers:{'Cache-Control':'private, no-store'}});
     if(path==='/api/v4/requests' && method==='POST')throw new AppError(410,'ACCOUNT_REQUIRED','Create a free ProInspect account to request or book a service.');
     if(path==='/api/v4/requests/verify' && method==='POST')return Response.json(await v4.verify(request,env));
@@ -372,6 +374,7 @@ export async function handleApi(
       assert(result instanceof Response,404,'DOCUMENT_UNAVAILABLE','Document unavailable.');return result;
     }
     const user = await requireUser(request, env);
+    await guardResidentialMutation(request, env);
     const commercialStaff=path.match(/^\/api\/staff\/commercial-applications(?:\/(.*))?$/);
     if(commercialStaff)return await commercialStaffHttp(request,env,user,commercialStaff[1]??'');
     const propertyReportLaunch=path.match(/^\/api\/staff\/work-orders\/([a-zA-Z0-9_-]+)\/property-report-tool$/);
@@ -596,6 +599,7 @@ export async function handleApi(
     assert(match, 404, 'NOT_FOUND', 'Page not found.');
     const w = await workspace(env, user, match[1], match[2]),
       tail = match[3] ?? '';
+    await guardResidentialMutation(request, env, w.kind, tail);
     // Narrow commercial occupant context: no generic customer/staff feature endpoints.
     if(w.kind==='commercial-occupant'){
       if(method==='GET'&&(!tail||tail==='data'))

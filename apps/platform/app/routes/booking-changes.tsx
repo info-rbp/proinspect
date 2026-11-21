@@ -1,4 +1,4 @@
-import { useLoaderData, type LoaderFunctionArgs } from 'react-router';
+import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { loadApi } from '../lib/api.server';
 import { useWorkspace, workspaceApi } from '../lib/workspace';
 import { PageHeading, Badge } from '../../../../packages/ui/components';
@@ -24,6 +24,7 @@ export default function BookingChanges() {
         title="Change a booking"
         description="Move or cancel a future visit before work starts. A changed appointment needs renewed access and notice coordination; payments are reviewed separately."
       />
+      {!bookings.some(b=>b.status==='confirmed' && b.starts_at>new Date().toISOString()) && <section className="panel"><h2>No future bookings available to change</h2><p>Past, completed or cancelled appointments cannot be rescheduled here. Contact ProInspect if a past visit needs follow-up; a past appointment does not mean its work is complete.</p><Link to={d.workspace.href+'/bookings'}>View booking history</Link> · <Link to={d.workspace.href+'/work-orders'}>View service progress</Link></section>}
       <div className="stack">
         {bookings
           .filter((b) => b.status === 'confirmed' && b.starts_at > new Date().toISOString())

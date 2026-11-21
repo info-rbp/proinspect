@@ -24,7 +24,7 @@ export function loader({ params, request }: LoaderFunctionArgs) {
         ['Start with the outcome', 'Choose the service around the property task and the decision you need to make. Scope, pricing and availability must be confirmed.'],
         ['How the work connects', 'An authorised account links the request or booking to its property or scheme. Issued documents stay with that record.'],
       ] as [string, string][],
-      services: SERVICE_SEEDS.filter((s) => s.family === params.family),
+      services: SERVICE_SEEDS.filter(s => s.sectors.includes('residential')).filter((s) => s.family === params.family),
     };
   }
   const kind = params.model ? 'engagement' as const : 'guide' as const;
@@ -33,7 +33,7 @@ export function loader({ params, request }: LoaderFunctionArgs) {
   if (!page) throw new Response('Not found', { status: 404 });
   return {
     kind, slug, ...page, path,
-    services: SERVICE_SEEDS.filter(
+    services: SERVICE_SEEDS.filter(s => s.sectors.includes('residential')).filter(
       (s) => 'services' in page && (page.services as string[]).includes(s.id),
     ),
   };
@@ -116,7 +116,7 @@ export default function Content() {
             ['Buildings and shared accommodation', 'Cleaning, waste, grounds, minor works, room turnover and resident arrivals under a scheduled programme.'],
             ['Construction and handover', 'Progress observations, milestones, defect follow-up and project coordination.'],
           ]).map(([title, copy]) => <article key={title} className="mkt-editorial-panel"><h3>{title}</h3><p>{copy}</p></article>)}</div>
-          <p className="mkt-section-footnote">Discuss an individual <Link to="/contact">custom scope</Link> or explore <Link to="/residential-property-support">residential plans</Link> and <Link to="/commercial">commercial operations</Link>.</p>
+          <p className="mkt-section-footnote">Discuss an individual <Link to="/contact">custom scope</Link> or explore <Link to="/residential-property-support">residential plans</Link> and <Link to="/co-living">Co-Living operations</Link>.</p>
         </div>
       </section>}
       {guide && d.services.length > 0 && (

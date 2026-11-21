@@ -62,7 +62,7 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
         <div className="mkt-footer-top">
           <div className="mkt-footer-intro">
             <Link className="brand inverse" to="/">ProInspect<span>PROPERTY SERVICES</span></Link>
-            <p>Inspections, outsourced property operations and building care for residential, commercial, shared accommodation and construction clients across Perth and Peel.</p>
+            <p>Residential inspections, leasing support, Co-Living and maintenance coordination for owners, agencies and tenants across Perth and Peel.</p>
             <Link className="mkt-footer-contact" to="/contact">Talk to ProInspect <span aria-hidden="true">↗</span></Link>
           </div>
           <div className="mkt-footer-group">
@@ -79,7 +79,6 @@ export function MarketingFooter({ appOrigin = '' }: { appOrigin?: string }) {
             {PUBLIC_NAVIGATION.filter(item => ['residential','commercial','strata','co-living','student-living','construction'].includes(item.href.slice(1))).map(item => <Link key={item.href} to={item.href}>{item.label}</Link>)}
             <Link to="/who-we-help">All customer types</Link>
             <Link to="/residential-property-support">Residential support options</Link>
-            <Link to="/student-living">Student Living</Link>
           </div>
           <div className="mkt-footer-group">
             <h3>ProInspect</h3>

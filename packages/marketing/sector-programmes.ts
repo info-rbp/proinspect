@@ -21,7 +21,7 @@ export const SECTOR_PROGRAMMES: Record<string, SectorProgramme> = {
     onboarding: [
       ['Confirm the property and responsible parties', 'Identify the owner, managing agency if any, the authorised service contact and the decisions ProInspect may support.'],
       ['Review tenancy and access requirements', 'Provide existing condition records, notice procedures, property instructions and known risks through approved channels.'],
-      ['Choose the engagement model', 'Select an individual service, the Inspection Only plan or an individually scoped All-Inclusive arrangement.'],
+      ['Choose the engagement model', 'Select an individual service, the Residential All Inclusive Subscription.'],
       ['Agree the working schedule', 'Confirm visits, included allowances, approvals, extras, communication and reporting before work starts.'],
     ],
     nextStep: 'Compare the residential plans or ask us to develop an outsourced workload proposal.',

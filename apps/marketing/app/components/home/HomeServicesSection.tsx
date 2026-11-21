@@ -7,7 +7,7 @@ import maintenanceImage from './images/maintenance.jpg';
 const services = [
   [
     'Inspections & reports',
-    'Understand the condition of your property through routine, incoming, outgoing and commercial inspections.',
+    'Understand the condition of your property through routine, incoming and outgoing residential inspections.',
     'Routine inspections · Condition reports · Exit inspections',
     '/services/category/inspections',
     inspectionImage,

@@ -17,7 +17,7 @@ export function resolveClientAreas(w:Workspace,properties:Property[],schemes:unk
   if(w.kind==='property-manager'||w.kind==='landlord'||w.kind==='commercial')defaults.add('leasing');
   defaults.add('maintenance');
  }
- return CLIENT_AREAS.filter(area=>selected.has(area)||defaults.has(area)).map((area):ClientAreaLink=>{
+ return CLIENT_AREAS.filter(area=>!['commercial','strata','construction'].includes(area)).filter(area=>selected.has(area)||defaults.has(area)).map((area):ClientAreaLink=>{
   const label=({'residential':'Residential','commercial':'Commercial','strata':'Strata','co-living':'Co-Living','construction':'Construction','leasing':'Leasing','maintenance':'Maintenance'} as Record<ClientArea,string>)[area];
   if(area==='construction')return {area,label,status:'planned',href:null,description:'In development; not bookable'};
   if(area==='co-living'){

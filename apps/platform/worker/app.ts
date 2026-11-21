@@ -1,3 +1,4 @@
+import { residentialPublicResponse } from '../../../packages/domain/residential-policy';
 import {dispatchTemporaryDocumentRetention} from './features/rental-temporary-documents.server';
 import { canonicalPageRedirect } from '../../../packages/security/canonical';
 import {dispatchGuestReminders} from './features/guest-reminders.server';
@@ -25,6 +26,8 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const canonical = canonicalPageRedirect(request, env.APP_ORIGIN, env.APP_ENV);
     if (canonical) return canonical;
+    const retired = residentialPublicResponse(request);
+    if (retired) return retired;
     const nonce = btoa(crypto.randomUUID());
     const context = new RouterContextProvider();
     context.set(runtimeContext, { env, ctx, nonce });

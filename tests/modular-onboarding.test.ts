@@ -50,8 +50,8 @@ test('professional onboarding remains reviewed and is not a self-approved member
   const org = load('apps/platform/app/routes/organisation.tsx');
   const server = load('apps/platform/worker/features/portfolio.server.ts');
   assert.match(org,/ONB-RES-AGENCY/);
-  assert.match(org,/ONB-COM-MANAGER/);
-  assert.match(org,/ONB-STR-MANAGER/);
+  assert.doesNotMatch(org,/ONB-COM-MANAGER/);
+  assert.doesNotMatch(org,/ONB-STR-MANAGER/);
   assert.match(server,/status='pending'/);
   assert.match(server,/approveOrganisation/);
 });

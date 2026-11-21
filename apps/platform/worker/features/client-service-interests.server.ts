@@ -24,6 +24,7 @@ export async function setClientServiceInterest(env:Env,user:Principal,clientId:s
  assert(['owner','admin'].includes(member.role),403,'ACCOUNT_ADMIN_REQUIRED','Account administrator access is required.');
  const d=z.object({area:z.enum(SERVICE_AREAS),requested:z.boolean()}).strict().parse(input);
  assert(await serviceInterestTableReady(env),503,'SERVICE_INTERESTS_NOT_READY','Account service preferences are not yet available.');
+ assert(!d.requested || !['commercial','strata','construction'].includes(d.area),410,'SECTOR_RETIRED','This service area is retired.');
  const time=now();
  const sql=d.requested?
    'INSERT INTO client_service_interests(client_id,service_area,requested_by,requested_at,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(client_id,service_area) DO UPDATE SET updated_at=excluded.updated_at,requested_by=excluded.requested_by':

@@ -1,3 +1,4 @@
+import { requireResidentialSector } from './residential-policy.server';
 import { z } from 'zod';
 import { assert, statement, uid, now, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
@@ -40,6 +41,7 @@ function recordAudit(env:Env,user:Principal,action:string,propertyId:string,meta
 export async function staffPropertyCreate(env:Env,user:Principal,w:Workspace,input:unknown){
   permission(user,w,true);
   const data=propertyCreation.parse(input);
+  requireResidentialSector(data.sector);
   assert(allowedType(data.sector,data.propertyType),422,'PROPERTY_TYPE_INVALID','Select a property type valid for this sector.');
   const key=addressKey(data.address,data.suburb,data.postcode);
   const existing=await statement(env.DB,'SELECT id FROM properties WHERE address_key=?',key).first<{id:string}>();
@@ -78,6 +80,7 @@ export async function staffPropertyUpdate(env:Env,user:Principal,w:Workspace,pro
     'SELECT id,address,suburb,postcode,address_key,sector,property_type,archived_at FROM properties WHERE id=?',
     propertyId).first<PropertyData>();
   assert(property&&!property.archived_at,404,'PROPERTY_NOT_FOUND','Property not found.');
+  requireResidentialSector(property.sector);
   assert(allowedType(property.sector,data.propertyType),422,'PROPERTY_TYPE_INVALID','The property type must match the recorded sector.');
   // Treat the exact original fields displayed in the edit form as a concurrency token.
   assert(property.address===data.original.address&&property.suburb===data.original.suburb

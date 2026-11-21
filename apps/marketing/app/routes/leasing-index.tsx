@@ -19,7 +19,7 @@ import '../../../../packages/ui/leasing.css';
 export const meta = () =>
   seo(
     'Properties for Lease & Open Homes — Western Australia',
-    'Browse available residential and commercial properties, register for an open home and follow the property’s rental application instructions.',
+    'Browse available residential properties, register for an open home and follow the property’s rental application instructions.',
     '/leasing',
     { noindex: true },
   );
@@ -60,7 +60,7 @@ export default function LeasingIndex() {
             <p className="eyebrow">Current opportunities</p>
             <h2>Properties for lease.</h2>
             <p>
-              Browse published residential and commercial opportunities. Choose a property to see
+              Browse published residential opportunities. Choose a property to see
               its photos, inspection sessions and application information.
             </p>
           </div>
@@ -79,7 +79,7 @@ export default function LeasingIndex() {
               <select name="type" defaultValue={kind}>
                 <option value="">All types</option>
                 <option value="residential">Residential</option>
-                <option value="commercial">Commercial</option>
+
               </select>
             </label>
             <button className="button">Search properties</button>
@@ -172,7 +172,7 @@ export default function LeasingIndex() {
               <span className="pi-step-number">01</span>
               <h3>Explore current properties</h3>
               <p>
-                Review residential or commercial property details, available photos and advertised
+                Review residential property details, available photos and advertised
                 inspection sessions.
               </p>
             </li>

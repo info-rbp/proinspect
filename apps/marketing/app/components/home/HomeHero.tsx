@@ -13,7 +13,7 @@ export function HomeHero({ appOrigin }: { appOrigin: string }) {
           <p className="pi-lead">
             ProInspect Property Services can be there when you need the support. From Property
             Condition Reports to organising routine maintenance, we aim to provide you with the
-            property support for your residential property, commercial property or building
+            property support for your rental home, residential portfolio or shared accommodation
             operations.
           </p>
           <div className="actions pi-actions">

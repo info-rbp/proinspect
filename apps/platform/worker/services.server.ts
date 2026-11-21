@@ -1,3 +1,4 @@
+import { requireResidentialSector } from './features/residential-policy.server';
 import { legalStatements } from './features/legal-acceptance.server';
 import { serviceInterestTableReady } from './features/client-service-interests.server';
 import { calendarSchedulingEnabled, calendarSyncStatement } from './features/calendar-scheduling.server';
@@ -72,6 +73,7 @@ export async function catalogue(env: Env, includeInactive = false): Promise<Serv
  */
 export async function onboard(env: Env, user: Principal, input: unknown) {
   const data = onboardingSchema.parse(input);
+  requireResidentialSector(data.landlordType);
   const residential = data.landlordType === 'residential';
   const clientType = residential ? 'landlord' : 'commercial_landlord';
   const workspaceKind = residential ? 'landlord' : 'commercial';
@@ -139,6 +141,7 @@ export async function onboard(env: Env, user: Principal, input: unknown) {
   return { clientId, workspaceKind, landlordType: data.landlordType };
 }
 export async function createProperty(env: Env, user: Principal, w: Workspace, input: unknown) {
+  requireResidentialSector(w.kind === 'landlord' ? 'residential' : w.kind);
   assert(
     w.kind === 'landlord' || w.kind === 'commercial',
     403,

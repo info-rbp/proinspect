@@ -6,12 +6,8 @@ import { ENGAGEMENTS } from '../packages/marketing/content.ts';
 import { SECTOR_OVERVIEWS } from '../packages/marketing/sector-overviews.ts';
 import { permittedExperienceSections, effectiveExperienceLabels } from '../packages/domain/portal-experience.ts';
 
-test('workbook offer distinguishes room and commercial-unit pricing without adding subscriptions', () => {
-  assert.deepEqual(PUBLIC_PLANS.map(p=>[p.id,p.monthlyExGst,p.billingBasis]),[
-    ['residential-inspection-only',20,'residential-property-or-room'],
-    ['residential-all-inclusive',150,'residential-property-or-room'],
-    ['commercial-all-inclusive',150,'commercial-unit'],
-  ]);
+test('owner-approved offer has one weekly per-property subscription', () => {
+  assert.deepEqual(PUBLIC_PLANS.map(p=>[p.id,p.weeklyExGst,p.billingBasis]),[['residential-all-inclusive-weekly-2026-11',50,'residential-property']]);
   assert.deepEqual(INSPECTION_ONLY_SERVICES,[
     'Quarterly routine inspection','Incoming Property Condition Report','Exit inspection',
     'Report generated on the ProInspect Platform','Tenant communication',

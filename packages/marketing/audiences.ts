@@ -12,12 +12,12 @@ type Audience = {
   deliverables?: string[];
   visual: 'residential' | 'commercial' | 'strata';
 };
-export const AUDIENCES: Record<string, Audience> = {
+const ALL_AUDIENCES: Record<string, Audience> = {
   'private-landlords': {
     name: 'Private landlords',
     title: 'Keep your rental property in view.',
     description: 'Residential inspections, condition reports and practical property attendance for Western Australian landlords who manage their own rental property.',
-    purpose: 'Keep control of your rental without managing every inspection and contractor attendance alone. Choose individual services, a defined Inspection Only subscription or a wider All-Inclusive arrangement with reporting and practical tenancy administration.',
+    purpose: 'Keep control of your rental without managing every inspection and contractor attendance alone. Choose individual services, the Residential All Inclusive Subscription with reporting and practical tenancy administration.',
     what: [
       ['Understand property condition', 'Arrange routine, incoming or outgoing condition records suited to the stage of the tenancy.'],
       ['Follow up maintenance', 'Have a reported concern or completed work observed, without mistaking an inspection for repair or certification.'],
@@ -166,3 +166,5 @@ export const AUDIENCES: Record<string, Audience> = {
     visual: 'strata',
   },
 };
+
+export const AUDIENCES: Record<string, Audience> = Object.fromEntries(Object.entries(ALL_AUDIENCES).filter(([key]) => ['private-landlords','property-management-agencies','tenants','co-living-operators','student-accommodation-providers'].includes(key)));

@@ -27,7 +27,7 @@ test('the public home, every service and all content routes are part of the one 
 
 test('public marketing pages are indexable only on the canonical domain, private pages never are', () => {
   for (const publicPath of ['/', '/services', '/contact', '/services/routine-inspection',
-    '/student-living', '/how-it-works', '/resources', '/resources/pre-vacate-vs-final',
+    '/co-living', '/how-it-works', '/resources', '/resources/pre-vacate-vs-final',
     '/why-proinspect', '/sitemap.xml', '/robots.txt']) {
     assert.equal(isPublicSitePath(publicPath), true, publicPath);
     assert.equal(shouldIndexPublicPage(publicPath, 'https://proinspect.systems', 'production'), true);

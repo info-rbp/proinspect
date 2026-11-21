@@ -27,16 +27,13 @@ test('unknown roles, Staff and individual invitation tags cannot select a regist
 test('new owners and professional managers reach their distinct setup routes with service context', () => {
   for (const [flow, path] of [
     ['ONB-RES-OWNER', '/onboarding'],
-    ['ONB-COM-OWNER', '/onboarding'],
     ['ONB-RES-AGENCY', '/organisation'],
-    ['ONB-COM-MANAGER', '/organisation'],
-    ['ONB-STR-MANAGER', '/organisation'],
   ])
     assert.equal(
       resolvePortalEntry([], flow, 'routine-inspection'),
       path + '?flow=' + flow + '&service=routine-inspection',
     );
-  assert.equal(entryPath('ONB-COM-OWNER', '//outside.test'), '/start?flow=ONB-COM-OWNER');
+  assert.equal(entryPath('ONB-COM-OWNER', '//outside.test'), '/start');
 });
 test('existing membership determines routing, including all invited roles and internal Staff', () => {
   for (const kind of [
@@ -74,11 +71,11 @@ test('commercial owners and reviewed professional portfolios are distinguished b
     accountType: 'commercial_landlord',
     professionalPortfolio: true,
   });
-  assert.equal(resolvePortalEntry([owner, manager], 'ONB-COM-OWNER'), owner.href);
-  assert.equal(resolvePortalEntry([owner, manager], 'ONB-COM-MANAGER'), manager.href);
+  assert.equal(resolvePortalEntry([owner, manager], 'ONB-COM-OWNER'), '/workspaces');
+  assert.equal(resolvePortalEntry([owner, manager], 'ONB-COM-MANAGER'), '/workspaces');
   assert.equal(
     resolvePortalEntry([owner], 'ONB-COM-MANAGER'),
-    '/organisation?flow=ONB-COM-MANAGER',
+    owner.href,
   );
 });
 test('multiple authorised accounts remain a choice and service intent overrides only bookable landing preferences', () => {

@@ -55,6 +55,8 @@ export async function billingPortal(env:Env,user:Principal,w:Workspace){
  await clientAdmin(env,user,w);
  if(env.APP_ENV==='production'&&w.kind==='landlord'){
   liveResidentialCredentialsReady(env);
+  const weeklyContract=await statement(env.DB,'SELECT 1 FROM residential_subscription_contracts c JOIN stripe_billing_links b ON b.id=c.billing_link_id WHERE b.client_id=?',w.scopeId).first();
+  assert(!weeklyContract,503,'CONTRACT_PORTAL_REVIEW_REQUIRED','Use written cancellation notice. The payment-method-only portal must be independently approved for the new contract.');
   // Existing verified subscribers retain the right to cancel even when new signups are paused.
   const a=await statement(env.DB,"SELECT stripe_customer_id FROM billing_accounts WHERE client_id=? AND mode='live' AND stripe_account_id=?",w.scopeId,LIVE_RESIDENTIAL_ACCOUNT).first<{stripe_customer_id:string}>();
   assert(a?.stripe_customer_id,409,'LIVE_BILLING_CUSTOMER_MISSING','An enrolled Stripe customer is required.');

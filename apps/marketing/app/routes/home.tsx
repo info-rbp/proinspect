@@ -8,7 +8,7 @@ import { seo } from '../lib/seo';
 
 const services: Array<{ key: BrandImageKey; name: string; copy: string; to: string }> = [
   ...Object.entries(SECTOR_OVERVIEWS)
-    .filter(([key]) => key !== 'maintenance')
+    .filter(([key]) => ['residential','co-living'].includes(key))
     .map(([key, page]) => ({
       key: (key === 'student-living' ? 'co-living' : key) as BrandImageKey,
       name: page.name,
@@ -32,7 +32,7 @@ const services: Array<{ key: BrandImageKey; name: string; copy: string; to: stri
 export const meta = () =>
   seo(
     'Property Inspections, Outsourced Operations & Building Services — Perth & Peel',
-    'Inspections, outsourced property operations and building services across Perth and Peel. Residential, commercial, strata, Co-Living, Student Living and construction support.',
+    'Residential inspections, leasing, Co-Living and maintenance support for property owners, agencies and tenants across Perth and Peel.',
     '/',
   );
 
@@ -53,10 +53,10 @@ export default function Home() {
           <div className="pi-section-heading pi-section-heading-wide">
             <div>
               <p className="eyebrow">How we can help</p>
-              <h2>The right support for every kind of property.</h2>
+              <h2>The right support for your Residential property.</h2>
             </div>
             <p>
-              Homes, workplaces, shared buildings and projects. Choose a one-off service, an
+              Rental homes, residential portfolios and shared accommodation. Choose a one-off service, an
               approved subscription or a tailored scope that fits the property and your responsibilities.
             </p>
           </div>
@@ -102,7 +102,7 @@ export default function Home() {
             <p>
               Get a clear picture of condition, keep everyday tasks moving and follow through
               on the work that matters. Choose a one-off service or discuss ongoing support
-              for your home, premises or shared building.
+              for your rental home or shared accommodation.
             </p>
             <ul className="pi-principles">
               <li>Inspections: factual condition records for the next decision</li>
