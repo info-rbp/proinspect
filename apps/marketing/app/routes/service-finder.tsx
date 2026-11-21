@@ -96,7 +96,7 @@ export default function ServiceFinder(){
       {matches.length === 0 && <div className="mkt-callout-panel">
         <h3>A tailored programme fits this request.</h3>
         <p>Review your property, operating workload, site or room count, reporting needs and approval responsibilities with us.</p>
-        <Link className="button secondary" to={sector === 'ongoing' && task === 'residential' ? '/residential-property-support' : sector === 'ongoing' && task === 'commercial' ? '/commercial' : sector === 'ongoing' ? '/strata' : '/' + sector}>Explore the programme <span aria-hidden="true">→</span></Link>
+        <Link className="button secondary" to={sector === 'ongoing' && task === 'residential' ? '/residential/subscriptions' : sector === 'ongoing' && task === 'commercial' ? '/commercial' : sector === 'ongoing' ? '/strata' : '/' + sector}>Explore the programme <span aria-hidden="true">→</span></Link>
         <Link className="mkt-text-link" to="/contact">Request a tailored scope <span aria-hidden="true">→</span></Link>
       </div>}
       <div className="mkt-catalogue-grid">
@@ -107,6 +107,12 @@ export default function ServiceFinder(){
       </div>
       <p className="mkt-section-footnote">Different work or several properties? <Link to="/contact">Describe your requirements</Link> for a reviewed instruction.</p>
     </div></section>
-    <MarketingCta title="Prefer to discuss the task first?" description="Tell us the property type, the general location and the outcome you need. A public enquiry is not a confirmed booking." appOrigin={appOrigin}/>
+    <section className="mkt-section pi-editorial-section"><div className="site-container pi-introduction">
+        <div><p className="eyebrow">Want a different way to browse?</p><h2>Explore the Residential service areas.</h2></div>
+        <div><p>See inspections, open homes, leasing, maintenance management, access, exit inspections, bond administration and specialist support in one place.</p>
+          <Link className="button secondary" to="/residential/services">See All Residential Services <span aria-hidden="true">→</span></Link>
+        </div>
+      </div></section>
+      <MarketingCta title="Prefer to discuss the task first?" description="Tell us the property type, the general location and the outcome you need. A public enquiry is not a confirmed booking." appOrigin={appOrigin}/>
   </>;
 }

@@ -4,14 +4,15 @@ import { MarketingCta } from '../components/marketing-ui';
 import { MarketingPageHero, MarketingSectionTitle } from '../components/page-patterns';
 import { seo } from '../lib/seo';
 import { BrandImage, type BrandImageKey } from '../components/brand-image';
+import { RESIDENTIAL_CATEGORIES } from '../../../../packages/marketing/residential-categories';
 
 const familyImages: Record<string, BrandImageKey> = {
   inspections: 'residential',
-  attendance: 'commercial',
+  attendance: 'residential',
   maintenance: 'maintenance',
   access: 'maintenance',
-  documents: 'commercial',
-  operations: 'strata',
+  documents: 'residential',
+  operations: 'co-living',
 };
 
 export const meta = () =>
@@ -31,12 +32,23 @@ export default function Services() {
     <>
       <MarketingPageHero
         eyebrow="The service catalogue"
-        title={family ? FAMILIES[family].name : 'The right service for the property.'}
-        intro="Explore inspections, outsourced property operations and building services. Each detailed service explains its purpose, activities, limits and documented output. Individual service prices are available to authorised signed-in clients; request a quote for a tailored scope."
+        title={family ? FAMILIES[family].name : 'Property support that makes sense for you.'}
+        intro="Choose what you need help with, from routine inspections and incoming reports to property access, maintenance and leasing support. Each individual service explains its intended outcome, inclusions and next steps."
         crumbs={[{ label: 'Services' }]}
         visual="services"
         primary={{ label: 'Find the right service', to: '/service-finder' }}
       />
+      <section className="mkt-section pi-editorial-section pi-neutral" id="residential-solutions">
+        <div className="site-container">
+          <div className="pi-section-heading"><p className="eyebrow">Residential Services</p>
+            <h2>Eight ways we can support your property.</h2>
+            <p>Find the right starting point by the work that needs doing. These are customer-friendly groupings; the booking price, availability and scope belong to each individual service.</p></div>
+          <div className="pi-residential-related" aria-label="Residential service areas">
+            {RESIDENTIAL_CATEGORIES.map(c=><Link key={c.slug} to={'/residential/services/'+c.slug}>{c.title}<span aria-hidden="true">↗</span></Link>)}
+          </div>
+          <Link className="button secondary" to="/residential/services">See All Residential Services <span aria-hidden="true">→</span></Link>
+        </div>
+      </section>
       <section className="section mkt-section" id="service-categories">
         <div className="site-container">
           <MarketingSectionTitle
@@ -63,9 +75,9 @@ export default function Services() {
       </section>
       <section className="section mkt-section mkt-stone"><div className="site-container">
         <MarketingSectionTitle eyebrow="Ongoing property services" title="Need a recurring property programme?"
-          description="Residential service pages explain individual inspections and attendances. Broader operations, tenancy administration, cleaning, property care and project support are scoped as recurring programmes." />
+          description="Residential service pages explain individual inspections and attendances. Broader tenancy support, cleaning, shared-space care and maintenance can be scoped separately or through an agreed Residential subscription." />
         <div className="mkt-engagement-grid">{[
-          ['Residential subscriptions', '/residential-property-support', 'All Inclusive at AUD $50 + GST per week per property.'],
+          ['Residential subscriptions', '/residential/subscriptions', 'All Inclusive at AUD $50 + GST per week per property.'],
           ['Co-Living', '/co-living', 'Shared accommodation turnover, maintenance and resident support.'],
         ].map(([title, to, description]) => <article className="mkt-engagement-card" key={to}>
           <h3>{title}</h3><p>{description}</p>

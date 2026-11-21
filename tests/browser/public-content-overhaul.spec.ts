@@ -29,5 +29,5 @@ test('the finder connects ongoing property support with the one residential plan
   await page.goto('/service-finder');
   await page.getByLabel('Property setting').selectOption('ongoing');
   await expect(page.getByLabel('Your intended outcome').locator('option')).toHaveCount(1);
-  await expect(page.getByRole('link',{name:/Explore the programme/})).toHaveAttribute('href','/residential-property-support');
+  await expect(page.getByRole('link',{name:/Explore the programme/})).toHaveAttribute('href','/residential/subscriptions');
 });
