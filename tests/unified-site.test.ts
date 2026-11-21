@@ -64,7 +64,7 @@ test('the deployed Worker has one origin for marketing, booking, sign-in and con
   assert.match(publicLayout, /<MarketingHeader appOrigin=\{appOrigin\}/);
   const chrome = source('apps/marketing/app/components/site-chrome.tsx');
   assert.match(chrome, /PUBLIC_NAVIGATION/);
-  assert.match(chrome, /to="\/client"/);
+  assert.match(chrome, /item\.href === "\/client" \? "\/contact" : item\.href/);
   assert.match(chrome, /to="\/contact"/);
 });
 
