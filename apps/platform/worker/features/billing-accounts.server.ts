@@ -39,7 +39,13 @@ export async function billingDashboard(env:Env,user:Principal,w:Workspace){
  const invoiceContactSchemaAvailable=staff && await invoiceRecipientSchemaReady(env);
  const [accounts,subscriptions,invoices,exceptions,refunds,contacts,dispatches]=await Promise.all([
  statement(env.DB,`SELECT client_id,mode,created_at FROM billing_accounts WHERE ${clause}`, ...values).all(),
- statement(env.DB,`SELECT id,client_id,property_id,sector,status,price_id FROM stripe_billing_links WHERE ${clause} ORDER BY updated_at DESC LIMIT 100`,...values).all(),
+ statement(env.DB,`SELECT b.id,b.client_id,b.property_id,b.sector,b.status,b.price_id,p.address,
+ c.plan_version,c.starts_at AS contract_starts_at,n.received_at AS notice_received_at,
+ n.earliest_end_at AS notice_earliest_end_at,n.status AS notice_status
+ FROM stripe_billing_links b LEFT JOIN properties p ON p.id=b.property_id
+ LEFT JOIN residential_subscription_contracts c ON c.billing_link_id=b.id
+ LEFT JOIN residential_cancellation_notices n ON n.billing_link_id=b.id
+ WHERE ${clause} ORDER BY b.updated_at DESC LIMIT 100`,...values).all(),
  statement(env.DB,`SELECT * FROM billing_invoices WHERE ${clause} ORDER BY updated_at DESC LIMIT 100`,...values).all(),
  staff?statement(env.DB,"SELECT id,payment_id,code,created_at FROM payment_reconciliation_items WHERE status='open' ORDER BY created_at LIMIT 100").all():Promise.resolve({results:[]}),
  staff?statement(env.DB,"SELECT r.*,p.description,p.total_cents,p.refunded_cents FROM refund_requests r JOIN payments p ON p.id=r.payment_id ORDER BY requested_at DESC LIMIT 100").all():Promise.resolve({results:[]}),
@@ -48,7 +54,7 @@ export async function billingDashboard(env:Env,user:Principal,w:Workspace){
  ]);
  return {accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,
   contacts:contacts.results,dispatches:dispatches.results,invoiceContactSchemaAvailable:!!invoiceContactSchemaAvailable,
-  portalEnabled:env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true'||(env.APP_ENV==='production'&&w.kind==='landlord'&&accounts.results.some((a:any)=>a.mode==='live')),
+  portalEnabled:!subscriptions.results.some((s:any)=>s.plan_version)&&(env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true'||(env.APP_ENV==='production'&&w.kind==='landlord'&&accounts.results.some((a:any)=>a.mode==='live'))),
   invoicesEnabled:env.STRIPE_INVOICING_ENABLED==='true',refundsEnabled:env.STRIPE_REFUNDS_ENABLED==='true'};
 }
 export async function billingPortal(env:Env,user:Principal,w:Workspace){

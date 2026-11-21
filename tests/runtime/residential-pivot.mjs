@@ -140,13 +140,16 @@ try {
   );
   assert.ok(staffWorkspace);
   const staffBase = '/api/w/staff/' + staffWorkspace.scopeId;
+  await sql("INSERT INTO organisation_applications(id,user_id,name,workspace_kind,business_reference,status,created_at) VALUES('old_commercial_application',?,'Old application','commercial','SYNTHETIC-ONLY','pending','2026-01-01')",staffUser.id).run();
+  assert.equal((await api(staffBase+'/organisation-applications/old_commercial_application/review',{cookie:staff.cookie,body:{decision:'approved',reference:'SYNTHETIC-ONLY'}})).status,410);
+  assert.equal((await sql("SELECT status FROM organisation_applications WHERE id='old_commercial_application'").first()).status,'pending');
+
   for (const path of [
     'schemes',
     'commercial-leases',
     'facilities',
     'council-appointments',
     'amenities',
-    'v2-sectors',
   ])
     assert.equal(
       (await api(staffBase + '/' + path, { cookie: staff.cookie, body: { action: 'create' } }))
@@ -154,10 +157,53 @@ try {
       410,
       path,
     );
+  for (const market of ['COM', 'STR', 'CTS', 'STA']) {
+    assert.equal(
+      (
+        await api(staffBase + '/v2/markets/' + market + '/enable', {
+          cookie: staff.cookie,
+          body: { enabled: true },
+        })
+      ).status,
+      410,
+    );
+    assert.equal(
+      (
+        await api(staffBase + '/v2/asset-markets', {
+          cookie: staff.cookie,
+          body: { propertyId, marketCode: market },
+        })
+      ).status,
+      410,
+    );
+  }
+  const asset = await api(staffBase + '/v2/assets', {
+    cookie: staff.cookie,
+    body: { propertyId, kind: 'building', name: 'Residential shared asset' },
+  });
+  assert.equal(asset.status, 200, JSON.stringify(asset.data));
+  const profile = await api(staffBase + '/v2-estates/profiles', {
+    cookie: staff.cookie,
+    body: { assetId: asset.data.id, assetCode: 'SYNTHETIC-RESIDENTIAL' },
+  });
+  assert.equal(profile.status, 200, JSON.stringify(profile.data));
   // Historical records are seeded as pre-pivot state, never via active acquisition.
   await sql(
     "INSERT INTO properties(id,address,suburb,postcode,address_key,sector,created_at) VALUES('pivot_legacy','Legacy address','Perth','6000','legacy-pivot','commercial','2026-01-01')",
   ).run();
+  const legacyAsset = await sql(
+    "SELECT id FROM v2_assets WHERE property_id='pivot_legacy'",
+  ).first();
+  assert.ok(legacyAsset);
+  assert.equal(
+    (
+      await api(staffBase + '/v2-estates/profiles', {
+        cookie: staff.cookie,
+        body: { assetId: legacyAsset.id, assetCode: 'RETIRED-ASSET' },
+      })
+    ).status,
+    410,
+  );
   assert.equal(
     (await api(staffBase + '/properties/pivot_legacy', { cookie: staff.cookie })).status,
     200,
@@ -265,6 +311,12 @@ try {
       "UPDATE residential_cancellation_notices SET received_at='2030-01-01' WHERE billing_link_id='sbl_pivot'",
     ).run(),
   );
+  const dashboard = await api(base + '/billing', { cookie: owner.cookie });
+  assert.equal(dashboard.status, 200, JSON.stringify(dashboard.data));
+  const savedNotice = dashboard.data.subscriptions.find((s) => s.id === 'sbl_pivot');
+  assert.equal(savedNotice.notice_received_at, notice.data.received_at);
+  assert.equal(savedNotice.notice_status, 'pending_review');
+  assert.equal(dashboard.data.portalEnabled, false);
   // R2 recovery uses only this isolated fixture bucket, including exact byte comparison.
   const bucket = await mf.getR2Bucket('DOCUMENTS');
   const bytes = Buffer.from('Synthetic issued report – no customer data.');

@@ -28,7 +28,7 @@ export function ClientDashboard({data}:{data:WorkspaceData}){
     <div className="client-dashboard-grid">{data.properties.map(property=><article className="panel" key={property.id}>
       <h3><Link to={base+'/properties/'+encodeURIComponent(property.id)}>{property.address}</Link></h3><p>{property.suburb} {property.postcode}</p>
       <p>{activeWork.filter(o=>o.property_id===property.id).length} active jobs · {openRequests.filter(r=>r.property_id===property.id).length} open requests</p>
-      <Link to={base+'/book?propertyId='+encodeURIComponent(property.id)}>Book for this property</Link> · <Link to={base+'/tenancies?propertyId='+encodeURIComponent(property.id)}>Tenancy</Link>
+      {property.sector==='residential'?<><Link to={base+'/book?propertyId='+encodeURIComponent(property.id)}>Book for this property</Link> · <Link to={base+'/tenancies?propertyId='+encodeURIComponent(property.id)}>Tenancy</Link></>:<p>Historical property record. New services are retired.</p>}
     </article>)}</div>
     {!data.properties.length&&<p>Add your first property, or complete your agency authority review to see your assigned portfolio.</p>}
     <Link to={base+'/properties'}>Manage properties</Link>

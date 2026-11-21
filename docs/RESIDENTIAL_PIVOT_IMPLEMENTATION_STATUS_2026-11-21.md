@@ -42,7 +42,7 @@ Hosted signup is intentionally fail-closed while staging email/security provider
 
 ## Verification actually run locally
 
-- `pnpm check`: handbook/schema register, TypeScript, 321 domain tests plus 47 additional checks, SQL suites and both application builds passed before the final delivery commit. Later CI must repeat these on exact committed source.
+- `pnpm check`: handbook/schema register, TypeScript, 323 domain tests plus 47 additional checks, SQL suites and both application builds passed before the final delivery commit. Later CI must repeat these on exact committed source.
 - Updated core `tests/runtime/run.mjs`: owner registration/property/booking, request-to-work-order, tenant privacy, revoked access, service-interest authority and retirement/history checks passed.
 - Independent runtime sweep: `open-home-resend`, `rental-journey`, `managed-intake`, `final-pass`, `reporting`, `stripe`, `residential-live`, `pcr-campaign`, `invoice-delivery`, `co-living`, `registered-booking`, `residential-pivot` passed. Provider adapters in these tests are synthetic; these results are not email-delivery or real-payment acceptance.
 - `weekly-billing.mjs`: synthetic provider test of legal consent, weekly price/tax/quantity, immutable 24/60 contract, duplicate Checkout, signed commencement and written-notice gate. Exact final result recorded in CI.
@@ -52,7 +52,7 @@ Hosted signup is intentionally fail-closed while staging email/security provider
 
 ### Known failing wider regression suites — release blockers
 
-The sweep also ran `connected`, `communications`, `reporting-portals`, `v2`, `sprint`, `commercial`, `commercial-application`. They fail where older fixtures expect retired-sector creation/mutation to succeed. These failures are retained visibly; no CI check is disabled to conceal them. The full `pnpm test:integration` therefore remains red at the first such failure. Adapt these fixtures to historical read-only setup and retirement assertions while preserving shared Residential coverage. The full older browser suite contains obsolete Commercial/Strata acquisition expectations and is not claimed green. A green **targeted preview** job cannot substitute for broad CI or independent acceptance.
+The sweep also ran `connected`, `communications`, `commercial`, `commercial-application`. The shared V2 operations suite now passes with Residential asset, preventive-maintenance, capacity, cost and enterprise workflows retained. The sprint finance/refund suite also passes after retired acquisition assertions were updated. The report-portal suite passes Residential Entry/Exit PCR, tenant responses, retired-report creation denial and cross-portal privacy checks. The remaining suites fail where older fixtures expect retired-sector creation/mutation to succeed. These failures are retained visibly; no CI check is disabled to conceal them. The full `pnpm test:integration` therefore remains red at the first such failure. Adapt these fixtures to historical read-only setup and retirement assertions while preserving shared Residential coverage. The full older browser suite contains obsolete Commercial/Strata acquisition expectations and is not claimed green. A green **targeted preview** job cannot substitute for broad CI or independent acceptance.
 
 ## Legal/provider gates
 
@@ -72,4 +72,6 @@ Written notice records `pending_review` and the later of commencement + 24 calen
 
 ## Delivery update
 
-Pending final PR/CI/preview observation. This section will record actual hosted results without converting pending gates into acceptance.
+Draft delivery PR: https://github.com/info-rbp/proinspect/pull/115. Initial preview run https://github.com/info-rbp/proinspect/actions/runs/44879185623 succeeded and deployed `72f7f185f4d57703f7244f0f0a4797fde7a7f704` to the isolated staging Worker. The remote staging migration ledger is through 0063, all enabled flags remain false and hosted public browser checks passed. Production was re-read and remains on the baseline with its original database/bucket bindings. Broad Verify ProInspect run https://github.com/info-rbp/proinspect/actions/runs/44879231980 failed in the older integration fixture suite, as expected; it is not a production GO.
+
+A following revision narrows operational retirement checks to the actual property/market, preserves shared Residential asset maintenance, and persists cancellation receipts in the owner billing view. Its exact hosted SHA and final workflow result are recorded in the PR's delivery update; use that report and `/api/health` before browser acceptance. The draft remains blocked from production pending the gates above.

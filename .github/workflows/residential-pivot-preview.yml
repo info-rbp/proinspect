@@ -26,6 +26,9 @@ jobs:
           node --experimental-strip-types tests/runtime/weekly-billing.mjs
           node --experimental-strip-types tests/runtime/stripe.mjs
           node --experimental-strip-types tests/runtime/run.mjs
+          node --experimental-strip-types tests/runtime/v2.mjs
+          node --experimental-strip-types tests/runtime/sprint.mjs
+          node --experimental-strip-types tests/runtime/reporting-portals.mjs
       - name: Co-Living tenant privacy and signed subscription lifecycle regression
         run: |
           node --experimental-strip-types tests/runtime/co-living.mjs
