@@ -282,7 +282,11 @@ export class BookingScheduler extends DurableObject<Env> {
       const creditBooking = !includedSubscription && amountExGstCents > 0 && terms?.termCode !== 'upon_booking';
       const paymentRequired = !includedSubscription && amountExGstCents > 0 && !creditBooking;
       const gstCents = amountExGstCents > 0 ? Math.round(amountExGstCents / 10) : 0;
-      if (creditBooking) await assertCashCreditCapacity(this.env,clientId,amountExGstCents+gstCents,terms!.creditLimitCents);
+      if (creditBooking) {
+        assert(this.env.APP_ENV!=='production' || this.env.CASH_CLIENT_CREDIT_ENABLED==='true',
+          503,'CASH_CREDIT_NOT_RELEASED','Account-invoice booking is awaiting final approval and activation.');
+        await assertCashCreditCapacity(this.env,clientId,amountExGstCents+gstCents,terms!.creditLimitCents);
+      }
       // The existing Checkout integration is sandbox-only; production must not
       // reserve an uncollectable one-off paid appointment until a separately
       // accepted live Stripe flow and legal/tax release are deployed.

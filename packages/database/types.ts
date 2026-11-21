@@ -12,6 +12,7 @@ export interface Env {
   STRIPE_INVOICING_ENABLED?: string;
   STRIPE_REFUNDS_ENABLED?: string;
   STRIPE_PAYMENTS_ENABLED?: string;
+  CASH_CLIENT_CREDIT_ENABLED?: string;
   PAYMENT_RECONCILIATION_ENABLED?: string;
 
   APP_ENV: 'local' | 'staging' | 'production';

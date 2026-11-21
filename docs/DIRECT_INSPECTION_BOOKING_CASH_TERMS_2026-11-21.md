@@ -33,3 +33,6 @@ Structured booking intake is encrypted under `DATA_ENCRYPTION_KEY`; access is re
 - Genuine Stripe test Checkout and invoice delivery with signed webhook reconciliation and cancelled/failed scenarios.
 - Approved prices, legal terms, screen-reader and mobile accessibility review.
 - Production remains unchanged until explicit acceptance and release.
+
+## Release flag
+`CASH_CLIENT_CREDIT_ENABLED` is absent/off by default. Production refuses new deferred-credit bookings until this flag is set to `true` after approved legal terms, invoicing, reconciliation and hosted acceptance. Local/staging tests may exercise the workflow without affecting production. The flag does not enable live Stripe Checkout or invoice delivery.
