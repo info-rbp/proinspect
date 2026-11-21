@@ -60,9 +60,7 @@ export function EditorialHero({
 }
 
 export function EditorialSteps(){
- const steps:[
-  {title:string;copy:string;image:'residential'|'leasing'|'maintenance'}
- ]=[
+ const steps: Array<{title:string;copy:string;image:'residential'|'leasing'|'maintenance'}>=[
   {title:'Tell us what you need',copy:'Choose an inspection, maintenance visit or other property task, or tell us the outcome you have in mind.',image:'residential'},
   {title:'Agree the details',copy:'Confirm the authorised contact, service scope, lawful access, price and an available appointment where offered.',image:'maintenance'},
   {title:'Keep a useful record',copy:'Follow the instructed work and review issued documents in your authorised property workspace.',image:'leasing'},
