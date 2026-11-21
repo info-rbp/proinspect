@@ -32,8 +32,8 @@ test('logo returns home and all service overviews have working images, FAQs and 
     const action = slug === 'residential'
       ? { name: 'See Our Services', href: '/residential/services' }
       : slug === 'co-living'
-        ? { name: 'Explore Co-Living Support', href: '#service-options' }
-        : { name: 'Explore Maintenance Support', href: '#service-options' };
+        ? { name: 'Explore Co-Living Support', href: '/co-living#service-options' }
+        : { name: 'Explore Maintenance Support', href: '/maintenance#service-options' };
     await expect(
       page.locator('.pi-editorial-copy').getByRole('link', { name: action.name }),
     ).toHaveAttribute('href', action.href);
