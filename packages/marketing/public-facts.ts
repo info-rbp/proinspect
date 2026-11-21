@@ -1,7 +1,7 @@
 /** Operator-confirmed marketing facts, 16 November 2026; reconciled to the subscription decision workbook. Does not activate billing. */
 export const PUBLIC_COMPANY = { name: 'ProInspect Property Services Pty Ltd', abn: '52 703 550 609', acn: '703 550 609', email: 'info@proinspect.systems' } as const;
 export const PUBLIC_PLANS = [{ id: 'residential-all-inclusive-weekly-2026-11', name: 'Residential All Inclusive Subscription', weeklyExGst: 50, weeklyIncGst: 55, billingUnit: 'property', billingBasis: 'residential-property' }] as const;
-export const PLAN_TERM = 'An initial 24-month term, followed by month-to-month continuation with 60 days’ written cancellation notice.';
+export const PLAN_TERM = 'An initial 24-month term and 60 days’ written cancellation notice.';
 export const INSPECTION_ONLY_SERVICES = ['Quarterly routine inspection', 'Incoming Property Condition Report', 'Exit inspection', 'Report generated on the ProInspect Platform', 'Tenant communication'] as const;
 export const RESIDENTIAL_BILLING_UNIT = 'AUD $50 + GST per week per property ($55 including GST). No per-room subscription. Co-Living operating agreements are separately scoped and quoted.';
 export const INSPECTION_ONLY_SCOPE = 'Routine visits follow lawful access requirements, with no more than four in any rolling 12 months and no carry-over of unused visits. Your schedule confirms PCR and exit allowances, tenant communication, notice responsibilities and report delivery before you join.';

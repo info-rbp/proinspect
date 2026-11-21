@@ -1,3 +1,4 @@
+import { isSettledStripeInvoice } from '../../../../packages/finance/invoice-observation';
 import { RESIDENTIAL_PLAN } from '../../../../packages/domain/residential-policy';
 import { currentLegalDocument } from './legal-acceptance.server';
 import { assert, statement, uid, now, type Env } from '../../../../packages/database/types';
@@ -132,10 +133,11 @@ function invoiceSnapshot(o:Record<string,any>,eventType:string,created:number){
  const priceId=String(item?.price?.id??item?.pricing?.price_details?.price??'unverified');
  const end=Number(item?.period?.end??o.period_end??0);
  const through=Number.isSafeInteger(end)&&end>0 ? new Date(end*1000).toISOString():'1970-01-01T00:00:00.000Z';
- const paid=eventType==='invoice.paid' && o.status==='paid' && o.paid===true &&
+ const paid=isSettledStripeInvoice(eventType, o, created) &&
    Number.isSafeInteger(o.amount_paid) && o.amount_paid>0 &&
    (![RESIDENTIAL,LIVE_RESIDENTIAL_PRICE].includes(priceId) ||
-     (o.amount_paid===RESIDENTIAL_PLAN.weeklyIncGstCents && (o.amount_remaining??0)===0 && lines.length===1)) &&
+     (o.amount_paid===RESIDENTIAL_PLAN.weeklyIncGstCents && o.amount_remaining===0 &&
+      (o.total===undefined || o.total===o.amount_paid) && lines.length===1 && !o.lines.has_more && item?.quantity===1)) &&
    item && (item.quantity??1)===1 && priceId!=='unverified' && end>0;
  const status=eventType==='invoice.payment_failed'||eventType==='invoice.payment_action_required'||eventType==='invoice.voided'||
    eventType==='invoice.marked_uncollectible'?'failed':paid?'paid':eventType==='invoice.finalized'?'pending':'review';
