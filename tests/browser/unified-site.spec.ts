@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 // PR-01 keeps the public website and client login on the existing single origin.
 test('public industry pages lead into one secure Client Portal entry',async({page,request})=>{
  const origin='http://127.0.0.1:5173';
- for(const path of ['/','/residential','/commercial','/strata','/co-living','/student-living','/construction','/leasing','/maintenance']){
+ for(const path of ['/','/residential','/co-living','/leasing','/maintenance']){
   const response=await request.get(path);expect(response.status(),path).toBe(200);
  }
  await page.setViewportSize({width:1600,height:900});

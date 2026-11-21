@@ -7,9 +7,11 @@ import {
   type LoaderFunctionArgs,
   type ActionFunctionArgs,
   data,
+  redirectDocument,
 } from 'react-router';
 import { platformEnv } from '../../../../packages/database/context';
-import { beginSignIn, isLocal } from '../../../../packages/auth/server';
+import { beginSignIn, isLocal, requireOrigin } from '../../../../packages/auth/server';
+import { stagingAccess } from '../../../../packages/auth/staging-access';
 import { bookingIntent } from '../../../../packages/domain/booking-intent';
 import {
   ENTRY_CHOICES,
@@ -35,6 +37,7 @@ export function loader({ request, context }: LoaderFunctionArgs) {
     bookingIntent(url.searchParams.get('service'));
   return {
     signup: false,
+    staging: stagingAccess(request, env),
     returnTo: returnTo === '/start' ? withService(returnTo, serviceId) : returnTo,
     chooseRole: destination.pathname === '/start',
     flow:
@@ -57,7 +60,12 @@ export async function action({ request, context }: ActionFunctionArgs) {
         );
       returnTo = entryPath(flow, destination.searchParams.get('service'));
     }
-    return await beginSignIn(request, platformEnv(context), {
+    const env = platformEnv(context);
+    if (stagingAccess(request, env)) {
+      requireOrigin(request, env);
+      return redirectDocument('/auth/staging?' + new URLSearchParams({returnTo}), 303);
+    }
+    return await beginSignIn(request, env, {
       ...Object.fromEntries(form),
       returnTo,
     });
@@ -87,18 +95,17 @@ export default function SignIn() {
             your role.
           </p>
           <p>
-            Residential, Commercial, Strata and Resident portals, connected through one secure
-            account.
+            One account connects you to the properties you own, manage or rent.
           </p>
         </section>
         <section className="panel auth-panel">
           <h2>{settings.signup ? 'Create your free account' : 'Sign in to your account'}</h2>
           <p>
-            {settings.signup
+            {settings.staging ? 'Use an approved staging test email. Cloudflare will send you a one-time code.' : settings.signup
               ? 'Verify your email, then complete the setup for your role. No payment details are needed.'
               : 'Enter your email and we will send a secure one-time link. No password to remember.'}
           </p>
-          <Form method="post" className="form">
+          <Form method="post" className="form" reloadDocument={settings.staging}>
             <input type="hidden" name="returnTo" value={settings.returnTo} />
             <input type="hidden" name="mode" value={settings.signup ? 'signup' : 'signin'} />
             {settings.signup && settings.chooseRole && (
@@ -109,7 +116,7 @@ export default function SignIn() {
               >
                 <select id="flow" name="flow" required defaultValue={settings.flow ?? ''}>
                   <option value="">Choose your role</option>
-                  {['Residential', 'Commercial', 'Strata', 'Resident'].map((family) => (
+                  {['Residential', 'Resident'].map((family) => (
                     <optgroup label={family} key={family}>
                       {ENTRY_CHOICES.filter((choice) => choice.family === family).map((choice) => (
                         <option key={choice.id} value={choice.id}>
@@ -121,7 +128,7 @@ export default function SignIn() {
                 </select>
               </Field>
             )}
-            <Field label="Email address" name="email">
+            {!settings.staging && <><Field label="Email address" name="email">
               <input
                 id="email"
                 name="email"
@@ -131,10 +138,10 @@ export default function SignIn() {
                 placeholder="you@example.com"
               />
             </Field>
-            <Turnstile siteKey={settings.siteKey} />
+            <Turnstile siteKey={settings.siteKey} /></>}
             <Feedback value={result} />
             <button className="primary" disabled={pending}>
-              {pending ? 'Sending link…' : 'Email sign-in link'}
+              {settings.staging ? 'Continue with staging email' : pending ? 'Sending link…' : 'Email sign-in link'}
             </button>
             {settings.local && result?.localSignInUrl && (
               <div className="notice warning">
@@ -147,7 +154,7 @@ export default function SignIn() {
             {settings.signup ? (
               <>
                 Already registered?{' '}
-                <Link to={'/signin?returnTo=' + encodeURIComponent(settings.returnTo)}>
+                <Link reloadDocument to={'/signin?returnTo=' + encodeURIComponent(settings.returnTo)}>
                   Sign in with your existing email
                 </Link>
                 .
@@ -155,7 +162,7 @@ export default function SignIn() {
             ) : (
               <>
                 New to ProInspect?{' '}
-                <Link to={'/signup?returnTo=' + encodeURIComponent(settings.returnTo)}>
+                <Link reloadDocument to={'/signup?returnTo=' + encodeURIComponent(settings.returnTo)}>
                   Create a free account
                 </Link>
                 .
@@ -164,8 +171,7 @@ export default function SignIn() {
           </p>
           <p className="auth-foot">
             An account does not start a subscription. Professional management access requires
-            review. Resident access is invitation-only; building managers need an approved
-            assignment.
+            review. Tenant access is invitation-only and limited to the invited tenancy.
           </p>
           <p className="auth-foot">
             Have an invitation? Open the original link and use the email it was sent to. Looking for

@@ -36,7 +36,7 @@ export default function Start() {
         <p>
           Signed in as {email}.{' '}
           {invited
-            ? 'Use the invitation sent to this email address by your authorised property, building or strata representative.'
+            ? 'Use the invitation sent to this email address by your authorised property owner or manager.'
             : 'Choose your role so we can guide you to the right setup. One email can access several authorised accounts.'}
         </p>
         {invited ? (
@@ -68,7 +68,7 @@ export default function Start() {
         ) : (
           <>
             <div className="stack">
-              {['Residential', 'Commercial', 'Strata', 'Resident'].map((family) => (
+              {['Residential', 'Resident'].map((family) => (
                 <section key={family} className="stack-sm">
                   <h2>{family}</h2>
                   <p>
@@ -78,7 +78,7 @@ export default function Start() {
                         ? 'Inspections, reports and operational support for your premises or managed portfolio.'
                         : family === 'Strata'
                           ? 'Scheme, building and facilities support within your verified appointment.'
-                          : 'Invited access for tenants, commercial occupants, building residents, lot owners and council members.'}
+                          : 'Invited access for residential tenants.'}
                   </p>
                   <div className="actions">
                     {ENTRY_CHOICES.filter((choice) => choice.family === family).map((choice) => (

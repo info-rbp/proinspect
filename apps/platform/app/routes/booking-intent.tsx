@@ -6,7 +6,7 @@ export async function loader({request,context,params}:LoaderFunctionArgs) {
   const serviceId=bookingIntent(params.serviceId), suffix=serviceId?'/'+serviceId:'';
   try {
     const session=await loadApi(request,context,'/api/session');
-    const options=(session.workspaces as Workspace[]).filter(w=>['landlord','property-manager','strata-manager','commercial'].includes(w.kind));
+    const options=(session.workspaces as Workspace[]).filter(w=>['landlord','property-manager'].includes(w.kind));
     return {options,suffix,signedIn:true};
   } catch { return {options:[] as Workspace[],suffix,signedIn:false}; }
 }
@@ -25,10 +25,10 @@ export default function BookingChoice() {
           <Link className="button" to={w.href+'/book'+suffix}>Continue to booking</Link>
         </article>)}
       </div>
-      <p className="small">Need a new owner account? <Link to={workspaceStart}>Set up Residential or Commercial in My ProInspect</Link>.</p>
+      <p className="small">Need a new owner account? <Link to={workspaceStart}>Set up a residential property in My ProInspect</Link>.</p>
     </> : <section className="panel stack">
       <h2>{signedIn?'Create or access an authorised property account':'Sign in or register for free'}</h2>
-      <p>{signedIn?'Choose Residential, Commercial or a verified professional organisation.':'Verify your email once, then add a property or join an approved organisation.'}</p>
+      <p>{signedIn?'Set up a residential owner account or join an approved agency.':'Verify your email once, then add a property or join an approved organisation.'}</p>
       <Link className="button" to={signedIn?workspaceStart:signIn}>{signedIn?'Open My ProInspect':'Continue with email'}</Link>
     </section>}
     <p className="small">If a service requires a price or scope confirmation, a request is not a confirmed appointment. Historic guest booking management links remain available for existing customers.</p>

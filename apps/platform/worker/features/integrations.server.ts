@@ -2,12 +2,11 @@ import { assert, statement, now, uid, type Env } from '../../../../packages/data
 import type { Principal, Workspace } from '../../../../packages/domain/index';
 import {
   workOrderAccess,
-  staffWrite,
   operationsWrite,
 } from '../../../../packages/authorization/server';
 import { digest, randomToken } from '../../../../packages/auth/crypto';
 import { activity, guard, clearGuard } from '../../../../packages/operations/core';
-import { issueReport } from '../services.server';
+import { directReportIssueOrder, issueReport } from '../services.server';
 import { verifyHmac } from './finance.server';
 export async function signHmac(secret: string, payload: string) {
   const key = await crypto.subtle.importKey(
@@ -24,14 +23,7 @@ export async function signHmac(secret: string, payload: string) {
     .join('');
 }
 export async function reportHandoff(env: Env, user: Principal, w: Workspace, workOrderId: string) {
-  assert(
-    w.kind === 'staff',
-    403,
-    'STAFF_REQUIRED',
-    'Report authoring is restricted to assigned staff.',
-  );
-  staffWrite(user);
-  const o = await workOrderAccess(env, user, w, workOrderId, true);
+  const o = await directReportIssueOrder(env, user, w, workOrderId);
   assert(
     env.REPORT_TOOL_ORIGIN && env.REPORT_TOOL_SECRET,
     503,

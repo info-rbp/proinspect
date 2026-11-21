@@ -295,6 +295,7 @@ export async function propertyAccess(
     ...s.values,
   ).first<Property>();
   assert(p, 404, 'PROPERTY_NOT_FOUND', 'Property not found in this workspace.');
+  if (write) assert(p.sector === 'residential', 410, 'SECTOR_RETIRED', 'New work is available for Residential properties only.');
   return p;
 }
 export async function currentTenancy(env: Env, user: Principal, tenancyId: string) {
@@ -328,6 +329,7 @@ export async function schemeAccess(
     Record<string, any>
   >();
   assert(s, 404, 'SCHEME_NOT_FOUND', 'Scheme not found.');
+  assert(!write, 410, 'SECTOR_RETIRED', 'New Strata operations are retired. Authorised historical records remain available.');
   if (w.kind === 'staff') {
     if (write) operationsWrite(user);
     else
@@ -421,6 +423,10 @@ export async function workOrderAccess(
       'Work order not found.',
     );
     await propertyAccess(env, user, w, order.property_id, write);
+  }
+  if (write) {
+    assert(!order.scheme_id, 410, 'SECTOR_RETIRED', 'New Strata work is retired.');
+    if (order.property_id) await propertyAccess(env, user, w, order.property_id, true);
   }
   return order;
 }

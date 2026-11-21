@@ -129,10 +129,10 @@ export const ENGAGEMENTS: Record<string,{ title: string; intro: string; sections
     ],
   },
   'inspection-plans': {
-    title:'Residential Inspection Only',
-    intro:'Keep condition and tenant communication on track for $20 + GST a month per whole property or separately leased room.',
+    title:'Residential All Inclusive Subscription',
+    intro:'Residential All Inclusive is AUD $50 + GST per week per property. The initial term is 24 months, with 60 days’ written cancellation notice.',
     sections:[
-      ['Five included service types', INSPECTION_ONLY_SERVICES.join('; ') + '.'],
+      ['Inspection service scope', INSPECTION_ONLY_SERVICES.join('; ') + '. Allowances require an approved service schedule.'],
       ['A clear inspection rhythm', INSPECTION_ONLY_SCOPE],
       ['The right unit for your property', RESIDENTIAL_BILLING_UNIT],
       ['Know your terms', PLAN_TERM + ' Your schedule confirms the detailed scope and any early-exit terms before you join. Account registration is free; subscribing is a separate choice.'],
@@ -140,10 +140,10 @@ export const ENGAGEMENTS: Record<string,{ title: string; intro: string; sections
   },
   'standard-support': {
     title:'All-Inclusive operational support',
-    intro:'Take everyday coordination off your list. Residential All-Inclusive is $150 + GST a month per whole property or separately leased room; Commercial All-Inclusive is $150 + GST per commercial unit a month.',
+    intro:'Keep everyday property coordination together. Residential All Inclusive is AUD $50 + GST per week per property; no per-room subscription.',
     sections:[
       ['Residential support', 'Build a service schedule around inspections, tenant enquiries, administration, access and vacate support.'],
-      ['Commercial support', 'Coordinate site records, occupant requests, lease diary tasks, contractor access and owner updates. Inspection frequency and allowances are agreed for each unit.'],
+      ['Co-Living support', 'Site-specific operating agreements are separately scoped and quoted. Room configuration does not create a subscription.'],
       ['Your agreed service schedule', PLAN_SCOPE + ' ' + MAINTENANCE_APPROVAL],
       ['Get started', PLAN_TERM + ' Tell us about your property and workload. We will confirm the responsibilities, included work and costs before you accept.'],
     ],
@@ -217,7 +217,7 @@ export const GUIDES: Record<string,{ title: string; intro: string; sections: [st
       ['During the tenancy','Maintain a diary for lawful routine inspections, tenant requests, repairs, contractor access and the required notices. Use property-linked records rather than scattered messages.'],
       ['When maintenance is reported','Describe the problem, location and safe access requirements. Obtain approved quotes where relevant, instruct qualified trades where needed, then retain completion evidence and outstanding items.'],
       ['Before and after vacate','Consider an early pre-vacate check, document final condition against available incoming records, manage authorised key returns and use the applicable bond process.'],
-      ['Choose individual work or a plan','Request PAYG services when needed, compare Residential Inspection Only ($20 + GST/month) with Residential All-Inclusive ($150 + GST/month), each per whole property or separately leased room, and obtain the exact service entitlements and 24-month conditions before enrolling.'],
+      ['Choose individual work or a plan','Request PAYG services when needed, review Residential All Inclusive (AUD $50 + GST per week per property), and confirm the service schedule, initial 24-month term and 60-day cancellation notice before enrolling.'],
     ],
     services:['routine-inspection','maintenance-attendance'],
   },

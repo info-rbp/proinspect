@@ -1,33 +1,10 @@
 import { Link } from 'react-router';
-import commercialImage from './images/sector-commercial.jpg';
 import residentialImage from './images/sector-residential.jpg';
-import strataImage from './images/sector-strata.jpg';
 
 const sectors = [
-  [
-    'Residential',
-    'For rental property owners and agencies',
-    'Condition reports, tenancy inspections and practical follow-up for self-managing landlords and professional managers.',
-    '/sectors/residential',
-    residentialImage,
-    'Australian residential property supported by ProInspect',
-  ],
-  [
-    'Commercial',
-    'For commercial owners and asset managers',
-    'Condition inspections, make-good observations, handovers and defined property attendance.',
-    '/sectors/commercial',
-    commercialImage,
-    'Modern commercial property exterior',
-  ],
-  [
-    'Strata & buildings',
-    'For strata and building teams',
-    'Common-property inspections, contractor coordination and documented building attendance.',
-    '/sectors/strata-building',
-    strataImage,
-    'Modern strata apartment building exterior',
-  ],
+  ['Residential', 'For rental owners and agencies', 'Property condition, tenancy support and maintenance coordination.', '/residential', residentialImage, 'Residential property'],
+  ['Co-Living', 'For shared accommodation', 'Site-specific operations, private room records and resident support.', '/co-living', residentialImage, 'Shared residential accommodation'],
+  ['Tenants', 'For invited residents', 'Report maintenance, follow requests and access documents shared with your tenancy.', '/tenants', residentialImage, 'Residential tenant support'],
 ] as const;
 
 export function HomeSectorsSection() {

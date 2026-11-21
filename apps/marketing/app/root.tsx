@@ -1,3 +1,4 @@
+import { residentialPublicResponse } from '../../../packages/domain/residential-policy';
 import {
   Links,
   Meta,
@@ -21,7 +22,8 @@ import '../../../packages/ui/rental-application.css';
 import '../../../packages/ui/rental-print.css';
 import '../../../packages/ui/open-home.css';
 import { MarketingHeader, MarketingFooter } from './components/site-chrome';
-export function loader({ context }: LoaderFunctionArgs) {
+export function loader({ request, context }: LoaderFunctionArgs) {
+  const retired = residentialPublicResponse(request); if (retired) throw retired;
   const env = context.get(runtimeContext).env as Record<string, string>;
   return { appOrigin: env.PLATFORM_ORIGIN || 'https://app.proinspect.systems' };
 }

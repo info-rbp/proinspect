@@ -24,7 +24,7 @@ export const PUBLICATION_REGISTER: readonly PublicationRecord[] = [
   record('COPY-WHO-WE-HELP', 'copy', '/who-we-help', 'Approve six audience journeys, role descriptions and conversion destinations.'),
   ...Object.keys(AUDIENCES).map(slug => record('COPY-AUDIENCE-' + slug, 'copy', '/who-we-help/' + slug, 'Verify sector-specific claims, authority boundaries and linked services.')),
   record('COPY-SERVICE-FINDER', 'copy', '/service-finder', 'Approve service-to-customer-need mappings and all visible boundary statements.'),
-  record('COPY-RESIDENTIAL-SUPPORT', 'copy', '/residential-property-support', 'Subscription decision workbook 16 November 2026 confirms residential $20/$150 per whole property or separately leased room and commercial $150 per unit, plus GST monthly; 24 months then monthly with 60 days written notice. Five Inspection Only service types confirmed. Detailed quotas, All-Inclusive matrices, extras, early-exit terms and checkout acceptance remain open.'),
+  record('COPY-RESIDENTIAL-SUPPORT', 'copy', '/residential-property-support', 'Owner confirmation 21 November 2026 supersedes the workbook: one Residential All Inclusive Subscription, AUD $50 + GST weekly per property, 24-month initial term, 60 days written cancellation notice, no per-room subscription. Service allowances, extras, early-exit treatment, approved legal version and provider acceptance remain release gates.'),
   record('COPY-LEASING', 'copy', '/properties-for-lease', 'Confirm agency inspection-only role, consent text, application handoff and lawful approved listing data.'),
   record('COPY-ENGAGEMENT', 'copy', '/how-we-work/*', 'Approve commercial engagement-model claims and scope.'),
   ...SERVICE_SEEDS.map(s => record('SERVICE-' + s.id, 'service', '/services/' + s.id,

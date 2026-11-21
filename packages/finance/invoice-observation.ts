@@ -1,12 +1,21 @@
 /** Pure projection of verified invoice events. Never derive authority or entitlement here. */
 export interface InvoiceSnapshot {total_cents:number;paid_cents:number;remaining_cents:number;status:string;reconciliation:string;last_provider_created:number;}
 export interface InvoiceProjection {apply:boolean;matched:boolean;needsReview:boolean;reason:string;status:string;paidCents:number;remainingCents:number;reconciliation:string;providerCreated:number;}
+// Current Stripe invoices carry the transition time. Older signed event versions carry a paid flag.
+export function isSettledStripeInvoice(type: string, invoice: Record<string, unknown>, eventCreated: number) {
+  if (type !== 'invoice.paid' || invoice.status !== 'paid') return false;
+  if (invoice.paid !== undefined) return invoice.paid === true;
+  const transitions = invoice.status_transitions;
+  if (!transitions || typeof transitions !== 'object' || !('paid_at' in transitions)) return false;
+  const paidAt = transitions.paid_at;
+  return typeof paidAt === 'number' && Number.isSafeInteger(paidAt) && paidAt > 0 && paidAt <= eventCreated;
+}
 export function projectInvoiceObservation(prior:InvoiceSnapshot,type:string,o:Record<string,unknown>,created:number):InvoiceProjection {
  const keep=(reason:string,needsReview=false):InvoiceProjection=>({apply:false,matched:prior.reconciliation==='matched'&&!needsReview,needsReview,reason,status:prior.status,paidCents:prior.paid_cents,remainingCents:prior.remaining_cents,reconciliation:prior.reconciliation,providerCreated:prior.last_provider_created});
  if(!Number.isSafeInteger(created)||created<=0)return keep('invoice_event_time_unusable',true);
  const amount=(v:unknown):v is number=>typeof v==='number'&&Number.isSafeInteger(v)&&v>=0;
  if(!amount(o.total)||o.total!==prior.total_cents||!amount(o.amount_paid)||!amount(o.amount_remaining)||o.amount_paid>o.total||o.amount_remaining>o.total)return keep('invoice_amount_requires_review',true);
- const paid=type==='invoice.paid'&&o.status==='paid'&&o.paid===true&&o.amount_paid===o.total&&o.amount_remaining===0;
+ const paid=isSettledStripeInvoice(type,o,created)&&o.amount_paid===o.total&&o.amount_remaining===0;
  const voided=type==='invoice.voided'&&o.status==='void'&&o.amount_paid===0&&o.amount_remaining===0;
  const badDebt=type==='invoice.marked_uncollectible'&&o.status==='uncollectible';
  if(!paid&&!voided&&o.amount_paid+o.amount_remaining!==o.total)return keep('invoice_balance_requires_review',true);

@@ -142,25 +142,18 @@ try{
    const envelope=await first('SELECT response_envelope FROM report_responses WHERE id=?',response.id);
    assert.ok(!envelope.response_envelope.includes('wall colour'));
  });
- let scheme;
- await check('Scheme-only Work Order supports report approval and council-only issuance',async()=>{
-   scheme=await approvedReport('wo_scheme','scheme_council','s_shared');
-   assert.equal((await ok('/api/w/council/s_shared/reports',resident)).reports.length,1);
-   assert.equal((await ok('/api/w/building/s_shared/reports',resident)).reports.length,0);
-   assert.equal((await api('/api/w/council/s_shared/documents/'+scheme.documentId+'/download',resident)).status,200);
-   assert.equal((await api('/api/w/building/s_shared/documents/'+scheme.documentId+'/download',resident)).status,404);
+ await check('retired property and scheme Work Orders cannot create new reports',async()=>{
+   const before=(await first('SELECT count(*) n FROM inspection_reports')).n;
+   for(const workOrderId of ['wo_scheme','wo_comm'])
+     assert.equal((await api(staffBase+'/reports/create',inspector,{workOrderId})).status,410);
+   assert.equal((await first('SELECT count(*) n FROM inspection_reports')).n,before);
  });
- await check('separate resident grant authorises the Building workspace without privilege union',async()=>{
-   await ok(staffBase+'/reports/'+scheme.id+'/issue',operator,{audience:'scheme_resident',recipientId:'s_shared',reviewReference:'Reviewed resident issue'});
-   assert.equal((await ok('/api/w/building/s_shared/reports',resident)).reports.length,1);
-   assert.equal((await api('/api/w/building/s_shared/documents/'+scheme.documentId+'/download',resident)).status,200);
- });
- await check('Commercial client receives only its independently issued portfolio report',async()=>{
-   const c=await approvedReport('wo_comm','client','cli_comm');
-   assert.equal((await ok('/api/w/commercial/cli_comm/reports',commercial)).reports.length,1);
-   assert.equal((await api('/api/w/commercial/cli_comm/documents/'+c.documentId+'/download',commercial)).status,200);
-   assert.equal((await api('/api/w/landlord/'+landlordId+'/reports/'+c.id,landlord)).status,404);
-   assert.equal((await api('/api/w/commercial/cli_comm/reports/'+pcr.id,commercial)).status,404);
+ await check('retained sector report registers stay scoped and cannot expose Residential tenant evidence',async()=>{
+   for(const [path,user] of [['/api/w/council/s_shared',resident],['/api/w/building/s_shared',resident],['/api/w/commercial/cli_comm',commercial]]){
+     assert.equal((await api(path+'/reports',user)).status,200);
+     assert.equal((await api(path+'/reports/'+pcr.id,user)).status,404);
+     assert.equal((await api(path+'/documents/'+pcr.documentId+'/download',user)).status,404);
+   }
  });
  writeFileSync('artifacts/reporting-portals-results.json',JSON.stringify({checks:checks.length,passed:checks,deployed:false},null,2));
  console.log(checks.length+' cross-portal report acceptance checks passed.');

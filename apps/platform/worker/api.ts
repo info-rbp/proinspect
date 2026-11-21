@@ -1,3 +1,5 @@
+import { stagingAccess } from '../../../packages/auth/staging-access';
+import { guardResidentialMutation } from './features/residential-policy.server';
 import {temporarySecurityDownload,reviewTemporaryDocument,stageTemporaryPackage,temporaryPackageAccess,controlTemporaryPackage} from './features/rental-temporary-documents.server';
 
 import { coLivingOverview, coLivingCommand, myCoLivingSpace } from './features/co-living.server';
@@ -234,7 +236,7 @@ async function acceptInvitation(env: Env, user: Principal, token: unknown) {
     : "t.status='active'";
   const invitation = await statement(
     env.DB,
-    `SELECT i.tenancy_id FROM invitations i JOIN tenancies t ON t.id=i.tenancy_id WHERE i.token_hash=? AND i.email=? AND i.expires_at>? AND i.consumed_at IS NULL AND ${pendingTenancyCondition} AND (EXISTS(SELECT 1 FROM staff_profiles s WHERE s.user_id=i.created_by AND s.active=1 AND s.role IN('administrator','operations_manager')) OR EXISTS(SELECT 1 FROM property_management_relationships pm JOIN client_memberships m ON m.client_id=pm.manager_client_id WHERE pm.property_id=t.property_id AND pm.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND pm.ends_at IS NULL AND m.user_id=i.created_by AND m.active=1 AND m.role!='viewer'))`,
+    `SELECT i.tenancy_id FROM invitations i JOIN tenancies t ON t.id=i.tenancy_id JOIN properties p ON p.id=t.property_id AND p.sector='residential' WHERE i.token_hash=? AND i.email=? AND i.expires_at>? AND i.consumed_at IS NULL AND ${pendingTenancyCondition} AND (EXISTS(SELECT 1 FROM staff_profiles s WHERE s.user_id=i.created_by AND s.active=1 AND s.role IN('administrator','operations_manager')) OR EXISTS(SELECT 1 FROM property_management_relationships pm JOIN client_memberships m ON m.client_id=pm.manager_client_id WHERE pm.property_id=t.property_id AND pm.starts_at<=strftime('%Y-%m-%dT%H:%M:%fZ','now') AND pm.ends_at IS NULL AND m.user_id=i.created_by AND m.active=1 AND m.role!='viewer'))`,
     hash,
     user.email,
     now(),
@@ -278,6 +280,7 @@ export async function handleApi(
       method = request.method;
     if (path === '/api/v4/catalogue' && method === 'GET') return Response.json(await v4.publicCatalogue(env,url.searchParams.get('sector')??undefined),{headers:{'Cache-Control':'private, no-store'}});
     const v4Item=path.match(/^\/api\/v4\/catalogue\/((?:RES|COM)-\d{3})$/);
+    if(v4Item?.[1].startsWith('COM-'))throw new AppError(410,'SECTOR_RETIRED','This service is retired.');
     if(v4Item && method==='GET')return Response.json(await v4.publicService(env,v4Item[1]),{headers:{'Cache-Control':'private, no-store'}});
     if(path==='/api/v4/requests' && method==='POST')throw new AppError(410,'ACCOUNT_REQUIRED','Create a free ProInspect account to request or book a service.');
     if(path==='/api/v4/requests/verify' && method==='POST')return Response.json(await v4.verify(request,env));
@@ -325,7 +328,7 @@ export async function handleApi(
           queue: Boolean(env.EVENTS),
         },
         authenticationConfigured: Boolean(
-          env.DATA_ENCRYPTION_KEY && (env.APP_ENV === 'local' || env.RESEND_API_KEY),
+          env.DATA_ENCRYPTION_KEY && (env.APP_ENV === 'local' || stagingAccess(request,env) || env.RESEND_API_KEY),
         ),
       });
     if (path==='/api/public/leasing' && method==='GET') return Response.json({listings:await publicListings(env,url.searchParams.get('kind')??undefined)});
@@ -372,6 +375,7 @@ export async function handleApi(
       assert(result instanceof Response,404,'DOCUMENT_UNAVAILABLE','Document unavailable.');return result;
     }
     const user = await requireUser(request, env);
+    await guardResidentialMutation(request, env);
     const commercialStaff=path.match(/^\/api\/staff\/commercial-applications(?:\/(.*))?$/);
     if(commercialStaff)return await commercialStaffHttp(request,env,user,commercialStaff[1]??'');
     const propertyReportLaunch=path.match(/^\/api\/staff\/work-orders\/([a-zA-Z0-9_-]+)\/property-report-tool$/);
@@ -596,6 +600,7 @@ export async function handleApi(
     assert(match, 404, 'NOT_FOUND', 'Page not found.');
     const w = await workspace(env, user, match[1], match[2]),
       tail = match[3] ?? '';
+    await guardResidentialMutation(request, env, w.kind, tail);
     // Narrow commercial occupant context: no generic customer/staff feature endpoints.
     if(w.kind==='commercial-occupant'){
       if(method==='GET'&&(!tail||tail==='data'))

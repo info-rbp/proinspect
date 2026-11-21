@@ -22,6 +22,8 @@ function StaffToday({ data, reports }: { data: WorkspaceData; reports: StaffRepo
     ['confirmed', 'scheduled'].includes(b.status) &&
     Number.isFinite(Date.parse(String(b.starts_at ?? ''))) &&
     localDay(new Date(b.starts_at)) === today);
+  const manager = ['administrator','operations_manager'].includes(data.user.staffRole ?? '');
+  const inspector = data.user.staffRole === 'inspector';
   const reviewReports = reports.filter(r => r.status === 'submitted');
   const openOrders = data.workOrders.filter(o => !['completed', 'cancelled', 'closed'].includes(o.status));
   const exceptions = data.payments.filter(p => ['failed', 'payment_required'].includes(p.status)).length
@@ -36,9 +38,9 @@ function StaffToday({ data, reports }: { data: WorkspaceData; reports: StaffRepo
     </PageHeading>
     <section className="grid-4 portal-summary" aria-label="Staff work summary">
       <Link className="portal-summary-link" to={base+'/bookings'}><Metric label="Bookings due" value={dueBookings.length} detail="Scheduled for today" /></Link>
-      <Link className="portal-summary-link" to={base+'/reports'}><Metric label="Reports to review" value={reviewReports.length} detail="Submitted for review" /></Link>
+      <Link className="portal-summary-link" to={base+'/reports'}><Metric label={manager ? "Reports to review" : "My reports"} value={manager ? reviewReports.length : reports.length} detail={manager ? "Submitted for review" : "Assigned report records"} /></Link>
       <Link className="portal-summary-link" to={base+'/work-orders'}><Metric label="Open work" value={openOrders.length} detail="Active work orders" /></Link>
-      <Link className="portal-summary-link" to={base+'/finance'}><Metric label="Exceptions" value={exceptions} detail="Financial and approval items" /></Link>
+      {!inspector && <Link className="portal-summary-link" to={base+'/finance'}><Metric label="Exceptions" value={exceptions} detail="Financial and approval items" /></Link>}
     </section>
     <div className="detail-grid portal-today-grid">
       <section className="panel">

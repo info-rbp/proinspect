@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test';
 import { SERVICE_SEEDS } from '../../packages/service-catalogue/index';
 import { AUDIENCES } from '../../packages/marketing/audiences';
 
-test('all 23 public service pages render distinctive copy and valid service structured data',async({request})=>{
-  for(const service of SERVICE_SEEDS){
+test('all available residential service pages render distinctive copy and valid service structured data',async({request})=>{
+  for(const service of SERVICE_SEEDS.filter(s=>s.sectors.includes('residential'))){
     const path='/services/'+service.id;
     const response=await request.get(path);
     expect(response.status(),path).toBe(200);
@@ -21,10 +21,10 @@ test('guided finder recommends a different service for each selected customer ne
   await expect(page.getByRole('link',{name:/View scope and next steps/}).first()).toHaveAttribute('href','/services/property-condition-report');
   await page.getByLabel('Your intended outcome').selectOption('vacating');
   await expect(page.getByRole('link',{name:/View scope and next steps/})).toHaveCount(2);
-  await page.getByLabel('Property setting').selectOption('commercial');
-  await expect(page.getByRole('link',{name:/View scope and next steps/}).first()).toHaveAttribute('href','/services/commercial-property-inspection');
-  await page.getByLabel('Property setting').selectOption('strata-building');
-  await expect(page.getByRole('link',{name:/View scope and next steps/}).first()).toHaveAttribute('href','/services/common-property-inspection');
+  await expect(page.getByLabel('Property setting').locator('option')).toHaveText(['Residential rental property','Co-Living property','Ongoing property operations']);
+  await page.getByLabel('Property setting').selectOption('co-living');
+  await expect(page.getByRole('link',{name:/View scope and next steps/}).first()).toBeVisible();
+
 });
 test('all six audience pages have a distinct heading, service links and correct canonical URLs',async({request})=>{
   for(const [slug,audience] of Object.entries(AUDIENCES)){
@@ -43,11 +43,11 @@ test('unapproved plan is present as information but not for sale or search index
   expect(response.status()).toBe(200);
   const html=await response.text();
   expect(html).toContain('noindex, nofollow');
-  expect(html).toContain('Residential Inspection Only at $20 + GST');
-  expect(html).toContain('Residential All-Inclusive at $150 + GST');
+  expect(html).toContain('AUD $50 + GST');
+  expect(html).not.toContain('Residential Inspection Only');
   await page.goto('/residential-property-support');
-  await page.getByText('What are the price and term of each plan?').click();
-  await expect(page.getByText(/There is no paid checkout on this page/)).toBeVisible();
+  await page.getByText('What are the subscription price and term?').click();
+  await expect(page.locator('details[open]')).toContainText('60 days');
   await expect(page.getByRole('link',{name:/Create account \/ Sign in/})).toHaveAttribute('href','/signin');
 });
 test('sitemap excludes draft terms, residential price proposal and leasing records',async({request})=>{

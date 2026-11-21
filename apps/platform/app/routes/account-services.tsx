@@ -30,7 +30,7 @@ export default function AccountServices(){
    {!prefs.ready&&<p role="status">Account service preferences require the pending database migration. Existing account permissions remain unchanged.</p>}
    <p>Available services still depend on approved market rules, verified property/scheme relationships and your individual permissions.</p>
    <Feedback value={result}/>
-   <div className="client-dashboard-grid">{CLIENT_AREAS.map(area=>{
+   <div className="client-dashboard-grid">{CLIENT_AREAS.filter(a=>!['commercial','strata','construction'].includes(a)).map(area=>{
     const chosen=prefs.areas.includes(area);
     return <div className="panel" key={area}><h3>{LABELS[area]}</h3>
       <p>{area==='co-living'||area==='construction'?'Full management functionality is in development.':'Request interest in eligible services for this area.'}</p>

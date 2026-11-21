@@ -11,7 +11,7 @@ import coverageReference from '../packages/marketing/service-area-reference.json
 import { enquirySchema } from '../packages/marketing/enquiry.ts';
 
 test('final public offers and service groups use the controlling register', () => {
-  assert.deepEqual(PUBLIC_PLANS.map(p => p.monthlyExGst), [20,150,150]);
+  assert.deepEqual(PUBLIC_PLANS.map(p => p.weeklyExGst), [50]);
   assert.equal(PUBLIC_COMPANY.abn, '52 703 550 609');
   assert.equal(RESIDENTIAL_SERVICE_GROUPS.length, 14);
   assert.equal(BUILDING_SERVICE_GROUPS.length, 8);
@@ -19,7 +19,7 @@ test('final public offers and service groups use the controlling register', () =
     assert.equal(page.services.length, 4);
     assert.equal(page.difference.length, 3);
     assert.ok(page.questions.length >= 3);
-    assert.doesNotMatch(JSON.stringify(page), /\$50|\$250|\$100|65 hours|management is planned|not yet available to book/);
+    assert.doesNotMatch(JSON.stringify(page), /\$250|\$100|65 hours|management is planned|not yet available to book/);
   }
 });
 test('anonymous catalogue projections cannot expose stored amounts or future rate columns', async () => {
@@ -47,8 +47,8 @@ test('location matching requires the exact pair and never infers a broad postcod
   assert.equal(findServiceArea('Boddington','6390').classification,'manual_review');
 });
 test('contact categories and postcode stay compatible with existing enquiry storage', () => {
-  const value=enquirySchema.parse({requestKey:crypto.randomUUID(),name:'Example Enquirer',email:'example@example.test',kind:'portfolio',category:'student-living',postcode:'6000',message:'Please scope our shared property support.',consent:true});
-  assert.equal(value.kind,'portfolio'); assert.equal(value.category,'student-living');
+  const value=enquirySchema.parse({requestKey:crypto.randomUUID(),name:'Example Enquirer',email:'example@example.test',kind:'portfolio',category:'co-living',postcode:'6000',message:'Please scope our shared property support.',consent:true});
+  assert.equal(value.kind,'portfolio'); assert.equal(value.category,'co-living');
   assert.equal(enquirySchema.safeParse({...value,postcode:'60000'}).success,false);
 });
 

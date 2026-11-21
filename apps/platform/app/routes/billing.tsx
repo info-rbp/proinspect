@@ -28,9 +28,17 @@ export default function Billing(){
   }catch{setCsvError('Unable to generate the invoice preview. No financial records were changed.');}
  }
  return <>
-<PageHeading title="Billing and reconciliation" description="Service revenue, invoices and financial exceptions. These records do not authorise rent, bond or trust-money collection. Sandbox adapters never move live funds."/>
-{!staff&&<Panel title="Secure billing self-service"><OperationForm endpoint={api+'/billing/portal'} label="Open billing portal" result={r=>r.url?<a className="button" href={r.url} rel="noreferrer">Continue to Stripe billing</a>:null}/></Panel>}
-<Panel title="Property subscriptions">{d.subscriptions.map((s:any)=><p key={s.id}>{s.property_id} / {s.sector}: <Badge status={s.status}/></p>)}<p>Subscription financial status and included service entitlements are separate records.</p></Panel>
+<PageHeading title={staff?"Billing and reconciliation":"Property plans and invoices"} description={staff?"Service revenue, invoices and financial exceptions.":"Review your property subscription, paid invoices and written cancellation notices."}/>
+{!staff&&d.portalEnabled&&<Panel title="Secure billing self-service"><OperationForm endpoint={api+'/billing/portal'} label="Open billing portal" result={r=>r.url?<a className="button" href={r.url} rel="noreferrer">Continue to Stripe billing</a>:null}/></Panel>}
+<Panel title="Property subscriptions">{d.subscriptions.map((s:any)=><p key={s.id}>{s.address ?? s.property_id}: <Badge status={s.status}/></p>)}<p>Subscription financial status and included service entitlements are separate records.</p></Panel>
+{staff && <Panel title="Written cancellation notices">
+ {d.cancellationNotices?.length ? d.cancellationNotices.map((n:any)=><article className="stack" key={n.billing_link_id}>
+   <h3>{n.address}</h3><p>Received {new Date(n.received_at).toLocaleDateString('en-AU',{timeZone:'Australia/Perth'})} · Earliest ordinary end {new Date(n.earliest_end_at).toLocaleDateString('en-AU',{timeZone:'Australia/Perth'})}</p>
+   <p>{n.reason}</p><Badge status={n.status}/>
+   {n.reviewed_at && <p>Last verified {new Date(n.reviewed_at).toLocaleString('en-AU',{timeZone:'Australia/Perth'})}</p>}
+   {d.sandboxNoticeReview && n.status!=='withdrawn' && <OperationForm endpoint={api+'/billing/cancellation-review'} defaults={{billingLinkId:n.billing_link_id}} label="Verify existing schedule in Stripe sandbox" />}
+ </article>) : <p>No written cancellation notices received.</p>}
+ </Panel>}
 <Panel title="Invoice observations and exceptions">
  <p>Review the invoice records visible to your authorised workspace. {observed.length} invoice observation(s) returned; {flagged.length} require attention based on provider status, matching or arithmetic. This dashboard is capped at 100 recent records, so neither this view nor its export is a full bank or payout reconciliation.</p>
  <div className="actions">
@@ -48,6 +56,16 @@ export default function Billing(){
    </div><Badge status={invoice.status}/>
   </div>)}
 </Panel>
+{w.kind==='landlord' && <Panel title="Written subscription cancellation notice">
+ <p>The initial term is 24 months with 60 days’ written cancellation notice. A notice does not immediately stop charges. The end date and any statutory right or exceptional circumstances require review before cancellation is scheduled with Stripe.</p>
+ {d.subscriptions.filter((s:any)=>s.plan_version).map((s:any)=><div key={s.id} className="stack">
+  <h3>{s.address ?? 'Property subscription'}</h3>
+  {s.notice_received_at?<p>Written notice received {new Date(s.notice_received_at).toLocaleDateString('en-AU')}. Earliest ordinary end date: {new Date(s.notice_earliest_end_at).toLocaleDateString('en-AU')}. <Badge status={s.notice_status}/> Contact ProInspect for confirmation.</p>:
+   s.contract_starts_at&&!['canceled','expired'].includes(s.status)?<OperationForm endpoint={api+'/billing/cancellation-notice'} label="Record written notice" result={r=><p>Notice received: {r.received_at}. Earliest ordinary end date: {r.earliest_end_at}. Pending review; contact ProInspect for confirmation.</p>}><input type="hidden" name="billingLinkId" value={s.id}/><Input name="reason" label="Reason or instructions"/></OperationForm>:
+   <p>{s.contract_starts_at?'This subscription has ended.':'The subscription start is awaiting provider verification.'} Contact ProInspect for assistance.</p>}
+ </div>)}
+ {!d.subscriptions.some((s:any)=>s.plan_version)&&<p>No new weekly subscription contract is recorded for this account.</p>}
+</Panel>}
 <Panel title="Invoices">{d.invoices.map((i:any)=><div className="record-row" key={i.stripe_invoice_id}><div><strong>{i.stripe_invoice_id}</strong><p>{money(i.total_cents)} total / {money(i.paid_cents)} paid / {money(i.remaining_cents)} remaining</p><small>{i.reconciliation}</small></div><Badge status={i.status}/></div>)}{!d.invoices.length&&<p>No invoices recorded for this workspace.</p>}</Panel>
 {staff&&<><Panel title="Payment exceptions">{d.exceptions.map((e:any)=><div key={e.id} className="stack"><p>{e.code} / {e.payment_id??'Unmatched provider object'}</p><OperationForm endpoint={`${api}/billing/reconciliation/${e.id}`} label="Record verified resolution"><Input name="reference" label="Investigation and resolution evidence (at least 8 characters)"/></OperationForm></div>)}</Panel>
 <Panel title="Request a refund"><OperationForm endpoint={api+'/billing/refunds/request'} label="Request independent review"><Input name="paymentId" label="Settled payment ID"/><Input name="amountCents" type="number" label="Refund amount (AUD cents)"/><Input name="reason" label="Authorised refund reason and supporting reference"/></OperationForm></Panel>

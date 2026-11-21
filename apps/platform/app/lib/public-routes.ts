@@ -1,3 +1,4 @@
+import { retiredPublicPath } from '../../../../packages/domain/residential-policy.ts';
 import { PUBLIC_LEGAL_APPROVAL, type PublicLegalKey } from '../../../../packages/marketing/legal-drafts.ts';
 import { RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED } from '../../../../packages/marketing/pricing-publication.ts';
 
@@ -16,6 +17,7 @@ export function isPublicSitePath(pathname: string): boolean {
 
 /** Never index the Worker preview alias or pages containing customer data. */
 export function shouldIndexPublicPage(pathname: string, requestOrigin: string, appEnv: string): boolean {
+  if (retiredPublicPath(pathname) || pathname === '/student-living') return false;
   // Canonical sector redirects remain routable but must not be indexed as distinct pages.
   if (/^\/sectors\/(?:residential|commercial|strata-building)$/.test(pathname)) return false;
   // Do not publicly index unapproved leasing/visitor flows in V3.

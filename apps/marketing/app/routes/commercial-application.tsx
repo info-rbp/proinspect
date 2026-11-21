@@ -1,3 +1,4 @@
+import { residentialPublicResponse } from '../../../../packages/domain/residential-policy';
 import { useState } from 'react';
 import {
   Form,
@@ -108,6 +109,8 @@ async function boundedMultipart(request: Request) {
   return new Request(request.url, { method: 'POST', headers, body: new Blob(chunks) }).formData();
 }
 export async function action({ request, context, params }: ActionFunctionArgs) {
+  const retired = residentialPublicResponse(request);
+  if (retired) return retired;
   const env = platformEnv(context),
     session = commercialSession(request, env);
   if (params.token !== 'session' || request.headers.get('Origin') !== new URL(request.url).origin)

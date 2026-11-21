@@ -4,14 +4,14 @@ import { ENGAGEMENTS, GUIDES } from '../../packages/marketing/content';
 import { AUDIENCES } from '../../packages/marketing/audiences';
 
 const publicRoutes = [
-  '/', '/services', '/service-finder', '/who-we-help', '/residential-property-support', '/residential', '/commercial', '/strata', '/co-living', '/student-living', '/construction', '/maintenance',
+  '/', '/services', '/service-finder', '/who-we-help', '/residential-property-support', '/residential', '/co-living', '/maintenance',
   '/how-it-works', '/client-experience', '/about', '/contact', '/why-proinspect',
   '/areas-we-service', '/resources', '/privacy', '/terms',
   ...Object.keys(AUDIENCES).map((audience) => '/who-we-help/' + audience),
   ...Object.keys(FAMILIES).map((family) => '/services/category/' + family),
   ...Object.keys(ENGAGEMENTS).map((model) => '/how-we-work/' + model),
   ...Object.keys(GUIDES).map((guide) => '/resources/' + guide),
-  ...SERVICE_SEEDS.map((service) => '/services/' + service.id),
+  ...SERVICE_SEEDS.filter(s=>s.sectors.includes('residential')).map((service) => '/services/' + service.id),
 ];
 
 test('every public marketing route uses shared navigation, typography, footer and canonical metadata', async ({ request }) => {
@@ -25,7 +25,7 @@ test('every public marketing route uses shared navigation, typography, footer an
     expect(html, path).toContain('mkt-site-footer');
     expect(html, path).toContain('id="main"');
     expect(html, path).toMatch(/<h1[\s>]/);
-    if (['/', '/who-we-help', '/about', '/contact', '/residential', '/commercial', '/strata', '/co-living', '/student-living', '/construction', '/maintenance'].includes(path)) expect(html).toContain('pi-editorial-hero');
+    if (['/', '/who-we-help', '/about', '/contact', '/residential', '/co-living', '/maintenance'].includes(path)) expect(html).toContain('pi-editorial-hero');
     else if (path.startsWith('/services/') && !path.startsWith('/services/category/')) {
       expect(html, path).toContain('mkt-detail-hero');
     } else expect(html, path).toContain('mkt-page-hero');
@@ -35,8 +35,8 @@ test('every public marketing route uses shared navigation, typography, footer an
 test('all public page families use the shared responsive layout without horizontal overflow', async ({ page }) => {
   const representatives = [
     '/', '/services', '/service-finder', '/who-we-help', '/who-we-help/private-landlords', '/residential-property-support', '/services/category/documents', '/services/category/inspections',
-    '/services/routine-inspection', '/services/commercial-property-inspection',
-    '/commercial', '/strata', '/student-living', '/how-it-works',
+    '/services/routine-inspection', '/services/property-condition-report',
+    '/how-it-works',
     '/how-we-work/inspection-plans', '/resources', '/resources/routine-inspection-vs-pcr',
     '/why-proinspect', '/client-experience', '/about', '/areas-we-service', '/contact', '/privacy',
   ];

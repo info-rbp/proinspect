@@ -4,7 +4,7 @@ import type { V4Price } from '../v4/workflows.ts';
 export const PUBLIC_PRICE_MESSAGE = 'Sign in to view individual service pricing or request a quote.';
 /** Explicit allowlist: new database columns cannot accidentally become public prices. */
 export function descriptiveCatalogue(services: readonly Service[]) {
-  return services.map(s => ({id:s.id,name:s.name,family:s.family,sectors:s.sectors,summary:s.summary,
+  return services.filter(s => s.sectors.includes('residential')).map(s => ({id:s.id,name:s.name,family:s.family,sectors:s.sectors,summary:s.summary,
     duration_minutes:s.duration_minutes,buffer_before:s.buffer_before,buffer_after:s.buffer_after,
     notice_hours:s.notice_hours,horizon_days:s.horizon_days,booking_mode:s.booking_mode,active:s.active,
     price_ex_gst_cents:null}));

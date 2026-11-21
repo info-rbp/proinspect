@@ -54,6 +54,22 @@ try{
   assert.equal((await first("SELECT COUNT(*) AS c FROM inspection_reports WHERE work_order_id='work_report'")).c,1);
   assert.equal((await ok(staffBase+'/reports',inspector)).reports.length,1);
  });
+ await check('Staff cases link the actual booking and authorised report without exposing draft or finance to the customer',async()=>{
+  const path='/work-orders/work_report';
+  const caseView=await ok(staffBase+path,ops);
+  assert.equal(caseView.caseRecords.booking.reference,'B-REPORT');
+  assert.equal(caseView.caseRecords.report.id,reportId);
+  assert.ok(caseView.caseRecords.events.some(e=>e.action==='report.created'));
+  assert.ok(Array.isArray(caseView.caseRecords.finance));
+  const assigned=await ok(staffBase+path,inspector);
+  assert.equal(assigned.caseRecords.finance,null);
+  assert.equal((await ok('/api/w/landlord/'+clientId+path,owner)).caseRecords,null);
+  assert.equal((await api(staffBase+path,outsider)).status,403);
+  const alternate=new FormData();
+  alternate.set('file',new File(['%PDF-1.4 synthetic'],'synthetic.pdf',{type:'application/pdf'}));
+  const blocked=await api(staffBase+path+'/report',ops,alternate);
+  assert.equal(blocked.status,409);assert.equal(blocked.data.code,'USE_REPORT_REVIEW');
+ });
  await check('drafts and unpublished evidence are isolated from customer accounts',async()=>{
   assert.equal((await ok('/api/w/landlord/'+clientId+'/reports',owner)).reports.length,0);
   assert.equal((await api('/api/w/landlord/'+clientId+'/reports/'+reportId,owner)).status,404);
@@ -190,6 +206,10 @@ try{
   const stamp=new Date().toISOString();
   await run("INSERT INTO work_orders(id,reference,client_id,property_id,title,status,assigned_staff_id,created_at,updated_at) VALUES('work_evidence_retry','WO-EVIDENCE-RETRY',?,'report_property','Evidence retry fixture','assigned',?,?,?)",clientId,inspector.id,stamp,stamp);
   const report=await ok(staffBase+'/reports/create',inspector,{workOrderId:'work_evidence_retry',reportType:'maintenance'});
+  const handoff=staffBase+'/work-orders/work_evidence_retry/report-handoff';
+  assert.equal((await api(handoff,inspector,{})).status,403);
+  assert.equal((await api(handoff,ops,{})).status,409);
+  assert.equal((await first("SELECT COUNT(*) n FROM report_handoffs WHERE work_order_id='work_evidence_retry'")).n,0);
   const endpoint=staffBase+'/reports/'+report.id;
   const form=(area,component)=>{const f=new FormData();f.set('areaId',area);if(component)f.set('componentId',component);f.set('file',new File([readFileSync('tests/fixtures/report-photo.jpg')],'synthetic.jpg',{type:'image/jpeg'}));return f;};
   const original=await ok(endpoint+'/evidence',inspector,form('area_general','component_general'));

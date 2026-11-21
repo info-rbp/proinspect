@@ -39,22 +39,33 @@ export async function billingDashboard(env:Env,user:Principal,w:Workspace){
  const invoiceContactSchemaAvailable=staff && await invoiceRecipientSchemaReady(env);
  const [accounts,subscriptions,invoices,exceptions,refunds,contacts,dispatches]=await Promise.all([
  statement(env.DB,`SELECT client_id,mode,created_at FROM billing_accounts WHERE ${clause}`, ...values).all(),
- statement(env.DB,`SELECT id,client_id,property_id,sector,status,price_id FROM stripe_billing_links WHERE ${clause} ORDER BY updated_at DESC LIMIT 100`,...values).all(),
+ statement(env.DB,`SELECT b.id,b.client_id,b.property_id,b.sector,b.status,b.price_id,p.address,
+ c.plan_version,c.starts_at AS contract_starts_at,n.received_at AS notice_received_at,
+ n.earliest_end_at AS notice_earliest_end_at,n.status AS notice_status
+ FROM stripe_billing_links b LEFT JOIN properties p ON p.id=b.property_id
+ LEFT JOIN residential_subscription_contracts c ON c.billing_link_id=b.id
+ LEFT JOIN residential_cancellation_notices n ON n.billing_link_id=b.id
+ WHERE ${clause} ORDER BY b.updated_at DESC LIMIT 100`,...values).all(),
  statement(env.DB,`SELECT * FROM billing_invoices WHERE ${clause} ORDER BY updated_at DESC LIMIT 100`,...values).all(),
  staff?statement(env.DB,"SELECT id,payment_id,code,created_at FROM payment_reconciliation_items WHERE status='open' ORDER BY created_at LIMIT 100").all():Promise.resolve({results:[]}),
  staff?statement(env.DB,"SELECT r.*,p.description,p.total_cents,p.refunded_cents FROM refund_requests r JOIN payments p ON p.id=r.payment_id ORDER BY requested_at DESC LIMIT 100").all():Promise.resolve({results:[]}),
  invoiceContactSchemaAvailable?statement(env.DB,"SELECT id,client_id,email,status,approved_by FROM billing_invoice_contacts ORDER BY created_at DESC LIMIT 100").all():Promise.resolve({results:[]}),
  invoiceContactSchemaAvailable?statement(env.DB,"SELECT statement_id,stripe_invoice_id,status,recipient_email FROM billing_invoice_dispatches ORDER BY created_at DESC LIMIT 100").all():Promise.resolve({results:[]})
  ]);
- return {accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,
+ const cancellationNotices=staff?(await statement(env.DB,`SELECT n.billing_link_id,n.received_at,n.earliest_end_at,n.reason,n.status,n.reviewed_at,n.provider_reference,p.address
+  FROM residential_cancellation_notices n JOIN stripe_billing_links b ON b.id=n.billing_link_id JOIN properties p ON p.id=b.property_id
+  ORDER BY (n.status='pending_review') DESC,n.received_at DESC LIMIT 100`).all()).results:[];
+ return {cancellationNotices, sandboxNoticeReview:staff && ['staging','local'].includes(env.APP_ENV) && env.STRIPE_BILLING_ENABLED==='true',accounts:accounts.results,subscriptions:subscriptions.results,invoices:invoices.results,exceptions:exceptions.results,refunds:refunds.results,
   contacts:contacts.results,dispatches:dispatches.results,invoiceContactSchemaAvailable:!!invoiceContactSchemaAvailable,
-  portalEnabled:env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true'||(env.APP_ENV==='production'&&w.kind==='landlord'&&accounts.results.some((a:any)=>a.mode==='live')),
+  portalEnabled:!subscriptions.results.some((s:any)=>s.plan_version)&&(env.STRIPE_CUSTOMER_PORTAL_ENABLED==='true'||(env.APP_ENV==='production'&&w.kind==='landlord'&&accounts.results.some((a:any)=>a.mode==='live'))),
   invoicesEnabled:env.STRIPE_INVOICING_ENABLED==='true',refundsEnabled:env.STRIPE_REFUNDS_ENABLED==='true'};
 }
 export async function billingPortal(env:Env,user:Principal,w:Workspace){
  await clientAdmin(env,user,w);
  if(env.APP_ENV==='production'&&w.kind==='landlord'){
   liveResidentialCredentialsReady(env);
+  const weeklyContract=await statement(env.DB,'SELECT 1 FROM residential_subscription_contracts c JOIN stripe_billing_links b ON b.id=c.billing_link_id WHERE b.client_id=?',w.scopeId).first();
+  assert(!weeklyContract,503,'CONTRACT_PORTAL_REVIEW_REQUIRED','Use written cancellation notice. The payment-method-only portal must be independently approved for the new contract.');
   // Existing verified subscribers retain the right to cancel even when new signups are paused.
   const a=await statement(env.DB,"SELECT stripe_customer_id FROM billing_accounts WHERE client_id=? AND mode='live' AND stripe_account_id=?",w.scopeId,LIVE_RESIDENTIAL_ACCOUNT).first<{stripe_customer_id:string}>();
   assert(a?.stripe_customer_id,409,'LIVE_BILLING_CUSTOMER_MISSING','An enrolled Stripe customer is required.');

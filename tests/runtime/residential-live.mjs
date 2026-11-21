@@ -75,7 +75,7 @@ try{
   assert.equal(r.status,200,JSON.stringify(r.body));assert.equal(await covered(),false);
  });
  const first={id:'in_live_first',parent:{subscription_details:{subscription}},
-  customer,currency:'aud',status:'paid',paid:true,amount_paid:5500,created:now-30,lines:{data:[line]}};
+  customer,currency:'aud',status:'paid',paid:true,amount_paid:5500,amount_remaining:0,created:now-30,lines:{data:[line]}};
  await check('signed Friday paid invoice activates subscription for enrolled property',async()=>{
   const r=await webhook(event('invoice.paid',first));
   assert.equal(r.status,200,JSON.stringify(r.body));

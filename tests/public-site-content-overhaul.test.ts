@@ -22,16 +22,16 @@ test('dedicated Student Living service is published alongside all seven programm
     assert.equal(p.onboarding.length, 4, slug + ' onboarding');
     assert.ok(p.benefit.length > 40);
   }
-  assert.equal(shouldIndexPublicPage('/student-living', 'https://proinspect.systems','production'), true);
+  assert.equal(shouldIndexPublicPage('/student-living', 'https://proinspect.systems','production'), false);
   const routes = readFileSync('apps/platform/app/routes.ts','utf8');
   assert.match(routes,/route\('student-living'/);
   assert.match(routes,/route\('sectors\/:sector', '\.\.\/\.\.\/marketing\/app\/routes\/sector-redirect\.tsx'/);
 });
 
 test('three approved marketing prices remain unchanged, without invented entitlements', () => {
-  assert.deepEqual(PUBLIC_PLANS.map(x=>x.monthlyExGst),[20,150,150]);
+  assert.deepEqual(PUBLIC_PLANS.map(x=>x.weeklyExGst),[50]);
   const comparison = readFileSync('apps/marketing/app/components/plan-comparison.tsx','utf8');
-  assert.match(comparison,/Service focus — final scope by agreement/);
+  assert.match(comparison,/agreed service schedule/);
   assert.match(comparison,/PLAN_SCOPE/);
   assert.doesNotMatch(comparison,/unlimited visits included/i);
 });
@@ -65,9 +65,9 @@ test('all four engagement models and six educational guides provide practical de
   }
 });
 
-test('ten audience segments include each new customer type and concrete outputs', () => {
-  assert.equal(Object.keys(AUDIENCES).length,10);
-  for (const slug of ['co-living-operators','student-accommodation-operators','construction-project-owners','construction-teams']) {
+test('Residential audience segments include supported customer types and concrete outputs', () => {
+  assert.equal(Object.keys(AUDIENCES).length,3);
+  for (const slug of ['private-landlords','property-management-agencies','co-living-operators']) {
     assert.ok(AUDIENCES[slug].programme);
     assert.ok((AUDIENCES[slug].deliverables?.length ?? 0) >= 3);
   }

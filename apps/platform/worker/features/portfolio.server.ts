@@ -1,3 +1,4 @@
+import { requireResidentialSector } from './residential-policy.server';
 import { z } from 'zod';
 import { statement, assert, now, uid, type Env } from '../../../../packages/database/types';
 import type { Principal, Workspace } from '../../../../packages/domain/index';
@@ -34,6 +35,7 @@ export async function applyOrganisation(env: Env, user: Principal, input: unknow
       businessReference: reference,
     })
     .parse(input);
+  requireResidentialSector(d.kind === 'property-manager' ? 'residential' : d.kind);
   const existing = await statement(
     env.DB,
     "SELECT id FROM organisation_applications WHERE user_id=? AND workspace_kind=? AND status='pending'",
@@ -65,6 +67,7 @@ export async function approveOrganisation(env: Env, user: Principal, id: string,
   >();
   assert(a, 404, 'APPLICATION_NOT_FOUND', 'Application not found.');
   if (a.status === d.decision) return { clientId: a.client_id, status: a.status };
+  assert(d.decision !== 'approved' || a.workspace_kind === 'property-manager',410,'SECTOR_RETIRED','New Commercial and Strata accounts cannot be approved.');
   assert(
     a.status === 'pending',
     409,
@@ -529,6 +532,10 @@ export async function acceptPortalInvitation(env: Env, user: Principal, token: s
       now(),
     ).first<Record<string, any>>();
   if (!i) return null;
+  assert(!i.scheme_id,410,'SECTOR_RETIRED','New Strata memberships are retired.');
+  if (i.client_id) assert(await statement(env.DB,
+    "SELECT 1 FROM client_entitlements WHERE client_id=? AND workspace_kind IN('landlord','property-manager') AND active=1",i.client_id).first(),
+    410,'SECTOR_RETIRED','This account no longer accepts new service memberships.');
   const grantor = await statement(
     env.DB,
     'SELECT u.id,u.email,u.display_name,sp.role AS staffRole FROM users u LEFT JOIN staff_profiles sp ON sp.user_id=u.id AND sp.active=1 WHERE u.id=? AND u.active=1',

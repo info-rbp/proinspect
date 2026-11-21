@@ -70,7 +70,7 @@ for (const [flow, kind] of [
   ['ONB-COM-MANAGER', 'commercial'],
   ['ONB-STR-MANAGER', 'strata-manager'],
 ]) {
-  test(`${flow} submits a pending organisation request without JavaScript or paid access`, async ({
+  test(`${flow} applies the organisation entry policy without JavaScript or paid access`, async ({
     browser,
   }) => {
     const context = await browser.newContext({ baseURL: origin, javaScriptEnabled: false });
@@ -78,6 +78,13 @@ for (const [flow, kind] of [
       await signIn(context);
       const page = await context.newPage();
       await page.goto('/start?flow=' + flow + '&service=routine-inspection');
+      if (kind !== 'property-manager') {
+        await expect(page.getByRole('heading',{name:'How will you use ProInspect?'})).toBeVisible();
+        const blocked=await context.request.post('/api/organisation-applications',{headers:{Origin:origin},data:{kind,name:'Retired firm',businessReference:'Synthetic entitlement'}});
+        expect(blocked.status()).toBe(410);
+        expect((await session(context)).workspaces).toHaveLength(0);
+        return;
+      }
       await expect(page).toHaveURL(
         origin + '/organisation?flow=' + flow + '&service=routine-inspection',
       );
@@ -155,6 +162,7 @@ test('invitation survives sign-up and opens only the invited tenancy after accep
     await page.goto(path);
     await expect(page).toHaveURL(/\/signin\?returnTo=/);
     await page.getByRole('link', { name: 'Create a free account' }).click();
+    await expect(page.getByRole('heading', { name: 'Create your free account', exact: true })).toBeVisible();
     await expect(page.getByLabel('Which best describes you?')).toHaveCount(0);
     await verifyEmail(page, address);
     await expect(page).toHaveURL(origin + path);
@@ -174,7 +182,7 @@ test('invitation survives sign-up and opens only the invited tenancy after accep
   }
 });
 test('existing owners reach the correct portal and multiple accounts retain service selection', async ({
-  page,
+  page, browser,
 }) => {
   await signIn(page.context());
   const residential = await post(page.context(), '/api/onboarding', {
@@ -183,54 +191,39 @@ test('existing owners reach the correct portal and multiple accounts retain serv
   });
   await page.goto('/start');
   await expect(page).toHaveURL(origin + '/w/landlord/' + residential.clientId);
-  const commercial = await post(page.context(), '/api/onboarding', {
-    displayName: 'Synthetic Multi Owner',
-    clientName: 'Synthetic Commercial',
-    landlordType: 'commercial',
-  });
-  await page.goto('/start?flow=ONB-COM-OWNER');
-  await expect(page).toHaveURL(origin + '/w/commercial/' + commercial.clientId);
-  await page.goto('/start?flow=ONB-COM-MANAGER');
-  await expect(page).toHaveURL(origin + '/organisation?flow=ONB-COM-MANAGER');
-  await page.goto('/start?service=routine-inspection');
-  await expect(page).toHaveURL(origin + '/workspaces?service=routine-inspection');
-  await expect(
-    page.locator('a.workspace-card').filter({ hasText: 'Synthetic Residential' }),
-  ).toHaveAttribute('href', '/w/landlord/' + residential.clientId + '/book/routine-inspection');
-  await expect(page.getByRole('link', { name: 'Strata management', exact: true })).toHaveAttribute(
-    'href',
-    '/organisation?flow=ONB-STR-MANAGER&service=routine-inspection',
-  );
-});
-test('approved commercial managers return to their reviewed portfolio instead of reapplying as an owner', async ({
-  browser,
-}) => {
-  const manager = await browser.newContext({ baseURL: origin }),
-    staff = await browser.newContext({ baseURL: origin });
+  const staff = await browser.newContext({baseURL:origin});
+  let agency;
   try {
-    await signIn(manager);
-    await signIn(staff, 'auth-onboarding-staff@proinspect.test');
-    const application = await post(manager, '/api/organisation-applications', {
-      kind: 'commercial',
-      name: 'Synthetic Reviewed Commercial',
-      businessReference: 'SYNTHETIC-ENGAGEMENT',
-    });
-    const approved = await post(
-      staff,
-      '/api/w/staff/operations/organisation-applications/' + application.id + '/review',
-      { decision: 'approved', reference: 'SYNTHETIC-STAFF-REVIEW' },
-    );
-    const member = (await session(manager)).workspaces[0];
-    expect(member).toMatchObject({ kind: 'commercial', professionalPortfolio: true });
-    const page = await manager.newPage();
-    await page.goto('/start?flow=ONB-COM-MANAGER');
-    await expect(page).toHaveURL(origin + '/w/commercial/' + approved.clientId);
-    await page.goto('/workspaces');
-    await expect(page.getByText('Asset management', { exact: true })).toBeVisible();
-  } finally {
-    await manager.close();
-    await staff.close();
+    await signIn(staff,'auth-onboarding-staff@proinspect.test');
+    const application=await post(page.context(),'/api/organisation-applications',{kind:'property-manager',name:'Second managed portfolio',businessReference:'Synthetic agency agreement'});
+    agency=await post(staff,'/api/w/staff/operations/organisation-applications/'+application.id+'/review',{decision:'approved',reference:'Reviewed synthetic portfolio'});
+  } finally { await staff.close(); }
+  await page.goto('/start?service=routine-inspection');
+  await expect(page).toHaveURL(origin+'/workspaces?service=routine-inspection');
+  for (const [kind,id] of [['landlord',residential.clientId],['property-manager',agency.clientId]]){
+    await expect(page.locator('a.workspace-card[href="/w/'+kind+'/'+id+'/book/routine-inspection"]')).toBeVisible();
   }
+  await expect(page.getByRole('link',{name:'Commercial management',exact:true})).toHaveCount(0);
+  for (const [kind, id, heading] of [
+    ['property-manager', agency.clientId, 'Your managed portfolio'],
+    ['landlord', residential.clientId, 'Your property overview'],
+  ]) {
+    await page.goto('/workspaces');
+    await page.locator(`a.workspace-card[href="/w/${kind}/${id}"]`).click();
+    await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Manage properties', exact: true })).toHaveAttribute('href', `/w/${kind}/${id}/properties`);
+  }
+});
+test('approved residential managers return to their scoped portfolio',async({browser})=>{
+  const manager=await browser.newContext({baseURL:origin}),staff=await browser.newContext({baseURL:origin});
+  try {
+    await signIn(manager);await signIn(staff,'auth-onboarding-staff@proinspect.test');
+    const app=await post(manager,'/api/organisation-applications',{kind:'property-manager',name:'Reviewed Residential Agency',businessReference:'Synthetic appointment'});
+    const approved=await post(staff,'/api/w/staff/operations/organisation-applications/'+app.id+'/review',{decision:'approved',reference:'SYNTHETIC-STAFF-REVIEW'});
+    const page=await manager.newPage();await page.goto('/start?flow=ONB-RES-AGENCY');
+    await expect(page).toHaveURL(new RegExp('/w/property-manager/'+approved.clientId));
+    expect((await session(manager)).workspaces.map((w:any)=>w.kind)).toEqual(['property-manager']);
+  } finally {await manager.close();await staff.close();}
 });
 test('registration rejects forged roles and incomplete sign-in links provide recovery', async ({
   page,

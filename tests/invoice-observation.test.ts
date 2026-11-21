@@ -7,6 +7,13 @@ const open={total:11000,amount_paid:0,amount_remaining:11000,status:'open',paid:
 test('exact signed settlement can close an open invoice even within the same second',()=>{
  const d=project(initial,'invoice.paid',paid,100);assert.equal(d.apply,true);assert.equal(d.matched,true);assert.equal(d.remainingCents,0);
 });
+test('current Stripe invoices settle from their signed paid transition and exact balance',()=>{
+ const current={total:11000,amount_paid:11000,amount_remaining:0,status:'paid',status_transitions:{paid_at:99}};
+ assert.equal(project(initial,'invoice.paid',current,100).matched,true);
+ for(const overrides of [{paid:false},{status_transitions:{paid_at:null}},{status_transitions:{paid_at:101}},{amount_remaining:1}]){
+  assert.equal(project(initial,'invoice.paid',{...current,...overrides},100).matched,false);
+ }
+});
 test('a paid invoice cannot become unpaid or lose its matched financial snapshot',()=>{
  const p={...initial,status:'paid',reconciliation:'matched',paid_cents:11000,remaining_cents:0,last_provider_created:200};
  for(const t of [100,200,300]){const d=project(p,'invoice.payment_failed',open,t);assert.equal(d.apply,false);assert.equal(d.status,'paid');assert.equal(d.remainingCents,0);assert.equal(d.reconciliation,'matched');}

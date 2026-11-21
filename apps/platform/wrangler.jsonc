@@ -243,6 +243,7 @@
         "STRIPE_CONNECT_COLLECTION_ENABLED": "false",
         "STRIPE_CONNECT_TRANSFERS_ENABLED": "false",
         "APP_ORIGIN": "https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev",
+        "STAGING_ACCESS_AUD": "e2e2f1eaf8b3885c148c8aee8cd7924319b0547850b33a53c76e4a7fd507aeca",
         "MARKETING_ORIGIN": "https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev",
         "PLATFORM_ORIGIN": "https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev",
         "EMAIL_PROVIDER": "local",

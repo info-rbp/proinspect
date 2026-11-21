@@ -126,22 +126,13 @@ export default function WhoWeHelp() {
               <p>
                 Tailored room and shared-area inspections, resident onboarding, turnover
                 coordination and everyday property support for Co-Living and Student Living.
-                Explore dedicated options for Student Living and Co-Living, with tailored operational scope and appropriate resident privacy.
+                Student accommodation is supported within Co-Living, with a tailored operating scope and resident privacy.
               </p>
-              <Link className="pi-inline-link" to="/student-living">
-                Explore Student Living <span aria-hidden="true">→</span>
+              <Link className="pi-inline-link" to="/co-living">
+                Explore Co-Living <span aria-hidden="true">→</span>
               </Link>
             </article>
-            <article>
-              <h3>Owners and construction teams</h3>
-              <p>
-                Tailored project coordination, progress records, site attendance and handover
-                follow-up alongside your appointed builder and professional advisers.
-              </p>
-              <Link className="pi-inline-link" to="/construction">
-                Explore construction <span aria-hidden="true">→</span>
-              </Link>
-            </article>
+
           </div>
         </div>
       </section>

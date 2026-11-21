@@ -46,8 +46,14 @@ export async function requireUser(request: Request, env: Env) {
   assert(user, 401, 'AUTH_REQUIRED', 'Sign in to continue.');
   return user;
 }
-export function sessionCookie(request: Request, env: Env, token: string, clear = false) {
-  return `${cookieName(request, env)}=${clear ? '' : token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${clear ? 0 : 86400}${isLocal(request, env) ? '' : '; Secure'}`;
+export function sessionCookie(
+  request: Request,
+  env: Env,
+  token: string,
+  clear = false,
+  maxAge = 86400,
+) {
+  return `${cookieName(request, env)}=${clear ? '' : token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${clear ? 0 : maxAge}${isLocal(request, env) ? '' : '; Secure'}`;
 }
 async function rateLimit(env: Env, key: string, limit: number) {
   const expires = new Date(Date.now() + 900000).toISOString();
@@ -164,6 +170,16 @@ export async function completeSignIn(
     'INVALID_LINK',
     'The sign-in link is invalid or has expired. Request a new link.',
   );
+  const cookie = await createVerifiedSession(request, env, email);
+  return { cookie, returnTo: safeReturnTo(record.return_to) };
+}
+
+export async function createVerifiedSession(
+  request: Request,
+  env: Env,
+  email: string,
+  expiresAt = Date.now() + 86400000,
+) {
   const user = await statement(
     env.DB,
     `INSERT INTO users(id,email,created_at,verified_at) VALUES(?,?,?,?) ON CONFLICT(email) DO UPDATE SET verified_at=COALESCE(users.verified_at,excluded.verified_at) RETURNING id,active`,
@@ -179,10 +195,16 @@ export async function completeSignIn(
     'INSERT INTO sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)',
     await digest(token),
     user.id,
-    new Date(Date.now() + 86400000).toISOString(),
+    new Date(expiresAt).toISOString(),
     now(),
   ).run();
-  return { cookie: sessionCookie(request, env, token), returnTo: safeReturnTo(record.return_to) };
+  return sessionCookie(
+    request,
+    env,
+    token,
+    false,
+    Math.max(0, Math.min(86400, Math.floor((expiresAt - Date.now()) / 1000))),
+  );
 }
 export async function signOut(request: Request, env: Env) {
   requireOrigin(request, env);

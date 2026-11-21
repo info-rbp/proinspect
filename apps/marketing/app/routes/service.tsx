@@ -11,12 +11,13 @@ import { seo } from '../lib/seo';
 
 export function loader({ params }: LoaderFunctionArgs) {
   const service = findService(params.slug ?? '');
+  if(service && !service.sectors.includes('residential')) throw new Response('This service is retired.', {status:410});
   if (!service) throw new Response('Not found', { status: 404 });
   return {
     service,
     editorial: SERVICE_EDITORIAL[service.id],
     scope: serviceScopeFor(service.id),
-    related: (RELATED_SERVICE_IDS[service.id] ?? []).map(id => SERVICE_SEEDS.find(s => s.id === id)).filter((s): s is (typeof SERVICE_SEEDS)[number] => Boolean(s)),
+    related: (RELATED_SERVICE_IDS[service.id] ?? []).map(id => SERVICE_SEEDS.find(s => s.id === id)).filter((s): s is (typeof SERVICE_SEEDS)[number] => Boolean(s) && s!.sectors.includes('residential')),
     examples: SERVICE_EXAMPLES[service.id] ?? [],
   };
 }

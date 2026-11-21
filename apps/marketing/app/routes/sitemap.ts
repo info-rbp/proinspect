@@ -33,7 +33,7 @@ export function loader() {
     ...Object.keys(FAMILIES).map(f => '/services/category/' + f),
     ...Object.keys(ENGAGEMENTS).map(e => '/how-we-work/' + e),
     ...Object.keys(GUIDES).map(g => '/resources/' + g),
-    ...SERVICE_SEEDS.map(s => '/services/' + s.id),
+    ...SERVICE_SEEDS.filter(s => s.sectors.includes('residential')).map(s => '/services/' + s.id),
   ];
   const indexable = [...new Set(paths)].filter(path =>
     shouldIndexPublicPage(path, 'https://proinspect.systems', 'production'));

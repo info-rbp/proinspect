@@ -81,9 +81,28 @@ try {
   });
   const future=Math.floor(Date.now()/1000)+7*86400;
   const invoiceLine={price:{id:'price_1UVkM6Ev62nbUZoknG7CA5P5'},quantity:1,period:{end:future}};
+  await check('wrong weekly amount or multiple invoice lines cannot grant property coverage',async()=>{
+    for(const [suffix,amount,lines] of [['amount',1,[invoiceLine]],['lines',5500,[invoiceLine,invoiceLine]]]){
+      const paid={id:'in_wrong_'+suffix,subscription:s.id,customer:s.customer,currency:'aud',status:'paid',paid:true,
+        amount_paid:amount,amount_remaining:0,created:499,lines:{data:lines}};
+      assert.equal((await webhook(event('invoice.paid',paid,suffix==='amount'?360:361))).status,200);
+      assert.equal(await coverage(),false);
+    }
+  });
   await check('verified paid invoice activates only the enrolled property',async()=>{
-    const paid={id:'in_stripe_paid',subscription:s.id,customer:s.customer,currency:'aud',status:'paid',paid:true,
-      amount_paid:5500,amount_remaining:0,created:501,lines:{data:[invoiceLine]}};
+    const modernLine={pricing:{type:'price_details',price_details:{price:invoiceLine.price.id}},quantity:1,period:invoiceLine.period};
+    const paid={id:'in_stripe_paid',parent:{type:'subscription_details',subscription_details:{subscription:s.id}},
+      customer:s.customer,currency:'aud',status:'paid',status_transitions:{paid_at:369},
+      total:5500,amount_paid:5500,amount_remaining:0,created:501,lines:{data:[modernLine],has_more:false}};
+    for(const [index,overrides] of [
+      {status_transitions:{paid_at:null}}, {paid:false}, {amount_remaining:1},
+      {total:6000},{lines:{data:[modernLine],has_more:true}},{lines:{data:[{...modernLine,quantity:null}]}},
+    ].entries()){
+      const invalid={...paid,id:'in_stripe_review_'+index,created:498,status_transitions:{paid_at:356},...overrides};
+      assert.equal((await webhook(event('invoice.paid',invalid,362+index))).status,200);
+      assert.equal((await get('SELECT status FROM stripe_subscription_invoice_observations WHERE stripe_invoice_id=?',invalid.id)).status,'review');
+      assert.equal(await coverage(),false);
+    }
     const r=await webhook(event('invoice.paid',paid,370));
     assert.equal(r.status,200,JSON.stringify(r.body));
     assert.equal(await coverage(),true);

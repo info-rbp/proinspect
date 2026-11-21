@@ -49,8 +49,8 @@ const pages: Record<string, { title: string; intro: string; sections: Array<[str
       ['One-off work and operational continuity', 'Book one inspection or delegate a recurring workload, with practical attendance and clear records in either case.'],
       ['Reports that support decisions', 'See what happened, what remains outstanding and who needs to decide through useful reports and action records.'],
       ['Clear responsibilities', 'Agree who instructs, who approves costs and who follows up, so the next step has an owner.'],
-      ['A practical partner for different teams', 'Self-managing landlords, agencies, asset managers, strata councils, shared-accommodation operators and project teams can obtain the type of service appropriate to their role.'],
-      ['Defined fees rather than assumptions', 'Compare our monthly plans, sign in for individual service prices or request a tailored quote. Scope and extras are agreed before you commit.'],
+      ['A practical partner for different teams', 'Self-managing landlords, residential agencies and shared-accommodation operators can obtain the type of service appropriate to their role.'],
+      ['Defined fees rather than assumptions', 'Review our weekly Residential subscription, sign in for individual service prices or request a tailored quote. Scope and extras are agreed before you commit.'],
     ],
   },
   'areas-we-service': {
@@ -95,8 +95,8 @@ const pages: Record<string, { title: string; intro: string; sections: Array<[str
         'Use the service catalogue to select an inspection or attendance, then continue to the authenticated booking flow. Availability and scope must be confirmed.',
       ],
       [
-        'Portfolio and strata requirements',
-        'Describe the properties or schemes, the type of work and the level of ongoing support required. Professional and strata portal onboarding will be enabled through staged releases.',
+        'Residential portfolio requirements',
+        'Describe your residential properties, the work and the level of ongoing support required. Agency authority is reviewed before portfolio access is granted.',
       ],
     ],
   },

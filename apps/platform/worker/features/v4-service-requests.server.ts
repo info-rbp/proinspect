@@ -68,6 +68,7 @@ async function notification(env:Env,to:string,row:Pick<RecordRow,'reference'|'se
  return mailEvent(env,'v4.service_request',{to,subject,heading,body,href,sensitive:Boolean(href),facts:{Reference:row.reference,Service:row.service_code}});
 }
 export async function publicCatalogue(env:Env,sector?:string){
+ sector='residential';
  const all=await v4Catalogue();
  const preview=env.APP_ENV==='local'||env.V4_SERVICE_REQUESTS_ENABLED==='true';
  const selected=preview?all.services.filter(s=>(sector===undefined||s.sector===sector)&&allowedForGuest(s)):[];

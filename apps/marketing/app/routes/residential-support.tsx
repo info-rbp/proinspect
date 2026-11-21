@@ -6,8 +6,8 @@ import { PlanComparison } from '../components/plan-comparison';
 
 import { RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED } from '../../../../packages/marketing/pricing-publication';
 export const meta=()=>seo(
-  'Residential Property Support — Account & Plan Options',
-  'Compare Residential Inspection Only at $20 + GST and Residential All-Inclusive at $150 + GST per whole property or separately leased room each month, or request tailored residential support.',
+  'Residential Property Support — All Inclusive Subscription',
+  'Residential All Inclusive Subscription: AUD $50 + GST per week per property, with a 24-month initial term and 60 days’ written cancellation notice.',
   '/residential-property-support',
   {breadcrumbs:[{name:'Who we help',path:'/who-we-help'},{name:'Residential property support',path:'/residential-property-support'}],
    noindex:!RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED},
@@ -22,12 +22,12 @@ export default function ResidentialSupport(){
     <section className="section mkt-section"><div className="site-container mkt-service-intro-grid">
       <div><p className="eyebrow">Flexible ways to work with us</p><h2>One property. Clear choices.</h2>
         <p>Create an account using your verified email, set up a property you are authorised to manage and view the services available to you. You can also request an individual inspection without committing to ongoing support.</p>
-        <p>Choose an individual service, Residential Inspection Only at $20 + GST per whole property or separately leased room/month, or Residential All-Inclusive at $150 + GST per whole property or separately leased room/month. Both plans have an initial 24-month term, then continue month-to-month with 60 days’ written cancellation notice. A tailored scope can address agency workloads or a specific property requirement.</p>
+        <p>Choose an individual service or the Residential All Inclusive Subscription at AUD $50 + GST ($55 including GST) per week per property. The initial term is 24 months, with 60 days’ written cancellation notice. There is no per-room subscription. A tailored scope can address agency workloads or a specific property requirement.</p>
         <a href={appOrigin+'/signin'} className="button secondary">Create account / Sign in <span aria-hidden="true">→</span></a>
       </div>
-      <aside className="mkt-at-glance"><p className="eyebrow">Residential subscription options</p>
-        <h3>Inspection Only $20 + GST<br/>All-Inclusive $150 + GST</h3>
-        <p>Per whole property or separately leased room each month, with a 24-month initial term. Compare the five Inspection Only service types below or agree a broader All-Inclusive schedule. Discuss the scope with us before joining.</p>
+      <aside className="mkt-at-glance"><p className="eyebrow">Residential All Inclusive Subscription</p>
+        <h3>AUD $50 + GST per week</h3>
+        <p>Per property ($55 including GST), with a 24-month initial term and 60 days’ written cancellation notice. Review the All Inclusive service schedule before joining.</p>
         <Link to="/contact">Ask about availability <span aria-hidden="true">→</span></Link>
       </aside>
     </div></section>
@@ -47,9 +47,9 @@ export default function ResidentialSupport(){
       <div><p className="eyebrow">Common questions</p><h2>Know what happens before you register.</h2></div>
       <div className="mkt-faq-list">
         <details><summary>Does creating a ProInspect account start a paid subscription?<span aria-hidden="true">+</span></summary><p>Creating a free account does not enrol you in a paid plan or authorise a recurring charge. A subscription requires a separate affirmative agreement.</p></details>
-        <details><summary>What are the price and term of each plan?<span aria-hidden="true">+</span></summary><p>Residential Inspection Only is $20 + GST per whole property or separately leased room/month. Residential All-Inclusive is $150 + GST per whole property or separately leased room/month. Each begins with 24 months, then continues month-to-month with 60 days’ written cancellation notice. Inclusions, extras and any early-exit obligations must be disclosed and agreed before you subscribe. There is no paid checkout on this page.</p></details>
+        <details><summary>What are the subscription price and term?<span aria-hidden="true">+</span></summary><p>Residential All Inclusive is AUD $50 + GST ($55 including GST) per week per property. The initial term is 24 months, with 60 days’ written cancellation notice. Rooms do not create additional subscriptions. Inclusions, extras and any early-exit obligations must be disclosed and agreed before you subscribe. There is no paid checkout on this page.</p></details>
         <details><summary>Can I request one inspection without joining a plan?<span aria-hidden="true">+</span></summary><p>Yes. Browse the individual services and follow the available one-off booking or enquiry path. Some work needs a reviewed quotation or confirmed appointment.</p></details>
-        <details><summary>Will the plan include every service?<span aria-hidden="true">+</span></summary><p>Inspection Only covers the five service types shown above, subject to its agreed allowances. All-Inclusive follows your accepted service schedule. Third-party work and extras need separate approval.</p></details>
+        <details><summary>Will the plan include every service?<span aria-hidden="true">+</span></summary><p>All Inclusive follows your accepted service schedule and allowances. Third-party work and extras need separate approval.</p></details>
       </div>
     </div></section>
     <MarketingCta title="Have a residential property to look after?" description="Compare inspections, request a tailored proposal or sign in to view individual service pricing. A subscription requires a separate agreement with clear terms." appOrigin={appOrigin}/>

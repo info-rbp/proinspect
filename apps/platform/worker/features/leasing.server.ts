@@ -1,3 +1,4 @@
+import { requireResidentialSector } from './residential-policy.server';
 import { issueRecipientChallenge,approveRentalListing,managedRentalListingApproved } from './rental-governance.server';
 import { withManagedIntakePolicy,managedIntakeRelease,managedDetailsOnlyListing,managedApplicationListing,propertyManagementTag } from './managed-rental-intake.server';
 import { applicationSettingsSchema } from '../../../../packages/marketing/form18';
@@ -16,6 +17,8 @@ import { releaseFeatureReady } from './release-governance.server';
 
 const cols='id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,application_url,application_mode,rental_approval_state,rental_recipient_verified_at,published_at';
 export async function publicListings(env:Env,kind?:string){
+ if(kind && kind!=='residential')return [];
+ kind='residential';
  const rows=await statement(env.DB,`SELECT ${cols} FROM leasing_listings WHERE status='published' AND (? IS NULL OR kind=?) ORDER BY published_at DESC LIMIT 100`,kind??null,kind??null).all();
  return rows.results;
 }
@@ -31,6 +34,7 @@ export async function publicPhoto(env:Env,photoId:string) {
  return new Response(object.body,{headers:{'Content-Type':p.content_type,'Cache-Control':'public, max-age=300','X-Content-Type-Options':'nosniff'}});
 }
 export async function publicListing(env:Env,kind:string,slug:string){
+ requireResidentialSector(kind);
  const row=await statement(env.DB,`SELECT ${cols} FROM leasing_listings WHERE status='published' AND kind=? AND slug=?`,kind,slug).first<Record<string,any>>();
  if(!row)return null;
  const sessions=(await statement(env.DB,"SELECT id,starts_at,ends_at,capacity,booked_count,status FROM leasing_sessions WHERE listing_id=? AND status='scheduled' AND starts_at>? ORDER BY starts_at LIMIT 40",row.id,now()).all()).results;
@@ -348,7 +352,7 @@ export async function dispatchLeasingReminders(env:Env) {
  const time=now(),until=new Date(Date.now()+24*60*60*1000).toISOString();
  const rows=(await statement(env.DB,`SELECT r.id,r.envelope,s.starts_at,l.title,l.kind,l.slug
  FROM leasing_leads r JOIN leasing_sessions s ON s.id=r.session_id JOIN leasing_listings l ON l.id=r.listing_id
- WHERE r.kind='inspection' AND r.status='active' AND r.reminder_queued_at IS NULL
+ WHERE l.kind='residential' AND r.kind='inspection' AND r.status='active' AND r.reminder_queued_at IS NULL
  AND s.status='scheduled' AND l.status='published' AND s.starts_at>? AND s.starts_at<=?
  ORDER BY s.starts_at LIMIT 50`,time,until).all<{id:string;envelope:string;starts_at:string;title:string;kind:string;slug:string}>()).results;
  for(const r of rows) {

@@ -1,3 +1,5 @@
+import { stagingAccess, STAGING_ACCESS_ISSUER } from '../../../packages/auth/staging-access';
+import { residentialPublicResponse } from '../../../packages/domain/residential-policy';
 import {dispatchTemporaryDocumentRetention} from './features/rental-temporary-documents.server';
 import { canonicalPageRedirect } from '../../../packages/security/canonical';
 import {dispatchGuestReminders} from './features/guest-reminders.server';
@@ -25,6 +27,8 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const canonical = canonicalPageRedirect(request, env.APP_ORIGIN, env.APP_ENV);
     if (canonical) return canonical;
+    const retired = residentialPublicResponse(request);
+    if (retired) return retired;
     const nonce = btoa(crypto.randomUUID());
     const context = new RouterContextProvider();
     context.set(runtimeContext, { env, ctx, nonce });
@@ -46,7 +50,7 @@ export default {
     if (env.APP_ENV !== 'local') {
       headers.set('Strict-Transport-Security', 'max-age=31536000');
       if(headers.get('Content-Disposition')?.startsWith('attachment'))headers.set('Content-Security-Policy',"sandbox; default-src 'none'");
-      else headers.set('Content-Security-Policy',`default-src 'self'; script-src 'self' 'nonce-${nonce}' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`);
+      else headers.set('Content-Security-Policy',`default-src 'self'; script-src 'self' 'nonce-${nonce}' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'${stagingAccess(request, env) ? ' ' + STAGING_ACCESS_ISSUER : ''}; frame-ancestors 'none'`);
     }
     if (request.method === 'POST') ctx.waitUntil(dispatchNotices(env).then(() => dispatchOutbox(env)).catch(() => console.error('outbox.dispatch_failed')));
     if (request.method === 'POST' && calendarSchedulingEnabled(env))
