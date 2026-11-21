@@ -79,7 +79,7 @@ export default function SignIn() {
   const result = useActionData<any>();
   const pending = useNavigation().state !== 'idle';
   return (
-    <main id="main" className="auth-page">
+    <main id="main" className={settings.signup ? "auth-page auth-page-signup" : "auth-page"}>
       <Link className="brand" to="/">
         ProInspect<span>PROPERTY OPERATIONS</span>
       </Link>
