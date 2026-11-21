@@ -1330,3 +1330,7 @@ summary {
 .signup-optional-entity summary { cursor: pointer; font-weight: 600; }
 .signup-optional-entity .field { margin-top: 1rem; }
 @media (max-width: 800px) { .signup-choice-grid { grid-template-columns: 1fr; } .signup-choice { min-height: 0; } }
+
+.auth-page-signup { max-width: 1220px; }
+.auth-page-signup .auth-grid { grid-template-columns: minmax(250px, .8fr) minmax(0, 1.2fr); gap: clamp(1.5rem, 5vw, 4rem); }
+@media (max-width: 800px) { .auth-page-signup .auth-grid { grid-template-columns: minmax(0, 1fr); } }
