@@ -203,6 +203,15 @@ test('existing owners reach the correct portal and multiple accounts retain serv
     await expect(page.locator('a.workspace-card[href="/w/'+kind+'/'+id+'/book/routine-inspection"]')).toBeVisible();
   }
   await expect(page.getByRole('link',{name:'Commercial management',exact:true})).toHaveCount(0);
+  for (const [kind, id, heading] of [
+    ['property-manager', agency.clientId, 'Your managed portfolio'],
+    ['landlord', residential.clientId, 'Your property overview'],
+  ]) {
+    await page.goto('/workspaces');
+    await page.locator(`a.workspace-card[href="/w/${kind}/${id}"]`).click();
+    await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Manage properties', exact: true })).toHaveAttribute('href', `/w/${kind}/${id}/properties`);
+  }
 });
 test('approved residential managers return to their scoped portfolio',async({browser})=>{
   const manager=await browser.newContext({baseURL:origin}),staff=await browser.newContext({baseURL:origin});

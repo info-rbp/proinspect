@@ -4,7 +4,7 @@ Use the exact preview SHA reported by `/api/health` and the delivery PR. Record 
 
 ## Sign in to the staging preview
 
-Open [ProInspect staging sign-in](https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev/signin?returnTo=%2Fworkspaces) in a private browser window. Choose **Continue with staging email**, enter the nominated address and retrieve its one-time code. Confirm the displayed address on the staging site and choose **Continue to ProInspect**. Use separate private sessions for different identities. Keep codes and cookies out of screenshots.
+Open [ProInspect staging sign-in](https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev/signin?returnTo=%2Fworkspaces) in a private browser window. Choose **Continue with staging email**, enter the nominated address and retrieve its one-time code. Confirm the displayed address on the staging site and choose **Continue to ProInspect**. Use separate private sessions for different identities. Keep codes and cookies out of screenshots. A live client email sign-in, both client workspace scopes and sign-out have been exercised. Staff and resident email delivery are still for the nominated testers to confirm.
 
 | Nominated email role | Workspace and synthetic records |
 | --- | --- |
@@ -16,6 +16,7 @@ Use **Staging practice visit** for the booking and rescheduling journey. It has 
 
 - [ ] Record the staging source revision from [staging health](https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev/api/health), browser, viewport and test alias.
 - [ ] Confirm the correct alias is displayed after email verification. Open its workspace and record the first page. Sign out and revisit a private page to confirm it requests sign-in.
+- [ ] From My ProInspect, open both client cards. Wait for **Your property overview** in the landlord workspace and **Your managed portfolio** in the agency workspace, then follow **Manage properties**.
 - [ ] In the landlord workspace, try the agency property through that landlord workspace’s property URL. Then try the landlord’s finance page in the separate resident session. Both must deny access. The client can intentionally switch to its own agency workspace in My ProInspect.
 - [ ] Record the receipt of the code, the confirmation and the workspace separately. Redact email codes, cookies and personal information from screenshots.
 
