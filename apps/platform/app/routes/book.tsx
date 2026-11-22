@@ -18,6 +18,7 @@ import { PageHeading, Field, Feedback, EmptyState } from '../../../../packages/u
 import { money } from '../../../../packages/domain/index';
 import { orderBookingServices, inspectionIntakeKind, CASH_PAYMENT_TERM_LABELS, type CashPaymentTerm } from '../../../../packages/booking/inspection-checkout';
 import { bookingCategoryForService, isBookingCategoryId, propertyBookingCategories, type BookingCategoryId } from '../../../../packages/service-catalogue/booking-navigation';
+import { RESIDENTIAL_ADD_ONS, type ResidentialAddOnCode } from '../../../../packages/service-catalogue/residential-workflows';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
   const propertyId = new URL(request.url).searchParams.get('property') ?? new URL(request.url).searchParams.get('propertyId');
   const selected = propertyId
@@ -57,12 +58,20 @@ export async function action(args: ActionFunctionArgs) {
         siteNotes: optional('siteNotes'),
         bedrooms: quantity('bedrooms'),
         bathrooms: quantity('bathrooms'),
-        furnished: optional('furnished'),
+        furnished: ['furnished','part_furnished'].includes(text('furnished')) ? 'yes'
+          : text('furnished')==='unfurnished' ? 'no' : 'unknown',
         tenancyCommencesOn: optional('tenancyCommencesOn'),
         vacateDate: optional('vacateDate'),
         keysReturned: optional('keysReturned'),
         originalPcrAvailable: optional('originalPcrAvailable'),
         areasOfConcern: optional('areasOfConcern'),
+        addOns: text('selectedAddOn') ? [text('selectedAddOn')] : [],
+        furnishingStatus: optional('furnishingStatus'),
+        tenantWillAttend: optional('tenantWillAttend'),
+        tenantAttendeeName: optional('tenantAttendeeName'),
+        tenantAttendeeEmail: optional('tenantAttendeeEmail'),
+        tenantAttendeePhone: optional('tenantAttendeePhone'),
+        linkedBookingId: optional('linkedBookingId'),
       },
       recurringPlanId: f.get('recurringPlanId') || undefined,
       planDue: f.get('planDue') || undefined,
@@ -102,19 +111,69 @@ export default function Book() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('Select a date to see available appointments.');
   const [method, setMethod] = useState('owner');
+  const [selectedAddOn,setSelectedAddOn] = useState<ResidentialAddOnCode|null>(null);
+  const [furnishingStatus,setFurnishingStatus] = useState('unknown');
+  const [tenantWillAttend,setTenantWillAttend] = useState('unknown');
+  const [occupancyStatus,setOccupancyStatus] = useState('unknown');
+  const [tenancyStartsOn,setTenancyStartsOn] = useState('');
+  const [propertyProfile,setPropertyProfile] = useState<null|{
+    bedrooms:number; bathrooms:number; furnishing:string;
+  }>(null);
+
   const property = properties.find((p) => p.id === propertyId);
+  useEffect(()=>{
+    setPropertyProfile(null);
+    setFurnishingStatus('unknown');
+    setOccupancyStatus('unknown');
+    setTenancyStartsOn('');
+    if(!propertyId||d.workspace.kind!=='landlord') return;
+    const controller=new AbortController();
+    fetch(`/api/w/${d.workspace.kind}/${d.workspace.scopeId}/properties/${encodeURIComponent(propertyId)}/setup`,
+      {signal:controller.signal,credentials:'same-origin'})
+      .then(r=>r.ok?r.json():null)
+      .then(value=>{
+        const setup=value as null | {
+          profile?:{bedrooms:number; bathrooms:number; furnishing:string};
+          tenancy?:{occupancyStatus:string;startsOn:string|null};
+        };
+        if(controller.signal.aborted||!setup)return;
+        if(setup.profile) {
+          setPropertyProfile(setup.profile);
+          setFurnishingStatus(setup.profile.furnishing??'unknown');
+        }
+        if(setup.tenancy) {
+          setOccupancyStatus(setup.tenancy.occupancyStatus??'unknown');
+          setTenancyStartsOn(setup.tenancy.startsOn??'');
+        }
+      }).catch(()=>{});
+    return ()=>controller.abort();
+  },[propertyId,d.workspace.kind,d.workspace.scopeId]);
+
   const availableCategories = propertyBookingCategories(d.services, property?.sector ?? 'residential');
   const visibleServices = availableCategories.find(category => category.id === categoryId)?.services ?? [];
   const service = d.services.find((s) => s.id === serviceId && s.active === 1 &&
     s.sectors.includes(property?.sector ?? 'residential'));
   const inspectionKind = inspectionIntakeKind(service?.id ?? '');
+  const relevantAddOn = service?.id==='property-condition-report'
+      ? (['furnished','part_furnished'].includes(furnishingStatus) ? 'inventory_with_pcr':null)
+      : (['routine-inspection','follow-up-routine-inspection'].includes(service?.id??'')
+          ? 'form19_service'
+          : (service?.id==='final-exit-inspection' && tenantWillAttend==='yes'
+              ? 'tenant_attendance_coordination':null));
+  const addOnEligible = selectedAddOn && selectedAddOn===relevantAddOn ? selectedAddOn : null;
+  const addOnFee = addOnEligible ? RESIDENTIAL_ADD_ONS[addOnEligible].exGstCents : 0;
+
   const chooseCategory = (next: BookingCategoryId) => {
+    setSelectedAddOn(null);
+    setTenantWillAttend('unknown');
     setCategoryId(next);
     if (bookingCategoryForService(service) !== next) setServiceId('');
     setDate('');
     setSlot('');
   };
   const chooseProperty = (nextPropertyId: string) => {
+    setSelectedAddOn(null);
+    setTenantWillAttend('unknown');
     const nextProperty = properties.find(p => p.id === nextPropertyId);
     setPropertyId(nextPropertyId);
     if (service && nextProperty && !service.sectors.includes(nextProperty.sector)) {
@@ -207,6 +266,10 @@ export default function Book() {
             : <>
                 {result.result.invoiceAfterService && <p><strong>Approved invoice terms: {CASH_PAYMENT_TERM_LABELS[result.result.paymentTerms as CashPaymentTerm] ?? 'Invoice after service'}.</strong> Your service is booked. Invoicing follows completion.</p>}
                 <p>Once your report is issued, it will appear under Documents &amp; reports in your account.</p>
+                {result.result.addonReviewRequired&&<div className="notice warning">
+                  Your optional service request is recorded with this booking. It remains subject to
+                  separate Staff review and price approval. No additional fee has been charged.
+                </div>}
               </>}
           <div className="actions">
             <Link className="button" to={`${d.workspace.href}/bookings`}>
@@ -240,6 +303,11 @@ export default function Book() {
         <input type="hidden" name="planDue" value={search.get('due') || ''} />
         <input type="hidden" name="requestKey" value={requestKey} />
         <input type="hidden" name="startsAt" value={slot} />
+        <input type="hidden" name="selectedAddOn" value={addOnEligible??''}/>
+        <input type="hidden" name="furnishingStatus" value={furnishingStatus}/>
+        <input type="hidden" name="tenantWillAttend" value={tenantWillAttend}/>
+        <input type="hidden" name="tenancyCommencesOn" value={tenancyStartsOn}/>
+
         <div className="stack">
           {!interactive && <p role="status">Preparing the booking form. JavaScript is required to check appointment availability and book a service.</p>}
           <section className="panel form">
@@ -287,7 +355,8 @@ export default function Book() {
                 required
                 disabled={!interactive}
                 value={service?.id ?? ''}
-                onChange={(e) => { setServiceId(e.target.value); setDate(''); setSlot(''); }}
+                onChange={(e) => { setServiceId(e.target.value); setSelectedAddOn(null);
+                  setTenantWillAttend('unknown'); setDate(''); setSlot(''); }}
               >
                 <option value="">Choose a service</option>
                 {orderBookingServices(visibleServices).map((s) => (
@@ -331,23 +400,44 @@ export default function Book() {
                 {inspectionKind==='pcr' && <><option value="New tenancy">New tenancy commencing</option><option value="Incoming condition record">Incoming condition record</option></>}
                 {inspectionKind==='exit' && <><option value="Tenancy ending">Tenancy ending</option><option value="Vacant possession inspection">Vacant possession inspection</option></>}
                 {inspectionKind==='routine' && <><option value="Scheduled routine inspection">Scheduled routine inspection</option><option value="Property condition follow-up">Property condition follow-up</option></>}
+                {inspectionKind==='follow_up' && <option value="Follow-up previous inspection">Follow-up outstanding inspection findings</option>}
+                {inspectionKind==='vacant' && <option value="Vacant property check">Vacant property check</option>}
+                {inspectionKind==='maintenance' && <><option value="Maintenance defect assessment">Inspect a maintenance defect</option><option value="Post-repair follow-up">Follow up after completed works</option><option value="Photographic update">Updated property photographs</option></>}
                 <option value="Other property inspection">Other inspection requirement</option>
               </select>
             </Field>
             <Field label="Current occupancy" name="occupancyStatus">
-              <select id="occupancyStatus" name="occupancyStatus" required disabled={!interactive} defaultValue="unknown">
+              <select id="occupancyStatus" name="occupancyStatus" required disabled={!interactive}
+                value={occupancyStatus} onChange={e=>setOccupancyStatus(e.target.value)}>
                 <option value="unknown">To be confirmed</option>
                 <option value="vacant">Vacant</option><option value="tenanted">Tenanted</option><option value="occupied_other">Otherwise occupied</option>
               </select>
             </Field>
             {inspectionKind==='pcr' && <div className="stack">
-              <Field label="Tenancy commencement date (if known)" name="tenancyCommencesOn"><input id="tenancyCommencesOn" name="tenancyCommencesOn" type="date" disabled={!interactive}/></Field>
+              <Field label="Tenancy commencement date (if known)" name="tenancy-date"><input id="tenancy-date" type="date" value={tenancyStartsOn} onChange={e=>setTenancyStartsOn(e.target.value)} disabled={!interactive}/></Field>
               <div className="grid-2">
-                <Field label="Bedrooms" name="bedrooms"><input id="bedrooms" name="bedrooms" type="number" min="0" max="100" disabled={!interactive}/></Field>
-                <Field label="Bathrooms" name="bathrooms"><input id="bathrooms" name="bathrooms" type="number" min="0" max="100" disabled={!interactive}/></Field>
+                <Field label="Bedrooms" name="bedrooms"><input key={propertyId+':'+String(propertyProfile?.bedrooms)} id="bedrooms" name="bedrooms" defaultValue={propertyProfile?.bedrooms} type="number" min="0" max="100" disabled={!interactive}/></Field>
+                <Field label="Bathrooms" name="bathrooms"><input key={propertyId+':'+String(propertyProfile?.bathrooms)} id="bathrooms" name="bathrooms" defaultValue={propertyProfile?.bathrooms} type="number" min="0" max="100" disabled={!interactive}/></Field>
               </div>
-              <Field label="Furnishing" name="furnished"><select id="furnished" name="furnished" defaultValue="unknown" disabled={!interactive}><option value="unknown">Not confirmed</option><option value="yes">Furnished</option><option value="no">Unfurnished</option></select></Field>
+              <Field label="Furnishing" name="furnished">
+                <select id="furnished" name="furnished" value={furnishingStatus}
+                  onChange={e=>{setFurnishingStatus(e.target.value);setSelectedAddOn(null);}}
+                  disabled={!interactive}>
+                  <option value="unknown">Not confirmed</option>
+                  <option value="furnished">Furnished</option>
+                  <option value="part_furnished">Partially furnished</option>
+                  <option value="unfurnished">Unfurnished</option>
+                </select>
+              </Field>
             </div>}
+            {inspectionKind==='follow_up' && <Field label="Previous routine inspection" name="linkedBookingId">
+              <select id="linkedBookingId" name="linkedBookingId" disabled={!interactive} defaultValue="">
+                <option value="">Select a previous inspection (if recorded)</option>
+                {d.bookings.filter(b=>b.property_id===propertyId &&
+                  /routine inspection/i.test(String(b.service_name??''))).map(b=>
+                  <option key={b.id} value={b.id}>{b.reference} · {new Date(b.starts_at).toLocaleDateString('en-AU')}</option>)}
+              </select>
+            </Field>}
             {inspectionKind==='exit' && <div className="stack">
               <Field label="Expected vacate date (if known)" name="vacateDate"><input id="vacateDate" name="vacateDate" type="date" disabled={!interactive}/></Field>
               <Field label="Have the keys been returned?" name="keysReturned"><select id="keysReturned" name="keysReturned" disabled={!interactive} defaultValue="unknown"><option value="unknown">Not confirmed</option><option value="yes">Yes</option><option value="no">No</option><option value="not_applicable">Not applicable</option></select></Field>
@@ -359,6 +449,53 @@ export default function Book() {
             <Field label="Pets, hazards or safety requirements (optional)" name="petsAndSafety">
               <textarea id="petsAndSafety" name="petsAndSafety" maxLength={1000} rows={2} disabled={!interactive} placeholder="Pets, construction work, site hazards or other preparation notes"/>
             </Field>
+          </section>}
+          {(['pcr','routine','follow_up','exit'] as string[]).includes(inspectionKind) &&
+          <section className="panel form" aria-label="Optional services">
+            <h2>Optional services</h2>
+            <p className="small">You may add a service below before selecting your appointment. Optional extras require separate Staff scope and price approval and are never charged by this screen.</p>
+            {inspectionKind==='exit'&&<Field label="Will the tenant attend the exit inspection?" name="tenant-attendance-choice">
+              <select id="tenant-attendance-choice" value={tenantWillAttend} disabled={!interactive}
+                onChange={e=>{setTenantWillAttend(e.target.value);setSelectedAddOn(null);}}>
+                <option value="unknown">Not confirmed</option>
+                <option value="yes">Yes — tenant expected to attend</option>
+                <option value="no">No — tenant is not attending</option>
+              </select>
+            </Field>}
+            {inspectionKind==='pcr' && !['furnished','part_furnished'].includes(furnishingStatus) &&
+              <p className="small">The discounted Inventory Report can be added when the property is confirmed furnished or partially furnished.</p>}
+            {(inspectionKind==='routine'||inspectionKind==='follow_up') && occupancyStatus!=='tenanted' &&
+              <p className="small">Form 19 preparation becomes available when you confirm that the property is tenanted.</p>}
+            {relevantAddOn && <div className="booking-addon-card">
+              <label className="checkbox" htmlFor="booking-addon">
+                <input id="booking-addon" type="checkbox" checked={selectedAddOn===relevantAddOn}
+                  disabled={!interactive}
+                  onChange={e=>setSelectedAddOn(e.target.checked?relevantAddOn:null)}/>
+                <span><strong>{RESIDENTIAL_ADD_ONS[relevantAddOn].label}</strong>
+                  <span className="small"> + {money(RESIDENTIAL_ADD_ONS[relevantAddOn].exGstCents)} ex GST — candidate fee, Staff review required</span>
+                </span>
+              </label>
+              {relevantAddOn==='inventory_with_pcr' &&
+                <p className="small">Discounted from the standalone Property Inventory Report. The report will share your PCR visit where approved.</p>}
+              {relevantAddOn==='form19_service' &&
+                <p className="small">We will check the notice requirements and seek approval before preparing or sending Form 19. Booking alone does not issue a notice.</p>}
+              {relevantAddOn==='tenant_attendance_coordination' &&
+                <p className="small">Only pay for this option if you request ProInspect to contact and coordinate with the tenant. Tenant attendance itself is not charged.</p>}
+            </div>}
+            {addOnEligible==='tenant_attendance_coordination' && <div className="form">
+              <Field label="Tenant's name (if known)" name="tenantAttendeeName">
+                <input id="tenantAttendeeName" name="tenantAttendeeName" maxLength={120} disabled={!interactive}/>
+              </Field>
+              <div className="grid-2">
+                <Field label="Tenant's email (if known)" name="tenantAttendeeEmail">
+                  <input id="tenantAttendeeEmail" name="tenantAttendeeEmail" type="email" maxLength={254} disabled={!interactive}/>
+                </Field>
+                <Field label="Tenant's phone (if known)" name="tenantAttendeePhone">
+                  <input id="tenantAttendeePhone" name="tenantAttendeePhone" type="tel" maxLength={40} disabled={!interactive}/>
+                </Field>
+              </div>
+              <p className="small">Supply at least one contact detail for coordination. Contact information is encrypted in the booking intake and not included in confirmation emails.</p>
+            </div>}
           </section>}
           <section className="panel form">
             <h2>Access arrangements</h2>
@@ -394,7 +531,9 @@ export default function Book() {
                 placeholder="Where to meet, access details or anything the inspector needs to know."
               />
             </Field>
-            {method === 'tenant' && (
+            {method === 'tenant' && addOnEligible==='form19_service' &&
+              <p className="notice warning">ProInspect must review and arrange the lawful notice before entering the property. No Form 19 is issued automatically.</p>}
+            {method === 'tenant' && addOnEligible!=='form19_service' && (
               <label className="checkbox">
                 <input type="checkbox" name="noticeConfirmed" value="yes" required />
                 <span>
@@ -474,6 +613,15 @@ export default function Book() {
                     ? ' This service requires a verified online payment. Checkout must be enabled before an upfront-paid booking can be confirmed.'
                     : ' Your approved account terms allow direct appointment booking. The invoice is prepared after the service.'}
                 </p>}
+              {addOnEligible&&<div className="booking-addon-summary">
+                <strong>Requested optional service</strong>
+                <p>{RESIDENTIAL_ADD_ONS[addOnEligible].label}</p>
+                <div className="definition">
+                  <span className="muted">Candidate extra fee</span>
+                  <strong>+ {money(addOnFee)} + GST</strong>
+                </div>
+                <p className="small">Not included in the charge or booked price. ProInspect will review scope, legal requirements and the additional fee before any separately authorised charge or service delivery.</p>
+              </div>}
               <p className="small">
                 Your selected appointment is checked again when you confirm. A slot is not reserved
                 until the booking succeeds.
@@ -485,7 +633,7 @@ export default function Book() {
             className="primary"
             disabled={!interactive || busy || !slot || !directBooking || !categoryId}
           >
-            {busy ? 'Confirming booking…' : 'Confirm booking'}
+            {busy ? 'Submitting…' : addOnEligible ? 'Confirm appointment & request extra' : 'Confirm booking'}
           </button>
           <Link
             className="small"

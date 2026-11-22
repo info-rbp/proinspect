@@ -100,7 +100,9 @@ export async function expandedWorkspaceData(env: Env, user: Principal, w: Worksp
   const requests = (
     await statement(
       env.DB,
-      `SELECT r.id,r.reference,r.property_id,r.scheme_id,r.title,${w.kind === 'council' ? "''" : 'r.details'} AS details,r.category,r.priority,r.status,r.version,r.created_at,r.updated_at FROM requests r WHERE ${reqSql} ORDER BY r.updated_at DESC LIMIT 300`,
+      `SELECT r.id,r.reference,r.property_id,r.scheme_id,r.title,${w.kind === 'council' ? "''" : 'r.details'} AS details,r.category,r.priority,r.status,r.version,r.created_at,r.updated_at,
+        (SELECT i.service_kind FROM request_service_intakes i WHERE i.request_id=r.id) AS service_kind
+        FROM requests r WHERE ${reqSql} ORDER BY r.updated_at DESC LIMIT 300`,
       ...reqArgs,
     ).all()
   ).results;

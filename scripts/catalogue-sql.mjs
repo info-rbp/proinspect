@@ -1,4 +1,5 @@
 import { SERVICE_SEEDS } from '../packages/service-catalogue/index.ts';
+import { RESIDENTIAL_NEW_SERVICE_SEEDS } from '../packages/service-catalogue/residential-workflows.ts';
 import { mkdirSync, writeFileSync } from 'node:fs';
 const quote = (value) =>
   value === null
@@ -7,7 +8,7 @@ const quote = (value) =>
       ? String(value)
       : `'${String(value).replaceAll("'", "''")}'`;
 export function catalogueSql() {
-  return SERVICE_SEEDS.map(
+  return [...SERVICE_SEEDS,...RESIDENTIAL_NEW_SERVICE_SEEDS].map(
     (s) =>
       `INSERT INTO services(id,name,family,sectors_json,summary,duration_minutes,buffer_before,buffer_after,notice_hours,horizon_days,price_ex_gst_cents,booking_mode,active) VALUES(${[s.id, s.name, s.family, JSON.stringify(s.sectors), s.summary, s.duration_minutes, s.buffer_before, s.buffer_after, s.notice_hours, s.horizon_days, null, 'request', 1].map(quote).join(',')}) ON CONFLICT(id) DO NOTHING;`,
   ).join('\n');
