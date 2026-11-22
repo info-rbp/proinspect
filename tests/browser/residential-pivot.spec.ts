@@ -6,7 +6,6 @@ const labels = [
   'Tenants',
   'Maintenance',
   'About Us',
-  'Who We Help',
   'Contact',
   'Sign Up / Sign In',
 ];
