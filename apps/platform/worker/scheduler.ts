@@ -374,6 +374,7 @@ export class BookingScheduler extends DurableObject<Env> {
               clientId,terms!.termCode,terms!.approvalRequestId,
               amountExGstCents+gstCents,clientId),
             guard(this.env),
+            clearGuard(this.env),
           ] : []),
         ] : []),
         statement(
