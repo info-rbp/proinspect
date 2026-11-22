@@ -91,7 +91,7 @@ test('professional booking creates a job and scoped full record browsing opens i
       page = await agency.newPage();
     await page.goto(href + `/book/routine-inspection?property=${property.propertyId}`);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      'Arrange your next property visit.',
+      'What would you like us to do?',
     );
     await page.getByLabel('Preferred date', { exact: true }).fill(date());
     await expect(page.getByRole('radio').first()).toBeVisible();
