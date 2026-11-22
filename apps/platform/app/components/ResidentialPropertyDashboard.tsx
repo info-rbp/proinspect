@@ -78,10 +78,29 @@ export function ResidentialPropertyDashboard({data,property,setup,busy,result}:{
       </Link>)}</div>
     </section>}
     {canBook&&<section className="panel stack" aria-labelledby="property-maintenance-heading">
-      <h2 id="property-maintenance-heading">Maintenance &amp; Insurance</h2>
-      <p>Request maintenance coordination, follow-up support or insurance-related assistance for this property.</p>
-      <Link className="button secondary" to={base+'/requests?property='+encodeURIComponent(p.id)}>Make a property request</Link>
+      <div className="panel-header"><h2 id="property-maintenance-heading">Maintenance &amp; Insurance</h2>
+        <Link className="small" to={base+'/requests?property='+encodeURIComponent(p.id)}>All property requests →</Link>
+      </div>
+      <p>Report an issue or insured event directly from this property. Maintenance, repairs, claims and completion evidence remain linked to the same property record.</p>
+      <div className="grid-2">
+        <Link className="booking-category-card" to={base+'/requests?property='+encodeURIComponent(p.id)+'&kind=maintenance'}>
+          <strong className="booking-category-heading">Submit maintenance request</strong>
+          <span className="booking-category-description">Describe the issue, priority, access and supporting information.</span>
+        </Link>
+        <Link className="booking-category-card" to={base+'/requests?property='+encodeURIComponent(p.id)+'&kind=insurance'}>
+          <strong className="booking-category-heading">Submit insurance request</strong>
+          <span className="booking-category-description">Report an event and initiate authorised claim coordination.</span>
+        </Link>
+      </div>
+      <Link className="button secondary" to={base+'/requests?property='+encodeURIComponent(p.id)+'&service=urgent-maintenance-make-good'}>
+        Request urgent maintenance / make-good
+      </Link>
     </section>}
+    <section className="panel stack">
+      <h2>Co-living rooms &amp; shared areas</h2>
+      <p>Configure an authorised residential property with private occupancies and shared spaces.</p>
+      <Link className="button secondary" to={base+'/properties/'+encodeURIComponent(p.id)+'/co-living'}>Manage co-living</Link>
+    </section>
     <section className="grid-4 portal-summary" aria-label="Property activity summary">
       <Metric label="Upcoming visits" value={upcoming.length} detail="Confirmed appointments"/>
       <Metric label="Past bookings" value={history.length} detail="Recent activity shown below"/>
