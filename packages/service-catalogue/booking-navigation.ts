@@ -1,5 +1,5 @@
 import type { Service } from '../domain/index';
-import { RESIDENTIAL_BOOKING_GROUPS, isResidentialBookingGroupId, groupForResidentialService } from './residential-workflows';
+import { RESIDENTIAL_BOOKING_GROUPS, isResidentialBookingGroupId, groupForResidentialService } from './residential-workflows.ts';
 
 /**
  * Customer-facing appointment discovery for the existing service catalogue.
