@@ -150,7 +150,7 @@ try{
   await advance();
   assert.equal((await detail()).project.stage,'advertising');
   await command(writer.cookie,{action:'advance',version:(await detail()).project.version},409);
-  // The fixture has no published, approved room listing and no active tenant:
+  // The fixture starts without a published property listing and no active tenant:
   // the project MUST NOT silently transition into Tenanted.
   const holding=await detail();
   await command(writer.cookie,{action:'set_status',status:'on_hold',
@@ -159,11 +159,59 @@ try{
   await command(writer.cookie,{action:'set_status',status:'active',
     version:(await detail()).project.version,reason:'Proceeding after review'});
   assert.equal((await detail()).project.status,'active');
+  // Existing Leasing has one published listing per property, NOT per room.
+  // This is a synthetic already-approved property-level listing, not an
+  // attempt to publish an unapproved real advertisement or bypass governance.
+  const coRoute=root+'/properties/'+propertyId+'/co-living';
+  const configured=await api(coRoute,{cookie:landlord.cookie,
+    body:{action:'configure',allocationMode:'room'}});
+  assert.equal(configured.status,200,JSON.stringify(configured.data));
+  const room=await api(coRoute,{cookie:landlord.cookie,
+    body:{action:'add_space',label:'Room 1',spaceType:'room'}});
+  assert.equal(room.status,200,JSON.stringify(room.data));
+  const ownerUser=(await sql('SELECT id FROM users WHERE email=?',landlord.email).first()).id;
+  const listingId='coliving-synthetic-approved-listing';
+  const stamp=new Date().toISOString();
+  await sql(`INSERT INTO leasing_listings
+  (id,property_id,instructed_by_client_id,owner_client_id,kind,slug,title,
+   description,display_address,suburb,postcode,price_cents,agent_name,
+   agent_role,status,published_at,created_by,created_at,updated_at)
+   VALUES (?,?,?,?,'residential','synthetic-co-living-room-offer',
+   'Six-room Co-Living illustration','Synthetic approved property-level advertisement',
+   '19 Workflow Example Street','Perth','6000',210000,'Synthetic Landlord',
+   'landlord','published',?,?,?,?)`,
+   listingId,propertyId,clientId,clientId,stamp,ownerUser,stamp,stamp).run();
+  await command(writer.cookie,{action:'link_listing',listingId,
+    evidenceReference:'synthetic-approved-property-advert'});
+  assert.equal((await detail()).listings.length,1);
+  await command(writer.cookie,{action:'advance',
+    version:(await detail()).project.version},409);
+
+  // Reuse canonical tenancy + private room allocation, not a fake onboarding flag.
+  const start=new Date(Date.now()-86400000).toISOString();
+  const end=new Date(Date.now()+90*86400000).toISOString();
+  const invited=await api(root+'/tenancies',{cookie:landlord.cookie,body:{
+    propertyId,spaceId:room.data.spaceId,email:'first-occupant@example.test',
+    startsAt:start,endsAt:end}});
+  assert.equal(invited.status,201,JSON.stringify(invited.data));
+  const tenancy=await sql('SELECT status FROM tenancies WHERE id=?',invited.data.id).first();
+  assert.equal(tenancy.status,'active');
+  await checks(['approved_listing_published','first_room_pcr_completed',
+    'first_room_inventory_completed','ongoing_services_scheduled']);
+  await advance();
+  const last=await detail();
+  assert.equal(last.project.stage,'tenanted');
+  assert.equal(last.project.status,'completed');
+  const ownerLast=await api(ownerUrl,{cookie:landlord.cookie});
+  assert.equal(ownerLast.status,200);
+  assert.equal(ownerLast.data.project.stage,'tenanted');
+  assert.equal(ownerLast.data.assessment?.internal_notes,undefined);
+
   const published=await sql("SELECT price_ex_gst_cents,booking_mode FROM services WHERE id='routine-inspection'").first();
   const candidate=await sql("SELECT candidate_ex_gst_cents FROM inspection_price_candidates WHERE service_id='routine-inspection'").first();
   assert.ok(published);
   assert.equal(candidate?.candidate_ex_gst_cents??6000,6000); // #118 candidate remains separate.
   assert.ok(['request','instant'].includes(published.booking_mode));
   assert.deepEqual((await db.prepare('PRAGMA foreign_key_check').all()).results,[]);
-  console.log('PASS: PR118-descendant Co-Living onboarding role isolation, assessment privacy, proposal review, owner approval, budgets and readiness');
+  console.log('PASS: PR118-descendant Co-Living six-stage owner/Staff workflow, isolation, financial approvals, property listing, room tenancy and handover');
 }finally{await mf.dispose();}
