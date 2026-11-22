@@ -132,14 +132,18 @@ export default function Book() {
       {signal:controller.signal,credentials:'same-origin'})
       .then(r=>r.ok?r.json():null)
       .then(value=>{
-        if(controller.signal.aborted||!value)return;
-        if(value.profile) {
-          setPropertyProfile(value.profile);
-          setFurnishingStatus(value.profile.furnishing??'unknown');
+        const setup=value as null | {
+          profile?:{bedrooms:number; bathrooms:number; furnishing:string};
+          tenancy?:{occupancyStatus:string;startsOn:string|null};
+        };
+        if(controller.signal.aborted||!setup)return;
+        if(setup.profile) {
+          setPropertyProfile(setup.profile);
+          setFurnishingStatus(setup.profile.furnishing??'unknown');
         }
-        if(value.tenancy) {
-          setOccupancyStatus(value.tenancy.occupancyStatus??'unknown');
-          setTenancyStartsOn(value.tenancy.startsOn??'');
+        if(setup.tenancy) {
+          setOccupancyStatus(setup.tenancy.occupancyStatus??'unknown');
+          setTenancyStartsOn(setup.tenancy.startsOn??'');
         }
       }).catch(()=>{});
     return ()=>controller.abort();
