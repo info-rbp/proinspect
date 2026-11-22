@@ -83,7 +83,7 @@ export default function CoLivingOnboardingDetail(){
       {d.assessment&&<section className="panel stack">
         <h2>Property assessment</h2>
         <p>{d.assessment.summary}</p>
-        <p className="small">Proposed private rooms: {d.assessment.proposed_rooms} · {d.assessment.status}</p>
+        <p className="small">Proposed private rooms: {d.assessment.proposed_rooms} · {d.assessment.status} · Visited: {d.assessment.visit_at?new Date(d.assessment.visit_at).toLocaleDateString('en-AU'):'Not yet recorded'}</p>
         {staff&&<p className="small">Internal assessment note: {d.assessment.internal_notes}</p>}
         <p className="small">Evidence reference: {d.assessment.evidence_reference}</p>
       </section>}
@@ -115,6 +115,30 @@ export default function CoLivingOnboardingDetail(){
               <strong>{dollars(proposal.furnishing_budget_cents+proposal.works_budget_cents)}</strong></div>
           </div>
           <p><strong>Management:</strong> 25% + GST of gross rental income actually collected.</p>
+          <div className="stack">
+            <h3>Illustrative owner income and annual utility allowance</h3>
+            <p className="small">The following assumes a full 52-week year with both car bays rented and no separately modelled property expenses.</p>
+            <div className="grid-4">
+              <div><p className="small">Gross rent per week at full occupancy</p><strong>{dollars(proposal.room_weekly_cents+proposal.parking_weekly_cents)}</strong></div>
+              <div><p className="small">Management fee plus GST per week</p><strong>{dollars(Math.round((proposal.room_weekly_cents+proposal.parking_weekly_cents)*0.275))}</strong></div>
+              <div><p className="small">Owner balance per week before expenses</p><strong>{dollars(Math.round((proposal.room_weekly_cents+proposal.parking_weekly_cents)*0.725))}</strong></div>
+              <div><p className="small">Potential annual utility cap</p><strong>{dollars(Math.round((proposal.room_weekly_cents+proposal.parking_weekly_cents)*52*0.25*0.25))}</strong></div>
+            </div>
+            <h3>Occupancy comparison</h3>
+            <div className="record-list">
+              {[1,0.95,0.9,0.85].map(rate=>{
+                const gross=Math.round(proposal.room_weekly_cents*rate)+proposal.parking_weekly_cents;
+                const management=Math.round(gross*0.25),gst=Math.round(management*0.1);
+                return <div key={rate} className="record-row">
+                  <div><strong>{Math.round(rate*100)}% room occupancy</strong><p className="small">Gross collected rent: {dollars(gross)}/week</p></div>
+                  <div><strong>{dollars(gross-management-gst)}/week</strong>
+                    <p className="small">Owner before property expenses · utility cap {dollars(Math.round(management*52*0.25))}/year</p>
+                  </div>
+                </div>;
+              })}
+            </div>
+            <p className="small">Illustrations exclude vacancies in parking, actual utility overages, maintenance, cleaning outside the agreed package, insurance, rates, tax and establishment capital. The annual allowance is based on fees actually collected, not guaranteed potential rent.</p>
+          </div>
           <p><strong>Annual utility allowance:</strong> 25% of collected ProInspect management fees excluding GST, for eligible electricity, gas and water consumption.</p>
           <p><strong>Assumptions and exclusions:</strong> {proposal.assumptions}</p>
           <p className="small">Agreement version: {proposal.agreement_version} · Document reference: {proposal.document_reference}</p>
@@ -221,7 +245,7 @@ export default function CoLivingOnboardingDetail(){
       <section className="panel stack">
         <h2>Tasks and project activity</h2>
         {tasks.length?<div className="record-list">{tasks.map((t:any)=><div className="record-row" key={t.id}>
-          <div><strong>{t.title}</strong><p className="small">{t.stage.replaceAll('_',' ')} · {t.status}</p></div>
+          <div><strong>{t.title}</strong><p className="small">{t.stage.replaceAll('_',' ')} · {t.status}{t.due_at?' · Due '+new Date(t.due_at).toLocaleDateString('en-AU'):''}</p></div>
           {staff&&t.stage===stage&&p.status==='active'&&
             <OperationForm endpoint={endpoint} defaults={{action:'update_task',taskId:t.id}} label="Update task">
               <Select name="status" label="Task status" value={t.status} options={choices(['open','blocked','completed'])}/>
