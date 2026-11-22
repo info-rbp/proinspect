@@ -185,3 +185,39 @@ CREATE TABLE co_living_onboarding_listing_links (
  UNIQUE(project_id,listing_id)
 ) STRICT;
 CREATE INDEX co_living_onboarding_listing_by_project ON co_living_onboarding_listing_links(project_id,listing_id);
+
+-- Defend approved capital limits at the database boundary, including racing
+-- procurement updates: a preflight cost calculation is not sufficient alone.
+CREATE TRIGGER co_living_onboarding_item_budget_guard
+BEFORE UPDATE OF status,actual_total_cents ON co_living_onboarding_items
+WHEN NEW.status IN('ordered','delivered','installed')
+BEGIN
+  SELECT RAISE(ABORT,'BUDGET_APPROVAL_REQUIRED')
+  WHERE (
+    SELECT COALESCE(SUM(COALESCE(actual_total_cents,unit_cost_cents*quantity)),0)
+    FROM co_living_onboarding_items
+    WHERE project_id=NEW.project_id AND id!=NEW.id AND status IN('ordered','delivered','installed')
+  ) + COALESCE(NEW.actual_total_cents,NEW.unit_cost_cents*NEW.quantity) >
+    (SELECT COALESCE(MAX(furnishing_budget_cents+works_budget_cents),0)
+     FROM co_living_onboarding_proposals
+     WHERE project_id=NEW.project_id AND status='accepted') +
+    (SELECT COALESCE(SUM(extra_budget_cents),0)
+     FROM co_living_onboarding_variations
+     WHERE project_id=NEW.project_id AND status='approved');
+END;
+
+-- Decisions must reference their exact proposal and stage-specific financial
+-- snapshot; a forged project/version pairing cannot be stored.
+CREATE TRIGGER co_living_onboarding_decision_matches_proposal
+BEFORE INSERT ON co_living_onboarding_decisions
+BEGIN
+  SELECT RAISE(ABORT,'PROPOSAL_DECISION_MISMATCH')
+  WHERE NOT EXISTS (
+    SELECT 1 FROM co_living_onboarding_proposals p
+    WHERE p.id=NEW.proposal_id AND p.project_id=NEW.project_id
+      AND p.version=NEW.proposal_version AND
+      ((NEW.decision='approved' AND p.status='accepted')
+      OR (NEW.decision='declined' AND p.status='declined')
+      OR (NEW.decision='changes_requested' AND p.status='changes_requested'))
+  );
+END;

@@ -56,6 +56,24 @@ class CoLivingOnboardingSchema(unittest.TestCase):
         with self.assertRaisesRegex(sqlite3.IntegrityError,'DECISION_IMMUTABLE'):
             self.db.execute("UPDATE co_living_onboarding_decisions SET decision='declined' WHERE id='dec'")
 
+    def test_financial_spend_cannot_exceed_owner_approved_budget_even_in_direct_sql(self):
+        self.db.execute("""INSERT INTO co_living_onboarding_proposals
+        (id,project_id,version,status,traditional_weekly_cents,room_weekly_cents,parking_weekly_cents,
+         furnishing_budget_cents,works_budget_cents,assumptions,agreement_version,document_reference,
+         created_by,created_at)
+        VALUES('spendprop','prj',1,'accepted',89000,205000,5000,100000,0,
+          'Illustrative low capital ceiling','coliving-v1','reviewed-owner-proposal','writer','2026-11-22')""")
+        self.db.execute("""INSERT INTO co_living_onboarding_items
+        (id,project_id,space_label,item_name,supplier,quantity,unit_cost_cents,updated_by,created_at,updated_at)
+        VALUES('bed','prj','Bedroom 1','Bedframe','IKEA',1,110000,'writer','2026-11-22','2026-11-22')""")
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'BUDGET_APPROVAL_REQUIRED'):
+            self.db.execute("UPDATE co_living_onboarding_items SET status='ordered' WHERE id='bed'")
+        self.db.execute("""INSERT INTO co_living_onboarding_variations
+        (id,project_id,description,extra_budget_cents,status,requested_by,created_at)
+        VALUES('extra','prj','Owner approved higher spend',25000,'approved','writer','2026-11-22')""")
+        self.db.execute("UPDATE co_living_onboarding_items SET status='ordered' WHERE id='bed'")
+        self.assertEqual(self.db.execute("SELECT status FROM co_living_onboarding_items WHERE id='bed'").fetchone(),('ordered',))
+
     def test_readiness_check_cannot_self_verify(self):
         self.db.execute("""INSERT INTO co_living_onboarding_checks
         (project_id,code,stage,status,evidence_reference,submitted_by,submitted_at)
