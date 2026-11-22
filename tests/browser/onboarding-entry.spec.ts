@@ -272,7 +272,7 @@ test('one-off inspection entry remains free and adds a property without creating
   await expect(page.getByRole('heading', { name: 'What would you like us to do?' })).toBeVisible();
   await expect(page.getByRole('button', { name: /Book an inspection/ })).toHaveAttribute('aria-pressed','true');
   await expect(page.getByRole('heading', { name: 'Inspection details' })).toBeVisible();
-  await expect(page.getByLabel('Contact phone')).toBeVisible();
+  await expect(page.getByLabel('Contact phone', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Tenancy commencement date (if known)')).toBeVisible();
   const serviceIds = await page.getByLabel('Service', { exact: true })
     .locator('option').evaluateAll(options => options.map(option => (option as HTMLOptionElement).value).filter(Boolean));
