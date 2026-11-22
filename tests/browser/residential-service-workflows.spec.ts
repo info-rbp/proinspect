@@ -64,9 +64,6 @@ test('open-home is a grouped scheduling request and maintenance/insurance start 
  await page.getByLabel(/Tenant Application Handling/).check();
  await page.getByRole('button',{name:'Request Open Home scheduling'}).click();
  await expect(page.getByText('Your request has been received.')).toBeVisible();
- const details=await page.request.get('/api/w/landlord/'+base.split('/').at(-1)+
-   '/requests'); // intentionally unused generic list; verified through page request below
- void details;
  await page.goto(base+'/properties/'+propertyId);
  await expect(page.getByRole('heading',{name:'Maintenance & Insurance'})).toBeVisible();
  await page.getByRole('link',{name:/Submit insurance request/}).click();
