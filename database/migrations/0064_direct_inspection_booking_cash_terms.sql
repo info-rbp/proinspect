@@ -3,7 +3,11 @@
 CREATE TABLE cash_payment_term_requests (
  id TEXT PRIMARY KEY, client_id TEXT NOT NULL REFERENCES clients(id),
  term_code TEXT NOT NULL CHECK(term_code IN('upon_booking','net_7','eom_7')),
- credit_limit_cents INTEGER CHECK(credit_limit_cents IS NULL OR credit_limit_cents>=0),
+ credit_limit_cents INTEGER CHECK(
+  (term_code='upon_booking' AND credit_limit_cents IS NULL)
+  OR (term_code IN('net_7','eom_7') AND credit_limit_cents IS NOT NULL
+   AND credit_limit_cents BETWEEN 1 AND 100000000)
+ ),
  reason TEXT NOT NULL CHECK(length(reason)>=8), status TEXT NOT NULL DEFAULT 'pending'
  CHECK(status IN('pending','approved','declined')),
  requested_by TEXT NOT NULL REFERENCES users(id),
@@ -14,7 +18,11 @@ CREATE UNIQUE INDEX cash_terms_one_pending ON cash_payment_term_requests(client_
 CREATE TABLE cash_client_terms (
  client_id TEXT PRIMARY KEY REFERENCES clients(id),
  term_code TEXT NOT NULL CHECK(term_code IN('upon_booking','net_7','eom_7')),
- credit_limit_cents INTEGER CHECK(credit_limit_cents IS NULL OR credit_limit_cents>=0),
+ credit_limit_cents INTEGER CHECK(
+  (term_code='upon_booking' AND credit_limit_cents IS NULL)
+  OR (term_code IN('net_7','eom_7') AND credit_limit_cents IS NOT NULL
+   AND credit_limit_cents BETWEEN 1 AND 100000000)
+ ),
  source_request_id TEXT NOT NULL UNIQUE REFERENCES cash_payment_term_requests(id),
  approved_by TEXT NOT NULL REFERENCES users(id), approved_at TEXT NOT NULL
 ) STRICT;
