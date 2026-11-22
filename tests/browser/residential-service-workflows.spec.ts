@@ -33,8 +33,9 @@ test('PCR, Routine and Exit add-ons are optional and appear before appointment s
  await expect(page.getByRole('button',{name:/Open Homes & leasing/})).toBeVisible();
  await expect(page.getByRole('button',{name:/Keys & access control/})).toBeVisible();
  await expect(page.getByRole('heading',{name:'Optional services'})).toBeVisible();
- await expect(page.getByText('The discounted Inventory Report can be added',{exact:false})).not.toBeVisible();
+ await expect(page.getByText('The discounted Inventory Report can be added',{exact:false})).toBeVisible();
  await page.getByLabel('Furnishing').selectOption('part_furnished');
+ await expect(page.getByText('The discounted Inventory Report can be added',{exact:false})).not.toBeVisible();
  await expect(page.getByText('Property Inventory Report (with PCR)')).toBeVisible();
  await page.getByLabel(/Property Inventory Report \(with PCR\)/).check();
  await expect(page.getByText('Candidate extra fee')).toBeVisible();
