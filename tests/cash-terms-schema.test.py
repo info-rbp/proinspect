@@ -30,13 +30,27 @@ def db():
 
 
 class CashBookingSchemaTests(unittest.TestCase):
-    def test_source_prices_and_other_services(self):
+    def test_candidate_prices_do_not_activate_direct_booking(self):
         conn = db()
-        rows = conn.execute("SELECT id,price_ex_gst_cents,booking_mode FROM services ORDER BY id").fetchall()
-        self.assertIn(("property-condition-report", 20000, "instant"), rows)
-        self.assertIn(("final-exit-inspection", 10000, "instant"), rows)
-        self.assertIn(("routine-inspection", 6000, "instant"), rows)
+        # Applying the migration alone must not approve prices or switch the
+        # public catalogue from request/quote to instant paid appointments.
+        rows = conn.execute(
+            "SELECT id,price_ex_gst_cents,booking_mode FROM services ORDER BY id"
+        ).fetchall()
+        self.assertIn(("property-condition-report", None, "request"), rows)
+        self.assertIn(("final-exit-inspection", None, "request"), rows)
+        self.assertIn(("routine-inspection", None, "request"), rows)
         self.assertIn(("already-approved", 19900, "instant"), rows)
+        candidates = conn.execute(
+            "SELECT service_id,candidate_ex_gst_cents,review_status "
+            "FROM inspection_price_candidates ORDER BY service_id"
+        ).fetchall()
+        self.assertEqual(candidates, [
+            ("final-exit-inspection", 10000, "pending_review"),
+            ("property-condition-report", 20000, "pending_review"),
+            ("routine-inspection", 6000, "pending_review"),
+        ])
+        self.assertFalse(any(row[0] == "already-approved" for row in candidates))
 
     def test_single_pending_decision_and_separate_effective_terms(self):
         conn = db()
