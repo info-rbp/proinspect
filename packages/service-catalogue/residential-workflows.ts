@@ -59,10 +59,10 @@ export function groupForResidentialService(id: string | null | undefined): Resid
   return RESIDENTIAL_BOOKING_GROUPS.find(g=>g.services.some(s=>s===id))?.id??null;
 }
 
+// Social marketing and tenant application assistance are available ONLY as
+// explicitly opted-in Open Home attachments, never standalone catalogue sales.
 export const RESIDENTIAL_REQUEST_ONLY = [
-  {id:'social-marketing',name:'Marketing of Property (social media)',kind:'service_request'},
   {id:'real-estate-platform-marketing',name:'Real Estate Platform Marketing',kind:'quote'},
-  {id:'tenant-application-handling',name:'Tenant Application Handling',kind:'service_request'},
   {id:'rent-review-renewal',name:'Rent Review and Renewal Support',kind:'service_request'},
   {id:'abandoned-goods',name:'Abandoned Goods Administration',kind:'enquiry'},
   {id:'court-form-lodgement',name:'Lodgement of Magistrates Court Forms',kind:'enquiry'},
