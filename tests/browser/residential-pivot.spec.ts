@@ -75,7 +75,7 @@ for (const width of [320, 390, 1440])
           .getByRole('navigation', { name: 'Primary navigation' })
           .getByRole('link')
           .allTextContents(),
-      ).toEqual(labels.slice(0, 8));
+      ).toEqual(labels.slice(0, -1));
     }
     await page.screenshot({ path: `artifacts/residential-pivot-${width}.png`, fullPage: true });
   });
