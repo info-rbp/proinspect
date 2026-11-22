@@ -350,11 +350,31 @@ export class BookingScheduler extends DurableObject<Env> {
           ...(paymentRequired ? [statement(this.env.DB,
             'INSERT INTO registered_booking_payment_links(booking_id,payment_id,price_ex_gst_cents,gst_cents,created_at) VALUES(?,?,?,?,?)',
             id,paymentId,amountExGstCents,gstCents,time)] : []),
-          ...(creditBooking ? [statement(this.env.DB,
-            `INSERT INTO cash_booking_charges
-             (booking_id,payment_id,client_id,term_code,amount_ex_gst_cents,gst_cents,status,created_at)
-             VALUES(?,?,?,?,?,?,'awaiting_service',?)`,
-            id,paymentId,clientId,terms!.termCode,amountExGstCents,gstCents,time)] : []),
+          ...(creditBooking ? [
+            // A concurrent Staff credit change must not race the scheduler's
+            // earlier balance check. Validate the exact approved profile and
+            // the now-current total exposure INSIDE the booking D1 batch.
+            statement(this.env.DB,
+              `INSERT INTO cash_booking_charges
+               (booking_id,payment_id,client_id,term_code,amount_ex_gst_cents,gst_cents,status,created_at)
+               SELECT ?,?,?,?,?,?,'awaiting_service',?
+               WHERE EXISTS (
+                 SELECT 1 FROM cash_client_terms t
+                 WHERE t.client_id=? AND t.term_code=?
+                   AND t.source_request_id=?
+                   AND t.credit_limit_cents IS NOT NULL
+                   AND t.credit_limit_cents >= ? + COALESCE((
+                     SELECT SUM(p.total_cents)
+                     FROM cash_booking_charges c JOIN payments p ON p.id=c.payment_id
+                     WHERE c.client_id=? AND c.status!='cancelled'
+                       AND p.status NOT IN('paid','waived','refunded')
+                   ),0)
+               )`,
+              id,paymentId,clientId,terms!.termCode,amountExGstCents,gstCents,time,
+              clientId,terms!.termCode,terms!.approvalRequestId,
+              amountExGstCents+gstCents,clientId),
+            guard(this.env),
+          ] : []),
         ] : []),
         statement(
           this.env.DB,
