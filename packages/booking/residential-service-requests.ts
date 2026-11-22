@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { RESIDENTIAL_REQUEST_ONLY, RESIDENTIAL_SERVICE_IDS } from '../service-catalogue/residential-workflows';
+import { RESIDENTIAL_REQUEST_ONLY, RESIDENTIAL_SERVICE_IDS } from '../service-catalogue/residential-workflows.ts';
 
 /** Intake is confidential and separate from the visible request summary. */
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value =>
