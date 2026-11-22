@@ -72,7 +72,7 @@ export async function cashTermCommand(env:Env,user:Principal,w:Workspace,action:
   await env.DB.batch([
    statement(env.DB,`INSERT INTO cash_payment_term_requests
     (id,client_id,term_code,credit_limit_cents,reason,status,requested_by,created_at)
-    VALUES(?,?,?,?,?,'pending',?,?)`,id,d.clientId,d.termCode,d.termCode==='upon_booking'?null:d.creditLimitCents,d.reason,user.id,time),
+    VALUES(?,?,?,?,?,'pending',?,?)`,id,d.clientId,d.termCode,d.termCode==='upon_booking'?null:(d.creditLimitCents??null),d.reason,user.id,time),
    activity(env,user,'cash_terms.requested','client',d.clientId,null,null,{requestId:id,term:d.termCode})
   ]);
   return {id,status:'pending',message:'Awaiting independent Staff approval; effective terms have not changed.'};
