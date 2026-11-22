@@ -95,6 +95,33 @@ export default function Property() {
               ))}
             </div>
           </section>}
+        {p.sector==='residential' &&
+          ['landlord','property-manager'].includes(d.workspace.kind) &&
+          d.workspace.role!=='viewer' &&
+          <section className="panel stack" aria-labelledby="property-maintenance-heading">
+            <div className="panel-header">
+              <h2 id="property-maintenance-heading">Maintenance & Insurance</h2>
+              <Link className="small" to={d.workspace.href+'/requests?property='+encodeURIComponent(p.id)}>All property requests →</Link>
+            </div>
+            <p className="small">Report an issue or insured event directly from this property.
+              Maintenance, repairs, claims and completion evidence remain linked to the same property record.</p>
+            <div className="grid-2">
+              <Link className="booking-category-card" to={
+                d.workspace.href+'/requests?property='+encodeURIComponent(p.id)+'&kind=maintenance'}>
+                <strong className="booking-category-heading">Submit maintenance request</strong>
+                <span className="booking-category-description">Describe the issue, priority, access and supporting information.</span>
+              </Link>
+              <Link className="booking-category-card" to={
+                d.workspace.href+'/requests?property='+encodeURIComponent(p.id)+'&kind=insurance'}>
+                <strong className="booking-category-heading">Submit insurance request</strong>
+                <span className="booking-category-description">Report an event and initiate authorised claim coordination.</span>
+              </Link>
+            </div>
+            <Link className="button secondary" to={
+              d.workspace.href+'/requests?property='+encodeURIComponent(p.id)+'&service=urgent-maintenance-make-good'}>
+              Request urgent maintenance / make-good
+            </Link>
+          </section>}
         {p.sector==='residential' && ['landlord','property-manager','staff'].includes(d.workspace.kind) &&
           (d.workspace.kind!=='staff' || ['administrator','operations_manager'].includes(d.user.staffRole??'')) &&
           <section className="panel stack">
