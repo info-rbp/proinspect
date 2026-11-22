@@ -4,6 +4,10 @@
 **Branch:** `feature/co-living-onboarding-pr118-spec-20261122` (forked from draft PR #118 at `12d66cf9`)  
 **Scope:** Acceptance *specification* only. None of these future end-to-end scenarios are asserted as passing merely because this file exists.
 
+## Implementation status
+
+The source branch now includes the additive D1 migration, guarded owner/Staff APIs and six-stage portal screens plus isolated schema/Worker tests. These source changes are *not* acceptance evidence by themselves. The existing Leasing model remains one published property-level listing per property; multi-room public advertising needs a separately approved build. Hosted browser accessibility, licensed payment flows, document issuance and full production release must be accepted independently.
+
 ## 1. Function and role acceptance
 
 | ID | Scenario | Required result | Test layer |
@@ -29,7 +33,7 @@
 | CL-019 | Supplier receipt/warranty uploaded | Only authorised owner/staff can view; object grant checked | API + documents |
 | CL-020 | Readiness incomplete or blocked | Cannot advance to Advertising; blockers visible with remedy | API + browser |
 | CL-021 | Same staff person drafts and independently approves controlled release | Review rejected where separation required | API |
-| CL-022 | Room listing publication requested from onboarding | Reuses approved leasing publication gate, no unauthorised public listing | API + browser |
+| CL-022 | Property-level listing linked to onboarding | Uses only an already-published property-level Residential listing, no unauthorised public room listing or second active listing | API + browser |
 | CL-023 | First verified resident moves in | Stage changes to Tenanted only after tenancy + PCR + inventory + schedules | API + D1 |
 | CL-024 | Only one of six rooms occupied | Project in Tenanted stage; remaining five can remain advertised without new project | Browser + API |
 | CL-025 | Resident reads own room | No exposure of other resident identity, owner financials or private staff notes | API + browser |
@@ -76,7 +80,7 @@
 ## 4. Test ownership and phase gates
 
 1. **Domain scaffolding (current branch):** run `node --experimental-strip-types --test tests/co-living-onboarding-contract.test.ts` and `pnpm typecheck` after dependencies installed. Test controls remain pure; they are **not** a DB/permissions acceptance result.
-2. **Schema/API phase:** add `tests/co-living-onboarding-schema.test.py` and `tests/runtime/co-living-onboarding.mjs` with non-empty synthetic D1, rollback/recovery, project/room/owner access, versioned acceptance and concurrency.
+2. **Schema/API phase:** `tests/co-living-onboarding-schema.test.py` and `tests/runtime/co-living-onboarding.mjs` are committed. Run exact-head schema/Worker checks, expand to non-empty upgrade + recovery and simultaneous budget approval/decision races before release.
 3. **Client/Staff browser phase:** extend `tests/browser` for Enquiry → Site Visit → Proposal → Implementation → Advertising → first Tenanted transition using separate staff and owner accounts, accessible mobile/keyboard checks and realistic pending states.
 4. **Regression:** verify canonical PR #118 owner registration, property-first appointment categories, PCR/Routine/Exit intake, unapproved candidate prices, disabled Cash credit and independent review.
 5. **Release:** only after source-head CI, migration rehearsal, external provider and legal sign-off, independent hosted owner/Staff/tenant acceptance and explicit environment-specific release approval. **No direct production deployment from this branch.**
@@ -86,10 +90,10 @@
 - [x] Reviewed PR #118 integration and exact-head constraints.
 - [x] Created separate descendant branch from PR #118 head.
 - [x] Prepared development specification and versioned stages/guide scaffold.
-- [ ] Implement additive schema and tested server API.
-- [ ] Implement owner and operations screens.
-- [ ] Implement proposal versioning, document grants and spend approval gates.
-- [ ] Implement readiness, lawful listing and resident handoff.
+- [x] Commit additive 0065 schema and guarded server API (subject to full test acceptance).
+- [x] Commit owner and operations screens (subject to browser acceptance).
+- [x] Commit versioned proposals and owner spend decision gates; real signed-document issuance/grants remain outstanding.
+- [x] Commit reviewable readiness and existing property-level listing/real-tenancy handoff gates; extended public room listing remains outstanding.
 - [ ] Run full automated and hosted acceptance.
 - [ ] Reconcile updated PR #118 head, open integration review and authorise any release.
 

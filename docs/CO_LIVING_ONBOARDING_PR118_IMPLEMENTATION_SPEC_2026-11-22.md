@@ -1,5 +1,17 @@
 # Co-Living property onboarding module — PR #118-based development specification
 
+## Implementation update — 22 November 2026 (PR #120, draft)
+
+The branch now includes migration `0065_co_living_onboarding.sql`, guarded Worker APIs, Residential owner and Staff Operations screens, revised owner fee/utility financial illustrations, document/evidence **references**, independent proposal/assessment/checklist review, project task/asset/approved-variation tracking, and focused migration plus isolated Worker/D1 tests. This is functional source code, not a production release, final legal agreement/e-signature, working Stripe rent routing, full document upload, room-by-room public leasing, or certified hosted role acceptance.
+
+**Verified upstream leasing limitation:** `database/migrations/0009_leasing.sql` creates `leasing_one_live_per_property`, allowing **one draft/published listing per canonical property**. Co-Living advertising handover currently links a published **property-level** listing to the onboarding project; resident room assignment remains independently scoped in `co_living_spaces` and `co_living_occupancies`. Six simultaneous public room-level advertisements require a separate leasing schema / API / UX change and approval. This implementation does not manufacture unsupported room listings or silently bypass leasing release gates.
+
+**Current core integration:** `apps/platform/worker/features/co-living-onboarding.server.ts` handles owner/staff actions under the established workspace/API permissions, and the onboarding routes render inside the existing `/w/:kind/:scopeId` Client/Staff Portals. An external enquiry may still use the existing public marketing channel; the authorised property-onboarding record is created after an owner's verified property relationship.
+
+**Release boundary:** Existing PR #118 inspection rates, booking categories, candidate fee migration `0064`, Stripe credit flags, bond handling and rent custody are untouched. All operations remain branch-only until full exact-head and hosted acceptance. Supplier procurement updates record progress; they do not place orders or pay trades. Owner decisions record an approved scope but are not substitute digital signatures or independent legal verification.
+
+---
+
 **Status:** IMPLEMENTATION SPECIFICATION / non-production  
 **Prepared:** 22 November 2026 (Australia/Perth)  
 **Upstream integration PR:** [#118](https://github.com/info-rbp/proinspect/pull/118), draft, head `12d66cf91b1fbb8d99268168248bd0c918d98908` at branch creation  
@@ -242,4 +254,4 @@ These are explicit gates, **not** justification to display unverified services a
 - Run `pnpm typecheck`, focused Node tests, the applicable `pnpm test`/`pnpm test:schema` and browser/isolated D1 acceptance once implementation exists, followed by independent hosted role testing.
 - Production deployment, live provider activation, D1 migrations and client billing require separate approvals.
 
-**Deliverable status on this branch:** specification, acceptance matrix and a pure Stage/Guide domain contract with tests; not a completed live portal, production migration or payment integration.
+**Deliverable status on this branch:** proposed functional schema/API/Portal screens, original specification and acceptance matrix, and focused tests are committed. Full multi-room public advertising, integrated document issuance, contractual e-signature, rent/bond/payment processing, completed hosted role acceptance and production release are **not** included.
