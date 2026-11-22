@@ -4,6 +4,7 @@ import type {Principal, Workspace} from '../../../../packages/domain/index';
 import {operationsWrite,workOrderAccess} from '../../../../packages/authorization/server';
 import {activity,guard,clearGuard} from '../../../../packages/operations/core';
 import {unseal} from '../../../../packages/auth/crypto';
+import {releaseFeatureReady} from './release-governance.server';
 import {cashPaymentTermSchema,cashInvoicePeriod,cashPeriodIsClosed,type CashPaymentTerm} from '../../../../packages/booking/inspection-checkout';
 
 function staff(user:Principal,w:Workspace) {
@@ -16,7 +17,7 @@ export async function effectiveCashTerms(env:Env,clientId:string){
  // A credit approval is not itself a production release. Keep the customer
  // booking screen consistent with the fail-closed scheduler while the
  // credit/invoicing provider acceptance flag remains off.
- const released=env.APP_ENV!=='production'||env.CASH_CLIENT_CREDIT_ENABLED==='true';
+ const released=await releaseFeatureReady(env,'cash_credit');
  const applicable=released?row:null;
  return {termCode:applicable?.term_code??'upon_booking' as CashPaymentTerm,
   creditLimitCents:applicable?.credit_limit_cents??null,
