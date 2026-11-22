@@ -87,7 +87,13 @@ test('existing owner can complete a minimal property profile without recreating 
   await page.getByRole('button',{name:/Continue/}).click();
   await page.getByLabel('Current tenancy status').selectOption('vacant');
   await page.getByRole('button',{name:/Continue/}).click();
-  await page.getByRole('button',{name:'Save property details'}).click();
+  // The successful action reloads and re-keys the wizard immediately.
+  // Use a native click after checking actionability so Playwright does not keep
+  // retrying a replaced button after the server has already persisted the data.
+  const save=page.getByRole('button',{name:'Save property details'});
+  await expect(save).toBeVisible();
+  await expect(save).toBeEnabled();
+  await save.evaluate(button=>(button as HTMLButtonElement).click());
   await expect(page.getByText('Property details saved.',{exact:false})).toBeVisible();
   const setup=await page.request.get('/api/w/landlord/'+client+'/properties/'+id+'/setup');
   const saved=await setup.json();
