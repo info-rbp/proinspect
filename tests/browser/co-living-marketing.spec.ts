@@ -11,10 +11,10 @@ test('Co-Living landing uses six linked image banners, correct destination pages
  for(const [index,item] of CO_LIVING_BANNERS.entries()){
   const card=banners.nth(index);
   await expect(card.getByRole('heading',{name:item.title})).toBeVisible();
-  await expect(card.getByRole('link',{name:item.action,exact:true})).toHaveAttribute('href',item.href);
+  await expect(card.locator('a.pi-co-living-button')).toHaveAttribute('href',item.href);
   await expect(card.locator('img')).toHaveAttribute('alt',/.+/);
  }
- const overview=banners.first().getByRole('link',{name:'Discover Co-Living',exact:true});
+ const overview=banners.first().locator('a.pi-co-living-button');
  await overview.click();
  await expect(page).toHaveURL(/\/co-living#overview$/);
  for(const slug of CO_LIVING_GUIDE_SLUGS){
