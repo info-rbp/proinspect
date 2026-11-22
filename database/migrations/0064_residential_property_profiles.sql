@@ -36,5 +36,3 @@ CREATE UNIQUE INDEX residential_tenancy_one_current
  ON residential_property_tenancy_snapshots(property_id) WHERE is_current=1;
 CREATE INDEX residential_tenancy_property_history
  ON residential_property_tenancy_snapshots(property_id,recorded_at DESC);
--- Existing tenancy/member/invitation tables remain independent. No automated
--- conversion of contact details into user accounts or portal access.
