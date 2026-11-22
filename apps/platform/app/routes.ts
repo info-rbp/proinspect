@@ -16,6 +16,7 @@ export default [
     route('commercial', '../../marketing/app/routes/service-overview.tsx', { id: 'sector-overview-commercial' }),
     route('strata', '../../marketing/app/routes/service-overview.tsx', { id: 'sector-overview-strata' }),
     route('co-living', '../../marketing/app/routes/service-overview.tsx', { id: 'sector-overview-co-living' }),
+    route('co-living/:topic', '../../marketing/app/routes/co-living-guide.tsx'),
     route('student-living', '../../marketing/app/routes/service-overview.tsx', { id: 'sector-overview-student-living' }),
     route('construction', '../../marketing/app/routes/service-overview.tsx', { id: 'sector-overview-construction' }),
     route('leasing', '../../marketing/app/routes/leasing-index.tsx', { id: 'leasing-main' }),
