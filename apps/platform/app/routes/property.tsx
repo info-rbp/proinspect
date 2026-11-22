@@ -5,6 +5,8 @@ import { useWorkspace } from '../lib/workspace';
 import { PageHeading, Badge, EmptyState, Feedback } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
 import { propertyBookingCategories } from '../../../../packages/service-catalogue/booking-navigation';
+import { ResidentialPropertyDashboard } from '../components/ResidentialPropertyDashboard';
+import type { ResidentialSetup } from '../components/ResidentialPropertyWizard';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
   const d = (await loadApi(
     request,
@@ -19,11 +21,29 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
     if(response.ok)management=await response.json() as Record<string,any>;
     else if(response.status!==403)throw response;
   }
-  return { ...d, management, stripeSubscriptionsEnabled: params.kind === 'landlord' || (env.APP_ENV === 'staging' && env.STRIPE_BILLING_ENABLED === 'true' && env.STRIPE_TAX_READY === 'true') };
+  const setup = params.kind === 'landlord' && params.propertyId
+    ? await loadApi(request,context,
+      `/api/w/${params.kind}/${params.scopeId}/properties/${params.propertyId}/setup`) as ResidentialSetup
+    : null;
+  return { ...d, setup, management, stripeSubscriptionsEnabled: params.kind === 'landlord' || (env.APP_ENV === 'staging' && env.STRIPE_BILLING_ENABLED === 'true' && env.STRIPE_TAX_READY === 'true') };
 }
 export async function action({request,context,params}:ActionFunctionArgs){
-  if(params.kind!=='staff')return data({error:'Staff administration only.'},{status:403});
   const f=await request.formData();
+  if(params.kind==='landlord'&&f.get('intent')==='save-setup'){
+    try {
+      const response=await callApi(request,context,
+        `/api/w/${params.kind}/${params.scopeId}/properties/${params.propertyId}/setup`,{
+          method:'POST',body:{expectedVersion:Number(f.get('expectedVersion')??0),
+            profile:JSON.parse(String(f.get('profile'))),
+            tenancy:JSON.parse(String(f.get('tenancy'))),
+            notes:String(f.get('notes')??'')},
+        });
+      const result=await response.json() as Record<string,any>;
+      if(!response.ok)return data({error:result.message??'Unable to update the property.',fields:result.fields},{status:response.status});
+      return data({ok:true,message:'Property details saved. Previous tenancy information remains in the property history.'});
+    } catch {return data({error:'Check the property details and try again.'},{status:422});}
+  }
+  if(params.kind!=='staff')return data({error:'Staff administration only.'},{status:403});
   if(f.get('intent')!=='edit-property')return data({error:'Unknown property action.'},{status:422});
   const payload={address:String(f.get('address')??''),suburb:String(f.get('suburb')??''),
     postcode:String(f.get('postcode')??''),propertyType:String(f.get('propertyType')??''),
@@ -39,7 +59,7 @@ export async function action({request,context,params}:ActionFunctionArgs){
 }
 export default function Property() {
   const d = useWorkspace();
-  const { property: p, stripeSubscriptionsEnabled, management } = useLoaderData<typeof loader>();
+  const { property: p, stripeSubscriptionsEnabled, management, setup } = useLoaderData<typeof loader>();
   const result=useActionData<typeof action>();
   const busy=useNavigation().state!=='idle';
   const staff=d.workspace.kind==='staff'&&Boolean(management);
@@ -51,6 +71,9 @@ export default function Property() {
         description="This property is not available in your current workspace."
       />
     );
+  if(d.workspace.kind==='landlord' && p.sector==='residential')
+    return <ResidentialPropertyDashboard data={d} property={p}
+      setup={setup} busy={busy} result={result??undefined}/>;
   const bookings = d.bookings.filter((b) => b.property_id === p.id);
   const documents = d.documents.filter((doc) => doc.property_id === p.id);
   const requests = d.requests.filter((r) => r.property_id === p.id);

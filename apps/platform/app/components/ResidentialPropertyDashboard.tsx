@@ -4,6 +4,7 @@ import type { Property } from '../../../../packages/domain/index';
 import { displayDate } from '../../../../packages/domain/index';
 import { Badge, EmptyState, Metric, Feedback } from '../../../../packages/ui/components';
 import { ResidentialPropertyWizard, type ResidentialSetup } from './ResidentialPropertyWizard';
+import { propertyBookingCategories } from '../../../../packages/service-catalogue/booking-navigation';
 
 const pending = (status: string) =>
   !['completed','cancelled','closed','ended','issued','rejected'].includes(status);
@@ -51,6 +52,7 @@ export function ResidentialPropertyDashboard({data,property,setup,busy,result}:{
   const worksUrl=base+'/records/work-orders?property='+encodeURIComponent(p.id);
   const requestsUrl=base+'/requests?property='+encodeURIComponent(p.id);
   const canBook=['owner','admin'].includes(w.role);
+  const bookingCategories=propertyBookingCategories(data.services,p.sector);
   return <div className="stack residential-property-dashboard">
     <nav className="breadcrumbs" aria-label="Breadcrumb">
       <Link to={base+'/properties'}>My properties</Link><span>/</span><span>{p.address}</span>
@@ -66,6 +68,20 @@ export function ResidentialPropertyDashboard({data,property,setup,busy,result}:{
         <Link className="button secondary" to={bookingsUrl}>Booking history</Link>
       </div>
     </header>
+    {canBook&&bookingCategories.length>0&&<section className="panel stack" aria-labelledby="property-services-heading">
+      <h2 id="property-services-heading">Arrange a property service</h2>
+      <div className="booking-category-grid">{bookingCategories.map(category=><Link key={category.id}
+        className="booking-category-card" to={base+'/book?property='+encodeURIComponent(p.id)+'&category='+category.id}>
+        <span className="booking-category-heading">{category.title}</span>
+        <span className="booking-category-description">{category.description}</span>
+        <span className="booking-category-count">{category.services.length} services · Choose services →</span>
+      </Link>)}</div>
+    </section>}
+    {canBook&&<section className="panel stack" aria-labelledby="property-maintenance-heading">
+      <h2 id="property-maintenance-heading">Maintenance &amp; Insurance</h2>
+      <p>Request maintenance coordination, follow-up support or insurance-related assistance for this property.</p>
+      <Link className="button secondary" to={base+'/requests?property='+encodeURIComponent(p.id)}>Make a property request</Link>
+    </section>}
     <section className="grid-4 portal-summary" aria-label="Property activity summary">
       <Metric label="Upcoming visits" value={upcoming.length} detail="Confirmed appointments"/>
       <Metric label="Past bookings" value={history.length} detail="Recent activity shown below"/>
