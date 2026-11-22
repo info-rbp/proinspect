@@ -4,6 +4,7 @@ import { useWorkspace } from '../lib/workspace';
 import { callApi } from '../lib/api.server';
 import { bookingIntent } from '../../../../packages/domain/booking-intent';
 import { PageHeading, EmptyState, Field, Feedback } from '../../../../packages/ui/components';
+import { ResidentialPropertyWizard } from '../components/ResidentialPropertyWizard';
 export function loader({ request }: LoaderFunctionArgs) {
   return { serviceId: bookingIntent(new URL(request.url).searchParams.get('service')) };
 }
@@ -19,8 +20,22 @@ export async function action(args: ActionFunctionArgs) {
     if(!response.ok)return data({error:result.message,fields:result.fields},{status:response.status});
     return redirect('/w/staff/operations/properties/'+encodeURIComponent(String(result.propertyId)));
   }
+  let extended: Record<string,unknown> = {};
+  if (args.params.kind==='landlord' && f.has('profile')) {
+    try {
+      extended = {
+        profile: JSON.parse(String(f.get('profile'))),
+        tenancy: JSON.parse(String(f.get('tenancy'))),
+        notes: String(f.get('notes') ?? ''),
+      };
+    } catch {
+      return data({error:'Check the property and tenancy details, then try again.'},{status:422});
+    }
+  }
   const response = await callApi(args.request, args.context, `/api/w/${args.params.kind}/${args.params.scopeId}/properties`, {
-    method: 'POST', body: { address: f.get('address'), suburb: f.get('suburb'), postcode: f.get('postcode'), propertyType: f.get('propertyType'), selfManaged: f.get('selfManaged') === 'yes' },
+    method: 'POST', body: { address: f.get('address'), suburb: f.get('suburb'),
+      postcode: f.get('postcode'), propertyType: f.get('propertyType'),
+      selfManaged: f.get('selfManaged') === 'yes', ...extended },
   });
   const result = await response.json() as Record<string, any>;
   if (!response.ok) return data({ error: result.message, fields: result.fields }, { status: response.status });
@@ -81,15 +96,37 @@ export default function Properties() {
             <button className="primary" disabled={busy}>{busy?'Creating property…':'Create property record'}</button>
           </Form>
         </section>}
-      {['landlord', 'commercial'].includes(d.workspace.kind) && ['owner', 'admin'].includes(d.workspace.role) && <section className="panel form-width" id="add-property"><div className="panel-header"><h2>Add your residential property</h2></div><p>Start with the address. After adding your property you can arrange an inspection or return to finish setup later. You will not be subscribed or charged by adding a property.</p>
-        <Form method="post" className="form"><input type="hidden" name="serviceId" value={serviceId ?? ''}/>
-          <Field label="Street address, including unit if applicable" name="address"><input id="address" name="address" required minLength={5} maxLength={180} autoComplete="street-address" placeholder="Unit 2, 24 Example Street"/></Field>
-          <div className="grid-2"><Field label="Suburb" name="suburb"><input id="suburb" name="suburb" required autoComplete="address-level2"/></Field><Field label="WA postcode" name="postcode"><input id="postcode" name="postcode" required pattern="[0-9]{4}" inputMode="numeric" autoComplete="postal-code"/></Field></div>
-          <Field label="Property type" name="propertyType"><select id="propertyType" name="propertyType">{propertyTypes.map(t => <option key={t}>{t}</option>)}</select></Field>
-          <label className="checkbox"><input type="checkbox" name="selfManaged" value="yes" required/><span>{commercial ? 'I own and self-manage this commercial property.' : 'I own and self-manage this residential rental property.'}</span></label>
-          <p className="small">A matching existing property may require ProInspect to verify the relationship before it can be linked.</p><button className="primary" disabled={busy}>{busy ? 'Adding property…' : 'Add property'}</button>
-        </Form>
-      </section>}
+      {d.workspace.kind === 'landlord' && ['owner','admin'].includes(d.workspace.role) &&
+        <section className="panel property-setup-panel" id="add-property">
+          <div className="panel-header"><h2>Add your residential property</h2></div>
+          <p>Set up your property once, then reuse the details for inspections and other services.
+            Tenant details are recorded privately and never create an invitation automatically.</p>
+          <ResidentialPropertyWizard mode="create" serviceId={serviceId??''} busy={busy}/>
+        </section>}
+      {d.workspace.kind === 'commercial' && ['owner','admin'].includes(d.workspace.role) &&
+        <section className="panel form-width" id="add-property">
+          <h2>Add your commercial property</h2>
+          <Form method="post" className="form">
+            <input type="hidden" name="serviceId" value={serviceId??''}/>
+            <Field label="Street address, including unit if applicable" name="address">
+              <input id="address" name="address" required minLength={5} maxLength={180}/>
+            </Field>
+            <div className="grid-2">
+              <Field label="Suburb" name="suburb"><input name="suburb" required/></Field>
+              <Field label="WA postcode" name="postcode">
+                <input name="postcode" required pattern="[0-9]{4}" inputMode="numeric"/>
+              </Field>
+            </div>
+            <Field label="Property type" name="propertyType">
+              <select name="propertyType">
+                {propertyTypes.map(t=><option key={t}>{t}</option>)}
+              </select>
+            </Field>
+            <label className="checkbox"><input name="selfManaged" type="checkbox" value="yes" required/>
+              <span>I own and self-manage this commercial property.</span></label>
+            <button className="primary" disabled={busy}>{busy?'Adding property…':'Add property'}</button>
+          </Form>
+        </section>}
     </div>
   </>;
 }

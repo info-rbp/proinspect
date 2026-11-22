@@ -1,0 +1,64 @@
+# Direct inspection booking and Cash Client terms — branch delivery
+
+Source branch: `feature/direct-inspection-booking-cash-terms-20261121`
+Originally based on `main` at `9385710d7a5a683a8bd7a34ed9c6546ceab2985e`; subsequently integrated current `main` at `632dbdbc901ba34a710ec90d63e09de8a58e2695`, including merged Client Portal PR #116 and marketing fixes.
+**Not approved for production deployment.** Do not merge until source prices and contractual terms are signed off and provider integration is accepted.
+
+## Price provenance
+The Project file **ProInspect - Residential Property Support - Schedule of Fees (All Services).docx** lists:
+- Row 01.01 Property Condition Reports (Form 1): **AUD 200 ex GST** per report
+- Row 01.02 Routine Property Inspections: **AUD 60 ex GST** per inspection
+- Row 11.04 Exit Inspections & Condition Comparisons: **AUD 100 ex GST** per exit inspection.
+
+These are candidate source rates, not automatically approved production prices. Migration 0064 stores the unapproved amounts in `inspection_price_candidates` for unconfigured service IDs. It **does not** update `services.price_ex_gst_cents` or `services.booking_mode`; published pricing, quote-versus-instant booking and pre-existing rates remain unchanged. A separate versioned approval and release migration is required before any candidate price can be used for a charge. Staff must verify schedule version, applicability, GST, inclusions, travel extras, contract and cancellation policy before release. The alternative V4 fee schedules are versioned independently and contain conflicting subscription assumptions; do not map them blindly into entitlements.
+
+## Cash terms
+- No approved Cash Client credit profile: `upon_booking` (prepaid).
+- `net_7`: invoice must be issued at/after service completion; due 7 calendar days after actual issue.
+- `eom_7`: accumulate completed service charges by Australia/Perth service month; invoice on/after closing the month, due at 23:59:59 AWST on the 7th of the next month.
+- Credit terms are Staff-requested, separately Staff-approved, and versioned in booking snapshots. A finite, positive credit limit is required for deferred bookings; an unbounded or missing limit fails closed. Unapproved requests do not change effective billing.
+- A client can have eligible subscription coverage for one property and Cash bookings for another: eligibility is per property/service.
+
+## Staged billing infrastructure
+Cash credit bookings create a canonical Booking and Work Order plus a pending payment ledger entry, with no prerequisite card settlement. Work completion marks the charge ready for invoice preparation. An authorised Staff user can prepare a durable invoice batch with immutable line links. **Batch preparation is not invoice issuance, dispatch or settlement.** A live, signed and independently reconciled Stripe invoice delivery adapter must be accepted before granting invoice-sent status. The existing prepaid path remains production-guarded until hosted Stripe collection is accepted.
+
+## Security
+Structured booking intake is encrypted under `DATA_ENCRYPTION_KEY`; access is read-only through authorised Staff work-order scope with an audit record. Tenant notices must be lawful and distinct from booking confirmation. No tenant is automatically billed or granted client privileges.
+
+## Required acceptance
+- New migration upgrade and restoration on a non-empty isolated D1 copy.
+- Hosted authenticated owner, agency and Staff booking flows for all three services.
+- Included coverage vs Cash Client credit classification, idempotency, dual-review approvals.
+- Payment failure/replay, schedule conflict and invoice arithmetic/date boundary tests.
+- Genuine Stripe test Checkout and invoice delivery with signed webhook reconciliation and cancelled/failed scenarios.
+- Approved prices, legal terms, screen-reader and mobile accessibility review.
+- Production remains unchanged until explicit acceptance and release.
+
+## Re-audit of integration safeguards (22 November 2026)
+
+1. The combined branch includes the full `main` history and therefore retains merged Client Portal PR #116 without replacing registration, authentication, or property setup files.
+2. Staff inspection details are typed, encrypted by booking context and read only after authorised Work Order access, with an audit event.
+3. Structural D1 migration 0064 records unapproved candidate rates separately. The published `services` catalogue and direct-booking mode remain unchanged until an explicitly reviewed release.
+4. New inspection intake is limited to PCR, Final/Exit and Routine forms. Legacy non-inspection customer booking APIs continue without mandatory intake. Inspection fields form part of the idempotency fingerprint; older no-intake fingerprints are unchanged.
+5. Deferred-credit terms are disclosed and booked only after **both** `CASH_CLIENT_CREDIT_ENABLED=true` **and** a feature-release approval for `cash_credit` matching the exact deployed `BUILD_SHA`, environment, independent administrator and unexpired evidence. A flag or commercial account approval alone is not authority to activate.
+6. Positive bounded credit limits are enforced in validation and in both D1 credit tables. Capacity is checked by the single global booking Durable Object and against unsettled charges; a later limit reduction cannot be approved below the balance, including the atomic approval write. No Cash Client booking payment can be marked manually settled.
+7. Independent credit approval uses an atomic pending-row update and mutation guards; retries cannot approve the same request twice. Idempotent credit booking replays restore the same payment obligation and invoice terms.
+8. `config/environment.json`, `Env` and the release-governance feature registry explicitly identify the disabled Cash Client credit switch.
+
+### Synthetic verification scope
+
+The new `tests/runtime/cash-booking.mjs` exercises owner registration, property creation, independently requested/approved terms, cross-workspace denials, strict credit exposure, encrypted Staff-only inspection intake, idempotent replay/mismatch, refusal of unverified manual settlement, and D1 foreign keys. The Node and isolated SQLite tests cover no-intake compatibility, intake immutability, candidate-price nonactivation, finite credit constraints, billing arithmetic and month-end boundaries.
+
+These synthetic tests do **not** substitute for hosted role-based acceptance, real Stripe Checkout, Stripe invoice dispatch, statutory content review, approved price lists or independent production go-live sign-off. Keep the PR draft and the production credit/payment flags off.
+
+## Release flag
+`CASH_CLIENT_CREDIT_ENABLED` is absent/off by default. Deferred credit requires this flag set to `true` **and** independently reviewed, unexpired `cash_credit` release evidence for the exact environment and deployed source SHA. The isolated local fixture enables the flag only for synthetic integration acceptance; hosted staging and production do not bypass source-specific release approval. Neither this flag nor that approval enables live Stripe Checkout or invoice delivery.
+
+## Client Portal and booking integration (PR #116 + draft PR #118)
+
+- The existing secure email registration, owner onboarding and first-property selection from PR #116 are retained from `main`. A selected service flows from signup through onboarding and property creation to the same authenticated property-scoped booking screen.
+- The draft booking step adds PCR, Final/Exit and Routine prioritisation; service-specific inspection information; confidential Staff-only intake; and Cash Client status / invoice preparation.
+- An ordinary free-account owner without an approved published instant-booking rate must remain on the existing **request/quote** route. Staged schedule candidates do not convert requests into chargeable or confirmed direct bookings.
+- Confirmed subscription inclusions remain property/service-scoped. An account can have paid and free properties; neither a signup selection nor a candidate price creates entitlement.
+- If production credit is not released, customer booking terms display **pay upon booking** even if Staff has separately approved a future credit profile. The booking scheduler still blocks unreleased prepaid or deferred collection.
+- Independent acceptance remains outstanding for source rate approval, reviewed legal/credit terms, true provider payment/invoice reconciliation, production release flags, accessible full journeys and hosted authentication. This PR stays **draft** until all gates pass.

@@ -302,7 +302,11 @@ class PortalTestingSeedTests(unittest.TestCase):
         self.assertEqual(self.db.execute('SELECT count(*) FROM users WHERE verified_at IS NOT NULL').fetchone()[0], 0)
         self.assertEqual(self.db.execute('SELECT count(*) FROM login_tokens').fetchone()[0], 0)
         self.assertEqual(self.db.execute('SELECT count(*) FROM sessions').fetchone()[0], 0)
-        self.assertEqual(self.db.execute('SELECT count(*) FROM services').fetchone()[0], 23)
+        # Preserve the legacy 23 services and add 16 request-only residential options.
+        self.assertEqual(self.db.execute('SELECT count(*) FROM services').fetchone()[0], 39)
+        self.assertEqual(self.db.execute(
+            "SELECT count(*) FROM services WHERE price_ex_gst_cents IS NULL AND booking_mode='request'"
+        ).fetchone()[0], 39)
         self.assertEqual(self.db.execute('SELECT count(*) FROM properties').fetchone()[0], 5)
         self.assertEqual(self.db.execute('SELECT count(*) FROM scheme_memberships').fetchone()[0], 2)
         self.assertEqual(self.db.execute("SELECT count(*) FROM clients WHERE id!='cli_guest_transactions'").fetchone()[0], 4)

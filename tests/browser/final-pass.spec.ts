@@ -91,8 +91,12 @@ test('professional booking creates a job and scoped full record browsing opens i
       page = await agency.newPage();
     await page.goto(href + `/book/routine-inspection?property=${property.propertyId}`);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      'Arrange your next property visit.',
+      'What would you like us to do?',
     );
+    // The integrated inspection intake requires contact details and a service reason.
+    // Populate the required inputs rather than allowing native validation to stop submission.
+    await page.getByLabel('Contact phone', { exact: true }).fill('0400 000 321');
+    await page.getByLabel('Reason for inspection', { exact: true }).selectOption('Scheduled routine inspection');
     await page.getByLabel('Preferred date', { exact: true }).fill(date());
     await expect(page.getByRole('radio').first()).toBeVisible();
     await page.getByRole('radio').first().check();

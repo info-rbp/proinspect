@@ -65,6 +65,9 @@ try{
  const p2=await api(otherBase+'/properties',other,{address:'902 Example Ave',suburb:'Perth',postcode:'6000',propertyType:'House',selfManaged:true});
  assert.equal(p1.status,201);assert.equal(p2.status,201);
  const propertyId=p1.data.propertyId,otherProperty=p2.data.propertyId;
+ // The integrated Residential catalogue may already contain public services.
+ // V2 approval must not silently publish or modify that canonical catalogue.
+ const canonicalServiceCountBeforeV2=(await sql('SELECT COUNT(*) AS total FROM services').first()).total;
  await check('anonymous and customer cannot enter draft business administration',async()=>{
    assert.equal((await api(staffApi,null)).status,401);
    assert.equal((await api(staffApi,owner)).status,403);
@@ -93,7 +96,7 @@ try{
    await ok(staffApi+'/rules',operator,{marketCode:'RES',serviceCode:'V2-001',status:'approved',notes:'Reviewed residential inclusion'});
    const row=await sql('SELECT status FROM v2_market_service_rules WHERE market_code=? AND service_code=?','RES','V2-001').first();
    assert.equal(row.status,'approved');
-   assert.equal((await sql('SELECT COUNT(*) AS total FROM services').first()).total,0);
+   assert.equal((await sql('SELECT COUNT(*) AS total FROM services').first()).total,canonicalServiceCountBeforeV2);
  });
  const created=await ok(staffApi+'/engagements',operator,{clientId:client,propertyId,marketCode:'RES',
    reference:'V2-TEST-ENGAGEMENT-2026',scopeSummary:'Verified limited property attendance and inspections',

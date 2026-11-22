@@ -8,8 +8,8 @@ const read=(path:string)=>readFileSync(path,'utf8');
 const w=(kind:Workspace['kind'],role='owner'):Workspace=>({kind,scopeId:'client_a',href:'/w/'+kind+'/client_a',name:'Example',role});
 const prop=(sector:string):Property=>({id:'prop_a',address:'Example',suburb:'Perth',state:'WA',postcode:'6000',property_type:'House',sector});
 const svc=(sectors:string[]):Service=>({id:'svc',name:'Inspection',family:'inspections',sectors,summary:'',duration_minutes:45,buffer_before:0,buffer_after:0,notice_hours:1,horizon_days:30,price_ex_gst_cents:10000,booking_mode:'instant',active:1});
-test('public navigation includes the nine Residential public destinations in order',()=>{
- assert.deepEqual(PUBLIC_NAVIGATION.map(x=>x.label),['Residential','Co-Living','Leasing','Tenants','Maintenance','About Us','Who We Help','Contact','Sign Up / Sign In']);
+test('public navigation includes the eight Residential destinations after About Us consolidation',()=>{
+ assert.deepEqual(PUBLIC_NAVIGATION.map(x=>x.label),['Residential','Co-Living','Leasing','Tenants','Maintenance','About Us' ,'Contact','Sign Up / Sign In']);
  const routes=read('apps/platform/app/routes.ts');
  for(const path of ['residential','commercial','strata','co-living','construction','leasing','maintenance'])assert.ok(routes.includes("route('"+path+"'"));
  assert.match(routes,/route\('client', 'routes\/client-entry\.tsx'\)/);

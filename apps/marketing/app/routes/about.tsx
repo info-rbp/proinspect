@@ -14,15 +14,17 @@ const audiences=[
  {name:'Tenants and prospective renters',description:'Find advertised rentals, register for an open home and use authorised tenant channels to follow inspections and requests.',href:'/tenants',action:'Tenant information'},
 ];
 export default function About(){return <>
- <EditorialHero eyebrow="About Us" title="Property Support. Designed Around You."
-  intro="ProInspect Property Services combines practical inspections, on-the-ground attendance and connected property records to help owners and managers keep Residential properties moving."
-  image="residential" primary={{label:'See What We Offer',to:'/residential/services'}}
-  secondary={{label:'Get Started Today',to:'/client'}}/>
- <section className="mkt-section pi-editorial-section"><div className="site-container pi-introduction">
-  <div><p className="eyebrow">Our purpose</p><h2>Less time chasing tasks. More clarity over your property.</h2></div>
-  <div><p>Rental property ownership and management involve inspections, access arrangements, tenant enquiries, maintenance and documentation. Our role is to make the practical work easier to organise and easier to follow up.</p>
-  <p>ProInspect Property Services Pty Ltd (ABN 52 703 550 609; ACN 703 550 609) is a Western Australian property-services business. We work across approved Perth and Peel suburbs, with other Western Australian locations assessed by request.</p>
-  <p>Choose an individual service or discuss an agreed programme. The responsible landlord, property manager or other authorised representative retains the decisions and legal responsibilities associated with their property.</p></div>
+ <div className="pi-about-hero"><EditorialHero eyebrow="About Us" title="Property Support. Designed Around You."
+  intro="ProInspect brings together the services needed to keep rental properties moving, with innovative inspection, leasing and maintenance solutions designed to save owners time and help maximise rental income."
+  image="residential" primary={{label:'See Our Residential Services',to:'/residential/services'}}
+  secondary={{label:'Get Started Today',to:'/client'}}/></div>
+ <section className="mkt-section pi-editorial-section"><div className="site-container pi-introduction pi-about-purpose">
+  <div className="pi-about-purpose-image"><BrandImage name="maintenance"/></div>
+  <div><p className="eyebrow">Our Purpose</p><h2>Less time chasing tasks. More clarity over your property.</h2>
+   <p>Owning a rental property involves much more than inspections. Finding the right tenant, organising routine visits, responding to maintenance and keeping records up to date all demand time and attention.</p>
+   <p>ProInspect provides practical inspections, leasing assistance and property support so private landlords and property managers can spend less time coordinating individual tasks and more time on what matters to them.</p>
+   <p>We work on the instructions of the responsible owner or authorised property manager. Property-management, leasing and statutory decisions remain with the appropriately authorised person.</p>
+  </div>
  </div></section>
  <section id="who-we-help" className="mkt-section pi-editorial-section pi-neutral"><div className="site-container">
   <div className="pi-section-heading"><p className="eyebrow">Who We Help</p><h2>Support for the people behind the property.</h2>

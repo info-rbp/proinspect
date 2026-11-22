@@ -87,7 +87,9 @@ export function OperationForm({
   );
 }
 const numberFields = new Set([
-  'version', 'dueDays',
+  'version', 'dueDays', 'creditLimitCents', 'proposedRooms',
+  'traditionalWeeklyCents', 'roomWeeklyCents', 'parkingWeeklyCents',
+  'furnishingBudgetCents', 'worksBudgetCents', 'unitCostCents', 'extraBudgetCents', 'actualTotalCents',
   'sourceAmountCents', 'reviewBasisPoints', 'indexNumerator', 'indexDenominator',
   'floorCents', 'capCents', 'quotedCents',
   'amountCents',
@@ -112,7 +114,7 @@ const numberFields = new Set([
 ]);
 const boolFields = new Set([
   'confirmManagedDevice','confirmAntivirusResult','confirmAuthority','confirmRecipients','confirmSecurityReview',
-  'active',
+  'active', 'ownerVisible',
   'assigned',
   'residentVisible',
   'accessConfirmed',
@@ -139,7 +141,7 @@ export function formValues(form: FormData) {
     if (numberFields.has(key)) data[key] = Number(value);
     else if (boolFields.has(key)) data[key] = value === 'true' || value === 'on';
     else if (
-      ['definitionsAt','scannedAt','startsAt', 'endsAt', 'optionOpensAt', 'optionClosesAt', 'newDueAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'holdUntil', 'receivedAt', 'deliveryAt', 'effectiveAt', 'verifiedAt', 'paidAt', 'responseDueAt', 'decisionAt', 'appealDueAt', 'periodStart', 'periodEnd', 'startedAt', 'endedAt', 'effectiveFrom'].includes(key)
+      ['definitionsAt','scannedAt','startsAt', 'endsAt', 'optionOpensAt', 'optionClosesAt', 'newDueAt', 'expiresAt', 'validUntil', 'scheduledAt', 'dueAt', 'holdUntil', 'receivedAt', 'deliveryAt', 'effectiveAt', 'verifiedAt', 'paidAt', 'responseDueAt', 'decisionAt', 'appealDueAt', 'periodStart', 'periodEnd', 'startedAt', 'endedAt', 'effectiveFrom', 'visitAt'].includes(key)
     )
       data[key] = new Date(String(value)).toISOString();
     else if (key === 'propertyTypes' || key === 'propertyIds' || key === 'tenantUserIds')

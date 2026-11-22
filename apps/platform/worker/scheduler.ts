@@ -1,4 +1,7 @@
 import { legalStatements } from './features/legal-acceptance.server';
+import { effectiveCashTerms, assertCashCreditCapacity } from './features/cash-terms.server';
+import { requireReleaseApproval } from './features/release-governance.server';
+import { bookingFingerprintFields, validateRequestedAddOns } from '../../../packages/booking/inspection-checkout';
 import { PCR_LAUNCH_SERVICE } from '../../../packages/marketing/pcr-campaign';
 import { guestSchedulerOperation } from './features/guest-scheduler.server';
 import { changeBooking } from './features/bookings.server';
@@ -164,16 +167,7 @@ export class BookingScheduler extends DurableObject<Env> {
       }
       const data = bookingSchema.parse(input);
       const property = await propertyAccess(this.env, user, w, data.propertyId, true);
-      const fingerprint = await digest(
-        JSON.stringify({
-          propertyId: data.propertyId,
-          serviceId: data.serviceId,
-          startsAt: new Date(data.startsAt).toISOString(),
-          access: data.access,
-          recurringPlanId: data.recurringPlanId ?? null,
-          planDue: data.planDue ?? null,
-        }),
-      );
+      const fingerprint = await digest(JSON.stringify(bookingFingerprintFields(data)));
       const existing = await statement(
         this.env.DB,
         'SELECT id,reference,fingerprint,user_id FROM bookings WHERE client_id=? AND request_key=?',
@@ -191,15 +185,32 @@ export class BookingScheduler extends DurableObject<Env> {
           `SELECT p.id AS payment_id,p.total_cents,p.status
            FROM registered_booking_payment_links l JOIN payments p ON p.id=l.payment_id
            WHERE l.booking_id=?`,existing.id).first<{payment_id:string;total_cents:number;status:string}>();
+        const cashCharge=await statement(this.env.DB,
+          `SELECT c.payment_id,p.total_cents,c.term_code
+           FROM cash_booking_charges c JOIN payments p ON p.id=c.payment_id
+           WHERE c.booking_id=?`,existing.id)
+          .first<{payment_id:string;total_cents:number;term_code:'net_7'|'eom_7'}>();
+        const addOnReview = await statement(this.env.DB,
+          'SELECT COUNT(*) AS count FROM booking_service_addon_intents WHERE booking_id=? AND status=?',
+          existing.id,'requested').first<{count:number}>();
         return Response.json({
           id:existing.id,reference:existing.reference,replayed:true,
-          paymentId:pendingPayment?.payment_id??null,
+          addonReviewRequired:Boolean(addOnReview?.count),
+          paymentId:pendingPayment?.payment_id??cashCharge?.payment_id??null,
           paymentRequired:Boolean(pendingPayment&&pendingPayment.status!=='paid'),
-          totalCents:pendingPayment?.total_cents??0,
+          totalCents:pendingPayment?.total_cents??cashCharge?.total_cents??0,
+          paymentTerms:cashCharge?.term_code??(pendingPayment?'upon_booking':null),
+          invoiceAfterService:Boolean(cashCharge),
         });
       }
       const service = (await catalogue(this.env)).find((s) => s.id === data.serviceId);
       assert(service, 404, 'SERVICE_NOT_FOUND', 'Service not found.');
+      let addonIntents: ReturnType<typeof validateRequestedAddOns>;
+      try { addonIntents = validateRequestedAddOns(service.id,data.intake); }
+      catch(error) {
+        throw new AppError(422,'ADD_ON_INVALID',
+          error instanceof Error ? error.message : 'Invalid service option.');
+      }
       assert(
         service.sectors.includes(property.sector),
         422,
@@ -225,7 +236,8 @@ export class BookingScheduler extends DurableObject<Env> {
         'SCHEDULING_CLOSED',
         'Online scheduling is not yet open.',
       );
-      if (data.access.method === 'tenant')
+      const staffNoticeRequested = addonIntents.some(item=>item.code==='form19_service');
+      if (data.access.method === 'tenant' && !staffNoticeRequested)
         assert(
           data.access.noticeConfirmed,
           422,
@@ -277,16 +289,24 @@ export class BookingScheduler extends DurableObject<Env> {
         woId = `wo_${id.slice(4)}`,
         time = now();
       const amountExGstCents = includedSubscription ? 0 : service.price_ex_gst_cents ?? 0;
-      const paymentRequired = !includedSubscription && amountExGstCents > 0;
-      const gstCents = paymentRequired ? Math.round(amountExGstCents / 10) : 0;
+      const terms = includedSubscription ? null : await effectiveCashTerms(this.env,clientId);
+      const creditBooking = !includedSubscription && amountExGstCents > 0 && terms?.termCode !== 'upon_booking';
+      const paymentRequired = !includedSubscription && amountExGstCents > 0 && !creditBooking;
+      const gstCents = amountExGstCents > 0 ? Math.round(amountExGstCents / 10) : 0;
+      if (creditBooking) {
+        // Source-bound release approval and the credit flag are both required.
+        // An approved customer profile alone must never activate deferred booking.
+        await requireReleaseApproval(this.env,'cash_credit');
+        await assertCashCreditCapacity(this.env,clientId,amountExGstCents+gstCents,terms!.creditLimitCents);
+      }
       // The existing Checkout integration is sandbox-only; production must not
       // reserve an uncollectable one-off paid appointment until a separately
       // accepted live Stripe flow and legal/tax release are deployed.
       assert(!paymentRequired || this.env.APP_ENV!=='production',503,
         'ONE_OFF_LIVE_CHECKOUT_NOT_RELEASED',
         'New one-off paid appointments are not yet activated. No booking or charge has been created.');
-      const paymentId = paymentRequired ? uid('pay') : null;
-      const legal = await legalStatements(this.env,{kind:'user',id:user.id},'booking',id,{clientId,propertyId:property.id,serviceId:service.id,startsAt:window.startsAt,priceExGstCents:includedSubscription?0:service.price_ex_gst_cents,subscriptionId:includedSubscription?.id??null,access:data.access},data.legalConsent);
+      const paymentId = !includedSubscription && amountExGstCents > 0 ? uid('pay') : null;
+      const legal = await legalStatements(this.env,{kind:'user',id:user.id},'booking',id,{clientId,propertyId:property.id,serviceId:service.id,startsAt:window.startsAt,priceExGstCents:includedSubscription?0:service.price_ex_gst_cents,subscriptionId:includedSubscription?.id??null,cashPaymentTerm:terms?.termCode??null,access:data.access},data.legalConsent);
       const statements = [
         ...legal,
         statement(
@@ -309,6 +329,10 @@ export class BookingScheduler extends DurableObject<Env> {
             customerName: user.display_name,
             customerEmail: user.email,
             bookingBasis: includedSubscription ? 'subscription_included' : 'published_price',
+            cashPaymentTerm: terms?.termCode ?? null,
+            addonRequests: addonIntents.map(item=>item.code),
+            addonPricingStatus: addonIntents.length ? 'unapproved_staff_review' : 'none',
+            cashTermApprovalRequestId: terms?.approvalRequestId ?? null,
             subscription: includedSubscription
               ? { id: includedSubscription.id, planCode: includedSubscription.planCode }
               : null,
@@ -326,20 +350,51 @@ export class BookingScheduler extends DurableObject<Env> {
           clientId,
           property.id,
           service.name,
-          paymentRequired ? 'awaiting_approval' : 'scheduled',
+          paymentRequired || addonIntents.length ? 'awaiting_approval' : 'scheduled',
           time,
           time,
         ),
         ...(paymentId ? [
           statement(this.env.DB,
             `INSERT INTO payments(id,client_id,property_id,work_order_id,description,amount_ex_gst_cents,gst_cents,total_cents,status,created_at,updated_at)
-             VALUES(?,?,?,?,?,?,?,?,'payment_required',?,?)`,
+             VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
             paymentId,clientId,property.id,woId,service.name,amountExGstCents,gstCents,
-            amountExGstCents+gstCents,time,time),
-          statement(this.env.DB,
+            amountExGstCents+gstCents,paymentRequired?'payment_required':'pending',time,time),
+          ...(paymentRequired ? [statement(this.env.DB,
             'INSERT INTO registered_booking_payment_links(booking_id,payment_id,price_ex_gst_cents,gst_cents,created_at) VALUES(?,?,?,?,?)',
-            id,paymentId,amountExGstCents,gstCents,time),
+            id,paymentId,amountExGstCents,gstCents,time)] : []),
+          ...(creditBooking ? [
+            // A concurrent Staff credit change must not race the scheduler's
+            // earlier balance check. Validate the exact approved profile and
+            // the now-current total exposure INSIDE the booking D1 batch.
+            statement(this.env.DB,
+              `INSERT INTO cash_booking_charges
+               (booking_id,payment_id,client_id,term_code,amount_ex_gst_cents,gst_cents,status,created_at)
+               SELECT ?,?,?,?,?,?,'awaiting_service',?
+               WHERE EXISTS (
+                 SELECT 1 FROM cash_client_terms t
+                 WHERE t.client_id=? AND t.term_code=?
+                   AND t.source_request_id=?
+                   AND t.credit_limit_cents IS NOT NULL
+                   AND t.credit_limit_cents >= ? + COALESCE((
+                     SELECT SUM(p.total_cents)
+                     FROM cash_booking_charges c JOIN payments p ON p.id=c.payment_id
+                     WHERE c.client_id=? AND c.status!='cancelled'
+                       AND p.status NOT IN('paid','waived','refunded')
+                   ),0)
+               )`,
+              id,paymentId,clientId,terms!.termCode,amountExGstCents,gstCents,time,
+              clientId,terms!.termCode,terms!.approvalRequestId,
+              amountExGstCents+gstCents,clientId),
+            guard(this.env),
+            clearGuard(this.env),
+          ] : []),
         ] : []),
+        ...addonIntents.map(item=>statement(this.env.DB,
+          `INSERT INTO booking_service_addon_intents
+             (booking_id,addon_code,source_fee_candidate_ex_gst_cents,status,created_at)
+           VALUES(?,?,?,'requested',?)`,
+          id,item.code,item.candidateExGstCents,time)),
         statement(
           this.env.DB,
           'INSERT INTO booking_access_secrets(booking_id,envelope,updated_at) VALUES(?,?,?)',
@@ -347,14 +402,24 @@ export class BookingScheduler extends DurableObject<Env> {
           await seal(this.env.DATA_ENCRYPTION_KEY, `booking:${id}`, data.access),
           time,
         ),
-        audit(this.env, user, 'booking.created', 'booking', id, property.id, { workOrderId: woId }),
+        ...(data.intake ? [statement(this.env.DB,
+          'INSERT INTO booking_intake_secrets(booking_id,envelope,updated_at) VALUES(?,?,?)',
+          id,await seal(this.env.DATA_ENCRYPTION_KEY,`booking-intake:${id}`,data.intake),time)] : []),
+        audit(this.env, user, 'booking.created', 'booking', id, property.id, {
+          workOrderId:woId,addonRequests:addonIntents.map(item=>item.code),
+          addonPriceApproved:false,
+        }),
         await mailEvent(this.env, 'booking.confirmed', {
           to: user.email,
-          subject: `${paymentRequired ? 'Payment required for booking' : 'Booking confirmed'}: ${reference}`,
+          subject: `${paymentRequired ? 'Payment required for booking' : addonIntents.length ? 'Appointment recorded — optional service review' : 'Booking confirmed'}: ${reference}`,
           heading: paymentRequired ? 'Complete payment to proceed' : 'Your booking is confirmed',
           body: paymentRequired
             ? 'Your appointment has been recorded but service delivery requires a separately verified payment. Use Finance in your account to open secure Checkout after any required pricing, tax and provider approvals.'
-            : 'Your booking and work order are now linked to your property. Your report will appear in your account after it is issued.',
+            : addonIntents.length
+              ? 'Your appointment is recorded. Optional services are pending scope and price confirmation by ProInspect. They are not charged or delivered automatically. Notice and tenant contact require separate review before attendance.'
+            : creditBooking
+              ? 'Your appointment is confirmed under your approved account invoice terms. The invoice will follow service completion and reconciliation.'
+              : 'Your booking and work order are now linked to your property. Your report will appear in your account after it is issued.',
           href: `${this.env.APP_ORIGIN}${w.href}/bookings`,
           facts: {
             Reference: reference,
@@ -431,8 +496,11 @@ export class BookingScheduler extends DurableObject<Env> {
       await this.env.DB.batch(statements);
       return Response.json({
         id,reference,workOrderId:woId,paymentId,paymentRequired,
-        totalCents:paymentRequired ? amountExGstCents+gstCents : 0,
-        message:paymentRequired ? 'Appointment recorded. Payment is required before service delivery.' : 'Booking confirmed.',
+        totalCents:!includedSubscription ? amountExGstCents+gstCents : 0,
+        paymentTerms:terms?.termCode??null,invoiceAfterService:creditBooking,
+        addonReviewRequired:addonIntents.length>0,
+        message:paymentRequired ? 'Appointment recorded. Payment is required before service delivery.'
+          : addonIntents.length ? 'Appointment recorded; optional services require separate review.' : 'Booking confirmed.',
       },{status:201});
     } catch (error) {
       if (error instanceof AppError)

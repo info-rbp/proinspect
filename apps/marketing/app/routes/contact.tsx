@@ -22,11 +22,12 @@ export function loader({request,context}:LoaderFunctionArgs) {
   'access':'I would like to discuss authorised access, keys and property attendance.',
   'vacate':'I would like to discuss vacate support and outgoing property inspection arrangements.',
   'bond':'I would like to discuss bond-related records and administrative support.',
-  'bond-disputes':'I would like to discuss the factual records needed for a bond-related enquiry.'
+  'bond-disputes':'I would like to discuss the factual records needed for a bond-related enquiry.',
+  'co-living':'I own or represent a residential property and would like to discuss a Co-Living suitability assessment, potential furnishing and the proposed operating arrangement.'
  };
  const initialMessage=topics[requestedTopic]??'';
  return data({requestKey:crypto.randomUUID(),serviceId:SERVICES.some(s=>s.id===requested)?requested:'',initialMessage,
- siteKey:env.MARKETING_TURNSTILE_SITE_KEY,ready:Boolean(env.ENQUIRY_GATEWAY_SECRET&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SITE_KEY)),local:env.APP_ENV==='local'},
+ requestedTopic,siteKey:env.MARKETING_TURNSTILE_SITE_KEY,ready:Boolean(env.ENQUIRY_GATEWAY_SECRET&&(env.APP_ENV==='local'||env.MARKETING_TURNSTILE_SITE_KEY)),local:env.APP_ENV==='local'},
  {headers:{'Cache-Control':'no-store'}});
 }
 /** Shared submission path for both the original marketing build and the unified Worker. */
@@ -79,7 +80,7 @@ export default function Contact() {
       <Field label="Your name" name="name"><input name="name" required minLength={2} maxLength={100} autoComplete="name" {...field('name')}/></Field>{error('name')}
       <Field label="Email address" name="email"><input name="email" required type="email" maxLength={254} autoComplete="email" {...field('email')}/></Field>{error('email')}
       <div className="grid-2"><Field label="Phone (optional)" name="phone"><input name="phone" maxLength={40} type="tel" autoComplete="tel"/></Field><Field label="Organisation (optional)" name="organisation"><input name="organisation" maxLength={180} autoComplete="organization"/></Field></div>
-      <Field label="What would you like to discuss?" name="category"><select name="category" defaultValue={settings.serviceId?'service':'portfolio'}><option value="service">An individual property service</option><option value="portfolio">Portfolio or outsourced operations</option><option value="residential">Residential support</option><option value="co-living">Co-Living support</option><option value="maintenance">Maintenance or property care</option><option value="subscription">Subscription enquiry</option><option value="other">Another requirement</option></select></Field>
+      <Field label="What would you like to discuss?" name="category"><select name="category" defaultValue={settings.serviceId?'service':settings.requestedTopic==='co-living'?'co-living':'portfolio'}><option value="service">An individual property service</option><option value="portfolio">Portfolio or outsourced operations</option><option value="residential">Residential support</option><option value="co-living">Co-Living support</option><option value="maintenance">Maintenance or property care</option><option value="subscription">Subscription enquiry</option><option value="other">Another requirement</option></select></Field>
       <Field label="Service (optional)" name="serviceId"><select name="serviceId" defaultValue={settings.serviceId}><option value="">Help me choose</option>{SERVICES.filter(s=>s.sectors.includes('residential')).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>{error('serviceId')}
       <div className="grid-2"><Field label="Suburb or locality (optional)" name="suburb"><input name="suburb" maxLength={100} autoComplete="address-level2"/></Field><Field label="Postcode (optional)" name="postcode"><input name="postcode" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} autoComplete="postal-code" {...field('postcode')}/></Field></div>{error('postcode')}
       <Field label="How can ProInspect help?" name="message"><textarea name="message" required minLength={15} maxLength={4000} rows={6} defaultValue={settings.initialMessage} {...field('message')}/></Field>{error('message')}

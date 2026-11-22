@@ -39,6 +39,8 @@ export default function WorkspaceLayout() {
     staff = w.kind === 'staff';
   if (management || staff)
     items.push(['properties', management ? 'My properties' : 'Properties', '']);
+  if (w.kind === 'landlord' || (staff && ['administrator','operations_manager'].includes(user.staffRole ?? '')))
+    items.push(['co-living-onboardings', staff ? 'Co-Living Establishments' : 'Co-Living Onboarding', '']);
   if (['landlord','property-manager'].includes(w.kind) && (w.experienceTags ?? []).some(tag => tag === 'co_living' || tag === 'student_living'))
     items.push(['co-living', (w.experienceTags ?? []).includes('student_living') ? 'Student & co-living' : 'Co-living', '']);
   if (w.kind === 'property-manager' && ['owner','admin'].includes(w.role))

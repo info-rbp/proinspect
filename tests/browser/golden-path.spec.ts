@@ -50,13 +50,22 @@ test('new Landlord registration is free and can consider a subscription later', 
   await page.getByRole('button', { name: 'Continue to add your property' }).click();
   await expect(page).toHaveURL(/\/properties\?service=routine-inspection$/);
   const base = new URL(page.url()).pathname.replace(/\/properties$/, '');
-  await page.getByLabel('Street address, including unit if applicable')
+  await page.getByLabel('Street address, including unit number')
     .fill(`${Math.floor(Date.now() / 1000)} Example Street`);
   await page.getByLabel('Suburb', { exact: true }).fill('Perth');
   await page.getByLabel('WA postcode').fill('6000');
-  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: /Continue/ }).click();
+  await expect(page.getByRole('heading',{name:'Tell us about the property'})).toBeVisible();
+  await page.getByRole('button', {name:'Add Bedrooms'}).click();
+  await page.getByRole('button', { name: /Continue/ }).click();
+  await expect(page.getByRole('heading',{name:'Is the property currently tenanted?'})).toBeVisible();
+  await page.getByRole('button', { name: /Continue/ }).click();
+  await page.getByRole('checkbox', {name:/I confirm I own and self-manage/}).check();
   await page.getByRole('button', { name: 'Add property', exact: true }).click();
   await expect(page).toHaveURL(/\/book\/routine-inspection\?property=/);
+  await expect(page.getByRole('button', { name: /Book an inspection/ })).toHaveAttribute('aria-pressed','true');
+  await expect(page.getByRole('button', { name: /Open Homes & leasing/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Keys & access control/ })).toBeVisible();
   await expect(page.getByLabel('Service', { exact: true })).toHaveValue('routine-inspection');
   await expect(page.getByText('Included in your active ProInspect subscription.', { exact: false })).toHaveCount(0);
   // Routine inspections can also be purchased as priced one-off services.
