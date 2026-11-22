@@ -5,13 +5,14 @@ import {
   type SectorKey,
   type SectorOverview,
 } from '../../../../packages/marketing/sector-overviews';
-import { EditorialHero, EditorialSteps } from '../components/editorial';
+import { EditorialHero } from '../components/editorial';
 import { MarketingCta } from '../components/marketing-ui';
 import { MarketingFaq } from '../components/page-patterns';
 import { BrandImage } from '../components/brand-image';
 import { PlanComparison } from '../components/plan-comparison';
 import { SECTOR_PROGRAMMES } from '../../../../packages/marketing/sector-programmes';
 import { seo } from '../lib/seo';
+import { ResidentialLanding } from '../components/residential-landing';
 
 export function loader({ request }: LoaderFunctionArgs) {
   const retired = residentialPublicResponse(request); if (retired) throw retired;
@@ -24,7 +25,7 @@ export function loader({ request }: LoaderFunctionArgs) {
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData: page }) =>
   page
-    ? seo(page.name + ' Property Services — Western Australia', page.summary, '/' + page.key, {
+    ? seo(page.key === 'residential' ? 'Residential Services & Property Support — Western Australia' : page.name + ' Property Services — Western Australia', page.key === 'residential' ? 'Residential inspections, open homes, maintenance and tenancy support for private landlords and residential agencies.' : page.summary, '/' + page.key, {
         type: 'Service',
         breadcrumbs: [{ name: page.name, path: '/' + page.key }],
       })
@@ -32,6 +33,7 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData: page }) =>
 
 export default function ServiceOverview() {
   const page = useLoaderData<typeof loader>();
+  if (page.key === 'residential') return <ResidentialLanding />;
   return (
     <>
       <EditorialHero
@@ -39,8 +41,8 @@ export default function ServiceOverview() {
         title={page.headline}
         intro={page.summary}
         image={page.key === 'student-living' ? 'co-living' : page.key}
-        primary={{ label: 'Discuss your requirements', to: '/contact' }}
-        secondary={{ label: 'Browse individual services', to: '/services' }}
+        primary={{label:page.key === 'co-living' ? 'Explore Co-Living Support' : 'Explore Maintenance Support', to:'#service-options'}}
+        secondary={{label:'Get Started Today',to:'/client'}}
       />
       <section className="mkt-section pi-editorial-section">
         <div className="site-container pi-introduction">
@@ -65,11 +67,11 @@ export default function ServiceOverview() {
           </div>
         )}
       </section>
-      <section className="mkt-section pi-editorial-section pi-neutral">
+      <section className="mkt-section pi-editorial-section pi-neutral" id="service-options">
         <div className="site-container">
           <div className="pi-section-heading">
             <p className="eyebrow">{page.name} support</p>
-            <h2>A practical service for the work at hand.</h2>
+            <h2>Support designed around your property.</h2>
           </div>
           <div className="pi-service-details">
             {page.services.map(([title, copy], index) => (
@@ -121,8 +123,7 @@ export default function ServiceOverview() {
             <li key={title}><span className="pi-step-number">0{i+1}</span><h3>{title}</h3><p>{copy}</p></li>)}</ol>
         </div>
       </section>}
-      {(page.key === 'residential' || page.key === 'commercial') && <PlanComparison market={page.key} />}
-      <EditorialSteps />
+      {page.key === 'commercial' && <PlanComparison market={page.key} />}
       <section className="mkt-section pi-editorial-section">
         <div className="site-container pi-faq-layout">
           <div>
@@ -135,10 +136,8 @@ export default function ServiceOverview() {
           <MarketingFaq questions={page.questions} />
         </div>
       </section>
-      <MarketingCta
-        title={'Let’s talk about your ' + page.name.toLowerCase() + ' property.'}
-        description="Start with a service, a property or a practical task. We’ll help clarify the next step."
-      />
+      <MarketingCta title={page.key === 'co-living' ? 'Let’s get your shared property working.' : 'Get the right support for your property.'}
+        description="Create a free account to explore services, or contact ProInspect for a tailored operating scope." />
     </>
   );
 }

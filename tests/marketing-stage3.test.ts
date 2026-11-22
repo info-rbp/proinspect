@@ -52,7 +52,7 @@ test('price proposals and unapproved statutory/public records stay noindex and o
   for(const pathname of ['/privacy','/terms','/subscription-terms','/residential-property-support','/properties-for-lease','/properties-for-lease/residential']){
     assert.equal(shouldIndexPublicPage(pathname,'https://proinspect.systems','production'),false,pathname);
   }
-  for(const pathname of ['/service-finder','/who-we-help','/who-we-help/private-landlords','/services/property-condition-report']){
+  for(const pathname of ['/service-finder','/about','/who-we-help/private-landlords','/services/property-condition-report']){
     assert.equal(shouldIndexPublicPage(pathname,'https://proinspect.systems','production'),true,pathname);
     assert.equal(shouldIndexPublicPage(pathname,'https://example.workers.dev','production'),false,pathname);
   }
@@ -71,7 +71,8 @@ test('both marketing route trees expose the same conversion and audience pages',
   const ui=read('apps/marketing/app/components/site-chrome.tsx');
   for(const slug of ['private-landlords','property-management-agencies','commercial-property-owners','commercial-asset-managers','strata-managers','building-operators'])
     assert.match(read('packages/marketing/audiences.ts'),new RegExp("'"+slug+"':"));
-  assert.match(ui,/who-we-help/);
+  assert.match(read('apps/marketing/app/routes/about.tsx'),/who-we-help/);
+  assert.match(read('packages/marketing/public-navigation.ts'),/Who We Help/);
   assert.match(ui,/PUBLIC_NAVIGATION/);
   assert.match(read('packages/marketing/public-navigation.ts'),/Leasing/);
 });

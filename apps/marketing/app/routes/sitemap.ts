@@ -1,3 +1,4 @@
+import { RESIDENTIAL_CATEGORIES } from '../../../../packages/marketing/residential-categories';
 import { ENGAGEMENTS, GUIDES } from '../../../../packages/marketing/content';
 import { SERVICE_SEEDS, FAMILIES } from '../../../../packages/service-catalogue/index';
 import { shouldIndexPublicPage } from '../../../platform/app/lib/public-routes';
@@ -12,6 +13,11 @@ export function loader() {
     '/',
     '/services',
     '/residential',
+    '/residential/services',
+    '/residential/subscriptions',
+    '/help-centre',
+    '/example-reports',
+    ...RESIDENTIAL_CATEGORIES.map(category => '/residential/services/' + category.slug),
     '/commercial',
     '/strata',
     '/co-living',

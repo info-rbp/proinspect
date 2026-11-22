@@ -14,7 +14,6 @@ import { beginSignIn, isLocal, requireOrigin } from '../../../../packages/auth/s
 import { stagingAccess } from '../../../../packages/auth/staging-access';
 import { bookingIntent } from '../../../../packages/domain/booking-intent';
 import {
-  ENTRY_CHOICES,
   authDestination,
   entryFlow,
   entryPath,
@@ -80,53 +79,77 @@ export default function SignIn() {
   const result = useActionData<any>();
   const pending = useNavigation().state !== 'idle';
   return (
-    <main id="main" className="auth-page">
+    <main id="main" className={settings.signup ? "auth-page auth-page-signup" : "auth-page"}>
       <Link className="brand" to="/">
         ProInspect<span>PROPERTY OPERATIONS</span>
       </Link>
       <div className="auth-grid">
         <section className="auth-copy">
-          <p className="eyebrow">Your ProInspect Client Portal</p>
-          <h1>
-            {settings.signup ? 'Property support starts here.' : 'Welcome back to ProInspect.'}
-          </h1>
+          <p className="eyebrow">Your ProInspect account</p>
+          <h1>{settings.signup ? 'Property support starts with you.' : 'Welcome back to ProInspect.'}</h1>
           <p>
-            Inspections, property reports, leasing and maintenance support, with the right tools for
-            your role.
+            {settings.signup
+              ? 'Book property inspections, manage your property records and follow work in one secure place.'
+              : 'Return to the properties and services you are authorised to manage or access.'}
           </p>
-          <p>
-            One account connects you to the properties you own, manage or rent.
-          </p>
+          {settings.signup ? (
+            <ol className="signup-steps" aria-label="Account setup steps">
+              <li><strong>Verify your email</strong><span>No password to remember.</span></li>
+              <li><strong>Tell us a little about yourself</strong><span>Only the details needed to set up your account.</span></li>
+              <li><strong>Add your property</strong><span>Arrange a service when you are ready.</span></li>
+            </ol>
+          ) : <p>One email gives you access to your existing authorised ProInspect workspaces.</p>}
         </section>
         <section className="panel auth-panel">
           <h2>{settings.signup ? 'Create your free account' : 'Sign in to your account'}</h2>
           <p>
             {settings.staging ? 'Use an approved staging test email. Cloudflare will send you a one-time code.' : settings.signup
-              ? 'Verify your email, then complete the setup for your role. No payment details are needed.'
+              ? 'Create a free account with your email address. We will send you a secure sign-in link; no payment details are needed.'
               : 'Enter your email and we will send a secure one-time link. No password to remember.'}
           </p>
           <Form method="post" className="form" reloadDocument={settings.staging}>
             <input type="hidden" name="returnTo" value={settings.returnTo} />
             <input type="hidden" name="mode" value={settings.signup ? 'signup' : 'signin'} />
             {settings.signup && settings.chooseRole && (
-              <Field
-                label="Which best describes you?"
-                name="flow"
-                help="This guides your setup. Property access is confirmed separately."
-              >
-                <select id="flow" name="flow" required defaultValue={settings.flow ?? ''}>
-                  <option value="">Choose your role</option>
-                  {['Residential', 'Resident'].map((family) => (
-                    <optgroup label={family} key={family}>
-                      {ENTRY_CHOICES.filter((choice) => choice.family === family).map((choice) => (
-                        <option key={choice.id} value={choice.id}>
-                          {choice.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </Field>
+              <fieldset className="signup-choice-fieldset">
+                <legend>What brings you to ProInspect?</legend>
+                <p id="signup-choice-help" className="small">
+                  Choose what you need to do. This guides setup; it does not grant property access.
+                </p>
+                <div className="signup-choice-grid" aria-describedby="signup-choice-help">
+                  <label className="signup-choice">
+                    <input type="radio" name="flow" value="ONB-RES-OWNER"
+                      defaultChecked={settings.flow === 'ONB-RES-OWNER'} required />
+                    <span className="signup-choice-copy">
+                      <strong>I own a residential property</strong>
+                      <span>Inspections, reports and support for property I own and self-manage.</span>
+                    </span>
+                  </label>
+                  <label className="signup-choice">
+                    <input type="radio" name="flow" value="ONB-RES-AGENCY"
+                      defaultChecked={settings.flow === 'ONB-RES-AGENCY'} />
+                    <span className="signup-choice-copy">
+                      <strong>I manage properties for owners</strong>
+                      <span>Apply for a reviewed property management organisation account.</span>
+                    </span>
+                  </label>
+                  <label className="signup-choice">
+                    <input type="radio" name="flow" value="ONB-RES-OWNER" />
+                    <span className="signup-choice-copy">
+                      <strong>I need a one-off inspection</strong>
+                      <span>For property I own and self-manage. No subscription required to register.</span>
+                    </span>
+                  </label>
+                  <label className="signup-choice">
+                    <input type="radio" name="flow" value="ONB-INV-CORE"
+                      defaultChecked={settings.flow === 'ONB-INV-CORE'} />
+                    <span className="signup-choice-copy">
+                      <strong>I am a tenant or resident</strong>
+                      <span>Use your invitation to access tenancy information.</span>
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
             )}
             {!settings.staging && <><Field label="Email address" name="email">
               <input
@@ -170,8 +193,8 @@ export default function SignIn() {
             )}
           </p>
           <p className="auth-foot">
-            An account does not start a subscription. Professional management access requires
-            review. Tenant access is invitation-only and limited to the invited tenancy.
+            Registration is free and never starts a subscription. Property management access requires
+            approval. Tenant and resident access is invitation-only and requires a verified invitation.
           </p>
           <p className="auth-foot">
             Have an invitation? Open the original link and use the email it was sent to. Looking for

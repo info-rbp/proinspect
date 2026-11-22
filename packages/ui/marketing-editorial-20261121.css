@@ -1,0 +1,82 @@
+
+/* Marketing editorial improvements: retained ProInspect design tokens and branding. */
+.site .pi-home-property-grid .pi-property-card,
+.site .pi-home-property-grid .pi-property-card:nth-child(-n + 2),
+.site .pi-home-property-grid .pi-property-card:nth-last-child(-n + 2) {grid-column:span 3;max-width:none;}
+.site .pi-residential-feature {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(2rem,5vw,5rem);align-items:center;}
+.site .pi-residential-feature-image {min-width:0;overflow:hidden;border-radius:4px;}
+.site .pi-residential-feature-image img {display:block;width:100%;height:auto;aspect-ratio:1.45;object-fit:cover;}
+.site .pi-residential-feature-content {min-width:0;}
+.site .pi-residential-feature-content h2,.site .pi-residential-feature-content h3 {font-size:clamp(1.7rem,3vw,3rem);line-height:1.18;}
+.site .pi-residential-feature-content p {line-height:1.7;max-width:60ch;}
+.site .pi-residential-feature-reverse .pi-residential-feature-image {order:2;}
+.site .pi-residential-feature-reverse .pi-residential-feature-content {order:1;}
+.site .pi-residential-feature .mkt-report-preview {max-width:540px;margin-inline:auto;}
+.site .pi-deep .pi-residential-feature-content p {color:#e5efed;}
+.site .pi-residential-note {font-size:.82rem!important;opacity:.85;}
+.site .pi-process-illustrated li img {display:block;width:100%;height:auto;aspect-ratio:1.6;object-fit:cover;margin-bottom:1.5rem;border-radius:3px;}
+.site .pi-footer-compact {grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:3rem;}
+.site .pi-footer-actions {display:flex;flex-wrap:wrap;gap:1rem 1.5rem;max-width:450px;align-items:center;}
+.site .pi-footer-actions a {color:#deebe7;text-decoration:underline;text-underline-offset:.25em;}
+.site .pi-footer-legal nav {display:flex;flex-wrap:wrap;gap:.65rem 1.25rem;align-items:center;}
+.site .pi-footer-legal a {white-space:nowrap;}
+.site .pi-footer-legal {align-items:flex-start;}
+.site .pi-residential-grid .pi-property-card,.site .pi-residential-grid .pi-property-card:nth-child(-n + 2),.site .pi-residential-grid .pi-property-card:nth-last-child(-n + 2) {grid-column:span 3;}
+.site .pi-residential-more {margin-top:4rem;}
+.site .pi-residential-related {display:flex;flex-wrap:wrap;gap:.8rem 1.5rem;margin-bottom:2rem;}
+.site .pi-residential-related a {display:inline-flex;align-items:center;justify-content:space-between;gap:1.2rem;padding:.75rem 1rem;border:1px solid #cddbd6;border-radius:3px;color:#18474d;text-underline-offset:.25em;}
+.site .pi-residential-related a:hover {background:#e9f2ec;}
+.site .pi-help-section {padding:3rem 0;border-top:1px solid #cbd5cf;scroll-margin-top:6rem;max-width:950px;}
+.site .pi-help-section .mkt-faq-list {margin-top:2rem;}
+.site .pi-residential-report-example {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4rem;align-items:start;}
+.site .pi-residential-report-example .mkt-report-preview {max-width:560px;}
+.site .pi-residential-feature .button {margin-top:1rem;}
+@media(max-width:1000px){
+ .site .pi-footer-compact {grid-template-columns:1fr;gap:1.3rem;}
+ .site .pi-footer-actions {max-width:none;}
+}
+@media(max-width:800px){
+ .site .pi-residential-feature,.site .pi-residential-report-example {grid-template-columns:minmax(0,1fr);gap:2rem;}
+ .site .pi-residential-feature-reverse .pi-residential-feature-image,.site .pi-residential-feature-reverse .pi-residential-feature-content {order:initial;}
+ .site .pi-residential-grid .pi-property-card,.site .pi-residential-grid .pi-property-card:nth-child(-n + 2),.site .pi-residential-grid .pi-property-card:nth-last-child(-n + 2) {grid-column:span 1;}
+ .site .pi-home-property-grid .pi-property-card,.site .pi-home-property-grid .pi-property-card:nth-child(-n + 2),.site .pi-home-property-grid .pi-property-card:nth-last-child(-n + 2) {grid-column:span 1;}
+ .site .pi-home-property-grid .pi-property-card:last-child,.site .pi-residential-grid .pi-property-card:last-child {max-width:none;}
+}
+@media(max-width:560px){
+ .site .pi-residential-feature {gap:1.5rem;}
+ .site .pi-residential-feature-image img {aspect-ratio:1.6;}
+ .site .pi-residential-grid .pi-property-card,.site .pi-residential-grid .pi-property-card:nth-child(-n + 2),.site .pi-residential-grid .pi-property-card:nth-last-child(-n + 2) {grid-column:span 1;max-width:none;}
+ .site .pi-home-property-grid .pi-property-card,.site .pi-home-property-grid .pi-property-card:nth-child(-n + 2),.site .pi-home-property-grid .pi-property-card:nth-last-child(-n + 2) {grid-column:span 1;max-width:none;}
+ .site .pi-footer-legal nav {gap:.8rem;}
+}
+
+/* Login landing: role-aware destinations without exposing or changing any authentication rule. */
+.pi-entry-page {max-width:1200px;margin-inline:auto;padding:clamp(2rem,5vw,4rem) clamp(1rem,3vw,2rem);}
+.pi-entry-wrap {width:100%;max-width:1080px;margin-inline:auto;}
+.pi-entry-intro {max-width:780px;margin-bottom:2rem;}
+.pi-entry-intro h1 {font-size:clamp(2rem,4vw,3.2rem);line-height:1.13;margin-bottom:1rem;}
+.pi-entry-intro p {line-height:1.7;}
+.pi-entry-options {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.2rem;}
+.pi-entry-card {display:flex;flex-direction:column;gap:1rem;min-width:0;padding:1.7rem;}
+.pi-entry-card h2 {font-size:1.35rem;margin:0;}
+.pi-entry-card p {line-height:1.6;margin:0;flex:1;}
+.pi-entry-card-actions {display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin-top:1rem;}
+.pi-entry-card-actions a {white-space:normal;text-align:center;}
+.pi-entry-footer {display:flex;flex-wrap:wrap;gap:1.5rem;margin-top:1.8rem;}
+@media(max-width:760px){.pi-entry-options{grid-template-columns:minmax(0,1fr);}.pi-entry-card{padding:1.3rem;}}
+
+/* Keep the two-line homepage headline deliberate at wide sizes; allow safe reflow on small screens. */
+.site .pi-editorial-hero-home .pi-editorial-copy h1 {
+  max-width: none;
+  font-size: clamp(2rem, 3.1vw, 3.2rem);
+  text-wrap: initial;
+}
+.site .pi-editorial-hero-home .pi-editorial-copy h1 > span { white-space: nowrap; }
+@media (max-width: 560px) {
+  .site .pi-editorial-hero-home .pi-editorial-copy h1 {
+    font-size: clamp(1.7rem, 7vw, 2.35rem);
+  }
+  .site .pi-editorial-hero-home .pi-editorial-copy h1 > span {
+    white-space: normal;
+  }
+}

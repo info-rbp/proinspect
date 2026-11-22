@@ -44,11 +44,11 @@ export default function LeasingIndex() {
   return (
     <>
       <EditorialHero
-        eyebrow="Leasing"
-        title="Find a place for your next chapter."
-        intro="Explore current properties, register for an advertised open home and find the right application pathway. Your next step starts with a closer look."
+        eyebrow="Properties Available"
+        title="Find Your Next Place."
+        intro="See what is available, when inspections are advertised and how to apply through the process selected by the responsible landlord or leasing agent."
         image="leasing"
-        primary={{ label: 'View available properties', to: '#available-properties' }}
+        primary={{ label: "See What's Available", to: '#available-properties' }}
         secondary={{ label: 'Tenant information', to: '/tenants' }}
       />
       <section
@@ -58,7 +58,7 @@ export default function LeasingIndex() {
         <div className="site-container">
           <div className="pi-section-heading">
             <p className="eyebrow">Current opportunities</p>
-            <h2>Properties for lease.</h2>
+            <h2>Current Properties Available.</h2>
             <p>
               Browse published residential opportunities. Choose a property to see
               its photos, inspection sessions and application information.

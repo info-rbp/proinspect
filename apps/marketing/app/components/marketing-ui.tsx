@@ -62,10 +62,10 @@ export function MarketingCta({
         </div>
         <div className="actions">
           <a className="button mkt-button-light" href={appOrigin + '/client'}>
-            Sign Up/Sign In to access <span aria-hidden="true">→</span>
+            Get Started Today <span aria-hidden="true">→</span>
           </a>
           <Link className="button mkt-button-outline-light" to={serviceId ? '/contact?service=' + serviceId : '/contact'}>
-            Discuss your needs
+            Contact ProInspect
           </Link>
         </div>
       </div>

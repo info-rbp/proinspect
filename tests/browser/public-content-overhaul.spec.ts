@@ -16,7 +16,7 @@ test('homepage advertises one property subscription and terms',async({page})=>{
   await expect(plan).toContainText('$50');await expect(plan).toContainText('$55 including GST per property per week');
   await expect(page.locator('.pi-plan-disclosure').first()).toContainText('24');
   await expect(page.locator('.pi-plan-disclosure').first()).toContainText('60');
-  await expect(page.locator('.pi-property-card')).toHaveCount(4);
+  await expect(page.locator('.pi-home-property-grid .pi-property-card')).toHaveCount(2);
 });
 test('old sector links have appropriate permanent responses and stay outside the sitemap',async({request})=>{
   const home=await request.get('/sectors/residential',{maxRedirects:0});
@@ -29,5 +29,5 @@ test('the finder connects ongoing property support with the one residential plan
   await page.goto('/service-finder');
   await page.getByLabel('Property setting').selectOption('ongoing');
   await expect(page.getByLabel('Your intended outcome').locator('option')).toHaveCount(1);
-  await expect(page.getByRole('link',{name:/Explore the programme/})).toHaveAttribute('href','/residential-property-support');
+  await expect(page.getByRole('link',{name:/Explore the programme/})).toHaveAttribute('href','/residential/subscriptions');
 });
