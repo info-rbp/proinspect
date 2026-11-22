@@ -56,6 +56,25 @@ export const bookingIntakeSchema = z.object({
   areasOfConcern: optionalText(1500),
 }).strict();
 export type BookingIntake = z.infer<typeof bookingIntakeSchema>;
+/** Keep the historic no-intake fingerprint stable for older booking clients.
+ * New inspection intake becomes part of the immutable, idempotent submission.
+ * This prevents a reused request key silently discarding changed private details.
+ */
+export function bookingFingerprintFields(data: {
+ propertyId: string; serviceId: string; startsAt: string;
+ access: unknown; recurringPlanId?: string; planDue?: string;
+ intake?: BookingIntake;
+}) {
+ return {
+  propertyId: data.propertyId,
+  serviceId: data.serviceId,
+  startsAt: new Date(data.startsAt).toISOString(),
+  access: data.access,
+  recurringPlanId: data.recurringPlanId ?? null,
+  planDue: data.planDue ?? null,
+  ...(data.intake ? { intake: data.intake } : {}),
+ };
+}
 export function inspectionIntakeKind(serviceId: string): 'pcr' | 'exit' | 'routine' | 'general' {
   if (serviceId === 'property-condition-report') return 'pcr';
   if (serviceId === 'final-exit-inspection') return 'exit';
