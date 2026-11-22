@@ -46,9 +46,9 @@ export function ResidentialPropertyDashboard({data,property,setup,busy,result}:{
   const canonicalTenancies=data.tenancies.filter(t=>t.property_id===p.id)
     .sort((a,b)=>String(b.starts_at).localeCompare(String(a.starts_at)));
   const profile=setup?.profile,tenancy=setup?.tenancy;
-  const bookingsUrl=base+'/records?type=bookings&property='+encodeURIComponent(p.id);
-  const docsUrl=base+'/records?type=documents&property='+encodeURIComponent(p.id);
-  const worksUrl=base+'/records?type=work-orders&property='+encodeURIComponent(p.id);
+  const bookingsUrl=base+'/records/bookings?property='+encodeURIComponent(p.id);
+  const docsUrl=base+'/records/documents?property='+encodeURIComponent(p.id);
+  const worksUrl=base+'/records/work-orders?property='+encodeURIComponent(p.id);
   const requestsUrl=base+'/requests?property='+encodeURIComponent(p.id);
   const canBook=['owner','admin'].includes(w.role);
   return <div className="stack residential-property-dashboard">
