@@ -536,6 +536,46 @@ td p {
 .definition dd {
   margin: 0;
 }
+/* Property-first service discovery. The selected category is a navigation
+   choice only; existing booking/authorisation rules still own acceptance. */
+.booking-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+.booking-category-card {
+  width: 100%;
+  min-height: 138px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  text-align: left;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.booking-category-card:hover:not(:disabled) {
+  border-color: var(--teal);
+  background: var(--teal-light);
+}
+.booking-category-card.selected {
+  border: 2px solid var(--teal);
+  padding: calc(1rem - 1px);
+  background: var(--teal-light);
+}
+.booking-category-card:disabled { cursor: wait; opacity: 0.75; }
+.booking-category-heading { font-size: 0.99rem; font-weight: 700; line-height: 1.3; }
+.booking-category-description { color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+.booking-category-count { margin-top: auto; color: var(--teal); font-size: 0.75rem; font-weight: 650; }
+@media (max-width: 540px) {
+  .booking-category-grid { grid-template-columns: 1fr; }
+  .booking-category-card { min-height: 104px; }
+}
 .step-track {
   display: flex;
   align-items: center;
