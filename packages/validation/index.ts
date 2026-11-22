@@ -41,7 +41,7 @@ export const residentialPropertyProfileSchema = z.object({
 }).refine(value=>value.ensuites<=value.bathrooms,{
   path:['ensuites'],message:'En-suites are included in the total number of bathrooms.',
 });
-const australianDate = z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/)
+const australianDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
   .refine(value=>!Number.isNaN(Date.parse(value+'T00:00:00Z')) &&
     new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value,
   'Enter a valid calendar date.');
