@@ -4,6 +4,7 @@ import { Form, Link, useLoaderData, useActionData, useNavigation, data, type Loa
 import { useWorkspace } from '../lib/workspace';
 import { PageHeading, Badge, EmptyState, Feedback } from '../../../../packages/ui/components';
 import { displayDate } from '../../../../packages/domain/index';
+import { propertyBookingCategories } from '../../../../packages/service-catalogue/booking-navigation';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
   const d = (await loadApi(
     request,
@@ -53,6 +54,7 @@ export default function Property() {
   const bookings = d.bookings.filter((b) => b.property_id === p.id);
   const documents = d.documents.filter((doc) => doc.property_id === p.id);
   const requests = d.requests.filter((r) => r.property_id === p.id);
+  const bookingCategories = propertyBookingCategories(d.services, p.sector);
   return (
     <>
       <nav className="breadcrumbs" aria-label="Breadcrumb">
@@ -75,6 +77,24 @@ export default function Property() {
           )}
       </PageHeading>
       <div className="stack">
+        {['landlord','property-manager','commercial','strata-manager'].includes(d.workspace.kind) &&
+          d.workspace.role !== 'viewer' && bookingCategories.length > 0 &&
+          <section className="panel stack" aria-labelledby="property-services-heading">
+            <div>
+              <h2 id="property-services-heading">Arrange a property service</h2>
+              <p className="small">Choose what you need for this property. We will show the relevant service options and booking requirements.</p>
+            </div>
+            <div className="booking-category-grid">
+              {bookingCategories.map(category => (
+                <Link key={category.id} className="booking-category-card"
+                  to={`${d.workspace.href}/book?property=${encodeURIComponent(p.id)}&category=${category.id}`}>
+                  <span className="booking-category-heading">{category.title}</span>
+                  <span className="booking-category-description">{category.description}</span>
+                  <span className="booking-category-count">{category.services.length} {category.services.length === 1 ? 'service' : 'services'} · Choose services →</span>
+                </Link>
+              ))}
+            </div>
+          </section>}
         {p.sector==='residential' && ['landlord','property-manager','staff'].includes(d.workspace.kind) &&
           (d.workspace.kind!=='staff' || ['administrator','operations_manager'].includes(d.user.staffRole??'')) &&
           <section className="panel stack">
