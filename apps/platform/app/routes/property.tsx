@@ -100,6 +100,8 @@ export default function Property() {
           <section className="panel stack">
             <h2>Co-living rooms & shared areas</h2>
             <p>For separately let rooms or beds, configure one residential property with private occupancies and common spaces. Every resident is invited to their own tenancy.</p>
+            {d.workspace.kind==='landlord'&&<Link className="button secondary"
+              to={d.workspace.href+'/co-living-onboardings'}>Co-Living onboarding & setup</Link>}
             <Link className="button secondary" to={d.workspace.href+'/properties/'+encodeURIComponent(p.id)+'/co-living'}>Manage co-living</Link>
           </section>}
         {staff&&<section className="panel stack" id="staff-property-operations" aria-label="Staff property operations">
