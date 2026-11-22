@@ -1,3 +1,4 @@
+import type { Service } from '../domain/index';
 /**
  * Customer-facing residential services from the approved service-scope review.
  * Source: ProInspect Schedule of Fees – Updated, Pay-As-You-Go pages 1–6,
@@ -124,3 +125,47 @@ export type ResidentialAddOnCode = keyof typeof RESIDENTIAL_ADD_ONS;
 export function addOnCandidateTotal(codes: readonly ResidentialAddOnCode[]):number {
   return codes.reduce((sum,code)=>sum+RESIDENTIAL_ADD_ONS[code].exGstCents,0);
 }
+
+const residentialRows: Array<[string,string,string,string[],number,number,string]> = [
+  ['follow-up-routine-inspection','Follow-Up Routine Inspections','inspections',
+    ['residential'],45,24,'Return inspection linked to the previous routine report and outstanding findings.'],
+  ['property-inventory-report','Property Inventory Report','inspections',
+    ['residential'],90,48,'Document the included inventory at the property; can also be requested with a PCR.'],
+  ['vacant-property-check','Vacant Property Check','inspections',
+    ['residential'],45,24,'Check a vacant property and provide room photographs and a summary report.'],
+  ['maintenance-inspection','Maintenance Inspection','inspections',
+    ['residential'],60,24,'Inspect defects, follow up on observable repair completion or capture updated photographs.'],
+  ['open-home','Open Home','leasing',['residential'],15,72,
+    'Grouped vacant-property viewing; request a date and morning, afternoon or evening window.'],
+  ['private-open-home','Open Home (Private)','leasing',['residential'],15,72,
+    'Private viewing for an identified attendee; appointment confirmation remains subject to availability.'],
+  ['video-walkthrough-property','Video Walkthrough of Property','leasing',['residential'],90,48,
+    'Record a property walkthrough and securely share with authorised recipients.'],
+  ['tenant-move-in-handover','Tenant Move-In and Handover Support','leasing',['residential'],60,24,
+    'Arrange practical move-in tasks, keys and handover for an approved tenancy.'],
+  ['off-site-key-storage','Off-Site Key Storage','access',['residential'],30,24,
+    'Arrange secure ongoing key custody with a monthly status record.'],
+  ['key-collection','Key Collection','access',['residential'],45,24,
+    'Collect authorised keys from a named person or collection location.'],
+  ['key-safe-installation','Key Safe Installation','access',['residential'],60,24,
+    'Install a key safe at an approved location and provide installation evidence.'],
+  ['key-safe-removal-relocation','Key Safe Removal or Relocation','access',['residential'],60,24,
+    'Remove or relocate an existing safe as instructed.'],
+  ['key-audit-register-update','Key Audit and Register Update','access',['residential'],60,24,
+    'Scope a property key audit and reconcile custody records.'],
+  ['key-cutting-tagging','Key Cutting and Tagging','access',['residential'],30,24,
+    'Arrange authorised duplicate keys and identifying tags.'],
+  ['locksmith-services','Locksmith Services','access',['residential'],60,24,
+    'Arrange and coordinate locksmith access and authorised works.'],
+  ['urgent-maintenance-make-good','Urgent Maintenance / Make Good Works','maintenance',
+    ['residential'],60,0,'Urgent attendance request requiring safety triage and availability confirmation.'],
+];
+/** Separate D1/service-seed identities: do not expand the legacy 23 public
+    marketing/legal publication IDs or silently publish those service pages. */
+export const RESIDENTIAL_NEW_SERVICE_SEEDS: Service[] = residentialRows.map(
+  ([id,name,family,sectors,duration_minutes,notice_hours,summary])=>({
+    id,name,family,sectors,duration_minutes,notice_hours,summary,
+    buffer_before:15,buffer_after:15,horizon_days:60,
+    price_ex_gst_cents:null,booking_mode:'request',active:1,
+  }),
+);
