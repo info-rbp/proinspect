@@ -90,7 +90,7 @@ export default function Billing(){
    {value:'upon_booking',label:'Payment upon booking'},
    {value:'net_7',label:'7 calendar days from invoice issue'},
    {value:'eom_7',label:'7 days end of month'}]}/>
-  <Input name="creditLimitCents" type="number" label="Maximum unsettled credit (AUD cents, optional)" required={false}/>
+  <Input name="creditLimitCents" type="number" label="Maximum unsettled credit (AUD cents; required for deferred terms)" required={false}/>
   <Input name="reason" label="Commercial approval reason (at least 8 characters)"/>
  </OperationForm>
  {(d.cashTermRequests||[]).map((r:any)=><div className="record-row" key={r.id}>
