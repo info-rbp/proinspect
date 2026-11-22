@@ -13,6 +13,9 @@ def db():
       CREATE TABLE bookings(id TEXT PRIMARY KEY);
       CREATE TABLE requests(id TEXT PRIMARY KEY);
       CREATE TABLE users(id TEXT PRIMARY KEY);
+      CREATE TABLE services(id TEXT PRIMARY KEY,name TEXT,family TEXT,sectors_json TEXT,summary TEXT,
+        duration_minutes INTEGER,buffer_before INTEGER,buffer_after INTEGER,notice_hours INTEGER,
+        horizon_days INTEGER,price_ex_gst_cents INTEGER,booking_mode TEXT,active INTEGER);
       CREATE TABLE payments(id TEXT PRIMARY KEY,total_cents INTEGER);
       INSERT INTO bookings VALUES('bkg_test');
       INSERT INTO requests VALUES('req_test');
@@ -22,6 +25,11 @@ def db():
     return c
 
 class ServiceIntentSchemaTests(unittest.TestCase):
+    def test_new_service_rows_are_request_only_and_unpriced(self):
+        c=db()
+        rows=c.execute("SELECT booking_mode,price_ex_gst_cents FROM services").fetchall()
+        self.assertEqual(len(rows),16)
+        self.assertTrue(all(mode=='request' and price is None for mode,price in rows))
     def test_addon_requested_without_any_payment(self):
         c=db()
         c.execute("""INSERT INTO booking_service_addon_intents
