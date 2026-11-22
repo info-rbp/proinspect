@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { bookingIntakeSchema } from '../booking/inspection-checkout';
+import { bookingIntakeSchema } from '../booking/inspection-checkout.ts';
 import { residentialServiceRequestIntakeSchema } from '../booking/residential-service-requests.ts';
 export const email = z.string().trim().toLowerCase().email().max(254);
 export const id = z

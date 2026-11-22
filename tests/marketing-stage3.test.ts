@@ -72,7 +72,7 @@ test('both marketing route trees expose the same conversion and audience pages',
   for(const slug of ['private-landlords','property-management-agencies','commercial-property-owners','commercial-asset-managers','strata-managers','building-operators'])
     assert.match(read('packages/marketing/audiences.ts'),new RegExp("'"+slug+"':"));
   assert.match(read('apps/marketing/app/routes/about.tsx'),/who-we-help/);
-  assert.match(read('packages/marketing/public-navigation.ts'),/Who We Help/);
+  assert.doesNotMatch(read('packages/marketing/public-navigation.ts'),/Who We Help/);
   assert.match(ui,/PUBLIC_NAVIGATION/);
   assert.match(read('packages/marketing/public-navigation.ts'),/Leasing/);
 });
