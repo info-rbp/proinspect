@@ -257,10 +257,14 @@ test('one-off inspection entry remains free and adds a property without creating
   await page.getByRole('button', { name: 'Continue to add your property' }).click();
   await expect(page).toHaveURL(/\/w\/landlord\/cli_[a-z0-9]+\/properties\?service=property-condition-report$/);
   const base = new URL(page.url()).pathname.replace('/properties', '');
-  await page.getByLabel('Street address, including unit if applicable').fill('47 Synthetic New Street');
+  await page.getByLabel('Street address, including unit number').fill('47 Synthetic New Street');
   await page.getByLabel('Suburb').fill('Perth');
   await page.getByLabel('WA postcode').fill('6000');
-  await page.getByRole('checkbox', { name: /I own and self-manage this residential rental property/ }).check();
+  await page.getByRole('button', { name: /Continue/ }).click();
+  await page.getByRole('button', { name: 'Add Car spaces' }).click();
+  await page.getByRole('button', { name: /Continue/ }).click();
+  await page.getByRole('button', { name: /Continue/ }).click();
+  await page.getByRole('checkbox', { name: /I confirm I own and self-manage/ }).check();
   await page.getByRole('button', { name: 'Add property' }).click();
   await expect(page).toHaveURL(new RegExp(base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/book/property-condition-report\\?property=prop_'));
   const account = await (await page.request.get('/api/account')).json();
