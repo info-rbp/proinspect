@@ -142,6 +142,17 @@ try{
  assert.equal((await api(base+'/work-orders/'+booked.data.workOrderId+'/booking-intake',
   {cookie:owner.cookie})).status,403);
 
+ const lower=await api(staff+'/billing/cash-terms/request',{cookie:requester.cookie,
+  body:{clientId,termCode:'net_7',creditLimitCents:1000,
+   reason:'Attempted reduction below outstanding exposure'}});
+ assert.equal(lower.status,200,JSON.stringify(lower.data));
+ const unsafeReduction=await api(staff+'/billing/cash-terms/approve',{cookie:reviewer.cookie,
+  body:{requestId:lower.data.id,reviewReference:'Review existing unpaid bookings'}});
+ assert.equal(unsafeReduction.status,409,JSON.stringify(unsafeReduction.data));
+ assert.equal(unsafeReduction.data.code,'CREDIT_LIMIT_REACHED');
+ const stillApproved=await api(base+'/cash-terms',{cookie:owner.cookie});
+ assert.equal(stillApproved.data.creditLimitCents,15000);
+
  const nextAvailability=await api(base+'/availability?service=routine-inspection&date='+
   dates[1]+'&property='+propertyId,{cookie:owner.cookie});
  assert.equal(nextAvailability.status,200,JSON.stringify(nextAvailability.data));
