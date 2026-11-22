@@ -13,6 +13,7 @@ import { PlanComparison } from '../components/plan-comparison';
 import { SECTOR_PROGRAMMES } from '../../../../packages/marketing/sector-programmes';
 import { seo } from '../lib/seo';
 import { ResidentialLanding } from '../components/residential-landing';
+import { CoLivingLanding } from '../components/co-living-landing';
 
 export function loader({ request }: LoaderFunctionArgs) {
   const retired = residentialPublicResponse(request); if (retired) throw retired;
@@ -34,6 +35,7 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData: page }) =>
 export default function ServiceOverview() {
   const page = useLoaderData<typeof loader>();
   if (page.key === 'residential') return <ResidentialLanding />;
+  if (page.key === 'co-living') return <CoLivingLanding />;
   return (
     <>
       <EditorialHero

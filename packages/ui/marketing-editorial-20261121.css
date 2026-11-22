@@ -80,3 +80,85 @@
     white-space: normal;
   }
 }
+
+/* Co-Living hub: six reusable image-led banners and linked explanatory pages.
+   Reuses approved BrandImage assets and established ProInspect design tokens. */
+.site .pi-co-living-grid .pi-property-card,
+.site .pi-co-living-grid .pi-property-card:nth-child(-n + 2),
+.site .pi-co-living-grid .pi-property-card:nth-last-child(-n + 2),
+.site .pi-co-living-grid .pi-property-card:last-child {
+  grid-column:span 2;max-width:none;min-width:0;
+}
+.site .pi-co-living-card .pi-co-living-button {
+  align-self:flex-start;margin-top:auto;
+  text-align:left;white-space:normal;
+}
+.site .pi-co-living-card .eyebrow {margin-bottom:.5rem;font-size:.76rem;}
+.site .pi-co-living-process {grid-template-columns:repeat(3,minmax(0,1fr));}
+.site .pi-co-living-process li {min-width:0;}
+.site .pi-co-living-process-detail li p {line-height:1.6;}
+.site .pi-co-living-note {font-size:.92rem!important;line-height:1.65!important;max-width:85ch;color:#415e60!important;margin-block:1.3rem;}
+.site .pi-co-living-metrics {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1rem 0 1.5rem;
+}
+.site .pi-co-living-metrics > div {
+  min-width:0;background:#edf3ee;border:1px solid #cbdad3;padding:1.15rem;display:flex;flex-direction:column;gap:.4rem;
+}
+.site .pi-co-living-metrics span,.site .pi-co-living-results span {font-size:.9rem;line-height:1.5;color:#496267;}
+.site .pi-co-living-metrics strong,.site .pi-co-living-results strong {
+  font-size:clamp(1.2rem,2vw,1.65rem);line-height:1.2;color:#153f42;overflow-wrap:anywhere;
+}
+.site .pi-co-living-after-feature {margin-top:3rem;}
+.site .pi-co-living-table-wrap {overflow-x:auto;max-width:100%;}
+.site .pi-co-living-table {width:100%;border-collapse:collapse;min-width:660px;text-align:left;}
+.site .pi-co-living-table th,.site .pi-co-living-table td {
+  padding:.9rem 1rem;border-bottom:1px solid #cbd8d2;line-height:1.6;vertical-align:top;
+}
+.site .pi-co-living-table thead th {background:#e6eee8;color:#163e43;font-size:.9rem;}
+.site .pi-co-living-table tbody th {font-weight:650;color:#183c43;}
+.site .pi-co-living-topic-nav {padding-block:1rem!important;background:#eaf0ec;}
+.site .pi-co-living-topic-links {display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;}
+.site .pi-co-living-topic-links a {font-size:.86rem;color:#214e52;text-decoration:none;border-bottom:2px solid transparent;padding:.4rem 0;}
+.site .pi-co-living-topic-links a[aria-current="page"] {font-weight:700;border-color:#1f6462;}
+.site .pi-co-living-topic-links a:hover,.site .pi-co-living-related a:hover {text-decoration:underline;text-underline-offset:.22em;}
+.site .pi-co-living-related {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.85rem;}
+.site .pi-co-living-related a {display:flex;justify-content:space-between;gap:1rem;align-items:center;border:1px solid #cbd8d2;padding:1rem;color:#214e52;min-width:0;text-decoration:none;}
+.site .pi-co-living-calculator {display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:2rem;align-items:start;}
+.site .pi-co-living-inputs {display:grid;gap:1.15rem;padding:1.5rem;background:#fff;border:1px solid #cbd8d2;}
+.site .pi-co-living-inputs label {font-size:.95rem;font-weight:600;color:#203d42;display:grid;gap:.4rem;min-width:0;}
+.site .pi-co-living-inputs input[type="number"] {
+  width:100%;max-width:100%;min-width:0;padding:.8rem .75rem;border:1px solid #98aaa4;border-radius:3px;font:inherit;
+}
+.site .pi-co-living-inputs input[type="range"] {width:100%;max-width:100%;accent-color:#155f59;}
+.site .pi-co-living-results {display:grid;gap:.6rem;}
+.site .pi-co-living-results > div {
+  display:flex;justify-content:space-between;align-items:baseline;gap:.7rem;
+  border-bottom:1px solid #c9d9d1;padding:.7rem 0;min-width:0;
+}
+.site .pi-co-living-results .pi-co-living-result-main {
+  background:#e5eee8;border:1px solid #b9d1c4;padding:1.2rem;margin-top:.45rem;align-items:flex-start;
+}
+.site .pi-co-living-related a:focus-visible,.site .pi-co-living-card a:focus-visible,
+.site .pi-co-living-topic-links a:focus-visible,.site .pi-co-living-inputs input:focus-visible {
+  outline:3px solid #1b6b65;outline-offset:4px;
+}
+@media(max-width:1000px){
+ .site .pi-co-living-grid .pi-property-card,
+ .site .pi-co-living-grid .pi-property-card:nth-child(-n + 2),
+ .site .pi-co-living-grid .pi-property-card:nth-last-child(-n + 2),
+ .site .pi-co-living-grid .pi-property-card:last-child {grid-column:span 1;max-width:none;}
+ .site .pi-co-living-calculator {grid-template-columns:minmax(0,1fr);}
+}
+@media(max-width:800px){
+ .site .pi-co-living-process {grid-template-columns:minmax(0,1fr);}
+ .site .pi-co-living-related {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:560px){
+ .site .pi-co-living-grid .pi-property-card,
+ .site .pi-co-living-grid .pi-property-card:nth-child(-n + 2),
+ .site .pi-co-living-grid .pi-property-card:nth-last-child(-n + 2),
+ .site .pi-co-living-grid .pi-property-card:last-child {grid-column:span 1;max-width:none;}
+ .site .pi-co-living-metrics,.site .pi-co-living-related {grid-template-columns:minmax(0,1fr);}
+ .site .pi-co-living-results > div {flex-direction:column;align-items:flex-start;}
+ .site .pi-co-living-inputs {padding:1rem;}
+}

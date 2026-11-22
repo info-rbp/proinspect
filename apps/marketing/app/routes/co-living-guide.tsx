@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState,type ReactNode,type ChangeEvent} from 'react';
 import {Link,useLoaderData,type LoaderFunctionArgs,type MetaFunction} from 'react-router';
 import {EditorialHero} from '../components/editorial';
 import {BrandImage} from '../components/brand-image';
@@ -31,7 +31,7 @@ function OwnerCta(){return <section className="mkt-final-cta"><div className="si
  Request a Co-Living Assessment <span aria-hidden="true">→</span></Link>
  <Link className="button mkt-button-outline-light" to="/co-living">Co-Living Overview</Link></div>
 </div></section>;}
-function Note({children}:{children:React.ReactNode}){return <p className="pi-co-living-note">{children}</p>;}
+function Note({children}:{children:ReactNode}){return <p className="pi-co-living-note">{children}</p>;}
 function HowItWorks(){return <>
  <section className="mkt-section pi-editorial-section" id="guide-content"><div className="site-container">
   <div className="pi-section-heading"><p className="eyebrow">Your onboarding journey</p><h2>Six stages from enquiry to tenanted.</h2>
@@ -117,7 +117,7 @@ function Pricing(){
   actualAnnualUtilityCents:Math.round(utilities*100),
  });
  const traditionalAnnual=EXAMPLE_TRADITIONAL_WEEKLY_CENTS*52;
- const num=(value:number,set:(value:number)=>void,max:number)=>(e:React.ChangeEvent<HTMLInputElement>)=>{
+ const num=(value:number,set:(value:number)=>void,max:number)=>(e:ChangeEvent<HTMLInputElement>)=>{
   const value=Number(e.target.value);set(Number.isFinite(value)?Math.min(max,Math.max(0,value)):0);
  };
  return <>
