@@ -241,46 +241,7 @@ const rows: Array<[string, string, string, string[], number, number, string]> = 
     'Discuss an on-site property task that falls outside the standard catalogue.',
   ],
 ];
-/**
- * Newly discovered service identities remain request-only until the authorised
- * catalogue explicitly publishes a price and opens the appointment schedule.
- * Old service IDs are preserved for historical bookings and cross-sector use.
- */
-const residentialRows: typeof rows = [
-  ['follow-up-routine-inspection','Follow-Up Routine Inspections','inspections',
-    ['residential'],45,24,'Return inspection linked to the previous routine report and outstanding findings.'],
-  ['property-inventory-report','Property Inventory Report','inspections',
-    ['residential'],90,48,'Document the included inventory at the property; can also be requested with a PCR.'],
-  ['vacant-property-check','Vacant Property Check','inspections',
-    ['residential'],45,24,'Check a vacant property and provide room photographs and a summary report.'],
-  ['maintenance-inspection','Maintenance Inspection','inspections',
-    ['residential'],60,24,'Inspect defects, follow up on observable repair completion or capture updated photographs.'],
-  ['open-home','Open Home','leasing',['residential'],15,72,
-    'Grouped vacant-property viewing; request a date and morning, afternoon or evening window.'],
-  ['private-open-home','Open Home (Private)','leasing',['residential'],15,72,
-    'Private viewing for an identified attendee; appointment confirmation remains subject to availability.'],
-  ['video-walkthrough-property','Video Walkthrough of Property','leasing',['residential'],90,48,
-    'Record a property walkthrough and securely share with authorised recipients.'],
-  ['tenant-move-in-handover','Tenant Move-In and Handover Support','leasing',['residential'],60,24,
-    'Arrange practical move-in tasks, keys and handover for an approved tenancy.'],
-  ['off-site-key-storage','Off-Site Key Storage','access',['residential'],30,24,
-    'Arrange secure ongoing key custody with a monthly status record.'],
-  ['key-collection','Key Collection','access',['residential'],45,24,
-    'Collect authorised keys from a named person or collection location.'],
-  ['key-safe-installation','Key Safe Installation','access',['residential'],60,24,
-    'Install a key safe at an approved location and provide installation evidence.'],
-  ['key-safe-removal-relocation','Key Safe Removal or Relocation','access',['residential'],60,24,
-    'Remove or relocate an existing safe as instructed.'],
-  ['key-audit-register-update','Key Audit and Register Update','access',['residential'],60,24,
-    'Scope a property key audit and reconcile custody records.'],
-  ['key-cutting-tagging','Key Cutting and Tagging','access',['residential'],30,24,
-    'Arrange authorised duplicate keys and identifying tags.'],
-  ['locksmith-services','Locksmith Services','access',['residential'],60,24,
-    'Arrange and coordinate locksmith access and authorised works.'],
-  ['urgent-maintenance-make-good','Urgent Maintenance / Make Good Works','maintenance',
-    ['residential'],60,0,'Urgent attendance request requiring safety triage and availability confirmation.'],
-];
-export const SERVICE_SEEDS: Service[] = [...rows,...residentialRows].map(
+export const SERVICE_SEEDS: Service[] = rows.map(
   ([id, name, family, sectors, duration_minutes, notice_hours, summary]) => ({
     id,
     name,
