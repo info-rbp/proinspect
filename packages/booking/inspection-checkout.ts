@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RESIDENTIAL_ADD_ONS, type ResidentialAddOnCode } from '../service-catalogue/residential-workflows';
 
 /** Canonical IDs are shared with the existing catalogue and report-tool mapping. */
 export const PRIMARY_INSPECTIONS = [
@@ -54,6 +55,17 @@ export const bookingIntakeSchema = z.object({
   keysReturned: z.enum(['yes', 'no', 'not_applicable', 'unknown']).optional(),
   originalPcrAvailable: z.enum(['yes', 'no', 'unknown']).optional(),
   areasOfConcern: optionalText(1500),
+  // Add-on requests are consented service intents, NEVER live billable lines.
+  addOns: z.array(z.enum([
+    'inventory_with_pcr','form19_service','tenant_attendance_coordination',
+  ])).max(1).optional(),
+  tenantWillAttend: z.enum(['yes','no','unknown']).optional(),
+  tenantAttendeeName: optionalText(120),
+  tenantAttendeeEmail: z.union([z.string().trim().toLowerCase().email().max(254),z.literal('')]).optional(),
+  tenantAttendeePhone: optionalText(40),
+  linkedBookingId: z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/).optional(),
+  furnishingStatus: z.enum(['furnished','part_furnished','unfurnished','unknown']).optional(),
+
 }).strict();
 export type BookingIntake = z.infer<typeof bookingIntakeSchema>;
 /** Keep the historic no-intake fingerprint stable for older booking clients.
@@ -75,11 +87,41 @@ export function bookingFingerprintFields(data: {
   ...(data.intake ? { intake: data.intake } : {}),
  };
 }
-export function inspectionIntakeKind(serviceId: string): 'pcr' | 'exit' | 'routine' | 'general' {
+export function inspectionIntakeKind(serviceId: string):
+  'pcr'|'exit'|'routine'|'follow_up'|'vacant'|'maintenance'|'general' {
   if (serviceId === 'property-condition-report') return 'pcr';
   if (serviceId === 'final-exit-inspection') return 'exit';
   if (serviceId === 'routine-inspection') return 'routine';
+  if (serviceId === 'follow-up-routine-inspection') return 'follow_up';
+  if (serviceId === 'vacant-property-check') return 'vacant';
+  if (serviceId === 'maintenance-inspection') return 'maintenance';
   return 'general';
+}
+
+/**
+ * Validate contextual eligibility before booking, independently of the browser.
+ * Returning an intent DOES NOT grant price/notice/delivery approval.
+ */
+export function validateRequestedAddOns(
+  serviceId: string, intake: BookingIntake | undefined,
+): Array<{code:ResidentialAddOnCode;candidateExGstCents:number}> {
+  const codes=intake?.addOns??[];
+  if(new Set(codes).size!==codes.length) throw new Error('Duplicate booking add-on.');
+  return codes.map(code=>{
+    const option=RESIDENTIAL_ADD_ONS[code];
+    if(!(option.parentServices as readonly string[]).includes(serviceId))
+      throw new Error('This add-on is not available for the selected service.');
+    if(code==='inventory_with_pcr'&&
+      !['furnished','part_furnished'].includes(intake?.furnishingStatus??''))
+      throw new Error('The inventory add-on is available only for furnished premises.');
+    if(code==='form19_service'&&intake?.occupancyStatus!=='tenanted')
+      throw new Error('Form 19 preparation requires a current tenancy and entry review.');
+    if(code==='tenant_attendance_coordination'&&
+      (intake?.tenantWillAttend!=='yes'||
+        !(intake.tenantAttendeeName||intake.tenantAttendeeEmail||intake.tenantAttendeePhone)))
+      throw new Error('Provide tenant attendance and contact information before requesting coordination.');
+    return {code,candidateExGstCents:option.exGstCents};
+  });
 }
 
 /** Perth is UTC+08:00, with no daylight saving. Output is a precise UTC instant. */
