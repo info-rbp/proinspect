@@ -17,6 +17,7 @@ import { submitAction } from '../lib/actions.server';
 import { PageHeading, Field, Feedback, EmptyState } from '../../../../packages/ui/components';
 import { money } from '../../../../packages/domain/index';
 import { orderBookingServices, inspectionIntakeKind, CASH_PAYMENT_TERM_LABELS, type CashPaymentTerm } from '../../../../packages/booking/inspection-checkout';
+import { bookingCategoryForService, isBookingCategoryId, propertyBookingCategories, type BookingCategoryId } from '../../../../packages/service-catalogue/booking-navigation';
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
   const propertyId = new URL(request.url).searchParams.get('property') ?? new URL(request.url).searchParams.get('propertyId');
   const selected = propertyId
@@ -90,26 +91,50 @@ export default function Book() {
   useEffect(() => { setInteractive(true); }, []);
   const [serviceId, setServiceId] = useState(requestedService || '');
   const [propertyId, setPropertyId] = useState(search.get('property') || properties[0]?.id || '');
+  // The service ID is authoritative for deep links; category is only navigation.
+  const requestedCategory = bookingCategoryForService(d.services.find(s => s.id === requestedService));
+  const [categoryId, setCategoryId] = useState<BookingCategoryId | null>(
+    requestedCategory ?? (isBookingCategoryId(search.get('category')) ? search.get('category') as BookingCategoryId : null),
+  );
   const [date, setDate] = useState('');
   const [slots, setSlots] = useState<Array<{ start: string; end: string; label: string }>>([]);
   const [slot, setSlot] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('Select a date to see available appointments.');
   const [method, setMethod] = useState('owner');
-  const service = d.services.find((s) => s.id === serviceId);
   const property = properties.find((p) => p.id === propertyId);
-  const inspectionKind = inspectionIntakeKind(serviceId);
-  const included = Boolean(d.subscriptionBookingServices?.[propertyId]?.includes(serviceId));
-  const directBooking = included ||
-    (service?.booking_mode === 'instant' && service.price_ex_gst_cents !== null);
+  const availableCategories = propertyBookingCategories(d.services, property?.sector ?? 'residential');
+  const visibleServices = availableCategories.find(category => category.id === categoryId)?.services ?? [];
+  const service = d.services.find((s) => s.id === serviceId && s.active === 1 &&
+    s.sectors.includes(property?.sector ?? 'residential'));
+  const inspectionKind = inspectionIntakeKind(service?.id ?? '');
+  const chooseCategory = (next: BookingCategoryId) => {
+    setCategoryId(next);
+    if (bookingCategoryForService(service) !== next) setServiceId('');
+    setDate('');
+    setSlot('');
+  };
+  const chooseProperty = (nextPropertyId: string) => {
+    const nextProperty = properties.find(p => p.id === nextPropertyId);
+    setPropertyId(nextPropertyId);
+    if (service && nextProperty && !service.sectors.includes(nextProperty.sector)) {
+      setServiceId('');
+      setCategoryId(null);
+    }
+    setDate('');
+    setSlot('');
+  };
+  const included = Boolean(service && d.subscriptionBookingServices?.[propertyId]?.includes(service.id));
+  const directBooking = Boolean(service) && (included ||
+    (service?.booking_mode === 'instant' && service.price_ex_gst_cents !== null));
   useEffect(() => {
     setSlot('');
     setSlots([]);
-    if (!date || !serviceId) return;
+    if (!date || !service?.id || !propertyId) return;
     const abort = new AbortController();
     setLoading(true);
     fetch(
-      `/api/w/${d.workspace.kind}/${d.workspace.scopeId}/availability?service=${encodeURIComponent(serviceId)}&date=${date}&property=${encodeURIComponent(propertyId)}`,
+      `/api/w/${d.workspace.kind}/${d.workspace.scopeId}/availability?service=${encodeURIComponent(service.id)}&date=${date}&property=${encodeURIComponent(propertyId)}`,
       { signal: abort.signal },
     )
       .then(async (r) => {
@@ -125,7 +150,7 @@ export default function Book() {
         if (!abort.signal.aborted) setLoading(false);
       });
     return () => abort.abort();
-  }, [date, serviceId, propertyId, d.workspace.kind, d.workspace.scopeId]);
+  }, [date, service?.id, propertyId, d.workspace.kind, d.workspace.scopeId]);
   if (
     !['landlord', 'property-manager', 'commercial', 'strata-manager'].includes(d.workspace.kind) ||
     d.workspace.role === 'viewer'
@@ -197,14 +222,14 @@ export default function Book() {
   return (
     <>
       <PageHeading
-        eyebrow="Book a ProInspect service"
-        title="Arrange your next property visit."
-        description="Select your property, tell us what is needed, choose a time and review your payment or subscription coverage."
+        eyebrow="Your property · ProInspect services"
+        title="What would you like us to do?"
+        description="Choose a service category for your property, then arrange your visit. Pricing, entitlement and appointment availability are confirmed before booking."
       />
       <div className="step-track">
         <strong>01 Property</strong>
         <span>→</span>
-        <strong>02 Service</strong>
+        <strong>02 Service category &amp; service</strong>
         <span>→</span>
         <strong>{inspectionKind === 'general' ? '03 Access' : '03 Inspection details'}</strong>
         <span>→</span>
@@ -218,7 +243,7 @@ export default function Book() {
         <div className="stack">
           {!interactive && <p role="status">Preparing the booking form. JavaScript is required to check appointment availability and book a service.</p>}
           <section className="panel form">
-            <h2>Property & service</h2>
+            <h2>1. Choose your property</h2>
             <Field label="Property" name="propertyId">
               <select
                 id="propertyId"
@@ -226,7 +251,7 @@ export default function Book() {
                 required
                 disabled={!interactive}
                 value={propertyId}
-                onChange={(e) => setPropertyId(e.target.value)}
+                onChange={(e) => chooseProperty(e.target.value)}
               >
                 {properties.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -235,25 +260,42 @@ export default function Book() {
                 ))}
               </select>
             </Field>
-            <Field label="Service" name="serviceId">
+          </section>
+          <section className="panel form">
+            <h2>2. What do you need?</h2>
+            <p className="small">Select a category to see the services available for this property.</p>
+            <div className="booking-category-grid" role="group" aria-label="Service categories">
+              {availableCategories.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  className={'booking-category-card' + (categoryId === category.id ? ' selected' : '')}
+                  aria-pressed={categoryId === category.id}
+                  disabled={!interactive}
+                  onClick={() => chooseCategory(category.id)}
+                >
+                  <span className="booking-category-heading">{category.title}</span>
+                  <span className="booking-category-description">{category.description}</span>
+                  <span className="booking-category-count">{category.services.length} {category.services.length === 1 ? 'service' : 'services'}</span>
+                </button>
+              ))}
+            </div>
+            {categoryId && <Field label="Service" name="serviceId">
               <select
                 id="serviceId"
                 name="serviceId"
                 required
                 disabled={!interactive}
-                value={serviceId}
-                onChange={(e) => setServiceId(e.target.value)}
+                value={service?.id ?? ''}
+                onChange={(e) => { setServiceId(e.target.value); setDate(''); setSlot(''); }}
               >
                 <option value="">Choose a service</option>
-                {orderBookingServices(d.services
-                  .filter((s) => s.sectors.includes(property?.sector ?? 'residential')))
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
+                {orderBookingServices(visibleServices).map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
               </select>
-            </Field>
+            </Field>}
+            {!categoryId && <p className="small" role="status">Choose one of the four service categories above to continue.</p>}
             {service && <p className="small">{service.summary}</p>}
             {included && (
               <div className="notice">
@@ -441,7 +483,7 @@ export default function Book() {
           <Feedback value={result} />
           <button
             className="primary"
-            disabled={!interactive || busy || !slot || !directBooking}
+            disabled={!interactive || busy || !slot || !directBooking || !categoryId}
           >
             {busy ? 'Confirming booking…' : 'Confirm booking'}
           </button>
