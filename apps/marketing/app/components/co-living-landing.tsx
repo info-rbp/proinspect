@@ -4,7 +4,6 @@ import {BrandImage} from './brand-image';
 import {MarketingFaq} from './page-patterns';
 import {
   CO_LIVING_BANNERS,CO_LIVING_STAGE_STEPS,
-  sampleCoLivingProjection,money
 } from '../../../../packages/marketing/co-living-hub';
 
 const questions:[string,string][]=[
@@ -14,7 +13,6 @@ const questions:[string,string][]=[
   ['Can every house be converted into Co-Living?','No. We assess suitability, existing tenancies, local planning requirements, building and fire safety, room use and expected returns. An existing theatre or study is not automatically an approved bedroom.'],
   ['When can I review and approve the furnishing budget?','A property-specific proposal is prepared after an assessment. The owner reviews the room configuration, scope and establishment costs before authorising purchases or works. Additional expenditure outside the agreed scope requires approval.'],
 ];
-const example=sampleCoLivingProjection(100);
 export function CoLivingLanding(){
  return <>
   <EditorialHero eyebrow="Co-Living Property Services"
@@ -82,19 +80,18 @@ export function CoLivingLanding(){
   </section>
   <section className="mkt-section pi-editorial-section">
    <div className="site-container pi-introduction">
-    <div><p className="eyebrow">Understand potential returns</p>
-      <h2>A financial assessment before you commit.</h2>
-      <p>Illustrative six-bedroom example — not a rental appraisal, operating promise or approved room conversion.</p>
+    <div>
+      <p className="eyebrow">A property-specific financial assessment</p>
+      <h2>Your property deserves its own numbers.</h2>
+      <p>Co-Living returns depend on your property's approved room configuration, expected rental demand, establishment investment, occupancy and ongoing costs.</p>
     </div>
     <div>
-     <div className="pi-co-living-metrics">
-       <div><span>Potential gross rent</span><strong>{money(example.grossWeeklyCents)}/wk</strong></div>
-       <div><span>Management fee + GST</span><strong>{money(Math.round(example.managementAnnualIncludingGstCents/52))}/wk</strong></div>
-       <div><span>Owner rent after management</span><strong>{money(example.ownerAnnualAfterFeesCents/52)}/wk</strong></div>
-       <div><span>Annual utility allowance</span><strong>{money(example.annualUtilityAllowanceCents)}</strong></div>
-     </div>
-     <p className="pi-co-living-note">At 100% occupancy, before owner operating expenses, utility-cap overages, capital expenditure and taxation. Actual financial outcomes vary.</p>
-     <Link className="button secondary" to="/co-living/pricing">See Pricing &amp; Owner Returns <span aria-hidden="true">→</span></Link>
+      <p>Instead of relying on a generic earnings example, we assess your property and prepare a tailored proposal showing indicative room rents, the management fee, agreed utility allowance and expected owner expenses.</p>
+      <p>Review the fee structure and explore adjustable assumptions, then request an assessment to understand what could be suitable for your property.</p>
+      <div className="actions">
+        <Link className="button secondary" to="/co-living/pricing">Explore Pricing &amp; Owner Returns <span aria-hidden="true">→</span></Link>
+        <Link className="button secondary" to="/contact?topic=co-living">Request a Property Assessment <span aria-hidden="true">→</span></Link>
+      </div>
     </div>
    </div>
   </section>
