@@ -157,6 +157,20 @@ export default function CoLivingOnboardingDetail(){
           </div>)}
       </section>}
 
+      {stage==='advertising'&&<section className="panel stack">
+        <h2>Room advertisements and leasing preparation</h2>
+        <p>Only approved private rooms may be linked to published leasing listings. Linking a listing here never publishes a new advertisement.</p>
+        {(d.listings??[]).map((l:any)=><p key={l.id} className="small">{l.room_label} — {l.title} · {l.status}</p>)}
+        {staff&&p.status==='active'&&<OperationForm endpoint={endpoint} defaults={{action:'link_listing'}}
+          label="Link existing approved room listing">
+          <Input name="spaceId" label="Approved private space ID (from Manage Co-Living)"/>
+          <Input name="listingId" label="Existing published Residential listing ID"/>
+          <Input name="evidenceReference" label="Listing approval reference"/>
+          <p className="small">The room space, advertisement and property must match. Published status and onboarding gate are independently checked.</p>
+        </OperationForm>}
+        <Link to={w.href+'/properties/'+encodeURIComponent(p.property_id)+'/co-living'}>Open room configuration and occupancy</Link>
+      </section>}
+
       {stage==='implementation'&&<section className="panel stack">
         <h2>Furnishing, purchases and property establishment</h2>
         <div className="grid-3">

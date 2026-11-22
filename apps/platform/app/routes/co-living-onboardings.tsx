@@ -33,7 +33,7 @@ export default function CoLivingOnboardings(){
           </article>)}
         </div>
       </section>
-      {!staff&&<section className="panel stack">
+      {!staff&&['owner','admin'].includes(d.workspace.role)&&<section className="panel stack">
         <h2>Request a Co-Living assessment</h2>
         <p>Use an existing authorised residential property. Registering an enquiry does not start a subscription, approve conversion works or authorise room leasing.</p>
         {residential.length?

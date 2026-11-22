@@ -25,7 +25,7 @@ CREATE TABLE co_living_onboarding_assessments (
  project_id TEXT PRIMARY KEY REFERENCES co_living_onboarding_projects(id) ON DELETE RESTRICT,
  visit_at TEXT,
  summary TEXT NOT NULL CHECK(length(trim(summary)) BETWEEN 8 AND 3000),
- internal_notes TEXT NOT NULL CHECK(length(trim(internal_notes)) BETWEEN 8 AND 4000),
+ internal_notes_envelope TEXT NOT NULL CHECK(length(internal_notes_envelope)>30),
  proposed_rooms INTEGER NOT NULL CHECK(proposed_rooms BETWEEN 1 AND 100),
  evidence_reference TEXT NOT NULL CHECK(length(trim(evidence_reference)) BETWEEN 8 AND 500),
  status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN('draft','reviewed')),
@@ -171,3 +171,17 @@ CREATE TRIGGER co_living_onboarding_event_immutable BEFORE UPDATE ON co_living_o
  BEGIN SELECT RAISE(ABORT,'EVENT_IMMUTABLE'); END;
 CREATE TRIGGER co_living_onboarding_event_no_delete BEFORE DELETE ON co_living_onboarding_events
  BEGIN SELECT RAISE(ABORT,'EVENT_IMMUTABLE'); END;
+
+-- Listings are linked to an approved private space, never inferred from a
+-- generic property advertisement. Existing Leasing publishes independently.
+CREATE TABLE co_living_onboarding_listing_links (
+ id TEXT PRIMARY KEY,
+ project_id TEXT NOT NULL REFERENCES co_living_onboarding_projects(id) ON DELETE RESTRICT,
+ space_id TEXT NOT NULL REFERENCES co_living_spaces(id) ON DELETE RESTRICT,
+ listing_id TEXT NOT NULL REFERENCES leasing_listings(id) ON DELETE RESTRICT,
+ evidence_reference TEXT NOT NULL CHECK(length(trim(evidence_reference)) BETWEEN 8 AND 500),
+ linked_by TEXT NOT NULL REFERENCES users(id),
+ created_at TEXT NOT NULL,
+ UNIQUE(project_id,listing_id)
+) STRICT;
+CREATE INDEX co_living_onboarding_listing_by_project ON co_living_onboarding_listing_links(project_id,space_id);

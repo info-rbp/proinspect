@@ -3,6 +3,7 @@ import { assert, now, statement, uid, type Env } from '../../../../packages/data
 import type { Principal, Workspace } from '../../../../packages/domain/index';
 import { clientAdmin, clientMembership, operationsWrite, propertyAccess } from '../../../../packages/authorization/server';
 import { guard, clearGuard, activity } from '../../../../packages/operations/core';
+import { seal, unseal } from '../../../../packages/auth/crypto';
 import {
   CO_LIVING_ONBOARDING_STAGES, CO_LIVING_STAGE_EXIT_GATES,
   evaluateCoLivingOnboardingStageExit, nextCoLivingOnboardingStage,
@@ -56,23 +57,18 @@ async function replay(env:Env,p:Row,key:string,action:string){
   }
   return null;
 }
-async function projectBump(env:Env,p:Row,stage:string,status:string){
-  const result=await statement(env.DB,
-    'UPDATE co_living_onboarding_projects SET stage=?,status=?,version=version+1,updated_at=? WHERE id=? AND version=?',
-    stage,status,now(),p.id,p.version).run();
-  assert(result.meta.changes===1,409,'STALE_ONBOARDING','Project changed. Reload before trying again.');
-}
 async function stageData(env:Env,p:Row){
-  const [checks,assessment,proposals,items,variations,tasks,events]=await Promise.all([
+  const [checks,assessment,proposals,items,variations,tasks,events,listings]=await Promise.all([
     statement(env.DB,'SELECT * FROM co_living_onboarding_checks WHERE project_id=? ORDER BY stage,code',p.id).all<Row>(),
     statement(env.DB,'SELECT * FROM co_living_onboarding_assessments WHERE project_id=?',p.id).first<Row>(),
     statement(env.DB,'SELECT * FROM co_living_onboarding_proposals WHERE project_id=? ORDER BY version DESC LIMIT 30',p.id).all<Row>(),
     statement(env.DB,'SELECT * FROM co_living_onboarding_items WHERE project_id=? ORDER BY created_at DESC LIMIT 200',p.id).all<Row>(),
     statement(env.DB,'SELECT * FROM co_living_onboarding_variations WHERE project_id=? ORDER BY created_at DESC LIMIT 100',p.id).all<Row>(),
     statement(env.DB,'SELECT * FROM co_living_onboarding_tasks WHERE project_id=? ORDER BY created_at DESC LIMIT 200',p.id).all<Row>(),
-    statement(env.DB,'SELECT id,action,detail,created_at FROM co_living_onboarding_events WHERE project_id=? ORDER BY created_at DESC LIMIT 150',p.id).all<Row>()
+    statement(env.DB,'SELECT id,action,detail,created_at FROM co_living_onboarding_events WHERE project_id=? ORDER BY created_at DESC LIMIT 150',p.id).all<Row>(),
+    statement(env.DB,"SELECT x.id,x.space_id,x.listing_id,x.evidence_reference,s.label AS room_label,l.title,l.status FROM co_living_onboarding_listing_links x JOIN co_living_spaces s ON s.id=x.space_id JOIN leasing_listings l ON l.id=x.listing_id WHERE x.project_id=? ORDER BY x.created_at DESC",p.id).all<Row>()
   ]);
-  return {checks:checks.results,assessment,proposals:proposals.results,items:items.results,variations:variations.results,tasks:tasks.results,events:events.results};
+  return {checks:checks.results,assessment,proposals:proposals.results,items:items.results,variations:variations.results,tasks:tasks.results,events:events.results,listings:listings.results};
 }
 export async function coLivingOnboardingList(env:Env,user:Principal,w:Workspace){
   if(w.kind==='staff')staff(user,w);
@@ -93,9 +89,15 @@ export async function coLivingOnboardingDetail(env:Env,user:Principal,w:Workspac
   const p=await project(env,user,w,id);
   const d=await stageData(env,p);
   const internal=w.kind==='staff';
+  const internalAssessment=internal&&d.assessment ? {
+    ...d.assessment, internal_notes:
+      (await unseal<{text:string}>(env.DATA_ENCRYPTION_KEY,'co-living-assessment:'+p.id,
+        d.assessment.internal_notes_envelope)).text,
+    internal_notes_envelope:undefined,
+  } : null;
   const current=d.proposals.find((v:Row)=>v.status==='issued'||v.status==='accepted')??null;
   return {project:p,stages:CO_LIVING_ONBOARDING_STAGES,
-    assessment:internal?d.assessment:d.assessment?.status==='reviewed'?{
+    assessment:internal?internalAssessment:d.assessment?.status==='reviewed'?{
       visit_at:d.assessment.visit_at,summary:d.assessment.summary,
       proposed_rooms:d.assessment.proposed_rooms,evidence_reference:d.assessment.evidence_reference,status:d.assessment.status}:null,
     proposals:internal?d.proposals:d.proposals.filter((x:Row)=>x.status!=='draft'),
@@ -106,6 +108,7 @@ export async function coLivingOnboardingDetail(env:Env,user:Principal,w:Workspac
     checks:d.checks.map((x:Row)=>({code:x.code,stage:x.stage,status:x.status,
       evidence_reference:internal?x.evidence_reference:null,submitted_at:x.submitted_at,reviewed_at:x.reviewed_at})),
     events:d.events,
+    listings:d.listings,
     stageRequirements:CO_LIVING_STAGE_EXIT_GATES[p.stage as CoLivingOnboardingStage]??[],
     staff:internal,
   };
@@ -137,11 +140,11 @@ export async function createCoLivingOnboarding(env:Env,user:Principal,w:Workspac
 async function stageEvidence(env:Env,p:Row,d:Awaited<ReturnType<typeof stageData>>){
   const checked:Record<string,boolean>={};
   for(const c of d.checks) if(c.status==='verified')checked[c.code]=true;
-  if(p.stage==='site_visit'&&d.assessment?.status==='reviewed')checked.assessment_reviewed=true;
+  if(p.stage==='site_visit')checked.assessment_reviewed=d.assessment?.status==='reviewed';
   const accepted=d.proposals.find((x:Row)=>x.status==='accepted');
-  if(p.stage==='proposal'&&accepted){
-    checked.current_proposal_issued=true;
-    checked.establishment_budget_approved=true;
+  if(p.stage==='proposal'){
+    checked.current_proposal_issued=Boolean(accepted);
+    checked.establishment_budget_approved=Boolean(accepted);
   }
   if(p.stage==='proposal'){
     const ownerLink=await statement(env.DB,
@@ -156,8 +159,8 @@ async function stageEvidence(env:Env,p:Row,d:Awaited<ReturnType<typeof stageData
     checked.first_tenancy_active=(occupancy?.n??0)>0;
     const site=await statement(env.DB,'SELECT property_id FROM co_living_sites WHERE property_id=?',p.property_id).first();
     const listings=await statement(env.DB,
-      "SELECT COUNT(*) AS n FROM leasing_listings WHERE property_id=? AND kind='residential' AND status IN('published','leased')",
-      p.property_id).first<{n:number}>();
+      "SELECT COUNT(*) AS n FROM co_living_onboarding_listing_links x JOIN leasing_listings l ON l.id=x.listing_id JOIN co_living_spaces s ON s.id=x.space_id WHERE x.project_id=? AND l.property_id=? AND s.property_id=? AND l.kind='residential' AND l.status IN('published','leased') AND s.space_type IN('room','bed') AND s.active=1",
+      p.id,p.property_id,p.property_id).first<{n:number}>();
     checked.approved_listing_published=Boolean(site)&&(listings?.n??0)>0&&checked.approved_listing_published===true;
   }
   return checked;
@@ -165,7 +168,7 @@ async function stageEvidence(env:Env,p:Row,d:Awaited<ReturnType<typeof stageData
 export async function coLivingOnboardingCommand(env:Env,user:Principal,w:Workspace,id:string,input:unknown){
   const common=z.object({action:z.string().min(3).max(40),requestKey:keySchema});
   const a=common.parse(input),p=await project(env,user,w,id,true);
-  assert(p.status==='active',409,'PROJECT_INACTIVE','The project is on hold or no longer active.');
+  assert(p.status==='active'||(a.action==='set_status'&&p.status==='on_hold'),409,'PROJECT_INACTIVE','The project is on hold or no longer active.');
   const existing=await replay(env,p,a.requestKey,a.action);
   if(existing)return existing;
   const data=input as Record<string,unknown>;
@@ -178,6 +181,9 @@ export async function coLivingOnboardingCommand(env:Env,user:Principal,w:Workspa
     const d=z.object({code:z.string().min(5).max(80),evidenceReference:ref}).parse(data);
     assert((CO_LIVING_STAGE_EXIT_GATES[p.stage as CoLivingOnboardingStage]??[]).includes(d.code as never),
       422,'CHECK_NOT_REQUIRED','Choose an evidence item for the current stage.');
+    assert(!['assessment_reviewed','verified_owner_authority','current_proposal_issued',
+      'establishment_budget_approved','first_tenancy_active'].includes(d.code),
+      422,'AUTOMATED_CHECK','This check comes from verified system records.');
     const prior=await statement(env.DB,'SELECT status FROM co_living_onboarding_checks WHERE project_id=? AND code=?',p.id,d.code).first<{status:string}>();
     assert(prior?.status!=='verified',409,'CHECK_VERIFIED','A verified checklist item cannot be silently overwritten.');
     const stamp=now();
@@ -208,8 +214,10 @@ export async function coLivingOnboardingCommand(env:Env,user:Principal,w:Workspa
       evidenceReference:ref}).parse(data);
     await env.DB.batch([
       statement(env.DB,
-        "INSERT INTO co_living_onboarding_assessments(project_id,visit_at,summary,internal_notes,proposed_rooms,evidence_reference,status,updated_by,updated_at) VALUES(?,?,?,?,?,?,'draft',?,?) ON CONFLICT(project_id) DO UPDATE SET visit_at=excluded.visit_at,summary=excluded.summary,internal_notes=excluded.internal_notes,proposed_rooms=excluded.proposed_rooms,evidence_reference=excluded.evidence_reference,status='draft',updated_by=excluded.updated_by,updated_at=excluded.updated_at,reviewed_by=NULL,reviewed_at=NULL",
-        p.id,d.visitAt,d.summary,d.internalNotes,d.proposedRooms,d.evidenceReference,user.id,now()),
+        "INSERT INTO co_living_onboarding_assessments(project_id,visit_at,summary,internal_notes_envelope,proposed_rooms,evidence_reference,status,updated_by,updated_at) VALUES(?,?,?,?,?,?,'draft',?,?) ON CONFLICT(project_id) DO UPDATE SET visit_at=excluded.visit_at,summary=excluded.summary,internal_notes_envelope=excluded.internal_notes_envelope,proposed_rooms=excluded.proposed_rooms,evidence_reference=excluded.evidence_reference,status='draft',updated_by=excluded.updated_by,updated_at=excluded.updated_at,reviewed_by=NULL,reviewed_at=NULL",
+        p.id,d.visitAt,d.summary,
+        await seal(env.DATA_ENCRYPTION_KEY,'co-living-assessment:'+p.id,{text:d.internalNotes}),
+        d.proposedRooms,d.evidenceReference,user.id,now()),
       ...withAudit(env,user,p,a.action,'Site assessment recorded',a.requestKey)
     ]);
     return {ok:true,message:'Site assessment saved for review.'};
@@ -343,6 +351,25 @@ export async function coLivingOnboardingCommand(env:Env,user:Principal,w:Workspa
     ]);
     return {ok:true,message:'Procurement record updated. This records progress, not a supplier payment.'};
   }
+  if(a.action==='link_listing'){
+    asStaff();requireStage('advertising');
+    const d=z.object({spaceId:identifier,listingId:identifier,evidenceReference:ref}).parse(data);
+    const space=await statement(env.DB,
+      "SELECT id FROM co_living_spaces WHERE id=? AND property_id=? AND active=1 AND space_type IN('room','bed')",
+      d.spaceId,p.property_id).first();
+    assert(space,409,'APPROVED_PRIVATE_SPACE_REQUIRED','Configure an approved private room or bed before linking an advertisement.');
+    const listing=await statement(env.DB,
+      "SELECT id FROM leasing_listings WHERE id=? AND property_id=? AND kind='residential' AND status IN('published','leased')",
+      d.listingId,p.property_id).first();
+    assert(listing,409,'PUBLISHED_LISTING_REQUIRED','The published Residential listing must belong to this property.');
+    await env.DB.batch([
+      statement(env.DB,
+        'INSERT INTO co_living_onboarding_listing_links(id,project_id,space_id,listing_id,evidence_reference,linked_by,created_at) VALUES(?,?,?,?,?,?,?)',
+        uid('clol'),p.id,d.spaceId,d.listingId,d.evidenceReference,user.id,now()),
+      ...withAudit(env,user,p,a.action,'Room listing evidence linked',a.requestKey)
+    ]);
+    return {ok:true,message:'Existing published listing linked to the approved private space.'};
+  }
   if(a.action==='request_variation'){
     asStaff();requireStage('implementation');
     const d=z.object({description:z.string().trim().min(8).max(500),extraBudgetCents:z.number().int().min(1).max(100000000)}).parse(data);
@@ -375,11 +402,14 @@ export async function coLivingOnboardingCommand(env:Env,user:Principal,w:Workspa
     assert(ready.ready,409,'STAGE_NOT_READY','Stage has outstanding requirements: '+ready.missing.join(', '));
     const pending=all.tasks.filter((t:Row)=>t.stage===p.stage&&t.status!=='completed');
     assert(pending.length===0,409,'TASKS_INCOMPLETE','Complete or resolve the current stage tasks before advancing.');
-    const updated=await statement(env.DB,
-      "UPDATE co_living_onboarding_projects SET stage=?,status=?,version=version+1,updated_at=? WHERE id=? AND version=? AND status='active'",
-      next,next==='tenanted'?'completed':'active',now(),p.id,p.version).run();
-    assert(updated.meta.changes===1,409,'STALE_ONBOARDING','Reload before advancing.');
-    await env.DB.batch(withAudit(env,user,p,a.action,p.stage+' -> '+next,a.requestKey));
+    await env.DB.batch([
+      statement(env.DB,
+        "UPDATE co_living_onboarding_projects SET stage=?,status=?,version=version+1,updated_at=? WHERE id=? AND version=? AND status='active'",
+        next,next==='tenanted'?'completed':'active',now(),p.id,p.version),
+      guard(env),
+      ...withAudit(env,user,p,a.action,p.stage+' -> '+next,a.requestKey),
+      clearGuard(env)
+    ]);
     return {ok:true,stage:next,message:next==='tenanted'?'Property handed over to ongoing Co-Living operations.':'Stage advanced to '+next+'.'};
   }
   if(a.action==='set_status'){
@@ -388,8 +418,14 @@ export async function coLivingOnboardingCommand(env:Env,user:Principal,w:Workspa
       reason:z.string().trim().min(8).max(500)}).parse(data);
     assert(p.status!=='completed'&&p.status!=='withdrawn',409,'PROJECT_CLOSED','Completed or withdrawn projects cannot be reopened.');
     assert(d.version===p.version,409,'STALE_ONBOARDING','Reload before changing project status.');
-    await projectBump(env,p,p.stage,d.status);
-    await env.DB.batch(withAudit(env,user,p,a.action,d.status+': '+d.reason,a.requestKey));
+    await env.DB.batch([
+      statement(env.DB,
+        "UPDATE co_living_onboarding_projects SET status=?,version=version+1,updated_at=? WHERE id=? AND version=?",
+        d.status,now(),p.id,p.version),
+      guard(env),
+      ...withAudit(env,user,p,a.action,d.status+': '+d.reason,a.requestKey),
+      clearGuard(env)
+    ]);
     return {ok:true,message:'Project status updated.'};
   }
   assert(false,422,'UNKNOWN_ACTION','Unknown onboarding action.');
