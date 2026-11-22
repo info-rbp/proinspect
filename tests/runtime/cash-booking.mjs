@@ -16,7 +16,7 @@ const mf=new Miniflare({
  d1Databases:{DB:'cash-booking-isolated'},
  r2Buckets:{DOCUMENTS:'cash-test-docs',RESTRICTED_DOCUMENTS:'cash-test-restricted'},
  durableObjects:{SCHEDULER:{className:'BookingScheduler',useSQLite:true}},
- bindings:{APP_ENV:'local',APP_ORIGIN:'http://localhost',
+ bindings:{APP_ENV:'local',APP_ORIGIN:'http://localhost',CASH_CLIENT_CREDIT_ENABLED:'true',
   DATA_ENCRYPTION_KEY:randomBytes(32).toString('base64'),
   EMAIL_PROVIDER:'local',OPERATIONS_EMAIL:'operator@example.invalid'}
 });
