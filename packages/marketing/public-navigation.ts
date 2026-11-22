@@ -6,7 +6,6 @@ export const PUBLIC_NAVIGATION = [
  {label:'Tenants',href:'/tenants'},
  {label:'Maintenance',href:'/maintenance'},
  {label:'About Us',href:'/about'},
- {label:'Who We Help',href:'/about#who-we-help'},
  {label:'Contact',href:'/contact'},
  {label:'Sign Up / Sign In',href:'/client'},
 ] as const;

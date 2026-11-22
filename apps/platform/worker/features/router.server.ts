@@ -5,6 +5,7 @@ import * as commercialOps from './commercial-operations.server';
 import * as ownerInvites from './agency-owner-invitations.server';
 import * as billingAccounts from './billing-accounts.server';
 import * as cashTerms from './cash-terms.server';
+import * as coLivingOnboarding from './co-living-onboarding.server';
 import * as refunds from './refunds.server';
 import * as noticeLifecycle from './notice-lifecycle.server';
 import {requireReleaseApproval} from './release-governance.server';
@@ -81,6 +82,14 @@ export async function featureApi(
   }
   const body = () => readJson(request),
     ok = (value: unknown) => Response.json(value);
+  if(area==='co-living-onboardings' && parts.length===1){
+    if(method==='GET')return ok(await coLivingOnboarding.coLivingOnboardingList(env,user,w));
+    if(method==='POST'){requireOrigin(request,env);return ok(await coLivingOnboarding.createCoLivingOnboarding(env,user,w,await body()));}
+  }
+  if(area==='co-living-onboardings' && id && parts.length===2){
+    if(method==='GET')return ok(await coLivingOnboarding.coLivingOnboardingDetail(env,user,w,id));
+    if(method==='POST'){requireOrigin(request,env);return ok(await coLivingOnboarding.coLivingOnboardingCommand(env,user,w,id,await body()));}
+  }
   if(tail==='billing/cancellation-review' && method==='POST'){requireOrigin(request,env);return ok(await reconcileResidentialNotice(env,user,w,await body()));}
   if(tail==='billing/cancellation-notice' && method==='POST'){requireOrigin(request,env);return ok(await requestResidentialCancellation(env,user,w,await body()));}
   if(area==='reports')return reportRoutes(request,env,user,w,tail);
