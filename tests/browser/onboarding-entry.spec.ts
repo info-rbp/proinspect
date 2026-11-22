@@ -263,6 +263,18 @@ test('one-off inspection entry remains free and adds a property without creating
   await page.getByRole('checkbox', { name: /I own and self-manage this residential rental property/ }).check();
   await page.getByRole('button', { name: 'Add property' }).click();
   await expect(page).toHaveURL(new RegExp(base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/book/property-condition-report\\?property=prop_'));
+  // Client Portal PR #116 -> draft booking PR #118 is one continuous
+  // authenticated owner journey, without creating a paid entitlement.
+  await expect(page.getByRole('heading', { name: 'Arrange your next property visit.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Inspection details' })).toBeVisible();
+  await expect(page.getByLabel('Contact phone')).toBeVisible();
+  await expect(page.getByLabel('Tenancy commencement date (if known)')).toBeVisible();
+  const serviceIds = await page.getByLabel('Service', { exact: true })
+    .locator('option').evaluateAll(options => options.map(option => (option as HTMLOptionElement).value).filter(Boolean));
+  const core = ['property-condition-report', 'final-exit-inspection', 'routine-inspection']
+    .filter(id => serviceIds.includes(id));
+  expect(core).toContain('property-condition-report');
+  expect(serviceIds.slice(0, core.length)).toEqual(core);
   const account = await (await page.request.get('/api/account')).json();
   expect(account.propertyPlans).toHaveLength(1);
   expect(account.propertyPlans[0]).toMatchObject({
