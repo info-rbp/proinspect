@@ -256,8 +256,9 @@ export function ResidentialPropertyWizard({mode,busy,serviceId='',address='',sub
     <div className="property-setup-controls">
       {step>0?<button className="secondary" type="button" onClick={()=>{setStep(x=>x-1);setStepError('');}}>
         Back</button>:<span className="small">Your information stays in this form until you submit it.</span>}
-      {step<3?<button className="primary" type="button" onClick={next}>Continue →</button>
-        :<button className="primary" type="submit" disabled={busy||(mode==='create'&&!selfManaged)}>
+      {step<3?<button key="continue" className="primary" type="button"
+          onClick={event=>{event.preventDefault();next();}}>Continue →</button>
+        :<button key="save" className="primary" type="submit" disabled={busy||(mode==='create'&&!selfManaged)}>
           {busy?'Saving…':mode==='edit'?'Save property details':'Add property'}</button>}
     </div>
   </Form>;
