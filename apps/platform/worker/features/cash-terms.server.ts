@@ -23,7 +23,8 @@ export async function effectiveCashTerms(env:Env,clientId:string){
   approvalRequestId:applicable?.source_request_id??null};
 }
 export async function assertCashCreditCapacity(env:Env,clientId:string,chargeCents:number,creditLimitCents:number|null){
- if(creditLimitCents===null)return;
+ assert(creditLimitCents!==null,409,'CREDIT_LIMIT_REQUIRED',
+  'Deferred account bookings require an explicitly approved credit limit.');
  const row=await statement(env.DB,`SELECT COALESCE(SUM(p.total_cents),0) AS amount
  FROM cash_booking_charges c JOIN payments p ON p.id=c.payment_id
  WHERE c.client_id=? AND c.status!='cancelled' AND p.status NOT IN('paid','waived','refunded')`,clientId).first<{amount:number}>();
@@ -61,6 +62,8 @@ export async function cashTermCommand(env:Env,user:Principal,w:Workspace,action:
    termCode:cashPaymentTermSchema,
    creditLimitCents:z.coerce.number().int().min(0).max(100000000).optional(),
    reason:z.string().trim().min(8).max(600)
+  }).refine(value=>value.termCode==='upon_booking'||(value.creditLimitCents??0)>0,{
+   path:['creditLimitCents'],message:'A positive approved credit limit is required for deferred payment terms.'
   }).parse(raw);
   const client=await statement(env.DB,"SELECT id FROM clients WHERE id=? AND status='active'",d.clientId).first();
   assert(client,404,'BILLING_CLIENT_REQUIRED','Choose an active customer account.');
