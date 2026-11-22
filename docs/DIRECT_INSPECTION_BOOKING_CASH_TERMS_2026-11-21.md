@@ -16,7 +16,7 @@ These are candidate source rates, not automatically approved production prices. 
 - No approved Cash Client credit profile: `upon_booking` (prepaid).
 - `net_7`: invoice must be issued at/after service completion; due 7 calendar days after actual issue.
 - `eom_7`: accumulate completed service charges by Australia/Perth service month; invoice on/after closing the month, due at 23:59:59 AWST on the 7th of the next month.
-- Credit terms are Staff-requested, separately Staff-approved, and versioned in booking snapshots. Unapproved requests do not change effective billing.
+- Credit terms are Staff-requested, separately Staff-approved, and versioned in booking snapshots. A finite, positive credit limit is required for deferred bookings; an unbounded or missing limit fails closed. Unapproved requests do not change effective billing.
 - A client can have eligible subscription coverage for one property and Cash bookings for another: eligibility is per property/service.
 
 ## Staged billing infrastructure
