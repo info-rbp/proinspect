@@ -66,3 +66,12 @@ test('fees apply to rent collected, not vacant room potential and not GST-inclus
  assert.equal(parking.annualUtilityAllowanceCents,16250);
  assert.throws(()=>coLivingProjection({roomWeeklyCents:1,parkingWeeklyCents:1,occupancyPercent:101}),RangeError);
 });
+
+test('main Co-Living page never displays figures derived from a sample floor plan',()=>{
+ const landing=readFileSync('apps/marketing/app/components/co-living-landing.tsx','utf8');
+ assert.match(landing,/Your property deserves its own numbers/);
+ assert.match(landing,/to="\/co-living\/pricing"/);
+ assert.match(landing,/to="\/contact\?topic=co-living"/);
+ assert.doesNotMatch(landing,/sampleCoLivingProjection|pi-co-living-metrics|example\.grossWeeklyCents/);
+ assert.doesNotMatch(landing,/Illustrative six-bedroom example|Potential gross rent|Annual utility allowance at full income/);
+});
