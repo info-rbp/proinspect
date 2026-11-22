@@ -1374,3 +1374,116 @@ summary {
 .auth-page-signup { max-width: 1220px; }
 .auth-page-signup .auth-grid { grid-template-columns: minmax(250px, .8fr) minmax(0, 1.2fr); gap: clamp(1.5rem, 5vw, 4rem); }
 @media (max-width: 800px) { .auth-page-signup .auth-grid { grid-template-columns: minmax(0, 1fr); } }
+
+
+/* Dedicated residential property onboarding and property-centred dashboard. */
+.property-setup-panel { max-width: 900px; }
+.property-setup-wizard { display: grid; gap: 1.4rem; }
+.property-setup-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: .65rem;
+  padding-bottom: .9rem;
+  border-bottom: 1px solid var(--border);
+}
+.property-setup-step {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  min-width: 0;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 600;
+}
+.property-setup-step .property-setup-number {
+  display: grid;
+  flex: 0 0 30px;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  font-weight: 750;
+}
+.property-setup-step.active { color: var(--navy); }
+.property-setup-step.active .property-setup-number {
+  color: #fff;
+  border-color: var(--teal);
+  background: var(--teal);
+}
+.property-setup-step.done .property-setup-number {
+  color: var(--teal);
+  border-color: var(--teal);
+  background: var(--teal-light);
+}
+.property-setup-content { display: grid; gap: .85rem; }
+.property-setup-content .form { max-width: 100%; gap: 1rem; }
+.property-setup-content h2 { font-size: 1.38rem; }
+.property-setup-counters {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.property-setup-counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .9rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.property-setup-counter:last-child { border-bottom: 0; }
+.property-setup-counter-actions { display: flex; align-items: center; gap: .65rem; }
+.property-setup-counter-actions button {
+  display: grid;
+  place-items: center;
+  width: 38px; min-height: 38px; padding: 0;
+  font-size: 1.2rem;
+}
+.property-setup-counter-actions output {
+  min-width: 24px;
+  font-weight: 750;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.property-setup-tenant { display: grid; gap: 1rem; }
+.property-setup-review { padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); }
+.property-setup-review h3 { margin-bottom: .65rem; }
+.property-setup-review p + p { margin-top: .4rem; }
+.property-setup-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.property-setup-controls button { min-width: 128px; }
+.property-setup-edit-summary { padding: 1rem 0; font-weight: 700; cursor: pointer; }
+.property-overview-grid { align-items: start; }
+.property-fact-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .65rem; }
+.property-fact {
+  display: grid; gap: .1rem;
+  padding: .7rem;
+  background: var(--canvas);
+  border-radius: 8px;
+}
+.property-fact span { font-size: .75rem; color: var(--muted); }
+.property-fact strong { font-size: 1.05rem; overflow-wrap: anywhere; }
+.property-private-note { padding: .8rem; background: var(--canvas); border-radius: 8px; }
+.property-private-note h3 { margin-bottom: .5rem; font-size: .92rem; }
+.property-note-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.residential-property-dashboard .record-list { margin-top: .65rem; }
+@media(max-width:700px) {
+  .property-setup-steps { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .property-setup-counter { padding: .75rem; }
+  .property-fact-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .property-setup-controls { flex-wrap: wrap; }
+  .property-setup-controls button { flex: 1; }
+}
+@media(max-width:420px) {
+  .property-setup-step { font-size: .7rem; }
+  .property-setup-counter-actions { gap: .35rem; }
+}

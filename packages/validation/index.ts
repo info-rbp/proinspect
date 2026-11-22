@@ -27,11 +27,64 @@ export const propertySchema = z.object({
   suburb: z.string().trim().min(2).max(80),
   postcode: z.string().regex(/^\d{4}$/),
   propertyType: z.enum([
-    'House', 'Apartment', 'Townhouse', 'Villa',
+    'House', 'Unit', 'Apartment', 'Townhouse', 'Villa', 'Duplex', 'Studio',
     'Office', 'Retail', 'Warehouse', 'Industrial', 'Mixed-use', 'Other',
   ]).default('House'),
   selfManaged: z.literal(true),
 });
+/** Property-wide facts, which can be reused by future reports and bookings. */
+export const residentialPropertyProfileSchema = z.object({
+  bedrooms: z.number().int().min(0).max(40),
+  bathrooms: z.number().int().min(0).max(40),
+  ensuites: z.number().int().min(0).max(40),
+  separateToilets: z.number().int().min(0).max(40),
+  carSpaces: z.number().int().min(0).max(40),
+  furnishing: z.enum(['unfurnished','part_furnished','furnished','unknown']),
+}).refine(value=>value.ensuites<=value.bathrooms,{
+  path:['ensuites'],message:'En-suites are included in the total number of bathrooms.',
+});
+const australianDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine(value=>!Number.isNaN(Date.parse(value+'T00:00:00Z')) &&
+    new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value,
+  'Enter a valid calendar date.');
+const optionalDate = australianDate.nullable().default(null);
+/** These are private onboarding notes, NOT a canonical tenancy or invitation. */
+export const residentialTenancyInformationSchema = z.object({
+  occupancyStatus: z.enum(['tenanted','upcoming','vacant','unknown']),
+  leaseType: z.enum(['fixed','periodic','unknown']).nullable().default(null),
+  startsOn: optionalDate,
+  endsOn: optionalDate,
+  tenants: z.array(z.object({
+    name: z.string().trim().min(2).max(120),
+    email: z.union([email,z.literal('')]).optional(),
+    phone: z.string().trim().max(40).optional(),
+  })).max(10).default([]),
+}).superRefine((value,ctx)=>{
+  const applicable=value.occupancyStatus==='tenanted'||value.occupancyStatus==='upcoming';
+  if(!applicable&&(value.leaseType!==null||value.startsOn!==null||value.endsOn!==null||value.tenants.length))
+    ctx.addIssue({code:'custom',path:['occupancyStatus'],
+      message:'Vacant or unknown occupancy must not include tenant or lease details.'});
+  if(applicable&&!value.leaseType)
+    ctx.addIssue({code:'custom',path:['leaseType'],message:'Select a lease arrangement or not yet confirmed.'});
+  if(value.endsOn&&!value.startsOn)
+    ctx.addIssue({code:'custom',path:['startsOn'],message:'Provide a commencement date before a lease end date.'});
+  if(value.endsOn&&value.startsOn&&value.endsOn<=value.startsOn)
+    ctx.addIssue({code:'custom',path:['endsOn'],message:'End date must be after commencement.'});
+  if(value.leaseType==='periodic'&&value.endsOn)
+    ctx.addIssue({code:'custom',path:['endsOn'],message:'A periodic tenancy must not specify a fixed end date.'});
+});
+export const residentialPropertySetupSchema = z.object({
+  profile: residentialPropertyProfileSchema,
+  tenancy: residentialTenancyInformationSchema,
+  notes: z.string().trim().max(3000).default(''),
+});
+export const residentialPropertyOnboardingSchema = propertySchema.safeExtend(
+  residentialPropertySetupSchema.shape,
+);
+export const residentialPropertyUpdateSchema = residentialPropertySetupSchema.extend({
+  expectedVersion: z.number().int().min(0),
+});
+
 export const bookingSchema = z.object({
   intake: bookingIntakeSchema.optional(),
   legalConsent: z.unknown().optional(),

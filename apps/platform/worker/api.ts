@@ -86,6 +86,7 @@ import { booksServices, managesProperty } from '../../../packages/authorization/
 import { readOnlyCalendarDiagnostic } from './features/google-calendar.server';
 import { calendarSyncSummary, retryCalendarSync } from './features/calendar-scheduling.server';
 import {staffPropertyCreate,staffPropertyOverview,staffPropertyUpdate} from './features/staff-property-management.server';
+import { propertySetup, updatePropertySetup } from './features/residential-property-setup.server';
 import { confidentialServiceRequestIntake } from './features/residential-service-intake.server';
 
 async function json(request: Request) {
@@ -724,6 +725,14 @@ export async function handleApi(
         requireOrigin(request,env);
         return Response.json(await staffPropertyUpdate(env,user,w,staffPropertyManage[1],await json(request)));
       }
+    }
+    const residentialSetup = tail.match(/^properties\/([a-zA-Z0-9_-]+)\/setup$/);
+    if(residentialSetup&&method==='GET')
+      return Response.json(await propertySetup(env,user,w,residentialSetup[1]),
+        {headers:{'Cache-Control':'private, no-store'}});
+    if(residentialSetup&&method==='POST'){
+      requireOrigin(request,env);
+      return Response.json(await updatePropertySetup(env,user,w,residentialSetup[1],await json(request)));
     }
     if (method === 'POST' && tail === 'properties') {
       const input = await json(request);
