@@ -13,7 +13,14 @@ function staff(user:Principal,w:Workspace) {
 export async function effectiveCashTerms(env:Env,clientId:string){
  const row=await statement(env.DB,'SELECT term_code,credit_limit_cents,source_request_id FROM cash_client_terms WHERE client_id=?',clientId)
  .first<{term_code:CashPaymentTerm;credit_limit_cents:number|null;source_request_id:string}>();
- return {termCode:row?.term_code??'upon_booking' as CashPaymentTerm,creditLimitCents:row?.credit_limit_cents??null,approvalRequestId:row?.source_request_id??null};
+ // A credit approval is not itself a production release. Keep the customer
+ // booking screen consistent with the fail-closed scheduler while the
+ // credit/invoicing provider acceptance flag remains off.
+ const released=env.APP_ENV!=='production'||env.CASH_CLIENT_CREDIT_ENABLED==='true';
+ const applicable=released?row:null;
+ return {termCode:applicable?.term_code??'upon_booking' as CashPaymentTerm,
+  creditLimitCents:applicable?.credit_limit_cents??null,
+  approvalRequestId:applicable?.source_request_id??null};
 }
 export async function assertCashCreditCapacity(env:Env,clientId:string,chargeCents:number,creditLimitCents:number|null){
  if(creditLimitCents===null)return;
