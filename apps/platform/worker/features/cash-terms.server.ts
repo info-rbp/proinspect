@@ -2,7 +2,7 @@ import {z} from 'zod';
 import {statement, assert, now, uid, type Env} from '../../../../packages/database/types';
 import type {Principal, Workspace} from '../../../../packages/domain/index';
 import {operationsWrite,workOrderAccess} from '../../../../packages/authorization/server';
-import {activity} from '../../../../packages/operations/core';
+import {activity,guard,clearGuard} from '../../../../packages/operations/core';
 import {unseal} from '../../../../packages/auth/crypto';
 import {cashPaymentTermSchema,cashInvoicePeriod,cashPeriodIsClosed,type CashPaymentTerm} from '../../../../packages/booking/inspection-checkout';
 
@@ -86,6 +86,9 @@ export async function cashTermCommand(env:Env,user:Principal,w:Workspace,action:
  const time=now(),status=action==='approve'?'approved':'declined';
  const steps=[
   statement(env.DB,"UPDATE cash_payment_term_requests SET status=?,reviewed_by=?,review_reference=?,reviewed_at=? WHERE id=? AND status='pending'",status,user.id,d.reviewReference,time,d.requestId),
+  // Only one independent reviewer may consume a pending decision. Reject a
+  // stale parallel review inside the same atomic D1 batch.
+  guard(env),
   activity(env,user,'cash_terms.'+status,'client',pending.client_id,null,null,{requestId:d.requestId,reviewReference:d.reviewReference})
  ];
  if(action==='approve')steps.push(statement(env.DB,`INSERT INTO cash_client_terms
@@ -94,6 +97,7 @@ export async function cashTermCommand(env:Env,user:Principal,w:Workspace,action:
     term_code=excluded.term_code,credit_limit_cents=excluded.credit_limit_cents,
     source_request_id=excluded.source_request_id,approved_by=excluded.approved_by,
     approved_at=excluded.approved_at`,pending.client_id,pending.term_code,pending.credit_limit_cents,d.requestId,user.id,time));
+ steps.push(clearGuard(env));
  await env.DB.batch(steps);
  return {id:d.requestId,status};
 }
