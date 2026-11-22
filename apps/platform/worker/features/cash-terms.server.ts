@@ -84,6 +84,8 @@ export async function cashTermCommand(env:Env,user:Principal,w:Workspace,action:
  assert(pending,409,'REQUEST_NOT_PENDING','This payment-terms request has already been reviewed.');
  assert(pending.requested_by!==user.id,403,'INDEPENDENT_CREDIT_APPROVAL',
    'The requesting Staff member cannot approve or decline the same credit decision.');
+ if(action==='approve'&&pending.term_code!=='upon_booking')
+  await assertCashCreditCapacity(env,pending.client_id,0,pending.credit_limit_cents);
  const time=now(),status=action==='approve'?'approved':'declined';
  const steps=[
   statement(env.DB,"UPDATE cash_payment_term_requests SET status=?,reviewed_by=?,review_reference=?,reviewed_at=? WHERE id=? AND status='pending'",status,user.id,d.reviewReference,time,d.requestId),
@@ -92,12 +94,27 @@ export async function cashTermCommand(env:Env,user:Principal,w:Workspace,action:
   guard(env),
   activity(env,user,'cash_terms.'+status,'client',pending.client_id,null,null,{requestId:d.requestId,reviewReference:d.reviewReference})
  ];
- if(action==='approve')steps.push(statement(env.DB,`INSERT INTO cash_client_terms
+ if(action==='approve'){
+  // Apply the credit decision only if its limit still covers the account's
+  // unsettled booking exposure at the moment of the atomic D1 write. The
+  // second mutation guard rejects a simultaneous/changed balance.
+  steps.push(statement(env.DB,`INSERT INTO cash_client_terms
     (client_id,term_code,credit_limit_cents,source_request_id,approved_by,approved_at)
-    VALUES(?,?,?,?,?,?) ON CONFLICT(client_id) DO UPDATE SET
+    SELECT ?,?,?,?,?,?
+    WHERE (?='upon_booking' OR ?>=COALESCE((
+      SELECT SUM(p.total_cents)
+      FROM cash_booking_charges c JOIN payments p ON p.id=c.payment_id
+      WHERE c.client_id=? AND c.status!='cancelled'
+        AND p.status NOT IN('paid','waived','refunded')
+    ),0))
+    ON CONFLICT(client_id) DO UPDATE SET
     term_code=excluded.term_code,credit_limit_cents=excluded.credit_limit_cents,
     source_request_id=excluded.source_request_id,approved_by=excluded.approved_by,
-    approved_at=excluded.approved_at`,pending.client_id,pending.term_code,pending.credit_limit_cents,d.requestId,user.id,time));
+    approved_at=excluded.approved_at`,
+    pending.client_id,pending.term_code,pending.credit_limit_cents,d.requestId,user.id,time,
+    pending.term_code,pending.credit_limit_cents??0,pending.client_id));
+  steps.push(guard(env));
+ }
  steps.push(clearGuard(env));
  await env.DB.batch(steps);
  return {id:d.requestId,status};
