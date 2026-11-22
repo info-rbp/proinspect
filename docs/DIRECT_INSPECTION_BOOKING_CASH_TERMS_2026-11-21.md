@@ -34,8 +34,25 @@ Structured booking intake is encrypted under `DATA_ENCRYPTION_KEY`; access is re
 - Approved prices, legal terms, screen-reader and mobile accessibility review.
 - Production remains unchanged until explicit acceptance and release.
 
+## Re-audit of integration safeguards (22 November 2026)
+
+1. The combined branch includes the full `main` history and therefore retains merged Client Portal PR #116 without replacing registration, authentication, or property setup files.
+2. Staff inspection details are typed, encrypted by booking context and read only after authorised Work Order access, with an audit event.
+3. Structural D1 migration 0064 records unapproved candidate rates separately. The published `services` catalogue and direct-booking mode remain unchanged until an explicitly reviewed release.
+4. New inspection intake is limited to PCR, Final/Exit and Routine forms. Legacy non-inspection customer booking APIs continue without mandatory intake. Inspection fields form part of the idempotency fingerprint; older no-intake fingerprints are unchanged.
+5. Deferred-credit terms are disclosed and booked only after **both** `CASH_CLIENT_CREDIT_ENABLED=true` **and** a feature-release approval for `cash_credit` matching the exact deployed `BUILD_SHA`, environment, independent administrator and unexpired evidence. A flag or commercial account approval alone is not authority to activate.
+6. Positive bounded credit limits are enforced in validation and in both D1 credit tables. Capacity is checked by the single global booking Durable Object and against unsettled charges; a later limit reduction cannot be approved below the balance, including the atomic approval write. No Cash Client booking payment can be marked manually settled.
+7. Independent credit approval uses an atomic pending-row update and mutation guards; retries cannot approve the same request twice. Idempotent credit booking replays restore the same payment obligation and invoice terms.
+8. `config/environment.json`, `Env` and the release-governance feature registry explicitly identify the disabled Cash Client credit switch.
+
+### Synthetic verification scope
+
+The new `tests/runtime/cash-booking.mjs` exercises owner registration, property creation, independently requested/approved terms, cross-workspace denials, strict credit exposure, encrypted Staff-only inspection intake, idempotent replay/mismatch, refusal of unverified manual settlement, and D1 foreign keys. The Node and isolated SQLite tests cover no-intake compatibility, intake immutability, candidate-price nonactivation, finite credit constraints, billing arithmetic and month-end boundaries.
+
+These synthetic tests do **not** substitute for hosted role-based acceptance, real Stripe Checkout, Stripe invoice dispatch, statutory content review, approved price lists or independent production go-live sign-off. Keep the PR draft and the production credit/payment flags off.
+
 ## Release flag
-`CASH_CLIENT_CREDIT_ENABLED` is absent/off by default. Production refuses new deferred-credit bookings until this flag is set to `true` after approved legal terms, invoicing, reconciliation and hosted acceptance. Local/staging tests may exercise the workflow without affecting production. The flag does not enable live Stripe Checkout or invoice delivery.
+`CASH_CLIENT_CREDIT_ENABLED` is absent/off by default. Deferred credit requires this flag set to `true` **and** independently reviewed, unexpired `cash_credit` release evidence for the exact environment and deployed source SHA. The isolated local fixture enables the flag only for synthetic integration acceptance; hosted staging and production do not bypass source-specific release approval. Neither this flag nor that approval enables live Stripe Checkout or invoice delivery.
 
 ## Client Portal and booking integration (PR #116 + draft PR #118)
 
