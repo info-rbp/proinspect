@@ -102,7 +102,7 @@ function InspectionBookingDetails({path}:{path:string}) {
   setLoading(true);
   try {
    const response=await fetch(path,{credentials:'same-origin',headers:{Accept:'application/json'}});
-   const body=await response.json();
+   const body=(await response.json()) as { message?: string; intake?: Record<string, unknown> };
    setValue(response.ok?body:{error:body.message??'Booking details are unavailable.'});
   } catch {setValue({error:'Unable to retrieve the inspection details.'});}
   finally {setLoading(false);}
