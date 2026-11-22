@@ -265,7 +265,8 @@ test('one-off inspection entry remains free and adds a property without creating
   await expect(page).toHaveURL(new RegExp(base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/book/property-condition-report\\?property=prop_'));
   // Client Portal PR #116 -> draft booking PR #118 is one continuous
   // authenticated owner journey, without creating a paid entitlement.
-  await expect(page.getByRole('heading', { name: 'Arrange your next property visit.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'What would you like us to do?' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Book an inspection/ })).toHaveAttribute('aria-pressed','true');
   await expect(page.getByRole('heading', { name: 'Inspection details' })).toBeVisible();
   await expect(page.getByLabel('Contact phone')).toBeVisible();
   await expect(page.getByLabel('Tenancy commencement date (if known)')).toBeVisible();
