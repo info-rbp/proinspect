@@ -43,7 +43,7 @@ export default function ServiceOverview() {
         title={page.headline}
         intro={page.summary}
         image={page.key === 'student-living' ? 'co-living' : page.key}
-        primary={{label:page.key === 'co-living' ? 'Explore Co-Living Support' : 'Explore Maintenance Support', to:'#service-options'}}
+        primary={{label:page.key === 'maintenance' ? 'Explore Maintenance Support' : 'Explore Services', to:'#service-options'}}
         secondary={{label:'Get Started Today',to:'/client'}}
       />
       <section className="mkt-section pi-editorial-section">
@@ -138,7 +138,7 @@ export default function ServiceOverview() {
           <MarketingFaq questions={page.questions} />
         </div>
       </section>
-      <MarketingCta title={page.key === 'co-living' ? 'Let’s get your shared property working.' : 'Get the right support for your property.'}
+      <MarketingCta title="Get the right support for your property."
         description="Create a free account to explore services, or contact ProInspect for a tailored operating scope." />
     </>
   );
