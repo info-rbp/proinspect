@@ -725,7 +725,7 @@ export async function handleApi(
         return Response.json(await staffPropertyUpdate(env,user,w,staffPropertyManage[1],await json(request)));
       }
     }
-    const residentialSetup = tail.match(/^properties\\/([a-zA-Z0-9_-]+)\\/setup$/);
+    const residentialSetup = tail.match(/^properties\/([a-zA-Z0-9_-]+)\/setup$/);
     if(residentialSetup&&method==='GET')
       return Response.json(await propertySetup(env,user,w,residentialSetup[1]),
         {headers:{'Cache-Control':'private, no-store'}});
