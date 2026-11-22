@@ -1,5 +1,6 @@
 import { legalStatements } from './features/legal-acceptance.server';
 import { effectiveCashTerms, assertCashCreditCapacity } from './features/cash-terms.server';
+import { requireReleaseApproval } from './features/release-governance.server';
 import { bookingFingerprintFields } from '../../../packages/booking/inspection-checkout';
 import { PCR_LAUNCH_SERVICE } from '../../../packages/marketing/pcr-campaign';
 import { guestSchedulerOperation } from './features/guest-scheduler.server';
@@ -282,8 +283,9 @@ export class BookingScheduler extends DurableObject<Env> {
       const paymentRequired = !includedSubscription && amountExGstCents > 0 && !creditBooking;
       const gstCents = amountExGstCents > 0 ? Math.round(amountExGstCents / 10) : 0;
       if (creditBooking) {
-        assert(this.env.APP_ENV!=='production' || this.env.CASH_CLIENT_CREDIT_ENABLED==='true',
-          503,'CASH_CREDIT_NOT_RELEASED','Account-invoice booking is awaiting final approval and activation.');
+        // Source-bound release approval and the credit flag are both required.
+        // An approved customer profile alone must never activate deferred booking.
+        await requireReleaseApproval(this.env,'cash_credit');
         await assertCashCreditCapacity(this.env,clientId,amountExGstCents+gstCents,terms!.creditLimitCents);
       }
       // The existing Checkout integration is sandbox-only; production must not
