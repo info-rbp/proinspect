@@ -17,7 +17,7 @@ async function ownerWithProperty(page: import('@playwright/test').Page) {
  expect(account.ok()).toBe(true);
  const clientId=(await account.json()).clientId;
  const property=await page.request.post('/api/w/landlord/'+clientId+'/properties',{
-   headers:{Origin:origin},data:{address:'29 Synthetic Leasing Way',suburb:'Perth',
+   headers:{Origin:origin},data:{address:randomUUID().slice(0,8)+' Synthetic Leasing Way',suburb:'Perth',
      postcode:'6000',propertyType:'House',selfManaged:true}});
  expect(property.ok()).toBe(true);
  return {clientId,propertyId:(await property.json()).propertyId,

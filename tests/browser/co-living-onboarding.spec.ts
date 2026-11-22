@@ -45,7 +45,14 @@ test('Co-Living owner enquiry and six-stage onboarding guide are property-scoped
     stage:'enquiry',status:'active',
   });
   const billing=await (await page.request.get('/api/account')).json();
-  expect(billing.propertyPlans??[]).toEqual([]);
+  // Free property registration creates an account/property relationship record,
+  // not a paid Stripe subscription. Inspect the actual financial state.
+  expect(billing.billingAvailable).toBe(false);
+  const plan=(billing.propertyPlans??[]).find((row:any)=>row.property_id===property.propertyId);
+  expect(plan).toBeDefined();
+  expect(plan.subscription_intent).toBe('none');
+  expect(['none','grandfathered']).toContain(plan.subscription_status);
+  expect(plan.stripe_subscription_recorded).toBe(0);
   await page.setViewportSize({width:390,height:844});
   await page.reload();
   await expect(page.getByRole('heading',{name:'Your Co-Living establishment journey'})).toBeVisible();
