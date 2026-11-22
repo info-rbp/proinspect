@@ -113,6 +113,8 @@ export default [
     route('wa-form-templates', 'routes/wa-form-templates.tsx'),
     route('properties', 'routes/properties.tsx'),
     route('co-living', 'routes/co-living-directory.tsx'),
+    route('co-living-onboardings', 'routes/co-living-onboardings.tsx'),
+    route('co-living-onboardings/:projectId', 'routes/co-living-onboarding-detail.tsx'),
     route('properties/:propertyId', 'routes/property.tsx'),
     route('properties/:propertyId/co-living', 'routes/co-living.tsx'),
     route('properties/:propertyId/co-living/operations', 'routes/co-living-operations.tsx'),
