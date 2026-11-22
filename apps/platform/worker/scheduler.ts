@@ -190,8 +190,12 @@ export class BookingScheduler extends DurableObject<Env> {
            FROM cash_booking_charges c JOIN payments p ON p.id=c.payment_id
            WHERE c.booking_id=?`,existing.id)
           .first<{payment_id:string;total_cents:number;term_code:'net_7'|'eom_7'}>();
+        const addOnReview = await statement(this.env.DB,
+          'SELECT COUNT(*) AS count FROM booking_service_addon_intents WHERE booking_id=? AND status=?',
+          existing.id,'requested').first<{count:number}>();
         return Response.json({
           id:existing.id,reference:existing.reference,replayed:true,
+          addonReviewRequired:Boolean(addOnReview?.count),
           paymentId:pendingPayment?.payment_id??cashCharge?.payment_id??null,
           paymentRequired:Boolean(pendingPayment&&pendingPayment.status!=='paid'),
           totalCents:pendingPayment?.total_cents??cashCharge?.total_cents??0,
@@ -494,7 +498,9 @@ export class BookingScheduler extends DurableObject<Env> {
         id,reference,workOrderId:woId,paymentId,paymentRequired,
         totalCents:!includedSubscription ? amountExGstCents+gstCents : 0,
         paymentTerms:terms?.termCode??null,invoiceAfterService:creditBooking,
-        message:paymentRequired ? 'Appointment recorded. Payment is required before service delivery.' : 'Booking confirmed.',
+        addonReviewRequired:addonIntents.length>0,
+        message:paymentRequired ? 'Appointment recorded. Payment is required before service delivery.'
+          : addonIntents.length ? 'Appointment recorded; optional services require separate review.' : 'Booking confirmed.',
       },{status:201});
     } catch (error) {
       if (error instanceof AppError)
