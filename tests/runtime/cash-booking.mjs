@@ -119,8 +119,13 @@ try{
  assert.equal(booked.data.invoiceAfterService,true);
  assert.equal(booked.data.paymentTerms,'net_7');
  assert.equal(booked.data.totalCents,13200);
- const payment=await sql('SELECT status,total_cents FROM payments WHERE id=?',booked.data.paymentId).first();
+ const payment=await sql('SELECT status,total_cents,version FROM payments WHERE id=?',booked.data.paymentId).first();
  assert.deepEqual([payment.status,payment.total_cents],['pending',13200]);
+ const manual=await api(staff+'/payments/'+booked.data.paymentId+'/record',
+  {cookie:reviewer.cookie,body:{version:payment.version,status:'paid',
+   reference:'Unverified manual payment cannot settle Cash Client credit'}});
+ assert.equal(manual.status,409,JSON.stringify(manual.data));
+ assert.equal(manual.data.code,'INVOICE_SETTLEMENT_REQUIRED');
  const encrypted=await sql('SELECT envelope FROM booking_intake_secrets WHERE booking_id=?',booked.data.id).first();
  assert.ok(encrypted && !encrypted.envelope.includes('Restricted private test detail'));
 
