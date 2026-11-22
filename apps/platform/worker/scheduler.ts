@@ -1,5 +1,6 @@
 import { legalStatements } from './features/legal-acceptance.server';
 import { effectiveCashTerms, assertCashCreditCapacity } from './features/cash-terms.server';
+import { bookingFingerprintFields } from '../../../packages/booking/inspection-checkout';
 import { PCR_LAUNCH_SERVICE } from '../../../packages/marketing/pcr-campaign';
 import { guestSchedulerOperation } from './features/guest-scheduler.server';
 import { changeBooking } from './features/bookings.server';
@@ -165,16 +166,7 @@ export class BookingScheduler extends DurableObject<Env> {
       }
       const data = bookingSchema.parse(input);
       const property = await propertyAccess(this.env, user, w, data.propertyId, true);
-      const fingerprint = await digest(
-        JSON.stringify({
-          propertyId: data.propertyId,
-          serviceId: data.serviceId,
-          startsAt: new Date(data.startsAt).toISOString(),
-          access: data.access,
-          recurringPlanId: data.recurringPlanId ?? null,
-          planDue: data.planDue ?? null,
-        }),
-      );
+      const fingerprint = await digest(JSON.stringify(bookingFingerprintFields(data)));
       const existing = await statement(
         this.env.DB,
         'SELECT id,reference,fingerprint,user_id FROM bookings WHERE client_id=? AND request_key=?',
@@ -192,11 +184,18 @@ export class BookingScheduler extends DurableObject<Env> {
           `SELECT p.id AS payment_id,p.total_cents,p.status
            FROM registered_booking_payment_links l JOIN payments p ON p.id=l.payment_id
            WHERE l.booking_id=?`,existing.id).first<{payment_id:string;total_cents:number;status:string}>();
+        const cashCharge=await statement(this.env.DB,
+          `SELECT c.payment_id,p.total_cents,c.term_code
+           FROM cash_booking_charges c JOIN payments p ON p.id=c.payment_id
+           WHERE c.booking_id=?`,existing.id)
+          .first<{payment_id:string;total_cents:number;term_code:'net_7'|'eom_7'}>();
         return Response.json({
           id:existing.id,reference:existing.reference,replayed:true,
-          paymentId:pendingPayment?.payment_id??null,
+          paymentId:pendingPayment?.payment_id??cashCharge?.payment_id??null,
           paymentRequired:Boolean(pendingPayment&&pendingPayment.status!=='paid'),
-          totalCents:pendingPayment?.total_cents??0,
+          totalCents:pendingPayment?.total_cents??cashCharge?.total_cents??0,
+          paymentTerms:cashCharge?.term_code??(pendingPayment?'upon_booking':null),
+          invoiceAfterService:Boolean(cashCharge),
         });
       }
       const service = (await catalogue(this.env)).find((s) => s.id === data.serviceId);
