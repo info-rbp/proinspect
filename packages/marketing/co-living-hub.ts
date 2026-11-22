@@ -75,4 +75,4 @@ export const sampleCoLivingProjection=(occupancyPercent:number,ownerCostsWeeklyC
  coLivingProjection({roomWeeklyCents:EXAMPLE_CO_LIVING_ROOM_WEEKLY_CENTS,
   parkingWeeklyCents:EXAMPLE_CO_LIVING_PARKING_WEEKLY_CENTS,occupancyPercent,
   ownerCostsWeeklyCents,actualAnnualUtilityCents});
-export const money=(cents:number)=>new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD',minimumFractionDigits:0,maximumFractionDigits:2}).format(cents/100);
+export const money=(cents:number)=>new Intl.NumberFormat('en-AU',{style:'currency',currency:'AUD',minimumFractionDigits:2,maximumFractionDigits:2}).format(cents/100);

@@ -35,10 +35,11 @@ test('Co-Living landing uses six linked image banners, correct destination pages
 test('Co-Living pricing calculator applies management fee and 25% of collected management fees to utility allowance',async({page})=>{
  await page.goto('/co-living/pricing');
  await expect(page.getByRole('heading',{name:'Illustrative Co-Living owner income calculator.'})).toBeVisible();
- await page.getByLabel('Room occupancy assumption (%)').fill('100');
+ await page.getByLabel('Room occupancy assumption (%)').focus();
+ await page.getByLabel('Room occupancy assumption (%)').press('End');
  await expect(page.getByText('$109,200',{exact:false}).first()).toBeVisible();
  await expect(page.getByText('$6,825',{exact:false}).first()).toBeVisible();
- await page.getByLabel('Room occupancy assumption (%)').fill('95');
+ await page.getByLabel('Room occupancy assumption (%)').press('ArrowLeft');
  await expect(page.getByText('$6,491.88',{exact:false}).first()).toBeVisible();
  await expect(page.getByText('$342.20',{exact:false}).first()).toBeVisible();
 });
