@@ -54,11 +54,34 @@ CREATE TABLE cash_invoice_items (
  booking_id TEXT PRIMARY KEY REFERENCES cash_booking_charges(booking_id),
  invoice_id TEXT NOT NULL REFERENCES cash_invoice_batches(id)
 ) STRICT;
--- Reviewed source prices. Apply only to unconfigured services, preserving prior
--- approved prices. A production deployment requires a separate approval gate.
-UPDATE services SET price_ex_gst_cents=20000,booking_mode='instant'
- WHERE id='property-condition-report' AND price_ex_gst_cents IS NULL AND booking_mode='request';
-UPDATE services SET price_ex_gst_cents=10000,booking_mode='instant'
- WHERE id='final-exit-inspection' AND price_ex_gst_cents IS NULL AND booking_mode='request';
-UPDATE services SET price_ex_gst_cents=6000,booking_mode='instant'
- WHERE id='routine-inspection' AND price_ex_gst_cents IS NULL AND booking_mode='request';
+-- Candidate schedule amounts are recorded for finance/legal review ONLY.
+-- Never change published service price or booking_mode in a structural migration:
+-- otherwise a production migration would activate unapproved direct bookings.
+CREATE TABLE inspection_price_candidates (
+ service_id TEXT PRIMARY KEY REFERENCES services(id),
+ source_document TEXT NOT NULL,
+ source_row TEXT NOT NULL,
+ source_label TEXT NOT NULL,
+ candidate_ex_gst_cents INTEGER NOT NULL CHECK(candidate_ex_gst_cents > 0),
+ review_status TEXT NOT NULL DEFAULT 'pending_review'
+  CHECK(review_status IN('pending_review','approved','rejected')),
+ recorded_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+) STRICT;
+INSERT INTO inspection_price_candidates
+ (service_id,source_document,source_row,source_label,candidate_ex_gst_cents)
+ SELECT id,'Residential Property Support Schedule of Fees','01.01',
+ 'Property Condition Reports (Form 1)',20000
+ FROM services WHERE id='property-condition-report'
+  AND price_ex_gst_cents IS NULL AND booking_mode='request';
+INSERT INTO inspection_price_candidates
+ (service_id,source_document,source_row,source_label,candidate_ex_gst_cents)
+ SELECT id,'Residential Property Support Schedule of Fees','01.02',
+ 'Routine Property Inspections',6000
+ FROM services WHERE id='routine-inspection'
+  AND price_ex_gst_cents IS NULL AND booking_mode='request';
+INSERT INTO inspection_price_candidates
+ (service_id,source_document,source_row,source_label,candidate_ex_gst_cents)
+ SELECT id,'Residential Property Support Schedule of Fees','11.04',
+ 'Exit Inspections & Condition Comparisons',10000
+ FROM services WHERE id='final-exit-inspection'
+  AND price_ex_gst_cents IS NULL AND booking_mode='request';
