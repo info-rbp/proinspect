@@ -57,6 +57,9 @@ test('new Landlord registration is free and can consider a subscription later', 
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Add property', exact: true }).click();
   await expect(page).toHaveURL(/\/book\/routine-inspection\?property=/);
+  await expect(page.getByRole('button', { name: /Book an inspection/ })).toHaveAttribute('aria-pressed','true');
+  await expect(page.getByRole('button', { name: /Open Homes & leasing/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Keys & access control/ })).toBeVisible();
   await expect(page.getByLabel('Service', { exact: true })).toHaveValue('routine-inspection');
   await expect(page.getByText('Included in your active ProInspect subscription.', { exact: false })).toHaveCount(0);
   // Routine inspections can also be purchased as priced one-off services.

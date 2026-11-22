@@ -1,10 +1,11 @@
 import { requireResidentialSector } from './features/residential-policy.server';
+import { cashInvoicePeriod } from '../../../packages/booking/inspection-checkout';
 import { legalStatements } from './features/legal-acceptance.server';
 import { serviceInterestTableReady } from './features/client-service-interests.server';
 import { calendarSchedulingEnabled, calendarSyncStatement } from './features/calendar-scheduling.server';
 import { activity, projection } from '../../../packages/operations/core';
 import type { Env } from '../../../packages/database/types';
-import { assert, statement, now, uid } from '../../../packages/database/types';
+import { assert, AppError, statement, now, uid } from '../../../packages/database/types';
 import type { Principal, Workspace, Service } from '../../../packages/domain/index';
 import { canTransition } from '../../../packages/domain/index';
 import {
@@ -26,7 +27,8 @@ import {
 } from '../../../packages/authorization/server';
 import { guestReportDelivery } from './features/guest-report.server';
 import { mailEvent } from '../../../packages/notifications/server';
-import { digest } from '../../../packages/auth/crypto';
+import { digest, seal } from '../../../packages/auth/crypto';
+import { assertOpenHomeLead } from '../../../packages/booking/residential-service-requests';
 
 export function audit(
   env: Env,
@@ -239,6 +241,10 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
 }
 export async function createRequest(env: Env, user: Principal, w: Workspace, input: unknown) {
   const data = requestSchema.parse(input);
+  if(data.serviceIntake) assert(
+    ['landlord','property-manager'].includes(w.kind),403,
+    'SERVICE_REQUEST_ROLE','Use an authorised residential owner or manager workspace.',
+  );
   let propertyId: string;
   let clientId: string | null = null;
   let tenancyId: string | null = null;
@@ -263,7 +269,13 @@ export async function createRequest(env: Env, user: Principal, w: Workspace, inp
       'REQUEST_FORBIDDEN',
       'Select an authorised property.',
     );
-    await propertyAccess(env, user, w, data.propertyId, true);
+    const requestProperty=await propertyAccess(env, user, w, data.propertyId, true);
+    if(data.serviceIntake){
+      assert(['landlord','property-manager'].includes(w.kind),403,
+        'SERVICE_REQUEST_ROLE','Use an authorised residential client workspace.');
+      assert(requestProperty.sector==='residential',422,
+        'SERVICE_SECTOR_MISMATCH','This request is only available for residential properties.');
+    }
     propertyId = data.propertyId;
     clientId = w.scopeId;
   }
@@ -283,6 +295,11 @@ export async function createRequest(env: Env, user: Principal, w: Workspace, inp
       ).first();
     assert(space,404,'CO_LIVING_SPACE_NOT_FOUND',
       'Choose your own assigned room or bed, or an authorised shared area.');
+  }
+  if(data.serviceIntake){
+    try{ assertOpenHomeLead(data.serviceIntake); }
+    catch(e){throw new AppError(422,'OPEN_HOME_NOTICE',
+      e instanceof Error?e.message:'Open Home scheduling requirements not met.');}
   }
   const id = uid('req'),
     reference = `REQ-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
@@ -306,7 +323,15 @@ export async function createRequest(env: Env, user: Principal, w: Workspace, inp
       time,
       time,
     ),
-    audit(env, user, 'request.created', 'request', id, propertyId, { source }),
+    ...(data.serviceIntake ? [statement(env.DB,
+      `INSERT INTO request_service_intakes
+        (request_id,service_kind,encrypted_envelope,created_at) VALUES(?,?,?,?)`,
+      id,data.serviceIntake.serviceCode,
+      await seal(env.DATA_ENCRYPTION_KEY,`request-service:${id}`,data.serviceIntake),time)] : []),
+    audit(env, user, 'request.created', 'request', id, propertyId, {
+      source,serviceCode:data.serviceIntake?.serviceCode??null,
+      schedulingConfirmed:false,additionalChargesApproved:false,
+    }),
     await mailEvent(env, 'request.received', {
       to: user.email,
       subject: `Request received: ${reference}`,
@@ -470,15 +495,23 @@ export async function updateWorkOrder(
       to: next,
     }),
   ];
-  if (order.booking_id && ['completed', 'cancelled'].includes(next))
+  if (order.booking_id && ['completed', 'cancelled'].includes(next)) {
     updates.push(
-      statement(
-        env.DB,
-        'UPDATE bookings SET status=?,version=version+1 WHERE id=?',
-        next,
-        order.booking_id,
-      ),
+      statement(env.DB,'UPDATE bookings SET status=?,version=version+1 WHERE id=?',next,order.booking_id),
     );
+    // Credit bookings are payable by invoice after completed service; no
+    // Stripe card payment is needed to begin work with approved account terms.
+    if (next === 'completed') {
+      const credit = await statement(env.DB,
+        "SELECT term_code FROM cash_booking_charges WHERE booking_id=? AND status='awaiting_service'",order.booking_id)
+        .first<{term_code:'net_7'|'eom_7'}>();
+      if (credit) updates.push(statement(env.DB,
+        "UPDATE cash_booking_charges SET status='ready_to_invoice',completed_at=?,period=? WHERE booking_id=? AND status='awaiting_service'",
+        time,cashInvoicePeriod(time,credit.term_code),order.booking_id));
+    } else updates.push(statement(env.DB,
+      "UPDATE cash_booking_charges SET status='cancelled' WHERE booking_id=? AND status='awaiting_service'",
+      order.booking_id));
+  }
   if (order.request_id && next === 'completed')
     updates.push(
       statement(

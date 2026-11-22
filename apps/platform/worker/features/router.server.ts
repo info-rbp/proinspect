@@ -4,6 +4,7 @@ import * as buildingOps from './building-operations.server';
 import * as commercialOps from './commercial-operations.server';
 import * as ownerInvites from './agency-owner-invitations.server';
 import * as billingAccounts from './billing-accounts.server';
+import * as cashTerms from './cash-terms.server';
 import * as refunds from './refunds.server';
 import * as noticeLifecycle from './notice-lifecycle.server';
 import {requireReleaseApproval} from './release-governance.server';
@@ -94,6 +95,12 @@ export async function featureApi(
     if(tail==='commercial-leases')return ok(await commercialOps.commercialData(env,user,w));
     if(tail==='owner-invitations')return ok(await ownerInvites.ownerInvitationList(env,user,w));
     if(tail==='billing')return ok(await billingAccounts.billingDashboard(env,user,w));
+    if(tail==='cash-terms'){
+      assert(['landlord','property-manager','commercial','strata-manager'].includes(w.kind),403,'BOOKING_FORBIDDEN','Choose a customer booking workspace.');
+      return ok(await cashTerms.effectiveCashTerms(env,w.scopeId));
+    }
+    if(area==='work-orders'&&id&&action==='booking-intake'&&parts.length===3)
+      return ok(await cashTerms.staffBookingIntake(env,user,w,id));
     if(area==='schemes'&&id&&action==='notices'&&child&&parts[4]==='history')return ok(await noticeLifecycle.noticeHistory(env,user,w,id,child));
 
     if (tail === 'v2') return ok(await v2StaffData(env,user,w,url.searchParams.get('market') ?? 'RES'));
@@ -187,6 +194,14 @@ export async function featureApi(
   if(tail==='owner-invitations/invite')return ok(await ownerInvites.inviteOwner(env,user,w,await body()));
   if(area==='owner-invitations'&&['approve','revoke'].includes(id))return ok(await ownerInvites.reviewOwnerInvitation(env,user,w,id,await body()));
   if(tail==='billing/portal')return ok(await billingAccounts.billingPortal(env,user,w));
+  if(area==='billing'&&id==='cash-terms'&&['request','approve','decline'].includes(action)){
+    staff();requireOrigin(request,env);
+    return ok(await cashTerms.cashTermCommand(env,user,w,action as 'request'|'approve'|'decline',await body()));
+  }
+  if(tail==='billing/cash-invoices/prepare'){
+    staff();requireOrigin(request,env);
+    return ok(await cashTerms.prepareCashInvoice(env,user,w,await body()));
+  }
   if(area==='billing'&&id==='invoices'&&action==='export'){staff();return ok(await billingAccounts.exportStatement(env,user,await body()));}
   if(area==='billing'&&id==='invoices'&&action==='finalize'){staff();return ok(await billingAccounts.finalizeStatement(env,user,await body()));}
   if(area==='billing'&&id==='invoices'&&action==='send'){staff();return ok(await billingAccounts.dispatchApprovedInvoice(env,user,await body()));}

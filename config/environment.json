@@ -482,6 +482,13 @@
       ],
       "group": "optional"
     },
+    "CASH_CLIENT_CREDIT_ENABLED": {
+      "targets": [
+        "platform"
+      ],
+      "group": "optional",
+      "description": "Default disabled. Enable only after approved Cash Client credit terms, finite credit limits, signed invoicing/reconciliation acceptance and separate production release."
+    },
     "STRIPE_INVOICING_ENABLED": {
       "targets": [
         "platform"

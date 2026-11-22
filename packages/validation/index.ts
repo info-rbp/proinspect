@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { bookingIntakeSchema } from '../booking/inspection-checkout';
+import { residentialServiceRequestIntakeSchema } from '../booking/residential-service-requests.ts';
 export const email = z.string().trim().toLowerCase().email().max(254);
 export const id = z
   .string()
@@ -31,6 +33,7 @@ export const propertySchema = z.object({
   selfManaged: z.literal(true),
 });
 export const bookingSchema = z.object({
+  intake: bookingIntakeSchema.optional(),
   legalConsent: z.unknown().optional(),
   propertyId: id,
   serviceId: id,
@@ -48,6 +51,7 @@ export const bookingSchema = z.object({
   }),
 });
 export const requestSchema = z.object({
+  serviceIntake: residentialServiceRequestIntakeSchema.optional(),
   propertyId: id.optional(),
   spaceId: id.optional(),
   tenancyId: id.optional(),

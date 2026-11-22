@@ -25,7 +25,8 @@ test('server-rendered booking fields stay disabled until the client can retain i
   });
   const page=await noScripts.newPage();
   await page.goto(base+`/book/routine-inspection?property=${property.propertyId}`);
-  await expect(page.getByRole('heading',{name:'Arrange your next property visit.'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'What would you like us to do?'})).toBeVisible();
+  await expect(page.getByRole('button',{name:/Book an inspection/})).toBeDisabled();
   for(const label of ['Property','Service','How will access be provided?','Access instructions','Preferred date']){
    await expect(page.getByLabel(label,{exact:true})).toBeDisabled();
   }

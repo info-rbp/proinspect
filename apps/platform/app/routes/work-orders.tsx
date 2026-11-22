@@ -95,6 +95,33 @@ function AccessInstructions({ path }: { path: string }) {
     </div>
   );
 }
+/** Staff-only, audit-logged reveal of encrypted inspection intake. */
+function InspectionBookingDetails({path}:{path:string}) {
+ const [value,setValue]=useState<any>(null),[loading,setLoading]=useState(false);
+ async function reveal(){
+  setLoading(true);
+  try {
+   const response=await fetch(path,{credentials:'same-origin',headers:{Accept:'application/json'}});
+   const body=(await response.json()) as { message?: string; intake?: Record<string, unknown> };
+   setValue(response.ok?body:{error:body.message??'Booking details are unavailable.'});
+  } catch {setValue({error:'Unable to retrieve the inspection details.'});}
+  finally {setLoading(false);}
+ }
+ return <div className="stack-sm">
+  <button type="button" className="button secondary small" disabled={loading}
+    onClick={()=>value?setValue(null):void reveal()}>
+   {loading?'Loading…':value?'Hide inspection details':'View inspection booking details'}
+  </button>
+  {value&&<div className="notice">
+   {value.error?<p role="alert">{value.error}</p>:<><strong>Customer-provided inspection information</strong>
+    <dl className="definition">{Object.entries(value.intake??{}).filter(([,v])=>v!==null&&v!==undefined&&v!=='').map(([key,v])=>
+     <div key={key}><dt>{key.replace(/([a-z])([A-Z])/g,'$1 $2')}</dt><dd style={{whiteSpace:'pre-wrap'}}>{String(v)}</dd></div>
+    )}</dl>
+   </>}
+  </div>}
+  <p className="small muted">Confidential inspection details are available only to authorised Staff; each retrieval is audited.</p>
+ </div>;
+}
 export default function WorkOrders() {
   const d = useWorkspace();
   const detail = useLoaderData<typeof loader>();
@@ -244,11 +271,14 @@ export default function WorkOrders() {
                       </button>
                     </Form>
                     <div className="stack">
-                      {o.booking_id && (
+                      {o.booking_id && <>
+                        <InspectionBookingDetails
+                          path={`/api/w/staff/operations/work-orders/${o.id}/booking-intake`}
+                        />
                         <AccessInstructions
                           path={`/api/w/staff/operations/work-orders/${o.id}/access`}
                         />
-                      )}
+                      </>}
                       {manager && o.assigned_staff_id !== d.user.id && !o.has_managed_report && !caseRecords?.report && (
                         <Form method="post" encType="multipart/form-data" className="form">
                           <input type="hidden" name="intent" value="report" />
