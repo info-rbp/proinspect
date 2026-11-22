@@ -73,6 +73,50 @@ class CashBookingSchemaTests(unittest.TestCase):
             "SELECT term_code FROM cash_client_terms WHERE client_id='cli_cash'"
         ).fetchone()[0], "net_7")
 
+    def test_credit_limits_are_enforced_even_without_api_validation(self):
+        # The D1 database must reject unsafe finance writes independently of
+        # the route guard and application-level Zod checks.
+        for term, limit in [('net_7', None), ('eom_7', 0),
+                            ('net_7', -10), ('eom_7', 100000001)]:
+            conn = db()
+            with self.subTest(term=term, limit=limit):
+                with self.assertRaises(sqlite3.IntegrityError):
+                    conn.execute("""INSERT INTO cash_payment_term_requests
+                        (id,client_id,term_code,credit_limit_cents,reason,
+                         status,requested_by,created_at)
+                        VALUES('ctr_invalid','cli_cash',?,?,'Reviewed request',
+                               'pending','requester','2026-11-21')""", (term, limit))
+        conn = db()
+        conn.execute("""INSERT INTO cash_payment_term_requests
+            (id,client_id,term_code,credit_limit_cents,reason,
+             status,requested_by,created_at)
+            VALUES('ctr_prepaid','cli_cash','upon_booking',NULL,'Reviewed request',
+                   'approved','requester','2026-11-21')""")
+        with self.assertRaises(sqlite3.IntegrityError):
+            conn.execute("""INSERT INTO cash_client_terms
+                (client_id,term_code,credit_limit_cents,source_request_id,
+                 approved_by,approved_at)
+                VALUES('cli_cash','net_7',NULL,'ctr_prepaid',
+                       'reviewer','2026-11-21')""")
+        conn.execute("""INSERT INTO cash_client_terms
+            (client_id,term_code,credit_limit_cents,source_request_id,
+             approved_by,approved_at)
+            VALUES('cli_cash','upon_booking',NULL,'ctr_prepaid',
+                   'reviewer','2026-11-21')""")
+        self.assertEqual(conn.execute(
+            "SELECT term_code,credit_limit_cents FROM cash_client_terms"
+        ).fetchone(), ('upon_booking', None))
+
+    def test_finance_review_does_not_activate_candidate_prices(self):
+        conn = db()
+        conn.execute("""UPDATE inspection_price_candidates
+            SET review_status='approved'
+            WHERE service_id='property-condition-report'""")
+        self.assertEqual(conn.execute(
+            "SELECT price_ex_gst_cents,booking_mode FROM services "
+            "WHERE id='property-condition-report'"
+        ).fetchone(), (None, 'request'))
+
     def test_invoice_line_link_cannot_be_double_billed(self):
         conn = db()
         conn.execute("""INSERT INTO cash_invoice_batches
