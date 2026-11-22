@@ -8,10 +8,6 @@ export const FAMILIES: Record<string, { name: string; description: string }> = {
     name: 'Property attendance',
     description: 'On-site assistance when you need an authorised person at the property.',
   },
-  leasing: {
-    name: 'Open Homes & leasing',
-    description: 'Viewings, property videos and approved tenant handovers.',
-  },
   maintenance: {
     name: 'Maintenance & works',
     description: 'Assess reported issues and document repairs and rectification.',
