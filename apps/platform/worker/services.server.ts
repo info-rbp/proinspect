@@ -241,6 +241,10 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
 }
 export async function createRequest(env: Env, user: Principal, w: Workspace, input: unknown) {
   const data = requestSchema.parse(input);
+  if(data.serviceIntake) assert(
+    ['landlord','property-manager'].includes(w.kind),403,
+    'SERVICE_REQUEST_ROLE','Use an authorised residential owner or manager workspace.',
+  );
   let propertyId: string;
   let clientId: string | null = null;
   let tenancyId: string | null = null;
