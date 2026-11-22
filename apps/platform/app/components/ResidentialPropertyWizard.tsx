@@ -245,7 +245,7 @@ export function ResidentialPropertyWizard({mode,busy,serviceId='',address='',sub
           <p>Tenancy: {occupancy==='tenanted'?'Currently tenanted':occupancy==='upcoming'?'Upcoming tenancy':occupancy==='vacant'?'Vacant':'Not yet confirmed'}{applicable?' · '+tenants.length+' named tenant(s)':''}</p>
         </section>
         {mode==='create'&&<label className="checkbox">
-          <input type="checkbox" checked={selfManaged}
+          <input type="checkbox" name="selfManaged" value="yes" checked={selfManaged}
             onChange={e=>setSelfManaged(e.target.checked)} required/>
           <span>I confirm I own and self-manage this property and am authorised to provide this information.</span>
         </label>}
