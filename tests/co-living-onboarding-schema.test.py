@@ -50,6 +50,12 @@ class CoLivingOnboardingSchema(unittest.TestCase):
         self.db.execute("UPDATE co_living_onboarding_proposals SET status='issued',reviewed_by='reviewer' WHERE id='prop'")
         with self.assertRaisesRegex(sqlite3.IntegrityError,'PROPOSAL_IMMUTABLE'):
             self.db.execute("UPDATE co_living_onboarding_proposals SET room_weekly_cents=210000 WHERE id='prop'")
+        # A decision cannot be attached while the proposal remains merely issued.
+        with self.assertRaisesRegex(sqlite3.IntegrityError,'PROPOSAL_DECISION_MISMATCH'):
+            self.db.execute("""INSERT INTO co_living_onboarding_decisions
+            (id,proposal_id,project_id,proposal_version,decision,note,actor_id,decided_at)
+            VALUES('premature','prop','prj',1,'approved','Before acceptance','owner','2026-11-22')""")
+        self.db.execute("UPDATE co_living_onboarding_proposals SET status='accepted' WHERE id='prop'")
         self.db.execute("""INSERT INTO co_living_onboarding_decisions
         (id,proposal_id,project_id,proposal_version,decision,note,actor_id,decided_at)
         VALUES('dec','prop','prj',1,'approved','Approved plan','owner','2026-11-22')""")
