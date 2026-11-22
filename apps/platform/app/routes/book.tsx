@@ -46,7 +46,7 @@ export async function action(args: ActionFunctionArgs) {
       serviceId: f.get('serviceId'),
       startsAt: f.get('startsAt'),
       requestKey: f.get('requestKey'),
-      intake: {
+      intake: inspectionIntakeKind(String(f.get('serviceId') ?? '')) === 'general' ? undefined : {
         contactPhone: text('contactPhone'),
         reason: text('reason'),
         occupancyStatus: text('occupancyStatus'),
@@ -206,7 +206,7 @@ export default function Book() {
         <span>→</span>
         <strong>02 Service</strong>
         <span>→</span>
-        <strong>03 Inspection details</strong>
+        <strong>{inspectionKind === 'general' ? '03 Access' : '03 Inspection details'}</strong>
         <span>→</span>
         <strong>04 Appointment &amp; payment</strong>
       </div>
@@ -277,7 +277,7 @@ export default function Book() {
               </div>
             )}
           </section>
-          <section className="panel form">
+          {inspectionKind !== 'general' && <section className="panel form">
             <h2>Inspection details</h2>
             <p className="small">Tell our inspector what is needed. Existing property details are already linked to this booking.</p>
             <Field label="Contact phone" name="contactPhone">
@@ -317,7 +317,7 @@ export default function Book() {
             <Field label="Pets, hazards or safety requirements (optional)" name="petsAndSafety">
               <textarea id="petsAndSafety" name="petsAndSafety" maxLength={1000} rows={2} disabled={!interactive} placeholder="Pets, construction work, site hazards or other preparation notes"/>
             </Field>
-          </section>
+          </section>}
           <section className="panel form">
             <h2>Access arrangements</h2>
             <Field label="How will access be provided?" name="accessMethod">
