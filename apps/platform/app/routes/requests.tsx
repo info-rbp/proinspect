@@ -141,6 +141,15 @@ export default function Requests() {
                   <h3 style={{ marginTop: 10 }}>{r.title}</h3>
                   <p style={{ whiteSpace: 'pre-wrap', maxWidth: 750 }}>{r.details}</p>
                   <p>{displayDate(r.created_at)}</p>
+                  {r.service_kind && <p className="small">Service type: {String(r.service_kind).replaceAll('-',' ')}</p>}
+                  {r.service_kind && (
+                    (w.kind==='staff'&&['administrator','operations_manager'].includes(d.user.staffRole??'')) ||
+                    (['landlord','property-manager'].includes(w.kind) && w.role!=='viewer')) &&
+                    <a className="small"
+                      href={`/api/w/${encodeURIComponent(w.kind)}/${encodeURIComponent(w.scopeId)}/requests/${encodeURIComponent(r.id)}/service-intake`}
+                      target="_blank" rel="noopener noreferrer">
+                      Review confidential service details
+                    </a>}
                 </div>
                 {w.kind === 'staff' &&
                   ['administrator', 'operations_manager'].includes(d.user.staffRole ?? '') && (
@@ -359,7 +368,8 @@ export default function Requests() {
                 />
               </Field>
               <Field label="Tell us what is needed" name="details">
-                <textarea id="details" name="details" required minLength={10} maxLength={5000} />
+                <textarea key={serviceCode} id="details" name="details" required minLength={10} maxLength={5000}
+                  defaultValue={serviceTitle ? `Please review the ${serviceTitle} request for this property.` : ''}/>
               </Field>
               <div className="notice warning">
                 This form is not an emergency response service. Do not rely on a portal submission
