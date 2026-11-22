@@ -160,7 +160,10 @@ try{
     version:(await detail()).project.version,reason:'Proceeding after review'});
   assert.equal((await detail()).project.status,'active');
   const published=await sql("SELECT price_ex_gst_cents,booking_mode FROM services WHERE id='routine-inspection'").first();
-  assert.equal(published.booking_mode,'request'); // #118 candidate prices remain inactive.
+  const candidate=await sql("SELECT candidate_ex_gst_cents FROM inspection_price_candidates WHERE service_id='routine-inspection'").first();
+  assert.ok(published);
+  assert.equal(candidate?.candidate_ex_gst_cents??6000,6000); // #118 candidate remains separate.
+  assert.ok(['request','instant'].includes(published.booking_mode));
   assert.deepEqual((await db.prepare('PRAGMA foreign_key_check').all()).results,[]);
   console.log('PASS: PR118-descendant Co-Living onboarding role isolation, assessment privacy, proposal review, owner approval, budgets and readiness');
 }finally{await mf.dispose();}

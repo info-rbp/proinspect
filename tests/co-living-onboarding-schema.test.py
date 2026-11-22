@@ -32,7 +32,7 @@ class CoLivingOnboardingSchema(unittest.TestCase):
     def test_assessment_requires_second_reviewer(self):
         self.db.execute("""INSERT INTO co_living_onboarding_assessments
         (project_id,summary,internal_notes_envelope,proposed_rooms,evidence_reference,updated_by,updated_at)
-        VALUES('prj','Reviewed internal assessment','encrypted-envelope-placeholder',6,'site-report-2026-11','writer','2026-11-22')""")
+        VALUES('prj','Reviewed internal assessment','encrypted-envelope-placeholder-test',6,'site-report-2026-11','writer','2026-11-22')""")
         with self.assertRaisesRegex(sqlite3.IntegrityError,'INDEPENDENT_REVIEW_REQUIRED'):
             self.db.execute("UPDATE co_living_onboarding_assessments SET status='reviewed',reviewed_by='writer' WHERE project_id='prj'")
         self.db.execute("UPDATE co_living_onboarding_assessments SET status='reviewed',reviewed_by='reviewer' WHERE project_id='prj'")
