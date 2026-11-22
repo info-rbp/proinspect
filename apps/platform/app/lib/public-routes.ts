@@ -7,6 +7,7 @@ export function isPublicSitePath(pathname: string): boolean {
   if (pathname === '/' || pathname === '/help-centre' || pathname === '/example-reports' || pathname === '/residential/services' || pathname === '/residential/subscriptions' || /^\/residential\/services\/[a-z-]+$/.test(pathname) || pathname === '/services' || pathname === '/contact' || pathname === '/tenants' ||
       pathname === '/resources' || new Set(['/residential','/commercial','/strata','/co-living','/student-living','/construction','/leasing','/maintenance']).has(pathname) || pathname === '/service-finder' || pathname === '/who-we-help' || pathname === '/residential-property-support' || pathname === '/robots.txt' || pathname === '/sitemap.xml')
     return true;
+  if (/^\/co-living\/(?:how-it-works|property-setup|inclusions|pricing|example-property)$/.test(pathname)) return true;
   if (pathname === '/properties-for-lease' || /^\/properties-for-lease\/(?:residential|commercial)(?:\/[a-z0-9-]+)?$/.test(pathname)) return true;
   if (/^\/(?:services|sectors|how-we-work|resources|who-we-help)\/.+/.test(pathname)) return true;
   return new Set([

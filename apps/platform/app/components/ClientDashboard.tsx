@@ -24,6 +24,11 @@ export function ClientDashboard({data}:{data:WorkspaceData}){
     {pending.length ? <p>{pending.length} pending decisions. <Link to={base+'/finance'}>Review quotes and approvals</Link></p> : <p>No pending approvals in your current account view.</p>}
     {activeWork.filter(o=>o.status==='awaiting_approval').slice(0,5).map(o=><p key={o.id}><Link to={base+'/work-orders/'+encodeURIComponent(o.id)}>{o.title}</Link> — awaiting an authorised decision</p>)}
   </section>
+  {w.kind==='landlord'&&<section className="panel stack">
+    <h2>Co-Living property establishment</h2>
+    <p>Request an assessment, approve your property proposal and track furnishings, readiness and leasing through the six-stage Co-Living journey.</p>
+    <Link to={base+'/co-living-onboardings'}>Open Co-Living onboarding</Link>
+  </section>}
   <section className="panel stack"><h2>Your properties</h2><p>Open a property to arrange work and review its tenancy, requests and issued reports. Adding a property is free and does not start a subscription.</p>
     <div className="client-dashboard-grid">{data.properties.map(property=><article className="panel" key={property.id}>
       <h3><Link to={base+'/properties/'+encodeURIComponent(property.id)}>{property.address}</Link></h3><p>{property.suburb} {property.postcode}</p>

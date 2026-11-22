@@ -78,11 +78,11 @@ export const SECTOR_OVERVIEWS = {
     ],
   },
   'co-living': {
-    name: 'Co-Living', headline: 'Shared living, supported from room to common space.',
-    summary: 'From room inspections and resident turnovers to shared-space care, we help Co-Living owners and operators keep their properties organised.',
-    description: 'Shared homes need care at room level and across the spaces everyone uses. We help with condition records, resident arrivals, room turnovers and communal care, giving operators a clearer view of what is ready and what needs attention.',
-    audience: 'For shared-accommodation owners, Co-Living operators, Student Living providers and authorised accommodation managers.',
-    outcome: 'A more consistent property experience for operators and residents.',
+    name: 'Co-Living', headline: 'Your Property. A Complete Co-Living Solution.',
+    summary: 'Explore the potential of furnished Co-Living: property assessment, approved setup, resident support, cleaning, utilities and clear owner financial responsibilities.',
+    description: 'From property assessment and furnishing coordination to resident services, inspections and shared-area care, ProInspect proposes a comprehensive Co-Living property-specific programme.',
+    audience: 'For residential property owners considering Co-Living and authorised operators seeking a property-specific service scope.',
+    outcome: 'Your property, from approved establishment to resident operations.',
     services: [
       ['Room and shared-space inspections', 'Room-condition records, turnover observations and checks of agreed kitchens, bathrooms, living areas and grounds. Confirm lawful access, private areas and recipients of each record.'],
       ['Resident onboarding and communications', 'Welcome information, keys, orientation, ordinary requests and maintenance reporting. Agreements, eligibility, rent collection and tenancy decisions remain with the authorised operator.'],
