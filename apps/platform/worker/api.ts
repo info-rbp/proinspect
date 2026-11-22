@@ -86,6 +86,7 @@ import { booksServices, managesProperty } from '../../../packages/authorization/
 import { readOnlyCalendarDiagnostic } from './features/google-calendar.server';
 import { calendarSyncSummary, retryCalendarSync } from './features/calendar-scheduling.server';
 import {staffPropertyCreate,staffPropertyOverview,staffPropertyUpdate} from './features/staff-property-management.server';
+import { confidentialServiceRequestIntake } from './features/residential-service-intake.server';
 
 async function json(request: Request) {
   const text = await boundedText(request);
@@ -756,6 +757,10 @@ export async function handleApi(
         }),
       );
     }
+    const privateRequest = tail.match(/^requests\/([a-zA-Z0-9_-]+)\/service-intake$/);
+    if(privateRequest && method==='GET')return Response.json(
+      await confidentialServiceRequestIntake(env,user,w,privateRequest[1]),
+      {headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
     if (method === 'POST' && tail === 'requests')
       return Response.json(await createRequest(env, user, w, await json(request)), { status: 201 });
     if (method === 'POST' && tail === 'tenancies')
