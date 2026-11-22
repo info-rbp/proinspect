@@ -170,3 +170,6 @@
 .site .pi-about-purpose-image img {display:block;width:100%;aspect-ratio:1.35;object-fit:cover;}
 .site .pi-about-purpose h2 {margin-bottom:1rem;}
 .site .pi-about-purpose p {line-height:1.7;}
+
+/* Keep the requested shorter purpose message easy to scan on narrow screens. */
+.site .pi-about-purpose > div:last-child > p:not(.eyebrow) + p {margin-top:.9rem;}

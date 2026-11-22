@@ -15,7 +15,7 @@ const audiences=[
 ];
 export default function About(){return <>
  <div className="pi-about-hero"><EditorialHero eyebrow="About Us" title="Property Support. Designed Around You."
-  intro="ProInspect brings together practical rental-property inspections, leasing support, maintenance attendance and connected records, with innovative ways to help owners protect their investment and make informed decisions."
+  intro="ProInspect brings together the services needed to keep rental properties moving, with innovative inspection, leasing and maintenance solutions designed to save owners time and help maximise rental income."
   image="residential" primary={{label:'See Our Residential Services',to:'/residential/services'}}
   secondary={{label:'Get Started Today',to:'/client'}}/></div>
  <section className="mkt-section pi-editorial-section"><div className="site-container pi-introduction pi-about-purpose">

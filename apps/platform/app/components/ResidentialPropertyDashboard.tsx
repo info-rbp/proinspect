@@ -99,6 +99,7 @@ export function ResidentialPropertyDashboard({data,property,setup,busy,result}:{
     <section className="panel stack">
       <h2>Co-living rooms &amp; shared areas</h2>
       <p>Configure an authorised residential property with private occupancies and shared spaces.</p>
+      <Link className="button secondary" to={base+'/co-living-onboardings'}>Co-Living onboarding &amp; setup</Link>
       <Link className="button secondary" to={base+'/properties/'+encodeURIComponent(p.id)+'/co-living'}>Manage co-living</Link>
     </section>
     <section className="grid-4 portal-summary" aria-label="Property activity summary">
