@@ -10,6 +10,7 @@ import { canTransition } from '../../../packages/domain/index';
 import {
   onboardingSchema,
   propertySchema,
+  residentialPropertyOnboardingSchema,
   addressKey,
   requestSchema,
   workOrderUpdateSchema,
@@ -27,6 +28,7 @@ import {
 import { guestReportDelivery } from './features/guest-report.server';
 import { mailEvent } from '../../../packages/notifications/server';
 import { digest } from '../../../packages/auth/crypto';
+import { initialPropertySetupStatements } from './features/residential-property-setup.server';
 
 export function audit(
   env: Env,
@@ -161,8 +163,14 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
   const commercial = w.kind === 'commercial';
   const allowedPropertyTypes = commercial
     ? ['Office', 'Retail', 'Warehouse', 'Industrial', 'Mixed-use', 'Other']
-    : ['House', 'Apartment', 'Townhouse', 'Villa', 'Other'];
-  const data = propertySchema.parse(input);
+    : ['House', 'Unit', 'Apartment', 'Townhouse', 'Villa', 'Duplex', 'Studio', 'Other'];
+  // Legacy integrations may create a minimal property. The four-step Residential
+  // journey submits all related records in a single atomic D1 transaction.
+  const extended = w.kind==='landlord' && !!input && typeof input==='object' &&
+    ('profile' in input || 'tenancy' in input || 'notes' in input);
+  const data = extended
+    ? residentialPropertyOnboardingSchema.parse(input)
+    : propertySchema.parse(input);
   assert(
     allowedPropertyTypes.includes(data.propertyType),
     422,
@@ -178,7 +186,7 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
   if (existing) {
     try {
       await propertyAccess(env, user, w, existing.id);
-      return { propertyId: existing.id, billingRequired: false };
+      return { propertyId: existing.id, billingRequired: false, alreadyExists: true };
     } catch {
       assert(
         false,
@@ -230,6 +238,8 @@ export async function createProperty(env: Env, user: Principal, w: Workspace, in
           propertyId, w.scopeId, user.display_name || user.email, user.email,
         )]
       : []),
+    ...(extended ? await initialPropertySetupStatements(env,user,propertyId,
+      residentialPropertyOnboardingSchema.parse(data)) : []),
     statement(env.DB,"UPDATE account_subscription_preferences SET account_state='active',updated_at=? WHERE client_id=? AND account_state='verified'",time,w.scopeId),
     audit(env, user, 'property.created', 'property', propertyId, propertyId, {
       landlordType: commercial ? 'commercial' : 'residential',
