@@ -66,7 +66,7 @@ async function stageData(env:Env,p:Row){
     statement(env.DB,'SELECT * FROM co_living_onboarding_variations WHERE project_id=? ORDER BY created_at DESC LIMIT 100',p.id).all<Row>(),
     statement(env.DB,'SELECT * FROM co_living_onboarding_tasks WHERE project_id=? ORDER BY created_at DESC LIMIT 200',p.id).all<Row>(),
     statement(env.DB,'SELECT id,action,detail,created_at FROM co_living_onboarding_events WHERE project_id=? ORDER BY created_at DESC LIMIT 150',p.id).all<Row>(),
-    statement(env.DB,"SELECT x.id,x.space_id,x.listing_id,x.evidence_reference,s.label AS room_label,l.title,l.status FROM co_living_onboarding_listing_links x JOIN co_living_spaces s ON s.id=x.space_id JOIN leasing_listings l ON l.id=x.listing_id WHERE x.project_id=? ORDER BY x.created_at DESC",p.id).all<Row>()
+    statement(env.DB,"SELECT x.id,x.listing_id,x.evidence_reference,l.title,l.status FROM co_living_onboarding_listing_links x JOIN leasing_listings l ON l.id=x.listing_id WHERE x.project_id=? ORDER BY x.created_at DESC",p.id).all<Row>()
   ]);
   return {checks:checks.results,assessment,proposals:proposals.results,items:items.results,variations:variations.results,tasks:tasks.results,events:events.results,listings:listings.results};
 }
@@ -159,8 +159,8 @@ async function stageEvidence(env:Env,p:Row,d:Awaited<ReturnType<typeof stageData
     checked.first_tenancy_active=(occupancy?.n??0)>0;
     const site=await statement(env.DB,'SELECT property_id FROM co_living_sites WHERE property_id=?',p.property_id).first();
     const listings=await statement(env.DB,
-      "SELECT COUNT(*) AS n FROM co_living_onboarding_listing_links x JOIN leasing_listings l ON l.id=x.listing_id JOIN co_living_spaces s ON s.id=x.space_id WHERE x.project_id=? AND l.property_id=? AND s.property_id=? AND l.kind='residential' AND l.status IN('published','leased') AND s.space_type IN('room','bed') AND s.active=1",
-      p.id,p.property_id,p.property_id).first<{n:number}>();
+      "SELECT COUNT(*) AS n FROM co_living_onboarding_listing_links x JOIN leasing_listings l ON l.id=x.listing_id WHERE x.project_id=? AND l.property_id=? AND l.kind='residential' AND l.status IN('published','leased')",
+      p.id,p.property_id).first<{n:number}>();
     checked.approved_listing_published=Boolean(site)&&(listings?.n??0)>0&&checked.approved_listing_published===true;
   }
   return checked;
@@ -353,22 +353,21 @@ export async function coLivingOnboardingCommand(env:Env,user:Principal,w:Workspa
   }
   if(a.action==='link_listing'){
     asStaff();requireStage('advertising');
-    const d=z.object({spaceId:identifier,listingId:identifier,evidenceReference:ref}).parse(data);
-    const space=await statement(env.DB,
-      "SELECT id FROM co_living_spaces WHERE id=? AND property_id=? AND active=1 AND space_type IN('room','bed')",
-      d.spaceId,p.property_id).first();
-    assert(space,409,'APPROVED_PRIVATE_SPACE_REQUIRED','Configure an approved private room or bed before linking an advertisement.');
+    const d=z.object({listingId:identifier,evidenceReference:ref}).parse(data);
+    const configured=await statement(env.DB,
+      'SELECT property_id FROM co_living_sites WHERE property_id=?',p.property_id).first();
+    assert(configured,409,'CO_LIVING_SETUP_REQUIRED','Configure the approved room allocation before linking a property advertisement.');
     const listing=await statement(env.DB,
       "SELECT id FROM leasing_listings WHERE id=? AND property_id=? AND kind='residential' AND status IN('published','leased')",
       d.listingId,p.property_id).first();
     assert(listing,409,'PUBLISHED_LISTING_REQUIRED','The published Residential listing must belong to this property.');
     await env.DB.batch([
       statement(env.DB,
-        'INSERT INTO co_living_onboarding_listing_links(id,project_id,space_id,listing_id,evidence_reference,linked_by,created_at) VALUES(?,?,?,?,?,?,?)',
-        uid('clol'),p.id,d.spaceId,d.listingId,d.evidenceReference,user.id,now()),
+        'INSERT INTO co_living_onboarding_listing_links(id,project_id,listing_id,evidence_reference,linked_by,created_at) VALUES(?,?,?,?,?,?)',
+        uid('clol'),p.id,d.listingId,d.evidenceReference,user.id,now()),
       ...withAudit(env,user,p,a.action,'Room listing evidence linked',a.requestKey)
     ]);
-    return {ok:true,message:'Existing published listing linked to the approved private space.'};
+    return {ok:true,message:'Existing approved property-level advertisement linked. Room tenancies remain separately tracked.'};
   }
   if(a.action==='request_variation'){
     asStaff();requireStage('implementation');

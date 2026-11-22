@@ -172,16 +172,16 @@ CREATE TRIGGER co_living_onboarding_event_immutable BEFORE UPDATE ON co_living_o
 CREATE TRIGGER co_living_onboarding_event_no_delete BEFORE DELETE ON co_living_onboarding_events
  BEGIN SELECT RAISE(ABORT,'EVENT_IMMUTABLE'); END;
 
--- Listings are linked to an approved private space, never inferred from a
--- generic property advertisement. Existing Leasing publishes independently.
+-- Current Leasing supports one active listing per property. Link the approved
+-- property-level advertisement; room-by-room tenancy remains a separate record.
+-- Future room-level advertising requires a dedicated leasing schema/release.
 CREATE TABLE co_living_onboarding_listing_links (
  id TEXT PRIMARY KEY,
  project_id TEXT NOT NULL REFERENCES co_living_onboarding_projects(id) ON DELETE RESTRICT,
- space_id TEXT NOT NULL REFERENCES co_living_spaces(id) ON DELETE RESTRICT,
  listing_id TEXT NOT NULL REFERENCES leasing_listings(id) ON DELETE RESTRICT,
  evidence_reference TEXT NOT NULL CHECK(length(trim(evidence_reference)) BETWEEN 8 AND 500),
  linked_by TEXT NOT NULL REFERENCES users(id),
  created_at TEXT NOT NULL,
  UNIQUE(project_id,listing_id)
 ) STRICT;
-CREATE INDEX co_living_onboarding_listing_by_project ON co_living_onboarding_listing_links(project_id,space_id);
+CREATE INDEX co_living_onboarding_listing_by_project ON co_living_onboarding_listing_links(project_id,listing_id);
