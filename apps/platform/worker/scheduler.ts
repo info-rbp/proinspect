@@ -1,7 +1,7 @@
 import { legalStatements } from './features/legal-acceptance.server';
 import { effectiveCashTerms, assertCashCreditCapacity } from './features/cash-terms.server';
 import { requireReleaseApproval } from './features/release-governance.server';
-import { bookingFingerprintFields } from '../../../packages/booking/inspection-checkout';
+import { bookingFingerprintFields, validateRequestedAddOns } from '../../../packages/booking/inspection-checkout';
 import { PCR_LAUNCH_SERVICE } from '../../../packages/marketing/pcr-campaign';
 import { guestSchedulerOperation } from './features/guest-scheduler.server';
 import { changeBooking } from './features/bookings.server';
@@ -201,6 +201,12 @@ export class BookingScheduler extends DurableObject<Env> {
       }
       const service = (await catalogue(this.env)).find((s) => s.id === data.serviceId);
       assert(service, 404, 'SERVICE_NOT_FOUND', 'Service not found.');
+      let addonIntents: ReturnType<typeof validateRequestedAddOns>;
+      try { addonIntents = validateRequestedAddOns(service.id,data.intake); }
+      catch(error) {
+        throw new AppError(422,'ADD_ON_INVALID',
+          error instanceof Error ? error.message : 'Invalid service option.');
+      }
       assert(
         service.sectors.includes(property.sector),
         422,
@@ -226,7 +232,8 @@ export class BookingScheduler extends DurableObject<Env> {
         'SCHEDULING_CLOSED',
         'Online scheduling is not yet open.',
       );
-      if (data.access.method === 'tenant')
+      const staffNoticeRequested = addonIntents.some(item=>item.code==='form19_service');
+      if (data.access.method === 'tenant' && !staffNoticeRequested)
         assert(
           data.access.noticeConfirmed,
           422,
@@ -319,6 +326,8 @@ export class BookingScheduler extends DurableObject<Env> {
             customerEmail: user.email,
             bookingBasis: includedSubscription ? 'subscription_included' : 'published_price',
             cashPaymentTerm: terms?.termCode ?? null,
+            addonRequests: addonIntents.map(item=>item.code),
+            addonPricingStatus: addonIntents.length ? 'unapproved_staff_review' : 'none',
             cashTermApprovalRequestId: terms?.approvalRequestId ?? null,
             subscription: includedSubscription
               ? { id: includedSubscription.id, planCode: includedSubscription.planCode }
@@ -337,7 +346,7 @@ export class BookingScheduler extends DurableObject<Env> {
           clientId,
           property.id,
           service.name,
-          paymentRequired ? 'awaiting_approval' : 'scheduled',
+          paymentRequired || addonIntents.length ? 'awaiting_approval' : 'scheduled',
           time,
           time,
         ),
@@ -377,6 +386,11 @@ export class BookingScheduler extends DurableObject<Env> {
             clearGuard(this.env),
           ] : []),
         ] : []),
+        ...addonIntents.map(item=>statement(this.env.DB,
+          `INSERT INTO booking_service_addon_intents
+             (booking_id,addon_code,source_fee_candidate_ex_gst_cents,status,created_at)
+           VALUES(?,?,?,'requested',?)`,
+          id,item.code,item.candidateExGstCents,time)),
         statement(
           this.env.DB,
           'INSERT INTO booking_access_secrets(booking_id,envelope,updated_at) VALUES(?,?,?)',
@@ -387,13 +401,18 @@ export class BookingScheduler extends DurableObject<Env> {
         ...(data.intake ? [statement(this.env.DB,
           'INSERT INTO booking_intake_secrets(booking_id,envelope,updated_at) VALUES(?,?,?)',
           id,await seal(this.env.DATA_ENCRYPTION_KEY,`booking-intake:${id}`,data.intake),time)] : []),
-        audit(this.env, user, 'booking.created', 'booking', id, property.id, { workOrderId: woId }),
+        audit(this.env, user, 'booking.created', 'booking', id, property.id, {
+          workOrderId:woId,addonRequests:addonIntents.map(item=>item.code),
+          addonPriceApproved:false,
+        }),
         await mailEvent(this.env, 'booking.confirmed', {
           to: user.email,
-          subject: `${paymentRequired ? 'Payment required for booking' : 'Booking confirmed'}: ${reference}`,
+          subject: `${paymentRequired ? 'Payment required for booking' : addonIntents.length ? 'Appointment recorded — optional service review' : 'Booking confirmed'}: ${reference}`,
           heading: paymentRequired ? 'Complete payment to proceed' : 'Your booking is confirmed',
           body: paymentRequired
             ? 'Your appointment has been recorded but service delivery requires a separately verified payment. Use Finance in your account to open secure Checkout after any required pricing, tax and provider approvals.'
+            : addonIntents.length
+              ? 'Your appointment is recorded. Optional services are pending scope and price confirmation by ProInspect. They are not charged or delivered automatically. Notice and tenant contact require separate review before attendance.'
             : creditBooking
               ? 'Your appointment is confirmed under your approved account invoice terms. The invoice will follow service completion and reconciliation.'
               : 'Your booking and work order are now linked to your property. Your report will appear in your account after it is issued.',
