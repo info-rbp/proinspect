@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { RESIDENTIAL_ADD_ONS, type ResidentialAddOnCode } from '../service-catalogue/residential-workflows';
+import { RESIDENTIAL_ADD_ONS, type ResidentialAddOnCode } from '../service-catalogue/residential-workflows.ts';
 
 /** Canonical IDs are shared with the existing catalogue and report-tool mapping. */
 export const PRIMARY_INSPECTIONS = [
