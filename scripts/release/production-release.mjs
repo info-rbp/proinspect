@@ -203,13 +203,15 @@ export async function assertHealthy(expected) {
   for(const key of ['database','documents','scheduler','queue']) assert(health.bindings?.[key]===true,'Missing live binding '+key);
   return health.source;
 }
-async function smoke(head, initial=false) {
+async function waitHealthy(head) {
   // Version propagation may lag briefly. Do not retry any write.
-  let source;
   for(let i=0;i<10;i++){
-    try { source=await assertHealthy(head);break; }
+    try { return await assertHealthy(head); }
     catch(e){ if(i===9)throw e; await delay(3000); }
   }
+}
+async function smoke(head, initial=false) {
+  const source=await waitHealthy(head);
   const pages=['/','/residential','/commercial','/co-spaces','/maintenance','/tenants','/leasing','/subscriptions','/residential/subscriptions'];
   const headings={
     '/residential':'Your Property. Our Support. Your Peace of Mind.',
@@ -324,7 +326,7 @@ export async function main(){
     }
     const target=await findCandidate(head);
     report.candidate={versionId:target.id,bindingCount:assertCompatible(old,target,head)};
-    await promoteAndVerify({head,previous:report.previous,target:target.id,assertCurrentMain:assertMain,readDeployment:currentDeployment,deploy:activate,verify:sha=>smoke(sha,risk.bootstrap),verifyPrevious:assertHealthy,report});
+    await promoteAndVerify({head,previous:report.previous,target:target.id,assertCurrentMain:assertMain,readDeployment:currentDeployment,deploy:activate,verify:sha=>smoke(sha,risk.bootstrap),verifyPrevious:waitHealthy,report});
   }finally{
     writeFileSync(out+'/release.json',JSON.stringify(report,null,2)+'\n');
     console.log(JSON.stringify({status:report.status,source:report.source,previous:report.previous,candidate:report.candidate,decision:report.decision,rollback:report.rollback}));

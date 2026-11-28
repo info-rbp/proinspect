@@ -33,9 +33,9 @@ test('logo returns home and all service overviews have working images, FAQs and 
     if (!['residential','co-living','maintenance'].includes(slug)) continue;
     await page.goto('/' + slug);
     const approved = {
-      residential: { heading: 'Your Property. Our Support. Your Peace of Mind.', name: 'Explore our residential solutions', href: '#residential-services' },
-      'co-living': { heading: 'Your Property. A Complete Co-Living Solution.', name: 'Explore Co-Living Support', href: '#service-options' },
-      maintenance: { heading: 'Taking Care of Your Property. Taking Care of the Details.', name: 'Explore our maintenance solutions', href: '#maintenance-solutions' },
+      residential: { heading: 'Your Property. Our Support. Your Peace of Mind.', name: 'Explore our residential solutions', href: '/residential#residential-services' },
+      'co-living': { heading: 'Your Property. A Complete Co-Living Solution.', name: 'Explore Co-Living Support', href: '/co-living#service-options' },
+      maintenance: { heading: 'Taking Care of Your Property. Taking Care of the Details.', name: 'Explore our maintenance solutions', href: '/maintenance#maintenance-solutions' },
     }[slug as 'residential' | 'co-living' | 'maintenance'];
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(approved.heading);
     const action = approved;
@@ -43,7 +43,8 @@ test('logo returns home and all service overviews have working images, FAQs and 
       page.locator('.pi-editorial-copy').getByRole('link', { name: action.name }),
     ).toHaveAttribute('href', action.href);
     await page.locator('.pi-editorial-copy').getByRole('link', { name: action.name }).click();
-    await expect(page.locator(action.href)).toBeVisible();
+    await expect(page.locator('#' + action.href.split('#')[1])).toBeVisible();
+    await expect(page).toHaveURL('http://127.0.0.1:5173' + action.href);
     await expect(page.locator('.mkt-header-book')).toHaveAttribute('href', '/client');
     const image = page.locator('.pi-editorial-hero-image img');
     await expect(image).toBeVisible();
