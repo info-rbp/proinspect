@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { PUBLIC_NAVIGATION } from '../packages/marketing/public-navigation.ts';
 import { readFileSync } from 'node:fs';
 import { listingInput,leadInput,safeApplicationUrl,propertyUrl,displayPrice,handoffDisclaimer,listingApplicationAction } from '../packages/marketing/leasing.ts';
 const text=(p:string)=>readFileSync(p,'utf8');
@@ -10,8 +11,7 @@ test('leasing is marketing-only, with separated residential/commercial public ro
  assert.ok(layout.includes('MarketingHeader'));
  const chrome=text('apps/marketing/app/components/site-chrome.tsx');
  assert.ok(chrome.includes('PUBLIC_NAVIGATION'));
- const publicNav=text('packages/marketing/public-navigation.ts');
- assert.ok(publicNav.includes("href:'/leasing'"));
+ assert.ok(PUBLIC_NAVIGATION.some(item => item.href === '/leasing'));
  const home=text('apps/marketing/app/routes/home.tsx');
  assert.ok(home.includes('to="/leasing"'));
  assert.ok(home.includes('Properties Available'));

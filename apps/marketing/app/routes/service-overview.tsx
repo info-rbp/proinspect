@@ -1,3 +1,4 @@
+import { MaintenanceLanding } from '../components/maintenance-landing';
 import { residentialPublicResponse } from '../../../../packages/domain/residential-policy';
 import { Link, useLoaderData, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
 import {
@@ -35,6 +36,7 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData: page }) =>
 export default function ServiceOverview() {
   const page = useLoaderData<typeof loader>();
   if (page.key === 'residential') return <ResidentialLanding />;
+  if (page.key === 'maintenance') return <MaintenanceLanding />;
   if (page.key === 'co-living') return <CoLivingLanding />;
   return (
     <>
@@ -43,7 +45,7 @@ export default function ServiceOverview() {
         title={page.headline}
         intro={page.summary}
         image={page.key === 'student-living' ? 'co-living' : page.key}
-        primary={{label:page.key === 'maintenance' ? 'Explore Maintenance Support' : 'Explore Services', to:'#service-options'}}
+        primary={{label:'Explore Services', to:'#service-options'}}
         secondary={{label:'Get Started Today',to:'/client'}}
       />
       <section className="mkt-section pi-editorial-section">

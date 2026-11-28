@@ -19,12 +19,12 @@ test('homepage editorial structure follows the expanded rebuild strategy',async(
 });
 test('all eight Residential service areas are browsable and connect to authorised detail routes',async({page})=>{
  await page.goto('/residential');
- await expect(page.getByRole('heading',{name:'Innovative Support for Every Stage of Your Rental'})).toBeVisible();
- await expect(page.getByRole('heading',{name:'Services Designed to Support You.'})).toBeVisible();
- await expect(page.locator('.pi-residential-grid .pi-property-card')).toHaveCount(8);
+ await expect(page.getByRole('heading',{name:'Your Property. Our Support. Your Peace of Mind.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Supporting your property at every stage.'})).toBeVisible();
+ await expect(page.locator('#residential-services .pi-solution-tile')).toHaveCount(8);
  for(const category of RESIDENTIAL_CATEGORIES){
   const dest='/residential/services/'+category.slug;
-  const linked=page.locator('.pi-residential-grid').getByRole('link',{name:category.title,exact:true});
+  const linked=page.locator('#residential-services').getByRole('link',{name:new RegExp('Explore '+category.title)});
   await expect(linked).toHaveAttribute('href',dest);
   const response=await page.goto(dest);
   expect(response?.status(),dest).toBe(200);

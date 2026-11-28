@@ -11,3 +11,7 @@ playwright-report/
 test-results/
 artifacts/
 *.log
+apps/marketing/app/components/images/co-working*.webp
+apps/marketing/app/components/images/modular*.webp
+apps/marketing/app/components/images/innovation*.webp
+apps/marketing/app/components/images/subscription-care*.webp

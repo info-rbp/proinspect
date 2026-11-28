@@ -234,7 +234,7 @@ export const RESIDENTIAL_CATEGORIES: ResidentialCategory[] = [
   },
   {
     "slug": "other-property-support",
-    "title": "Everything Else",
+    "title": "Tailored Property Solutions",
     "intro": "Not every property requirement fits an ordinary inspection. Tell us what you need and we can assess a tailored scope.",
     "image": "maintenance",
     "features": [
