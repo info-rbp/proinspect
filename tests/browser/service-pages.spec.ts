@@ -2,6 +2,13 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { SECONDARY_NAVIGATION } from '../../packages/marketing/public-navigation';
 
+test.beforeEach(async ({ request }) => {
+  // Browser fixtures must never exercise the connected production environment.
+  const response = await request.get('/api/health');
+  expect(response.ok()).toBe(true);
+  expect((await response.json()).environment).toBe('local');
+});
+
 const pages = [
   '/',
   '/residential',
@@ -19,6 +26,14 @@ for (const width of [390, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       const errors: string[] = [];
       page.on('pageerror', (error) => errors.push(error.message));
+      page.on('requestfailed', (request) => {
+        if (request.resourceType() === 'script' && request.failure()?.errorText !== 'net::ERR_ABORTED')
+          errors.push('Script request failed: ' + request.url() + ' (' + request.failure()?.errorText + ')');
+      });
+      page.on('response', (response) => {
+        if (response.request().resourceType() === 'script' && response.status() >= 400)
+          errors.push('Script response ' + response.status() + ': ' + response.url());
+      });
       const response = await page.goto(path);
       expect(response?.status()).toBe(200);
       await expect(page.locator('main h1')).toHaveCount(1);

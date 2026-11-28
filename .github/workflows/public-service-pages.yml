@@ -28,9 +28,13 @@ jobs:
         run: |
           pnpm local:init --test-fixtures
           pnpm exec playwright install --with-deps chromium firefox webkit
-      - name: Chromium accessibility, navigation and page acceptance
+      - name: Chromium accessibility, navigation and page acceptance (built local application)
+        env:
+          PROINSPECT_BROWSER_PREVIEW: '1'
         run: pnpm exec playwright test tests/browser/service-pages.spec.ts
-      - name: Firefox and WebKit accessibility and navigation
+      - name: Firefox and WebKit accessibility and navigation (built local application)
+        env:
+          PROINSPECT_BROWSER_PREVIEW: '1'
         run: pnpm exec playwright test --config playwright.service-pages.config.ts
       - name: Production-build laboratory performance and WebP checks
         run: |
