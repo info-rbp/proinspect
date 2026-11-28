@@ -1,0 +1,88 @@
+/* Rebuild home and editorial subscription cards. Header/footer unchanged. */
+.site .pi-home-rebuild .pi-home-stacked-heading { display:block;max-width:880px;margin-bottom:clamp(1.5rem,3vw,2.8rem); }
+.site .pi-home-stacked-heading > p:not(.eyebrow) {max-width:68ch;margin-top:.85rem;}
+.site .pi-home-services-grid {display:grid;gap:clamp(1rem,2.3vw,2rem);}
+.site .pi-home-services-grid.pi-home-two {grid-template-columns:repeat(2,minmax(0,1fr));}
+.site .pi-home-services-grid.pi-home-three {grid-template-columns:repeat(3,minmax(0,1fr));}
+.site .pi-home-rebuild .pi-home-services-grid > .pi-home-service-card {grid-column:auto;width:100%;min-width:0;max-width:none;height:100%;background:#fff;border:1px solid var(--mkt-line);border-radius:3px;overflow:hidden;}
+.site .pi-home-service-card {position:relative;}
+.site .pi-home-service-card > .pi-home-card-media {display:block;flex:0 0 auto;padding:0;margin:0;overflow:hidden;background:#e4e8e0;}
+.site .pi-home-service-card .pi-brand-image {display:block;width:100%;height:auto;aspect-ratio:1.65;object-fit:cover;}
+.site .pi-home-three .pi-home-service-card .pi-brand-image {aspect-ratio:1.45;}
+.site .pi-home-service-card > .pi-home-card-body {padding:clamp(1.2rem,2.2vw,1.8rem);}
+.site .pi-home-service-card h3 {font-size:clamp(1.2rem,2vw,1.6rem);overflow-wrap:anywhere;}
+.site .pi-home-service-card .pi-inline-link {align-self:flex-start;}
+.site .pi-home-rebuild .pi-editorial-hero-home .pi-editorial-copy h1 > span {white-space:normal;}
+.site .pi-rebuild-subscription-grid {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(.85rem,2vw,1.6rem);}
+.site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card {grid-column:span 2;min-width:0;min-height:130px;display:flex;align-items:flex-start;justify-content:center;padding:clamp(1.2rem,2vw,1.8rem);border-top:3px solid var(--mkt-teal);}
+.site .pi-rebuild-subscription-card h3 {font-size:clamp(1.15rem,1.8vw,1.5rem);overflow-wrap:anywhere;}
+.site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card:nth-child(4) {grid-column:2 / span 2;}
+.site .pi-subscription-landing-options > p {font-size:.88rem;margin-top:1rem;color:#486168;}
+.site .pi-subscription-landing-options {margin-bottom:2rem;}
+.site .pi-subscription-landing-options > h2 {margin-top:2rem;}
+.site .pi-home-principles {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(1rem,2.5vw,2rem);}
+.site .pi-home-principles article {border-top:2px solid #b9cec7;padding-top:1.4rem;min-width:0;}
+.site .pi-home-principles svg {width:36px;height:36px;color:var(--mkt-teal);margin-bottom:1rem;}
+.site .pi-home-principles h3 {font-size:clamp(1.2rem,2vw,1.55rem);margin-bottom:.8rem;}
+.site .pi-home-principles p {line-height:1.7;}
+@media(max-width:1000px){
+  .site .pi-rebuild-subscription-grid {grid-template-columns:repeat(4,minmax(0,1fr));}
+  .site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card:nth-child(4) {grid-column:span 2;}
+  .site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card:nth-child(5) {grid-column:2 / span 2;}
+  .site .pi-home-services-grid.pi-home-three {grid-template-columns:repeat(4,minmax(0,1fr));}
+  .site .pi-home-rebuild .pi-home-three > .pi-home-service-card {grid-column:span 2;}
+  .site .pi-home-rebuild .pi-home-three > .pi-home-service-card:last-child {grid-column:2 / span 2;}
+}
+@media(max-width:760px){
+  .site .pi-home-services-grid.pi-home-two,.site .pi-home-services-grid.pi-home-three,.site .pi-home-principles {grid-template-columns:minmax(0,1fr);}
+  .site .pi-home-rebuild .pi-home-three > .pi-home-service-card,.site .pi-home-rebuild .pi-home-three > .pi-home-service-card:last-child {grid-column:auto;}
+  .site .pi-home-three .pi-home-service-card .pi-brand-image {aspect-ratio:1.65;}
+  .site .pi-rebuild-subscription-grid {grid-template-columns:minmax(0,1fr);}
+  .site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card,.site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card:nth-child(4),.site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card:nth-child(5) {grid-column:auto;min-height:95px;}
+}
+
+/* Final home-page refinements: use the full banner content width rather than
+   constraining service introductions to the heading's text measure. */
+.site .pi-home-rebuild .pi-home-service-banner .pi-home-stacked-heading {
+  width:100%;
+  max-width:none;
+}
+.site .pi-home-rebuild .pi-home-service-banner .pi-home-stacked-heading > p:not(.eyebrow) {
+  width:100%;
+  max-width:none;
+  white-space:normal;
+}
+.site .pi-home-rebuild #home-leasing .pi-residential-feature-content > p:not(.eyebrow),
+.site .pi-home-rebuild #home-subscriptions .pi-residential-feature-content > p:not(.eyebrow),
+.site .pi-home-rebuild #proinspect-approach .pi-residential-feature-content > p:not(.eyebrow) {
+  max-width:none;
+  white-space:normal;
+  text-wrap:wrap;
+}
+.site .pi-home-rebuild #proinspect-approach .pi-residential-feature-content > p:not(.eyebrow),
+.site .pi-home-rebuild #home-subscriptions .pi-residential-feature-content > p:not(.eyebrow) {
+  margin-block:0 1rem;
+  line-height:1.7;
+}
+
+.site .pi-home-rebuild #customer-commitment .pi-home-stacked-heading,
+.site .pi-home-rebuild #customer-commitment .pi-home-stacked-heading > p:not(.eyebrow) {width:100%;max-width:none;}
+.site .pi-home-card-action {position:static;min-height:44px;display:inline-flex;align-items:center;}
+.site .pi-home-card-action::after {content:'';position:absolute;inset:0;z-index:1;}
+.site .pi-home-service-card:focus-within {outline:3px solid #0e6a65;outline-offset:4px;}
+.site .pi-home-service-card .pi-brand-image {transition:transform .2s ease;}
+@media(hover:hover) {
+  .site .pi-home-service-card:hover .pi-brand-image {transform:scale(1.02);}
+  .site .pi-home-service-card:hover .pi-home-card-action {text-decoration:underline;text-underline-offset:.2em;}
+}
+@media(max-width:760px) {
+  .site .pi-home-rebuild .pi-editorial-section {padding-block:2.5rem;}
+  .site .pi-home-rebuild .pi-home-stacked-heading {margin-bottom:1.35rem;}
+  .site .pi-home-rebuild .pi-home-service-card > .pi-home-card-body {padding:1.15rem;}
+  .site .pi-home-rebuild .pi-home-principles {gap:1.15rem;}
+  .site .pi-home-rebuild .pi-home-principles article {padding-top:1rem;}
+  .site .pi-home-rebuild .pi-editorial-hero {padding-block:1.65rem 2.25rem;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .site .pi-home-service-card .pi-brand-image {transition:none;transform:none!important;}
+}

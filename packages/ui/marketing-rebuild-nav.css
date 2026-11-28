@@ -1,0 +1,117 @@
+/* Two-level public header. Keep the existing brand and account CTA at
+   the outer edges of the first row; centre navigation on a separate row. */
+.site .mkt-header-wrap .mkt-site-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+  flex-wrap: nowrap;
+}
+.site .mkt-site-header .mkt-header-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  gap: .8rem;
+}
+.site .mkt-site-header .mkt-header-identity .mkt-brand {
+  flex: 0 0 auto;
+  order: 0;
+}
+.site .mkt-site-header .mkt-header-identity .mkt-header-actions {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+  order: 0;
+}
+.site .mkt-site-header .mkt-header-identity .mkt-header-book {
+  width: auto;
+}
+.site .mkt-site-header .mkt-header-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 46px;
+  border-top: 1px solid rgba(255,255,255,.14);
+}
+@media (min-width: 1024px) {
+  .site .mkt-site-header .mkt-site-links {
+    display: flex !important;
+    flex-wrap: nowrap;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    justify-content: center;
+    gap: clamp(.6rem, 1.15vw, 1.35rem);
+  }
+  .site .mkt-site-header .mkt-site-links > a {
+    font-size: clamp(.78rem, 1.04vw, .89rem);
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    border-bottom: 2px solid transparent;
+    padding-bottom: 0;
+  }
+  .site .mkt-site-header .mkt-site-links > a[aria-current] {
+    border-bottom-color: #f0d2a3;
+  }
+  .site .mkt-site-header .marketing-menu { display: none; }
+}
+@media (max-width: 1023px) {
+  .site .mkt-site-header .mkt-site-links { display: none !important; }
+  .site .mkt-site-header .mkt-header-identity { min-height: 60px; }
+  .site .mkt-site-header .mkt-header-navigation { min-height: 44px; }
+  .site .mkt-site-header .marketing-menu {
+    display: block;
+    margin: 0;
+    position: relative;
+  }
+  .site .mkt-site-header .marketing-menu summary {
+    min-height: 44px;
+    justify-content: center;
+  }
+  .site .mkt-site-header .marketing-menu nav {
+    right: 50%;
+    left: auto;
+    transform: translateX(50%);
+    width: min(320px, calc(100vw - 2.2rem));
+    min-width: 0;
+    max-width: calc(100vw - 2.2rem);
+    max-height: min(70vh, 36rem);
+    overflow-y: auto;
+  }
+  .site .mkt-site-header .marketing-menu nav a { min-height: 44px; }
+}
+@media (max-width: 380px) {
+  .site .mkt-site-header .mkt-header-identity { gap: .35rem; }
+  .site .mkt-site-header .mkt-header-identity .mkt-header-book {
+    padding-inline: .55rem;
+    font-size: .69rem;
+  }
+}
+
+/* Persistent, compact two-row navigation. Do not animate header height:
+   stable geometry keeps the page from jumping as the user scrolls. */
+.site .mkt-header-wrap { position:sticky; top:0; z-index:30; }
+html:has(body.site .mkt-header-wrap) { scroll-padding-top:126px; }
+.site .mkt-site-header .mkt-header-identity .mkt-header-book { min-height:44px; }
+.site .mkt-site-header .mkt-site-links > a[aria-current] { color:#f0d2a3; }
+.site .mkt-site-header .marketing-menu nav a[aria-current] {
+  color:#102e35; background:#e7efeb; border-inline-start:3px solid #147b79; font-weight:700;
+}
+.site .mkt-header-wrap :focus-visible,.site .mkt-site-footer :focus-visible {outline:3px solid #f0d2a3;outline-offset:3px;}
+.site .mkt-site-header .marketing-menu nav a:focus-visible {outline:3px solid #0e6a65;outline-offset:-3px;}
+.site .pi-footer-actions a { min-height:44px; }
+@media(max-width:1023px) {
+  html:has(body.site .mkt-header-wrap) { scroll-padding-top:120px; }
+  .site .mkt-site-header .marketing-menu nav {max-height:min(68vh,calc(100dvh - 125px),36rem);}
+}
+@media(max-height:360px) {
+  .site .mkt-header-wrap {position:relative;}
+  html:has(body.site .mkt-header-wrap) {scroll-padding-top:0;}
+}

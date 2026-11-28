@@ -75,6 +75,7 @@ async function editableAccess(env:Env,token:string){
 }
 function existingAccess(env:Env){assert(Boolean(env.DATA_ENCRYPTION_KEY&&env.RESTRICTED_DOCUMENTS),503,'APPLICATION_ACCESS_UNAVAILABLE','Private application records are temporarily unavailable.');}
 export async function rentalStartPage(env:Env,slug:string){
+ assert(env.APP_ENV==='local'||slug!=='residential-browser-test',404,'RENTAL_APPLICATION_UNAVAILABLE','This demonstration listing does not accept applications.');
  env=await withManagedIntakePolicy(env);
  let row=await statement(env.DB,"SELECT id,kind,slug,title,display_address,suburb,postcode,agent_name,agent_role,status,application_mode,application_url,tenancy_database_notice_mode,tenancy_database_notice_json,application_recipient_email,rental_approved_notice_version FROM leasing_listings WHERE kind='residential' AND slug=? AND status='published' AND application_mode='proinspect' AND application_url IS NULL",slug).first<RentalListing>();
  assert(row,404,'RENTAL_APPLICATION_UNAVAILABLE','Online applications are unavailable for this property.');
@@ -84,6 +85,7 @@ export async function rentalStartPage(env:Env,slug:string){
   enabled:rentalEnabled(env)&&await releaseFeatureReady(env,'rental')&&notice.approved&&await managedRentalListingApproved(env,row.id),detailsOnly:(await managedIntakeRelease(env))?.intake_mode==='details_only',siteKey:env.MARKETING_TURNSTILE_SITE_KEY??''};
 }
 export async function startRental(env:Env,request:Request,listingId:string,input:unknown,security?:string){
+ assert(env.APP_ENV==='local'||listingId!=='lst_pr115_demo',409,'RENTAL_APPLICATION_UNAVAILABLE','This demonstration listing does not accept applications.');
  env=await enabled(env);
  const d=startApplicationSchema.parse(input);
  const l=await listing(env,listingId);await active(env,l);

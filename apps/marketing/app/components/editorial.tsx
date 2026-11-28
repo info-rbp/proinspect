@@ -12,7 +12,7 @@ export function EditorialHero({
 }: {
   eyebrow: string;
   title: string;
-  intro: string;
+  intro?: string;
   image: BrandImageKey;
   primary?: { label: string; to: string };
   secondary?: { label: string; to: string };
@@ -32,7 +32,7 @@ export function EditorialHero({
           <div className="pi-editorial-copy">
             <p className="eyebrow">{eyebrow}</p>
             <h1>{title.includes('\n') ? title.split('\n').map((line, i) => <span key={line}>{i > 0 && <br />}{line}</span>) : title}</h1>
-            <p className="pi-editorial-intro">{intro}</p>
+            {intro && <p className="pi-editorial-intro">{intro}</p>}
             {(primary || secondary) && (
               <div className="actions">
                 {primary && (

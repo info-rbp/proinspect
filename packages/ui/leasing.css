@@ -84,3 +84,132 @@
  .leasing-detail-facts>div{padding:12px}
  .leasing-application-button{width:100%}
 }
+
+
+/* Rebuild leasing: shared editorial palette, consistent cards, honest empty
+   states, and accessible, native-dialog property photography. */
+.site .pi-leasing-page .pi-leasing-heading {display:block;max-width:none;width:100%}
+.site .pi-leasing-page .pi-leasing-heading>p:not(.eyebrow) {max-width:none}
+.site .pi-leasing-page .leasing-filters {grid-template-columns:minmax(0,2fr) minmax(0,1.1fr) auto;align-items:end;gap:1rem}
+.site .pi-leasing-page .leasing-filters .pi-leasing-clear {grid-column:1/-1;justify-self:start;display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:.2em}
+.site .pi-leasing-page .leasing-filters label {min-width:0}
+.site .pi-leasing-page .leasing-filters :is(input,select) {min-width:0;min-height:44px}
+.site .pi-leasing-page .pi-listing-card {position:relative;display:flex;flex-direction:column;min-width:0}
+.site .pi-leasing-page .pi-listing-card .leasing-image {aspect-ratio:1.65;flex:0 0 auto;margin:0;background:#e7ede9}
+.site .pi-leasing-page .pi-listing-body {display:flex;flex-direction:column;gap:.7rem;flex:1;padding:clamp(1.2rem,2.3vw,1.8rem);min-width:0}
+.site .pi-leasing-page .pi-listing-body :is(p,h3) {margin:0;overflow-wrap:anywhere}
+.site .pi-leasing-page .pi-listing-body .leasing-price {font-size:1.35rem!important;color:#142f38!important}
+.site .pi-leasing-page .pi-leasing-card-link {position:static;display:inline-flex;align-items:center;min-height:44px;margin-top:auto}
+.site .pi-leasing-page .pi-leasing-card-link::after {content:'';position:absolute;inset:0;z-index:1}
+.site .pi-leasing-page .pi-listing-card:focus-within {outline:3px solid #0e6a65;outline-offset:4px}
+.site .pi-leasing-card-facts {list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:.4rem .8rem;font-size:.92rem;font-weight:650;color:#142f38}
+.site .pi-leasing-card-status {display:grid;gap:.45rem;padding-top:.8rem;border-top:1px solid #d5dfd9;font-size:.88rem;color:#486168}
+.site .pi-leasing-card-status p {line-height:1.5}
+.site .pi-leasing-photo-placeholder {height:100%;min-height:130px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;padding:1rem;text-align:center;background:#e7ede9;color:#395b59;font-size:.9rem;line-height:1.5}
+.site .pi-leasing-demo-section {margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid #cbd5cf}
+.site .pi-leasing-demo-section>p {max-width:72ch;margin:.5rem 0 1.4rem}
+.site .pi-leasing-demo-label {display:inline-block;align-self:flex-start;border:1px solid #a7bdb7;border-radius:3px;padding:.55rem .75rem;color:#244b49;background:#edf3ef;font-size:.85rem;font-weight:700}
+.site .pi-leasing-page .pi-leasing-journey .pi-process-list svg {width:34px;height:34px;color:#0e6a65;margin-bottom:1rem}
+.site .pi-leasing-page .pi-leasing-journey .pi-process-list li {border-top:2px solid #b9cec7}
+.site .pi-leasing-property .leasing-hero {background:#102e35;color:#fff;padding:2.5rem 0 2.7rem}
+.site .pi-leasing-property .leasing-hero h1 {color:#fff;overflow-wrap:anywhere}
+.site .pi-leasing-property .leasing-hero .eyebrow {color:#b9ded4}
+.site .pi-leasing-property .leasing-hero .leasing-hero-primary {background:#e6bd84;color:#142f38;border-color:#e6bd84}
+.site .pi-leasing-property .leasing-hero .leasing-hero-secondary {color:#fff;background:transparent;border:1px solid #a9c1c2}
+.site .pi-leasing-property .leasing-breadcrumb {margin-bottom:1.5rem}
+.site .pi-leasing-property .leasing-breadcrumb a {text-decoration:underline;text-underline-offset:.2em}
+.site .pi-leasing-property .leasing-hero-meta {margin:1rem 0;gap:.8rem 1.4rem}
+.site .pi-leasing-hero-facts {list-style:none;display:flex;flex-wrap:wrap;gap:.5rem 1.3rem;margin:1rem 0;padding:0;color:#e4efeb}
+.site .pi-leasing-hero-facts li {display:flex;align-items:baseline;gap:.45rem}
+.site .pi-leasing-hero-facts strong {font-size:1.15rem;color:#fff}
+.site .pi-leasing-property .leasing-hero .pi-leasing-availability {color:#e4efeb}
+.site .pi-leasing-property .leasing-showcase {padding:2rem 0;background:#f5f3ee}
+.site .pi-leasing-property .leasing-showcase h2 {font-size:1.25rem}
+.pi-leasing-gallery-empty {margin-top:1rem;min-height:150px}
+.pi-leasing-gallery-empty .pi-leasing-photo-placeholder {min-height:150px}
+.pi-leasing-gallery-grid {display:grid;grid-template-columns:2fr 1fr 1fr;grid-auto-rows:clamp(105px,12vw,180px);gap:10px;margin-top:1rem}
+.pi-leasing-gallery-grid .pi-leasing-gallery-thumb:first-child {grid-row:span 2}
+.pi-leasing-gallery-grid.single {grid-template-columns:minmax(0,1fr);grid-auto-rows:auto}
+.pi-leasing-gallery-grid.single .pi-leasing-gallery-thumb:first-child {grid-row:auto;aspect-ratio:16/9;max-height:590px}
+.pi-leasing-gallery-grid.pair {grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto}
+.pi-leasing-gallery-grid.pair .pi-leasing-gallery-thumb {grid-row:auto;aspect-ratio:1.6}
+.pi-leasing-gallery-grid.pair .pi-leasing-gallery-thumb:first-child {grid-row:auto}
+.pi-leasing-gallery-thumb {display:block;cursor:pointer;border:0;padding:0;border-radius:3px;overflow:hidden;background:#e7ede9;min-width:0;min-height:0}
+.pi-leasing-gallery-thumb img {display:block;width:100%;height:100%;object-fit:cover}
+.pi-leasing-gallery-footer {display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:1rem}
+.pi-leasing-gallery-footer p {margin:0}
+.pi-leasing-lightbox {position:fixed;inset:0;box-sizing:border-box;width:min(1100px,96vw);height:auto;max-height:94dvh;overflow:auto;margin:auto;padding:0;border:1px solid #9eb3b0;border-radius:6px;color:#fff;background:#102e35}
+.pi-leasing-lightbox::backdrop {background:rgba(8,23,27,.88)}
+.pi-leasing-lightbox-content {padding:clamp(.8rem,2vw,1.6rem)}
+.pi-leasing-lightbox-top,.pi-leasing-lightbox-controls {display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+.pi-leasing-lightbox-top h2 {font-size:1.2rem;color:#fff;margin:0}
+.pi-leasing-lightbox-image {display:grid;place-items:center;min-height:120px;height:min(65dvh,600px);margin:1rem 0;background:#081d22}
+.pi-leasing-lightbox-image img {width:100%;height:100%;object-fit:contain}
+.pi-leasing-lightbox-controls p {color:#fff;margin:0}
+.pi-leasing-lightbox .button.secondary {background:#e6bd84;color:#142f38;border:1px solid #e6bd84;min-height:44px}
+.pi-leasing-lightbox .button:disabled {opacity:.6;cursor:default}
+.site .pi-leasing-property .leasing-content-section {padding:2.5rem 0 3.5rem}
+.site .pi-leasing-property .leasing-detail-grid {grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:clamp(1.25rem,3vw,2.8rem)}
+.site .pi-leasing-property .leasing-detail-grid .panel {border-radius:3px;border:1px solid #d4dfd8;box-shadow:none;padding:clamp(1.2rem,2.4vw,1.8rem);min-width:0}
+.site .pi-leasing-property .leasing-detail-grid .stack {min-width:0}
+.site .pi-leasing-property .leasing-detail-grid h2 {font-size:clamp(1.4rem,2vw,1.85rem);color:#142f38;line-height:1.2}
+.site .pi-leasing-property .leasing-detail-grid h3 {font-size:1.15rem;color:#142f38;margin:0 0 .7rem}
+.site .pi-leasing-property .leasing-detail-grid p {line-height:1.65;overflow-wrap:anywhere}
+.site .pi-leasing-property .pi-leasing-information {margin:0;display:grid;gap:.65rem}
+.site .pi-leasing-property .pi-leasing-information div {display:grid;grid-template-columns:minmax(105px,1fr) minmax(0,2fr);gap:.8rem;border-bottom:1px solid #d4dfd8;padding-bottom:.65rem}
+.site .pi-leasing-property .pi-leasing-information dt {color:#486168}
+.site .pi-leasing-property .pi-leasing-information dd {margin:0;font-weight:650;overflow-wrap:anywhere}
+.site .pi-leasing-property .pi-leasing-action-panel {display:grid;gap:1.25rem;background:#f7f8f5}
+.site .pi-leasing-property .pi-leasing-action-panel>.eyebrow {margin:0}
+.site .pi-leasing-property .pi-leasing-action-panel>.pi-leasing-action-section {border-top:1px solid #cbd5cf;padding-top:1.25rem}
+.site .pi-leasing-property .leasing-session-list li {background:#fff;border-radius:3px;align-items:center}
+.site .pi-leasing-property .leasing-session-list li p {margin:0}
+.site .pi-leasing-property .leasing-detail-grid .check {display:flex;align-items:flex-start;gap:.6rem}
+.site .pi-leasing-property .leasing-detail-grid .check input {width:20px;min-height:20px;flex:0 0 20px;margin-top:.15rem}
+.site .pi-leasing-property .pi-leasing-privacy {text-decoration:underline;text-underline-offset:.18em;color:#0e6a65}
+.site .pi-leasing-property .leasing-detail-grid .button {white-space:normal;min-height:44px;max-width:100%}
+.site .pi-leasing-property .leasing-detail-grid .form>label {min-width:0;overflow-wrap:anywhere}
+.site .pi-leasing-property .leasing-detail-grid .form [role=group] {max-width:100%;min-width:0}
+.site .pi-leasing-property .leasing-detail-grid .form :is(input,select,textarea) {min-width:0}
+.site .pi-leasing-property :is(#leasing-gallery,#leasing-next-steps,#leasing-enquiry,#leasing-application,#leasing-inspections) {scroll-margin-top:12px}
+.site :is(.pi-leasing-page,.pi-leasing-property) :focus-visible,.pi-leasing-lightbox :focus-visible,.pi-leasing-gallery-thumb:focus-visible {outline:3px solid #0e6a65;outline-offset:3px}
+.site .pi-leasing-property .leasing-hero :focus-visible,.pi-leasing-lightbox :focus-visible {outline-color:#f0d2a3}
+@media(max-width:800px){
+ .site .pi-leasing-page .leasing-filters {grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .site .pi-leasing-page .leasing-filters .button {grid-column:1/-1}
+ .site .pi-leasing-property .leasing-detail-grid {grid-template-columns:minmax(0,1fr)}
+ .site .pi-leasing-property .leasing-hero {padding:1.8rem 0 2rem}
+ .pi-leasing-gallery-grid {grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto}
+ .pi-leasing-gallery-grid .pi-leasing-gallery-thumb {aspect-ratio:1.6}
+ .pi-leasing-gallery-grid .pi-leasing-gallery-thumb:first-child {grid-row:auto;grid-column:1/-1;aspect-ratio:16/9}
+ .pi-leasing-gallery-grid.pair .pi-leasing-gallery-thumb:first-child {grid-column:auto;aspect-ratio:1.6}
+}
+@media(max-width:760px){
+ .site .pi-leasing-page .pi-editorial-hero {padding-block:1.65rem 2.25rem}
+ .site .pi-leasing-page .pi-editorial-section {padding-block:2.5rem}
+ .site .pi-leasing-page .pi-leasing-heading {margin-bottom:1.4rem}
+ .site .pi-leasing-page .pi-listing-grid {gap:1.25rem}
+ .site .pi-leasing-page .pi-leasing-empty {padding:1.2rem}
+ .site .pi-leasing-property .leasing-content-section {padding:1.75rem 0 2.5rem}
+}
+@media(max-width:520px){
+ .site .pi-leasing-page .leasing-filters {grid-template-columns:minmax(0,1fr);padding:1rem}
+ .site .pi-leasing-property .leasing-hero-actions .button {width:100%}
+ .pi-leasing-lightbox-controls {display:grid;grid-template-columns:1fr 1fr}
+ .pi-leasing-lightbox-controls p {grid-row:1;grid-column:1/-1;text-align:center}
+ .pi-leasing-lightbox-controls button {white-space:normal;padding:.55rem;font-size:.88rem}
+ .pi-leasing-lightbox-image {height:min(52dvh,450px)}
+ .pi-leasing-gallery-grid {gap:6px}
+}
+
+.pi-leasing-gallery-grid.triple {grid-template-columns:2fr 1fr}
+.pi-leasing-gallery-grid.quad {grid-template-columns:repeat(2,minmax(0,1fr))}
+.pi-leasing-gallery-grid.quad .pi-leasing-gallery-thumb:first-child {grid-row:auto}
+@media(max-width:800px){
+ .pi-leasing-gallery-grid.triple,.pi-leasing-gallery-grid.quad {grid-template-columns:repeat(2,minmax(0,1fr))}
+ .pi-leasing-gallery-grid.quad .pi-leasing-gallery-thumb:first-child {grid-column:auto;aspect-ratio:1.6}
+}
+
+/* Keep an unavailable thumbnail's message legible even in a narrow grid. */
+.pi-leasing-gallery-thumb .pi-leasing-photo-placeholder {min-height:0;gap:.3rem;padding:.35rem;font-size:.74rem;line-height:1.25}
+.pi-leasing-gallery-thumb .pi-leasing-photo-placeholder svg {width:28px;height:24px;flex-shrink:0}

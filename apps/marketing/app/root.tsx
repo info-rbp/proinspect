@@ -18,6 +18,8 @@ import '../../../packages/ui/marketing-redesign.css';
 import '../../../packages/ui/marketing-home-focus.css';
 import '../../../packages/ui/marketing-public-refresh.css';
 import '../../../packages/ui/marketing-editorial-20261121.css';
+import '../../../packages/ui/marketing-rebuild-nav.css';
+import '../../../packages/ui/marketing-rebuild-home.css';
 import '../../../packages/ui/leasing.css';
 import '../../../packages/ui/rental-application.css';
 import '../../../packages/ui/rental-print.css';
@@ -53,7 +55,7 @@ export default function Root() {
   return (
     <>
       <MarketingHeader appOrigin={appOrigin} />
-      <main id="main">
+      <main id="main" tabIndex={-1}>
         <Outlet context={{ appOrigin }} />
       </main>
       <MarketingFooter appOrigin={appOrigin} />

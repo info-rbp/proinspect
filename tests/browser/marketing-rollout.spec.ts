@@ -62,11 +62,12 @@ test('marketing contact form preserves scoped service request and signed submiss
 
 test('category and engagement navigation use canonical URLs rather than obsolete filters', async ({ page }) => {
   await page.goto('/');
-  const category = page.getByRole('link', { name: 'Explore all Residential service areas' });
-  await expect(category).toHaveAttribute('href', '/residential/services');
+  const category = page.locator('#property-services .pi-inline-link').filter({hasText:'Explore Our Residential Solutions'});
+  await expect(category).toHaveAttribute('href', '/residential');
   await expect(page.getByRole('link', { name: /Discover the ProInspect Approach/i })).toHaveAttribute('href', '/about');
-  await expect(page.locator('.pi-process-list li')).toHaveCount(3);
+  await expect(page.locator('.pi-home-principles article')).toHaveCount(3);
   await category.click();
-  await expect(page).toHaveURL(/\/residential\/services$/);
+  await expect(page).toHaveURL(/\/residential$/);
+  await page.goto('/residential/services');
   await expect(page.locator('.pi-residential-grid .pi-property-card').first()).toBeVisible();
 });

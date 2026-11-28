@@ -1,19 +1,23 @@
 import { expect, test } from '@playwright/test';
 import { SECTOR_OVERVIEWS } from '../../packages/marketing/sector-overviews';
 
-test('phone header keeps the logo, sign-in button and menu on the same row', async ({ page }) => {
+test('phone header keeps logo and sign-in aligned above navigation', async ({ page }) => {
   for (const width of [390, 430, 768]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/');
     const centres = await page.locator('.mkt-site-header').evaluate((header) =>
-      ['.mkt-brand', '.mkt-header-actions', '.marketing-menu'].map((selector) => {
+      ['.mkt-brand', '.mkt-header-actions'].map((selector) => {
         const bounds = header.querySelector(selector)!.getBoundingClientRect();
         return bounds.top + bounds.height / 2;
       }),
     );
-    expect(Math.max(...centres) - Math.min(...centres), width + 'px header alignment').toBeLessThan(
-      2,
-    );
+    expect(Math.max(...centres) - Math.min(...centres), width + 'px header alignment').toBeLessThan(2);
+    const rows=await page.locator('.mkt-site-header').evaluate(header=>{
+      const top=header.querySelector('.mkt-header-identity')!.getBoundingClientRect();
+      const nav=header.querySelector('.mkt-header-navigation')!.getBoundingClientRect();
+      return {top:top.bottom,nav:nav.top};
+    });
+    expect(rows.nav).toBeGreaterThanOrEqual(rows.top-1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(
       true,
     );
@@ -124,7 +128,7 @@ test('Leasing goes directly to the catalogue while preserving check-in and appli
   await page.getByRole('button', { name: 'Search properties' }).click();
   await expect(page.getByRole('heading', { name: 'No properties currently match.' })).toBeVisible();
   await page.getByRole('link', { name: 'View all properties' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:5173/leasing');
+  await expect(page).toHaveURL('http://127.0.0.1:5173/leasing#available-properties');
   await page.goto('/tenants');
   await expect(
     page.getByRole('link', { name: 'Open home check-in', exact: false }),

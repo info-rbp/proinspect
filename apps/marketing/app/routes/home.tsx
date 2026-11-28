@@ -1,58 +1,114 @@
-import {Link} from 'react-router';
-import {BrandImage} from '../components/brand-image';
-import {EditorialHero,EditorialSteps} from '../components/editorial';
-import {IllustrativeReport} from '../components/marketing-ui';
-import {PlanComparison} from '../components/plan-comparison';
-import {seo} from '../lib/seo';
-export const meta=()=>seo(
- 'Residential Property Inspections, Co-Living & Property Support — WA | ProInspect',
- 'Inspections, leasing, maintenance and practical Residential property support for private landlords, property managers and shared accommodation across Western Australia.','/');
-export default function Home(){return <div className="pi-public-home">
- <EditorialHero home eyebrow="ProInspect Property Services · Western Australia"
-  title={'Your Property.\nOur Practical Support.'}
-  intro="Whether you need one Routine Inspection or everyday support for several rental properties, ProInspect helps with the practical work and keeps your property records connected."
-  image="residential" primary={{label:'See What We Offer',to:'#property-services'}}
-  secondary={{label:'Get Started Today',to:'/client'}}/>
- <section id="property-services" className="mkt-section pi-editorial-section"><div className="site-container">
-  <div className="pi-section-heading pi-section-heading-wide"><div><p className="eyebrow">How we can help</p><h2>The right support for your Residential property.</h2></div>
-  <p>From a one-bedroom apartment to a portfolio of rental homes or shared accommodation, choose practical services that fit your property.</p></div>
-  <div className="pi-property-grid pi-home-property-grid">
-   <article className="pi-property-card"><Link to="/residential" className="pi-card-image-link" aria-label="Explore Residential Solutions"><BrandImage name="residential"/></Link>
-    <div><h3><Link to="/residential">Residential</Link></h3><p>From advertising and incoming condition reports to routine inspections, maintenance and vacate support, find help across the life of your rental.</p>
-    <Link to="/residential" className="pi-inline-link">Explore Our Residential Solutions <span aria-hidden="true">↗</span></Link></div></article>
-   <article className="pi-property-card"><Link to="/co-living" className="pi-card-image-link" aria-label="Explore Co-Living Solutions"><BrandImage name="co-living"/></Link>
-    <div><h3><Link to="/co-living">Co-Living</Link></h3><p>Keep rooms, shared spaces and resident turnovers organised through tailored inspections, maintenance coordination and agreed property support.</p>
-    <Link to="/co-living" className="pi-inline-link">Explore Our Co-Living Solutions <span aria-hidden="true">↗</span></Link></div></article>
-  </div>
-  <p className="pi-discovery">Have something specific in mind? <Link to="/residential/services">Explore all Residential service areas</Link> or <Link to="/service-finder">find a service.</Link></p>
- </div></section>
- <section className="mkt-section pi-editorial-section pi-neutral"><div className="site-container pi-residential-feature">
+import { Link } from 'react-router';
+import { BrandImage, type BrandImageKey } from '../components/brand-image';
+import { EditorialHero } from '../components/editorial';
+import { seo } from '../lib/seo';
+
+export const meta = () => seo(
+  'Property Solutions. Built Around You. — Western Australia',
+  'Explore ProInspect residential and commercial property services, co-living and co-working, construction project management, modular building and maintenance.',
+  '/'
+);
+
+type ServiceTile = { title: string; copy: string; image: BrandImageKey; href: string; action: string };
+const residential: ServiceTile[] = [
+  { title: 'Residential Solutions', copy: 'From inspections and leasing to tenancy administration and ongoing property support, we help make looking after your residential property easier.', image: 'residential', href: '/residential', action: 'Explore Our Residential Solutions' },
+  { title: 'Co-Living Spaces', copy: 'Let us help you discover a more connected approach to shared living, with property setup, resident support and ongoing care.', image: 'co-living', href: '/co-living', action: 'Explore Our Co-Living Solutions' },
+];
+const commercial: ServiceTile[] = [
+  { title: 'Commercial Solutions', copy: 'Take the stress out of managing your commercial properties with regular inspections, tenant engagement and responsive support when you need it most.', image: 'commercial', href: '/commercial', action: 'Explore Our Commercial Solutions' },
+  { title: 'Co-Working Spaces', copy: 'Transform your commercial property into a co-working space with flexible, tailored workspaces, shared environments and fully managed solutions.', image: 'co-working', href: '/co-spaces/co-working', action: 'Explore Our Co-Working Solutions' },
+];
+const projects: ServiceTile[] = [
+  { title: 'Construction Project Management', copy: 'Take the stress out of your construction project and keep it on track with our dedicated construction project management services.', image: 'construction', href: '/construction', action: 'Explore Construction' },
+  { title: 'Modular Building', copy: 'Discover a more flexible approach to building with modular solutions for evolving residential and commercial property needs.', image: 'modular', href: '/modular', action: 'Explore Modular' },
+  { title: 'Maintenance', copy: 'Keep your property functioning at its best through practical maintenance support, approved contractor coordination and ongoing care.', image: 'maintenance', href: '/maintenance', action: 'Explore Maintenance' },
+];
+function ServiceBanner({ id, eyebrow, title, intro, tiles, neutral = false }: {
+  id: string; eyebrow: string; title: string; intro: string; tiles: ServiceTile[]; neutral?: boolean;
+}) {
+  return <section id={id} className={'mkt-section pi-editorial-section pi-home-service-banner' + (neutral ? ' pi-neutral' : '')} aria-labelledby={id + '-heading'}>
+    <div className="site-container">
+      <div className="pi-section-heading pi-home-stacked-heading">
+        <p className="eyebrow">{eyebrow}</p><h2 id={id + '-heading'}>{title}</h2><p>{intro}</p>
+      </div>
+      <div className={'pi-home-services-grid ' + (tiles.length === 3 ? 'pi-home-three' : 'pi-home-two')}>
+        {tiles.map(tile => <article className="pi-property-card pi-home-service-card" key={tile.href}>
+          <div className="pi-home-card-media"><BrandImage name={tile.image} sizes={tiles.length === 3 ? '(max-width: 760px) 94vw, (max-width: 1000px) 46vw, (max-width: 1320px) 31vw, 410px' : '(max-width: 760px) 94vw, (max-width: 1320px) 47vw, 630px'}/></div>
+          <div className="pi-home-card-body"><h3>{tile.title}</h3><p>{tile.copy}</p>
+          <Link to={tile.href} className="pi-inline-link pi-home-card-action">{tile.action} <span aria-hidden="true">↗</span></Link></div>
+        </article>)}
+      </div>
+    </div>
+  </section>;
+}
+function CustomerCommitment() {
+  return <section className="mkt-section pi-editorial-section" id="customer-commitment" aria-labelledby="customer-commitment-heading">
+    <div className="site-container">
+      <div className="pi-section-heading pi-home-stacked-heading">
+        <p className="eyebrow">Our Commitment to You</p><h2 id="customer-commitment-heading">Property support that puts you first.</h2>
+        <p>Every property is different, and so are the people behind it. We believe in building lasting working relationships through understanding, flexibility and responsive service.</p>
+      </div>
+      <div className="pi-home-principles">
+        <article><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M27 15c0 6-5 10-11 10H8l-5 4v-9a10 10 0 0 1-1-5C2 9 8 4 15 4s12 5 12 11z"/><path d="M9 14h13M9 18h9"/></svg>
+          <h3>We listen first.</h3><p>We take the time to understand your property, priorities and expectations before working with you to identify the right solution.</p></article>
+        <article><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true"><path d="M4 8h24M4 16h24M4 24h24"/><circle cx="11" cy="8" r="3" fill="white"/><circle cx="22" cy="16" r="3" fill="white"/><circle cx="14" cy="24" r="3" fill="white"/></svg>
+          <h3>We adapt to your needs.</h3><p>Our approach is flexible. We work with you to shape property services that fit your circumstances and evolve as your requirements change.</p></article>
+        <article><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="5" width="24" height="18" rx="4"/><path d="m9 13 5 5 9-9M12 23v5h8v-5"/></svg>
+          <h3>We stay connected.</h3><p>Clear communication, responsive support and a collaborative approach help keep you informed and involved along the way.</p></article>
+      </div>
+    </div>
+  </section>;
+}
+export default function Home() {
+  return <div className="pi-public-home pi-home-rebuild">
+    <EditorialHero home eyebrow="ProInspect Property Services"
+      title={'Property Solutions.\nBuilt Around You.'}
+      intro="From residential and commercial properties to shared spaces and building projects, ProInspect helps unlock the potential of your property through innovative solutions, practical expertise and support designed around your needs."
+      image="residential" primary={{ label: 'Learn More About ProInspect', to: '/about' }}
+      secondary={{ label: 'Get Started Today', to: '/client' }}/>
+    <ServiceBanner id="property-services" eyebrow="How we can help" title="The right support for your residential property."
+      intro="Whether you own a single rental, manage a property portfolio or operate shared accommodation, discover flexible property solutions designed around your needs." tiles={residential}/>
+    <ServiceBanner id="commercial-property-services" eyebrow="Commercial Property Services" title="Spaces that work better for your business."
+      intro="Practical, flexible property solutions for commercial owners, property managers and operators who want to focus on what matters most to their business." tiles={commercial} neutral/>
+    <ServiceBanner id="property-projects" eyebrow="Building, developing and maintaining property" title="Build it. Improve it. Keep it working."
+      intro="From bringing a new project to life to keeping an existing property at its best, our solutions support every stage of the property journey." tiles={projects}/>
+ <section className="mkt-section pi-editorial-section pi-neutral" id="home-leasing" aria-labelledby="home-leasing-heading"><div className="site-container pi-residential-feature">
   <div className="pi-residential-feature-image"><BrandImage name="leasing"/></div>
-  <div className="pi-residential-feature-content"><p className="eyebrow">Looking for your next home?</p><h2>Properties Available</h2>
-   <p>Find your next place with ProInspect Property Services. Browse available homes, see advertised open-home times and follow the application option chosen by the responsible landlord or agent.</p>
+  <div className="pi-residential-feature-content"><p className="eyebrow">Looking for your next home?</p><h2 id="home-leasing-heading">Properties Available</h2>
+   <p>Find your next place with ProInspect. Browse our available homes, discover upcoming open homes and follow the advertised online application process where available.</p>
    <Link to="/leasing" className="button">See What's Available <span aria-hidden="true">→</span></Link></div>
  </div></section>
- <section className="mkt-section pi-editorial-section"><div className="site-container pi-residential-feature pi-residential-feature-reverse">
-  <div className="pi-residential-feature-image"><BrandImage name="maintenance"/></div>
-  <div className="pi-residential-feature-content"><p className="eyebrow">Care when you need it</p><h2>Maintenance Support</h2>
-   <p>From a minor maintenance concern to a larger project requiring approved specialist contractors, ProInspect can help document the issue, coordinate the next steps and keep the outcome in view.</p>
-   <Link to="/maintenance" className="button">See Our Maintenance Solutions <span aria-hidden="true">→</span></Link></div>
- </div></section>
- <section className="mkt-section pi-editorial-section pi-deep"><div className="site-container pi-residential-feature pi-residential-approach">
-  <div className="pi-residential-feature-image"><IllustrativeReport compact/></div>
-  <div className="pi-residential-feature-content"><p className="eyebrow">More than another site visit</p>
-   <h2>Practical Work.<br/>Innovative Solutions.<br/>Focused on You.</h2>
-   <p>We do more than attend and leave. Our team combines property inspections, agreed administration and practical follow-up with a connected platform for bookings, work records and authorised reports.</p>
-   <p>Less time chasing updates. More visibility over what has happened and what needs attention.</p>
-   <Link to="/about" className="pi-inline-link">Discover the ProInspect Approach <span aria-hidden="true">↗</span></Link>
-   <p className="pi-residential-note">Illustrative report preview — not an issued report.</p>
-  </div>
- </div></section>
- <PlanComparison/>
- <EditorialSteps/>
+
+    <section className="mkt-section pi-editorial-section pi-deep" id="proinspect-approach" aria-labelledby="home-innovation-heading">
+      <div className="site-container pi-residential-feature pi-residential-approach">
+        <div className="pi-residential-feature-image"><BrandImage name="innovation"/></div>
+        <div className="pi-residential-feature-content">
+          <p className="eyebrow">Innovation with purpose</p><h2 id="home-innovation-heading">Innovative property solutions.<br/>Connected by design.</h2>
+          <p>Property needs are constantly evolving.</p>
+          <p>We bring together innovative property solutions, practical expertise and connected technology to support residential and commercial properties in a more effective way.</p>
+          <p>From shared living and working environments to construction, modular building, inspections and maintenance, our approach is designed to simplify the way you look after, develop and operate your property.</p>
+          <Link to="/about" className="pi-inline-link">Discover the ProInspect Approach <span aria-hidden="true">↗</span></Link>
+        </div>
+      </div>
+    </section>
+    <section className="mkt-section pi-editorial-section pi-neutral" id="home-subscriptions" aria-labelledby="home-subscriptions-heading">
+      <div className="site-container pi-residential-feature pi-residential-feature-reverse">
+        <div className="pi-residential-feature-image"><BrandImage name="subscription-care"/></div>
+        <div className="pi-residential-feature-content">
+          <p className="eyebrow">ProInspect Subscriptions</p>
+          <h2 id="home-subscriptions-heading">A smarter way to support your property.</h2>
+          <p>Property support should be simple, flexible and connected. Our innovative subscription solutions bring together the services your property needs through a more coordinated approach to ongoing property care.</p>
+          <p>Whether you require inspections, outsourced support, Co-Living, Co-Working or commercial property services, discover a subscription designed around your evolving needs.</p>
+          <Link className="button" to="/subscriptions">Explore Our Subscriptions <span aria-hidden="true">→</span></Link>
+        </div>
+      </div>
+    </section>
+    <CustomerCommitment/>
  <section className="mkt-final-cta"><div className="site-container mkt-cta-inner">
   <div><p className="eyebrow">Ready for the next step?</p><h2>Let’s make property work easier.</h2>
    <p>No long calls or waiting for an email reply to create an account. Sign up for free, add your authorised property and explore the services available to you.</p></div>
   <div className="actions"><Link className="button mkt-button-light" to="/client">Sign Up Today <span aria-hidden="true">→</span></Link></div>
  </div></section>
-</div>}
+
+  </div>;
+}

@@ -3,6 +3,7 @@ import { digest, seal, unseal } from '../../../../packages/auth/crypto';
 import { isLocal } from '../../../../packages/auth/server';
 import { operationsWrite } from '../../../../packages/authorization/server';
 import type { Principal } from '../../../../packages/domain/index';
+import { isLeasingDemoListing } from '../../../../packages/marketing/leasing-presentation';
 import { openHomeCheckInInput, isOpenHomeCheckInAvailable, CHECK_IN_CONSENT_VERSION } from '../../../../packages/marketing/open-home';
 
 type SessionRow={ id:string; listing_id:string; property_id:string; kind:string; slug:string;
@@ -16,7 +17,7 @@ export async function publicOpenHomeSessions(env:Env,at=new Date()){
  const rows=(await statement(env.DB,
   "SELECT s.id,s.listing_id,l.property_id,l.kind,l.slug,l.title,l.display_address,l.suburb,l.postcode,l.agent_name,s.starts_at,s.ends_at FROM leasing_sessions s JOIN leasing_listings l ON l.id=s.listing_id WHERE l.kind='residential' AND l.status='published' AND s.status='scheduled' AND s.ends_at>=? AND s.starts_at<=? ORDER BY s.starts_at,l.display_address LIMIT 150",
   after,before).all<SessionRow>()).results;
- return rows.map(s=>({id:s.id,listingId:s.listing_id,kind:s.kind,slug:s.slug,
+ return rows.filter(s=>env.APP_ENV==='local'||!isLeasingDemoListing(s.listing_id)).map(s=>({id:s.id,listingId:s.listing_id,kind:s.kind,slug:s.slug,
   title:s.title,address:s.display_address,suburb:s.suburb,postcode:s.postcode,
   startsAt:s.starts_at,endsAt:s.ends_at,
   acceptingCheckIn:isOpenHomeCheckInAvailable(s,at)}));
@@ -44,6 +45,7 @@ async function verifyTurnstile(env:Env,request:Request,token:string|undefined,re
 export async function recordOpenHomeCheckIn(env:Env,request:Request,args:{input:unknown;turnstile?:string;clientKey:string}){
  assert(env.DATA_ENCRYPTION_KEY&&args.clientKey,503,'CHECK_IN_UNAVAILABLE','Check-in is temporarily unavailable.');
  const d=openHomeCheckInInput.parse(args.input);
+ assert(env.APP_ENV==='local'||!isLeasingDemoListing(d.listingId),409,'CHECK_IN_SESSION_UNAVAILABLE','Demonstration listings do not accept check-ins.');
  const fingerprint=await digest(JSON.stringify(d));
  await throttle(env,'ip:'+args.clientKey,20);
  await throttle(env,'email:'+d.email,8);
