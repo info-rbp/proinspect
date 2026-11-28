@@ -1,0 +1,49 @@
+/* Rebuild top-level navigation: symmetrical side columns keep the menu
+   centred on the header, independently of the widths of the brand and CTA. */
+@media (min-width: 1280px) {
+  .site .mkt-site-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(.65rem, 1.15vw, 1.4rem);
+    min-height: 78px;
+  }
+  .site .mkt-site-header .mkt-brand { justify-self: start; }
+  .site .mkt-site-header .mkt-site-links {
+    display: flex !important;
+    flex-wrap: nowrap;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    justify-content: center;
+    gap: clamp(.6rem, 1.05vw, 1.25rem);
+  }
+  .site .mkt-site-header .mkt-site-links > a {
+    font-size: clamp(.74rem, 1.04vw, .89rem);
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    border-bottom: 2px solid transparent;
+    padding-bottom: 0;
+  }
+  .site .mkt-site-header .mkt-site-links > a[aria-current='page'] {
+    border-bottom-color: #f0d2a3;
+  }
+  .site .mkt-site-header .mkt-header-actions {
+    justify-self: end;
+    margin: 0;
+    width: auto;
+  }
+  .site .mkt-site-header .marketing-menu { display: none; }
+}
+@media (max-width: 1279px) {
+  .site .mkt-site-header .mkt-site-links { display: none !important; }
+  .site .mkt-site-header .marketing-menu { display: block; }
+  .site .mkt-site-header .marketing-menu nav {
+    max-width: calc(100vw - 2.2rem);
+    max-height: min(75vh, 36rem);
+    overflow-y: auto;
+  }
+  .site .mkt-site-header .marketing-menu nav a { min-height: 44px; }
+}

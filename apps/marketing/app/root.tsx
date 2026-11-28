@@ -18,6 +18,7 @@ import '../../../packages/ui/marketing-redesign.css';
 import '../../../packages/ui/marketing-home-focus.css';
 import '../../../packages/ui/marketing-public-refresh.css';
 import '../../../packages/ui/marketing-editorial-20261121.css';
+import '../../../packages/ui/marketing-rebuild-nav.css';
 import '../../../packages/ui/leasing.css';
 import '../../../packages/ui/rental-application.css';
 import '../../../packages/ui/rental-print.css';
