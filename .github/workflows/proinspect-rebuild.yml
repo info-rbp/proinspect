@@ -37,7 +37,22 @@ jobs:
         run: |
           test -n "$CLOUDFLARE_API_TOKEN"
           node scripts/deploy/rebuild.mjs deploy
-      - name: Require Access protection for anonymous requests
+      - name: Verify public website, portal entry and protected test authentication
+        shell: bash
         run: |
-          status=$(curl --silent --show-error --max-time 30 -o /dev/null -w '%{http_code}' https://proinspect-rebuild.delicate-dream-e4c9.workers.dev/)
-          case "$status" in 302|303|401|403) echo "Anonymous access restricted ($status)";; *) echo "Unexpected anonymous response ($status)"; exit 1;; esac
+          set -euo pipefail
+          origin=https://proinspect-rebuild.delicate-dream-e4c9.workers.dev
+          for path in / /services /signin /signup; do
+            code=$(curl --silent --show-error --retry 3 --max-time 30 -D /tmp/rebuild-headers -o /tmp/rebuild-page -w '%{http_code}' "$origin$path")
+            test "$code" = 200
+            grep -qi 'ProInspect' /tmp/rebuild-page
+            grep -qi '^x-robots-tag:.*noindex' /tmp/rebuild-headers
+            echo "Public $path: $code"
+          done
+          curl --fail --silent --show-error --retry 3 --max-time 30 "$origin/api/health" > /tmp/rebuild-health.json
+          node -e 'const h=require("/tmp/rebuild-health.json"); if(!h.ok||h.environment!=="staging"||h.source!==process.env.GITHUB_SHA||!h.authenticationConfigured||!Object.values(h.bindings).every(Boolean))throw Error("Unexpected rebuild health"); console.log("Deployed source and bindings verified")'
+          code=$(curl --silent --show-error --max-time 30 -o /dev/null -w '%{http_code}' "$origin/auth/staging")
+          case "$code" in 302|303|401|403) echo "Tester authentication protected ($code)";; *) echo "Unexpected auth response ($code)"; exit 1;; esac
+          code=$(curl --silent --show-error --max-time 30 -D /tmp/rebuild-private -o /dev/null -w '%{http_code}' "$origin/workspaces")
+          case "$code" in 302|303|307|308) grep -qi '^location:.*signin' /tmp/rebuild-private;; 401|403) ;; *) echo "Unexpected anonymous portal response ($code)"; exit 1;; esac
+          echo "Anonymous workspace access denied"

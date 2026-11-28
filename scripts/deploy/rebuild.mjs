@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
 const root = new URL('../../', import.meta.url);
@@ -24,7 +24,7 @@ function check(c) {
   assert.deepEqual(c.r2_buckets?.map(x=>[x.binding,x.bucket_name]), [['DOCUMENTS','proinspect-v3-staging-documents'],['RESTRICTED_DOCUMENTS','proinspect-v3-staging-restricted']]);
   assert.deepEqual(c.services, [{binding:'PRIVATE_DOCUMENT_SCANNER',service:'proinspect-private-document-scanner-staging'}]);
   assert.deepEqual(c.durable_objects?.bindings, [{name:'SCHEDULER',class_name:'BookingScheduler',script_name:'proinspect-v3-staging'}]);
-  assert.equal(c.migrations?.length ?? 0,0);
+  assert.equal(c.migrations?.length ?? 0,0,'Shared scheduler must not have any local migration');
   assert.deepEqual(c.queues?.producers,[{binding:'EVENTS',queue:'proinspect-rebuild-events'}]);
   assert.equal(c.queues?.consumers?.length,1);
   assert.equal(c.queues.consumers[0].queue,'proinspect-rebuild-events');
@@ -38,12 +38,26 @@ assert.equal(process.env.GITHUB_REPOSITORY,'info-rbp/proinspect');
 assert.equal(process.env.GITHUB_REF,'refs/heads/proinspect-rebuild');
 const sha=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
 assert.equal(sha,process.env.GITHUB_SHA);
-const source=JSON.parse(readFileSync(new URL('apps/platform/wrangler.jsonc',root),'utf8'));
+const sourcePath=new URL('apps/platform/wrangler.jsonc',root);
+const sourceText=readFileSync(sourcePath,'utf8');
+const source=JSON.parse(sourceText);
 check(source.env.rebuild);
 const action=process.argv[2];
 assert.ok(['build','dry-run','deploy'].includes(action));
-const env={...process.env,WORKERS_CI:'0',CLOUDFLARE_ENV:'rebuild'};
-if(action==='build') execFileSync('pnpm',['--dir','apps/platform','build'],{cwd:root,env,stdio:'inherit'});
+const env={...process.env,WORKERS_CI:'0',CLOUDFLARE_ENV:''};
+if(action==='build') {
+  // The staging scheduler is owned by its existing Worker. Do not inherit
+  // the local or production Durable Object migration in the Vite output.
+  const buildConfig={...source,...source.env.rebuild,migrations:[]};
+  delete buildConfig.env;
+  check(buildConfig);
+  try {
+    writeFileSync(sourcePath,JSON.stringify(buildConfig,null,2)+'\n');
+    execFileSync('pnpm',['--dir','apps/platform','build'],{cwd:root,env,stdio:'inherit'});
+  } finally {
+    writeFileSync(sourcePath,sourceText);
+  }
+}
 const pointerPath=new URL('apps/platform/.wrangler/deploy/config.json',root);
 const pointer=JSON.parse(readFileSync(pointerPath,'utf8'));
 const path=new URL(pointer.configPath,pointerPath);

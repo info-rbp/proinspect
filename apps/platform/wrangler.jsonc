@@ -456,7 +456,8 @@
       },
       "triggers": {
         "crons": []
-      }
+      },
+      "migrations": []
     }
   }
 }
