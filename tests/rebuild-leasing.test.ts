@@ -41,3 +41,22 @@ test('search taxonomy does not reopen retired publication or application flows',
     for(const path of ['/properties-for-lease/commercial','/properties-for-lease/commercial/example','/properties-for-lease/commercial/example/apply'])
       assert.equal(residentialPublicResponse(new Request(origin+path))?.status,410);
 });
+
+test('property presentation separates known fixture and preserves safe search parameters',async()=>{
+ const {isLeasingDemoListing,leasingResultsUrl,leasingSearchSuffix,leasingDate,listingFacts,listingInspectionLabel,listingApplicationLabel}=await import('../packages/marketing/leasing-presentation.ts');
+ assert.equal(isLeasingDemoListing('lst_pr115_demo'),true);
+ assert.equal(isLeasingDemoListing('real-listing'),false);
+ assert.equal(leasingResultsUrl('co-working',' Perth '),'/leasing?type=co-working&q=Perth#available-properties');
+ assert.equal(leasingResultsUrl('https://example.invalid',''),' /leasing#available-properties'.trim());
+ assert.equal(leasingSearchSuffix('residential','Perth'),'?type=residential&q=Perth');
+ assert.equal(leasingDate('2026-02-30'),null);
+ assert.equal(leasingDate('2026-12-01'),'1 December 2026');
+ assert.deepEqual(listingFacts({kind:'commercial',bedrooms:3,area_sqm:150,parking:2}),[{label:'Car bays',value:'2'},{label:'Floor area',value:'150 m²'}]);
+ assert.deepEqual(listingFacts({kind:'residential'}),[]);
+ assert.equal(listingInspectionLabel(0,0,null),'No upcoming inspections advertised');
+ assert.equal(listingInspectionLabel(2,0,null),'Advertised inspections fully booked');
+ assert.equal(listingApplicationLabel('proinspect',false,false),'Online applications not currently available');
+ assert.equal(listingApplicationLabel('proinspect',false,null),'Check application availability');
+ assert.equal(listingApplicationLabel('proinspect',false,true),'Online applications open');
+ assert.equal(listingApplicationLabel('external',true,false),'External application provider');
+});

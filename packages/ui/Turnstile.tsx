@@ -70,7 +70,7 @@ export function Turnstile({ siteKey, action }: { siteKey?: string; action?: stri
 
   return (
     <>
-      <div ref={ref} aria-label="Security verification" />
+      <div ref={ref} role="group" aria-label="Security verification" />
       {siteKey && status === 'loading' && <p role="status">Loading security check…</p>}
       {siteKey && status === 'error' && (
         <p role="alert">Security check unavailable or expired. Refresh the page to retry.</p>

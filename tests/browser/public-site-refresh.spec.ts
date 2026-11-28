@@ -124,7 +124,7 @@ test('Leasing goes directly to the catalogue while preserving check-in and appli
   await page.getByRole('button', { name: 'Search properties' }).click();
   await expect(page.getByRole('heading', { name: 'No properties currently match.' })).toBeVisible();
   await page.getByRole('link', { name: 'View all properties' }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:5173/leasing');
+  await expect(page).toHaveURL('http://127.0.0.1:5173/leasing#available-properties');
   await page.goto('/tenants');
   await expect(
     page.getByRole('link', { name: 'Open home check-in', exact: false }),

@@ -14,12 +14,19 @@ import { residentialApplicationReadiness, futureInspectionWindow } from '../../.
 import { hasRentalRetentionPolicy } from '../../../../packages/marketing/rental-retention';
 import { checkedHttpsEndpoint } from '../../../../packages/marketing/rental-governance';
 import { releaseFeatureReady } from './release-governance.server';
+import { isLeasingDemoListing } from '../../../../packages/marketing/leasing-presentation';
 
 const cols='id,kind,slug,title,description,display_address,suburb,postcode,price_cents,price_period,bedrooms,bathrooms,parking,area_sqm,available_from,application_url,application_mode,rental_approval_state,rental_recipient_verified_at,published_at';
 export async function publicListings(env:Env,kind?:string){
  if(kind && kind!=='residential')return [];
  kind='residential';
- const rows=await statement(env.DB,`SELECT ${cols} FROM leasing_listings WHERE status='published' AND (? IS NULL OR kind=?) ORDER BY published_at DESC LIMIT 100`,kind??null,kind??null).all();
+ const time=now();
+ const rows=await statement(env.DB,`SELECT ${cols},
+   (SELECT COUNT(*) FROM leasing_photos ph WHERE ph.listing_id=leasing_listings.id) AS photo_count,
+   (SELECT COUNT(*) FROM leasing_sessions s WHERE s.listing_id=leasing_listings.id AND s.status='scheduled' AND s.starts_at>?) AS inspection_count,
+   (SELECT COUNT(*) FROM leasing_sessions s WHERE s.listing_id=leasing_listings.id AND s.status='scheduled' AND s.starts_at>? AND (s.capacity IS NULL OR s.booked_count<s.capacity)) AS available_inspection_count,
+   (SELECT MIN(s.starts_at) FROM leasing_sessions s WHERE s.listing_id=leasing_listings.id AND s.status='scheduled' AND s.starts_at>? AND (s.capacity IS NULL OR s.booked_count<s.capacity)) AS next_inspection_at
+   FROM leasing_listings WHERE status='published' AND (? IS NULL OR kind=?) ORDER BY published_at DESC LIMIT 100`,time,time,time,kind??null,kind??null).all();
  return rows.results;
 }
 export async function publicPhoto(env:Env,photoId:string) {
@@ -28,14 +35,14 @@ export async function publicPhoto(env:Env,photoId:string) {
   const listingId=photoId.slice(0,-6);
   p=await statement(env.DB,"SELECT ph.object_key,ph.content_type FROM leasing_photos ph JOIN leasing_listings l ON l.id=ph.listing_id WHERE l.id=? AND l.status='published' ORDER BY ph.sort_order,ph.id LIMIT 1",listingId).first();
  }else p=await statement(env.DB,"SELECT ph.object_key,ph.content_type FROM leasing_photos ph JOIN leasing_listings l ON l.id=ph.listing_id WHERE ph.id=? AND l.status='published'",photoId).first();
- assert(p,404,'PHOTO_NOT_FOUND','Photo unavailable.');
+ if(!p)return new Response('Photo unavailable.',{status:404,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
  const object=await env.DOCUMENTS.get(p.object_key);
- assert(object,404,'PHOTO_NOT_FOUND','Photo unavailable.');
+ if(!object)return new Response('Photo unavailable.',{status:404,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
  return new Response(object.body,{headers:{'Content-Type':p.content_type,'Cache-Control':'public, max-age=300','X-Content-Type-Options':'nosniff'}});
 }
 export async function publicListing(env:Env,kind:string,slug:string){
  requireResidentialSector(kind);
- const row=await statement(env.DB,`SELECT ${cols} FROM leasing_listings WHERE status='published' AND kind=? AND slug=?`,kind,slug).first<Record<string,any>>();
+ const row=await statement(env.DB,`SELECT ${cols},agent_name,agent_role FROM leasing_listings WHERE status='published' AND kind=? AND slug=?`,kind,slug).first<Record<string,any>>();
  if(!row)return null;
  const sessions=(await statement(env.DB,"SELECT id,starts_at,ends_at,capacity,booked_count,status FROM leasing_sessions WHERE listing_id=? AND status='scheduled' AND starts_at>? ORDER BY starts_at LIMIT 40",row.id,now()).all()).results;
  const photos=(await statement(env.DB,'SELECT id,alt_text FROM leasing_photos WHERE listing_id=? ORDER BY sort_order,id LIMIT 25',row.id).all()).results;
@@ -65,6 +72,7 @@ export async function createLead(env:Env,request:Request,source:{input:unknown;t
  const d=leadInput.parse(source.input);
  const listing=await statement(env.DB,"SELECT id,kind,slug,title,agent_name FROM leasing_listings WHERE id=? AND status='published'",d.listingId).first<{id:string;kind:string;slug:string;title:string;agent_name:string}>();
  assert(listing,404,'LISTING_UNAVAILABLE','This property is no longer available.');
+ assert(env.APP_ENV==='local'||!isLeasingDemoListing(listing.id),409,'DEMONSTRATION_LISTING','This demonstration listing is not available to rent.');
  const finger=await digest(JSON.stringify(d));
  const previous=await statement(env.DB,'SELECT id,fingerprint FROM leasing_leads WHERE request_key=?',d.requestKey).first<{id:string;fingerprint:string}>();
  if(previous){assert(previous.fingerprint===finger,409,'LEASING_CHANGED_RETRY','Start a new registration for changed details.');return {reference:previous.id,replayed:true};}
