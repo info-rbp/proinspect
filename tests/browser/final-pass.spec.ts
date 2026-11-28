@@ -47,12 +47,17 @@ test('marketing category, engagement and guide routes render with mobile navigat
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('http://127.0.0.1:5173/resources');
   await page.locator('.marketing-menu summary').click();
-  await expect(
-    page
-      .getByRole('navigation', { name: 'Mobile site navigation' })
-      .getByRole('link', { name: 'Contact', exact: true }),
-  ).toBeVisible();
-  await page.locator('.marketing-menu summary').click();
+  const nav = page.getByRole('navigation', { name: 'Mobile site navigation' });
+  const information = nav.getByRole('button', { name: 'Information pages', exact: true });
+  await information.click();
+  await expect(information).toHaveAttribute('aria-expanded', 'true');
+  const contact = nav.getByRole('link', { name: 'Contact us', exact: true });
+  await expect(contact).toBeVisible();
+  await expect(contact).toHaveAttribute('href', '/contact');
+  await contact.click();
+  await expect(page).toHaveURL(origin + '/contact');
+  await expect(nav).not.toBeVisible();
+  await page.goto(origin + '/resources');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(
     true,
   );

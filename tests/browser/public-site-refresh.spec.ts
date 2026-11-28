@@ -32,15 +32,19 @@ test('logo returns home and all service overviews have working images, FAQs and 
   for (const [slug, content] of Object.entries(SECTOR_OVERVIEWS)) {
     if (!['residential','co-living','maintenance'].includes(slug)) continue;
     await page.goto('/' + slug);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(content.headline);
-    const action = slug === 'residential'
-      ? { name: 'See Our Services', href: '/residential/services' }
-      : slug === 'co-living'
-        ? { name: 'Explore Co-Living Support', href: '/co-living#service-options' }
-        : { name: 'Explore Maintenance Support', href: '/maintenance#service-options' };
+    const approved = {
+      residential: { heading: 'Your Property. Our Support. Your Peace of Mind.', name: 'Explore our residential solutions', href: '#residential-services' },
+      'co-living': { heading: 'Your Property. A Complete Co-Living Solution.', name: 'Explore Co-Living Support', href: '#service-options' },
+      maintenance: { heading: 'Taking Care of Your Property. Taking Care of the Details.', name: 'Explore our maintenance solutions', href: '#maintenance-solutions' },
+    }[slug as 'residential' | 'co-living' | 'maintenance'];
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(approved.heading);
+    const action = approved;
     await expect(
       page.locator('.pi-editorial-copy').getByRole('link', { name: action.name }),
     ).toHaveAttribute('href', action.href);
+    await page.locator('.pi-editorial-copy').getByRole('link', { name: action.name }).click();
+    await expect(page.locator(action.href)).toBeVisible();
+    await expect(page.locator('.mkt-header-book')).toHaveAttribute('href', '/client');
     const image = page.locator('.pi-editorial-hero-image img');
     await expect(image).toBeVisible();
     await expect
@@ -130,11 +134,17 @@ test('Leasing goes directly to the catalogue while preserving check-in and appli
   await page.getByRole('link', { name: 'View all properties' }).click();
   await expect(page).toHaveURL('http://127.0.0.1:5173/leasing#available-properties');
   await page.goto('/tenants');
-  await expect(
-    page.getByRole('link', { name: 'Open home check-in', exact: false }),
-  ).toHaveAttribute('href', '/open-home/check-in');
-  await expect(page.getByRole('link', { name: 'Resume an existing application' })).toHaveAttribute(
-    'href',
-    '/rental-application/recover',
-  );
+  const checkins = page.locator('main').getByRole('link', { name: 'Open home check-in', exact: true });
+  await expect(checkins).toHaveCount(2);
+  for (const link of await checkins.all()) {
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('href', '/open-home/check-in');
+  }
+  await expect(page.locator('#tenant-actions').getByRole('link', { name: 'Resume your application' })).toHaveAttribute('href', '/rental-application/recover');
+  await expect(page.getByRole('link', { name: 'Resume an existing application' })).toHaveAttribute('href', '/rental-application/recover');
+  await page.locator('#tenant-actions').getByRole('link', { name: 'Open home check-in', exact: true }).click();
+  await expect(page).toHaveURL(/\/open-home\/check-in$/);
+  await page.goto('/tenants');
+  await page.locator('#tenant-actions').getByRole('link', { name: 'Resume your application' }).click();
+  await expect(page).toHaveURL(/\/rental-application\/recover$/);
 });

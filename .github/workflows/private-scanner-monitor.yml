@@ -1,0 +1,34 @@
+name: Private scanner definition monitor
+on:
+  schedule:
+    - cron: '23 0,12 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: private-scanner-monitor
+  cancel-in-progress: false
+jobs:
+  definitions:
+    if: github.repository == 'info-rbp/proinspect' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the pinned engine
+        run: docker build -t proinspect-private-scanner apps/private-document-scanner/container
+      - name: Require actual fresh signatures and clean/EICAR/failure cases
+        run: bash scripts/release/private-scanner-acceptance.sh
+      - name: Collect definition diagnostics
+        if: always()
+        run: |
+          mkdir -p artifacts
+          docker logs --tail 120 private-scanner > artifacts/private-scanner-update.log 2>&1 || true
+          docker exec private-scanner clamconf -n > artifacts/private-scanner-config.log 2>&1 || true
+          docker rm -f private-scanner || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scanner-definition-monitor
+          path: artifacts/
+          retention-days: 14

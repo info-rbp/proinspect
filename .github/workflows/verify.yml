@@ -20,12 +20,7 @@ jobs:
       - name: Build the pinned private ClamAV image
         run: docker build -t proinspect-private-scanner apps/private-document-scanner/container
       - name: Exercise real clean, EICAR and fail-closed scans
-        run: |
-          set -euo pipefail
-          docker run -d --name private-scanner --memory=4g --cpus=1 -e PROINSPECT_SCANNER_CI_DNS=1 -p 127.0.0.1:18080:8080 proinspect-private-scanner
-          mkdir -p artifacts
-          python3 scripts/release/private-scanner-smoke.py | tee artifacts/private-scanner-engine.json
-          docker exec private-scanner python3 -c 'import os; s=dict(p.split(":",1) for p in open("/proc/1/status") if ":" in p); assert all(int(s[k].strip(),16)==0 for k in ["CapInh","CapPrm","CapEff","CapBnd","CapAmb"]); assert s["NoNewPrivs"].strip()=="1"; assert not os.listdir("/dev/shm/clamav")'
+        run: bash scripts/release/private-scanner-acceptance.sh
       - name: Diagnose synthetic engine startup only
         if: failure()
         run: |
@@ -84,6 +79,8 @@ jobs:
           pnpm local:init --test-fixtures
           pnpm exec playwright install --with-deps chromium
       - name: Browser acceptance and responsive screenshots
+        env:
+          PROINSPECT_BROWSER_PREVIEW: '1'
         run: |
           pnpm test:browser
           node scripts/release/temporary-rental-browser.mjs
