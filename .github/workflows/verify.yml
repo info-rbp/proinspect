@@ -58,6 +58,8 @@ jobs:
           cp pnpm-lock.yaml artifacts/
           git archive --format=tar.gz -o artifacts/source.tar.gz HEAD
           printf '{"deploymentLocked":true,"deployed":false}\n' > artifacts/deployment-readiness.json
+      - name: Verify production release policy (mocked activation and rollback)
+        run: node --test tests/production-release.test.mjs
       - name: Typecheck, domain tests, SQL invariants and both builds
         run: pnpm check
       - name: Exercise actual Worker, D1, R2 and scheduling APIs
