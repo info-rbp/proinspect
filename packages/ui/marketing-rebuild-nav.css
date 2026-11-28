@@ -1,14 +1,44 @@
-/* Rebuild top-level navigation: symmetrical side columns keep the menu
-   centred on the header, independently of the widths of the brand and CTA. */
-@media (min-width: 1280px) {
-  .site .mkt-site-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items: center;
-    gap: clamp(.65rem, 1.15vw, 1.4rem);
-    min-height: 78px;
-  }
-  .site .mkt-site-header .mkt-brand { justify-self: start; }
+/* Two-level public header. Keep the existing brand and account CTA at
+   the outer edges of the first row; centre navigation on a separate row. */
+.site .mkt-header-wrap .mkt-site-header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+  flex-wrap: nowrap;
+}
+.site .mkt-site-header .mkt-header-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 78px;
+  gap: .8rem;
+}
+.site .mkt-site-header .mkt-header-identity .mkt-brand {
+  flex: 0 0 auto;
+  order: 0;
+}
+.site .mkt-site-header .mkt-header-identity .mkt-header-actions {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+  order: 0;
+}
+.site .mkt-site-header .mkt-header-identity .mkt-header-book {
+  width: auto;
+}
+.site .mkt-site-header .mkt-header-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50px;
+  border-top: 1px solid rgba(255,255,255,.14);
+}
+@media (min-width: 1024px) {
   .site .mkt-site-header .mkt-site-links {
     display: flex !important;
     flex-wrap: nowrap;
@@ -17,10 +47,10 @@
     padding: 0;
     overflow: visible;
     justify-content: center;
-    gap: clamp(.55rem, .85vw, 1.1rem);
+    gap: clamp(.6rem, 1.15vw, 1.35rem);
   }
   .site .mkt-site-header .mkt-site-links > a {
-    font-size: clamp(.74rem, 1.04vw, .89rem);
+    font-size: clamp(.78rem, 1.04vw, .89rem);
     display: inline-flex;
     align-items: center;
     min-height: 44px;
@@ -30,20 +60,37 @@
   .site .mkt-site-header .mkt-site-links > a[aria-current='page'] {
     border-bottom-color: #f0d2a3;
   }
-  .site .mkt-site-header .mkt-header-actions {
-    justify-self: end;
-    margin: 0;
-    width: auto;
-  }
   .site .mkt-site-header .marketing-menu { display: none; }
 }
-@media (max-width: 1279px) {
+@media (max-width: 1023px) {
   .site .mkt-site-header .mkt-site-links { display: none !important; }
-  .site .mkt-site-header .marketing-menu { display: block; }
+  .site .mkt-site-header .mkt-header-identity { min-height: 66px; }
+  .site .mkt-site-header .mkt-header-navigation { min-height: 46px; }
+  .site .mkt-site-header .marketing-menu {
+    display: block;
+    margin: 0;
+    position: relative;
+  }
+  .site .mkt-site-header .marketing-menu summary {
+    min-height: 44px;
+    justify-content: center;
+  }
   .site .mkt-site-header .marketing-menu nav {
+    right: 50%;
+    left: auto;
+    transform: translateX(50%);
+    width: min(320px, calc(100vw - 2.2rem));
+    min-width: 0;
     max-width: calc(100vw - 2.2rem);
-    max-height: min(75vh, 36rem);
+    max-height: min(70vh, 36rem);
     overflow-y: auto;
   }
   .site .mkt-site-header .marketing-menu nav a { min-height: 44px; }
+}
+@media (max-width: 380px) {
+  .site .mkt-site-header .mkt-header-identity { gap: .35rem; }
+  .site .mkt-site-header .mkt-header-identity .mkt-header-book {
+    padding-inline: .55rem;
+    font-size: .69rem;
+  }
 }

@@ -18,7 +18,7 @@ try {
   const page=await browser.newPage();
   const health=await page.request.get(origin+'/api/health');
   assert.equal((await health.json()).source,process.env.GITHUB_SHA);
-  for(const width of [1920,1440,1280]){
+  for(const width of [1920,1440,1280,1024]){
     await page.setViewportSize({width,height:950});
     await page.goto(origin,{waitUntil:'networkidle'});
     const header=page.locator('.mkt-site-header');
@@ -33,8 +33,17 @@ try {
     await expect(cta).toHaveAttribute('href','/client');
     const button=await cta.boundingBox();
     const h=await header.boundingBox();
-    assert.ok(brand.x+brand.width<=menu.x && menu.x+menu.width<=button.x,'Header overlaps at '+width);
+
+    const top=await header.locator('.mkt-header-identity').boundingBox();
+    const lower=await header.locator('.mkt-header-navigation').boundingBox();
+    assert.ok(Math.abs(brand.x-top.x)<=3 && Math.abs(button.x+button.width-(top.x+top.width))<=3,'Brand or account button shifted from outer edge at '+width);
+    assert.ok(brand.x+brand.width<=button.x,'Brand and account button overlap at '+width);
+    assert.ok(Math.abs(brand.y+brand.height/2-(button.y+button.height/2))<=3,'Top-row controls misaligned at '+width);
+    assert.ok(lower.y>=top.y+top.height-1 && menu.y>=lower.y-1,'Navigation not on second row at '+width);
     assert.ok(Math.abs(menu.x+menu.width/2-(h.x+h.width/2))<=3,'Menu not centred at '+width);
+    const links=await nav.getByRole('link').evaluateAll(items=>items.map(el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};}));
+    assert.ok(links.every((r,i)=>r.left>=h.x-1 && r.right<=h.x+h.width+1 && Math.abs(r.top-links[0].top)<=2 && (i===0||r.left>=links[i-1].right-1)),'Navigation wraps or overlaps at '+width);
+    assert.ok(Math.abs((links[0].left+links.at(-1).right)/2-(h.x+h.width/2))<=3,'Menu links not centred at '+width);
     await header.screenshot({path:out+'/header-'+width+'.png'});
     evidence.desktop.push(width);
   }
@@ -54,6 +63,15 @@ try {
     const header=page.locator('.mkt-site-header');
     const toggle=header.locator('summary');
     await expect(toggle).toBeVisible();
+    const top=await header.locator('.mkt-header-identity').boundingBox();
+    const lower=await header.locator('.mkt-header-navigation').boundingBox();
+    const brand=await header.getByRole('link',{name:'ProInspect home'}).boundingBox();
+    const button=await header.getByRole('link',{name:'Sign Up / Sign In'}).boundingBox();
+    const toggleBox=await toggle.boundingBox();
+    assert.ok(brand.x+brand.width<=button.x && brand.x>=-1 && button.x+button.width<=width+1,'Mobile top row overflows at '+width);
+    assert.ok(Math.abs(brand.x-top.x)<=3 && Math.abs(button.x+button.width-(top.x+top.width))<=3,'Mobile top-row positions changed at '+width);
+    assert.ok(lower.y>=top.y+top.height-1 && toggleBox.y>=lower.y-1,'Mobile menu not on second row at '+width);
+    assert.ok(Math.abs(toggleBox.x+toggleBox.width/2-(lower.x+lower.width/2))<=3,'Mobile menu not centred at '+width);
     await toggle.click();
     const nav=header.getByRole('navigation',{name:'Mobile site navigation'});
     await expect(nav).toBeVisible();

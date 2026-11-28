@@ -12,13 +12,17 @@ export function MarketingHeader({appOrigin=''}:{appOrigin?:string}){
   return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape)};
  },[]);
  return <div className="mkt-header-wrap"><div className="site-container"><header className="site-header mkt-site-header">
-  <Link className="brand mkt-brand" to="/" aria-label="ProInspect home" aria-current={pathname==='/'?'page':undefined}>ProInspect<span>PROPERTY SERVICES</span></Link>
-  <nav className="site-links mkt-site-links" aria-label="Primary navigation">{PUBLIC_NAVIGATION.filter(item=>item.href!=='/client').map(item=>
-   <Link key={item.href} to={item.href} aria-current={pathname===item.href?'page':undefined}>{item.label}</Link>)}</nav>
-  <div className="mkt-header-actions"><Link className="button mkt-header-book" to={clientHref}>Sign Up / Sign In</Link></div>
-  <details className="marketing-menu" ref={mobileMenu}><summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span>Menu</span></summary>
-   <nav aria-label="Mobile site navigation">{PUBLIC_NAVIGATION.map(item=><Link key={item.href} to={item.href === "/client" ? clientHref : item.href} aria-current={pathname===item.href?'page':undefined}>{item.label}</Link>)}</nav>
-  </details>
+  <div className="mkt-header-identity">
+   <Link className="brand mkt-brand" to="/" aria-label="ProInspect home" aria-current={pathname==='/'?'page':undefined}>ProInspect<span>PROPERTY SERVICES</span></Link>
+   <div className="mkt-header-actions"><Link className="button mkt-header-book" to={clientHref}>Sign Up / Sign In</Link></div>
+  </div>
+  <div className="mkt-header-navigation">
+   <nav className="site-links mkt-site-links" aria-label="Primary navigation">{PUBLIC_NAVIGATION.filter(item=>item.href!=='/client').map(item=>
+    <Link key={item.href} to={item.href} aria-current={pathname===item.href?'page':undefined}>{item.label}</Link>)}</nav>
+   <details className="marketing-menu" ref={mobileMenu}><summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span>Menu</span></summary>
+    <nav aria-label="Mobile site navigation">{PUBLIC_NAVIGATION.map(item=><Link key={item.href} to={item.href === "/client" ? clientHref : item.href} aria-current={pathname===item.href?'page':undefined}>{item.label}</Link>)}</nav>
+   </details>
+  </div>
  </header></div></div>
 }
 export function MarketingFooter({appOrigin=''}:{appOrigin?:string}){
