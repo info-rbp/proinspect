@@ -5,7 +5,7 @@ import { RESIDENTIAL_SUPPORT_COMMERCIAL_APPROVED } from '../../../../packages/ma
 /** Public marketing route families for the unified Worker, including unapproved legal drafts. */
 export function isPublicSitePath(pathname: string): boolean {
   if (pathname === '/' || pathname === '/help-centre' || pathname === '/example-reports' || pathname === '/residential/services' || pathname === '/residential/subscriptions' || /^\/residential\/services\/[a-z-]+$/.test(pathname) || pathname === '/services' || pathname === '/contact' || pathname === '/tenants' ||
-      pathname === '/resources' || new Set(['/residential','/commercial','/strata','/co-living','/co-spaces','/student-living','/construction','/leasing','/maintenance','/modular','/subscriptions','/information']).has(pathname) || pathname === '/service-finder' || pathname === '/who-we-help' || pathname === '/residential-property-support' || pathname === '/robots.txt' || pathname === '/sitemap.xml')
+      pathname === '/resources' || new Set(['/residential','/commercial','/strata','/co-living','/co-spaces','/co-spaces/co-working','/student-living','/construction','/leasing','/maintenance','/modular','/subscriptions','/information']).has(pathname) || pathname === '/service-finder' || pathname === '/who-we-help' || pathname === '/residential-property-support' || pathname === '/robots.txt' || pathname === '/sitemap.xml')
     return true;
   if (/^\/co-living\/(?:how-it-works|property-setup|inclusions|pricing|example-property)$/.test(pathname)) return true;
   if (pathname === '/properties-for-lease' || /^\/properties-for-lease\/(?:residential|commercial)(?:\/[a-z0-9-]+)?$/.test(pathname)) return true;
@@ -18,7 +18,7 @@ export function isPublicSitePath(pathname: string): boolean {
 
 /** Never index the Worker preview alias or pages containing customer data. */
 export function shouldIndexPublicPage(pathname: string, requestOrigin: string, appEnv: string): boolean {
-  if (retiredPublicPath(pathname) || ['/co-spaces','/modular','/subscriptions','/information'].includes(pathname) || pathname === '/student-living' || pathname === '/who-we-help') return false;
+  if (retiredPublicPath(pathname) || ['/co-spaces','/co-spaces/co-working','/modular','/subscriptions','/information'].includes(pathname) || pathname === '/student-living' || pathname === '/who-we-help') return false;
   // Canonical sector redirects remain routable but must not be indexed as distinct pages.
   if (/^\/sectors\/(?:residential|commercial|strata-building)$/.test(pathname)) return false;
   // Do not publicly index unapproved leasing/visitor flows in V3.

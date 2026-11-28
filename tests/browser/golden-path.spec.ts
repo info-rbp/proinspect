@@ -26,8 +26,8 @@ test('marketing is server rendered and responsive', async ({ page, request }) =>
   expect(html).toContain('rel="canonical"');
   expect(html).not.toContain('<title>Service not found');
   await page.goto('http://127.0.0.1:5173');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Your Property.');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Our Practical Support.');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Property Solutions.');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Built Around You.');
   mkdirSync('artifacts/screenshots', { recursive: true });
   await page.screenshot({ path: 'artifacts/screenshots/marketing-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });

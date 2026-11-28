@@ -10,6 +10,7 @@ export default [
   route('residential', 'routes/service-overview.tsx', { id: 'sector-overview-residential' }),
   route('commercial', 'routes/rebuild-landing.tsx', { id: 'marketing-landing-commercial' }),
     route('co-spaces', 'routes/rebuild-landing.tsx', { id: 'marketing-landing-co-spaces' }),
+    route('co-spaces/co-working', 'routes/co-working.tsx'),
     route('modular', 'routes/rebuild-landing.tsx', { id: 'marketing-landing-modular' }),
     route('subscriptions', 'routes/rebuild-landing.tsx', { id: 'marketing-landing-subscriptions' }),
     route('information', 'routes/rebuild-landing.tsx', { id: 'marketing-landing-information' }),

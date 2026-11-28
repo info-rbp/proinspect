@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 test('homepage presents a high-level overview and Client Portal entry',async({page})=>{
  await page.goto('/');
- await expect(page.getByRole('heading',{level:1})).toContainText('Our Practical Support.');
- await expect(page.locator('.pi-property-card')).toHaveCount(2);
- await expect(page.locator('.pi-property-card img')).toHaveCount(2);
+ await expect(page.getByRole('heading',{level:1})).toContainText('Built Around You.');
+ await expect(page.locator('.pi-home-service-card')).toHaveCount(7);
+ await expect(page.locator('.pi-home-service-card img')).toHaveCount(7);
  await expect(page.locator('.pi-editorial-copy').getByRole('link',{name:'Get Started Today'})).toHaveAttribute('href','/client');
  const firstService=page.locator('.pi-property-card').first().getByRole('link',{name:'Explore Our Residential Solutions',exact:true});
  await expect(firstService).toHaveAttribute('href','/residential');

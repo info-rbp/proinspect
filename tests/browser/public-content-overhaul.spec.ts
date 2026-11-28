@@ -9,14 +9,11 @@ test('Student Living links take mobile and desktop visitors to the Co-Living pro
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
   }
 });
-test('homepage advertises one property subscription and terms',async({page})=>{
+test('homepage presents the five editorial subscription categories without activating billing',async({page})=>{
   await page.goto('/');
-  const plan=page.locator('.pi-plan-card');
-  await expect(plan).toHaveCount(1);await expect(plan).toContainText('Residential All Inclusive');
-  await expect(plan).toContainText('$50');await expect(plan).toContainText('$55 including GST per property per week');
-  await expect(page.locator('.pi-plan-disclosure').first()).toContainText('24');
-  await expect(page.locator('.pi-plan-disclosure').first()).toContainText('60');
-  await expect(page.locator('.pi-home-property-grid .pi-property-card')).toHaveCount(2);
+  await expect(page.locator('#home-subscriptions .pi-rebuild-subscription-card h3')).toHaveText(['Inspections Subscription','Outsourced Subscription','Co-Living Subscription','Co-Working Subscription','Commercial Property Support Subscription']);
+  await expect(page.getByRole('link',{name:'Explore Our Subscriptions'})).toHaveAttribute('href','/subscriptions');
+  await expect(page.locator('.pi-home-service-card')).toHaveCount(7);
 });
 test('old sector links have appropriate permanent responses and stay outside the sitemap',async({request})=>{
   const home=await request.get('/sectors/residential',{maxRedirects:0});

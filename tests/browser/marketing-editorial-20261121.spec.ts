@@ -1,17 +1,17 @@
 import {test,expect} from '@playwright/test';
 import {RESIDENTIAL_CATEGORIES} from '../../packages/marketing/residential-categories';
-test('homepage editorial structure follows the Residential-only strategy',async({page})=>{
+test('homepage editorial structure follows the expanded rebuild strategy',async({page})=>{
  await page.goto('/');
  const hero=page.locator('.pi-editorial-hero-home');
- await expect(hero.getByRole('heading',{level:1})).toContainText('Your Property.');
+ await expect(hero.getByRole('heading',{level:1})).toContainText('Property Solutions.');
  await expect(hero.locator('h1 br')).toHaveCount(1);
  await expect(hero.getByRole('link',{name:'See What We Offer'})).toHaveAttribute('href','/#property-services');
  await expect(hero.getByRole('link',{name:'Get Started Today'})).toHaveAttribute('href','/client');
- await expect(page.locator('.pi-home-property-grid .pi-property-card')).toHaveCount(2);
+ await expect(page.locator('.pi-home-service-card')).toHaveCount(7);
  await expect(page.getByRole('heading',{name:'Properties Available'})).toBeVisible();
- await expect(page.getByRole('heading',{name:'Maintenance Support'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Maintenance',exact:true})).toBeVisible();
  await expect(page.getByRole('link',{name:/See Our Maintenance Solutions/})).toHaveAttribute('href','/maintenance');
- await expect(page.getByRole('link',{name:/See Our Subscription Offers/})).toHaveAttribute('href','/residential/subscriptions');
+ await expect(page.getByRole('link',{name:/Explore Our Subscriptions/})).toHaveAttribute('href','/subscriptions');
  await expect(page.locator('.pi-process-illustrated img')).toHaveCount(3);
  await expect(page.getByRole('link',{name:/Sign Up Today/})).toHaveAttribute('href','/client');
  await expect(page.locator('.mkt-footer-group')).toHaveCount(0);

@@ -1,0 +1,2 @@
+# Rebuild home imagery
+The Co-Working and Modular concept photographs are original generated editorial assets created for ProInspect in Adobe Firefly on 28 November 2026. They are illustrative, not records of actual client projects or specific facilities. Both are stored locally as JPEG full and small variants; no third-party image URLs or expiring external URLs are used. Existing ProInspect imagery is retained for the other home banners. Subscription labels are informational only; no billing products, prices, activation or entitlements were modified.

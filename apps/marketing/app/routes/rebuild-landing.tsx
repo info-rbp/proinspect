@@ -1,5 +1,6 @@
 import { Link, useLoaderData, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
 import { EditorialHero } from '../components/editorial';
+import { RebuildSubscriptionTiles } from '../components/rebuild-subscription-tiles';
 import type { BrandImageKey } from '../components/brand-image';
 import { seo } from '../lib/seo';
 
@@ -24,12 +25,13 @@ const landings: Record<string, Landing> = {
   },
   'co-spaces': {
     label: 'Co-Spaces',
-    title: 'Support for shared spaces and shared living.',
-    intro: 'Explore the existing Co-Living information, property setup guidance and resident pathways within Co-Spaces.',
+    title: 'Support for shared living and working.',
+    intro: 'Explore Co-Living and Co-Working within Co-Spaces, with information for property owners, operators and residents.',
     image: 'co-living',
     heading: 'Explore Co-Spaces.',
     resources: [
       { title: 'Co-Living', description: 'Discover the existing Co-Living programme and shared accommodation information.', href: '/co-living', action: 'Explore Co-Living' },
+      { title: 'Co-Working', description: 'Explore the dedicated Co-Working section.', href: '/co-spaces/co-working', action: 'Explore Co-Working' },
       { title: 'Property setup', description: 'Review the existing guidance on preparing a property, furnishings and shared facilities.', href: '/co-living/property-setup', action: 'Explore property setup' },
       { title: 'Tenants and residents', description: 'Find information for renters and residents, including the appropriate account access pathway.', href: '/tenants', action: 'Tenant information' },
     ],
@@ -38,7 +40,7 @@ const landings: Record<string, Landing> = {
     label: 'Modular',
     title: 'Modular.',
     intro: 'The Modular section is being developed as part of the ProInspect website rebuild.',
-    image: 'construction',
+    image: 'modular',
     heading: 'Modular information and enquiries.',
     note: 'The detailed Modular offering and its service boundaries are yet to be specified. No new service, pricing or booking availability is represented on this page.',
     resources: [
@@ -108,6 +110,11 @@ export default function RebuildLanding() {
           <h2>{page.heading}</h2>
           {page.note && <p>{page.note}</p>}
         </div>
+        {page.key === 'subscriptions' && <div className="pi-subscription-landing-options">
+          <RebuildSubscriptionTiles/>
+          <p>Subscription details and inclusions will be available as each offering is finalised.</p>
+          <h2>Existing subscription information</h2>
+        </div>}
         <div className="mkt-editorial-grid">
           {page.resources.map(resource => <article className="mkt-editorial-panel" key={resource.href}>
             <h3>{resource.title}</h3>

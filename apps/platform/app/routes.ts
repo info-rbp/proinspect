@@ -15,6 +15,7 @@ export default [
     route('residential', '../../marketing/app/routes/service-overview.tsx', { id: 'sector-overview-residential' }),
     route('commercial', '../../marketing/app/routes/rebuild-landing.tsx', { id: 'marketing-landing-commercial' }),
     route('co-spaces', '../../marketing/app/routes/rebuild-landing.tsx', { id: 'marketing-landing-co-spaces' }),
+    route('co-spaces/co-working', '../../marketing/app/routes/co-working.tsx'),
     route('modular', '../../marketing/app/routes/rebuild-landing.tsx', { id: 'marketing-landing-modular' }),
     route('subscriptions', '../../marketing/app/routes/rebuild-landing.tsx', { id: 'marketing-landing-subscriptions' }),
     route('information', '../../marketing/app/routes/rebuild-landing.tsx', { id: 'marketing-landing-information' }),

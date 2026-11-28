@@ -13,7 +13,7 @@ const expected = [
 const out='artifacts/rebuild-navigation';
 mkdirSync(out,{recursive:true});
 const browser=await chromium.launch();
-const evidence={source:process.env.GITHUB_SHA,desktop:[],mobile:[],pages:[],footer:[]};
+const evidence={source:process.env.GITHUB_SHA,desktop:[],mobile:[],pages:[],footer:[],home:[]};
 const footerExpected=[['Help Centre','/help-centre'],['About Us','/about'],['Contact Us','/contact']];
 async function verifyFooter(page,width){
   const footer=page.locator('.mkt-site-footer');
@@ -31,6 +31,31 @@ async function verifyFooter(page,width){
   assert.ok(boxes.every(r=>r.left>=-1&&r.right<=width+1),'Footer overflows at '+width);
   await footer.screenshot({path:out+'/footer-'+width+'.png'});
   evidence.footer.push(width);
+}
+const plans=['Inspections Subscription','Outsourced Subscription','Co-Living Subscription','Co-Working Subscription','Commercial Property Support Subscription'];
+async function verifyHome(page,width) {
+  const home=page.locator('.pi-home-rebuild');
+  await expect(home.locator(':scope > header, :scope > section')).toHaveCount(9);
+  await expect(home.locator('.pi-home-service-card')).toHaveCount(7);
+  await expect(home.locator('#home-subscriptions .pi-rebuild-subscription-card h3')).toHaveText(plans);
+  await expect(home.getByRole('link',{name:'Explore Our Subscriptions'})).toHaveAttribute('href','/subscriptions');
+  await expect(home.getByText('Have something specific in mind?',{exact:false})).toHaveCount(0);
+  await expect(home.getByRole('heading',{name:'Maintenance Support',exact:true})).toHaveCount(0);
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Home horizontal overflow at '+width);
+  for(const id of ['property-services','commercial-property-services','property-projects','home-subscriptions']){
+    const section=home.locator('#'+id);
+    await section.scrollIntoViewIfNeeded();
+    const boxes=await section.locator('.pi-home-service-card,.pi-rebuild-subscription-card').evaluateAll(els=>els.map(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};}));
+    assert.ok(boxes.every(b=>b.x>=-1&&b.x+b.w<=width+1&&b.w>0&&b.h>0),'Tile overflow '+id+' at '+width);
+    const cols=width<=760?1:width<=1000?2:['home-subscriptions','property-projects'].includes(id)?3:2;
+    assert.equal(boxes.filter(b=>Math.abs(b.y-boxes[0].y)<3).length,cols,'Incorrect columns '+id+' at '+width);
+    for(const img of await section.locator('img').all()){
+      await img.scrollIntoViewIfNeeded();
+      await expect.poll(()=>img.evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
+    }
+  }
+  if([1440,390].includes(width))await page.screenshot({path:out+'/home-'+width+'.png',fullPage:true});
+  evidence.home.push(width);
 }
 try {
   const page=await browser.newPage();
@@ -65,6 +90,7 @@ try {
     await header.screenshot({path:out+'/header-'+width+'.png'});
     evidence.desktop.push(width);
     await verifyFooter(page,width);
+    await verifyHome(page,width);
   }
   for(const [label,path] of expected){
     await page.goto(origin+path,{waitUntil:'domcontentloaded'});
@@ -81,6 +107,7 @@ try {
     await page.goto(origin,{waitUntil:'networkidle'});
     const header=page.locator('.mkt-site-header');
     await verifyFooter(page,width);
+    await verifyHome(page,width);
     const toggle=header.locator('summary');
     await expect(toggle).toBeVisible();
     const top=await header.locator('.mkt-header-identity').boundingBox();
@@ -110,6 +137,14 @@ try {
     await expect(page).toHaveURL(origin+path);
     assert.equal((await page.request.get(origin+path)).status(),200,path);
   }
+  await page.goto(origin);
+  await page.locator('#commercial-property-services .pi-inline-link').filter({hasText:'Explore Our Co-Working Solutions'}).click();
+  await expect(page).toHaveURL(origin+'/co-spaces/co-working');
+  await expect(page.locator('main h1')).toHaveText('Co-Working');
+  await expect(page.locator('main section')).toHaveCount(0);
+  await expect.poll(()=>page.locator('main img').evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
+  await page.goto(origin+'/subscriptions');
+  await expect(page.locator('.pi-rebuild-subscription-card h3')).toHaveText(plans);
   console.log(JSON.stringify(evidence));
 } finally {
   writeFileSync(out+'/verification.json',JSON.stringify(evidence,null,2)+'\n');

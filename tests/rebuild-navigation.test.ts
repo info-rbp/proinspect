@@ -44,3 +44,15 @@ test('footer contains only the requested support navigation and retains company 
   for(const path of ['/privacy','/website-terms','/platform-terms','/terms','/booking-policy','/service-scopes','/subscription-terms'])
     assert.equal(isMarketingStylePath(path),true,path+' remains a public route');
 });
+
+test('Co-Working is public editorial content, not a booking or indexed release', () => {
+  const path='/co-spaces/co-working';
+  assert.equal(isMarketingStylePath(path),true);
+  assert.equal(shouldIndexPublicPage(path,'https://proinspect.systems','production'),false);
+  for(const file of ['apps/platform/app/routes.ts','apps/marketing/app/routes.ts'])
+    assert.ok(readFileSync(file,'utf8').includes("route('co-spaces/co-working',"));
+  const home=readFileSync('apps/marketing/app/routes/home.tsx','utf8');
+  assert.match(home,/RebuildSubscriptionTiles/);
+  assert.match(home,/to="\/subscriptions"/);
+  assert.doesNotMatch(home,/PlanComparison|EditorialSteps|Have something specific in mind\?/);
+});

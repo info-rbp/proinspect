@@ -1,0 +1,49 @@
+/* Rebuild home and editorial subscription cards. Header/footer unchanged. */
+.site .pi-home-rebuild .pi-home-stacked-heading { display:block;max-width:880px;margin-bottom:clamp(1.5rem,3vw,2.8rem); }
+.site .pi-home-stacked-heading > p:not(.eyebrow) {max-width:68ch;margin-top:.85rem;}
+.site .pi-home-services-grid {display:grid;gap:clamp(1rem,2.3vw,2rem);}
+.site .pi-home-services-grid.pi-home-two {grid-template-columns:repeat(2,minmax(0,1fr));}
+.site .pi-home-services-grid.pi-home-three {grid-template-columns:repeat(3,minmax(0,1fr));}
+.site .pi-home-rebuild .pi-home-services-grid > .pi-home-service-card {grid-column:auto;width:100%;min-width:0;max-width:none;height:100%;background:#fff;border:1px solid var(--mkt-line);border-radius:3px;overflow:hidden;}
+.site .pi-home-service-card .pi-card-image-link {display:block;}
+.site .pi-home-service-card .pi-brand-image {display:block;width:100%;height:auto;aspect-ratio:1.65;object-fit:cover;}
+.site .pi-home-three .pi-home-service-card .pi-brand-image {aspect-ratio:1.45;}
+.site .pi-home-service-card > div {padding:clamp(1.2rem,2.2vw,1.8rem);}
+.site .pi-home-service-card h3 {font-size:clamp(1.2rem,2vw,1.6rem);overflow-wrap:anywhere;}
+.site .pi-home-service-card .pi-inline-link {align-self:flex-start;}
+.site .pi-home-rebuild .pi-editorial-hero-home .pi-editorial-copy h1 > span {white-space:normal;}
+.site .pi-home-connections {background:#f8faf8;border-radius:4px;padding:clamp(1.25rem,3vw,2rem);min-width:0;color:var(--mkt-ink);}
+.site .pi-deep .pi-home-connections p {color:#486168;}
+.site .pi-home-connection-label {text-transform:uppercase;font-weight:750;letter-spacing:.12em;font-size:.75rem;margin-bottom:.8rem;}
+.site .pi-home-connections h3 {background:#e7efeb;padding:1rem;border-radius:3px;font-size:clamp(1.15rem,2.2vw,1.6rem);text-align:center;color:var(--mkt-ink);}
+.site .pi-home-connections ul {list-style:none;padding:0;margin:1rem 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;}
+.site .pi-home-connections li {display:grid;place-items:center;text-align:center;padding:.85rem .65rem;background:#fff;border:1px solid var(--mkt-line);border-radius:3px;font-size:.88rem;min-width:0;overflow-wrap:anywhere;}
+.site .pi-home-connection-footer {font-size:.76rem;text-align:center;line-height:1.6;margin:0;}
+.site .pi-rebuild-subscription-grid {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(.85rem,2vw,1.6rem);}
+.site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card {grid-column:span 2;min-width:0;min-height:130px;display:flex;align-items:flex-start;justify-content:center;padding:clamp(1.2rem,2vw,1.8rem);border-top:3px solid var(--mkt-teal);}
+.site .pi-rebuild-subscription-card h3 {font-size:clamp(1.15rem,1.8vw,1.5rem);overflow-wrap:anywhere;}
+.site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card:nth-child(4) {grid-column:2 / span 2;}
+.site .pi-home-subscription-cta {text-align:center;margin-top:2rem;}
+.site .pi-home-subscription-cta p,.site .pi-subscription-landing-options > p {font-size:.88rem;margin-top:1rem;color:#486168;}
+.site .pi-subscription-landing-options {margin-bottom:2rem;}
+.site .pi-subscription-landing-options > h2 {margin-top:2rem;}
+.site .pi-home-principles {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(1rem,2.5vw,2rem);}
+.site .pi-home-principles article {border-top:2px solid #b9cec7;padding-top:1.4rem;min-width:0;}
+.site .pi-home-principles svg {width:36px;height:36px;color:var(--mkt-teal);margin-bottom:1rem;}
+.site .pi-home-principles h3 {font-size:clamp(1.2rem,2vw,1.55rem);margin-bottom:.8rem;}
+.site .pi-home-principles p {line-height:1.7;}
+@media(max-width:1000px){
+  .site .pi-rebuild-subscription-grid {grid-template-columns:repeat(4,minmax(0,1fr));}
+  .site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card:nth-child(4) {grid-column:span 2;}
+  .site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card:nth-child(5) {grid-column:2 / span 2;}
+  .site .pi-home-services-grid.pi-home-three {grid-template-columns:repeat(4,minmax(0,1fr));}
+  .site .pi-home-rebuild .pi-home-three > .pi-home-service-card {grid-column:span 2;}
+  .site .pi-home-rebuild .pi-home-three > .pi-home-service-card:last-child {grid-column:2 / span 2;}
+}
+@media(max-width:760px){
+  .site .pi-home-services-grid.pi-home-two,.site .pi-home-services-grid.pi-home-three,.site .pi-home-principles {grid-template-columns:minmax(0,1fr);}
+  .site .pi-home-rebuild .pi-home-three > .pi-home-service-card,.site .pi-home-rebuild .pi-home-three > .pi-home-service-card:last-child {grid-column:auto;}
+  .site .pi-home-three .pi-home-service-card .pi-brand-image {aspect-ratio:1.65;}
+  .site .pi-rebuild-subscription-grid {grid-template-columns:minmax(0,1fr);}
+  .site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card,.site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card:nth-child(4),.site .pi-rebuild-subscription-grid > .pi-rebuild-subscription-card:nth-child(5) {grid-column:auto;min-height:95px;}
+}
