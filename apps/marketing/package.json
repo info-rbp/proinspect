@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5174",
-    "build": "react-router build",
+    "build": "node ../../scripts/deploy/optimise-rebuild-images.mjs && react-router build",
     "preview": "vite preview --port 5174",
     "deploy": "wrangler deploy"
   }

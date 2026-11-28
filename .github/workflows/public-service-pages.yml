@@ -1,0 +1,56 @@
+name: Public service page acceptance
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: public-service-pages-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  public-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --frozen-lockfile
+      - name: Check source, schemas and production builds
+        run: pnpm check
+      - name: Prepare isolated local browser fixtures
+        run: |
+          pnpm local:init --test-fixtures
+          pnpm exec playwright install --with-deps chromium firefox webkit
+      - name: Chromium accessibility, navigation and page acceptance (built local application)
+        env:
+          PROINSPECT_BROWSER_PREVIEW: '1'
+        run: pnpm exec playwright test tests/browser/service-pages.spec.ts
+      - name: Firefox and WebKit accessibility and navigation (built local application)
+        env:
+          PROINSPECT_BROWSER_PREVIEW: '1'
+        run: pnpm exec playwright test --config playwright.service-pages.config.ts
+      - name: Production-build laboratory performance and WebP checks
+        run: |
+          pnpm --dir apps/platform preview --host 127.0.0.1 --port 5175 > /tmp/proinspect-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:5175/api/health > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/release/service-pages-performance.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-service-page-acceptance
+          path: |
+            artifacts/service-enhancements/
+            artifacts/browser-results.json
+          retention-days: 14

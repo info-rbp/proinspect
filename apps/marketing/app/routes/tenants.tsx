@@ -1,3 +1,4 @@
+import { ServiceSection, ServiceTiles } from '../components/service-page';
 import { Link } from 'react-router';
 import { EditorialHero } from '../components/editorial';
 import { MarketingFaq } from '../components/page-patterns';
@@ -15,13 +16,66 @@ export default function Tenants() {
   return (
     <>
       <EditorialHero
-        eyebrow="Tenants"
-        title="A little more clarity, wherever you are in your rental journey."
+        eyebrow="Tenant & resident support"
+        title="Supporting You Throughout Your Rental Journey."
         intro="Looking for a home, preparing for an inspection or reporting a property issue? Find the right next step and understand how ProInspect can assist."
         image="leasing"
         primary={{ label: 'Browse properties for lease', to: '/leasing' }}
-        secondary={{ label: 'Open Your Tenant Account', to: '/client' }}
+        secondary={{ label: 'Access Your Tenant Workspace', to: '/client' }}
       />
+      <ServiceSection
+        id="tenant-actions"
+        eyebrow="How can we help you?"
+        title="Find the support you need."
+        neutral
+      >
+        <ServiceTiles
+          items={[
+            {
+              title: 'Find a home',
+              copy: 'Browse advertised properties and current inspection information.',
+              icon: 'home',
+              href: '/leasing',
+              action: 'Browse available properties',
+            },
+            {
+              title: 'Attend an open home',
+              copy: 'Follow the advertised session details and use the existing check-in pathway on arrival.',
+              icon: 'calendar',
+              href: '/open-home/check-in',
+              action: 'Open home check-in',
+            },
+            {
+              title: 'Continue an application',
+              copy: 'Resume an application you have already started through the secure recovery pathway.',
+              icon: 'report',
+              href: '/rental-application/recover',
+              action: 'Resume your application',
+            },
+            {
+              title: 'Prepare for an inspection',
+              copy: 'Find guidance on appointment details, access and property observations.',
+              icon: 'report',
+              href: '#inspection-help',
+              action: 'Inspection guidance',
+            },
+            {
+              title: 'Report a maintenance issue',
+              copy: 'Find the right reporting channel and urgent-assistance guidance for your property.',
+              icon: 'tools',
+              href: '#maintenance-help',
+              action: 'Maintenance guidance',
+            },
+            {
+              title: 'Access your tenant workspace',
+              copy: 'Sign in with the email associated with your verified invitation or property relationship.',
+              icon: 'keys',
+              href: '/client',
+              action: 'Access your tenant workspace',
+            },
+          ]}
+        />
+      </ServiceSection>
       <section className="mkt-section pi-editorial-section">
         <div className="site-container">
           <div className="pi-section-heading">
@@ -79,13 +133,13 @@ export default function Tenants() {
           </div>
           <div className="pi-support-list">
             <article>
-              <h3>Property inspections</h3>
+              <h3 id="inspection-help">Property inspections</h3>
               <p>
                 Where ProInspect is instructed to attend, follow the appointment and access
                 information supplied by your manager. Let the responsible person know about relevant
                 property concerns so the visit can address the agreed scope. Keep your incoming
-                condition report and safe supporting evidence; raise corrections or concerns
-                through your responsible representative.
+                condition report and safe supporting evidence; raise corrections or concerns through
+                your responsible representative.
               </p>
             </article>
             <article>
@@ -93,9 +147,9 @@ export default function Tenants() {
               <p>
                 Use your property’s nominated reporting process. Describe where the issue is, what
                 is happening and any relevant photos. Use your authorised tenant workspace if your
-                property provides one. Requests about pets, modifications, replacement keys,
-                access or permissions should go to the responsible landlord or manager for a
-                decision. Keep private documents and access secrets out of general enquiries.
+                property provides one. Requests about pets, modifications, replacement keys, access
+                or permissions should go to the responsible landlord or manager for a decision. Keep
+                private documents and access secrets out of general enquiries.
               </p>
               <Link className="pi-inline-link" to="/maintenance">
                 How maintenance support works <span aria-hidden="true">→</span>
@@ -115,13 +169,38 @@ export default function Tenants() {
           </div>
         </div>
       </section>
+      <section id="maintenance-help" className="mkt-section pi-editorial-section">
+        <div className="site-container pi-assistance-notice">
+          <div>
+            <p className="eyebrow">Maintenance and urgent assistance</p>
+            <h2>Contact the person responsible for your property.</h2>
+            <p>
+              Use your property’s nominated reporting process or authorised tenant workspace for
+              maintenance. Follow urgent-repair instructions from your landlord, property manager or
+              building operator. ProInspect’s public website and general enquiry form are not an
+              emergency reporting service. Contact emergency services if there is immediate danger.
+            </p>
+            <p>
+              Keep identification documents, sensitive tenant records, keys and access codes out of
+              public enquiries. Use the secure channel provided by your responsible representative.
+            </p>
+          </div>
+          <Link className="button secondary" to="/client">
+            Access your tenant workspace <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+      </section>
       <section className="mkt-section pi-editorial-section">
         <div className="site-container pi-faq-layout">
           <div>
             <p className="eyebrow">Helpful answers</p>
             <h2>Know what happens next.</h2>
           </div>
-          <p><Link className="pi-inline-link" to="/help-centre">More answers in the Help Centre <span aria-hidden="true">↗</span></Link></p>
+          <p>
+            <Link className="pi-inline-link" to="/help-centre">
+              More answers in the Help Centre <span aria-hidden="true">↗</span>
+            </Link>
+          </p>
           <MarketingFaq
             questions={[
               [

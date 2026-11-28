@@ -1,3 +1,5 @@
+import { CommercialLanding } from '../components/commercial-landing';
+import { CoSpacesLanding } from '../components/co-spaces-landing';
 import { Link, useLoaderData, type LoaderFunctionArgs, type MetaFunction } from 'react-router';
 import { EditorialHero } from '../components/editorial';
 import { RebuildSubscriptionTiles } from '../components/rebuild-subscription-tiles';
@@ -100,6 +102,8 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData: page }) =>
 
 export default function RebuildLanding() {
   const page = useLoaderData<typeof loader>();
+  if (page.key === 'commercial') return <CommercialLanding/>;
+  if (page.key === 'co-spaces') return <CoSpacesLanding/>;
   return <>
     <EditorialHero eyebrow={page.label} title={page.title} intro={page.intro} image={page.image}
       primary={{ label: ['Modular', 'Commercial', 'Construction'].includes(page.label) ? 'Contact ProInspect' : 'Explore information', to: ['Modular', 'Commercial', 'Construction'].includes(page.label) ? '/contact' : '#landing-options' }} />

@@ -22,15 +22,15 @@ jobs:
       - name: Exercise real clean, EICAR and fail-closed scans
         run: |
           set -euo pipefail
-          docker run -d --name private-scanner --memory=4g --cpus=1 -p 127.0.0.1:18080:8080 proinspect-private-scanner
+          docker run -d --name private-scanner --memory=4g --cpus=1 -e PROINSPECT_SCANNER_CI_DNS=1 -p 127.0.0.1:18080:8080 proinspect-private-scanner
           mkdir -p artifacts
           python3 scripts/release/private-scanner-smoke.py | tee artifacts/private-scanner-engine.json
           docker exec private-scanner python3 -c 'import os; s=dict(p.split(":",1) for p in open("/proc/1/status") if ":" in p); assert all(int(s[k].strip(),16)==0 for k in ["CapInh","CapPrm","CapEff","CapBnd","CapAmb"]); assert s["NoNewPrivs"].strip()=="1"; assert not os.listdir("/dev/shm/clamav")'
       - name: Diagnose synthetic engine startup only
         if: failure()
         run: |
-          docker logs --tail 30 private-scanner || true
-          docker exec private-scanner sh -c 'ps; ls -l /run/clamav /dev/shm/clamav; clamconf -n; timeout 15 clamd --foreground=true --config-file=/etc/clamav/clamd.conf' || true
+          docker logs --tail 120 private-scanner || true
+          docker exec private-scanner sh -c 'ps; ls -l /run/clamav /dev/shm/clamav; clamconf -n' || true
       - name: Stop the synthetic private engine
         if: always()
         run: docker rm -f private-scanner || true
@@ -40,9 +40,10 @@ jobs:
           name: private-scanner-engine
           path: artifacts/private-scanner-engine.json
           retention-days: 7
-  verify:
-    needs: private-scanner
-    if: ${{ always() }}
+  # Local fixtures contain no applicant data and do not deploy anything.
+  # Run regression independently so a definition-provider outage does not
+  # obscure unrelated browser or application failures.
+  local-regression:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -53,9 +54,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Require successful real antivirus acceptance
-        if: needs.private-scanner.result != 'success'
-        run: exit 1
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Capture exact source and repository-only acceptance status
@@ -98,6 +96,23 @@ jobs:
             artifacts/
             playwright-report/
           retention-days: 7
+  # Keep the authoritative verify check fail-closed: neither a failed nor
+  # skipped engine check can result in successful release verification.
+  verify:
+    needs: [private-scanner, local-regression]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require successful real antivirus and complete regression acceptance
+        env:
+          SCANNER_RESULT: ${{ needs.private-scanner.result }}
+          REGRESSION_RESULT: ${{ needs.local-regression.result }}
+        run: |
+          set -euo pipefail
+          printf 'Private scanner: %s\nLocal regression: %s\n' "$SCANNER_RESULT" "$REGRESSION_RESULT"
+          test "$SCANNER_RESULT" = success
+          test "$REGRESSION_RESULT" = success
   staging-preview:
     if: github.repository == 'info-rbp/proinspect' && ((github.event_name == 'workflow_dispatch' && contains(fromJSON('["refs/heads/feat/pr01-account-driven-client-portal","refs/heads/feat/public-site-services-refresh","refs/heads/feat/public-content-final-alignment","refs/heads/feat/residential-application-readiness","refs/heads/feat/commercial-dynamic-application","refs/heads/feat/managed-property-application-routing","refs/heads/feat/private-managed-document-scanning","refs/heads/fix/managed-rental-application-availability","refs/heads/feat/temporary-rental-document-delivery","refs/heads/integrate/public-offering-portals-20261116","refs/heads/feat/auth-onboarding-portal-routing"]'), github.ref)) || (github.event_name == 'pull_request' && contains(fromJSON('["feat/pr01-account-driven-client-portal","feat/public-site-services-refresh","feat/public-content-final-alignment","feat/residential-application-readiness","feat/commercial-dynamic-application","feat/managed-property-application-routing","feat/private-managed-document-scanning","fix/managed-rental-application-availability","feat/temporary-rental-document-delivery","integrate/public-offering-portals-20261116","feat/auth-onboarding-portal-routing"]'), github.event.pull_request.head.ref) && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest

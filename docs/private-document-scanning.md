@@ -121,3 +121,8 @@ Sources: [Cloudflare Containers](https://developers.cloudflare.com/containers/),
 [scanning](https://docs.clamav.net/manual/Usage/Scanning.html) and
 [FreshClam](https://docs.clamav.net/manual/Usage/SignatureManagement.html). Current plan restriction is a provider response,
 not an independent-review or release-approval requirement.
+
+### Scanner CI startup diagnostics
+The real-engine CI container uses FreshClam's standard DNS-assisted signature updates (official updater, pinned engine); the private hosted runtime keeps its existing fixed-host HTTP-only download boundary. The initial refresh runs before clamd using a temporary configuration without the notification directive; periodic refresh starts after the socket is ready. CI exposes only signature-update diagnostics, never applicant content. The diagnostic step inspects the running engine instead of starting a second clamd and competing for its log/socket. A failed download does not override the 72-hour freshness gate: acceptance must still demonstrate the actual engine, fresh loaded signatures, clean and EICAR verdicts, digest mismatch and size rejection, and dropped privileges.
+
+The `Verify ProInspect` workflow runs disposable local regression tests independently of the real antivirus acceptance job. The authoritative `verify` job still requires both results to be `success`; missing, skipped, cancelled or failed real-engine acceptance blocks verification. This allows all application diagnostics to be collected during a definition-provider outage without relaxing any security prerequisite or authorising deployment.

@@ -18,7 +18,9 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: 'pnpm --dir apps/platform dev --host 127.0.0.1 --port 5173',
+      command: process.env.PROINSPECT_BROWSER_PREVIEW === '1'
+        ? 'pnpm --dir apps/platform preview --host 127.0.0.1 --port 5173 --strictPort'
+        : 'pnpm --dir apps/platform dev --host 127.0.0.1 --port 5173 --strictPort',
       url: 'http://127.0.0.1:5173/api/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,

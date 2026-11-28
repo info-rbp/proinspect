@@ -146,7 +146,7 @@ try{
    await call('/__test/approve-listing',{listingId,input});
   }
  });
- await check('public listings resolve without exposing landlord names or roles',async()=>{
+ await check('listing summaries keep private identities out; detail exposes only the approved advertiser',async()=>{
   const listings=await call('/__test/listings');
   const sessions=await call('/__test/public-sessions');
   assert.equal(listings.length,2);
@@ -161,9 +161,12 @@ try{
    const slug='unit-'+unit+'-273-fulham-street-cloverdale';
    const listing=await call('/__test/listing?slug='+slug);
    assert.equal(listing.listing.slug,slug);
-   assert.equal(Object.hasOwn(listing.listing,'agent_name'),false);
-   assert.equal(Object.hasOwn(listing.listing,'agent_role'),false);
-   assert.equal(JSON.stringify(listing).includes('Lighthouse Property Group'),false);
+   // The approved Leasing detail page identifies its public leasing representative.
+   assert.equal(listing.listing.agent_name,'Lighthouse Property Group Pty Ltd');
+   const stored=await first('SELECT agent_role FROM leasing_listings WHERE id=?','lst_synthetic_fulham_'+unit);
+   assert.equal(listing.listing.agent_role,stored.agent_role);
+   for(const key of ['owner_client_id','instructed_by_client_id','rental_recipient_email','rental_recipient_name'])
+    assert.equal(Object.hasOwn(listing.listing,key),false,key+' must stay private');
    const start=await call('/__test/start-page?slug='+slug);
    assert.equal(start.enabled,true);
    assert.equal(start.listing.title.includes('Unit '+unit+','),true);

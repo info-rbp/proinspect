@@ -64,9 +64,9 @@ test('the deployed Worker has one origin for marketing, booking, sign-in and con
   assert.match(publicLayout, /<MarketingHeader appOrigin=\{appOrigin\}/);
   const chrome = source('apps/marketing/app/components/site-chrome.tsx');
   assert.match(chrome, /PUBLIC_NAVIGATION/);
-  assert.match(chrome, /PUBLIC_NAVIGATION\.filter\(item=>item\.href!=='\/client'\)/);
+  assert.match(chrome, /PUBLIC_NAVIGATION\.filter\(\(?item\)?\s*=>\s*item\.href\s*!==\s*'\/client'\)/);
   assert.match(chrome, /navItems\.map/);
-  assert.match(chrome, /to=\{clientHref\}>Sign Up \/ Sign In/);
+  assert.match(chrome, /to=\{clientHref\}>\s*Sign Up \/ Sign In/);
 });
 
 test('the original contact form uses a signed in-process receiver instead of a second Worker', () => {

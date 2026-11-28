@@ -1,3 +1,4 @@
+import {SECONDARY_NAVIGATION} from '../packages/marketing/public-navigation.ts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -31,8 +32,8 @@ test('all and only the published 23 services receive one descriptive scope',()=>
 });
 test('existing marketing and platform routes retain legal links with draft notice',()=>{
  const i=readFileSync('apps/marketing/app/routes/information.tsx','utf8');
- const f=readFileSync('apps/marketing/app/components/site-chrome.tsx','utf8');
- for(const key of expected)assert.ok(f.includes('to="/'+key+'"'),key);
+ const links=Object.values(SECONDARY_NAVIGATION).flat().map(item=>item.href);
+ for(const key of expected)assert.ok(links.includes('/'+key),key);
  assert.match(i,/noindex, nofollow/);
  assert.match(i,/Do not treat this review draft as an approved policy or a binding contract/);
 });
