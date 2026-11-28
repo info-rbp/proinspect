@@ -31,7 +31,7 @@ test('Website Improvement Guide: About Us content, actions, positioning and reta
   const nav=page.getByRole('navigation',{name:'Primary navigation'});
   await expect(nav.getByRole('link',{name:'Who We Help'})).toHaveCount(0);
   await expect(page.locator('#who-we-help')).toBeVisible();
-  await expect(page.locator('.pi-footer-legal a')).toHaveCount(7);
+  await expect(page.locator('.pi-footer-legal a')).toHaveCount(0);
 });
 
 test('Website Improvement Guide: responsive desktop and mobile visual review evidence',async({page})=>{
@@ -52,5 +52,5 @@ test('Website Improvement Guide: responsive desktop and mobile visual review evi
   await expect(page.locator('.marketing-menu summary')).toBeVisible();
   await page.locator('.marketing-menu summary').click();
   await expect(page.getByRole('navigation',{name:'Mobile site navigation'}).getByRole('link',{name:'Who We Help'})).toHaveCount(0);
-  await expect(page.getByRole('navigation',{name:'Mobile site navigation'}).getByRole('link',{name:'About Us'})).toBeVisible();
+  await expect(page.getByRole('navigation',{name:'Mobile site navigation'}).getByRole('link',{name:'Information'})).toBeVisible();
 });

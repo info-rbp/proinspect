@@ -20,13 +20,20 @@ test('all eleven top-level menu destinations match the approved order', () => {
       assert.ok(readFileSync(file,'utf8').includes("route('"+item.href.slice(1)+"',"), item.href+' '+file);
   }
 });
-test('commercial and construction landing exceptions are rebuild-only and do not reactivate retired workflows', () => {
+test('commercial and construction editorial pages are read-only and do not reactivate retired workflows', () => {
   for (const path of ['/commercial','/commercial.data','/commercial/','/construction','/construction.data','/construction/'])
     assert.equal(residentialPublicResponse(new Request(origin+path)),null);
   for (const path of ['/commercial/new','/commercial-applications','/properties-for-lease/commercial','/strata','/construction/new','/construction-services','/sectors/construction'])
     assert.equal(residentialPublicResponse(new Request(origin+path))?.status,410);
-  for (const path of ['/commercial','/construction'])
-    assert.equal(residentialPublicResponse(new Request('https://proinspect.systems'+path))?.status,410);
+  for (const host of ['https://proinspect.systems',origin,'http://127.0.0.1:5173']) {
+    for (const path of ['/commercial','/commercial.data','/construction','/construction.data']) {
+      assert.equal(residentialPublicResponse(new Request(host+path)),null);
+      assert.equal(residentialPublicResponse(new Request(host+path,{method:'HEAD'})),null);
+      assert.equal(residentialPublicResponse(new Request(host+path,{method:'POST'}))?.status,410);
+    }
+    for(const path of ['/commercial/new','/commercial-applications','/properties-for-lease/commercial','/strata','/construction/new','/construction-services','/sectors/construction'])
+      assert.equal(residentialPublicResponse(new Request(host+path))?.status,410);
+  }
 });
 test('new editorial landings remain excluded from indexing until reviewed', () => {
   for (const path of ['/commercial','/co-spaces','/modular','/construction','/subscriptions','/information'])

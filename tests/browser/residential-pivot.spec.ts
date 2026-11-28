@@ -1,13 +1,7 @@
 import { test, expect } from '@playwright/test';
 const labels = [
-  'Residential',
-  'Co-Living',
-  'Leasing',
-  'Tenants',
-  'Maintenance',
-  'About Us',
-  'Contact',
-  'Sign Up / Sign In',
+  'Residential','Commercial','Co-Spaces','Maintenance','Modular','Construction',
+  'Tenants','Leasing','Subscriptions','Information',
 ];
 for (const width of [320, 390, 1440])
   test(`Residential public journeys at ${width}px`, async ({ page }) => {
@@ -16,6 +10,13 @@ for (const width of [320, 390, 1440])
       '/',
       '/residential',
       '/co-living',
+      '/commercial',
+      '/construction',
+      '/co-spaces',
+      '/co-spaces/co-working',
+      '/modular',
+      '/subscriptions',
+      '/information',
       '/leasing',
       '/tenants',
       '/maintenance',
@@ -42,7 +43,7 @@ for (const width of [320, 390, 1440])
           links
             .map((a) => a.getAttribute('href'))
             .filter((h) =>
-              /^\/(commercial|strata|construction|student-living)(\/|$)/.test(h || ''),
+              /^\/(commercial|strata|construction|student-living)(\/|$)/.test(h || '') && !['/commercial','/construction'].includes(h || ''),
             ),
         );
       expect(retired, path + ' retired links').toEqual([]);
@@ -57,14 +58,15 @@ for (const width of [320, 390, 1440])
     await expect(page.locator('body')).not.toContainText('$150');
     await expect(page.locator('body')).not.toContainText('$20');
     if (width < 1000) {
-      await page.getByLabel('Open site menu').click();
+      await page.getByLabel('Site menu').click();
       expect(
         await page
           .getByRole('navigation', { name: 'Mobile site navigation' })
           .getByRole('link')
           .allTextContents(),
       ).toEqual(labels);
-      await expect(page.getByRole('navigation', {name: 'Mobile site navigation'}).getByRole('link', {name: 'Sign Up / Sign In'})).toHaveAttribute('href','/contact');
+      await expect(page.getByRole('navigation', {name: 'Mobile site navigation'}).getByRole('link', {name: 'Sign Up / Sign In'})).toHaveCount(0);
+      await expect(page.locator('.mkt-header-book')).toHaveAttribute('href','/client');
       await page.keyboard.press('Escape');
       await expect(
         page.getByRole('navigation', { name: 'Mobile site navigation' }),
@@ -75,16 +77,15 @@ for (const width of [320, 390, 1440])
           .getByRole('navigation', { name: 'Primary navigation' })
           .getByRole('link')
           .allTextContents(),
-      ).toEqual(labels.slice(0, -1));
+      ).toEqual(labels);
     }
     await page.screenshot({ path: `artifacts/residential-pivot-${width}.png`, fullPage: true });
   });
 test('retired routes and forged data requests are not new acquisition', async ({ request }) => {
   for (const path of [
-    '/commercial',
     '/strata',
-    '/construction',
-    '/commercial.data',
+    '/commercial/new',
+    '/construction/new',
     '/commercial-application/session',
     '/commercial-application/recover',
     '/services/commercial-property-inspection',
@@ -93,6 +94,12 @@ test('retired routes and forged data requests are not new acquisition', async ({
     const r = await request.get(path);
     expect(r.status(), path).toBe(410);
     expect(r.headers()['x-robots-tag']).toContain('noindex');
+  }
+  for(const path of ['/commercial','/construction']){
+    const response=await request.get(path);
+    expect(response.status(),path).toBe(200);
+    expect(response.headers()['x-robots-tag']).toContain('noindex');
+    expect((await request.post(path,{data:{}})).status()).toBe(410);
   }
   const student = await request.get('/student-living', { maxRedirects: 0 });
   expect(student.status()).toBe(301);

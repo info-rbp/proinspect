@@ -3,18 +3,15 @@ import { assert, type Env } from '../database/types';
 import { email as emailSchema } from '../validation/index';
 import { createVerifiedSession, requireOrigin } from './server';
 
-const allowedOrigins = new Set([
-  'https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev',
-  'https://proinspect-rebuild.delicate-dream-e4c9.workers.dev',
-]);
+const origin = 'https://proinspect-v3-staging.delicate-dream-e4c9.workers.dev';
 export const STAGING_ACCESS_ISSUER = 'https://delicate-dream-e4c9.cloudflareaccess.com';
 const keys = createRemoteJWKSet(new URL('/cdn-cgi/access/certs', STAGING_ACCESS_ISSUER));
 
 export function stagingAccess(request: Request, env: Env) {
   return (
     env.APP_ENV === 'staging' &&
-    allowedOrigins.has(env.APP_ORIGIN) &&
-    new URL(request.url).origin === env.APP_ORIGIN &&
+    env.APP_ORIGIN === origin &&
+    new URL(request.url).origin === origin &&
     /^[a-f0-9]{64}$/.test(env.STAGING_ACCESS_AUD ?? '')
   );
 }

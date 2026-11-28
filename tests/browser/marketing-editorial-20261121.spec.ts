@@ -45,7 +45,7 @@ test('Residential discovery, legal gating and responsive reflow work at small an
    expect(response?.status(),path).toBe(200);
    await expect(page.locator('h1')).toBeVisible();
    expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),path+' @ '+width+'px').toBe(false);
-   const retired=await page.locator('a[href]').evaluateAll(links=>links.map(x=>x.getAttribute('href')).filter(h=>/^\/(commercial|strata|construction|student-living)(\/|$)/.test(h||'')));
+   const retired=await page.locator('a[href]').evaluateAll(links=>links.map(x=>x.getAttribute('href')).filter(h=>/^\/(commercial|strata|construction|student-living)(\/|$)/.test(h||'')&&!['/commercial','/construction'].includes(h||'')));
    expect(retired).toEqual([]);
   }
  }

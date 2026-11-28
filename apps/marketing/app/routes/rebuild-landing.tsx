@@ -16,7 +16,7 @@ const landings: Record<string, Landing> = {
     intro: 'Explore property support for commercial premises and discuss your requirements with ProInspect.',
     image: 'commercial',
     heading: 'Discuss your property requirements.',
-    note: 'Commercial service scopes and availability are being reviewed as part of the rebuild. This information page does not enable commercial bookings, paid plans or new commercial account access.',
+    note: 'Commercial service scopes and availability are being reviewed. Contact ProInspect to discuss your requirements. Commercial bookings and paid plans are not currently available through this page.',
     resources: [
       { title: 'Property requirements', description: 'Outline your property type, the work you need and the outcomes you want to discuss.', href: '/contact', action: 'Contact ProInspect' },
       { title: 'Maintenance support', description: 'Explore the existing maintenance information and discuss the appropriate scope for your property.', href: '/maintenance', action: 'Explore maintenance' },
@@ -39,7 +39,7 @@ const landings: Record<string, Landing> = {
   modular: {
     label: 'Modular',
     title: 'Modular.',
-    intro: 'The Modular section is being developed as part of the ProInspect website rebuild.',
+    intro: 'Explore modular building possibilities and discuss your property requirements with ProInspect.',
     image: 'modular',
     heading: 'Modular information and enquiries.',
     note: 'The detailed Modular offering and its service boundaries are yet to be specified. No new service, pricing or booking availability is represented on this page.',
@@ -54,7 +54,7 @@ const landings: Record<string, Landing> = {
     intro: 'Explore the Construction section of ProInspect and discuss your property or project requirements.',
     image: 'construction',
     heading: 'Construction information and enquiries.',
-    note: 'Construction service scopes and availability are being reviewed as part of the rebuild. This information page does not activate new construction bookings, pricing or paid services.',
+    note: 'Construction service scopes and availability are being reviewed. Contact ProInspect to discuss your project. Construction bookings and paid services are not currently available through this page.',
     resources: [
       { title: 'Project requirements', description: 'Tell us about your construction project, its stage and the support you would like to discuss.', href: '/contact', action: 'Contact ProInspect' },
       { title: 'Existing property services', description: 'Explore existing property service information while the Construction offering is being developed.', href: '/services', action: 'Explore services' },
