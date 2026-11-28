@@ -6,10 +6,10 @@ import { residentialPublicResponse } from '../packages/domain/residential-policy
 import { isMarketingStylePath, shouldIndexPublicPage } from '../apps/platform/app/lib/public-routes.ts';
 
 const origin = 'https://proinspect-rebuild.delicate-dream-e4c9.workers.dev';
-test('all ten top-level menu destinations match the approved order', () => {
+test('all eleven top-level menu destinations match the approved order', () => {
   assert.deepEqual(PUBLIC_NAVIGATION.map(x=>[x.label,x.href]), [
     ['Residential','/residential'],['Commercial','/commercial'],['Co-Spaces','/co-spaces'],
-    ['Maintenance','/maintenance'],['Modular','/modular'],['Tenants','/tenants'],
+    ['Maintenance','/maintenance'],['Modular','/modular'],['Construction','/construction'],['Tenants','/tenants'],
     ['Leasing','/leasing'],['Subscriptions','/subscriptions'],['Information','/information'],
     ['Sign Up / Sign In','/client'],
   ]);
@@ -20,14 +20,15 @@ test('all ten top-level menu destinations match the approved order', () => {
       assert.ok(readFileSync(file,'utf8').includes("route('"+item.href.slice(1)+"',"), item.href+' '+file);
   }
 });
-test('commercial landing exception is rebuild-only and does not reactivate commercial workflows', () => {
-  for (const path of ['/commercial','/commercial.data','/commercial/'])
+test('commercial and construction landing exceptions are rebuild-only and do not reactivate retired workflows', () => {
+  for (const path of ['/commercial','/commercial.data','/commercial/','/construction','/construction.data','/construction/'])
     assert.equal(residentialPublicResponse(new Request(origin+path)),null);
-  for (const path of ['/commercial/new','/commercial-applications','/properties-for-lease/commercial','/strata','/construction'])
+  for (const path of ['/commercial/new','/commercial-applications','/properties-for-lease/commercial','/strata','/construction/new','/construction-services','/sectors/construction'])
     assert.equal(residentialPublicResponse(new Request(origin+path))?.status,410);
-  assert.equal(residentialPublicResponse(new Request('https://proinspect.systems/commercial'))?.status,410);
+  for (const path of ['/commercial','/construction'])
+    assert.equal(residentialPublicResponse(new Request('https://proinspect.systems'+path))?.status,410);
 });
 test('new editorial landings remain excluded from indexing until reviewed', () => {
-  for (const path of ['/commercial','/co-spaces','/modular','/subscriptions','/information'])
+  for (const path of ['/commercial','/co-spaces','/modular','/construction','/subscriptions','/information'])
     assert.equal(shouldIndexPublicPage(path,'https://proinspect.systems','production'),false);
 });

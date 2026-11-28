@@ -52,9 +52,9 @@ export function residentialPublicResponse(request: Request): Response | null {
   const path = url.pathname.replace(/\.data$/, '').replace(/\/+$/, '');
   if (path === '/student-living')
     return new Response(null, { status: 301, headers: { Location: '/co-living' } });
-  // Rebuild-only editorial landing, not a reopening of retired commercial workflows.
-  // Keep the production retirement rules and all deeper commercial paths intact.
-  if (path === '/commercial' && url.origin === 'https://proinspect-rebuild.delicate-dream-e4c9.workers.dev') return null;
+  // Rebuild-only editorial landings, not a reopening of retired service workflows.
+  // Keep the production retirement rules and all deeper retired paths intact.
+  if (['/commercial', '/construction'].includes(path) && url.origin === 'https://proinspect-rebuild.delicate-dream-e4c9.workers.dev') return null;
   if (!retiredPublicPath(path)) return null;
   return new Response(
     'This offering is no longer available. Explore Residential services at /residential or contact info@proinspect.systems. Existing account records remain available through sign-in.',

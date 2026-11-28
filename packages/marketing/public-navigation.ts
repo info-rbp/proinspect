@@ -5,6 +5,7 @@ export const PUBLIC_NAVIGATION = [
  {label:'Co-Spaces',href:'/co-spaces'},
  {label:'Maintenance',href:'/maintenance'},
  {label:'Modular',href:'/modular'},
+ {label:'Construction',href:'/construction'},
  {label:'Tenants',href:'/tenants'},
  {label:'Leasing',href:'/leasing'},
  {label:'Subscriptions',href:'/subscriptions'},

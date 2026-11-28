@@ -17,7 +17,7 @@ export default [
   route('co-living', 'routes/service-overview.tsx', { id: 'sector-overview-co-living' }),
   route('co-living/:topic', 'routes/co-living-guide.tsx'),
   route('student-living', 'routes/service-overview.tsx', { id: 'sector-overview-student-living' }),
-  route('construction', 'routes/service-overview.tsx', { id: 'sector-overview-construction' }),
+  route('construction', 'routes/rebuild-landing.tsx', { id: 'marketing-landing-construction' }),
   route('leasing', 'routes/leasing-index.tsx', { id: 'leasing-main' }),
   route('maintenance', 'routes/service-overview.tsx', { id: 'sector-overview-maintenance' }),
   route('tenants', 'routes/tenants.tsx'),

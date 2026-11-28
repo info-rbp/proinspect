@@ -46,6 +46,18 @@ const landings: Record<string, Landing> = {
       { title: 'Existing property services', description: 'Explore the existing service information in the meantime.', href: '/services', action: 'Explore services' },
     ],
   },
+  construction: {
+    label: 'Construction',
+    title: 'Construction property services.',
+    intro: 'Explore the Construction section of ProInspect and discuss your property or project requirements.',
+    image: 'construction',
+    heading: 'Construction information and enquiries.',
+    note: 'Construction service scopes and availability are being reviewed as part of the rebuild. This information page does not activate new construction bookings, pricing or paid services.',
+    resources: [
+      { title: 'Project requirements', description: 'Tell us about your construction project, its stage and the support you would like to discuss.', href: '/contact', action: 'Contact ProInspect' },
+      { title: 'Existing property services', description: 'Explore existing property service information while the Construction offering is being developed.', href: '/services', action: 'Explore services' },
+    ],
+  },
   subscriptions: {
     label: 'Subscriptions',
     title: 'Explore ProInspect subscriptions.',
@@ -88,7 +100,7 @@ export default function RebuildLanding() {
   const page = useLoaderData<typeof loader>();
   return <>
     <EditorialHero eyebrow={page.label} title={page.title} intro={page.intro} image={page.image}
-      primary={{ label: page.label === 'Modular' || page.label === 'Commercial' ? 'Contact ProInspect' : 'Explore information', to: page.label === 'Modular' || page.label === 'Commercial' ? '/contact' : '#landing-options' }} />
+      primary={{ label: ['Modular', 'Commercial', 'Construction'].includes(page.label) ? 'Contact ProInspect' : 'Explore information', to: ['Modular', 'Commercial', 'Construction'].includes(page.label) ? '/contact' : '#landing-options' }} />
     <section className="mkt-section pi-editorial-section pi-neutral" id="landing-options">
       <div className="site-container">
         <div className="pi-section-heading">

@@ -17,7 +17,7 @@
     padding: 0;
     overflow: visible;
     justify-content: center;
-    gap: clamp(.6rem, 1.05vw, 1.25rem);
+    gap: clamp(.55rem, .85vw, 1.1rem);
   }
   .site .mkt-site-header .mkt-site-links > a {
     font-size: clamp(.74rem, 1.04vw, .89rem);

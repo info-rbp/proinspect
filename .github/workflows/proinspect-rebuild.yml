@@ -43,7 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           origin=https://proinspect-rebuild.delicate-dream-e4c9.workers.dev
-          for path in / /services /residential /commercial /co-spaces /maintenance /modular /tenants /leasing /subscriptions /information /client /signin /signup; do
+          for path in / /services /residential /commercial /co-spaces /maintenance /modular /construction /tenants /leasing /subscriptions /information /client /signin /signup; do
             code=$(curl --silent --show-error --retry 3 --max-time 30 -D /tmp/rebuild-headers -o /tmp/rebuild-page -w '%{http_code}' "$origin$path")
             test "$code" = 200
             grep -qi 'ProInspect' /tmp/rebuild-page

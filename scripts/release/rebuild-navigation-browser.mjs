@@ -7,7 +7,7 @@ assert.equal(process.env.GITHUB_REPOSITORY,'info-rbp/proinspect');
 assert.equal(process.env.GITHUB_REF,'refs/heads/proinspect-rebuild');
 const expected = [
  ['Residential','/residential'],['Commercial','/commercial'],['Co-Spaces','/co-spaces'],
- ['Maintenance','/maintenance'],['Modular','/modular'],['Tenants','/tenants'],
+ ['Maintenance','/maintenance'],['Modular','/modular'],['Construction','/construction'],['Tenants','/tenants'],
  ['Leasing','/leasing'],['Subscriptions','/subscriptions'],['Information','/information'],
 ];
 const out='artifacts/rebuild-navigation';
@@ -61,8 +61,8 @@ try {
     const box=await nav.boundingBox();
     assert.ok(box.x>=-1 && box.x+box.width<=width+1,'Mobile menu overflow at '+width);
     await page.screenshot({path:out+'/mobile-'+width+'.png'});
-    await nav.getByRole('link',{name:'Information',exact:true}).click();
-    await expect(page).toHaveURL(origin+'/information');
+    await nav.getByRole('link',{name:'Construction',exact:true}).click();
+    await expect(page).toHaveURL(origin+'/construction');
     await expect(header.locator('details')).not.toHaveAttribute('open','');
     evidence.mobile.push(width);
   }
