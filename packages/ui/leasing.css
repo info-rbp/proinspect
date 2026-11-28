@@ -201,3 +201,11 @@
  .pi-leasing-lightbox-image {height:min(52dvh,450px)}
  .pi-leasing-gallery-grid {gap:6px}
 }
+
+.pi-leasing-gallery-grid.triple {grid-template-columns:2fr 1fr}
+.pi-leasing-gallery-grid.quad {grid-template-columns:repeat(2,minmax(0,1fr))}
+.pi-leasing-gallery-grid.quad .pi-leasing-gallery-thumb:first-child {grid-row:auto}
+@media(max-width:800px){
+ .pi-leasing-gallery-grid.triple,.pi-leasing-gallery-grid.quad {grid-template-columns:repeat(2,minmax(0,1fr))}
+ .pi-leasing-gallery-grid.quad .pi-leasing-gallery-thumb:first-child {grid-column:auto;aspect-ratio:1.6}
+}

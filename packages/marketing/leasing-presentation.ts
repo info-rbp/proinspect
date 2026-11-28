@@ -14,7 +14,7 @@ export function leasingResultsUrl(type:unknown,q:unknown):string {
 }
 export function leasingSearchSuffix(type:unknown,q:unknown):string {
   const url=leasingResultsUrl(type,q);
-  return url.slice('/leasing'.length,url.indexOf('#'));
+  return url.slice('/leasing'.length,url.indexOf('#'))||'?type=';
 }
 export function leasingDate(value:unknown):string|null {
   if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return null;

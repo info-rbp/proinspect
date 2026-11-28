@@ -15,7 +15,7 @@ export const meta=()=>seo('Properties for Lease & Open Homes — Western Austral
 type Listing={id:string;kind:string;slug:string;title:string;display_address:string;suburb:string;postcode:string;price_cents:number|null;price_period:string;bedrooms:number|null;bathrooms:number|null;parking:number|null;area_sqm:number|null;available_from:string|null;application_mode:string;application_url:string|null;photo_count:number;inspection_count:number;available_inspection_count:number;next_inspection_at:string|null;demo:boolean;applicationReady:boolean|null};
 export async function loader({context,request}:LoaderFunctionArgs){
  const env=context.get(runtimeContext).env as Env;
- const url=new URL(request.url),type=leasingPropertyType(url.searchParams.get('type')),q=url.searchParams.get('q')??'';
+ const url=new URL(request.url),type=leasingPropertyType(url.searchParams.get('type')),q=(url.searchParams.get('q')??'').slice(0,240);
  const rows=await publicListings(env) as unknown as Omit<Listing,'demo'|'applicationReady'>[];
  const visible=rows.filter(p=>!isLeasingDemoListing(p.id)||env.APP_ENV!=='production');
  const selected=filterLeasingListings(visible,type,q);
@@ -50,7 +50,7 @@ function PropertyCard({property,suffix}:{property:Listing;suffix:string}){
     {date&&<p className="pi-leasing-availability"><strong>Available from:</strong> {date}</p>}
     <div className="pi-leasing-card-status"><p>{listingInspectionLabel(property.inspection_count,property.available_inspection_count,property.next_inspection_at)}</p><p>{listingApplicationLabel(property.application_mode,Boolean(safeApplicationUrl(property.application_url)),property.applicationReady)}</p></div>
    </>}
-   <Link className="pi-inline-link pi-leasing-card-link" to={url} aria-label={(property.demo?'Preview demonstration property: ':'View property: ')+property.title}>{property.demo?'Preview demonstration property':'View property, inspections & applications'} <span aria-hidden="true">→</span></Link>
+   <Link className="pi-inline-link pi-leasing-card-link" to={url} aria-label={(property.demo?'Preview demonstration property: ':'View property, inspections & applications: ')+property.title}>{property.demo?'Preview demonstration property':'View property, inspections & applications'} <span aria-hidden="true">→</span></Link>
   </div>
  </article>;
 }
@@ -62,7 +62,7 @@ const steps=[
 export default function LeasingIndex(){
  const {listings}=useLoaderData<typeof loader>();
  const [params]=useSearchParams();
- const kind=leasingPropertyType(params.get('type')),q=(params.get('q')??'').trim();
+ const kind=leasingPropertyType(params.get('type')),q=(params.get('q')??'').trim().slice(0,240);
  const items=filterLeasingListings(listings,kind,q),live=items.filter(p=>!p.demo),demos=items.filter(p=>p.demo);
  const selectedTypeLabel=leasingPropertyTypeLabel(kind);
  const suffix=leasingSearchSuffix(kind,q);

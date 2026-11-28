@@ -49,6 +49,7 @@ test('property presentation separates known fixture and preserves safe search pa
  assert.equal(leasingResultsUrl('co-working',' Perth '),'/leasing?type=co-working&q=Perth#available-properties');
  assert.equal(leasingResultsUrl('https://example.invalid',''),' /leasing#available-properties'.trim());
  assert.equal(leasingSearchSuffix('residential','Perth'),'?type=residential&q=Perth');
+ assert.equal(leasingSearchSuffix('',''),'?type=');
  assert.equal(leasingDate('2026-02-30'),null);
  assert.equal(leasingDate('2026-12-01'),'1 December 2026');
  assert.deepEqual(listingFacts({kind:'commercial',bedrooms:3,area_sqm:150,parking:2}),[{label:'Car bays',value:'2'},{label:'Floor area',value:'150 m²'}]);

@@ -18,12 +18,13 @@ const alternative=(photo:ListingPhoto,index:number)=>photo.alt_text?.trim()||'Pr
 
 export function LeasingGallery({photos}:{photos:ListingPhoto[]}){
  const [active,setActive]=useState(0);
+ const [viewerOpen,setViewerOpen]=useState(false);
  const dialog=useRef<HTMLDialogElement>(null);
  const trigger=useRef<HTMLElement|null>(null);
  const closeButton=useRef<HTMLButtonElement>(null);
  const count=photos.length;
  function open(index:number,button:HTMLElement){
-   setActive(index);trigger.current=button;
+   setActive(index);setViewerOpen(true);trigger.current=button;
    dialog.current?.showModal();
    closeButton.current?.focus();
  }
@@ -41,7 +42,7 @@ export function LeasingGallery({photos}:{photos:ListingPhoto[]}){
  const photo=photos[Math.min(active,count-1)];
  return <section id="leasing-gallery" className="leasing-showcase" aria-labelledby="leasing-gallery-heading"><div className="site-container">
   <div className="leasing-showcase-heading"><h2 id="leasing-gallery-heading">Property photographs</h2><span>{count} {count===1?'photo':'photos'}</span></div>
-  <div className={'pi-leasing-gallery-grid'+(count===1?' single':count===2?' pair':'')}>
+  <div className={'pi-leasing-gallery-grid'+(count===1?' single':count===2?' pair':count===3?' triple':count===4?' quad':'')}>
    {photos.slice(0,5).map((p,i)=><button key={p.id} type="button" className="pi-leasing-gallery-thumb" aria-label={'View photo '+(i+1)+' of '+count+': '+alternative(p,i)} onClick={e=>open(i,e.currentTarget)}>
     <ListingPhotoMedia key={p.id} src={source(p.id)} alt={alternative(p,i)} priority={i===0}/>
    </button>)}
@@ -50,10 +51,10 @@ export function LeasingGallery({photos}:{photos:ListingPhoto[]}){
    <p className="small">Photographs supplied for this listing.</p>
    <button type="button" className="button secondary" onClick={e=>open(0,e.currentTarget)}>{count===1?'Enlarge photograph':'View all '+count+' photos'}</button>
   </div>
-  <dialog ref={dialog} className="pi-leasing-lightbox" aria-labelledby="leasing-photo-viewer-title" onKeyDown={keys} onClose={()=>trigger.current?.focus()} onClick={e=>{if(e.target===e.currentTarget)dialog.current?.close()}}>
+  <dialog ref={dialog} className="pi-leasing-lightbox" aria-labelledby="leasing-photo-viewer-title" onKeyDown={keys} onClose={()=>{setViewerOpen(false);trigger.current?.focus()}} onClick={e=>{if(e.target===e.currentTarget)dialog.current?.close()}}>
    <div className="pi-leasing-lightbox-content">
     <div className="pi-leasing-lightbox-top"><h2 id="leasing-photo-viewer-title">Property photographs</h2><button type="button" ref={closeButton} className="button secondary" onClick={()=>dialog.current?.close()}>Close</button></div>
-    <div className="pi-leasing-lightbox-image">{photo&&<ListingPhotoMedia key={photo.id} src={source(photo.id)} alt={alternative(photo,active)}/>}</div>
+    <div className="pi-leasing-lightbox-image">{viewerOpen&&photo&&<ListingPhotoMedia priority key={photo.id} src={source(photo.id)} alt={alternative(photo,active)}/>}</div>
     <div className="pi-leasing-lightbox-controls">
      <button type="button" className="button secondary" disabled={count<2} onClick={()=>move(-1)}>Previous photo</button>
      <p role="status" aria-live="polite">Photo {active+1} of {count}</p>
