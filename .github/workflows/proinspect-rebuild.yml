@@ -40,7 +40,7 @@ jobs:
       - name: Check source and staging authentication
         run: |
           pnpm typecheck
-          node --experimental-strip-types --test tests/rebuild-navigation.test.ts tests/client-portal-foundation.test.ts tests/unified-site.test.ts
+          node --experimental-strip-types --test tests/rebuild-navigation.test.ts tests/rebuild-leasing.test.ts tests/client-portal-foundation.test.ts tests/unified-site.test.ts
           node tests/runtime/staging-signin.mjs
       - name: Build and validate dedicated rebuild Worker
         run: node scripts/deploy/rebuild.mjs build
@@ -76,6 +76,8 @@ jobs:
       - name: Audit deployed home page performance, images and accessibility
         if: success()
         run: node scripts/release/rebuild-home-audit.mjs final
+      - name: Verify leasing filters and review listing presentation
+        run: node scripts/release/rebuild-leasing-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

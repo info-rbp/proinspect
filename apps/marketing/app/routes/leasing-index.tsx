@@ -13,13 +13,14 @@ import {
   propertyUrl,
   handoffDisclaimer,
 } from '../../../../packages/marketing/leasing';
+import { LEASING_PROPERTY_TYPES, leasingPropertyType, leasingPropertyTypeLabel, filterLeasingListings } from '../../../../packages/marketing/leasing-property-types';
 import { seo } from '../lib/seo';
 import { EditorialHero } from '../components/editorial';
 import '../../../../packages/ui/leasing.css';
 export const meta = () =>
   seo(
     'Properties for Lease & Open Homes — Western Australia',
-    'Browse available residential properties, register for an open home and follow the property’s rental application instructions.',
+    'Browse published properties for lease, explore available inspection sessions and follow the advertised application instructions.',
     '/leasing',
     { noindex: true },
   );
@@ -31,16 +32,10 @@ export default function LeasingIndex() {
   const { listings } = useLoaderData<typeof loader>();
   const [params] = useSearchParams();
   const { pathname } = useLocation();
-  const kind = params.get('type') ?? '',
-    q = (params.get('q') ?? '').trim().toLowerCase();
-  const items = listings.filter(
-    (x: any) =>
-      (!kind || x.kind === kind) &&
-      (!q ||
-        String(x.suburb + ' ' + x.postcode + ' ' + x.display_address + ' ' + x.title)
-          .toLowerCase()
-          .includes(q)),
-  );
+  const kind = leasingPropertyType(params.get('type'));
+  const q = (params.get('q') ?? '').trim();
+  const selectedTypeLabel = leasingPropertyTypeLabel(kind);
+  const items = filterLeasingListings(listings, kind, q);
   return (
     <>
       <EditorialHero
@@ -60,11 +55,11 @@ export default function LeasingIndex() {
             <p className="eyebrow">Current opportunities</p>
             <h2>Current Properties Available.</h2>
             <p>
-              Browse published residential opportunities. Choose a property to see
-              its photos, inspection sessions and application information.
+              Browse published properties for lease. Choose a property to see its available photos,
+              inspection sessions and application information.
             </p>
           </div>
-          <form className="leasing-filters" method="get">
+          <form className="leasing-filters" method="get" key={params.toString()} action={pathname + '#available-properties'} aria-label="Search properties for lease">
             <label>
               Find a suburb or address
               <input
@@ -78,8 +73,7 @@ export default function LeasingIndex() {
               Property type
               <select name="type" defaultValue={kind}>
                 <option value="">All types</option>
-                <option value="residential">Residential</option>
-
+                {LEASING_PROPERTY_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
               </select>
             </label>
             <button className="button">Search properties</button>
@@ -92,9 +86,11 @@ export default function LeasingIndex() {
             <div className="panel pi-leasing-empty">
               <h3>No properties currently match.</h3>
               <p>
-                Try another suburb or property type. Only approved, published listings appear here.
+                {selectedTypeLabel && !q
+                  ? `There are no published ${selectedTypeLabel} listings available at present. Try another property type or view all properties.`
+                  : 'Try another suburb or property type. Only approved, published listings appear here.'}
               </p>
-              <Link className="pi-inline-link" to={pathname}>
+              <Link className="pi-inline-link" to={pathname + '#available-properties'}>
                 View all properties <span aria-hidden="true">→</span>
               </Link>
             </div>
@@ -117,7 +113,7 @@ export default function LeasingIndex() {
                   </Link>
                   <div className="pi-listing-body">
                     <p className="eyebrow">
-                      {property.kind === 'commercial' ? 'Commercial' : 'Residential'} ·{' '}
+                      {leasingPropertyTypeLabel(property.kind) ?? 'Property'} ·{' '}
                       {property.suburb}
                     </p>
                     <h3>
@@ -143,7 +139,7 @@ export default function LeasingIndex() {
                             .join(' · ')
                         : property.area_sqm != null
                           ? `${property.area_sqm.toLocaleString()} m²`
-                          : 'Commercial property'}
+                          : `${leasingPropertyTypeLabel(property.kind) ?? 'Property'} listing`}
                     </p>
                     <p className="small">Inspections facilitated by ProInspect</p>
                     <Link className="pi-inline-link" to={propertyUrl(property.kind, property.slug)}>
@@ -172,8 +168,7 @@ export default function LeasingIndex() {
               <span className="pi-step-number">01</span>
               <h3>Explore current properties</h3>
               <p>
-                Review residential property details, available photos and advertised
-                inspection sessions.
+                Review property details, available photos and advertised inspection sessions.
               </p>
             </li>
             <li>
