@@ -15,7 +15,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 78px;
+  min-height: 64px;
   gap: .8rem;
 }
 .site .mkt-site-header .mkt-header-identity .mkt-brand {
@@ -35,7 +35,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 50px;
+  min-height: 46px;
   border-top: 1px solid rgba(255,255,255,.14);
 }
 @media (min-width: 1024px) {
@@ -57,15 +57,15 @@
     border-bottom: 2px solid transparent;
     padding-bottom: 0;
   }
-  .site .mkt-site-header .mkt-site-links > a[aria-current='page'] {
+  .site .mkt-site-header .mkt-site-links > a[aria-current] {
     border-bottom-color: #f0d2a3;
   }
   .site .mkt-site-header .marketing-menu { display: none; }
 }
 @media (max-width: 1023px) {
   .site .mkt-site-header .mkt-site-links { display: none !important; }
-  .site .mkt-site-header .mkt-header-identity { min-height: 66px; }
-  .site .mkt-site-header .mkt-header-navigation { min-height: 46px; }
+  .site .mkt-site-header .mkt-header-identity { min-height: 60px; }
+  .site .mkt-site-header .mkt-header-navigation { min-height: 44px; }
   .site .mkt-site-header .marketing-menu {
     display: block;
     margin: 0;
@@ -93,4 +93,25 @@
     padding-inline: .55rem;
     font-size: .69rem;
   }
+}
+
+/* Persistent, compact two-row navigation. Do not animate header height:
+   stable geometry keeps the page from jumping as the user scrolls. */
+.site .mkt-header-wrap { position:sticky; top:0; z-index:30; }
+html:has(body.site .mkt-header-wrap) { scroll-padding-top:126px; }
+.site .mkt-site-header .mkt-header-identity .mkt-header-book { min-height:44px; }
+.site .mkt-site-header .mkt-site-links > a[aria-current] { color:#f0d2a3; }
+.site .mkt-site-header .marketing-menu nav a[aria-current] {
+  color:#102e35; background:#e7efeb; border-inline-start:3px solid #147b79; font-weight:700;
+}
+.site .mkt-header-wrap :focus-visible,.site .mkt-site-footer :focus-visible {outline:3px solid #f0d2a3;outline-offset:3px;}
+.site .mkt-site-header .marketing-menu nav a:focus-visible {outline:3px solid #0e6a65;outline-offset:-3px;}
+.site .pi-footer-actions a { min-height:44px; }
+@media(max-width:1023px) {
+  html:has(body.site .mkt-header-wrap) { scroll-padding-top:120px; }
+  .site .mkt-site-header .marketing-menu nav {max-height:min(68vh,calc(100dvh - 125px),36rem);}
+}
+@media(max-height:360px) {
+  .site .mkt-header-wrap {position:relative;}
+  html:has(body.site .mkt-header-wrap) {scroll-padding-top:0;}
 }

@@ -1,9 +1,12 @@
 import {useEffect,useRef} from 'react';
 import {Link,useLocation} from 'react-router';
-import {PUBLIC_NAVIGATION} from '../../../../packages/marketing/public-navigation';
+import {PUBLIC_NAVIGATION,activePublicCategory} from '../../../../packages/marketing/public-navigation';
 export function MarketingHeader({appOrigin=''}:{appOrigin?:string}){
  const {pathname}=useLocation();const mobileMenu=useRef<HTMLDetailsElement>(null);
  const clientHref=appOrigin.replace(/\/$/,'')+'/client';
+ const navItems=PUBLIC_NAVIGATION.filter(item=>item.href!=='/client');
+ const active=activePublicCategory(pathname);
+ const current=(href:string)=>pathname.replace(/\/+$/,'')===href?'page':active===href?'location':undefined;
  useEffect(()=>{if(mobileMenu.current)mobileMenu.current.open=false},[pathname]);
  useEffect(()=>{
   const outside=(event:PointerEvent)=>{const menu=mobileMenu.current;if(menu?.open&&!menu.contains(event.target as Node))menu.open=false};
@@ -17,10 +20,10 @@ export function MarketingHeader({appOrigin=''}:{appOrigin?:string}){
    <div className="mkt-header-actions"><Link className="button mkt-header-book" to={clientHref}>Sign Up / Sign In</Link></div>
   </div>
   <div className="mkt-header-navigation">
-   <nav className="site-links mkt-site-links" aria-label="Primary navigation">{PUBLIC_NAVIGATION.filter(item=>item.href!=='/client').map(item=>
-    <Link key={item.href} to={item.href} aria-current={pathname===item.href?'page':undefined}>{item.label}</Link>)}</nav>
-   <details className="marketing-menu" ref={mobileMenu}><summary aria-label="Open site menu"><span aria-hidden="true">☰</span><span>Menu</span></summary>
-    <nav aria-label="Mobile site navigation">{PUBLIC_NAVIGATION.map(item=><Link key={item.href} to={item.href === "/client" ? clientHref : item.href} aria-current={pathname===item.href?'page':undefined}>{item.label}</Link>)}</nav>
+   <nav className="site-links mkt-site-links" aria-label="Primary navigation">{navItems.map(item=>
+    <Link key={item.href} to={item.href} aria-current={current(item.href)}>{item.label}</Link>)}</nav>
+   <details className="marketing-menu" ref={mobileMenu}><summary aria-label="Site menu"><span aria-hidden="true">☰</span><span>Menu</span></summary>
+    <nav aria-label="Mobile site navigation">{navItems.map(item=><Link key={item.href} to={item.href} aria-current={current(item.href)} onClick={()=>{if(mobileMenu.current)mobileMenu.current.open=false}}>{item.label}</Link>)}</nav>
    </details>
   </div>
  </header></div></div>
@@ -29,7 +32,7 @@ export function MarketingFooter(_props:{appOrigin?:string}={}){
  return <footer className="site-footer mkt-site-footer"><div className="site-container">
   <div className="mkt-footer-top pi-footer-compact">
    <div className="mkt-footer-intro"><Link className="brand inverse" to="/">ProInspect<span>PROPERTY SERVICES</span></Link>
-    <p>Providing Innovative Property Inspection and Outsourcing Solutions to Private Landlords and Property Managers across Western Australia.</p>
+    <p>Providing innovative property solutions and practical support across residential and commercial properties, shared spaces and building projects in Western Australia.</p>
    </div>
    <nav className="pi-footer-actions" aria-label="Footer navigation">
     <Link to="/help-centre">Help Centre</Link>

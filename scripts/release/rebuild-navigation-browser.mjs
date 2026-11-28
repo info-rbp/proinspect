@@ -26,7 +26,7 @@ async function verifyFooter(page,width){
   await expect(footer.locator('.mkt-footer-bottom')).toContainText('ABN 52 703 550 609');
   await expect(footer.locator('.mkt-footer-bottom')).toContainText('ACN 703 550 609');
   await expect(footer.locator('.mkt-footer-bottom a')).toHaveCount(0);
-  await expect(footer.locator('.mkt-footer-intro p')).toHaveText('Providing Innovative Property Inspection and Outsourcing Solutions to Private Landlords and Property Managers across Western Australia.');
+  await expect(footer.locator('.mkt-footer-intro p')).toHaveText('Providing innovative property solutions and practical support across residential and commercial properties, shared spaces and building projects in Western Australia.');
   const boxes=await links.evaluateAll(items=>items.map(x=>{const r=x.getBoundingClientRect();return {left:r.left,right:r.right};}));
   assert.ok(boxes.every(r=>r.left>=-1&&r.right<=width+1),'Footer overflows at '+width);
   await footer.screenshot({path:out+'/footer-'+width+'.png'});
@@ -34,16 +34,17 @@ async function verifyFooter(page,width){
 }
 const plans=['Inspections Subscription','Outsourced Subscription','Co-Living Subscription','Co-Working Subscription','Commercial Property Support Subscription'];
 const finalHomeCopy={
-  "hero": "From Residential Homes to Co-Living Spaces, ProInspect helps realise potential in properties and provide the necessary support that landlords and agencies need with innovative solutions in the modern world",
-  "coLiving": "Let us help you discover a more connected approach to shared living with property set-up, resident support and on-going care",
-  "commercial": "Take the stress out of your commercial properties with regular inspections, tenant engagement and support when things go wrong with our commercial property solutions",
-  "coWorking": "Convert your commercial space into a co-working space with flexible tailored workspaces, shared environments and fully managed solutions",
-  "construction": "Take the stress out of your construction project and keep your project on track with our Construction Project Management Services",
-  "leasing": "Find your next place with ProInspect. Browse our available homes, see when the next advertised open home is and submit an application online"
+  "hero": "From residential and commercial properties to shared spaces and building projects, ProInspect helps unlock the potential of your property through innovative solutions, practical expertise and support designed around your needs.",
+  "coLiving": "Let us help you discover a more connected approach to shared living, with property setup, resident support and ongoing care.",
+  "commercial": "Take the stress out of managing your commercial properties with regular inspections, tenant engagement and responsive support when you need it most.",
+  "coWorking": "Transform your commercial property into a co-working space with flexible, tailored workspaces, shared environments and fully managed solutions.",
+  "construction": "Take the stress out of your construction project and keep it on track with our dedicated construction project management services.",
+  "leasing": "Find your next place with ProInspect. Browse our available homes, discover upcoming open homes and follow the advertised online application process where available."
 };
 async function imageLoaded(img) {
   await img.scrollIntoViewIfNeeded();
   await expect.poll(()=>img.evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
+  await img.evaluate(el=>el.decode());
 }
 async function verifyHome(page,width) {
   const home=page.locator('.pi-home-rebuild');
@@ -94,7 +95,17 @@ async function verifyHome(page,width) {
     assert.ok(layout.ix>=-1&&layout.ir<=width+1&&layout.tx>=-1&&layout.tr<=width+1,'Feature overflow '+id+' at '+width);
     assert.ok(width<=800?layout.ib<=layout.ty+1:(layout.ir<=layout.tx+1||layout.tr<=layout.ix+1),'Feature layout overlaps '+id+' at '+width);
   }
+  // Decode the hero too, and return to the top before full-page capture.
+  // Scrolling lazy images into view alone does not prove their pixels were painted.
+  for(const img of await home.locator('img').all())await imageLoaded(img);
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   if([1440,390].includes(width))await page.screenshot({path:out+'/home-'+width+'.png',fullPage:true});
+  await expect(home.locator('.pi-home-service-card a')).toHaveCount(7);
+  const commitment=home.locator('#customer-commitment');
+  assert.ok(await commitment.evaluate(el=>Math.abs(el.querySelector('.pi-home-stacked-heading > p:not(.eyebrow)').getBoundingClientRect().width-el.querySelector('.pi-home-principles').getBoundingClientRect().width)<=3),'Commitment copy width');
+  await page.evaluate(()=>window.scrollTo({top:Math.min(1200,document.documentElement.scrollHeight-innerHeight),behavior:'instant'}));
+  await expect.poll(()=>page.locator('.mkt-header-wrap').evaluate(el=>Math.round(el.getBoundingClientRect().top))).toBe(0);
   evidence.home.push(width);
 }
 try {
@@ -162,7 +173,9 @@ try {
     await toggle.click();
     const nav=header.getByRole('navigation',{name:'Mobile site navigation'});
     await expect(nav).toBeVisible();
-    assert.deepEqual(await nav.getByRole('link').allTextContents(),[...expected.map(x=>x[0]),'Sign Up / Sign In']);
+    assert.deepEqual(await nav.getByRole('link').allTextContents(),expected.map(x=>x[0]));
+    await expect(header.getByRole('link',{name:'Sign Up / Sign In',exact:true})).toHaveCount(1);
+    await expect(nav.getByRole('link',{name:'Sign Up / Sign In'})).toHaveCount(0);
     const box=await nav.boundingBox();
     assert.ok(box.x>=-1 && box.x+box.width<=width+1,'Mobile menu overflow at '+width);
     await page.screenshot({path:out+'/mobile-'+width+'.png'});
@@ -181,6 +194,9 @@ try {
   await page.locator('#commercial-property-services .pi-inline-link').filter({hasText:'Explore Our Co-Working Solutions'}).click();
   await expect(page).toHaveURL(origin+'/co-spaces/co-working');
   await expect(page.locator('main h1')).toHaveText('Co-Working');
+  await page.locator('.marketing-menu summary').click();
+  await expect(page.getByRole('navigation',{name:'Mobile site navigation'}).getByRole('link',{name:'Co-Spaces',exact:true})).toHaveAttribute('aria-current','location');
+  await page.keyboard.press('Escape');
   await expect(page.locator('main section')).toHaveCount(0);
   await expect.poll(()=>page.locator('main img').evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
   await page.goto(origin);

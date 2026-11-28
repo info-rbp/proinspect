@@ -21,6 +21,8 @@ import innovationSmall from './images/innovation-small.jpg';
 import subscriptionCare from './images/subscription-care.jpg';
 import subscriptionCareSmall from './images/subscription-care-small.jpg';
 
+const optimised = import.meta.glob<string>('./images/{co-working,modular,innovation,subscription-care}*.webp', { eager: true, query: '?url', import: 'default' });
+const imageSource = (name: string, fallback: string) => optimised['./images/' + name + '.webp'] ?? fallback;
 const imagery = {
   residential: {
     src: residential,
@@ -43,19 +45,19 @@ const imagery = {
     alt: 'Welcoming shared kitchen, dining and living space',
   },
   'co-working': {
-    src: coworking, small: coworkingSmall,
+    src: imageSource('co-working', coworking), small: imageSource('co-working-small', coworkingSmall),
     alt: 'Illustrative contemporary co-working office with oak desks, greenery and natural daylight',
   },
   modular: {
-    src: modular, small: modularSmall,
+    src: imageSource('modular', modular), small: imageSource('modular-small', modularSmall),
     alt: 'Illustrative modern modular building with timber cladding and native landscaping',
   },
   innovation: {
-    src: innovation, small: innovationSmall,
+    src: imageSource('innovation', innovation), small: imageSource('innovation-small', innovationSmall),
     alt: 'Illustrative contemporary property with shaded glazing, timber screens and native landscaping',
   },
   'subscription-care': {
-    src: subscriptionCare, small: subscriptionCareSmall,
+    src: imageSource('subscription-care', subscriptionCare), small: imageSource('subscription-care-small', subscriptionCareSmall),
     alt: 'Illustrative property-care setting with keys, documents and a tablet on a sunlit timber table',
   },
   construction: {
@@ -81,10 +83,12 @@ export function BrandImage({
   name,
   priority = false,
   className = '',
+  sizes = '(max-width: 600px) 94vw, (max-width: 800px) 85vw, (max-width: 1320px) 50vw, 630px',
 }: {
   name: BrandImageKey;
   priority?: boolean;
   className?: string;
+  sizes?: string;
 }) {
   const originalConcept = name === 'co-working' || name === 'modular' || name === 'innovation' || name === 'subscription-care';
   return (
@@ -93,12 +97,12 @@ export function BrandImage({
       src={imagery[name].src}
       alt={imagery[name].alt}
       srcSet={imagery[name].small + ' 600w, ' + imagery[name].src + (originalConcept ? ' 1152w' : ' 1200w')}
-      sizes="(max-width: 600px) 100vw, (max-width: 800px) 85vw, 50vw"
+      sizes={sizes}
       width={originalConcept ? 1152 : 1200}
       height={originalConcept ? 896 : 800}
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : 'auto'}
-      decoding="async"
+      decoding={priority ? "auto" : "async"}
     />
   );
 }

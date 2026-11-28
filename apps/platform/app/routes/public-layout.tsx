@@ -13,7 +13,7 @@ export default function PublicLayout() {
   return (
     <>
       <MarketingHeader appOrigin={appOrigin} />
-      <main id="main">
+      <main id="main" tabIndex={-1}>
         <Outlet context={{ appOrigin }} />
       </main>
       <MarketingFooter appOrigin={appOrigin} />

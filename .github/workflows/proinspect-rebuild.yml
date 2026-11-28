@@ -23,6 +23,20 @@ jobs:
         with:
           node-version: '22'
       - run: pnpm install --frozen-lockfile
+      - name: Install browser and accessibility audit tooling
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          npm install --prefix "$RUNNER_TEMP/proinspect-home-audit" --no-package-lock --ignore-scripts --no-audit --no-fund axe-core@4.10.3
+          echo "AXE_SCRIPT=$RUNNER_TEMP/proinspect-home-audit/node_modules/axe-core/axe.min.js" >> "$GITHUB_ENV"
+      - name: Record baseline home page lab measurements
+        run: node scripts/release/rebuild-home-audit.mjs baseline
+      - name: Optimise editorial photos without replacing originals
+        run: |
+          if ! command -v cwebp >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y webp
+          fi
+          python3 scripts/deploy/optimise-rebuild-images.py
       - name: Check source and staging authentication
         run: |
           pnpm typecheck
@@ -57,10 +71,11 @@ jobs:
           code=$(curl --silent --show-error --max-time 30 -D /tmp/rebuild-private -o /dev/null -w '%{http_code}' "$origin/workspaces")
           case "$code" in 302|303|307|308) grep -qi '^location:.*signin' /tmp/rebuild-private;; 401|403) ;; *) echo "Unexpected anonymous portal response ($code)"; exit 1;; esac
           echo "Anonymous workspace access denied"
-      - name: Install Chromium for header acceptance
-        run: pnpm exec playwright install --with-deps chromium
       - name: Verify desktop and mobile navigation in a real browser
         run: node scripts/release/rebuild-navigation-browser.mjs
+      - name: Audit deployed home page performance, images and accessibility
+        if: success()
+        run: node scripts/release/rebuild-home-audit.mjs final
       - uses: actions/upload-artifact@v4
         if: always()
         with:

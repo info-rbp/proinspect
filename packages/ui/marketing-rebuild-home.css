@@ -5,10 +5,11 @@
 .site .pi-home-services-grid.pi-home-two {grid-template-columns:repeat(2,minmax(0,1fr));}
 .site .pi-home-services-grid.pi-home-three {grid-template-columns:repeat(3,minmax(0,1fr));}
 .site .pi-home-rebuild .pi-home-services-grid > .pi-home-service-card {grid-column:auto;width:100%;min-width:0;max-width:none;height:100%;background:#fff;border:1px solid var(--mkt-line);border-radius:3px;overflow:hidden;}
-.site .pi-home-service-card .pi-card-image-link {display:block;}
+.site .pi-home-service-card {position:relative;}
+.site .pi-home-service-card > .pi-home-card-media {display:block;flex:0 0 auto;padding:0;margin:0;overflow:hidden;background:#e4e8e0;}
 .site .pi-home-service-card .pi-brand-image {display:block;width:100%;height:auto;aspect-ratio:1.65;object-fit:cover;}
 .site .pi-home-three .pi-home-service-card .pi-brand-image {aspect-ratio:1.45;}
-.site .pi-home-service-card > div {padding:clamp(1.2rem,2.2vw,1.8rem);}
+.site .pi-home-service-card > .pi-home-card-body {padding:clamp(1.2rem,2.2vw,1.8rem);}
 .site .pi-home-service-card h3 {font-size:clamp(1.2rem,2vw,1.6rem);overflow-wrap:anywhere;}
 .site .pi-home-service-card .pi-inline-link {align-self:flex-start;}
 .site .pi-home-rebuild .pi-editorial-hero-home .pi-editorial-copy h1 > span {white-space:normal;}
@@ -62,4 +63,26 @@
 .site .pi-home-rebuild #home-subscriptions .pi-residential-feature-content > p:not(.eyebrow) {
   margin-block:0 1rem;
   line-height:1.7;
+}
+
+.site .pi-home-rebuild #customer-commitment .pi-home-stacked-heading,
+.site .pi-home-rebuild #customer-commitment .pi-home-stacked-heading > p:not(.eyebrow) {width:100%;max-width:none;}
+.site .pi-home-card-action {position:static;min-height:44px;display:inline-flex;align-items:center;}
+.site .pi-home-card-action::after {content:'';position:absolute;inset:0;z-index:1;}
+.site .pi-home-service-card:focus-within {outline:3px solid #0e6a65;outline-offset:4px;}
+.site .pi-home-service-card .pi-brand-image {transition:transform .2s ease;}
+@media(hover:hover) {
+  .site .pi-home-service-card:hover .pi-brand-image {transform:scale(1.02);}
+  .site .pi-home-service-card:hover .pi-home-card-action {text-decoration:underline;text-underline-offset:.2em;}
+}
+@media(max-width:760px) {
+  .site .pi-home-rebuild .pi-editorial-section {padding-block:2.5rem;}
+  .site .pi-home-rebuild .pi-home-stacked-heading {margin-bottom:1.35rem;}
+  .site .pi-home-rebuild .pi-home-service-card > .pi-home-card-body {padding:1.15rem;}
+  .site .pi-home-rebuild .pi-home-principles {gap:1.15rem;}
+  .site .pi-home-rebuild .pi-home-principles article {padding-top:1rem;}
+  .site .pi-home-rebuild .pi-editorial-hero {padding-block:1.65rem 2.25rem;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .site .pi-home-service-card .pi-brand-image {transition:none;transform:none!important;}
 }

@@ -26,9 +26,10 @@ test('mobile header contains all destinations without horizontal overflow',async
  await expect(page.locator('.marketing-menu summary')).toBeVisible();
  await page.locator('.marketing-menu summary').click();
  const menu=page.getByRole('navigation',{name:'Mobile site navigation'});
- for(const name of ['Residential','Commercial','Co-Spaces','Maintenance','Modular','Construction','Tenants','Leasing','Subscriptions','Information','Sign Up / Sign In'])
+ for(const name of ['Residential','Commercial','Co-Spaces','Maintenance','Modular','Construction','Tenants','Leasing','Subscriptions','Information'])
   await expect(menu.getByRole('link',{name,exact:true})).toBeVisible();
- await expect(menu.getByRole('link',{name:'Sign Up / Sign In'})).toHaveAttribute('href','/client');
+ await expect(menu.getByRole('link',{name:'Sign Up / Sign In'})).toHaveCount(0);
+ await expect(page.locator('.mkt-header-actions').getByRole('link',{name:'Sign Up / Sign In'})).toHaveAttribute('href','/client');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2)).toBe(true);
  await menu.getByRole('link',{name:'Residential'}).click();
  await expect(page).toHaveURL(/\/residential$/);
