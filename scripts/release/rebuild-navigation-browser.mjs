@@ -13,7 +13,25 @@ const expected = [
 const out='artifacts/rebuild-navigation';
 mkdirSync(out,{recursive:true});
 const browser=await chromium.launch();
-const evidence={source:process.env.GITHUB_SHA,desktop:[],mobile:[],pages:[]};
+const evidence={source:process.env.GITHUB_SHA,desktop:[],mobile:[],pages:[],footer:[]};
+const footerExpected=[['Help Centre','/help-centre'],['About Us','/about'],['Contact Us','/contact']];
+async function verifyFooter(page,width){
+  const footer=page.locator('.mkt-site-footer');
+  const navigation=footer.getByRole('navigation',{name:'Footer navigation'});
+  await expect(navigation).toBeVisible();
+  const links=navigation.getByRole('link');
+  assert.deepEqual(await links.allTextContents(),footerExpected.map(x=>x[0]));
+  assert.deepEqual(await links.evaluateAll(items=>items.map(x=>x.getAttribute('href'))),footerExpected.map(x=>x[1]));
+  await expect(footer.getByRole('link')).toHaveCount(4); // Brand and exactly three links.
+  await expect(footer.locator('.mkt-footer-bottom')).toContainText('ABN 52 703 550 609');
+  await expect(footer.locator('.mkt-footer-bottom')).toContainText('ACN 703 550 609');
+  await expect(footer.locator('.mkt-footer-bottom a')).toHaveCount(0);
+  await expect(footer.locator('.mkt-footer-intro p')).toHaveText('Providing Innovative Property Inspection and Outsourcing Solutions to Private Landlords and Property Managers across Western Australia.');
+  const boxes=await links.evaluateAll(items=>items.map(x=>{const r=x.getBoundingClientRect();return {left:r.left,right:r.right};}));
+  assert.ok(boxes.every(r=>r.left>=-1&&r.right<=width+1),'Footer overflows at '+width);
+  await footer.screenshot({path:out+'/footer-'+width+'.png'});
+  evidence.footer.push(width);
+}
 try {
   const page=await browser.newPage();
   const health=await page.request.get(origin+'/api/health');
@@ -46,6 +64,7 @@ try {
     assert.ok(Math.abs((links[0].left+links.at(-1).right)/2-(h.x+h.width/2))<=3,'Menu links not centred at '+width);
     await header.screenshot({path:out+'/header-'+width+'.png'});
     evidence.desktop.push(width);
+    await verifyFooter(page,width);
   }
   for(const [label,path] of expected){
     await page.goto(origin+path,{waitUntil:'domcontentloaded'});
@@ -61,6 +80,7 @@ try {
     await page.setViewportSize({width,height:850});
     await page.goto(origin,{waitUntil:'networkidle'});
     const header=page.locator('.mkt-site-header');
+    await verifyFooter(page,width);
     const toggle=header.locator('summary');
     await expect(toggle).toBeVisible();
     const top=await header.locator('.mkt-header-identity').boundingBox();
@@ -83,6 +103,12 @@ try {
     await expect(page).toHaveURL(origin+'/construction');
     await expect(header.locator('details')).not.toHaveAttribute('open','');
     evidence.mobile.push(width);
+  }
+  for (const [label,path] of footerExpected) {
+    await page.goto(origin);
+    await page.getByRole('navigation',{name:'Footer navigation'}).getByRole('link',{name:label,exact:true}).click();
+    await expect(page).toHaveURL(origin+path);
+    assert.equal((await page.request.get(origin+path)).status(),200,path);
   }
   console.log(JSON.stringify(evidence));
 } finally {

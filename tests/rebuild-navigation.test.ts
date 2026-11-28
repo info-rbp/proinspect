@@ -32,3 +32,15 @@ test('new editorial landings remain excluded from indexing until reviewed', () =
   for (const path of ['/commercial','/co-spaces','/modular','/construction','/subscriptions','/information'])
     assert.equal(shouldIndexPublicPage(path,'https://proinspect.systems','production'),false);
 });
+
+test('footer contains only the requested support navigation and retains company details', () => {
+  const chrome=readFileSync('apps/marketing/app/components/site-chrome.tsx','utf8').split('export function MarketingFooter')[1];
+  assert.ok(chrome);
+  const footerLinks=Array.from(chrome.matchAll(/<Link\b[^>]*\bto="([^"]+)"[^>]*>/g),match=>match[1]);
+  assert.deepEqual(footerLinks,['/','/help-centre','/about','/contact']);
+  assert.match(chrome,/aria-label="Footer navigation"/);
+  assert.match(chrome,/ABN 52 703 550 609/);
+  assert.match(chrome,/ACN 703 550 609/);
+  for(const path of ['/privacy','/website-terms','/platform-terms','/terms','/booking-policy','/service-scopes','/subscription-terms'])
+    assert.equal(isMarketingStylePath(path),true,path+' remains a public route');
+});

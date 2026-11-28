@@ -17,9 +17,7 @@
 .site .pi-process-illustrated li img {display:block;width:100%;height:auto;aspect-ratio:1.6;object-fit:cover;margin-bottom:1.5rem;border-radius:3px;}
 .site .pi-footer-compact {grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:3rem;}
 .site .pi-footer-actions {display:flex;flex-wrap:wrap;gap:1rem 1.5rem;max-width:450px;align-items:center;}
-.site .pi-footer-actions a {color:#deebe7;text-decoration:underline;text-underline-offset:.25em;}
-.site .pi-footer-legal nav {display:flex;flex-wrap:wrap;gap:.65rem 1.25rem;align-items:center;}
-.site .pi-footer-legal a {white-space:nowrap;}
+.site .pi-footer-actions a {color:#deebe7;text-decoration:underline;text-underline-offset:.25em;display:inline-flex;align-items:center;min-height:44px;}
 .site .pi-footer-legal {align-items:flex-start;}
 .site .pi-residential-grid .pi-property-card,.site .pi-residential-grid .pi-property-card:nth-child(-n + 2),.site .pi-residential-grid .pi-property-card:nth-last-child(-n + 2) {grid-column:span 3;}
 .site .pi-residential-more {margin-top:4rem;}
@@ -47,7 +45,6 @@
  .site .pi-residential-feature-image img {aspect-ratio:1.6;}
  .site .pi-residential-grid .pi-property-card,.site .pi-residential-grid .pi-property-card:nth-child(-n + 2),.site .pi-residential-grid .pi-property-card:nth-last-child(-n + 2) {grid-column:span 1;max-width:none;}
  .site .pi-home-property-grid .pi-property-card,.site .pi-home-property-grid .pi-property-card:nth-child(-n + 2),.site .pi-home-property-grid .pi-property-card:nth-last-child(-n + 2) {grid-column:span 1;max-width:none;}
- .site .pi-footer-legal nav {gap:.8rem;}
 }
 
 /* Login landing: role-aware destinations without exposing or changing any authentication rule. */

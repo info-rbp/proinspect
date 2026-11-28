@@ -25,21 +25,20 @@ export function MarketingHeader({appOrigin=''}:{appOrigin?:string}){
   </div>
  </header></div></div>
 }
-export function MarketingFooter({appOrigin=''}:{appOrigin?:string}){
+export function MarketingFooter(_props:{appOrigin?:string}={}){
  return <footer className="site-footer mkt-site-footer"><div className="site-container">
   <div className="mkt-footer-top pi-footer-compact">
    <div className="mkt-footer-intro"><Link className="brand inverse" to="/">ProInspect<span>PROPERTY SERVICES</span></Link>
     <p>Providing Innovative Property Inspection and Outsourcing Solutions to Private Landlords and Property Managers across Western Australia.</p>
    </div>
-   <div className="pi-footer-actions"><Link className="mkt-footer-contact" to="/contact">Contact ProInspect <span aria-hidden="true">↗</span></Link>
-    <Link to="/help-centre">Help Centre</Link><Link to="/residential/services">Residential Services</Link>
-    <a href={appOrigin.replace(/\/$/,'')+'/client'}>Client Portal / Sign In</a></div>
+   <nav className="pi-footer-actions" aria-label="Footer navigation">
+    <Link to="/help-centre">Help Centre</Link>
+    <Link to="/about">About Us</Link>
+    <Link to="/contact">Contact Us</Link>
+   </nav>
   </div>
   <div className="mkt-footer-bottom pi-footer-legal">
    <span>© {new Date().getFullYear()} ProInspect Property Services Pty Ltd · ABN 52 703 550 609 · ACN 703 550 609</span>
-   <nav aria-label="Legal and policy links"><Link to="/privacy">Privacy</Link><Link to="/website-terms">Website Terms</Link>
-    <Link to="/platform-terms">Platform Terms</Link><Link to="/terms">Service Terms</Link><Link to="/booking-policy">Bookings &amp; Refunds</Link>
-    <Link to="/service-scopes">Service Scopes</Link><Link to="/subscription-terms">Plans</Link></nav>
   </div>
  </div></footer>;
 }
