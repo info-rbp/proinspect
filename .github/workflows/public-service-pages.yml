@@ -22,6 +22,8 @@ jobs:
         with:
           node-version: '22'
       - run: pnpm install --frozen-lockfile
+      - name: Verify production release policy (mocked activation and rollback)
+        run: node --test tests/production-release.test.mjs
       - name: Check source, schemas and production builds
         run: pnpm check
       - name: Prepare isolated local browser fixtures

@@ -1,0 +1,42 @@
+name: Controlled production release
+on:
+  workflow_run:
+    workflows: [Verify ProInspect, Public service page acceptance]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: proinspect-production-activation
+  cancel-in-progress: false
+jobs:
+  activate:
+    # Never run a PR checkout with a production token. The main-only
+    # workflow checks its own checkout, GitHub head and exact-head results.
+    if: github.repository == 'info-rbp/proinspect' && github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository && contains(fromJSON('["push","workflow_dispatch"]'), github.event.workflow_run.event)))
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/heads/main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify release policy without production credentials
+        run: node --test tests/production-release.test.mjs
+      - name: Activate only an exact accepted public-platform upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PRODUCTION_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+        run: node scripts/release/production-release.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-release-evidence
+          path: artifacts/production-release/
+          retention-days: 30

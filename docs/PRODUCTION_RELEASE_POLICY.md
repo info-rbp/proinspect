@@ -1,0 +1,23 @@
+# Controlled production releases
+
+Owner-approved release architecture for the existing `proinspect-platform` Worker and `https://proinspect.systems`. Cloudflare Workers Builds retains its existing main-only version upload. GitHub's Controlled production release workflow activates an uploaded version only after independently checking the current main commit, current production version, entire diff from the live source, and completed exact-main-source acceptance runs.
+
+## Release lanes
+
+- **Public platform:** narrow allowlist of reviewed presentation components, marketing styles, raster assets, relevant browser tests and documentation. The full local regression (including domain, SQL, integration, packaging, recovery and full browser acceptance), public Chromium/Firefox/WebKit, accessibility and performance suite must pass. The separate real scanner check must finish and its result is recorded; an upstream stale-definition failure does not make public presentation code ineligible. Changes to authentication, application handlers, payments, sensitive document workflows, route guards, migrations, dependencies, Worker settings, shared roots or unclassified files require controlled operational review. Review all changes on protected main; paths alone are not a guarantee that arbitrary source code is safe.
+- **Controlled operational:** no automatic activation. The existing full verify job still requires successful real scanner acceptance plus the complete local regression; independent application/service approvals, migration rehearsal, live proof and other existing release prerequisites are unchanged. No permission, feature or data release is granted by public-platform acceptance.
+- **Initial transition:** the specific owner-approved 71daee8d -> 9689b6c5 snapshot (PR 126, approved image optimisation, regression corrections and scanner monitor) has been reviewed as a platform-only promotion. Exact snapshot exceptions and the named initial policy installation files are eligible only while the live source remains 71daee8d. The two modified private scanner container files belong to a separate Worker and are not deployed by this workflow. Future scanner, root, package and deployment-script changes fall into the controlled lane.
+
+## Activation and recovery
+
+The workflow runs only from protected main after completion of either acceptance workflow, or by a trusted main-only manual dispatch. No production credential is supplied to a PR job. It uses an existing Cloudflare credential, preferring the dedicated `CLOUDFLARE_PRODUCTION_API_TOKEN` if available, otherwise the repository's existing `CLOUDFLARE_API_TOKEN`. The credential must have Workers script version/deployment read and write access to the existing target. Prefer a dedicated narrowly scoped token; no new token or broadened scope is created by this policy.
+
+The script reads the exact production source and health, compares complete version binding inventory (including flag values and secret names/types, excluding only BUILD_SHA), checks runtime settings and rechecks the main SHA and active deployment before assigning 100% traffic. Secret values are not retrievable and never logged. GET-only live health, page heading/navigation, terms, WebP and retired route checks follow activation. A failed smoke test restores the previous Worker version and checks its health, unless an operator changed the deployment concurrently. Code rollback does not roll back data. This path performs no migrations, provider writes, uploads, or scanner deployments. Cloudflare version ID, source, acceptance and rollback evidence are retained as a GitHub artifact.
+
+## Signature availability
+
+Twice-daily scheduled isolated real-engine checks (Private scanner definition monitor) use the exact existing smoke/privilege checks with the 72-hour limit. They report actual stale/unavailable signatures rather than substituting the DNS query time for the database build timestamp. The private engine and full operational gate remain fail-closed; no applicant documents or provider secrets are used.
+
+## Review and operation
+
+Public browser regressions assert the new Information menu Contact link and its navigation, new hero actions and FAQ, both tenant check-in destinations and application recovery, and the existing subscription price/term in the new feature and detailed terms destination. Do not remove old coverage merely to make CI pass. Automated lab checks do not substitute for manual accessibility or independent operational acceptance. Inspect the Controlled production release workflow and release.json for exact source, acceptance, activation and rollback state. A successful version upload alone is not a deployment.

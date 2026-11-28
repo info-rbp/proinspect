@@ -49,15 +49,20 @@ for (const width of [320, 390, 1440])
       expect(retired, path + ' retired links').toEqual([]);
     }
     await page.goto('/residential');
-    await expect(
-      page.getByText('Residential All Inclusive Subscription', { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.locator('.pi-plan-disclosure').filter({ hasText: 'An initial 24-month term' }),
-    ).toBeVisible();
+    const subscription = page.locator('#subscription-support');
+    await expect(subscription.getByRole('heading', { name: 'Existing Residential All Inclusive Subscription' })).toBeVisible();
+    await expect(subscription).toContainText('AUD $50 + GST per week per property ($55 including GST)');
+    await expect(subscription).toContainText('An initial 24-month term and 60 days’ written cancellation notice.');
+    await expect(subscription).toContainText('Creating an account does not activate a paid subscription.');
+    await subscription.getByRole('link', { name: 'Existing Residential pricing and terms' }).click();
+    await expect(page).toHaveURL(/\/residential\/subscriptions$/);
+    await expect(page.getByRole('heading', { name: 'Residential All Inclusive Subscription', exact: true })).toBeVisible();
+    await expect(page.locator('.pi-plan-disclosure').filter({ hasText: 'An initial 24-month term' })).toBeVisible();
+    await expect(page.locator('.pi-plan-disclosure').filter({ hasText: 'AUD $50 + GST per week per property' })).toBeVisible();
+    await page.goto('/residential');
     await expect(page.locator('body')).not.toContainText('$150');
     await expect(page.locator('body')).not.toContainText('$20');
-    if (width < 1000) {
+    if (width < 1024) {
       await page.getByLabel('Site menu').click();
       expect(
         await page
