@@ -209,3 +209,7 @@
  .pi-leasing-gallery-grid.triple,.pi-leasing-gallery-grid.quad {grid-template-columns:repeat(2,minmax(0,1fr))}
  .pi-leasing-gallery-grid.quad .pi-leasing-gallery-thumb:first-child {grid-column:auto;aspect-ratio:1.6}
 }
+
+/* Keep an unavailable thumbnail's message legible even in a narrow grid. */
+.pi-leasing-gallery-thumb .pi-leasing-photo-placeholder {min-height:0;gap:.3rem;padding:.35rem;font-size:.74rem;line-height:1.25}
+.pi-leasing-gallery-thumb .pi-leasing-photo-placeholder svg {width:28px;height:24px;flex-shrink:0}

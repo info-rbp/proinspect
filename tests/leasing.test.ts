@@ -65,12 +65,15 @@ test('public listing CTAs enforce the exact applicant release gate and avoid unu
  assert.deepEqual(listingApplicationAction({...base,applicationMode:'external',applicationUrl:'javascript:alert(1)',rentalReady:false}),{type:'interest',href:'#leasing-enquiry'});
  const page=text('apps/marketing/app/routes/leasing-property.tsx');
  assert.match(page,/rentalListingReady\(env,result.listing.slug\)/);
- assert.match(page,/leasing-gallery--single/);
+ assert.match(page,/<LeasingGallery/);
+ const gallery=text('apps/marketing/app/components/leasing-gallery.tsx');
+ assert.match(gallery,/showModal\(\)/);
+ assert.match(gallery,/count===1\?' single'/);
  assert.match(page,/id="leasing-enquiry"/);
  assert.match(page,/id="leasing-application"/);
  assert.match(page,/Register your interest/);
  assert.match(page,/Start or resume application/);
- assert.match(text('packages\/ui\/leasing.css'),/leasing-gallery--single img:first-child/);
+ assert.match(text('packages/ui/leasing.css'),/pi-leasing-gallery-grid\.single/);
  const server=text('apps/platform/worker/features/rental-applications.server.ts');
  assert.match(server,/await rentalStartPage\(env,slug\)/);
  assert.match(server,/enabled:rentalEnabled\(env\)&&await releaseFeatureReady\(env,'rental'\)/);

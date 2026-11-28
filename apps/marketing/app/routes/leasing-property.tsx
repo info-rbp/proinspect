@@ -77,7 +77,7 @@ export default function LeasingProperty(){
     <h1>{p.title}</h1>
     {demo?<p className="pi-leasing-demo-label">Demonstration listing · Not available to rent</p>:<>
      <div className="leasing-hero-meta"><strong className="leasing-hero-price">{displayPrice(p.price_cents,p.price_period)}</strong><span className="leasing-hero-location">{p.display_address} · {p.suburb} WA {p.postcode}</span></div>
-     {facts.length>0&&<ul className="pi-leasing-hero-facts" aria-label="Property features">{facts.map(f=><li key={f.label}><strong>{f.value}</strong> {f.label}</li>)}</ul>}
+     {facts.length>0&&<ul className="pi-leasing-hero-facts" aria-label="Property features">{facts.map(f=><li key={f.label}><strong>{f.value}</strong> {f.label==='Floor area'?'':f.label}</li>)}</ul>}
      {available&&<p className="pi-leasing-availability">Available from {available}</p>}
     </>}
     <div className="leasing-hero-actions">
