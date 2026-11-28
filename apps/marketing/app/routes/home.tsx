@@ -34,7 +34,7 @@ function ServiceBanner({ id, eyebrow, title, intro, tiles, neutral = false }: {
       </div>
       <div className={'pi-home-services-grid ' + (tiles.length === 3 ? 'pi-home-three' : 'pi-home-two')}>
         {tiles.map(tile => <article className="pi-property-card pi-home-service-card" key={tile.href}>
-          <Link to={tile.href} className="pi-card-image-link" aria-label={tile.action}><BrandImage name={tile.image}/></Link>
+          <Link to={tile.href} className="pi-card-image-link" aria-label={'View ' + tile.title}><BrandImage name={tile.image}/></Link>
           <div><h3><Link to={tile.href}>{tile.title}</Link></h3><p>{tile.copy}</p>
           <Link to={tile.href} className="pi-inline-link">{tile.action} <span aria-hidden="true">↗</span></Link></div>
         </article>)}

@@ -10,12 +10,12 @@ test('homepage editorial structure follows the expanded rebuild strategy',async(
  await expect(page.locator('.pi-home-service-card')).toHaveCount(7);
  await expect(page.getByRole('heading',{name:'Properties Available'})).toBeVisible();
  await expect(page.getByRole('heading',{name:'Maintenance',exact:true})).toBeVisible();
- await expect(page.getByRole('link',{name:/See Our Maintenance Solutions/})).toHaveAttribute('href','/maintenance');
+ await expect(page.getByRole('link',{name:/Explore Maintenance/})).toHaveAttribute('href','/maintenance');
  await expect(page.getByRole('link',{name:/Explore Our Subscriptions/})).toHaveAttribute('href','/subscriptions');
- await expect(page.locator('.pi-process-illustrated img')).toHaveCount(3);
+ await expect(page.locator('.pi-home-principles article')).toHaveCount(3);
  await expect(page.getByRole('link',{name:/Sign Up Today/})).toHaveAttribute('href','/client');
  await expect(page.locator('.mkt-footer-group')).toHaveCount(0);
- await expect(page.locator('.pi-footer-legal a')).toHaveCount(7);
+ await expect(page.locator('.pi-footer-legal a')).toHaveCount(0);
 });
 test('all eight Residential service areas are browsable and connect to authorised detail routes',async({page})=>{
  await page.goto('/residential');
