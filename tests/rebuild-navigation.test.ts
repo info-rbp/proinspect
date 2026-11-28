@@ -52,7 +52,21 @@ test('Co-Working is public editorial content, not a booking or indexed release',
   for(const file of ['apps/platform/app/routes.ts','apps/marketing/app/routes.ts'])
     assert.ok(readFileSync(file,'utf8').includes("route('co-spaces/co-working',"));
   const home=readFileSync('apps/marketing/app/routes/home.tsx','utf8');
-  assert.match(home,/RebuildSubscriptionTiles/);
+  assert.match(home,/name="subscription-care"/);
+  assert.doesNotMatch(home,/RebuildSubscriptionTiles/);
+  assert.match(readFileSync('apps/marketing/app/routes/rebuild-landing.tsx','utf8'),/<RebuildSubscriptionTiles\/>/);
   assert.match(home,/to="\/subscriptions"/);
   assert.doesNotMatch(home,/PlanComparison|EditorialSteps|Have something specific in mind\?/);
+});
+
+test('final home notes preserve the approved title and exact replacement copy', () => {
+  const home=readFileSync('apps/marketing/app/routes/home.tsx','utf8');
+  for(const copy of ["From Residential Homes to Co-Living Spaces, ProInspect helps realise potential in properties and provide the necessary support that landlords and agencies need with innovative solutions in the modern world","Let us help you discover a more connected approach to shared living with property set-up, resident support and on-going care","Take the stress out of your commercial properties with regular inspections, tenant engagement and support when things go wrong with our commercial property solutions","Convert your commercial space into a co-working space with flexible tailored workspaces, shared environments and fully managed solutions","Take the stress out of your construction project and keep your project on track with our Construction Project Management Services","Find your next place with ProInspect. Browse our available homes, see when the next advertised open home is and submit an application online"]) assert.ok(home.includes(copy),copy);
+  assert.ok(home.includes('eyebrow="ProInspect Property Services"'));
+  assert.ok(home.includes("label: 'Learn More About ProInspect', to: '/about'"));
+  assert.match(home,/name="innovation"/);
+  assert.match(home,/name="subscription-care"/);
+  assert.doesNotMatch(home,/pi-home-connections/);
+  const css=readFileSync('packages/ui/marketing-rebuild-home.css','utf8');
+  assert.match(css,/pi-home-service-banner \.pi-home-stacked-heading\s*\{[^}]*max-width:none/);
 });

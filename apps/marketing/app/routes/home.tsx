@@ -1,7 +1,6 @@
 import { Link } from 'react-router';
 import { BrandImage, type BrandImageKey } from '../components/brand-image';
 import { EditorialHero } from '../components/editorial';
-import { RebuildSubscriptionTiles } from '../components/rebuild-subscription-tiles';
 import { seo } from '../lib/seo';
 
 export const meta = () => seo(
@@ -13,14 +12,14 @@ export const meta = () => seo(
 type ServiceTile = { title: string; copy: string; image: BrandImageKey; href: string; action: string };
 const residential: ServiceTile[] = [
   { title: 'Residential Solutions', copy: 'From inspections and leasing to tenancy administration and ongoing property support, we help make looking after your residential property easier.', image: 'residential', href: '/residential', action: 'Explore Our Residential Solutions' },
-  { title: 'Co-Living Spaces', copy: 'Discover a more connected approach to shared living, from property setup and room readiness to resident support and ongoing care.', image: 'co-living', href: '/co-living', action: 'Explore Our Co-Living Solutions' },
+  { title: 'Co-Living Spaces', copy: 'Let us help you discover a more connected approach to shared living with property set-up, resident support and on-going care', image: 'co-living', href: '/co-living', action: 'Explore Our Co-Living Solutions' },
 ];
 const commercial: ServiceTile[] = [
-  { title: 'Commercial Solutions', copy: 'Bring commercial property inspections, operational requirements, leasing support and maintenance coordination together around your property’s needs.', image: 'commercial', href: '/commercial', action: 'Explore Our Commercial Solutions' },
-  { title: 'Co-Working Spaces', copy: 'Explore flexible workplaces and shared commercial environments designed around the changing needs of businesses, professionals and space operators.', image: 'co-working', href: '/co-spaces/co-working', action: 'Explore Our Co-Working Solutions' },
+  { title: 'Commercial Solutions', copy: 'Take the stress out of your commercial properties with regular inspections, tenant engagement and support when things go wrong with our commercial property solutions', image: 'commercial', href: '/commercial', action: 'Explore Our Commercial Solutions' },
+  { title: 'Co-Working Spaces', copy: 'Convert your commercial space into a co-working space with flexible tailored workspaces, shared environments and fully managed solutions', image: 'co-working', href: '/co-spaces/co-working', action: 'Explore Our Co-Working Solutions' },
 ];
 const projects: ServiceTile[] = [
-  { title: 'Construction Project Management', copy: 'Bring greater clarity and coordination to your construction project, from planning and progress monitoring to completion.', image: 'construction', href: '/construction', action: 'Explore Construction' },
+  { title: 'Construction Project Management', copy: 'Take the stress out of your construction project and keep your project on track with our Construction Project Management Services', image: 'construction', href: '/construction', action: 'Explore Construction' },
   { title: 'Modular Building', copy: 'Discover a more flexible approach to building with modular solutions for evolving residential and commercial property needs.', image: 'modular', href: '/modular', action: 'Explore Modular' },
   { title: 'Maintenance', copy: 'Keep your property functioning at its best through practical maintenance support, approved contractor coordination and ongoing care.', image: 'maintenance', href: '/maintenance', action: 'Explore Maintenance' },
 ];
@@ -42,7 +41,6 @@ function ServiceBanner({ id, eyebrow, title, intro, tiles, neutral = false }: {
     </div>
   </section>;
 }
-const connections = ['Residential & Commercial','Co-Living & Co-Working','Construction & Modular','Maintenance & Property Care','Inspections & Reporting','Leasing & Subscriptions'];
 function CustomerCommitment() {
   return <section className="mkt-section pi-editorial-section" id="customer-commitment">
     <div className="site-container">
@@ -63,10 +61,10 @@ function CustomerCommitment() {
 }
 export default function Home() {
   return <div className="pi-public-home pi-home-rebuild">
-    <EditorialHero home eyebrow="ProInspect Property Services · Western Australia"
+    <EditorialHero home eyebrow="ProInspect Property Services"
       title={'Property Solutions.\nBuilt Around You.'}
-      intro="From residential homes and commercial properties to shared spaces, construction projects, modular buildings and ongoing maintenance, ProInspect brings innovative thinking and practical support to every stage of your property journey."
-      image="residential" primary={{ label: 'See What We Offer', to: '#property-services' }}
+      intro="From Residential Homes to Co-Living Spaces, ProInspect helps realise potential in properties and provide the necessary support that landlords and agencies need with innovative solutions in the modern world"
+      image="residential" primary={{ label: 'Learn More About ProInspect', to: '/about' }}
       secondary={{ label: 'Get Started Today', to: '/client' }}/>
     <ServiceBanner id="property-services" eyebrow="How we can help" title="The right support for your residential property."
       intro="Whether you own a single rental, manage a property portfolio or operate shared accommodation, discover flexible property solutions designed around your needs." tiles={residential}/>
@@ -74,38 +72,35 @@ export default function Home() {
       intro="Practical, flexible property solutions for commercial owners, property managers and operators who want to focus on what matters most to their business." tiles={commercial} neutral/>
     <ServiceBanner id="property-projects" eyebrow="Building, developing and maintaining property" title="Build it. Improve it. Keep it working."
       intro="From bringing a new project to life to keeping an existing property at its best, our solutions support every stage of the property journey." tiles={projects}/>
- <section className="mkt-section pi-editorial-section pi-neutral"><div className="site-container pi-residential-feature">
+ <section className="mkt-section pi-editorial-section pi-neutral" id="home-leasing" aria-labelledby="home-leasing-heading"><div className="site-container pi-residential-feature">
   <div className="pi-residential-feature-image"><BrandImage name="leasing"/></div>
-  <div className="pi-residential-feature-content"><p className="eyebrow">Looking for your next home?</p><h2>Properties Available</h2>
-   <p>Find your next place with ProInspect Property Services. Browse available homes, see advertised open-home times and follow the application option chosen by the responsible landlord or agent.</p>
+  <div className="pi-residential-feature-content"><p className="eyebrow">Looking for your next home?</p><h2 id="home-leasing-heading">Properties Available</h2>
+   <p>Find your next place with ProInspect. Browse our available homes, see when the next advertised open home is and submit an application online</p>
    <Link to="/leasing" className="button">See What's Available <span aria-hidden="true">→</span></Link></div>
  </div></section>
 
-    <section className="mkt-section pi-editorial-section pi-deep" id="proinspect-approach">
+    <section className="mkt-section pi-editorial-section pi-deep" id="proinspect-approach" aria-labelledby="home-innovation-heading">
       <div className="site-container pi-residential-feature pi-residential-approach">
-        <div className="pi-home-connections">
-          <p className="pi-home-connection-label">The ProInspect Approach</p>
-          <h3>Your property. One connected approach.</h3>
-          <ul>{connections.map(item => <li key={item}>{item}</li>)}</ul>
-          <p className="pi-home-connection-footer">Practical services · Connected information · Customer-focused support</p>
-        </div>
+        <div className="pi-residential-feature-image"><BrandImage name="innovation"/></div>
         <div className="pi-residential-feature-content">
-          <p className="eyebrow">Innovation with purpose</p><h2>Innovative property solutions.<br/>Connected by design.</h2>
-          <p>Property needs are constantly evolving. We bring together innovative property solutions, practical expertise and connected technology to support residential and commercial properties in a more effective way.</p>
+          <p className="eyebrow">Innovation with purpose</p><h2 id="home-innovation-heading">Innovative property solutions.<br/>Connected by design.</h2>
+          <p>Property needs are constantly evolving.</p>
+          <p>We bring together innovative property solutions, practical expertise and connected technology to support residential and commercial properties in a more effective way.</p>
           <p>From shared living and working environments to construction, modular building, inspections and maintenance, our approach is designed to simplify the way you look after, develop and operate your property.</p>
           <Link to="/about" className="pi-inline-link">Discover the ProInspect Approach <span aria-hidden="true">↗</span></Link>
         </div>
       </div>
     </section>
     <section className="mkt-section pi-editorial-section pi-neutral" id="home-subscriptions" aria-labelledby="home-subscriptions-heading">
-      <div className="site-container">
-        <div className="pi-section-heading pi-home-stacked-heading">
-          <p className="eyebrow">ProInspect Subscriptions</p><h2 id="home-subscriptions-heading">Ongoing support. Designed around your property.</h2>
-          <p>Discover a more convenient approach to property services, with subscription solutions designed around different property types and ongoing needs.</p>
+      <div className="site-container pi-residential-feature pi-residential-feature-reverse">
+        <div className="pi-residential-feature-image"><BrandImage name="subscription-care"/></div>
+        <div className="pi-residential-feature-content">
+          <p className="eyebrow">ProInspect Subscriptions</p>
+          <h2 id="home-subscriptions-heading">A smarter way to support your property.</h2>
+          <p>We believe property support should be more than a series of separate transactions. Our innovative subscription approach brings ongoing property services, practical expertise and connected technology together.</p>
+          <p>From inspections and outsourced support to Co-Living, Co-Working and commercial property support, discover a more flexible way to meet your property’s evolving needs.</p>
+          <Link className="button" to="/subscriptions">Explore Our Subscriptions <span aria-hidden="true">→</span></Link>
         </div>
-        <RebuildSubscriptionTiles/>
-        <div className="pi-home-subscription-cta"><Link className="button secondary" to="/subscriptions">Explore Our Subscriptions <span aria-hidden="true">→</span></Link>
-          <p>Subscription details and inclusions will be available as each offering is finalised.</p></div>
       </div>
     </section>
     <CustomerCommitment/>

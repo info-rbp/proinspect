@@ -33,26 +33,66 @@ async function verifyFooter(page,width){
   evidence.footer.push(width);
 }
 const plans=['Inspections Subscription','Outsourced Subscription','Co-Living Subscription','Co-Working Subscription','Commercial Property Support Subscription'];
+const finalHomeCopy={
+  "hero": "From Residential Homes to Co-Living Spaces, ProInspect helps realise potential in properties and provide the necessary support that landlords and agencies need with innovative solutions in the modern world",
+  "coLiving": "Let us help you discover a more connected approach to shared living with property set-up, resident support and on-going care",
+  "commercial": "Take the stress out of your commercial properties with regular inspections, tenant engagement and support when things go wrong with our commercial property solutions",
+  "coWorking": "Convert your commercial space into a co-working space with flexible tailored workspaces, shared environments and fully managed solutions",
+  "construction": "Take the stress out of your construction project and keep your project on track with our Construction Project Management Services",
+  "leasing": "Find your next place with ProInspect. Browse our available homes, see when the next advertised open home is and submit an application online"
+};
+async function imageLoaded(img) {
+  await img.scrollIntoViewIfNeeded();
+  await expect.poll(()=>img.evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
+}
 async function verifyHome(page,width) {
   const home=page.locator('.pi-home-rebuild');
   await expect(home.locator(':scope > header, :scope > section')).toHaveCount(9);
   await expect(home.locator('.pi-home-service-card')).toHaveCount(7);
-  await expect(home.locator('#home-subscriptions .pi-rebuild-subscription-card h3')).toHaveText(plans);
+  const hero=home.locator('.pi-editorial-hero-home');
+  await expect(hero.locator('.eyebrow')).toHaveText('ProInspect Property Services');
+  await expect(hero.locator('.pi-editorial-intro')).toHaveText(finalHomeCopy.hero);
+  await expect(hero.getByRole('link',{name:'Learn More About ProInspect'})).toHaveAttribute('href','/about');
+  await expect(hero.getByRole('link',{name:'Get Started Today'})).toHaveAttribute('href','/client');
+  for(const [title,copy] of [['Co-Living Spaces',finalHomeCopy.coLiving],['Commercial Solutions',finalHomeCopy.commercial],['Co-Working Spaces',finalHomeCopy.coWorking],['Construction Project Management',finalHomeCopy.construction]]) {
+    await expect(home.locator('.pi-home-service-card').filter({has:page.getByRole('heading',{name:title,exact:true})}).locator('p')).toHaveText(copy);
+  }
+  await expect(home.locator('#home-leasing .pi-residential-feature-content > p:not(.eyebrow)')).toHaveText(finalHomeCopy.leasing);
+  await expect(home.locator('#proinspect-approach .pi-home-connections')).toHaveCount(0);
+  await expect(home.locator('#proinspect-approach .pi-residential-feature-content > p:not(.eyebrow)')).toHaveCount(3);
+  await expect(home.locator('#home-subscriptions .pi-rebuild-subscription-card')).toHaveCount(0);
   await expect(home.getByRole('link',{name:'Explore Our Subscriptions'})).toHaveAttribute('href','/subscriptions');
   await expect(home.getByText('Have something specific in mind?',{exact:false})).toHaveCount(0);
   await expect(home.getByRole('heading',{name:'Maintenance Support',exact:true})).toHaveCount(0);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Home horizontal overflow at '+width);
-  for(const id of ['property-services','commercial-property-services','property-projects','home-subscriptions']){
+  for(const id of ['property-services','commercial-property-services','property-projects']){
     const section=home.locator('#'+id);
     await section.scrollIntoViewIfNeeded();
-    const boxes=await section.locator('.pi-home-service-card,.pi-rebuild-subscription-card').evaluateAll(els=>els.map(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};}));
+    const geometry=await section.evaluate(el=>{
+      const intro=el.querySelector('.pi-home-stacked-heading > p:not(.eyebrow)');
+      const grid=el.querySelector('.pi-home-services-grid');
+      return {introWidth:intro.getBoundingClientRect().width,gridWidth:grid.getBoundingClientRect().width};
+    });
+    assert.ok(Math.abs(geometry.introWidth-geometry.gridWidth)<=3,'Introduction not full width '+id+' at '+width);
+    const boxes=await section.locator('.pi-home-service-card').evaluateAll(els=>els.map(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};}));
     assert.ok(boxes.every(b=>b.x>=-1&&b.x+b.w<=width+1&&b.w>0&&b.h>0),'Tile overflow '+id+' at '+width);
-    const cols=width<=760?1:width<=1000?2:['home-subscriptions','property-projects'].includes(id)?3:2;
+    const cols=width<=760?1:width<=1000?2:id==='property-projects'?3:2;
     assert.equal(boxes.filter(b=>Math.abs(b.y-boxes[0].y)<3).length,cols,'Incorrect columns '+id+' at '+width);
-    for(const img of await section.locator('img').all()){
-      await img.scrollIntoViewIfNeeded();
-      await expect.poll(()=>img.evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
-    }
+    for(const img of await section.locator('img').all())await imageLoaded(img);
+  }
+  for(const [id,asset] of [['proinspect-approach','innovation'],['home-subscriptions','subscription-care']]){
+    const section=home.locator('#'+id);
+    const img=section.locator('.pi-residential-feature-image img');
+    await expect(img).toHaveCount(1);
+    await imageLoaded(img);
+    assert.ok((await img.getAttribute('src')).includes(asset),'Incorrect feature image '+id);
+    const layout=await section.locator('.pi-residential-feature').evaluate(el=>{
+      const i=el.querySelector('.pi-residential-feature-image').getBoundingClientRect();
+      const t=el.querySelector('.pi-residential-feature-content').getBoundingClientRect();
+      return {ix:i.x,iy:i.y,ir:i.right,ib:i.bottom,tx:t.x,ty:t.y,tr:t.right,tb:t.bottom};
+    });
+    assert.ok(layout.ix>=-1&&layout.ir<=width+1&&layout.tx>=-1&&layout.tr<=width+1,'Feature overflow '+id+' at '+width);
+    assert.ok(width<=800?layout.ib<=layout.ty+1:(layout.ir<=layout.tx+1||layout.tr<=layout.ix+1),'Feature layout overlaps '+id+' at '+width);
   }
   if([1440,390].includes(width))await page.screenshot({path:out+'/home-'+width+'.png',fullPage:true});
   evidence.home.push(width);
@@ -143,8 +183,20 @@ try {
   await expect(page.locator('main h1')).toHaveText('Co-Working');
   await expect(page.locator('main section')).toHaveCount(0);
   await expect.poll(()=>page.locator('main img').evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
-  await page.goto(origin+'/subscriptions');
+  await page.goto(origin);
+  await page.getByRole('link',{name:'Learn More About ProInspect'}).click();
+  await expect(page).toHaveURL(origin+'/about');
+  assert.equal((await page.request.get(origin+'/about')).status(),200);
+  await page.goto(origin);
+  await page.getByRole('link',{name:'Explore Our Subscriptions'}).click();
+  await expect(page).toHaveURL(origin+'/subscriptions');
   await expect(page.locator('.pi-rebuild-subscription-card h3')).toHaveText(plans);
+  for (const width of [1440,768,390,320]) {
+    await page.setViewportSize({width,height:900});
+    const cards=await page.locator('.pi-rebuild-subscription-card').evaluateAll(els=>els.map(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width};}));
+    assert.ok(cards.every(b=>b.x>=-1&&b.x+b.w<=width+1),'Subscription landing overflow at '+width);
+    assert.equal(cards.filter(b=>Math.abs(b.y-cards[0].y)<3).length,width<=760?1:width<=1000?2:3,'Subscription landing columns at '+width);
+  }
   console.log(JSON.stringify(evidence));
 } finally {
   writeFileSync(out+'/verification.json',JSON.stringify(evidence,null,2)+'\n');

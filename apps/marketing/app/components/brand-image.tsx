@@ -16,6 +16,10 @@ import coworking from './images/co-working.jpg';
 import coworkingSmall from './images/co-working-small.jpg';
 import modular from './images/modular.jpg';
 import modularSmall from './images/modular-small.jpg';
+import innovation from './images/innovation.jpg';
+import innovationSmall from './images/innovation-small.jpg';
+import subscriptionCare from './images/subscription-care.jpg';
+import subscriptionCareSmall from './images/subscription-care-small.jpg';
 
 const imagery = {
   residential: {
@@ -46,6 +50,14 @@ const imagery = {
     src: modular, small: modularSmall,
     alt: 'Illustrative modern modular building with timber cladding and native landscaping',
   },
+  innovation: {
+    src: innovation, small: innovationSmall,
+    alt: 'Illustrative contemporary property with shaded glazing, timber screens and native landscaping',
+  },
+  'subscription-care': {
+    src: subscriptionCare, small: subscriptionCareSmall,
+    alt: 'Illustrative property-care setting with keys, documents and a tablet on a sunlit timber table',
+  },
   construction: {
     src: construction,
     small: constructionSmall,
@@ -74,7 +86,7 @@ export function BrandImage({
   priority?: boolean;
   className?: string;
 }) {
-  const originalConcept = name === 'co-working' || name === 'modular';
+  const originalConcept = name === 'co-working' || name === 'modular' || name === 'innovation' || name === 'subscription-care';
   return (
     <img
       className={'pi-brand-image ' + className}

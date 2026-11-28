@@ -5,7 +5,7 @@ test('homepage editorial structure follows the expanded rebuild strategy',async(
  const hero=page.locator('.pi-editorial-hero-home');
  await expect(hero.getByRole('heading',{level:1})).toContainText('Property Solutions.');
  await expect(hero.locator('h1 br')).toHaveCount(1);
- await expect(hero.getByRole('link',{name:'See What We Offer'})).toHaveAttribute('href','/#property-services');
+ await expect(hero.getByRole('link',{name:'Learn More About ProInspect'})).toHaveAttribute('href','/about');
  await expect(hero.getByRole('link',{name:'Get Started Today'})).toHaveAttribute('href','/client');
  await expect(page.locator('.pi-home-service-card')).toHaveCount(7);
  await expect(page.getByRole('heading',{name:'Properties Available'})).toBeVisible();

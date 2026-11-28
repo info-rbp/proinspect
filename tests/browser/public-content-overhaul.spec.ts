@@ -9,11 +9,15 @@ test('Student Living links take mobile and desktop visitors to the Co-Living pro
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
   }
 });
-test('homepage presents the five editorial subscription categories without activating billing',async({page})=>{
+test('homepage introduces subscriptions and links to all five editorial subscription categories without activating billing',async({page})=>{
   await page.goto('/');
-  await expect(page.locator('#home-subscriptions .pi-rebuild-subscription-card h3')).toHaveText(['Inspections Subscription','Outsourced Subscription','Co-Living Subscription','Co-Working Subscription','Commercial Property Support Subscription']);
-  await expect(page.getByRole('link',{name:'Explore Our Subscriptions'})).toHaveAttribute('href','/subscriptions');
+  await expect(page.locator('#home-subscriptions .pi-rebuild-subscription-card')).toHaveCount(0);
+  await expect(page.locator('#home-subscriptions img')).toBeVisible();
   await expect(page.locator('.pi-home-service-card')).toHaveCount(7);
+  const cta=page.getByRole('link',{name:'Explore Our Subscriptions'});
+  await expect(cta).toHaveAttribute('href','/subscriptions');
+  await cta.click();
+  await expect(page.locator('.pi-rebuild-subscription-card h3')).toHaveText(['Inspections Subscription','Outsourced Subscription','Co-Living Subscription','Co-Working Subscription','Commercial Property Support Subscription']);
 });
 test('old sector links have appropriate permanent responses and stay outside the sitemap',async({request})=>{
   const home=await request.get('/sectors/residential',{maxRedirects:0});
